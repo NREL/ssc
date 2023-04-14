@@ -35,7 +35,115 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "CO2_properties.h"
 
+
+
+void C_HTRBypass_Cycle::design_core(int& error_code)
+{
+    design_core_standard(error_code);
+}
+
 void C_HTRBypass_Cycle::design_core_standard(int& error_code)
 {
+    int x = 0;
+}
 
+void C_HTRBypass_Cycle::opt_design_core(int& error_code)
+{
+}
+
+void C_HTRBypass_Cycle::auto_opt_design_core(int& error_code)
+{
+}
+
+void C_HTRBypass_Cycle::finalize_design(int& error_code)
+{
+}
+
+// Public Methods
+
+void C_HTRBypass_Cycle::design(S_design_parameters& des_par_in, int& error_code)
+{
+    ms_des_par = des_par_in;
+
+    int design_error_code = 0;
+
+    design_core(design_error_code);
+
+    if (design_error_code != 0)
+    {
+        error_code = design_error_code;
+        return;
+    }
+
+    finalize_design(design_error_code);
+
+    error_code = design_error_code;
+}
+
+void C_HTRBypass_Cycle::opt_design(S_opt_design_parameters& opt_des_par_in, int& error_code)
+{
+}
+
+void C_HTRBypass_Cycle::reset_ms_od_turbo_bal_csp_solved()
+{
+}
+
+int C_HTRBypass_Cycle::auto_opt_design(S_auto_opt_design_parameters& auto_opt_des_par_in)
+{
+    return 0;
+}
+
+int C_HTRBypass_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters& auto_opt_des_hit_eta_in, std::string& error_msg)
+{
+    return 0;
+}
+
+int C_HTRBypass_Cycle::off_design_fix_shaft_speeds(S_od_par& od_phi_par_in, double od_tol)
+{
+    return 0;
+}
+
+int C_HTRBypass_Cycle::solve_OD_all_coolers_fan_power(double T_amb, double od_tol, double& W_dot_fan)
+{
+    return 0;
+}
+
+int C_HTRBypass_Cycle::solve_OD_mc_cooler_fan_power(double T_amb, double od_tol, double& W_dot_mc_cooler_fan, double& P_co2_out)
+{
+    return 0;
+}
+
+int C_HTRBypass_Cycle::solve_OD_pc_cooler_fan_power(double T_amb, double od_tol, double& W_dot_pc_cooler_fan, double& P_co2_out)
+{
+    return 0;
+}
+
+double C_HTRBypass_Cycle::get_od_temp(int n_state_point)
+{
+    return 0.0;
+}
+
+double C_HTRBypass_Cycle::get_od_pres(int n_state_point)
+{
+    return 0.0;
+}
+
+void C_HTRBypass_Cycle::check_od_solution(double& diff_m_dot, double& diff_E_cycle, double& diff_Q_LTR, double& diff_Q_HTR)
+{
+}
+
+void C_HTRBypass_Cycle::set_od_temp(int n_state_point, double temp_K)
+{
+}
+
+void C_HTRBypass_Cycle::set_od_pres(int n_state_point, double pres_kPa)
+{
+}
+
+void C_HTRBypass_Cycle::off_design_recompressor(double T_in, double P_in, double m_dot, double P_out, double tol, int& error_code, double& T_out)
+{
+}
+
+void C_HTRBypass_Cycle::estimate_od_turbo_operation(double T_mc_in, double P_mc_in, double f_recomp, double T_t_in, double phi_mc, int& mc_error_code, double& mc_w_tip_ratio, double& P_mc_out, int& rc_error_code, double& rc_w_tip_ratio, double& rc_phi, bool is_update_ms_od_solved)
+{
 }

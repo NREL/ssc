@@ -42,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class C_HTRBypass_Cycle : public C_sco2_cycle_core
 {
+public:
 
     enum E_htrbypass_cycle_state_points
     {
@@ -305,6 +306,58 @@ public:
     void reset_ms_od_turbo_bal_csp_solved();
 
     int auto_opt_design(S_auto_opt_design_parameters& auto_opt_des_par_in);
+
+
+
+
+
+
+    // Unused
+
+    int auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters& auto_opt_des_hit_eta_in, std::string& error_msg);
+
+    int off_design_fix_shaft_speeds(S_od_par& od_phi_par_in, double od_tol /*-*/);
+
+    virtual int solve_OD_all_coolers_fan_power(double T_amb /*K*/, double od_tol /*-*/, double& W_dot_fan /*MWe*/);
+
+    virtual int solve_OD_mc_cooler_fan_power(double T_amb /*K*/, double od_tol /*-*/, double& W_dot_mc_cooler_fan /*MWe*/, double& P_co2_out /*kPa*/);
+
+    virtual int solve_OD_pc_cooler_fan_power(double T_amb /*K*/, double od_tol /*-*/, double& W_dot_pc_cooler_fan /*MWe*/, double& P_co2_out /*kPa*/);
+
+    double get_od_temp(int n_state_point);
+
+    double get_od_pres(int n_state_point);
+
+    virtual void check_od_solution(double& diff_m_dot, double& diff_E_cycle,
+        double& diff_Q_LTR, double& diff_Q_HTR);
+
+    void set_od_temp(int n_state_point, double temp_K);
+
+    void set_od_pres(int n_state_point, double pres_kPa);
+
+    void off_design_recompressor(double T_in, double P_in, double m_dot, double P_out, double tol /*-*/, int& error_code, double& T_out);
+
+    void estimate_od_turbo_operation(double T_mc_in /*K*/, double P_mc_in /*kPa*/, double f_recomp /*-*/, double T_t_in /*K*/, double phi_mc /*-*/,
+        int& mc_error_code, double& mc_w_tip_ratio /*-*/, double& P_mc_out /*kPa*/,
+        int& rc_error_code, double& rc_w_tip_ratio /*-*/, double& rc_phi /*-*/,
+        bool is_update_ms_od_solved = false);
+
+    const C_comp_multi_stage::S_od_solved* get_rc_od_solved()
+    {
+        return m_rc_ms.get_od_solved();
+    }
+
+    /*const S_od_turbo_bal_csp_solved* get_od_turbo_bal_csp_solved()
+    {
+        return &ms_od_turbo_bal_csp_solved;
+    }
+
+    double get_max_target()
+    {
+        return m_biggest_target;
+    }*/
+
+
 
 };
 #endif

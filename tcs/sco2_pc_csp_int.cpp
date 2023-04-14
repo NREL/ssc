@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include "sco2_pc_core.h"
 #include "sco2_recompression_cycle.h"
 #include "sco2_partialcooling_cycle.h"
+#include "sco2_htrbypass_cycle.h"
 
 #include "csp_solver_util.h"
 #include "CO2_properties.h"
@@ -126,9 +127,9 @@ void C_sco2_phx_air_cooler::design_core()
 
         mpc_sco2_cycle = std::move(c_pc_cycle);
 	}
-	else
+	else if(ms_des_par.m_cycle_config == 3)
 	{
-        std::unique_ptr<C_RecompCycle> c_rc_cycle = std::unique_ptr<C_RecompCycle>(new C_RecompCycle(
+        std::unique_ptr<C_HTRBypass_Cycle> c_bp_cycle = std::unique_ptr<C_HTRBypass_Cycle>(new C_HTRBypass_Cycle(
             turbo_gen_motor_config,
             eta_generator,
             T_mc_in,
@@ -146,8 +147,31 @@ void C_sco2_phx_air_cooler::design_core()
 
 		s_cycle_config = "recompression";
 
-        mpc_sco2_cycle = std::move(c_rc_cycle);
+        mpc_sco2_cycle = std::move(c_bp_cycle);
 	}
+    else
+    {
+        std::unique_ptr<C_RecompCycle> c_rc_cycle = std::unique_ptr<C_RecompCycle>(new C_RecompCycle(
+            turbo_gen_motor_config,
+            eta_generator,
+            T_mc_in,
+            ms_des_par.m_W_dot_net,
+            T_t_in, ms_des_par.m_P_high_limit,
+            ms_des_par.m_DP_LT, ms_des_par.m_DP_HT,
+            ms_des_par.m_DP_PC, ms_des_par.m_DP_PHX,
+            ms_des_par.m_LTR_N_sub_hxrs, ms_des_par.m_HTR_N_sub_hxrs,
+            ms_des_par.m_eta_mc, ms_des_par.m_mc_comp_type,
+            ms_des_par.m_eta_rc,
+            ms_des_par.m_eta_t, ms_des_par.m_N_turbine,
+            ms_des_par.m_frac_fan_power, ms_des_par.m_eta_fan, ms_des_par.m_deltaP_cooler_frac,
+            ms_des_par.m_N_nodes_pass,
+            ms_des_par.m_T_amb_des, ms_des_par.m_elevation));
+
+        s_cycle_config = "recompression";
+
+        mpc_sco2_cycle = std::move(c_rc_cycle);
+    }
+
 
 	// Set min temp
 	m_T_mc_in_min = mpc_sco2_cycle->get_design_limits().m_T_mc_in_min;		//[K]
