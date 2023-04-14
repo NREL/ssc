@@ -306,7 +306,7 @@ TEST_F(DayCaseIrradProc, solarpos_spaTest_lib_irradproc) {
 
     /* Just before sunset test case */
     solarpos_spa(year, month, day, 18, 30, 0, lat, lon, tz, 0, 234, 1016, 15, lat, 180, sun);
-    vector<double>solution = { 5.01026, 1.35848, 0.212317, 0.36205, 5.636927, 19.584888, 0.96835, 17.88626, 278.9899 };
+    vector<double>solution = { 5.01026, 1.35836, 0.212436, 0.36205, 5.637368, 19.584888, 0.96835, 17.88588, 278.9899 };
     sunrise_times.push_back(solution[4]);
     sunset_times.push_back(solution[5]);
     for (int i = 0; i < 9; i++) {

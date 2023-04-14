@@ -257,7 +257,7 @@ solarpos(int year, int month, int day, int hour, double minute, double lat, doub
     sunn[7] = tst;
     sunn[8] = hextra;
 }
-
+/*
 const double L_TERMS[6][64][3] = //Terms used for the calculation of the Earth heliocentric longitude (L)
         {
                 {
@@ -402,7 +402,7 @@ const double L_TERMS[6][64][3] = //Terms used for the calculation of the Earth h
                         {1,              3.14,  0}
                 }
         };
-
+*/
 const double B_TERMS[2][5][3] = //Terms used for the calculation of the Earth heliocentric latitude (B)
         {
                 {
@@ -417,7 +417,7 @@ const double B_TERMS[2][5][3] = //Terms used for the calculation of the Earth he
                         {6,     1.73,  5223.69}
                 }
         };
-
+/*
 const double R_TERMS[5][40][3] = //Terms used for the calculation of the Earth radius vector (R)
         {
                 {
@@ -622,7 +622,7 @@ const double PE_TERMS[63][4] = { //Periodic terms for the nutation in longitude 
         {-3,      0,      0,     0},
         {-3,      0,      0,     0},
         {-3,      0,      0,     0},
-};
+};*/
 
 double limit_degrees(double degrees) //Limit angle values to degrees within 0-360°
 {
@@ -766,7 +766,7 @@ double earth_values(double term_sum[], int count,
 
 double earth_heliocentric_longitude(double j_star_tt, double jme) //Earth heliocentric longitude (degrees)
 {
-    
+    /*
     const int L_COUNT = 6;
     const int l_subcount[6] = {64, 34, 20, 7, 3, 1};
     double sum[6];
@@ -777,6 +777,7 @@ double earth_heliocentric_longitude(double j_star_tt, double jme) //Earth helioc
 
     double earth_helio_longitude = limit_degrees(RTOD * (earth_values(sum, 6, jme)));
    // return earth_helio_longitude;
+   */
     
 
     const double LGS_terms[10][3] = { {1.0 / 365.261278, 3.401508e-2 , 1.600780},
@@ -797,16 +798,16 @@ double earth_heliocentric_longitude(double j_star_tt, double jme) //Earth helioc
     double phi_L_k = 0;
     double a_L = 1.0 / 58.130101;
     double b_L = 1.742145;
-    //double LG2 = a_L * j_star_tt + b_L;
-    double LG2 = 0;
+    double LG2 = a_L * j_star_tt + b_L;
+    //double LG2 = 0;
     for (int i = 0; i < 10; i++) {
         rho_L_k = LGS_terms[i][1];
         f_L_k = LGS_terms[i][0];
         phi_L_k = LGS_terms[i][2];
-        LG2 += rho_L_k * cos(2.0 * M_PI * f_L_k * j_star_tt - phi_L_k) + a_L * j_star_tt + b_L;
+        LG2 += rho_L_k * cos(2.0 * M_PI * f_L_k * j_star_tt - phi_L_k);
     }
     double LG2_final = limit_degrees(RTOD * LG2);
-    return LG2;
+    return LG2_final;
 
 }
 
@@ -828,6 +829,7 @@ double earth_heliocentric_latitude(double jme) //Earth heliocentric latitude (de
 double earth_radius_vector(double j_star_tt, double jme) //Earth radius vector (Astronomical Units (AU))
 {
     
+    /*
     const int R_COUNT = 5;
     int r_subcount[5] = {40, 10, 6, 2, 1};
     double sum[R_COUNT];
@@ -838,8 +840,8 @@ double earth_radius_vector(double j_star_tt, double jme) //Earth radius vector (
 
     double earth_rad_vector = earth_values(sum, R_COUNT, jme);
     //return earth_rad_vector;
+    */
     
-
     double a_R = 0;
     double b_R = 1.000140;
     double f_R = 1.0 / 365.254902;
@@ -895,7 +897,7 @@ double ascending_longitude_moon(
     double ascending_long_moon = third_order_polynomial(1.0 / 450000.0, 0.0020708, -1934.136261, 125.04452, jce);
     return ascending_long_moon;
 }
-
+/*
 double xy_term_summation(int i, double x[5]) {
     int j;
     double sum = 0;
@@ -904,9 +906,9 @@ double xy_term_summation(int i, double x[5]) {
         sum += x[j] * Y_TERMS[i][j];
 
     return sum;
-}
+}*/
 
-void nutation_longitude_and_obliquity(double j_star_tt, double x[5],
+void nutation_longitude_and_obliquity(double j_star_tt, double jce, double x[5],
                                       double delta_values[2]) //nutation in longitude and obliquity (both degrees)
 {
     /*
@@ -918,11 +920,12 @@ void nutation_longitude_and_obliquity(double j_star_tt, double x[5],
         sum_psi += (PE_TERMS[i][0] + jce * PE_TERMS[i][1]) * sin(xy_term_sum);
         sum_epsilon += (PE_TERMS[i][2] + jce * PE_TERMS[i][3]) * cos(xy_term_sum);
     }
+    double del_psi_old = sum_psi / 36000000.0;
     */
     double f_psi = 1.0 / 6791.164405;
     double rho_psi = 8.329092e-5;
     double phi_psi = -2.052757;
-    double del_psi = rho_psi * cos(2.0 * M_PI * f_psi * j_star_tt - phi_psi);
+    double del_psi = RTOD * rho_psi * cos(2.0 * M_PI * f_psi * j_star_tt - phi_psi);
     delta_values[0] = del_psi;
     //delta_values[1] = sum_epsilon / 36000000.0; //del_epsilon
 }
@@ -946,14 +949,14 @@ double ecliptic_mean_obliquity(double jme) //mean obliquity of the ecliptic (arc
 
 double ecliptic_true_obliquity(double j_star_tt) //true obliquity of the ecliptic (degrees)
 {
-    //double eclip_true_obliquity = delta_epsilon + epsilon0 / 3600.0;
+    //double eclip_true_obliquity_old = delta_epsilon + epsilon0 / 3600.0;
     double a_eps = -6.216374e-9;
     double b_eps = 4.091383e-1;
     double f_eps = 1.0 / 6791.164405;
     double rho_eps = 4.456183e-5;
     double phi_eps = 2.660352;
     double eclip_true_obliquity = rho_eps * cos(2.0 * M_PI * f_eps * j_star_tt - phi_eps) + a_eps * j_star_tt + b_eps;
-    return eclip_true_obliquity;
+    return RTOD * eclip_true_obliquity;
 }
 
 double aberration_correction(double r) //aberration correction (degrees)
@@ -969,13 +972,13 @@ double apparent_sun_longitude(double theta, double delta_psi, double delta_tau) 
     return lambda;
 }
 
-double greenwich_mean_sidereal_time(double j_star_ut, double jc) //greenwich mean sidereal time (degrees)
+double greenwich_mean_sidereal_time(double j_star_ut, double jd, double jc) //greenwich mean sidereal time (degrees)
 {
-    /*double nu0 = limit_degrees(280.46061837 + 360.98564736629 * (jd - 2451545.0) +
+    double nu0_old = limit_degrees(280.46061837 + 360.98564736629 * (jd - 2451545.0) +
                                jc * jc * (0.000387933 - jc / 38710000.0));
-                               */
-    double nu0 = 6.3000388 * j_star_ut + 1.742079;
-    return nu0;
+                               
+    //double nu0 = limit_degrees(RTOD * (6.3000388 * j_star_ut + 1.742079));
+    return nu0_old;
 }
 
 double
@@ -1032,10 +1035,10 @@ void right_ascension_parallax_and_topocentric_dec(double latitude, double elevat
     delta_alpha_rad = atan2(-x * sin(xi_rad) * sin(h_rad),
                             cos(delta_rad) - x * sin(xi_rad) * cos(h_rad));
 
-    delta_alpha_prime[0] = RTOD * (atan2((sin(delta_rad) - y * sin(xi_rad)) * cos(delta_alpha_rad),
+    double delta_alpha_prime_old= RTOD * (atan2((sin(delta_rad) - y * sin(xi_rad)) * cos(delta_alpha_rad),
                                          cos(delta_rad) - x * sin(xi_rad) * cos(h_rad)));
 
-    delta_alpha_prime[1] = RTOD * (delta_alpha_rad);
+    double delta_alpha_prime_old1 = RTOD * (delta_alpha_rad);
     */
     delta_alpha_prime[1] = RTOD * -x * (sin(h_rad) / cos(delta_rad)) * xi_rad;
     delta_alpha_prime[0] = RTOD * (delta_rad + (x * cos(h_rad) * sin(delta_rad) - y * cos(delta_rad)) * xi_rad);
@@ -1246,7 +1249,7 @@ calculate_spa(double jd, double lat, double lng, double alt, double pressure, do
     x[4] = ascending_longitude_moon(jce); // degrees
 
     double delta_values[2]; // allocate storage for nutation in longitude (del_psi) and nutation in obliquity (del_epsilon)
-    nutation_longitude_and_obliquity(j_star_tt, x, delta_values);
+    nutation_longitude_and_obliquity(j_star_tt, jce, x, delta_values);
     double del_psi = delta_values[0]; //store value for use in further spa calculations
     needed_values[2] = del_psi; //pass del_psi value to sunrise sunset calculations
     double del_epsilon = delta_values[1]; //store value for use in further spa calculations
@@ -1263,7 +1266,7 @@ calculate_spa(double jd, double lat, double lng, double alt, double pressure, do
     double lamda = apparent_sun_longitude(theta, del_psi, del_tau); // degrees
 
     //Calculate the apparent sidereal time at Greenwich at any given time (3.8)
-    double nu0 = greenwich_mean_sidereal_time(j_star_ut, jc); //degrees
+    double nu0 = greenwich_mean_sidereal_time(j_star_ut, jd, jc); //degrees
     double nu = greenwich_sidereal_time(nu0, del_psi, epsilon); // degrees
     needed_values[4] = nu;
 
