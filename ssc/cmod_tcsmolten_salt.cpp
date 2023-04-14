@@ -3053,38 +3053,50 @@ public:
 
         if (csp_financial_model > 0 && csp_financial_model < 5) {   // Single Owner financial models
 
-            // Get first year base ppa price
-            size_t count_ppa_price_input;
-            ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
-            ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
+            if (is_assigned("ppa_price_input")) {
 
-            double T_amb_hot = 30.0;    //[C]
-            double rev_full_cap_T_amb_hot = 0.0;    //[$]
-            double rev_actual_T_amb_hot = 0.0;      //[$]
+                // Get first year base ppa price
+                size_t count_ppa_price_input;
+                ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
+                ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
 
-            for (size_t i = 0; i < count; i++) {
-                if (p_tdry[i] > T_amb_hot) {
-                    double tod = p_pricing_mult[i] * ppa_price_year1;
-                    rev_full_cap_T_amb_hot += system_capacity * tod;        //[kWe]*1[hr]*[$/kWh] = $
-                    rev_actual_T_amb_hot += p_gen[i] * tod;                 //[$]
+                double T_amb_hot = 30.0;    //[C]
+                double rev_full_cap_T_amb_hot = 0.0;    //[$]
+                double rev_actual_T_amb_hot = 0.0;      //[$]
+
+                for (size_t i = 0; i < count; i++) {
+                    if (p_tdry[i] > T_amb_hot) {
+                        double tod = p_pricing_mult[i] * ppa_price_year1;
+                        rev_full_cap_T_amb_hot += system_capacity * tod;        //[kWe]*1[hr]*[$/kWh] = $
+                        rev_actual_T_amb_hot += p_gen[i] * tod;                 //[$]
+                    }
                 }
+                double hot_hours_revenue_fraction = rev_actual_T_amb_hot / rev_full_cap_T_amb_hot;    //[-]
+                assign("hot_hours_revenue_fraction", hot_hours_revenue_fraction);
+                assign("hot_hours_electricity_sales", rev_actual_T_amb_hot);  //[$]
+
+                double rev_full_cap = 0.0;
+                double rev_actual = 0.0;
+
+                for (size_t i = 0; i < count; i++) {
+                    double tod = p_pricing_mult[i] * ppa_price_year1;
+                    rev_full_cap += system_capacity * tod;        //[kWe]*1[hr]*[$/kWh] = $
+                    rev_actual += p_gen[i] * tod;                 //[$]
+                }
+
+                double all_hours_revenue_fraction = rev_actual / rev_full_cap;
+                assign("all_hours_revenue_fraction", all_hours_revenue_fraction);
+                assign("all_hours_electricity_sales", rev_actual);            //[$]
             }
-            double hot_hours_revenue_fraction = rev_actual_T_amb_hot / rev_full_cap_T_amb_hot;    //[-]
-            assign("hot_hours_revenue_fraction", hot_hours_revenue_fraction);
-            assign("hot_hours_electricity_sales", rev_actual_T_amb_hot);  //[$]
+            else {
+                double nan_output = std::numeric_limits<double>::quiet_NaN();
 
-            double rev_full_cap = 0.0;
-            double rev_actual = 0.0;
+                assign("hot_hours_revenue_fraction", nan_output);
+                assign("hot_hours_electricity_sales", nan_output);  //[$]
 
-            for (size_t i = 0; i < count; i++) {
-                double tod = p_pricing_mult[i] * ppa_price_year1;
-                rev_full_cap += system_capacity * tod;        //[kWe]*1[hr]*[$/kWh] = $
-                rev_actual += p_gen[i] * tod;                 //[$]
+                assign("all_hours_revenue_fraction", nan_output);
+                assign("all_hours_electricity_sales", nan_output);            //[$]
             }
-
-            double all_hours_revenue_fraction = rev_actual / rev_full_cap;
-            assign("all_hours_revenue_fraction", all_hours_revenue_fraction);
-            assign("all_hours_electricity_sales", rev_actual);            //[$]
         }
 
         if (p_electric_resistance != NULL) {
