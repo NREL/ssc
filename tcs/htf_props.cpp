@@ -123,6 +123,13 @@ void HTFProperties::set_temp_enth_lookup()
     double T_low = this->min_temp();
     double T_high = this->max_temp();
 
+    if (!std::isfinite(T_low)) {
+        T_low = 270.0 + 273.15;
+    }
+    if (!std::isfinite(T_high)) {
+        T_high = 720.0 + 273.15;
+    }
+
 	double delta_T_target = 1.0;
 
 	int n_rows = (int)(ceil((T_high - T_low)/delta_T_target) + 1.0);
