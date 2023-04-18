@@ -160,7 +160,8 @@ extern module_entry_info
 	cm_entry_wave_file_reader,
 	cm_entry_grid,
 	cm_entry_battery_stateful,
-    cm_entry_csp_subcomponent
+    cm_entry_csp_subcomponent,
+    cm_entry_hybrid
 	;
 
 /* official module table */
@@ -261,6 +262,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_grid,
 	&cm_entry_battery_stateful,
     &cm_entry_csp_subcomponent,
+    & cm_entry_hybrid,
 	0 };
 
 SSCEXPORT ssc_module_t ssc_module_create( const char *name )
@@ -545,14 +547,22 @@ SSCEXPORT ssc_var_t ssc_data_lookup_case(ssc_data_t p_data, const char *name)
     return vt->lookup_match_case(name);
 }
 
-SSCEXPORT void ssc_data_set_var(ssc_data_t p_data, const char *name, ssc_var_t p_var)
+SSCEXPORT void ssc_data_set_var(ssc_data_t p_data, const char* name, ssc_var_t p_var)
 {
     auto vt = static_cast<var_table*>(p_data);
     if (!vt) return;
     auto vd = static_cast<var_data*>(p_var);
     if (!p_var) return;
-    //    vt->assign_match_case(name, *vd);
     vt->assign(name, *vd);
+}
+
+SSCEXPORT void ssc_data_set_var_match_case(ssc_data_t p_data, const char* name, ssc_var_t p_var)
+{
+    auto vt = static_cast<var_table*>(p_data);
+    if (!vt) return;
+    auto vd = static_cast<var_data*>(p_var);
+    if (!p_var) return;
+    vt->assign_match_case(name, *vd);
 }
 
 SSCEXPORT void ssc_data_set_string( ssc_data_t p_data, const char *name, const char *value )
