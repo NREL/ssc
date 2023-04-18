@@ -33,16 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "core.h"
 
-#include <limits>
-#include <cmath>
-
-#include "6par_jacobian.h"
-#include "6par_lu.h"
-#include "6par_search.h"
-#include "6par_newton.h"
-#include "6par_gamma.h"
-#include "6par_solve.h"
-
 
 
 static var_info _cm_vtab_hybrid[] = {
@@ -69,28 +59,33 @@ public:
             throw exec_error("hybrid", util::format("No input table found."));
 
 
+        // loop based on table of table inputs
+        // loop for multiple hybrid compute modules starts here
         auto module = ssc_module_create(table->table.as_string("compute_module"));
-        ssc_module_exec(module, table);
-        // TODO check successful run
-        ssc_module_free(module);
 
+        auto &input = table->table;
+        ssc_module_exec(module, static_cast<ssc_data_t>(&input));
+ 
         auto outputs = ssc_data_create();
 
         int pidx = 0;
         while (const ssc_info_t p_inf = ssc_module_var_info(module, pidx++))
         {
             int var_type = ssc_info_var_type(p_inf);   // SSC_INPUT, SSC_OUTPUT, SSC_INOUT
-            if (var_type == SSC_OUTPUT) {
+            if (var_type == SSC_OUTPUT) { // maybe add INOUT
                 auto var_name = ssc_info_name(p_inf);
                 auto type = ssc_info_data_type(p_inf);
-                auto var_value = table->table.lookup(var_name);
+                auto var_value = input.lookup(var_name);
                 ssc_data_set_var(outputs, var_name, var_value);
             }
         }
 
+        // loop ends here
+        // need to agregate some outputs potenitally here
 
         assign("output", var_data(*(static_cast<var_table*>(outputs))));
 
+        ssc_module_free(module);
         ssc_data_free(outputs);
 	}
 };

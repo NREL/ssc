@@ -30,45 +30,46 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#if defined( _WINDOWS) && defined(_DEBUG)
-#define _CRTDBG_MAP_ALLOC
-#include <stdlib.h>
-#include <crtdbg.h>
-#endif
 
-#include <stdlib.h>
-#include <iostream>
-#include <gtest/gtest.h>
+#include "cmod_hybrids_test.h"
 
-// in order to get MS V2017 update 2 to build without a bunch of C4996 "std::tr1:warning..."
-#define _SILENCE_TR1_NAMESPACE_DEPRECIATION_WARNING
-
-GTEST_API_ int main(int argc, char **argv) {
-
-#if defined( _WINDOWS) && defined(_DEBUG)
-    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-#endif
-
-    printf("Running main() from gtest_main.cc\n");
-    testing::InitGoogleTest(&argc, argv);
-
-    //    filter to include
-    //    ::testing::GTEST_FLAG(filter) = "CmodPVWatts*:CMPvwatts*";
-
-       ::testing::GTEST_FLAG(filter) = "CmodHybrids*";
+#include "gtest/gtest.h"
 
 
-    //    filter to exclude
-    //    ::testing::GTEST_FLAG(filter) = "-PVSmoothing_lib_battery_dispatch*";
 
-    // run multiple test
-    //    ::testing::GTEST_FLAG(filter) = "CMPvwattsv8Integration_cmod_pvwattsv8.DefaultNoFinancialModel_cmod_pvwattsv8:CMPvwattsv8Integration_cmod_pvwattsv8.NonAnnual";
+TEST_F(CmodHybridsTest, PVWattsv8) {
 
-    int status = RUN_ALL_TESTS();
+    char file_path[256];
+    int nfc1 = sprintf(file_path, "%s/test/input_json/hybrids/pvwattsv8.json", SSCDIR);
+    std::ifstream file(file_path);
+    std::ostringstream tmp;
+    tmp << file.rdbuf();
+    file.close();
+    ssc_data_t dat = json_to_ssc_data(tmp.str().c_str());
+    tmp.str("");
+    int errors = run_module(dat, "hybrid");
 
-    //    sleep(10); //used for single test instruments leak detector on macOS
+    EXPECT_FALSE(errors);
+    if (!errors)
+    {
+        ssc_number_t annualenergy;
+        auto outputs = ssc_data_get_table(dat, "output");
+        ssc_data_get_number(outputs, "annual_energy", &annualenergy);
 
-    if (!status)
-        printf("Tests Pass!\n");
-    return status;
+         EXPECT_NEAR(annualenergy, 165112880, 165112880 * 0.01);
+    }
+    ssc_data_free(dat);
+    dat = nullptr;
 }
+/*
+TEST_F(CmodHybridsTest, PVWattsv8) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/hybrids/pvwattsv8.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/hybrids/pvwattsv8_outputs.json";
+    std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
+    std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
+
+    Test("pvwattsv8", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
+*/
