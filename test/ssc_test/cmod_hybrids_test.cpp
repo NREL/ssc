@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "gtest/gtest.h"
 
-
+// TODO - update input JSON for test paths for resource files
 
 TEST_F(CmodHybridsTest, PVWattsv8) {
 
@@ -61,6 +61,61 @@ TEST_F(CmodHybridsTest, PVWattsv8) {
     ssc_data_free(dat);
     dat = nullptr;
 }
+
+
+TEST_F(CmodHybridsTest, Wind) {
+
+    char file_path[256];
+    int nfc1 = sprintf(file_path, "%s/test/input_json/hybrids/wind.json", SSCDIR);
+    std::ifstream file(file_path);
+    std::ostringstream tmp;
+    tmp << file.rdbuf();
+    file.close();
+    ssc_data_t dat = json_to_ssc_data(tmp.str().c_str());
+    tmp.str("");
+    int errors = run_module(dat, "hybrid");
+
+    EXPECT_FALSE(errors);
+    if (!errors)
+    {
+        ssc_number_t annualenergy;
+        auto outputs = ssc_data_get_table(dat, "output");
+        ssc_data_get_number(outputs, "annual_energy", &annualenergy);
+
+        EXPECT_NEAR(annualenergy, 201595968, 201595968 * 0.01);
+    }
+    ssc_data_free(dat);
+    dat = nullptr;
+}
+
+
+TEST_F(CmodHybridsTest, PVWattsv8Wind) {
+
+    char file_path[256];
+    int nfc1 = sprintf(file_path, "%s/test/input_json/hybrids/pvwattsv8wind.json", SSCDIR);
+    std::ifstream file(file_path);
+    std::ostringstream tmp;
+    tmp << file.rdbuf();
+    file.close();
+    ssc_data_t dat = json_to_ssc_data(tmp.str().c_str());
+    tmp.str("");
+    int errors = run_module(dat, "hybrid");
+
+    EXPECT_FALSE(errors);
+    if (!errors)
+    {
+        ssc_number_t annualenergy;
+        auto outputs = ssc_data_get_table(dat, "output");
+        auto wind_outputs = ssc_data_get_table(outputs, "mod2");
+        ssc_data_get_number(wind_outputs, "annual_energy", &annualenergy);
+
+        EXPECT_NEAR(annualenergy, 201595968, 201595968 * 0.01);
+    }
+    ssc_data_free(dat);
+    dat = nullptr;
+}
+
+
 /*
 TEST_F(CmodHybridsTest, PVWattsv8) {
     std::string file_inputs = SSCDIR;

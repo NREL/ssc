@@ -58,35 +58,77 @@ public:
         if (table->type != SSC_TABLE)
             throw exec_error("hybrid", util::format("No input table found."));
 
+        if (table->table.is_assigned("num_hybrids")) {
+            // loop based on table of table inputs
+            // loop for multiple hybrid compute modules starts here
+            int num_hybrids = table->table.as_integer("num_hybrids");
+            auto outputs = ssc_data_create();
 
-        // loop based on table of table inputs
-        // loop for multiple hybrid compute modules starts here
-        auto module = ssc_module_create(table->table.as_string("compute_module"));
+            for (int i = 0; i < num_hybrids; i++) {
 
-        auto &input = table->table;
-        ssc_module_exec(module, static_cast<ssc_data_t>(&input));
- 
-        auto outputs = ssc_data_create();
+                auto table_name = "mod" + std::to_string(i + 1);
+                auto hybrid_table = table->table.lookup(table_name);
+                if (hybrid_table->type != SSC_TABLE)
+                    throw exec_error("hybrid", "No input table found for ." + table_name);
 
-        int pidx = 0;
-        while (const ssc_info_t p_inf = ssc_module_var_info(module, pidx++))
-        {
-            int var_type = ssc_info_var_type(p_inf);   // SSC_INPUT, SSC_OUTPUT, SSC_INOUT
-            if (var_type == SSC_OUTPUT) { // maybe add INOUT
-                auto var_name = ssc_info_name(p_inf);
-                auto type = ssc_info_data_type(p_inf);
-                auto var_value = input.lookup(var_name);
-                ssc_data_set_var(outputs, var_name, var_value);
+                auto module = ssc_module_create(hybrid_table->table.as_string("compute_module"));
+
+                auto& input = hybrid_table->table;
+                ssc_module_exec(module, static_cast<ssc_data_t>(&input));
+
+                auto hybrid_output = ssc_data_create();
+
+                int pidx = 0;
+                while (const ssc_info_t p_inf = ssc_module_var_info(module, pidx++))
+                {
+                    int var_type = ssc_info_var_type(p_inf);   // SSC_INPUT, SSC_OUTPUT, SSC_INOUT
+                    if (var_type == SSC_OUTPUT) { // maybe add INOUT
+                        auto var_name = ssc_info_name(p_inf);
+                        auto type = ssc_info_data_type(p_inf);
+                        auto var_value = input.lookup(var_name);
+                        ssc_data_set_var(hybrid_output, var_name, var_value);
+                    }
+                }
+
+                // loop ends here
+                // need to agregate some outputs potenitally here
+                ssc_data_set_table(outputs, table_name.c_str(), hybrid_output);
+
+                ssc_module_free(module);
+                ssc_data_free(hybrid_output);
             }
+            assign("output", var_data(*(static_cast<var_table*>(outputs))));
+            ssc_data_free(outputs);
+
         }
+        else {
+            auto module = ssc_module_create(table->table.as_string("compute_module"));
 
-        // loop ends here
-        // need to agregate some outputs potenitally here
+            auto& input = table->table;
+            ssc_module_exec(module, static_cast<ssc_data_t>(&input));
 
-        assign("output", var_data(*(static_cast<var_table*>(outputs))));
+            auto outputs = ssc_data_create();
 
-        ssc_module_free(module);
-        ssc_data_free(outputs);
+            int pidx = 0;
+            while (const ssc_info_t p_inf = ssc_module_var_info(module, pidx++))
+            {
+                int var_type = ssc_info_var_type(p_inf);   // SSC_INPUT, SSC_OUTPUT, SSC_INOUT
+                if (var_type == SSC_OUTPUT) { // maybe add INOUT
+                    auto var_name = ssc_info_name(p_inf);
+                    auto type = ssc_info_data_type(p_inf);
+                    auto var_value = input.lookup(var_name);
+                    ssc_data_set_var(outputs, var_name, var_value);
+                }
+            }
+
+            // loop ends here
+            // need to agregate some outputs potenitally here
+
+            assign("output", var_data(*(static_cast<var_table*>(outputs))));
+
+            ssc_module_free(module);
+            ssc_data_free(outputs);
+        }
 	}
 };
 
