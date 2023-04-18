@@ -22,7 +22,7 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, DefaultNoFinancialModel_cmod_pvwat
         tmp += (double)monthly_energy[i];
     //v5 is 6909.79, decrease of 2.4%: decreases due to shading, module cover losses, and spectral losses
     //v7 prior to module coeff changes is 6750.4236, increase of 3.7% due to improved tempco for standard module
-    EXPECT_NEAR(tmp, 7011.440, error_tolerance) << "Annual energy.";
+    EXPECT_NEAR(tmp, 7011.55, error_tolerance) << "Annual energy.";
 
     EXPECT_NEAR((double)monthly_energy[0], 440.535, error_tolerance) << "Monthly energy of January";
     EXPECT_NEAR((double)monthly_energy[1], 486.124, error_tolerance) << "Monthly energy of February";

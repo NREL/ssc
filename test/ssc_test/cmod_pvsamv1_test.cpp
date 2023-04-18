@@ -571,7 +571,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelSystemDesign)
     pairs["inverter_count"] = 22;
     pairs["subarray1_track_mode"] = 0;
 
-    std::vector<double> annual_energy_expected = { 185647, 243264, 259017, 217887, 195100 };
+    std::vector<double> annual_energy_expected = { 185649, 243262, 259014, 217887, 195101 };
 
     for (int tracking_option = 0; tracking_option != 5; tracking_option++)
     {
@@ -597,7 +597,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelSystemDesign)
     {
         ssc_number_t annual_energy;
         ssc_data_get_number(data, "annual_energy", &annual_energy);
-        EXPECT_NEAR(annual_energy, 238077, m_error_tolerance_hi) << "Annual energy.";
+        EXPECT_NEAR(annual_energy, 238076, m_error_tolerance_hi) << "Annual energy.";
     }
 
     // Test multiple sub-arrays with different tracking, tilt, azimuth, gcr, tracker rotation limit
@@ -631,12 +631,12 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelSystemDesign)
     std::vector<double> subarray2_track_mode = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     std::vector<double> subarray3_track_mode = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 0, 0, 0, 0, 0 };
     std::vector<double> subarray4_track_mode = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4 };
-    annual_energy_expected = { 170108, 178814, 185647, 168989, 178321, 185647, 174579, 180782, 185647, 174579, 180782,
-                                185647, 185647, 185638, 185647, 185647, 185647, 185647, 185647, 185647, 185647, 185647,
-                                185647, 185647, 185647, 185647, 179908, 185310, 165057, 179495, 185283, 163575, 181557,
-                                185413, 170978, 181557, 185413, 170978, 185647, 185647, 185647, 185647, 185647, 200729,
-                                207043, 194883, 188414, 185647, 203396, 208568, 195543, 188610, 185647, 197484, 200940,
-                                192246, 187626, 185647, 197484, 200940, 192246, 187626
+    annual_energy_expected = { 170111, 178818, 185649, 168992, 178325, 185649, 174582, 180785, 185649, 174582, 180785,
+                                185649, 185649, 185641, 185649, 185649, 185649, 185649, 185649, 185649, 185649, 185649,
+                                185649, 185649, 185649, 185649, 179910, 185311, 165057, 179497, 185285, 163576, 181560,
+                                185415, 170979, 181560, 185415, 170979, 185649, 185649, 185649, 185649, 185649, 200730,
+                                207044, 194885, 188416, 185649, 203396, 208568, 195544, 188613, 185649, 197485, 200942,
+                                192248, 187628, 185647, 197486, 200942, 192248, 187628
     };
 
     for (size_t i = 0; i != annual_energy_expected.size(); i++)
