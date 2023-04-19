@@ -69,7 +69,7 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, DefaultNoFinancialModel_cmod_pvwat
     EXPECT_NEAR((double)monthly_energy[3], 684.884, error_tolerance) << "Monthly energy of April";
     EXPECT_NEAR((double)monthly_energy[4], 729.389, error_tolerance) << "Monthly energy of May";
     EXPECT_NEAR((double)monthly_energy[5], 680.703, error_tolerance) << "Monthly energy of June";
-    EXPECT_NEAR((double)monthly_energy[6], 678.56, error_tolerance) << "Monthly energy of July";
+    EXPECT_NEAR((double)monthly_energy[6], 678.562, error_tolerance) << "Monthly energy of July";
     EXPECT_NEAR((double)monthly_energy[7], 661.983, error_tolerance) << "Monthly energy of August";
     EXPECT_NEAR((double)monthly_energy[8], 609.707, error_tolerance) << "Monthly energy of September";
     EXPECT_NEAR((double)monthly_energy[9], 582.902, error_tolerance) << "Monthly energy of October";
