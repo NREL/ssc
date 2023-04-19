@@ -1,7 +1,7 @@
 {
-    "input":
-{
-    "compute_module":"pvwattsv8",
+    "input": {
+    "compute_modules": ["pvwattsv8"],
+    "pvwattsv8": {    
     "module_type": 0.0,
     "shading_en_azal": 0.0,
     "bifaciality": 0.0,
@@ -17601,5 +17601,6 @@
     ],
     "enable_interconnection_limit": 0.0,
     "grid_interconnection_limit_kwac": 100000.0
+    }
 }
 }

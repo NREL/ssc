@@ -56,27 +56,31 @@ public:
     {
         auto table = lookup("input");
         if (table->type != SSC_TABLE)
-            throw exec_error("hybrid", util::format("No input table found."));
+            throw exec_error("hybrid", "No input table found.");
 
-        if (table->table.is_assigned("num_hybrids")) {
+        if (table->table.is_assigned("compute_modules")) {
+
+            // aggregates - vectors or single values, etc.
+            double cumulative_annual_energy = 0, annual_energy;
+
+            auto& vec_cms = table->table.lookup("compute_modules")->vec;
             // loop based on table of table inputs
             // loop for multiple hybrid compute modules starts here
-            int num_hybrids = table->table.as_integer("num_hybrids");
             auto outputs = ssc_data_create();
 
-            for (int i = 0; i < num_hybrids; i++) {
+            for (size_t i = 0; i < vec_cms.size(); i++) {
 
-                auto table_name = "mod" + std::to_string(i + 1);
-                auto hybrid_table = table->table.lookup(table_name);
-                if (hybrid_table->type != SSC_TABLE)
-                    throw exec_error("hybrid", "No input table found for ." + table_name);
+                auto& compute_module = vec_cms[i].str;
+                auto compute_module_inputs = table->table.lookup(compute_module);
+                if (compute_module_inputs->type != SSC_TABLE)
+                    throw exec_error("hybrid", "No input table found for ." + compute_module);
 
-                auto module = ssc_module_create(hybrid_table->table.as_string("compute_module"));
+                auto module = ssc_module_create(compute_module.c_str());
 
-                auto& input = hybrid_table->table;
+                auto& input = compute_module_inputs->table;
                 ssc_module_exec(module, static_cast<ssc_data_t>(&input));
 
-                auto hybrid_output = ssc_data_create();
+                auto compute_module_outtputs = ssc_data_create();
 
                 int pidx = 0;
                 while (const ssc_info_t p_inf = ssc_module_var_info(module, pidx++))
@@ -86,48 +90,27 @@ public:
                         auto var_name = ssc_info_name(p_inf);
                         auto type = ssc_info_data_type(p_inf);
                         auto var_value = input.lookup(var_name);
-                        ssc_data_set_var(hybrid_output, var_name, var_value);
+                        ssc_data_set_var(compute_module_outtputs, var_name, var_value);
                     }
                 }
 
-                // loop ends here
-                // need to agregate some outputs potenitally here
-                ssc_data_set_table(outputs, table_name.c_str(), hybrid_output);
+                ssc_data_set_table(outputs, compute_module.c_str(), compute_module_outtputs);
+
+                ssc_data_get_number(compute_module_outtputs, "annual_energy", &annual_energy);
+                cumulative_annual_energy += annual_energy;
 
                 ssc_module_free(module);
-                ssc_data_free(hybrid_output);
+                ssc_data_free(compute_module_outtputs);
             }
+            // need to agregate some outputs potenitally here
+            ssc_data_set_number(outputs, "cumulative_annual_energy", cumulative_annual_energy);
+
             assign("output", var_data(*(static_cast<var_table*>(outputs))));
             ssc_data_free(outputs);
 
         }
         else {
-            auto module = ssc_module_create(table->table.as_string("compute_module"));
-
-            auto& input = table->table;
-            ssc_module_exec(module, static_cast<ssc_data_t>(&input));
-
-            auto outputs = ssc_data_create();
-
-            int pidx = 0;
-            while (const ssc_info_t p_inf = ssc_module_var_info(module, pidx++))
-            {
-                int var_type = ssc_info_var_type(p_inf);   // SSC_INPUT, SSC_OUTPUT, SSC_INOUT
-                if (var_type == SSC_OUTPUT) { // maybe add INOUT
-                    auto var_name = ssc_info_name(p_inf);
-                    auto type = ssc_info_data_type(p_inf);
-                    auto var_value = input.lookup(var_name);
-                    ssc_data_set_var(outputs, var_name, var_value);
-                }
-            }
-
-            // loop ends here
-            // need to agregate some outputs potenitally here
-
-            assign("output", var_data(*(static_cast<var_table*>(outputs))));
-
-            ssc_module_free(module);
-            ssc_data_free(outputs);
+            throw exec_error("hybrid", "No compute modules found.");
         }
 	}
 };

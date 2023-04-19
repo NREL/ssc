@@ -49,9 +49,10 @@ TEST_F(CmodHybridsTest, PVWattsv8) {
     tmp.str("");
 
     auto table = ssc_data_get_table(dat, "input");
+    auto pv_table = ssc_data_get_table(table, "pvwattsv8");
     char solar_resource_path[256];
-    sprintf(solar_resource_path, "%s/test/input_cases/general_data/phoenix_az_33.450495_-111.983688_psmv3_60_tmy.csv", std::getenv("SSCDIR")); 
-    ssc_data_set_string(table, "solar_resource_file", solar_resource_path);
+    sprintf(solar_resource_path, "%s/test/input_cases/general_data/phoenix_az_33.450495_-111.983688_psmv3_60_tmy.csv", std::getenv("SSCDIR"));
+    ssc_data_set_string(pv_table, "solar_resource_file", solar_resource_path);
 
     int errors = run_module(dat, "hybrid");
     EXPECT_FALSE(errors);
@@ -59,14 +60,13 @@ TEST_F(CmodHybridsTest, PVWattsv8) {
     {
         ssc_number_t annualenergy;
         auto outputs = ssc_data_get_table(dat, "output");
-        ssc_data_get_number(outputs, "annual_energy", &annualenergy);
-
-         EXPECT_NEAR(annualenergy, 165112880, 165112880 * 0.01);
+        auto pv_outputs = ssc_data_get_table(outputs, "pvwattsv8");
+        ssc_data_get_number(pv_outputs, "annual_energy", &annualenergy);
+        EXPECT_NEAR(annualenergy, 165112880, 165112880 * 0.01);
     }
     ssc_data_free(dat);
     dat = nullptr;
 }
-
 
 TEST_F(CmodHybridsTest, Wind) {
 
@@ -80,9 +80,10 @@ TEST_F(CmodHybridsTest, Wind) {
     tmp.str("");
 
     auto table = ssc_data_get_table(dat, "input");
+    auto wind_table = ssc_data_get_table(table, "windpower");
     char wind_resource_path[256];
     sprintf(wind_resource_path, "%s/test/input_cases/general_data/WY_Southern-Flat_Lands.srw", std::getenv("SSCDIR"));
-    ssc_data_set_string(table, "wind_resource_filename", wind_resource_path);
+    ssc_data_set_string(wind_table, "wind_resource_filename", wind_resource_path);
 
     int errors = run_module(dat, "hybrid");
     EXPECT_FALSE(errors);
@@ -90,7 +91,8 @@ TEST_F(CmodHybridsTest, Wind) {
     {
         ssc_number_t annualenergy;
         auto outputs = ssc_data_get_table(dat, "output");
-        ssc_data_get_number(outputs, "annual_energy", &annualenergy);
+        auto wind_outputs = ssc_data_get_table(outputs, "windpower");
+        ssc_data_get_number(wind_outputs, "annual_energy", &annualenergy);
 
         EXPECT_NEAR(annualenergy, 201595968, 201595968 * 0.01);
     }
@@ -111,12 +113,12 @@ TEST_F(CmodHybridsTest, PVWattsv8Wind) {
     tmp.str("");
 
     auto table = ssc_data_get_table(dat, "input");
-    auto pv_table = ssc_data_get_table(table, "mod1");
+    auto pv_table = ssc_data_get_table(table, "pvwattsv8");
     char solar_resource_path[256];
     sprintf(solar_resource_path, "%s/test/input_cases/general_data/phoenix_az_33.450495_-111.983688_psmv3_60_tmy.csv", std::getenv("SSCDIR"));
     ssc_data_set_string(pv_table, "solar_resource_file", solar_resource_path);
 
-    auto wind_table = ssc_data_get_table(table, "mod2");
+    auto wind_table = ssc_data_get_table(table, "windpower");
     char wind_resource_path[256];
     sprintf(wind_resource_path, "%s/test/input_cases/general_data/WY_Southern-Flat_Lands.srw", std::getenv("SSCDIR"));
     ssc_data_set_string(wind_table, "wind_resource_filename", wind_resource_path);
@@ -128,25 +130,17 @@ TEST_F(CmodHybridsTest, PVWattsv8Wind) {
     {
         ssc_number_t annualenergy;
         auto outputs = ssc_data_get_table(dat, "output");
-        auto wind_outputs = ssc_data_get_table(outputs, "mod2");
-        ssc_data_get_number(wind_outputs, "annual_energy", &annualenergy);
+        ssc_data_get_number(outputs, "cumulative_annual_energy", &annualenergy);
+        EXPECT_NEAR(annualenergy, 366708848, 366708848 * 0.01);
 
+        auto pv_outputs = ssc_data_get_table(outputs, "pvwattsv8");
+        ssc_data_get_number(pv_outputs, "annual_energy", &annualenergy);
+        EXPECT_NEAR(annualenergy, 165112880, 165112880 * 0.01);
+
+        auto wind_outputs = ssc_data_get_table(outputs, "windpower");
+        ssc_data_get_number(wind_outputs, "annual_energy", &annualenergy);
         EXPECT_NEAR(annualenergy, 201595968, 201595968 * 0.01);
     }
     ssc_data_free(dat);
     dat = nullptr;
 }
-
-
-/*
-TEST_F(CmodHybridsTest, PVWattsv8) {
-    std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/hybrids/pvwattsv8.json";
-    std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/hybrids/pvwattsv8_outputs.json";
-    std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
-    std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
-
-    Test("pvwattsv8", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
-}
-*/

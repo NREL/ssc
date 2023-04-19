@@ -1,6 +1,7 @@
-{ "input":
 {
-    "compute_module": "windpower",
+    "input": {
+    "compute_modules": ["windpower"],
+    "windpower": {    
     "avail_bop_loss": 0.5,
     "weibull_wind_speed": 7.25,
     "wind_turbine_max_cp": 0.45,
@@ -9273,5 +9274,6 @@
         1e38,
         1e38
     ]
+    }
 }
 }

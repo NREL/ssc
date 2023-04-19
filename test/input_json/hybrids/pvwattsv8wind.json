@@ -1,8 +1,7 @@
 { 
     "input": { 
-        "num_hybrids": 2,
-        "mod1": {
-        "compute_module":"pvwattsv8",
+        "compute_modules": ["pvwattsv8", "windpower"],
+        "pvwattsv8": {
         "module_type": 0.0,
         "shading_en_azal": 0.0,
         "bifaciality": 0.0,
@@ -17603,7 +17602,7 @@
         "enable_interconnection_limit": 0.0,
         "grid_interconnection_limit_kwac": 100000.0
         },
-        "mod2": {
+        "windpower": {
         "compute_module": "windpower",
         "avail_bop_loss": 0.5,
         "weibull_wind_speed": 7.25,
