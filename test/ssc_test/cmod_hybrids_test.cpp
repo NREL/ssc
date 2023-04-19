@@ -83,7 +83,7 @@ TEST_F(CmodHybridsTest, Wind) {
 
     auto table = ssc_data_get_table(dat, "input");
     char wind_resource_path[256];
-    int npvy1 = sprintf(wind_resource_path, "%s/test/input_cases/general_data/WY Southern-Flat Lands.srw", std::getenv("SSCDIR"));
+    int npvy1 = sprintf(wind_resource_path, "%s/test/input_cases/general_data/WY_Southern-Flat_Lands.srw", std::getenv("SSCDIR"));
     ssc_data_set_string(table, "wind_resource_filename", wind_resource_path);
 
     EXPECT_FALSE(errors);
