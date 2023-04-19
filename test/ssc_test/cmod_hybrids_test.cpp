@@ -47,6 +47,12 @@ TEST_F(CmodHybridsTest, PVWattsv8) {
     file.close();
     ssc_data_t dat = json_to_ssc_data(tmp.str().c_str());
     tmp.str("");
+
+    auto table = ssc_data_get_table(dat, "input");
+    char solar_resource_path[256];
+    int npvy1 = sprintf(solar_resource_path, "%s/test/input_cases/general_data/phoenix_az_33.450495_-111.983688_psmv3_60_tmy.csv", std::getenv("SSCDIR")); 
+    ssc_data_set_string(table, "solar_resource_file", solar_resource_path);
+
     int errors = run_module(dat, "hybrid");
 
     EXPECT_FALSE(errors);
@@ -75,6 +81,11 @@ TEST_F(CmodHybridsTest, Wind) {
     tmp.str("");
     int errors = run_module(dat, "hybrid");
 
+    auto table = ssc_data_get_table(dat, "input");
+    char wind_resource_path[256];
+    int npvy1 = sprintf(wind_resource_path, "%s/test/input_cases/general_data/WY Southern-Flat Lands.srw", std::getenv("SSCDIR"));
+    ssc_data_set_string(table, "wind_resource_filename", wind_resource_path);
+
     EXPECT_FALSE(errors);
     if (!errors)
     {
@@ -99,6 +110,15 @@ TEST_F(CmodHybridsTest, PVWattsv8Wind) {
     file.close();
     ssc_data_t dat = json_to_ssc_data(tmp.str().c_str());
     tmp.str("");
+
+    char solar_resource_path[256];
+    int npvy1 = sprintf(solar_resource_path, "%s/test/input_cases/general_data/phoenix_az_33.450495_-111.983688_psmv3_60_tmy.csv", std::getenv("SSCDIR"));
+    ssc_data_set_string(dat, "solar_resource_file", solar_resource_path);
+
+    char wind_resource_path[256];
+    int npvy2 = sprintf(wind_resource_path, "%s/test/input_cases/general_data/WY Southern-Flat Lands.srw", std::getenv("SSCDIR"));
+    ssc_data_set_string(dat, "wind_resource_filename", wind_resource_path);
+
     int errors = run_module(dat, "hybrid");
 
     EXPECT_FALSE(errors);
