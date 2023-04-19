@@ -66,12 +66,6 @@ public:
 
     struct S_design_parameters
     {
-        // HTR Bypass ONLY parameters
-        double m_T_HTF_bp_out;              // HTF Bypass HTX Outlet Temperature
-        double m_bp_frac;                   // Fraction of flow that bypasses HTR HP via bypass HTX
-
-
-
         // Parameters SHARED with recompression
 
         double m_P_mc_in;					//[kPa] Compressor inlet pressure
@@ -202,7 +196,7 @@ private:
     C_turbine m_t;
     C_comp_multi_stage m_mc_ms;
     C_comp_multi_stage m_rc_ms;
-    C_HeatExchanger m_PHX, m_PC, m_BP;
+    C_HeatExchanger m_PHX, m_PC;
 
     C_HX_co2_to_co2_CRM mc_LT_recup;
     C_HX_co2_to_co2_CRM mc_HT_recup;
@@ -230,6 +224,26 @@ private:
     double m_objective_metric_auto_opt;
     S_design_parameters ms_des_par_auto_opt;
 
+    // NEW Internal Variables
+    double m_w_t;
+    double m_w_mc;
+    double m_w_rc;
+    double m_Q_dot_LT, m_Q_dot_HT;
+    double m_bp_frac;
+    double m_m_dot_bp;
+    double m_m_dot_htr_hp;
+    double m_cp_HTF;
+    double m_m_dot_HTF;
+    double m_Q_dot_BP;
+    double m_T_HTF_PHX_inlet;
+    double m_T_HTF_BP_outlet;
+    double m_T_HTF_PHX_out;
+    double m_dT_BP; // BYPASS_OUT - HTR_HP_OUT
+    double m_Q_dot_total;
+    double m_Q_dot_pc;  // pre cooler heat rejected
+
+    C_HX_co2_to_co2_CRM m_BP_HTX;
+
     // New opt
     bool m_found_opt;
     double m_eta_phx_max;
@@ -246,6 +260,12 @@ private:
 
     void finalize_design(int& error_code);
 
+
+    // Added
+    int solve_HTR(double T_HTR_LP_OUT_guess, double& T_HTR_LP_out_calc);
+    int solve_LTR(double T_LTR_LP_OUT_guess, double& T_LTR_LP_out_calc);
+    int solve_bypass(double T_BP_OUT_guess, double& T_BP_out_calc);
+    int solve_bypass_energy(double T_BP_OUT_guess, double& T_BP_out_calc);
 
 public:
 
@@ -360,4 +380,5 @@ public:
 
 
 };
+
 #endif
