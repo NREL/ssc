@@ -5,7 +5,6 @@
     "weibull_wind_speed": 7.25,
     "wind_turbine_max_cp": 0.45,
     "wind_resource_model_choice": 0.0,
-    "wind_resource_filename": "C:\\Projects\\Github\\NREL\\working\\SAM\\deploy\\wind_resource\\WY Southern-Flat Lands.srw",
     "weibull_k_factor": 2.0,
     "turb_specific_loss": 0.81,
     "wind_resource_distribution": [

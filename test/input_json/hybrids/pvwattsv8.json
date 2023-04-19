@@ -3,7 +3,6 @@
 {
     "compute_module":"pvwattsv8",
     "module_type": 0.0,
-    "solar_resource_file": "C:\\Projects\\Github\\NREL\\working\\SAM\\deploy\\solar_resource\\phoenix_az_33.450495_-111.983688_psmv3_60_tmy.csv",
     "shading_en_azal": 0.0,
     "bifaciality": 0.0,
     "albedo": [
