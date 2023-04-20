@@ -153,7 +153,9 @@ static var_info _cm_vtab_fresnel_physical[] = {
     /*X*/     /*Power Cycle*/{ SSC_INPUT,    SSC_NUMBER,         "cycle_max_frac",              "Maximum turbine over design operation fraction",                                        "",                    "",                             "Powerblock",           "*",                "",                 "" },
     /*X*/     /*Power Cycle*/{ SSC_INPUT,    SSC_NUMBER,         "cycle_cutoff_frac",           "Minimum turbine operation fraction before shutdown",                                    "",                    "",                             "Powerblock",           "*",                "",                 "" },
     /*X*/  /*startup script*/{ SSC_INPUT,    SSC_NUMBER,         "pc_config",                   "0: Steam Rankine (224), 1: user defined",                                               "-",                   "",                             "Powerblock",           "",                 "INTEGER",          "" },
-                                                                                                
+    /*X*/     /*Power Cycle*/{ SSC_INPUT,    SSC_NUMBER,         "L_rnr_pb",                    "Length of runner pipe in power block",                                                  "m",                   "",                             "Powerblock",           "*",                "",                 "" },
+
+
     // Steam Rankine Cycle										     							 											
               /*Power Cycle*/{ SSC_INPUT,    SSC_NUMBER,         "dT_cw_ref",                   "Reference condenser cooling water inlet/outlet T diff",                                 "C",                   "",                             "Powerblock",           "pc_config=0",      "",                 "" },
               /*Power Cycle*/{ SSC_INPUT,    SSC_NUMBER,         "T_amb_des",                   "Reference ambient temperature at design point",                                         "C",                   "",                             "Powerblock",           "pc_config=0",      "",                 "" },
@@ -557,12 +559,6 @@ public:
 
     void exec()
     {
-        // Missing Variables
-
-            // Field
-            // Hard Coded (currently no UI)
-        double L_rnr_pb = 50;
-
         // Common Parameters
         bool is_dispatch = as_boolean("is_dispatch");
         int sim_type = as_number("sim_type");
@@ -691,7 +687,7 @@ public:
                 c_fresnel.m_DP_coefs = as_vector_double("DP_coefs");
                 c_fresnel.m_rec_htf_vol = as_number("rec_htf_vol");
 
-                c_fresnel.m_L_rnr_pb = L_rnr_pb;
+                c_fresnel.m_L_rnr_pb = as_number("L_rnr_pb");
 
                 c_fresnel.m_V_wind_des = as_number("V_wind_des");
                 c_fresnel.m_T_amb_sf_des = as_number("T_amb_sf_des");
