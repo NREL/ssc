@@ -672,7 +672,8 @@ public:
 						V_hot = V_hot_prev + ts_sec*mdot_total/rho_water;
 						V_cold = V_tank - V_hot;
 						T_hot = (T_hot_prev*V_hot_prev + ts_sec*(mdot_total/rho_water)*(T_cold_prev + dT_collector))/V_hot;
-						T_cold = (V_tank/V_cold)*T_tank - (V_hot/V_cold)*T_hot;
+                        T_cold = (V_tank/V_cold)*T_tank - (V_hot/V_cold)*T_hot;                                 // weighted average to enforce T_tank based on T_hot
+                        if (T_cold < std::min(T_mains_use, T_room)) T_cold = std::min(T_mains_use, T_room);     // above relation breaks-down at small V_cold causing unphysical T_cold
 						T_top = T_hot;
 						T_bot = T_cold;
 						T_deliv = T_top;
@@ -715,9 +716,11 @@ public:
 						V_hot = 0;
                     }
 
+                    double T_hot_drained = std::numeric_limits<double>::quiet_NaN();
 					if (V_hot == 0)	// cold water drawn into the bottom of the tank in previous timesteps has completely flushed hot water from the tank
 					{
-						T_hot = T_hot_prev;
+                        double time_to_drain_sec = V_hot_prev * rho_water / mdot_mix;
+                        T_hot_drained = (T_hot_prev * time_to_drain_sec + T_cold * (ts_sec - time_to_drain_sec)) / ts_sec;
 					}
 					else
 					{
@@ -726,7 +729,6 @@ public:
 						double m_hot = V_hot_prev*rho_water;
 						T_hot = ((T_hot_prev * Cp_water * m_hot) + (ts_sec*U_tank*A_hot * T_room))/((m_hot*Cp_water) + (ts_sec*U_tank*A_hot)); // IMPLICIT NON-STEADY (Euler)
 					}
-					hotLoss = U_tank * A_hot * (T_hot - T_room);
 
 					// Cold node calculations
 					V_cold = V_tank-V_hot;
@@ -742,20 +744,23 @@ public:
 						T_cold = ((T_cold_prev*m_cold*Cp_water) + (ts_sec*U_tank*A_cold*T_room) + (ts_sec*mdot_mix*Cp_water*T_mains_use))
 							/((m_cold*Cp_water) + (ts_sec*A_cold*U_tank) + (mdot_mix*ts_sec*Cp_water) ); // IMPLICIT NON-STEADY
 					}
-					coldLoss = U_tank*A_cold*(T_cold - T_room);
 
-					Q_tankloss = hotLoss + coldLoss;
+                    if (V_hot > 0) {
+                        T_deliv = T_hot;
+                    }
+                    else {
+                        T_deliv = T_hot_drained;
+                        T_hot = T_cold;     // hot water completely flushed from tank
+                    }
 					T_tank = (V_hot / V_tank) * T_hot + (V_cold / V_tank) * T_cold;
 					T_top = T_tank + 0.33*dT_collector;
 					T_bot = T_tank - 0.67*dT_collector;
 					// T_top = T_hot
 					// T_bot = T_cold
-                    if (V_hot > 0) {
-                        T_deliv = T_hot;
-                    }
-                    else {
-                        T_deliv = T_cold;
-                    }
+
+					hotLoss = U_tank * A_hot * (T_hot - T_room);
+					coldLoss = U_tank*A_cold*(T_cold - T_room);
+					Q_tankloss = hotLoss + coldLoss;
 				}
 
 				// calculate pumping losses (pump size is user entered) -
