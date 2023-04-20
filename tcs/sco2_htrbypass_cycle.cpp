@@ -41,23 +41,83 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 void C_HTRBypass_Cycle::design_core(int& error_code)
 {
-    design_core_standard(error_code);
-}
-
-void C_HTRBypass_Cycle::design_core_standard(int& error_code)
-{
     // Temporary Hard coded parameters
     ms_des_par.m_recomp_frac = 0.3;
     m_cp_HTF = 1.482e+03;           // J/kg K
     m_T_HTF_PHX_inlet = 670 + 273;  // K
+    m_dT_BP = 10;
     m_T_HTF_BP_outlet = 770;  // K
-    m_bp_frac = 0;
-    m_dT_BP = 0;
+    ms_des_par.m_P_mc_in = 10000;
+    ms_des_par.m_P_mc_out = 25000;
+    m_T_t_in = 923.149;
 
+    // temp
+    double hot_approach = m_T_HTF_PHX_inlet - m_T_t_in;
+
+    // Iterating bp_frac so the cold approach value is correct
+    m_bp_frac = 0;
+    double des_HTF_cold_approach = hot_approach;
+
+    // local
+    double error = 100000;
+    double frac_low = 0.0;
+    double frac_high = 1;
+    m_bp_frac = 0.5 * (frac_low + frac_high);
+    int count = 0;
+    while (std::abs(error) > 0.5)
+    {
+        // Update Bypass Fraction Guess
+        m_bp_frac = 0.5 * (frac_low + frac_high);
+
+        // Run Calculation
+        design_core_standard(error_code);
+
+        // Get Results
+        double actual_approach = m_HTF_cold_approach;
+        error = actual_approach - des_HTF_cold_approach;
+
+        // Update Bounds
+        if (error > 0)
+            frac_low = m_bp_frac;
+        else
+            frac_high = m_bp_frac;
+
+        if (count > 50)
+            break;
+
+        count++;
+    }
+
+
+    // DEBUG
+    if (true)
+    {
+        std::vector<double> frac_vec = { 0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1 };
+        std::vector<double> cold_approach;
+
+        for (int i = 0; i < frac_vec.size(); i++)
+        {
+            m_bp_frac = frac_vec[i];
+
+            // Run Calculation
+            design_core_standard(error_code);
+
+            double actual_approach = m_HTF_cold_approach;
+            cold_approach.push_back(actual_approach);
+        }
+    }
+
+
+}
+
+void C_HTRBypass_Cycle::design_core_standard(int& error_code)
+{
     // Apply scaling to the turbomachinery here
-    m_mc_ms.m_r_W_dot_scale = m_W_dot_net / 10.E3;	//[-]
-    m_rc_ms.m_r_W_dot_scale = m_mc_ms.m_r_W_dot_scale;			//[-]
-    m_t.m_r_W_dot_scale = m_mc_ms.m_r_W_dot_scale;				//[-]
+    {
+        m_mc_ms.m_r_W_dot_scale = m_W_dot_net / 10.E3;	//[-]
+        m_rc_ms.m_r_W_dot_scale = m_mc_ms.m_r_W_dot_scale;			//[-]
+        m_t.m_r_W_dot_scale = m_mc_ms.m_r_W_dot_scale;				//[-]
+    }
 
     CO2_state co2_props;
 
@@ -71,13 +131,10 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
 
     // Initialize a few variables
     {
-        //double m_dot_t, , m_dot_rc, Q_dot_LT, Q_dot_HT, UA_LT_calc, UA_HT_calc;
-        //m_dot_t = m_dot_mc = m_dot_rc = Q_dot_LT = Q_dot_HT = UA_LT_calc = UA_HT_calc = 0.0;
-
         m_temp_last[MC_IN] = m_T_mc_in;     //[K]
-        m_pres_last[MC_IN] = 10000; // ms_des_par.m_P_mc_in
-        m_pres_last[MC_OUT] = 25000; // ms_des_par.m_P_mc_out; // 25000
-        m_temp_last[TURB_IN] = 923.149; // m_T_t_in;    //[K] 923.149
+        m_pres_last[MC_IN] = ms_des_par.m_P_mc_in; 
+        m_pres_last[MC_OUT] = ms_des_par.m_P_mc_out;
+        m_temp_last[TURB_IN] = m_T_t_in; //[K]
     }
     
     // Apply pressure drops to heat exchangers, fully defining the pressures at all states
@@ -147,12 +204,43 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
 
     }
 
-    // Set isentropic efficiency (temporary)
-    double eta_mc_isen, eta_t_isen;
+    // Determine equivalent isentropic efficiencies for main compressor and turbine, if necessary.
+    double eta_mc_isen = std::numeric_limits<double>::quiet_NaN();
+    double eta_t_isen = std::numeric_limits<double>::quiet_NaN();
     {
-        eta_mc_isen = m_eta_mc;
-        eta_t_isen = m_eta_t;
+        if (m_eta_mc < 0.0)
+        {
+            int poly_error_code = 0;
+
+            isen_eta_from_poly_eta(m_temp_last[MC_IN], m_pres_last[MC_IN], m_pres_last[MC_OUT], std::abs(m_eta_mc),
+                true, poly_error_code, eta_mc_isen);
+
+            if (poly_error_code != 0)
+            {
+                error_code = poly_error_code;
+                return;
+            }
+        }
+        else
+            eta_mc_isen = m_eta_mc;
+
+        if (m_eta_t < 0.0)
+        {
+            int poly_error_code = 0;
+
+            isen_eta_from_poly_eta(m_temp_last[TURB_IN], m_pres_last[TURB_IN], m_pres_last[TURB_OUT], std::abs(m_eta_t),
+                false, poly_error_code, eta_t_isen);
+
+            if (poly_error_code != 0)
+            {
+                error_code = poly_error_code;
+                return;
+            }
+        }
+        else
+            eta_t_isen = m_eta_t;
     }
+
 
     // Determine the outlet state and specific work for the main compressor and turbine.
     
@@ -234,29 +322,33 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
     // ****************************************************
     // ****************************************************
     // Solve the recuperators
+    double T_HTR_LP_out_lower = m_temp_last[MC_OUT];		//[K] Coldest possible temperature
+    double T_HTR_LP_out_upper = m_temp_last[TURB_OUT];		//[K] Hottest possible temperature
+
+    double error = 1000;
+    double T_HTR_guess = 0.5 * (T_HTR_LP_out_lower + T_HTR_LP_out_upper);
+    double T_HTR_calc;
+    while (error > 0.1)
     {
-        double T_HTR_LP_out_lower = m_temp_last[MC_OUT];		//[K] Coldest possible temperature
-        double T_HTR_LP_out_upper = m_temp_last[TURB_OUT];		//[K] Hottest possible temperature
+        solve_HTR(T_HTR_guess, T_HTR_calc);
+        double guess_val = T_HTR_guess;
+        double calc_val = T_HTR_calc;
 
-        double error = 1000;
-        double T_HTR_guess = 0.5 * (T_HTR_LP_out_lower + T_HTR_LP_out_upper);
-        double T_HTR_calc;
-        while (error > 0.1)
-        {
-            solve_HTR(T_HTR_guess, T_HTR_calc);
-            double guess_val = T_HTR_guess;
-            double calc_val = T_HTR_calc;
+        error = std::abs(guess_val - calc_val);
 
-            error = std::abs(guess_val - calc_val);
-
-            // Update guess value
-            T_HTR_guess = 0.5 * (guess_val + calc_val);
-        }
+        // Update guess value
+        T_HTR_guess = 0.5 * (guess_val + calc_val);
     }
+
 
     // State 5 can now be fully defined
     {
-        m_enth_last[HTR_HP_OUT] = m_enth_last[MIXER_OUT] + m_Q_dot_HT / m_m_dot_t;						// Energy balance on cold stream of high-temp recuperator
+        // Check if there is flow through HTR_HP
+        if (m_m_dot_htr_hp <= 1e-12)
+            m_enth_last[HTR_HP_OUT] = m_enth_last[MIXER_OUT];
+        else
+            m_enth_last[HTR_HP_OUT] = m_enth_last[MIXER_OUT] + m_Q_dot_HT / m_m_dot_htr_hp;						// Energy balance on cold stream of high-temp recuperator
+
         int prop_error_code = CO2_PH(m_pres_last[HTR_HP_OUT], m_enth_last[HTR_HP_OUT], &co2_props);
         if (prop_error_code != 0)
         {
@@ -341,7 +433,6 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
         // Calculate PHX Heat Transfer
         {
             m_Q_dot_PHX = m_m_dot_t * (m_enth_last[TURB_IN] - m_enth_last[MIXER2_OUT]);
-            int x = 0;
         }
 
         // Back Calculate and Check values
@@ -354,9 +445,19 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
 
             double qSum = m_Q_dot_total;
             double qSum_calc = m_Q_dot_BP + m_Q_dot_PHX;
+        }
 
-            int x = 0;
 
+        // HTF
+        {
+            // Calculate HTF Bypass Cold Approach
+            m_HTF_cold_approach = m_T_HTF_BP_outlet - m_temp_last[MIXER_OUT];
+
+            // Calculate HTF Mdot
+            m_m_dot_HTF = m_Q_dot_total / ((m_T_HTF_PHX_inlet - m_T_HTF_BP_outlet) * m_cp_HTF);
+
+            // Calculate PHX outlet Temp
+            m_T_HTF_PHX_out = m_T_HTF_PHX_inlet - (m_Q_dot_PHX / (m_m_dot_HTF * m_cp_HTF));
         }
 
     }
@@ -439,7 +540,6 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
     }
 
 }
-    
 
 int C_HTRBypass_Cycle::solve_HTR(double T_HTR_LP_OUT_guess, double& T_HTR_LP_out_calc)
 {
@@ -533,14 +633,26 @@ int C_HTRBypass_Cycle::solve_HTR(double T_HTR_LP_OUT_guess, double& T_HTR_LP_out
 
     // Find the design solution of the HTR
     {
-        T_HTR_LP_out_calc = std::numeric_limits<double>::quiet_NaN();
-        this->mc_HT_recup.design_for_target__calc_outlet(this->ms_opt_des_par.m_HTR_target_code,
-            this->ms_opt_des_par.m_HTR_UA, this->ms_opt_des_par.m_HTR_min_dT, this->ms_opt_des_par.m_HTR_eff_target,
-            this->ms_opt_des_par.m_HTR_eff_max,
-            this->m_temp_last[MIXER_OUT], this->m_pres_last[MIXER_OUT], m_m_dot_htr_hp, this->m_pres_last[HTR_HP_OUT],
-            this->m_temp_last[TURB_OUT], this->m_pres_last[TURB_OUT], m_m_dot_t, this->m_pres_last[HTR_LP_OUT],
-            this->ms_opt_des_par.m_des_tol,
-            m_Q_dot_HT, this->m_temp_last[HTR_HP_OUT], T_HTR_LP_out_calc);
+        // If there is no flow through HTR HP side
+        if (m_m_dot_htr_hp < 1e-12)
+        {
+            m_Q_dot_HT = 0;
+            T_HTR_LP_out_calc = m_temp_last[TURB_OUT];
+        }
+
+        // If there is flow through HTR HP side
+        else
+        {
+            T_HTR_LP_out_calc = std::numeric_limits<double>::quiet_NaN();
+            this->mc_HT_recup.design_for_target__calc_outlet(this->ms_opt_des_par.m_HTR_target_code,
+                this->ms_opt_des_par.m_HTR_UA, this->ms_opt_des_par.m_HTR_min_dT, this->ms_opt_des_par.m_HTR_eff_target,
+                this->ms_opt_des_par.m_HTR_eff_max,
+                this->m_temp_last[MIXER_OUT], this->m_pres_last[MIXER_OUT], m_m_dot_htr_hp, this->m_pres_last[HTR_HP_OUT],
+                this->m_temp_last[TURB_OUT], this->m_pres_last[TURB_OUT], m_m_dot_t, this->m_pres_last[HTR_LP_OUT],
+                this->ms_opt_des_par.m_des_tol,
+                m_Q_dot_HT, this->m_temp_last[HTR_HP_OUT], T_HTR_LP_out_calc);
+        }
+        
     }
 
 }

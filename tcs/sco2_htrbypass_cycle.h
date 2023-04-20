@@ -241,6 +241,7 @@ private:
     double m_dT_BP; // BYPASS_OUT - HTR_HP_OUT
     double m_Q_dot_total;
     double m_Q_dot_pc;  // pre cooler heat rejected
+    double m_HTF_cold_approach;
 
     C_HX_co2_to_co2_CRM m_BP_HTX;
 
@@ -262,6 +263,7 @@ private:
 
 
     // Added
+    int solve_cycle(double bypass_fraction, double& error);
     int solve_HTR(double T_HTR_LP_OUT_guess, double& T_HTR_LP_out_calc);
     int solve_LTR(double T_LTR_LP_OUT_guess, double& T_LTR_LP_out_calc);
     int solve_bypass(double T_BP_OUT_guess, double& T_BP_out_calc);

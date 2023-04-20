@@ -145,7 +145,7 @@ void C_sco2_phx_air_cooler::design_core()
             ms_des_par.m_N_nodes_pass,
             ms_des_par.m_T_amb_des, ms_des_par.m_elevation));
 
-		s_cycle_config = "recompression";
+		s_cycle_config = "htr bypass";
 
         mpc_sco2_cycle = std::move(c_bp_cycle);
 	}
