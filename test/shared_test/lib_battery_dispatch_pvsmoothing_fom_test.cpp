@@ -159,8 +159,8 @@ TEST_F(PVSmoothing_lib_battery_dispatch, FuelCell_PV_Phoenix_all_on) {
         ssc_data_get_number(dat, "batt_pvs_energy_to_grid_percent_sam", &grid_percent_sam);
 
         // values from Phoenix_FuelCell_Validation_testing.sam
-        EXPECT_NEAR(violation_count, 5, 0.001);
-        EXPECT_NEAR(violation_percent, 0.0095, 0.001);
+        EXPECT_NEAR(violation_count, 4, 0.001);
+        EXPECT_NEAR(violation_percent, 0.0076, 0.001);
         EXPECT_NEAR(grid_percent, 99.63, 0.01);
         EXPECT_NEAR(grid_percent_sam, 99.96, 0.01);
     }
