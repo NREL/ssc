@@ -492,8 +492,8 @@ void pvyield_no_financial_meteo(ssc_data_t& data)
 
 
     // shading inputs from Timo
-    ssc_data_set_number(data, "subarray1_shading:string_option", -1);
-    ssc_data_set_number(data, "subarray1_shading:diff", 0);
+    ssc_data_set_number(data, "subarray1_shading_string_option", -1);
+    ssc_data_set_number(data, "subarray1_shading_diff", 0);
 
 
 
@@ -933,8 +933,8 @@ void pvyield_bifacial_case(ssc_data_t& data)
     ssc_data_set_string(data, "ond_ModeAffEnum", "Efficiencyf_PIn");
 
     // shading inputs from Timo
-    ssc_data_set_number(data, "subarray1_shading:string_option", -1);
-    ssc_data_set_number(data, "subarray1_shading:diff", 0);
+    ssc_data_set_number(data, "subarray1_shading_string_option", -1);
+    ssc_data_set_number(data, "subarray1_shading_diff", 0);
 }
 
 void pvyield_user_support_80603_meteo(ssc_data_t& data)
@@ -1370,8 +1370,8 @@ void pvyield_user_support_80603_meteo(ssc_data_t& data)
     ssc_data_set_string(data, "ond_ModeAffEnum", "Efficiencyf_PIn");
 
     // shading inputs from Timo
-    ssc_data_set_number(data, "subarray1_shading:string_option", -1);
-    ssc_data_set_number(data, "subarray1_shading:diff", 0);
+    ssc_data_set_number(data, "subarray1_shading_string_option", -1);
+    ssc_data_set_number(data, "subarray1_shading_diff", 0);
 }
 
 
@@ -1809,8 +1809,8 @@ void pvyield_user_support_80603_AZ(ssc_data_t& data)
 
 
     // shading inputs from Timo
-    ssc_data_set_number(data, "subarray1_shading:string_option", -1);
-    ssc_data_set_number(data, "subarray1_shading:diff", 0);
+    ssc_data_set_number(data, "subarray1_shading_string_option", -1);
+    ssc_data_set_number(data, "subarray1_shading_diff", 0);
 }
 
 

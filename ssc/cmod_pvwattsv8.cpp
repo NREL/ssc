@@ -669,12 +669,9 @@ public:
 
         // read all the shading input data and calculate the hourly factors for use subsequently
         // timeseries beam shading factors cannot be used with non-annual data
-        if (is_assigned("shading")) {
-            auto& table = get_var_table()->lookup("shading")->table;
-            if (table.is_assigned("en_timestep") && table.as_boolean("en_timestep") && !wdprov->annualSimulation())
-                //        if (is_assigned("shading:timestep") && !wdprov->annualSimulation())
+        if (is_assigned("shading_en_timestep") && as_boolean("shading_en_timestep") && !wdprov->annualSimulation())
+            //        if (is_assigned("shading:timestep") && !wdprov->annualSimulation())
                 throw exec_error("pvwattsv8", "Timeseries beam shading inputs cannot be used for a simulation period that is not continuous over one or more years.");
-        }
         shading_factor_calculator shad;
         if (!shad.setup(this, ""))
             throw exec_error("pvwattsv8", shad.get_error());

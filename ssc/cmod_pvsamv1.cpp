@@ -1127,7 +1127,7 @@ void cm_pvsamv1::exec()
     {
         for (size_t nn = 0; nn < num_subarrays; nn++)
         {
-            if (is_assigned("subarray" + util::to_string(static_cast<int>(nn + 1)) + "_shading:timestep"))
+            if (is_assigned("subarray" + util::to_string(static_cast<int>(nn + 1)) + "_shading_timestep"))
                 throw exec_error("pvsamv1", "Time series beam shading inputs cannot be used for a simulation period that is not continuous over one or more years.");
         }
     }
