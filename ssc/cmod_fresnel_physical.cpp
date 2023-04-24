@@ -95,6 +95,10 @@ static var_info _cm_vtab_fresnel_physical[] = {
     /*X*/     /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "SCA_drives_elec",             "Tracking power in Watts per SCA drive",                                                 "W/module",            "",                             "Solar_Field",          "*",                "",                 "" },
     /*X*/     /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "land_mult",                   "Non-solar field land area multiplier",                                                  "-",                   "",                             "Solar_Field",          "*",                "",                 "" },
     /*X*/     /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "T_startup",                   "Power block startup temperature",                                                       "C",                   "",                             "Solar_Field",          "*",                "",                 "" },
+    /*X*/     /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "rec_su_delay",                "Fixed startup delay time for the receiver",                                             "hr",                  "",                             "Solar_Field",          "*",                "",                 "" },
+    /*X*/     /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "rec_qf_delay",                "Energy-based receiver startup delay (fraction of rated thermal power)",                 "-",                   "",                             "Solar_Field",          "*",                "",                 "" },
+    /*X*/     /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "p_start",                     "Collector startup energy, per SCA",                                                     "kWe-hr",              "",                             "Solar_Field",          "*",                "",                 "" },
+
 
     // Collector and Receiver
 
@@ -245,7 +249,7 @@ static var_info _cm_vtab_fresnel_physical[] = {
 
 
     /*Financial TOD Factors*/{ SSC_INPUT,    SSC_NUMBER,         "ppa_multiplier_model",        "PPA multiplier model 0: dispatch factors dispatch_factorX, 1: hourly multipliers dispatch_factors_ts", "0/1",  "",                             "tou",                  "?=0",  /*need a default so this var works in required_if*/ "INTEGER,MIN=0",  "SIMULATION_PARAMETER" },
-    /*Financial TOD Factors*/{ SSC_INPUT,    SSC_ARRAY,          "dispatch_factors_ts",         "Dispatch payment factor array",                                                         "",                    "",               "tou",                    "ppa_multiplier_model=1&csp_financial_model<5&is_dispatch=1","",              "SIMULATION_PARAMETER" },
+    /*Financial TOD Factors*/{ SSC_INPUT,    SSC_ARRAY,          "dispatch_factors_ts",         "Dispatch payment factor array",                                                         "",                    "",                             "tou",                                      "ppa_multiplier_model=1&csp_financial_model<5&is_dispatch=1","",              "SIMULATION_PARAMETER" },
     /*Financial TOD Factors*/{ SSC_INPUT,    SSC_MATRIX,         "dispatch_sched_weekday",      "PPA pricing weekday schedule, 12x24",                                                   "",                    "",                             "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
     /*Financial TOD Factors*/{ SSC_INPUT,    SSC_MATRIX,         "dispatch_sched_weekend",      "PPA pricing weekend schedule, 12x24",                                                   "",                    "",                             "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
     /*Financial TOD Factors*/{ SSC_INPUT,    SSC_NUMBER,         "dispatch_factor1",            "Dispatch payment factor 1",                                                             "",                    "",                             "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
@@ -258,10 +262,10 @@ static var_info _cm_vtab_fresnel_physical[] = {
     /*Financial TOD Factors*/{ SSC_INPUT,    SSC_NUMBER,         "dispatch_factor8",            "Dispatch payment factor 8",                                                             "",                    "",                             "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
     /*Financial TOD Factors*/{ SSC_INPUT,    SSC_NUMBER,         "dispatch_factor9",            "Dispatch payment factor 9",                                                             "",                    "",                             "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
 
-    /*Fin Sol Mode Sing Own*/{ SSC_INPUT,    SSC_NUMBER,         "ppa_soln_mode",               "PPA solution mode (0=Specify IRR target, 1=Specify PPA price)",                         "",                    "",                             "Financial Solution Mode","ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1","",              "SIMULATION_PARAMETER" },
-    /*Fin Sol Mode Sing Own*/{ SSC_INPUT,    SSC_NUMBER,         "ppa_price_input",             "PPA solution mode (0=Specify IRR target, 1=Specify PPA price)",                         "",                    "",                             "Financial Solution Mode","ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1","",              "SIMULATION_PARAMETER" },
+    /*Fin Sol Mode Sing Own*/{ SSC_INPUT,    SSC_NUMBER,         "ppa_soln_mode",               "PPA solution mode (0=Specify IRR target, 1=Specify PPA price)",                         "",                    "",                             "Financial Solution Mode",                  "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
+    /*Fin Sol Mode Sing Own*/{ SSC_INPUT,    SSC_ARRAY,          "ppa_price_input",             "PPA solution mode (0=Specify IRR target, 1=Specify PPA price)",                         "",                    "",                             "Financial Solution Mode",                  "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
 
-    /*Fin Merc Plant Energy*/{ SSC_INPUT,    SSC_MATRIX,         "mp_energy_market_revenue",    "Energy market revenue input",                                                           "",                    "Lifetime x 2[Cleared Capacity(MW),Price($ / MWh)]", "Revenue", "csp_financial_model=6&is_dispatch=1",      "",             "SIMULATION_PARAMETER" },
+    /*Fin Merc Plant Energy*/{ SSC_INPUT,    SSC_MATRIX,         "mp_energy_market_revenue",    "Energy market revenue input",                                                           "",                    "Lifetime x 2[Cleared Capacity(MW),Price($ / MWh)]", "Revenue",             "csp_financial_model=6&is_dispatch=1&sim_type=1",                              "",              "SIMULATION_PARAMETER" },
 
     // Capital Costs
 
@@ -328,7 +332,7 @@ static var_info _cm_vtab_fresnel_physical[] = {
 
         // Power Cycle
     { SSC_OUTPUT,       SSC_NUMBER,     "q_dot_cycle_des",                  "PC thermal input at design",                                           "MWt",          "",         "Power Cycle",                              "*",                                                                "",              "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "mdot_cycle_des",                  "PC thermal input at design",                                           "MWt",          "",         "Power Cycle",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "mdot_cycle_des",                   "PC thermal input at design",                                           "MWt",          "",         "Power Cycle",                              "*",                                                                "",              "" },
 
         // Thermal Storage
     { SSC_OUTPUT,       SSC_NUMBER,     "vol_tank",                         "Total tank volume",                                                    "m3",           "",         "Power Cycle",                              "*",                                                                "",              "" },
@@ -688,6 +692,9 @@ public:
                 c_fresnel.m_rec_htf_vol = as_number("rec_htf_vol");
 
                 c_fresnel.m_L_rnr_pb = as_number("L_rnr_pb");
+                c_fresnel.m_rec_su_delay = as_number("rec_su_delay");
+                c_fresnel.m_rec_qf_delay = as_number("rec_qf_delay");
+                c_fresnel.m_p_start = as_number("p_start");
 
                 c_fresnel.m_V_wind_des = as_number("V_wind_des");
                 c_fresnel.m_T_amb_sf_des = as_number("T_amb_sf_des");
@@ -1091,6 +1098,8 @@ public:
                     util::matrix_t<double> mp_energy_market_revenue = as_matrix("mp_energy_market_revenue"); // col 0 = cleared capacity, col 1 = $/MWh
                     size_t n_rows = mp_energy_market_revenue.nrows();
                     if (n_rows < n_steps_fixed) {
+
+                        // Todo?: This throws error even if "Time series cleared capacity and price" is not set (ie 'Fixed cleared capacity and time series price' is set')
                         string ppa_msg = util::format("mp_energy_market_revenue input has %d rows but there are %d number of timesteps", n_rows, n_steps_fixed);
                         throw exec_error("fresnel_physical", ppa_msg);
                     }

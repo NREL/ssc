@@ -210,15 +210,24 @@ double C_csp_fresnel_collector_receiver::field_pressure_drop(double T_db, double
     DP_toField = 0.0;
     DP_fromField = 0.0;
     for (int i = 0; i < m_nrunsec; i++) {
-        DP_toField += PressureDrop(m_dot_temp, T_loop_in, 1.0, m_D_runner[i], m_HDR_rough, m_L_runner[i], 0.0, x3, 0.0, 0.0,
+        double rnr_toField = PressureDrop(m_dot_temp, T_loop_in, 1.0, m_D_runner[i], m_HDR_rough, m_L_runner[i], 0.0, x3, 0.0, 0.0,
             max(float(CSP::nint(m_L_runner[i] / 70.)) * 4., 8.), 1.0, 0.0, 1.0, 0.0, 0.0, 0.0);    //Correct for less than all mass flow passing through each section
         //if(ErrorFound()) return 1                  
         //-------SGS from field section
-        DP_fromField += PressureDrop(m_dot_temp, T_loop_out, 1.0, m_D_runner[i], m_HDR_rough, m_L_runner[i], x3, 0.0, 0.0, 0.0,
+        double rnr_fromField = PressureDrop(m_dot_temp, T_loop_out, 1.0, m_D_runner[i], m_HDR_rough, m_L_runner[i], x3, 0.0, 0.0, 0.0,
             max(float(CSP::nint(m_L_runner[i] / 70.)) * 4., 8.), 1.0, 0.0, 0.0, 0.0, 0.0, 0.0);   //Correct for less than all mass flow passing through each section
         //if(ErrorFound()) return 1
+
+        DP_toField += rnr_toField;
+        DP_fromField += rnr_fromField;
+
+        m_DP_rnr[i] = rnr_toField;
+        m_DP_rnr[2 * m_nrunsec - i - 1] = rnr_fromField;
+
         if (i > 1) m_dot_temp = max(m_dot_temp - 2. * m_m_dot_htf_tot / float(m_nfsec), 0.0);
     }
+
+
 
     double m_dot_header_in = m_m_dot_htf_tot / float(m_nfsec);
     double m_dot_header = m_dot_header_in;
@@ -245,16 +254,17 @@ double C_csp_fresnel_collector_receiver::field_pressure_drop(double T_db, double
 
 
 
+
     // The total pressure drop in all of the piping
     m_dP_total = (DP_loop_tot + DP_hdr_cold + DP_hdr_hot + DP_fromField + DP_toField);
 
     // Convert pressure drops to gauge pressures
-    //m_P_rnr[0] = m_dP_total;
-    //for (int i = 1; i < 2 * m_nrunsec; i++) {
-    //    m_P_rnr[i] = m_P_rnr[i - 1] - m_DP_rnr[i - 1];
-    //    if (i == m_nrunsec) { m_P_rnr[i] -= (DP_hdr_cold + DP_loop_tot + DP_IOCOP + DP_hdr_hot); }
-    //}
-    //
+    m_P_rnr[0] = m_dP_total;
+    for (int i = 1; i < 2 * m_nrunsec; i++) {
+        m_P_rnr[i] = m_P_rnr[i - 1] - m_DP_rnr[i - 1];
+        if (i == m_nrunsec) { m_P_rnr[i] -= (DP_hdr_cold + DP_loop_tot + DP_IOCOP + DP_hdr_hot); }
+    }
+    
     //m_P_hdr[0] = m_P_rnr[m_nrunsec - 1] - m_DP_rnr[m_nrunsec - 1];    // report pressures for farthest subfield
     //for (int i = 1; i < 2 * m_nhdrsec; i++) {
     //    m_P_hdr[i] = m_P_hdr[i - 1] - m_DP_hdr[i - 1];
@@ -1800,6 +1810,44 @@ void C_csp_fresnel_collector_receiver::init(const C_csp_collector_receiver::S_cs
             m_htfProps, m_airProps, m_AnnulusGasMat, m_AbsorberPropMat, m_Flow_type, m_A_cs, m_D_h));
     }
 
+    // Calculate other design parameters
+    {
+        C_csp_weatherreader::S_outputs weatherValues;
+        weatherValues.m_lat = init_inputs.m_latitude;
+        weatherValues.m_lon = init_inputs.m_longitude;
+        weatherValues.m_tz = init_inputs.m_tz;
+        weatherValues.m_shift = init_inputs.m_shift;
+        weatherValues.m_elev = init_inputs.m_elev;
+        weatherValues.m_year = 2009;
+        weatherValues.m_month = 6;
+        weatherValues.m_day = 21;
+        weatherValues.m_hour = 12;
+        weatherValues.m_minute = 0;
+        weatherValues.m_beam = m_I_bn_des;
+        weatherValues.m_tdry = 30;
+        weatherValues.m_tdew = 30 - 10;
+        weatherValues.m_wspd = 5;
+        weatherValues.m_pres = 1013;
+        weatherValues.m_solazi = m_ColAz;
+
+        C_csp_solver_htf_1state htfInletState;
+        //htfInletState.m_m_dot = m_m_dot_design;
+        //htfInletState.m_pres = 101.3;
+        //htfInletState.m_qual = 0;
+        htfInletState.m_temp = m_T_loop_in_des - 273.15;
+        double defocus = 1;
+        C_csp_solver_sim_info troughInfo;
+        troughInfo.ms_ts.m_time_start = 14817600.;
+        troughInfo.ms_ts.m_step = 5. * 60.;               // 5-minute timesteps
+        troughInfo.ms_ts.m_time = troughInfo.ms_ts.m_time_start + troughInfo.ms_ts.m_step;
+        troughInfo.m_tou = 1.;
+        C_csp_collector_receiver::S_csp_cr_out_solver troughOutputs;
+
+        steady_state(weatherValues, htfInletState, std::numeric_limits<double>::quiet_NaN(), defocus, troughOutputs, troughInfo);
+        solved_params.m_T_htf_hot_des = m_T_field_out;
+        solved_params.m_dP_sf = troughOutputs.m_dP_sf;
+    }
+
     return;
 }
 
@@ -1991,6 +2039,12 @@ bool C_csp_fresnel_collector_receiver::init_fieldgeom()
     m_D_runner.resize(m_nrunsec);
     m_L_runner.resize(m_nrunsec);
     m_D_hdr.resize(m_nhdrsec);
+    m_P_rnr.resize(2 * m_nrunsec);
+    m_P_rnr_dsn = m_P_rnr;
+    m_DP_rnr.resize(2 * m_nrunsec);
+    m_T_rnr_dsn = m_T_rnr;
+    m_T_hdr_dsn = m_T_hdr;
+    m_T_loop_dsn = m_T_loop;
 
     header_design(m_nhdrsec, m_nfsec, m_nrunsec, rho_ave, m_V_hdr_max, m_V_hdr_min, m_m_dot_design, m_D_hdr, m_D_runner, &m_piping_summary);
 
@@ -2145,18 +2199,14 @@ C_csp_collector_receiver::E_csp_cr_modes C_csp_fresnel_collector_receiver::get_o
 
 double C_csp_fresnel_collector_receiver::get_startup_time()
 {
-    throw("C_csp_fresnel_collector_receiver::get_startup_time() is not complete");
-
-
-    return std::numeric_limits<double>::quiet_NaN();
+    // Note: C_csp_fresnel_collector_receiver::startup() is called after this function
+    return m_rec_su_delay * 3600.;                    // sec
 }
 
 double C_csp_fresnel_collector_receiver::get_startup_energy()
 {
-    throw(C_csp_exception("C_csp_fresnel_collector_receiver::get_startup_energy() is not complete"));
-
-    
-    return std::numeric_limits<double>::quiet_NaN();
+    // Note: C_csp_fresnel_collector_receiver::startup() is called after this function
+    return m_rec_qf_delay * m_q_design * 1.e-6;       // MWh
 }
 
 double C_csp_fresnel_collector_receiver::get_pumping_parasitic_coef()
@@ -2198,8 +2248,7 @@ double C_csp_fresnel_collector_receiver::get_tracking_power()
 
 double C_csp_fresnel_collector_receiver::get_col_startup_power()
 {
-    throw(C_csp_exception("C_csp_fresnel_collector_receiver::get_col_startup_power() is not complete"));
-    return std::numeric_limits<double>::quiet_NaN(); //MWe-hr
+    return m_p_start * 1.e-3 * m_nMod * m_nLoops;             //MWe-hr
 }
 
 void C_csp_fresnel_collector_receiver::get_design_parameters(C_csp_collector_receiver::S_csp_cr_solved_params& solved_params)
@@ -2824,7 +2873,7 @@ void C_csp_fresnel_collector_receiver::steady_state(const C_csp_weatherreader::S
 
     // Set steady-state outputs
     transform(m_T_rnr.begin(), m_T_rnr.end(), m_T_rnr_dsn.begin(), [](double x) {return x - 273.15; });        // K to C
-    //transform(m_P_rnr.begin(), m_P_rnr.end(), m_P_rnr_dsn.begin(), [](double x) {return x / 1.e5; });          // Pa to bar
+    transform(m_P_rnr.begin(), m_P_rnr.end(), m_P_rnr_dsn.begin(), [](double x) {return x / 1.e5; });          // Pa to bar
     transform(m_T_hdr.begin(), m_T_hdr.end(), m_T_hdr_dsn.begin(), [](double x) {return x - 273.15; });        // K to C
     //transform(m_P_hdr.begin(), m_P_hdr.end(), m_P_hdr_dsn.begin(), [](double x) {return x / 1.e5; });          // Pa to bar
     transform(m_T_loop.begin(), m_T_loop.end(), m_T_loop_dsn.begin(), [](double x) {return x - 273.15; });     // K to C
@@ -2962,9 +3011,76 @@ double C_csp_fresnel_collector_receiver::calculate_optical_efficiency(const C_cs
 
 double C_csp_fresnel_collector_receiver::calculate_thermal_efficiency_approx(const C_csp_weatherreader::S_outputs& weather, double q_incident /*MW*/)
 {
-    throw(C_csp_exception("C_csp_fresnel_collector_receiver::calculate_thermal_efficiency_approx"));
+    // q_incident is the power incident (absorbed by the absorber) on all the HCE receivers, calculated using the DNI and optical efficiency
+    if (q_incident <= 0) return 0.;
 
-    return std::numeric_limits<double>::quiet_NaN();
+    // Incidence angle
+    int doy = DateTime::CalculateDayOfYear(weather.m_year, weather.m_month, weather.m_day);      // day of year
+    double time_start = ((doy - 1) * 24 + weather.m_hour + weather.m_minute / 60.) * 3600.;
+    double step = 3600.;
+    double time = time_start + step;
+    double time_hr = time / 3600.;  		                // [hr]
+    double dt_hr = step / 3600.;    			            // [hr]
+    double hour = fmod(time_hr, 24.);				        // [hr]
+    int day_of_year = (int)ceil(time_hr / 24.);             // Day of the year
+    double B = (day_of_year - 1) * 360.0 / 365.0 * CSP::pi / 180.0;                 // Duffie & Beckman 1.5.3b
+    double EOT = 229.2 * (0.000075 + 0.001868 * cos(B) - 0.032077 * sin(B) - 0.014615 * cos(B * 2.0) - 0.04089 * sin(B * 2.0));     // Eqn of time in minutes
+    double Dec = 23.45 * sin(360.0 * (284.0 + day_of_year) / 365.0 * CSP::pi / 180.0) * CSP::pi / 180.0;    // Declination in radians (Duffie & Beckman 1.6.1)
+    double SolarNoon = 12. - ((m_shift) * 180.0 / CSP::pi) / 15.0 - EOT / 60.0;     // Solar Noon and time in hours
+    double HrA = hour - dt_hr;
+    double StdTime = HrA + 0.5 * dt_hr;
+    double SolarTime = StdTime + ((m_shift) * 180.0 / CSP::pi) / 15.0 + EOT / 60.0;
+    double omega = (SolarTime - 12.0) * 15.0 * CSP::pi / 180.0;                     // m_hour angle (arc of sun) in radians
+    double SolarAlt = asin(sin(Dec) * sin(m_latitude) + cos(m_latitude) * cos(Dec) * cos(omega));
+    double SolarAz = (weather.m_solazi - 180.) * m_d2r;		// [rad] Solar azimuth angle
+    double CosTh = sqrt(1.0 - pow(cos(SolarAlt - 0) - cos(0) * cos(SolarAlt) * (1.0 - cos(SolarAz - m_ColAz)), 2));
+    double Theta = acos(CosTh);                             // [rad]
+
+    // Incidence angle modifier (IAM) from Burkholder & Kutscher 2008
+    double IamF1 = 0.000884;
+    double IamF2 = -0.0000537;
+    double IAM;
+    if (CosTh == 0) {
+        IAM = 0;
+    }
+    else {
+        IAM = std::min(1., (CosTh + IamF1 * Theta + IamF2 * pow(Theta, 2.)) / CosTh);
+    }
+
+    // Heat loss, where temperatures are in [C] per Burkholder & Kutscher 2008
+    // model coefficients for 2008 Schott PTR70 (vacuum) receiver
+    double A0 = 4.05;
+    double A1 = 0.247;
+    double A2 = -0.00146;
+    double A3 = 5.65e-06;
+    double A4 = 7.62e-08;
+    double A5 = -1.7;
+    double A6 = 0.0125;
+    double PerfFac = 1;
+    double T_amb = weather.m_tdry;                                // [C]
+    double W_spd = std::abs(weather.m_wspd);
+    double DNI = weather.m_beam;
+    double T_out_des = m_T_loop_out_des - 273.15;                 // [C] (converted from [C] to [K] in init and now back to [C])
+    double T_in_des = m_T_loop_in_des - 273.15;                   // [C] (converted from [C] in [K] in init and now back to [C])
+    double HLTerm1 = (A0 + A5 * sqrt(W_spd)) * (T_out_des - T_in_des);
+    double HLTerm2 = (A1 + A6 * sqrt(W_spd)) * ((pow(T_out_des, 2) - pow(T_in_des, 2)) / 2. - T_amb * (T_out_des - T_in_des));
+    double HLTerm3 = ((A2 + A4 * DNI * CosTh * IAM) / 3.) * (pow(T_out_des, 3) - pow(T_in_des, 3));
+    double HLTerm4 = (A3 / 4.) * (pow(T_out_des, 4) - pow(T_in_des, 4));
+    double HL = (HLTerm1 + HLTerm2 + HLTerm3 + HLTerm4) / (T_out_des - T_in_des);		//[W/m]
+    double HL_hces = std::max(HL * m_L_tot * m_nLoops * PerfFac, 0.); // [W] convert from W/m to W for entire field
+
+    // Piping heat loss, at average hot/cold design temperature
+    double T_avg_des = 0.5 * (T_out_des + T_in_des);              // [C]
+
+    double row_distance = m_L_crossover; // use crossover as row distance
+    double HL_headers = m_nfsec * (2 * m_nhdrsec) * row_distance * m_D_hdr[m_nhdrsec] * CSP::pi * m_Pipe_hl_coef * (T_avg_des - T_amb);   // [W]
+    double HL_runners = 0.;
+    for (int i = 0; i < 2 * m_nrunsec; i++) {
+        HL_runners += 2. * m_L_runner[i] * CSP::pi * m_D_runner[i] * m_Pipe_hl_coef * (T_avg_des - T_amb);   // [W]
+    }
+
+    double HL_total = HL_hces + HL_headers + HL_runners;
+    return std::max(1. - HL_total * 1.e-6 / q_incident, 0.);
 }
 
 double C_csp_fresnel_collector_receiver::get_collector_area()

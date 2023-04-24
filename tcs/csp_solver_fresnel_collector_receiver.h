@@ -517,9 +517,9 @@ public:
 
     double m_L_rnr_pb;                              //[m] Length of hot or cold runner pipe around the power block
 
-
-
-
+    double m_rec_su_delay;                          //[hr] Fixed startup delay time for the receiver
+    double m_rec_qf_delay;                          //[-] Energy-based receiver startup delay (fraction of rated thermal power)
+    double m_p_start;                               //[kWe-hr] Collector startup energy, per SCA
     
 
     // Fields accessible as outputs
@@ -536,7 +536,7 @@ public:
     std::vector<double> m_P_rnr_dsn;                // [bar]  Gauge pessure in runner sections at design
     std::vector<double> m_T_rnr;                    // [K]    Temperature entering runner sections
     double m_T_field_out;                           // [K]    Temperature exiting last runner, and thus exiting field
-                                                       
+    std::vector<double> m_P_rnr;                    // [Pa]  Gauge pessure in runner sections                                                   
                                                        
     std::vector<double> m_D_hdr;	                // [m]    Diameters of header sections
     std::vector<double> m_WallThk_hdr;   	        // [m]    Pipe wall thicknesses of header sections
