@@ -16,6 +16,18 @@ option(SAM_SKIP_TESTS "Skips building tests" OFF)
 
 option(SAMAPI_EXPORT "Export of ssc binaries to the SAM_api directory; for Unix, compile ssc libraries for SAM_api" ON)
 
+option(SKIP_ORTOOLS "Skips building OR-Tools" OFF)
+
+include(CMakeDependentOption)
+
+CMAKE_DEPENDENT_OPTION(BUILD_DEPS "Build OR-Tools dependencies" ON "NOT SKIP_ORTOOLS" OFF)
+CMAKE_DEPENDENT_OPTION(USE_COINOR "Use the COIN-OR solver" OFF "NOT SKIP_ORTOOLS" OFF)
+CMAKE_DEPENDENT_OPTION(USE_HIGHS "Use the HiGHS solver" OFF "NOT SKIP_ORTOOLS" OFF)
+option(BUILD_EXAMPLES "Build examples" OFF)
+option(BUILD_SAMPLES "Build samples" OFF)
+CMAKE_DEPENDENT_OPTION(INSTALL_DOC "Install doc" OFF "NOT SKIP_ORTOOLS" OFF)
+
+
 #
 # If project isn't system_advisor_model and SAM_SKIP_TOOLS=1,
 #   environment vars LK_LIB and LKD_LIB can be used to specify where to find those libraries
@@ -26,8 +38,8 @@ if(APPLE)
 endif()
 
 if (UNIX AND NOT CMAKE_C_COMPILER)
-	set(CMAKE_C_COMPILER gcc)
-	set(CMAKE_CXX_COMPILER g++)
+    set(CMAKE_C_COMPILER gcc)
+    set(CMAKE_CXX_COMPILER g++)
 endif()
 set(CMAKE_CXX_STANDARD 11)
 
@@ -142,17 +154,17 @@ endfunction()
 
 
 add_subdirectory(splinter)
-add_subdirectory(shared)
-add_subdirectory(nlopt)
-add_subdirectory(lpsolve)
-add_subdirectory(solarpilot)
+if (NOT SKIP_ORTOOLS)
+    add_subdirectory(or-tools)
+    add_subdirectory(ortools_sandbox)
+endif()
 add_subdirectory(tcs)
 add_subdirectory(ssc)
 
 if (NOT SAM_SKIP_TOOLS)
-	add_subdirectory(sdktool)
+    add_subdirectory(sdktool)
 endif()
 
 if (NOT SAM_SKIP_TESTS)
-	add_subdirectory(test)
+    add_subdirectory(test)
 endif()
