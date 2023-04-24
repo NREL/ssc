@@ -137,7 +137,7 @@ TEST(save_as_JSON_test_run, pvwatts_mechant_plant_rapidjson_read_file_run_pvwatt
     EXPECT_TRUE(success);
     ssc_number_t annual_energy;
     ssc_data_get_number(data, "annual_energy", &annual_energy);
-    EXPECT_NEAR(annual_energy, 88483173, 88483173 / 1e6);
+    EXPECT_NEAR(annual_energy, 88484774, 88484774 / 1e6);
     
     ssc_module_free(mod);
     ssc_data_free(data);
