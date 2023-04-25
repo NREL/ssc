@@ -105,6 +105,7 @@ struct weather_header {
 	std::string source;
 	std::string description;
 	std::string url;
+    std::string version;
 	bool hasunits;
 	double tz;
 	double lat;
