@@ -2994,7 +2994,7 @@ double C_csp_fresnel_collector_receiver::calculate_optical_efficiency(const C_cs
     double m_q_dot_inc_sf_tot_ini(m_q_dot_inc_sf_tot);
 
     loop_optical_eta(weather, sim);
-    double eta_optical = m_EqOpteff;
+    double eta_optical = m_eta_optical;     // m_EqOpteff;
 
     // Restore member variable values
     m_q_i = m_q_i_ini;
@@ -3069,6 +3069,7 @@ double C_csp_fresnel_collector_receiver::calculate_thermal_efficiency_approx(con
     double HL = (HLTerm1 + HLTerm2 + HLTerm3 + HLTerm4) / (T_out_des - T_in_des);		//[W/m]
     double HL_hces = std::max(HL * m_L_tot * m_nLoops * PerfFac, 0.); // [W] convert from W/m to W for entire field
 
+    /*
     // Piping heat loss, at average hot/cold design temperature
     double T_avg_des = 0.5 * (T_out_des + T_in_des);              // [C]
 
@@ -3078,9 +3079,11 @@ double C_csp_fresnel_collector_receiver::calculate_thermal_efficiency_approx(con
     for (int i = 0; i < 2 * m_nrunsec; i++) {
         HL_runners += 2. * m_L_runner[i] * CSP::pi * m_D_runner[i] * m_Pipe_hl_coef * (T_avg_des - T_amb);   // [W]
     }
+    */
 
-    double HL_total = HL_hces + HL_headers + HL_runners;
-    return std::max(1. - HL_total * 1.e-6 / q_incident, 0.);
+    double HL_total = HL_hces;  // +HL_headers + HL_runners;
+    double eta_therm_approx = std::max(1. - HL_total * 1.e-6 / q_incident, 0.);
+    return eta_therm_approx;
 }
 
 double C_csp_fresnel_collector_receiver::get_collector_area()
