@@ -858,7 +858,7 @@ public:
         C_csp_two_tank_tes storage;
         {
             double V_tes_des = as_double("V_tes_des");
-            double eta_pump = 0.85;
+            /*double eta_pump = 0.85;
             bool has_hot_tank_bypass = false;
             double T_tank_hot_inlet_min = 200;
             bool custom_tes_p_loss = false;
@@ -881,7 +881,7 @@ public:
 
             double tes_length_vals[11] = { 0., 90., 100., 120., 0., 30., 90., 80., 80., 120., 80. };
             util::matrix_t<double> tes_lengths;
-            tes_lengths.assign(tes_length_vals, 11);
+            tes_lengths.assign(tes_length_vals, 11);*/
 
             storage = C_csp_two_tank_tes(
                 as_integer("Fluid"),
@@ -909,8 +909,9 @@ public:
                 as_boolean("tanks_in_parallel"),
                 V_tes_des,
                 false,
-                as_double("tes_pump_coef"),
-                eta_pump,
+                as_double("tes_pump_coef")
+            );
+                /*eta_pump,
                 has_hot_tank_bypass,
                 T_tank_hot_inlet_min,
                 custom_tes_p_loss,
@@ -921,7 +922,7 @@ public:
                 tes_lengths,
                 pipe_rough,
                 dP_discharge
-            );
+            );*/
 
 
                 //as_double("eta_pump"),
