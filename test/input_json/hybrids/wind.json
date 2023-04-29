@@ -2,7 +2,42 @@
     "input": {
     "compute_modules": ["windpower"],
     "windpower": {    
-    "avail_bop_loss": 0.5,
+    "adjust_constant": 0.0,
+    "adjust_en_periods": 0.0,
+    "adjust_en_timeindex": 0.0,
+    "adjust_periods": [
+        [
+            0.0
+        ],
+        [
+            0.0
+        ],
+        [
+            0.0
+        ],
+        [
+            0.0
+        ],
+        [
+            0.0
+        ],
+        [
+            0.0
+        ],
+        [
+            0.0
+        ]
+    ],
+    "adjust_timeindex": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+    ],
+   "avail_bop_loss": 0.5,
     "weibull_wind_speed": 7.25,
     "wind_turbine_max_cp": 0.45,
     "wind_resource_model_choice": 0.0,
