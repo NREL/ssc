@@ -241,7 +241,8 @@ private:
     double m_dT_BP; // BYPASS_OUT - HTR_HP_OUT
     double m_Q_dot_total;
     double m_Q_dot_pc;  // pre cooler heat rejected
-    double m_HTF_cold_approach;
+    double m_HTF_BP_cold_approach;
+    double m_HTF_PHX_cold_approach;
 
     C_HX_co2_to_co2_CRM m_BP_HTX;
 

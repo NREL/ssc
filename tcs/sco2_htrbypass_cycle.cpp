@@ -56,7 +56,7 @@ void C_HTRBypass_Cycle::design_core(int& error_code)
 
     // Iterating bp_frac so the cold approach value is correct
     m_bp_frac = 0;
-    double des_HTF_cold_approach = hot_approach;
+    double des_HTF_PHX_cold_approach = hot_approach;
 
     // local
     double error = 100000;
@@ -73,11 +73,11 @@ void C_HTRBypass_Cycle::design_core(int& error_code)
         design_core_standard(error_code);
 
         // Get Results
-        double actual_approach = m_HTF_cold_approach;
-        error = actual_approach - des_HTF_cold_approach;
+        double actual_approach = m_HTF_PHX_cold_approach;
+        error = actual_approach - des_HTF_PHX_cold_approach;
 
         // Update Bounds
-        if (error > 0)
+        if (error < 0)
             frac_low = m_bp_frac;
         else
             frac_high = m_bp_frac;
@@ -102,12 +102,14 @@ void C_HTRBypass_Cycle::design_core(int& error_code)
             // Run Calculation
             design_core_standard(error_code);
 
-            double actual_approach = m_HTF_cold_approach;
+            double actual_approach = m_HTF_PHX_cold_approach;
             cold_approach.push_back(actual_approach);
         }
+
+        int x = 0;
     }
 
-
+ 
 }
 
 void C_HTRBypass_Cycle::design_core_standard(int& error_code)
@@ -451,13 +453,16 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
         // HTF
         {
             // Calculate HTF Bypass Cold Approach
-            m_HTF_cold_approach = m_T_HTF_BP_outlet - m_temp_last[MIXER_OUT];
+            m_HTF_BP_cold_approach = m_T_HTF_BP_outlet - m_temp_last[MIXER_OUT];
 
             // Calculate HTF Mdot
             m_m_dot_HTF = m_Q_dot_total / ((m_T_HTF_PHX_inlet - m_T_HTF_BP_outlet) * m_cp_HTF);
 
             // Calculate PHX outlet Temp
             m_T_HTF_PHX_out = m_T_HTF_PHX_inlet - (m_Q_dot_PHX / (m_m_dot_HTF * m_cp_HTF));
+
+            // Calculate PHX Cold Approach
+            m_HTF_PHX_cold_approach = m_T_HTF_PHX_out - m_temp_last[MIXER2_OUT];
         }
 
     }
