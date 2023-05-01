@@ -792,23 +792,30 @@ bool weatherfile::open(const std::string& file, bool header_only)
         getline(ifs, buf);
         auto cols = split(buf);
         int ncols = (int)cols.size();
+
         getline(ifs, buf1);
         auto cols1 = split(buf1);
         int ncols1 = (int)split(buf1).size();
 
         int hdr_step_sec = -1;
 
-        if (ncols != ncols1)
-        {
-            m_message = "first two header lines must have same number of columns";
-            return false;
-        }
+        // allow metadata rows to have different lengths as long as required data is included
+        ncols = std::min(ncols, ncols1);
+
+        std::string name, value;
 
         for (size_t i = 0; (int)i < ncols; i++)
         {
-            const std::string name = util::lower_case(trimboth(cols[i]));
-            const std::string value = trimboth(cols1[i]);
 
+            name = "";
+            if (!cols[i].empty())
+                name = util::lower_case(trimboth(cols[i]));
+
+            value = "";
+            if (!cols1[i].empty())
+                value = trimboth(cols1[i]);
+
+            // required metadata (see checks below)
             if (name == "lat" || name == "latitude")
             {
                 m_hdr.lat = col_or_nan(value);
@@ -817,7 +824,7 @@ bool weatherfile::open(const std::string& file, bool header_only)
             {
                 m_hdr.lon = col_or_nan(value);
             }
-            else if (name == "tz" || name == "timezone" || name == "time zone")
+            else if (name == "tz" || name == "timezone" || name == "time zone") // require "time zone" and "local time zone" columns in NSRDB files are the same
             {
                 m_hdr.tz = col_or_nan(value);
             }
@@ -825,7 +832,8 @@ bool weatherfile::open(const std::string& file, bool header_only)
             {
                 m_hdr.elev = col_or_nan(value);
             }
-            else if (name == "year")
+            // optional metadata
+            else if (name == "year") // allows year to be missing from time series data
             {
                 m_startYear = (int)col_or_nan(value);
             }
@@ -861,12 +869,17 @@ bool weatherfile::open(const std::string& file, bool header_only)
             {
                 m_hdr.hasunits = (util::lower_case(value) == "yes" || stoi(value) != 0);
             }
+            else if (name == "version")
+            {
+                m_hdr.version = value;
+            }
             else if (name == "step")
             {
                 hdr_step_sec = stoi(value);
             }
         }
 
+        // check for required metadata
         if (!std::isfinite(m_hdr.lat) || !std::isfinite(m_hdr.lon))
         {
             m_message = "latitude and longitude required but not specified";
