@@ -960,10 +960,6 @@ void C_csp_fresnel_collector_receiver::loop_optical_eta(const C_csp_weatherreade
     }
     else
     {
-        int hr = (sim_info.ms_ts.m_time) / 3600;
-        if (hr == 6360)
-            int x = 0;
-
         // First, clear all the values calculated below
         loop_optical_eta_off();
 
@@ -1838,7 +1834,7 @@ void C_csp_fresnel_collector_receiver::init(const C_csp_collector_receiver::S_cs
         double defocus = 1;
         C_csp_solver_sim_info troughInfo;
         troughInfo.ms_ts.m_time_start = 14817600.;
-        troughInfo.ms_ts.m_step = 5. * 60.;               // 5-minute timesteps
+        troughInfo.ms_ts.m_step = 15. * 60.;               // 5-minute timesteps
         troughInfo.ms_ts.m_time = troughInfo.ms_ts.m_time_start + troughInfo.ms_ts.m_step;
         troughInfo.m_tou = 1.;
         C_csp_collector_receiver::S_csp_cr_out_solver troughOutputs;
@@ -2213,7 +2209,7 @@ double C_csp_fresnel_collector_receiver::get_pumping_parasitic_coef()
 {
     double T_amb_des = 42. + 273.15;
     double T_avg = (m_T_loop_in_des + m_T_loop_out_des) / 2.;
-    double P_field_in = m_P_rnr_dsn[1];
+    double P_field_in = m_P_rnr_dsn[1]; // hard code?
     double dT_avg_SCA = (m_T_loop_out_des - m_T_loop_in_des) / m_nMod;
     std::vector<double> T_in_SCA, T_out_SCA;
 
@@ -2261,12 +2257,6 @@ void C_csp_fresnel_collector_receiver::off(const C_csp_weatherreader::S_outputs&
     C_csp_collector_receiver::S_csp_cr_out_solver& cr_out_solver,
     const C_csp_solver_sim_info& sim_info)
 {
-    // DEBUG
-    int hr = sim_info.ms_ts.m_time / 3600;
-    if (hr == 50)
-        int x = 0;
-
-
     // Always reset last temps
     reset_last_temps();
 
@@ -2862,14 +2852,13 @@ void C_csp_fresnel_collector_receiver::steady_state(const C_csp_weatherreader::S
 
     // Re-run runner and header pipe sizing using the same diameters to get the actual mass flows and velocities at steady state
     double m_dot_ss = cr_out_solver.m_m_dot_salt_tot / 3600.;           // [kg/s]
-    bool custom_sf_pipe_sizes = true;
     double rho_cold = m_htfProps.dens(T_htf_in_t_int_last[0], 10.e5); // [kg/m3]
     double rho_hot = m_htfProps.dens(T_htf_out_t_int_last[m_nMod - 1], 10.e5); // [kg/m3]
     std::string summary;
 
     double rho_ave = m_htfProps.dens((m_T_loop_out_des + m_T_loop_in_des) / 2.0, 0.0); //kg/m3
 
-    header_design(m_nhdrsec, m_nfsec, m_nrunsec, rho_ave, m_V_hdr_max, m_V_hdr_min, m_m_dot_design, m_D_hdr, m_D_runner, &m_piping_summary);
+    //header_design(m_nhdrsec, m_nfsec, m_nrunsec, rho_ave, m_V_hdr_max, m_V_hdr_min, m_m_dot_design, m_D_hdr, m_D_runner, &m_piping_summary);
 
     // Set steady-state outputs
     transform(m_T_rnr.begin(), m_T_rnr.end(), m_T_rnr_dsn.begin(), [](double x) {return x - 273.15; });        // K to C
@@ -2886,6 +2875,7 @@ void C_csp_fresnel_collector_receiver::steady_state(const C_csp_weatherreader::S
 
     return;
 }
+
 
 void C_csp_fresnel_collector_receiver::estimates(const C_csp_weatherreader::S_outputs& weather,
     const C_csp_solver_htf_1state& htf_state_in,
@@ -3069,19 +3059,33 @@ double C_csp_fresnel_collector_receiver::calculate_thermal_efficiency_approx(con
     double HL = (HLTerm1 + HLTerm2 + HLTerm3 + HLTerm4) / (T_out_des - T_in_des);		//[W/m]
     double HL_hces = std::max(HL * m_L_tot * m_nLoops * PerfFac, 0.); // [W] convert from W/m to W for entire field
 
-    /*
+    
     // Piping heat loss, at average hot/cold design temperature
     double T_avg_des = 0.5 * (T_out_des + T_in_des);              // [C]
 
     double row_distance = m_L_crossover; // use crossover as row distance
-    double HL_headers = m_nfsec * (2 * m_nhdrsec) * row_distance * m_D_hdr[m_nhdrsec] * CSP::pi * m_Pipe_hl_coef * (T_avg_des - T_amb);   // [W]
+    //double HL_headers_old = m_nfsec * (2 * m_nhdrsec) * row_distance * m_D_hdr[0] * CSP::pi * m_Pipe_hl_coef * (T_avg_des - T_amb);   // [W]
+
+
+    double HL_headers = 0;
+    // Sum hot headers heat loss
+    for (int i = 0; i < m_nhdrsec; i++)
+    {
+        HL_headers += m_L_crossover * m_D_hdr[i] * CSP::pi * m_Pipe_hl_coef * (T_avg_des - T_amb);
+    }
+    HL_headers *= 2.0; // multiply to account for cold headers
+    HL_headers *= m_nfsec; // account for field sections
+
+
+
     double HL_runners = 0.;
-    for (int i = 0; i < 2 * m_nrunsec; i++) {
+    for (int i = 0; i < m_nrunsec; i++) {
         HL_runners += 2. * m_L_runner[i] * CSP::pi * m_D_runner[i] * m_Pipe_hl_coef * (T_avg_des - T_amb);   // [W]
     }
-    */
+    HL_runners *= 2.0; // account for cold headers
+    
 
-    double HL_total = HL_hces;  // +HL_headers + HL_runners;
+    double HL_total = HL_hces + HL_headers + HL_runners;
     double eta_therm_approx = std::max(1. - HL_total * 1.e-6 / q_incident, 0.);
     return eta_therm_approx;
 }

@@ -461,6 +461,7 @@ public:
 
     int m_opt_model;		                        // The optical model (1=Solar position ; 2=Collector incidence table ; 3 = IAM polys)
 
+    // Mirror Properties
     double m_A_aperture;	                        // [m^2] Reflective aperture area of the collector
     double m_reflectivity;                          // Solar-weighted mirror reflectivity value
     double m_TrackingError;                         // [-] Tracking error derate
@@ -579,10 +580,6 @@ public:
     double m_m_dot_design;	                        // [kg/s] Total solar field mass flow rate at design
     double m_m_dot_loop_des;                        // [kg/s] LOOP design mass flow rate
 
-
-    // DEBUG
-    vector<int> call_per_step;
-
     // Methods
 public:
 
@@ -636,6 +633,7 @@ public:
         double W_dot_elec_to_CR_heat /*MWe*/, double field_control,
         C_csp_collector_receiver::S_csp_cr_out_solver& cr_out_solver,
         const C_csp_solver_sim_info& sim_info);
+
 
     virtual void estimates(const C_csp_weatherreader::S_outputs& weather,
         const C_csp_solver_htf_1state& htf_state_in,

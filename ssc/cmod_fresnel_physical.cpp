@@ -1576,9 +1576,6 @@ public:
             throw exec_error("fresnel_physical", csp_exception.m_error_message);
         }
 
-        // DEBUG
-        vector<int> call_per_step = c_fresnel.call_per_step;
-
         // If no exception, then report messages
         while (csp_solver.mc_csp_messages.get_message(&out_type, &out_msg))
         {
