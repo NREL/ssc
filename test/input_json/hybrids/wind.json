@@ -1,6 +1,9 @@
 {
     "input": {
-    "compute_modules": ["windpower"],
+    "steps" : ["1"],
+    "1" : {
+    "run": ["windpower"]
+    },
     "windpower": {    
     "adjust_constant": 0.0,
     "adjust_en_periods": 0.0,

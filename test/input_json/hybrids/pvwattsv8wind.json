@@ -1,6 +1,12 @@
 { 
     "input": { 
-        "compute_modules": ["pvwattsv8", "windpower"],
+        "steps" : ["1", "2"],
+        "1" : {
+        "run": ["pvwattsv8", "windpower"]
+        },
+        "2" : {
+        "add": ["pvwattsv8:annual_energy", "windpower:annual_energy"]
+        },
         "pvwattsv8": {
         "module_type": 0.0,
         "shading_en_azal": 0.0,

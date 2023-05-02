@@ -133,6 +133,9 @@ TEST_F(CmodHybridsTest, PVWattsv8Wind) {
         ssc_data_get_number(outputs, "cumulative_annual_energy", &annualenergy);
         EXPECT_NEAR(annualenergy, 366708848, 366708848 * 0.01);
 
+        ssc_data_get_number(outputs, "annual_energy", &annualenergy);
+        EXPECT_NEAR(annualenergy, 366708848, 366708848 * 0.01);
+
         auto pv_outputs = ssc_data_get_table(outputs, "pvwattsv8");
         ssc_data_get_number(pv_outputs, "annual_energy", &annualenergy);
         EXPECT_NEAR(annualenergy, 165112880, 165112880 * 0.01);

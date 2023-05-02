@@ -37,8 +37,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static var_info _cm_vtab_hybrid[] = {
 /*   VARTYPE           DATATYPE         NAME                           LABEL                                UNITS     META                      GROUP                      REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,         SSC_TABLE,      "input",               "Table input for one technology",             "","","",      "*",        "",      "" },
-    { SSC_OUTPUT,        SSC_TABLE,      "output",               "Table output for one technology",           "","","",      "*",        "",      "" },
+	{ SSC_INPUT,         SSC_TABLE,      "input",               "input_table input for one technology",             "","","",      "*",        "",      "" },
+    { SSC_OUTPUT,        SSC_TABLE,      "output",               "input_table output for one technology",           "","","",      "*",        "",      "" },
 
 
 var_info_invalid };
@@ -54,63 +54,101 @@ public:
 
     void exec()
     {
-        auto table = lookup("input");
-        if (table->type != SSC_TABLE)
-            throw exec_error("hybrid", "No input table found.");
+        auto input_table = lookup("input");
+        if (input_table->type != SSC_TABLE)
+            throw exec_error("hybrid", "No input input_table found.");
 
-        if (table->table.is_assigned("compute_modules")) {
+        if (input_table->table.is_assigned("steps")) {
 
-            // aggregates - vectors or single values, etc.
-            double cumulative_annual_energy = 0, annual_energy;
+            auto& vec_steps = input_table->table.lookup("steps")->vec;
 
-            auto& vec_cms = table->table.lookup("compute_modules")->vec;
-            // loop based on table of table inputs
-            // loop for multiple hybrid compute modules starts here
             auto outputs = ssc_data_create();
 
-            for (size_t i = 0; i < vec_cms.size(); i++) {
+            for (size_t i = 0; i < vec_steps.size(); i++) {
 
-                auto& compute_module = vec_cms[i].str;
-                auto compute_module_inputs = table->table.lookup(compute_module);
-                if (compute_module_inputs->type != SSC_TABLE)
-                    throw exec_error("hybrid", "No input table found for ." + compute_module);
+                auto& current_step = input_table->table.lookup(vec_steps[i].str)->table;
 
-                auto module = ssc_module_create(compute_module.c_str());
+                if (current_step.is_assigned("run")) {
+                    // e.g.  "run": ["pvwattsv8", "windpower"]
 
-                auto& input = compute_module_inputs->table;
-                ssc_module_exec(module, static_cast<ssc_data_t>(&input));
+                    // TODO:remove after combine working testing aggregates - vectors or single values, etc.
+                    double cumulative_annual_energy = 0, annual_energy;
 
-                auto compute_module_outputs = ssc_data_create();
+                    auto& vec_cms = current_step.lookup("run")->vec;
+                    // loop based on input_table of input_table inputs
+                    // loop for multiple hybrid compute modules starts here
 
-                int pidx = 0;
-                while (const ssc_info_t p_inf = ssc_module_var_info(module, pidx++))
-                {
-                    int var_type = ssc_info_var_type(p_inf);   // SSC_INPUT, SSC_OUTPUT, SSC_INOUT
-                    if (var_type == SSC_OUTPUT) { // maybe add INOUT
-                        auto var_name = ssc_info_name(p_inf);
-                        auto type = ssc_info_data_type(p_inf);
-                        auto var_value = input.lookup(var_name);
-                        ssc_data_set_var(compute_module_outputs, var_name, var_value);
+                    for (size_t i = 0; i < vec_cms.size(); i++) {
+
+                        auto& compute_module = vec_cms[i].str;
+                        auto compute_module_inputs = input_table->table.lookup(compute_module);
+                        if (compute_module_inputs->type != SSC_TABLE)
+                            throw exec_error("hybrid", "No input input_table found for ." + compute_module);
+
+                        auto module = ssc_module_create(compute_module.c_str());
+
+                        auto& input = compute_module_inputs->table;
+                        ssc_module_exec(module, static_cast<ssc_data_t>(&input));
+
+                        auto compute_module_outputs = ssc_data_create();
+
+                        int pidx = 0;
+                        while (const ssc_info_t p_inf = ssc_module_var_info(module, pidx++))
+                        {
+                            int var_type = ssc_info_var_type(p_inf);   // SSC_INPUT, SSC_OUTPUT, SSC_INOUT
+                            if (var_type == SSC_OUTPUT) { // maybe add INOUT
+                                auto var_name = ssc_info_name(p_inf);
+                                auto type = ssc_info_data_type(p_inf);
+                                auto var_value = input.lookup(var_name);
+                                ssc_data_set_var(compute_module_outputs, var_name, var_value);
+                            }
+                        }
+
+                        ssc_data_set_table(outputs, compute_module.c_str(), compute_module_outputs);
+
+                        ssc_data_get_number(compute_module_outputs, "annual_energy", &annual_energy);
+                        cumulative_annual_energy += annual_energy;
+
+                        ssc_module_free(module);
+                        ssc_data_free(compute_module_outputs);
                     }
+                    // need to agregate some outputs potenitally here
+                    ssc_data_set_number(outputs, "cumulative_annual_energy", cumulative_annual_energy);
+
+                }
+                else if (current_step.is_assigned("add")) {
+                    // e.g.    "combine": ["pvwattsv8:annual_energy", "windpower:annual_energy"]
+                    auto& vec_ccombines = current_step.lookup("add")->vec;
+
+                    // determine type to combine
+                    // here implement single number
+                    // TODO - check for valid output table and types
+                    std::string out_var_name = "output";
+                    ssc_number_t sum = 0;
+                    for (size_t i = 0; i < vec_ccombines.size(); i++) {
+                        auto cm_var = util::split(vec_ccombines[i].str, ":"); // TODO check size == 2
+                        out_var_name = cm_var[1];
+                        auto cm_output_table = ssc_data_get_table(outputs, cm_var[0].c_str());
+                        ssc_number_t output_value;
+                        if (ssc_data_get_number(cm_output_table, cm_var[1].c_str(), &output_value))
+                            sum += output_value;
+                    }
+                    ssc_data_set_number(outputs, out_var_name.c_str(), sum);
+
+
+                }
+                else {
+                    throw exec_error("hybrid", "No valid instruction found for step " + vec_steps[i].str);
                 }
 
-                ssc_data_set_table(outputs, compute_module.c_str(), compute_module_outputs);
-
-                ssc_data_get_number(compute_module_outputs, "annual_energy", &annual_energy);
-                cumulative_annual_energy += annual_energy;
-
-                ssc_module_free(module);
-                ssc_data_free(compute_module_outputs);
-            }
-            // need to agregate some outputs potenitally here
-            ssc_data_set_number(outputs, "cumulative_annual_energy", cumulative_annual_energy);
+            } // for vec_stpes
 
             assign("output", var_data(*(static_cast<var_table*>(outputs))));
             ssc_data_free(outputs);
 
         }
         else {
-            throw exec_error("hybrid", "No compute modules found.");
+            throw exec_error("hybrid", "No steps found.");
         }
 	}
 };

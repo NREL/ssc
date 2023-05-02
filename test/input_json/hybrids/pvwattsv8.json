@@ -1,6 +1,9 @@
 {
     "input": {
-    "compute_modules": ["pvwattsv8"],
+    "steps" : ["1"],
+    "1" : {
+    "run": ["pvwattsv8"]
+    },
     "pvwattsv8": {    
     "module_type": 0.0,
     "shading_en_azal": 0.0,
