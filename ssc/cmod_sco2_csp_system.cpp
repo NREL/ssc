@@ -332,7 +332,7 @@ public:
 	void exec() override
 	{
         // Debug to launch HTR Bypass
-        if (true)
+        if (false)
         {
             // inputs
             C_sco2_cycle_core::E_turbo_gen_motor_config turbo_gen_motor_config = static_cast<C_sco2_cycle_core::E_turbo_gen_motor_config>(0);

@@ -35,6 +35,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "CO2_properties.h"
 
+#include "nlopt.hpp"
+#include "nlopt_callbacks.h"
+
 #include "fmin.h"
 
 
@@ -90,7 +93,7 @@ void C_HTRBypass_Cycle::design_core(int& error_code)
 
 
     // DEBUG
-    if (true)
+    if (false)
     {
         std::vector<double> frac_vec = { 0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1 };
         std::vector<double> cold_approach;
@@ -321,27 +324,26 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
         }
     }
 
-    // ****************************************************
-    // ****************************************************
     // Solve the recuperators
-    double T_HTR_LP_out_lower = m_temp_last[MC_OUT];		//[K] Coldest possible temperature
-    double T_HTR_LP_out_upper = m_temp_last[TURB_OUT];		//[K] Hottest possible temperature
-
-    double error = 1000;
-    double T_HTR_guess = 0.5 * (T_HTR_LP_out_lower + T_HTR_LP_out_upper);
-    double T_HTR_calc;
-    while (error > 0.1)
     {
-        solve_HTR(T_HTR_guess, T_HTR_calc);
-        double guess_val = T_HTR_guess;
-        double calc_val = T_HTR_calc;
+        double T_HTR_LP_out_lower = m_temp_last[MC_OUT];		//[K] Coldest possible temperature
+        double T_HTR_LP_out_upper = m_temp_last[TURB_OUT];		//[K] Hottest possible temperature
 
-        error = std::abs(guess_val - calc_val);
+        double error = 1000;
+        double T_HTR_guess = 0.5 * (T_HTR_LP_out_lower + T_HTR_LP_out_upper);
+        double T_HTR_calc;
+        while (error > 0.1)
+        {
+            solve_HTR(T_HTR_guess, T_HTR_calc);
+            double guess_val = T_HTR_guess;
+            double calc_val = T_HTR_calc;
 
-        // Update guess value
-        T_HTR_guess = 0.5 * (guess_val + calc_val);
+            error = std::abs(guess_val - calc_val);
+
+            // Update guess value
+            T_HTR_guess = 0.5 * (guess_val + calc_val);
+        }
     }
-
 
     // State 5 can now be fully defined
     {
@@ -362,7 +364,7 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
         m_dens_last[HTR_HP_OUT] = co2_props.dens;
     }
 
-    // Calculate cycle performance metrics (including total heat coming into cycle)
+    // Calculate total heat coming into cycle
     {
         m_W_dot_mc = m_w_mc * m_m_dot_mc;		//[kWe]
         m_W_dot_rc = m_w_rc * m_m_dot_rc;		//[kWe]
@@ -374,174 +376,109 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
         m_Q_dot_total = m_W_dot_net_last + m_Q_dot_pc;
     }
 
-    // Define bypass out temperature
-    if (true)
+    // Calculate Bypass Energy
     {
-        // Calculate Bypass Energy
-        {
-            // Set Bypass Temp based on HTR_HP_OUT
-            m_temp_last[BYPASS_OUT] = m_temp_last[HTR_HP_OUT] + m_dT_BP;
+        // Set Bypass Temp based on HTR_HP_OUT
+        m_temp_last[BYPASS_OUT] = m_temp_last[HTR_HP_OUT] + m_dT_BP;
 
-            // Calculate BYPASS_OUT properties
-            int prop_error_code = CO2_TP(this->m_temp_last[BYPASS_OUT], this->m_pres_last[BYPASS_OUT], &this->mc_co2_props);
+        // Calculate BYPASS_OUT properties
+        int prop_error_code = CO2_TP(this->m_temp_last[BYPASS_OUT], this->m_pres_last[BYPASS_OUT], &this->mc_co2_props);
+        if (prop_error_code != 0)
+        {
+            return;
+        }
+        this->m_enth_last[BYPASS_OUT] = this->mc_co2_props.enth;
+        this->m_entr_last[BYPASS_OUT] = this->mc_co2_props.entr;
+        this->m_dens_last[BYPASS_OUT] = this->mc_co2_props.dens;
+
+        // Calculate Heat Transfer in Bypass
+        m_Q_dot_BP = m_m_dot_bp * (m_enth_last[BYPASS_OUT] - m_enth_last[MIXER_OUT]);
+    }
+
+    // Simulate Mixer 2
+    {
+        // If Bypass and HTR have flow
+        if (m_bp_frac >= 1e-12 && m_bp_frac <= (1.0 - 1e-12))
+        {
+            m_enth_last[MIXER2_OUT] = (1.0 - m_bp_frac) * m_enth_last[HTR_HP_OUT] +
+                m_bp_frac * m_enth_last[BYPASS_OUT];	//[kJ/kg]
+
+            int prop_error_code = CO2_PH(m_pres_last[MIXER2_OUT], m_enth_last[MIXER2_OUT], &mc_co2_props);
             if (prop_error_code != 0)
             {
                 return;
             }
-            this->m_enth_last[BYPASS_OUT] = this->mc_co2_props.enth;
-            this->m_entr_last[BYPASS_OUT] = this->mc_co2_props.entr;
-            this->m_dens_last[BYPASS_OUT] = this->mc_co2_props.dens;
+            m_temp_last[MIXER2_OUT] = mc_co2_props.temp;		//[K]
+            m_entr_last[MIXER2_OUT] = mc_co2_props.entr;		//[kJ/kg-K]
+            m_dens_last[MIXER2_OUT] = mc_co2_props.dens;		//[kg/m^3]
 
-            // Calculate Heat Transfer in Bypass
-            m_Q_dot_BP = m_m_dot_bp * (m_enth_last[BYPASS_OUT] - m_enth_last[MIXER_OUT]);
         }
-
-        // Simulate Mixer 2
+        // Flow only through HTR
+        else if (m_bp_frac <= (1.0 - 1e-12))
         {
-            // If Bypass and HTR have flow
-            if (m_bp_frac >= 1e-12 && m_bp_frac <= (1.0 - 1e-12))
-            {
-                m_enth_last[MIXER2_OUT] = (1.0 - m_bp_frac) * m_enth_last[HTR_HP_OUT] +
-                    m_bp_frac * m_enth_last[BYPASS_OUT];	//[kJ/kg]
-
-                int prop_error_code = CO2_PH(m_pres_last[MIXER2_OUT], m_enth_last[MIXER2_OUT], &mc_co2_props);
-                if (prop_error_code != 0)
-                {
-                    return;
-                }
-                m_temp_last[MIXER2_OUT] = mc_co2_props.temp;		//[K]
-                m_entr_last[MIXER2_OUT] = mc_co2_props.entr;		//[kJ/kg-K]
-                m_dens_last[MIXER2_OUT] = mc_co2_props.dens;		//[kg/m^3]
-
-            }
-            // Flow only through HTR
-            else if (m_bp_frac <= (1.0 - 1e-12))
-            {
-                m_temp_last[MIXER2_OUT] = m_temp_last[HTR_HP_OUT];		//[K]
-                m_enth_last[MIXER2_OUT] = m_enth_last[HTR_HP_OUT];		//[kJ/kg]
-                m_entr_last[MIXER2_OUT] = m_entr_last[HTR_HP_OUT];		//[kJ/kg-K]
-                m_dens_last[MIXER2_OUT] = m_dens_last[HTR_HP_OUT];		//[kg/m^3]
-            }
-            // Flow only through Bypass
-            else
-            {
-                m_temp_last[MIXER2_OUT] = m_temp_last[BYPASS_OUT];		//[K]
-                m_enth_last[MIXER2_OUT] = m_enth_last[BYPASS_OUT];		//[kJ/kg]
-                m_entr_last[MIXER2_OUT] = m_entr_last[BYPASS_OUT];		//[kJ/kg-K]
-                m_dens_last[MIXER2_OUT] = m_dens_last[BYPASS_OUT];		//[kg/m^3]
-            }
+            m_temp_last[MIXER2_OUT] = m_temp_last[HTR_HP_OUT];		//[K]
+            m_enth_last[MIXER2_OUT] = m_enth_last[HTR_HP_OUT];		//[kJ/kg]
+            m_entr_last[MIXER2_OUT] = m_entr_last[HTR_HP_OUT];		//[kJ/kg-K]
+            m_dens_last[MIXER2_OUT] = m_dens_last[HTR_HP_OUT];		//[kg/m^3]
         }
-
-        // Calculate PHX Heat Transfer
+        // Flow only through Bypass
+        else
         {
-            m_Q_dot_PHX = m_m_dot_t * (m_enth_last[TURB_IN] - m_enth_last[MIXER2_OUT]);
-        }
-
-        // Back Calculate and Check values
-        {
-            // Bypass Temps
-            double bp_temp_in = m_temp_last[MIXER_OUT];
-            double bp_temp_out = m_temp_last[BYPASS_OUT];
-
-            double real_q_dot_total = m_W_dot_t + m_Q_dot_pc;
-
-            double qSum = m_Q_dot_total;
-            double qSum_calc = m_Q_dot_BP + m_Q_dot_PHX;
-        }
-
-
-        // HTF
-        {
-            // Calculate HTF Bypass Cold Approach
-            m_HTF_BP_cold_approach = m_T_HTF_BP_outlet - m_temp_last[MIXER_OUT];
-
-            // Calculate HTF Mdot
-            m_m_dot_HTF = m_Q_dot_total / ((m_T_HTF_PHX_inlet - m_T_HTF_BP_outlet) * m_cp_HTF);
-
-            // Calculate PHX outlet Temp
-            m_T_HTF_PHX_out = m_T_HTF_PHX_inlet - (m_Q_dot_PHX / (m_m_dot_HTF * m_cp_HTF));
-
-            // Calculate PHX Cold Approach
-            m_HTF_PHX_cold_approach = m_T_HTF_PHX_out - m_temp_last[MIXER2_OUT];
-        }
-
-    }
-
-    // old bypass method
-    if (false)
-    {
-        // Calculate Total Heat Coming into Cycle
-        {
-            m_W_dot_mc = m_w_mc * m_m_dot_mc;
-            m_W_dot_rc = m_w_rc * m_m_dot_rc;
-            m_W_dot_t = m_w_t * m_m_dot_t;
-            m_Q_dot_total = m_W_dot_mc + m_W_dot_rc + m_W_dot_t + m_Q_dot_pc;
-        }
-
-        // Calculate HTF Mass Flow Rate
-        {
-            m_m_dot_HTF = m_Q_dot_total / ((m_T_HTF_PHX_inlet - m_T_HTF_BP_outlet) * m_cp_HTF);
-        }
-
-
-        // Solve Bypass Outlet Temperature
-        {
-            double T_BP_out_lower = m_temp_last[MIXER_OUT];		//[K] Coldest possible temperature
-            double T_BP_out_upper = m_temp_last[TURB_OUT];		//[K] Hottest possible temperature
-
-            double error = 1000;
-            double T_BP_guess = 0.5 * (T_BP_out_lower + T_BP_out_upper);
-            double T_BP_calc;
-            while (error > 0.1)
-            {
-                solve_bypass(T_BP_guess, T_BP_calc);
-                double guess_val = T_BP_guess;
-                double calc_val = T_BP_calc;
-
-                error = std::abs(guess_val - calc_val);
-
-                // Update guess value
-                T_BP_guess = 0.5 * (guess_val + calc_val);
-            }
+            m_temp_last[MIXER2_OUT] = m_temp_last[BYPASS_OUT];		//[K]
+            m_enth_last[MIXER2_OUT] = m_enth_last[BYPASS_OUT];		//[kJ/kg]
+            m_entr_last[MIXER2_OUT] = m_entr_last[BYPASS_OUT];		//[kJ/kg-K]
+            m_dens_last[MIXER2_OUT] = m_dens_last[BYPASS_OUT];		//[kg/m^3]
         }
     }
 
-    // Iterate over energy
-    if (false)
+    // Calculate PHX Heat Transfer
     {
-        // Calculate Total Heat Coming into Cycle
+        m_Q_dot_PHX = m_m_dot_t * (m_enth_last[TURB_IN] - m_enth_last[MIXER2_OUT]);
+    }
+
+    // Back Calculate and Check values
+    {
+        // Bypass Temps
+        double bp_temp_in = m_temp_last[MIXER_OUT];
+        double bp_temp_out = m_temp_last[BYPASS_OUT];
+
+        double real_q_dot_total = m_W_dot_t + m_Q_dot_pc;
+
+        double qSum = m_Q_dot_total;
+        double qSum_calc = m_Q_dot_BP + m_Q_dot_PHX;
+    }
+
+    // HTF
+    {
+        // Calculate HTF Bypass Cold Approach
+        m_HTF_BP_cold_approach = m_T_HTF_BP_outlet - m_temp_last[MIXER_OUT];
+
+        // Calculate HTF Mdot
+        m_m_dot_HTF = m_Q_dot_total / ((m_T_HTF_PHX_inlet - m_T_HTF_BP_outlet) * m_cp_HTF);
+
+        // Calculate PHX outlet Temp
+        m_T_HTF_PHX_out = m_T_HTF_PHX_inlet - (m_Q_dot_PHX / (m_m_dot_HTF * m_cp_HTF));
+
+        // Calculate PHX Cold Approach
+        m_HTF_PHX_cold_approach = m_T_HTF_PHX_out - m_temp_last[MIXER2_OUT];
+    }
+
+    // Set objective metric
+    {
+
+        m_eta_thermal_calc_last = m_W_dot_net_last / m_Q_dot_total;
+
+        if (ms_des_par.m_des_objective_type == 2)
         {
-            m_W_dot_mc = m_w_mc * m_m_dot_mc;
-            m_W_dot_rc = m_w_rc * m_m_dot_rc;
-            m_W_dot_t = m_w_t * m_m_dot_t;
-            double m_Q_dot_pc = m_m_dot_mc * (m_enth_last[LTR_LP_OUT] - m_enth_last[MC_IN]);
-            m_Q_dot_total = m_W_dot_mc + m_W_dot_rc + m_W_dot_t + m_Q_dot_pc;
+            double phx_deltaT = m_temp_last[TURB_IN] - m_temp_last[HTR_HP_OUT];
+            double under_min_deltaT = std::max(0.0, ms_des_par.m_min_phx_deltaT - phx_deltaT);
+            double eta_deltaT_scale = std::exp(-under_min_deltaT);
+            m_objective_metric_last = m_eta_thermal_calc_last * eta_deltaT_scale;
         }
-
-        // Solve Bypass Outlet Temperature
+        else
         {
-            double T_BP_out_lower = m_temp_last[MIXER_OUT];		//[K] Coldest possible temperature
-            double T_BP_out_upper = m_temp_last[TURB_OUT];		//[K] Hottest possible temperature
-
-            double error = 1000;
-            double T_BP_guess = 0.5 * (T_BP_out_lower + T_BP_out_upper);
-            double T_BP_calc;
-            while (error > 0.1)
-            {
-                solve_bypass_energy(T_BP_guess, T_BP_calc);
-                double guess_val = T_BP_guess;
-                double calc_val = T_BP_calc;
-
-                error = std::abs(guess_val - calc_val);
-
-                // Update guess value
-                T_BP_guess = 0.5 * (guess_val + calc_val);
-            }
-
-            int x = 0;
+            m_objective_metric_last = m_eta_thermal_calc_last;
         }
-
-
     }
 
 }
@@ -566,10 +503,7 @@ int C_HTRBypass_Cycle::solve_HTR(double T_HTR_LP_OUT_guess, double& T_HTR_LP_out
         this->m_entr_last[HTR_LP_OUT] = this->mc_co2_props.entr;
         this->m_dens_last[HTR_LP_OUT] = this->mc_co2_props.dens;
     }
-        
 
-    // *********************************************************************************
-    // *********************************************************************************
     // Solve for the LTR solution
     {
         double T_LTR_LP_out_lower = this->m_temp_last[MC_OUT];		//[K] Coldest possible outlet temperature
@@ -592,8 +526,7 @@ int C_HTRBypass_Cycle::solve_HTR(double T_HTR_LP_OUT_guess, double& T_HTR_LP_out
         }
     }
         
-    // Know LTR performance so we can calculate the HP outlet
-        // Energy balance on LTR HP stream
+    // Know LTR performance so we can calculate the HP outlet (Energy balance on LTR HP stream)
     {
         this->m_enth_last[LTR_HP_OUT] = this->m_enth_last[MC_OUT] + m_Q_dot_LT / m_m_dot_mc;		//[kJ/kg]
         int prop_error_code = CO2_PH(this->m_pres_last[LTR_HP_OUT], this->m_enth_last[LTR_HP_OUT], &this->mc_co2_props);
@@ -635,7 +568,6 @@ int C_HTRBypass_Cycle::solve_HTR(double T_HTR_LP_OUT_guess, double& T_HTR_LP_out
         m_m_dot_htr_hp = m_m_dot_t - m_m_dot_bp;
     }
 
-
     // Find the design solution of the HTR
     {
         // If there is no flow through HTR HP side
@@ -649,12 +581,12 @@ int C_HTRBypass_Cycle::solve_HTR(double T_HTR_LP_OUT_guess, double& T_HTR_LP_out
         else
         {
             T_HTR_LP_out_calc = std::numeric_limits<double>::quiet_NaN();
-            this->mc_HT_recup.design_for_target__calc_outlet(this->ms_opt_des_par.m_HTR_target_code,
-                this->ms_opt_des_par.m_HTR_UA, this->ms_opt_des_par.m_HTR_min_dT, this->ms_opt_des_par.m_HTR_eff_target,
-                this->ms_opt_des_par.m_HTR_eff_max,
+            this->mc_HT_recup.design_for_target__calc_outlet(this->ms_des_par.m_HTR_target_code,
+                this->ms_des_par.m_HTR_UA, this->ms_des_par.m_HTR_min_dT, this->ms_des_par.m_HTR_eff_target,
+                this->ms_des_par.m_HTR_eff_max,
                 this->m_temp_last[MIXER_OUT], this->m_pres_last[MIXER_OUT], m_m_dot_htr_hp, this->m_pres_last[HTR_HP_OUT],
                 this->m_temp_last[TURB_OUT], this->m_pres_last[TURB_OUT], m_m_dot_t, this->m_pres_last[HTR_LP_OUT],
-                this->ms_opt_des_par.m_des_tol,
+                this->ms_des_par.m_des_tol,
                 m_Q_dot_HT, this->m_temp_last[HTR_HP_OUT], T_HTR_LP_out_calc);
         }
         
@@ -735,199 +667,157 @@ int C_HTRBypass_Cycle::solve_LTR(double T_LTR_LP_OUT_guess, double& T_LTR_LP_out
     // Solve LTR
     T_LTR_LP_out_calc = std::numeric_limits<double>::quiet_NaN();
     {
-        this->mc_LT_recup.design_for_target__calc_outlet(this->ms_opt_des_par.m_LTR_target_code,
-            this->ms_opt_des_par.m_LTR_UA, this->ms_opt_des_par.m_LTR_min_dT, this->ms_opt_des_par.m_LTR_eff_target,
-            this->ms_opt_des_par.m_LTR_eff_max,
+        this->mc_LT_recup.design_for_target__calc_outlet(this->ms_des_par.m_LTR_target_code,
+            this->ms_des_par.m_LTR_UA, this->ms_des_par.m_LTR_min_dT, this->ms_des_par.m_LTR_eff_target,
+            this->ms_des_par.m_LTR_eff_max,
             this->m_temp_last[MC_OUT], this->m_pres_last[MC_OUT], m_m_dot_mc, this->m_pres_last[LTR_HP_OUT],
             this->m_temp_last[HTR_LP_OUT], this->m_pres_last[HTR_LP_OUT], m_m_dot_t, this->m_pres_last[LTR_LP_OUT],
-            this->ms_opt_des_par.m_des_tol,
+            this->ms_des_par.m_des_tol,
             m_Q_dot_LT, this->m_temp_last[LTR_HP_OUT], T_LTR_LP_out_calc);
 
     }
 }
 
-int C_HTRBypass_Cycle::solve_bypass(double T_BP_OUT_guess, double& T_BP_out_calc)
-{
-    // Set temperature guess
-    m_temp_last[BYPASS_OUT] = T_BP_OUT_guess;		//[K]	
-
-    // Solve BYPASS_OUT properties
-    {
-        int prop_error_code = CO2_TP(this->m_temp_last[BYPASS_OUT], this->m_pres_last[BYPASS_OUT], &this->mc_co2_props);
-        if (prop_error_code != 0)
-        {
-            return prop_error_code;
-        }
-        this->m_enth_last[BYPASS_OUT] = this->mc_co2_props.enth;
-        this->m_entr_last[BYPASS_OUT] = this->mc_co2_props.entr;
-        this->m_dens_last[BYPASS_OUT] = this->mc_co2_props.dens;
-    }
-
-    // Simulate Mixer 2
-    {
-        // If Bypass and HTR have flow
-        if (m_bp_frac >= 1e-12 && m_bp_frac <= (1.0-1e-12))
-        {
-            m_enth_last[MIXER2_OUT] = (1.0 - m_bp_frac) * m_enth_last[HTR_HP_OUT] +
-                m_bp_frac * m_enth_last[BYPASS_OUT];	//[kJ/kg]
-
-            int prop_error_code = CO2_PH(m_pres_last[MIXER2_OUT], m_enth_last[MIXER2_OUT], &mc_co2_props);
-            if (prop_error_code != 0)
-            {
-                return prop_error_code;
-            }
-            m_temp_last[MIXER2_OUT] = mc_co2_props.temp;		//[K]
-            m_entr_last[MIXER2_OUT] = mc_co2_props.entr;		//[kJ/kg-K]
-            m_dens_last[MIXER2_OUT] = mc_co2_props.dens;		//[kg/m^3]
-
-        }
-        // Flow only through HTR
-        else if (m_bp_frac <= (1.0 - 1e-12))
-        {
-            m_temp_last[MIXER2_OUT] = m_temp_last[HTR_HP_OUT];		//[K]
-            m_enth_last[MIXER2_OUT] = m_enth_last[HTR_HP_OUT];		//[kJ/kg]
-            m_entr_last[MIXER2_OUT] = m_entr_last[HTR_HP_OUT];		//[kJ/kg-K]
-            m_dens_last[MIXER2_OUT] = m_dens_last[HTR_HP_OUT];		//[kg/m^3]
-        }
-        // Flow only through Bypass
-        else
-        {
-            m_temp_last[MIXER2_OUT] = m_temp_last[BYPASS_OUT];		//[K]
-            m_enth_last[MIXER2_OUT] = m_enth_last[BYPASS_OUT];		//[kJ/kg]
-            m_entr_last[MIXER2_OUT] = m_entr_last[BYPASS_OUT];		//[kJ/kg-K]
-            m_dens_last[MIXER2_OUT] = m_dens_last[BYPASS_OUT];		//[kg/m^3]
-        }
-    }
-
-    // Calculate Heat From PHX
-    m_Q_dot_PHX = m_m_dot_t * (m_enth_last[TURB_IN] - m_enth_last[MIXER2_OUT]);
-
-    // Calculate HTF PHX Outlet Temp
-    m_T_HTF_PHX_out = m_T_HTF_PHX_inlet - (m_Q_dot_PHX / (m_cp_HTF * m_m_dot_HTF));
-
-    // Check if HTF PHX Outlet is higher than BP outlet
-    if (m_T_HTF_PHX_out < m_T_HTF_BP_outlet)
-    {
-        // Something is wrong
-    }
-
-
-    // Solve Bypass HTX
-    {
-        // Calculate Heat Transfer in Bypass
-        m_Q_dot_BP = m_m_dot_HTF * m_cp_HTF * (m_T_HTF_PHX_out - m_T_HTF_BP_outlet);
-
-        // Calculate Enthalpy at sco2 bypass outlet
-        double h_bp_out_calc = (m_Q_dot_BP / m_m_dot_bp) + m_enth_last[MIXER_OUT];
-
-        // Calculate Temperature
-        int prop_error_code = CO2_PH(m_pres_last[BYPASS_OUT], h_bp_out_calc, &mc_co2_props);
-        if (prop_error_code != 0)
-        {
-            return prop_error_code;
-        }
-        T_BP_out_calc = mc_co2_props.temp;
-
-        int x = 0;
-    }
-
-
-    return 0;
-}
-
-int C_HTRBypass_Cycle::solve_bypass_energy(double T_BP_OUT_guess, double& T_BP_out_calc)
-{
-    // Set temperature guess
-    m_temp_last[BYPASS_OUT] = T_BP_OUT_guess;		//[K]	
-
-    // Solve BYPASS_OUT properties
-    {
-        int prop_error_code = CO2_TP(this->m_temp_last[BYPASS_OUT], this->m_pres_last[BYPASS_OUT], &this->mc_co2_props);
-        if (prop_error_code != 0)
-        {
-            return prop_error_code;
-        }
-        this->m_enth_last[BYPASS_OUT] = this->mc_co2_props.enth;
-        this->m_entr_last[BYPASS_OUT] = this->mc_co2_props.entr;
-        this->m_dens_last[BYPASS_OUT] = this->mc_co2_props.dens;
-    }
-
-    // Calculate Bypass Heat Exchanged
-    {
-        m_Q_dot_BP = m_m_dot_bp * (m_enth_last[BYPASS_OUT] - m_enth_last[MIXER_OUT]);
-    }
-
-    // Simulate Mixer 2
-    {
-        // If Bypass and HTR have flow
-        if (m_bp_frac >= 1e-12 && m_bp_frac <= (1.0 - 1e-12))
-        {
-            m_enth_last[MIXER2_OUT] = (1.0 - m_bp_frac) * m_enth_last[HTR_HP_OUT] +
-                m_bp_frac * m_enth_last[BYPASS_OUT];	//[kJ/kg]
-
-            int prop_error_code = CO2_PH(m_pres_last[MIXER2_OUT], m_enth_last[MIXER2_OUT], &mc_co2_props);
-            if (prop_error_code != 0)
-            {
-                return prop_error_code;
-            }
-            m_temp_last[MIXER2_OUT] = mc_co2_props.temp;		//[K]
-            m_entr_last[MIXER2_OUT] = mc_co2_props.entr;		//[kJ/kg-K]
-            m_dens_last[MIXER2_OUT] = mc_co2_props.dens;		//[kg/m^3]
-
-        }
-        // Flow only through HTR
-        else if (m_bp_frac <= (1.0 - 1e-12))
-        {
-            m_temp_last[MIXER2_OUT] = m_temp_last[HTR_HP_OUT];		//[K]
-            m_enth_last[MIXER2_OUT] = m_enth_last[HTR_HP_OUT];		//[kJ/kg]
-            m_entr_last[MIXER2_OUT] = m_entr_last[HTR_HP_OUT];		//[kJ/kg-K]
-            m_dens_last[MIXER2_OUT] = m_dens_last[HTR_HP_OUT];		//[kg/m^3]
-        }
-        // Flow only through Bypass
-        else
-        {
-            m_temp_last[MIXER2_OUT] = m_temp_last[BYPASS_OUT];		//[K]
-            m_enth_last[MIXER2_OUT] = m_enth_last[BYPASS_OUT];		//[kJ/kg]
-            m_entr_last[MIXER2_OUT] = m_entr_last[BYPASS_OUT];		//[kJ/kg-K]
-            m_dens_last[MIXER2_OUT] = m_dens_last[BYPASS_OUT];		//[kg/m^3]
-        }
-    }
-
-    // Calculate Heat From PHX
-    m_Q_dot_PHX = m_m_dot_t * (m_enth_last[TURB_IN] - m_enth_last[MIXER2_OUT]);
-
-    // Back Calculate Bypass Q_dot using Sum
-    double q_dot_bp_calc = m_Q_dot_total - m_Q_dot_PHX;
-
-    double error = q_dot_bp_calc - m_Q_dot_BP;
-
-    // Negative Bypass energy means temperature is too low
-    /*if (q_dot_bp_calc < 0)
-    {
-        T_BP_out_calc = m_enth_last[TURB_IN];
-        return 0;
-    }*/
-
-    // Back Calculate sco2 bypass outlet temperature
-    {
-        double enth_bp_out_calc = m_enth_last[MIXER_OUT] + (q_dot_bp_calc / m_m_dot_bp);
-
-        int prop_error_code = CO2_PH(m_pres_last[BYPASS_OUT], enth_bp_out_calc, &mc_co2_props);
-        if (prop_error_code != 0)
-        {
-            return prop_error_code;
-        }
-        T_BP_out_calc = mc_co2_props.temp;
-    }
-
-}
-
-
-
-
-
 void C_HTRBypass_Cycle::opt_design_core(int& error_code)
 {
+    // Map ms_opt_des_par to ms_des_par
+        // LTR thermal design
+    ms_des_par.m_LTR_target_code = ms_opt_des_par.m_LTR_target_code;    //[-]
+    ms_des_par.m_LTR_min_dT = ms_opt_des_par.m_LTR_min_dT;      //[K]
+    ms_des_par.m_LTR_eff_target = ms_opt_des_par.m_LTR_eff_target;  //[-]
+    ms_des_par.m_LTR_eff_max = ms_opt_des_par.m_LTR_eff_max;    //[-]
+    ms_des_par.m_LTR_od_UA_target_type = ms_opt_des_par.m_LTR_od_UA_target_type;
+    // HTR thermal design
+    ms_des_par.m_HTR_target_code = ms_opt_des_par.m_HTR_target_code;    //[-]
+    ms_des_par.m_HTR_min_dT = ms_opt_des_par.m_HTR_min_dT;      //[K]
+    ms_des_par.m_HTR_eff_target = ms_opt_des_par.m_HTR_eff_target;  //[-]
+    ms_des_par.m_HTR_eff_max = ms_opt_des_par.m_HTR_eff_max;    //[-]
+    ms_des_par.m_HTR_od_UA_target_type = ms_opt_des_par.m_HTR_od_UA_target_type;
+    //
+    ms_des_par.m_des_tol = ms_opt_des_par.m_des_tol;
+
+    ms_des_par.m_is_des_air_cooler = ms_opt_des_par.m_is_des_air_cooler;	//[-]
+
+    ms_des_par.m_des_objective_type = ms_opt_des_par.m_des_objective_type;	//[-]
+    ms_des_par.m_min_phx_deltaT = ms_opt_des_par.m_min_phx_deltaT;			//[C]
+
+    // ms_des_par members to be defined by optimizer and set in 'design_point_eta':
+        // m_P_mc_in
+        // m_P_mc_out
+        // m_recomp_frac
+        // m_UA_LT
+        // m_UA_HT
+
+    int index = 0;
+
+    std::vector<double> x(0);
+    std::vector<double> lb(0);
+    std::vector<double> ub(0);
+    std::vector<double> scale(0);
+
+    if (!ms_opt_des_par.m_fixed_P_mc_out)
+    {
+        x.push_back(ms_opt_des_par.m_P_mc_out_guess);
+        lb.push_back(100.0);
+        ub.push_back(m_P_high_limit);
+        scale.push_back(500.0);
+
+        index++;
+    }
+
+    if (!ms_opt_des_par.m_fixed_PR_HP_to_LP)
+    {
+        x.push_back(ms_opt_des_par.m_PR_HP_to_LP_guess);
+        lb.push_back(0.0001);
+        double PR_max = m_P_high_limit / 100.0;
+        ub.push_back(PR_max);
+        scale.push_back(0.2);
+
+        index++;
+    }
+
+    if (!ms_opt_des_par.m_fixed_recomp_frac)
+    {
+        x.push_back(ms_opt_des_par.m_recomp_frac_guess);
+        lb.push_back(0.0);
+        ub.push_back(1.0);
+        scale.push_back(0.05);
+
+        index++;
+    }
+
+    if (!ms_opt_des_par.m_fixed_LT_frac)
+    {
+        x.push_back(ms_opt_des_par.m_LT_frac_guess);
+        lb.push_back(0.0);
+        ub.push_back(1.0);
+        scale.push_back(0.05);
+
+        index++;
+    }
+
+    error_code = 0;
+    if (index > 0)
+    {
+        // Ensure thermal efficiency is initialized to 0
+        m_objective_metric_opt = 0.0;
+
+        // Set up instance of nlopt class and set optimization parameters
+        nlopt::opt		opt_des_cycle(nlopt::LN_SBPLX, index);
+        opt_des_cycle.set_lower_bounds(lb);
+        opt_des_cycle.set_upper_bounds(ub);
+        opt_des_cycle.set_initial_step(scale);
+        opt_des_cycle.set_xtol_rel(ms_opt_des_par.m_des_opt_tol);
+
+        // Set max objective function
+        opt_des_cycle.set_max_objective(nlopt_cb_opt_htr_bypass_des, this);		// Calls wrapper/callback that calls 'design_point_eta', which optimizes design point eta through repeated calls to 'design'
+        double max_f = std::numeric_limits<double>::quiet_NaN();
+        nlopt::result   result_des_cycle = opt_des_cycle.optimize(x, max_f);
+
+        ms_des_par = ms_des_par_optimal;
+
+        design_core(error_code);
+
+        /*
+        m_W_dot_net_last = m_W_dot_net_opt;
+        m_eta_thermal_last = m_eta_thermal_opt;
+        m_temp_last = m_temp_opt;
+        m_pres_last = m_pres_opt;
+        m_enth_last = m_enth_opt;
+        m_entr_last = m_entr_opt;
+        m_dens_last = m_dens_opt;
+        */
+    }
+    else
+    {
+        // Finish defining ms_des_par based on current 'x' values
+        ms_des_par.m_P_mc_out = ms_opt_des_par.m_P_mc_out_guess;
+        ms_des_par.m_P_mc_in = ms_des_par.m_P_mc_out / ms_opt_des_par.m_PR_HP_to_LP_guess;
+        ms_des_par.m_recomp_frac = ms_opt_des_par.m_recomp_frac_guess;
+
+        if (ms_opt_des_par.m_LTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA || ms_opt_des_par.m_HTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA)
+        {
+            ms_des_par.m_LTR_UA = ms_opt_des_par.m_UA_rec_total * ms_opt_des_par.m_LT_frac_guess;
+            ms_des_par.m_HTR_UA = ms_opt_des_par.m_UA_rec_total * (1.0 - ms_opt_des_par.m_LT_frac_guess);
+        }
+        else
+        {
+            ms_des_par.m_LTR_UA = ms_opt_des_par.m_LTR_UA;      //[kW/K]
+            ms_des_par.m_HTR_UA = ms_opt_des_par.m_HTR_UA;      //[kW/K]
+        }
+
+        // Ensure thermal efficiency is initialized to 0
+        m_objective_metric_opt = 0.0;
+        double eta_local = design_cycle_return_objective_metric(x);
+
+        if (eta_local == 0.0)
+        {
+            error_code = -1;
+            return;
+        }
+
+        ms_des_par_optimal = ms_des_par;
+    }
 }
 
 void C_HTRBypass_Cycle::auto_opt_design_core(int& error_code)
@@ -1127,6 +1017,116 @@ int C_HTRBypass_Cycle::auto_opt_design(S_auto_opt_design_parameters& auto_opt_de
     return auto_opt_des_error_code;
 }
 
+
+
+double C_HTRBypass_Cycle::design_cycle_return_objective_metric(const std::vector<double>& x)
+{
+    // 'x' is array of inputs either being adjusted by optimizer or set constant
+    // Finish defining ms_des_par based on current 'x' values
+
+    int index = 0;
+
+    // Main compressor outlet pressure
+    if (!ms_opt_des_par.m_fixed_P_mc_out)
+    {
+        ms_des_par.m_P_mc_out = x[index];
+        if (ms_des_par.m_P_mc_out > m_P_high_limit)
+            return 0.0;
+        index++;
+    }
+    else
+        ms_des_par.m_P_mc_out = ms_opt_des_par.m_P_mc_out_guess;
+
+    // Main compressor pressure ratio
+    double PR_mc_local = -999.9;
+    double P_mc_in = -999.9;
+    if (!ms_opt_des_par.m_fixed_PR_HP_to_LP)
+    {
+        PR_mc_local = x[index];
+        if (PR_mc_local > 50.0)
+            return 0.0;
+        index++;
+        P_mc_in = ms_des_par.m_P_mc_out / PR_mc_local;
+    }
+    else
+    {
+        if (ms_opt_des_par.m_PR_HP_to_LP_guess >= 0.0)
+        {
+            PR_mc_local = ms_opt_des_par.m_PR_HP_to_LP_guess;
+            P_mc_in = ms_des_par.m_P_mc_out / PR_mc_local;		//[kPa]
+        }
+        else
+        {
+            P_mc_in = std::abs(ms_opt_des_par.m_PR_HP_to_LP_guess);		//[kPa]
+        }
+    }
+
+
+    if (P_mc_in >= ms_des_par.m_P_mc_out)
+        return 0.0;
+    if (P_mc_in <= 100.0)
+        return 0.0;
+    ms_des_par.m_P_mc_in = P_mc_in;
+
+    // Recompression fraction
+    if (!ms_opt_des_par.m_fixed_recomp_frac)
+    {
+        ms_des_par.m_recomp_frac = x[index];
+        if (ms_des_par.m_recomp_frac < 0.0)
+            return 0.0;
+        index++;
+    }
+    else
+        ms_des_par.m_recomp_frac = ms_opt_des_par.m_recomp_frac_guess;
+
+    // Recuperator split fraction
+    double LT_frac_local = -999.9;
+    if (!ms_opt_des_par.m_fixed_LT_frac)
+    {
+        LT_frac_local = x[index];
+        if (LT_frac_local > 1.0 || LT_frac_local < 0.0)
+            return 0.0;
+        index++;
+    }
+    else
+        LT_frac_local = ms_opt_des_par.m_LT_frac_guess;
+
+    if (ms_opt_des_par.m_LTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA || ms_opt_des_par.m_HTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA)
+    {
+        ms_des_par.m_LTR_UA = ms_opt_des_par.m_UA_rec_total * LT_frac_local;
+        ms_des_par.m_HTR_UA = ms_opt_des_par.m_UA_rec_total * (1.0 - LT_frac_local);
+    }
+    else
+    {
+        ms_des_par.m_LTR_UA = ms_opt_des_par.m_LTR_UA;      //[kW/K]
+        ms_des_par.m_HTR_UA = ms_opt_des_par.m_HTR_UA;      //[kW/K]
+    }
+
+    int error_code = 0;
+
+    design_core(error_code);
+
+    double objective_metric = 0.0;
+    if (error_code == 0)
+    {
+        objective_metric = m_objective_metric_last;
+
+        if (m_objective_metric_last > m_objective_metric_opt)
+        {
+            ms_des_par_optimal = ms_des_par;
+            m_objective_metric_opt = m_objective_metric_last;
+        }
+    }
+
+    return objective_metric;
+}
+
+
+
+
+
+
+
 int C_HTRBypass_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters& auto_opt_des_hit_eta_in, std::string& error_msg)
 {
     return 0;
@@ -1180,4 +1180,14 @@ void C_HTRBypass_Cycle::off_design_recompressor(double T_in, double P_in, double
 
 void C_HTRBypass_Cycle::estimate_od_turbo_operation(double T_mc_in, double P_mc_in, double f_recomp, double T_t_in, double phi_mc, int& mc_error_code, double& mc_w_tip_ratio, double& P_mc_out, int& rc_error_code, double& rc_w_tip_ratio, double& rc_phi, bool is_update_ms_od_solved)
 {
+}
+
+
+double nlopt_cb_opt_htr_bypass_des(const std::vector<double>& x, std::vector<double>& grad, void* data)
+{
+    C_HTRBypass_Cycle* frame = static_cast<C_HTRBypass_Cycle*>(data);
+    if (frame != NULL)
+        return frame->design_cycle_return_objective_metric(x);
+    else
+        return 0.0;
 }

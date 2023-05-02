@@ -264,11 +264,8 @@ private:
 
 
     // Added
-    int solve_cycle(double bypass_fraction, double& error);
     int solve_HTR(double T_HTR_LP_OUT_guess, double& T_HTR_LP_out_calc);
     int solve_LTR(double T_LTR_LP_OUT_guess, double& T_LTR_LP_out_calc);
-    int solve_bypass(double T_BP_OUT_guess, double& T_BP_out_calc);
-    int solve_bypass_energy(double T_BP_OUT_guess, double& T_BP_out_calc);
 
 public:
 
@@ -332,7 +329,8 @@ public:
 
 
 
-
+    // Called by 'nlopt_callback_opt_des_1', so needs to be public
+    double design_cycle_return_objective_metric(const std::vector<double>& x);
 
 
     // Unused
@@ -383,5 +381,8 @@ public:
 
 
 };
+
+
+double nlopt_cb_opt_htr_bypass_des(const std::vector<double>& x, std::vector<double>& grad, void* data);
 
 #endif
