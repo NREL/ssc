@@ -80,7 +80,7 @@ public:
                 auto& input = compute_module_inputs->table;
                 ssc_module_exec(module, static_cast<ssc_data_t>(&input));
 
-                auto compute_module_outtputs = ssc_data_create();
+                auto compute_module_outputs = ssc_data_create();
 
                 int pidx = 0;
                 while (const ssc_info_t p_inf = ssc_module_var_info(module, pidx++))
@@ -90,17 +90,17 @@ public:
                         auto var_name = ssc_info_name(p_inf);
                         auto type = ssc_info_data_type(p_inf);
                         auto var_value = input.lookup(var_name);
-                        ssc_data_set_var(compute_module_outtputs, var_name, var_value);
+                        ssc_data_set_var(compute_module_outputs, var_name, var_value);
                     }
                 }
 
-                ssc_data_set_table(outputs, compute_module.c_str(), compute_module_outtputs);
+                ssc_data_set_table(outputs, compute_module.c_str(), compute_module_outputs);
 
-                ssc_data_get_number(compute_module_outtputs, "annual_energy", &annual_energy);
+                ssc_data_get_number(compute_module_outputs, "annual_energy", &annual_energy);
                 cumulative_annual_energy += annual_energy;
 
                 ssc_module_free(module);
-                ssc_data_free(compute_module_outtputs);
+                ssc_data_free(compute_module_outputs);
             }
             // need to agregate some outputs potenitally here
             ssc_data_set_number(outputs, "cumulative_annual_energy", cumulative_annual_energy);
