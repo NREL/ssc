@@ -2277,9 +2277,11 @@ public:
             // Need to grab the crit load before battstor assigns it as an output
             if (is_assigned("crit_load")) {
                 p_crit_load = as_vector_ssc_number_t("crit_load");
-                size_t nload = p_crit_load.size();
-                if (nload != n_rec_single_year)
-                    throw exec_error("battery", "Electric load profile must have same number of values as weather file, or 8760.");
+                size_t n_crit_load = p_crit_load.size();
+                if (n_crit_load != n_rec_single_year && n_crit_load != 8760)
+                    throw exec_error("battery", "Critical electric load profile must have same number of values as weather file, or 8760.");
+                if (n_crit_load != nload)
+                    throw exec_error("battery", "Critical load profile must have same number of values as load file.");
 
             }
 

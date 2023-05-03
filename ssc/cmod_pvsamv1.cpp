@@ -1167,9 +1167,11 @@ void cm_pvsamv1::exec()
     if (is_assigned("crit_load"))
     {
         p_crit_load_in = as_vector_ssc_number_t("crit_load");
-        nload = p_crit_load_in.size();
-        if (nload != nrec && nload != 8760)
-            throw exec_error("pvsamv1", "The critical electric load profile must have either same number of time steps as the weather file, or 8760 time steps.");
+        size_t n_crit_load = p_crit_load_in.size();
+        if (n_crit_load != nrec && n_crit_load != 8760)
+            throw exec_error("pvsamv1", "Critical electric load profile must have same number of values as weather file, or 8760.");
+        if (n_crit_load != nload)
+            throw exec_error("pvsamv1", "Critical load profile must have same number of values as load file.");
     }
 
     // resilience metrics for battery
