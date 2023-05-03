@@ -45,52 +45,83 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 void C_HTRBypass_Cycle::design_core(int& error_code)
 {
     // Temporary Hard coded parameters
-    ms_des_par.m_recomp_frac = 0.3;
-    m_cp_HTF = 1.482e+03;           // J/kg K
-    m_T_HTF_PHX_inlet = 670 + 273;  // K
+    //ms_des_par.m_recomp_frac = 0.3;
+
     m_dT_BP = 10;
+    m_T_HTF_PHX_inlet = 670 + 273;  // K
     m_T_HTF_BP_outlet = 770;  // K
-    ms_des_par.m_P_mc_in = 10000;
-    ms_des_par.m_P_mc_out = 25000;
-    m_T_t_in = 923.149;
 
-    // temp
-    double hot_approach = m_T_HTF_PHX_inlet - m_T_t_in;
 
-    // Iterating bp_frac so the cold approach value is correct
-    m_bp_frac = 0;
-    double des_HTF_PHX_cold_approach = hot_approach;
 
-    // local
-    double error = 100000;
-    double frac_low = 0.0;
-    double frac_high = 1;
-    m_bp_frac = 0.5 * (frac_low + frac_high);
-    int count = 0;
-    while (std::abs(error) > 0.5)
+    m_cp_HTF = 1.482e+03;           // J/kg K
+    //ms_des_par.m_P_mc_in = 10000;
+    //ms_des_par.m_P_mc_out = 25000;
+    //m_T_t_in = 923.149;
+
+
+    C_mono_htr_bypass_BP_des BP_des_eq(this);
+    C_monotonic_eq_solver BP_des_solver(BP_des_eq);
+    double BP_out_lower = 0;
+    double BP_out_upper = 1.0;
+
+    double BP_out_guess_lower = 0.25;	//[K] There is nothing special about these guesses...
+    double BP_out_guess_upper = 0.75;	//[K] There is nothing special about these guesses, either...
+
+    BP_des_solver.settings(ms_des_par.m_des_tol * m_temp_last[MC_IN], 1000, BP_out_lower, BP_out_upper, false);
+
+    double BP_out_solved, tol_BP_out_solved;
+    BP_out_solved = tol_BP_out_solved = std::numeric_limits<double>::quiet_NaN();
+    int iter_BP_out = -1;
+
+    int BP_out_code = BP_des_solver.solve(BP_out_guess_lower, BP_out_guess_upper, 0, BP_out_solved, tol_BP_out_solved, iter_BP_out);
+
+    if (BP_out_code != C_monotonic_eq_solver::CONVERGED)
     {
-        // Update Bypass Fraction Guess
-        m_bp_frac = 0.5 * (frac_low + frac_high);
-
-        // Run Calculation
-        design_core_standard(error_code);
-
-        // Get Results
-        double actual_approach = m_HTF_PHX_cold_approach;
-        error = actual_approach - des_HTF_PHX_cold_approach;
-
-        // Update Bounds
-        if (error < 0)
-            frac_low = m_bp_frac;
-        else
-            frac_high = m_bp_frac;
-
-        if (count > 50)
-            break;
-
-        count++;
+        error_code = 35;
+        return;
     }
 
+
+    // DEBUG
+    if (false)
+    {
+        // temp
+        double hot_approach = m_T_HTF_PHX_inlet - m_T_t_in;
+
+        // Iterating bp_frac so the cold approach value is correct
+        m_bp_frac = 0;
+        double des_HTF_PHX_cold_approach = hot_approach;
+
+        // local
+        double error = 100000;
+        double frac_low = 0.0;
+        double frac_high = 1;
+        m_bp_frac = 0.5 * (frac_low + frac_high);
+        int count = 0;
+        while (std::abs(error) > 0.5)
+        {
+            // Update Bypass Fraction Guess
+            m_bp_frac = 0.5 * (frac_low + frac_high);
+
+            // Run Calculation
+            design_core_standard(error_code);
+
+            // Get Results
+            double actual_approach = m_HTF_PHX_cold_approach;
+            error = actual_approach - des_HTF_PHX_cold_approach;
+
+            // Update Bounds
+            if (error < 0)
+                frac_low = m_bp_frac;
+            else
+                frac_high = m_bp_frac;
+
+            if (count > 50)
+                break;
+
+            count++;
+        }
+    }
 
     // DEBUG
     if (false)
@@ -326,23 +357,65 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
 
     // Solve the recuperators
     {
-        double T_HTR_LP_out_lower = m_temp_last[MC_OUT];		//[K] Coldest possible temperature
-        double T_HTR_LP_out_upper = m_temp_last[TURB_OUT];		//[K] Hottest possible temperature
+        C_mono_htr_bypass_HTR_des HTR_des_eq(this);
+        C_monotonic_eq_solver HTR_des_solver(HTR_des_eq);
 
-        double error = 1000;
-        double T_HTR_guess = 0.5 * (T_HTR_LP_out_lower + T_HTR_LP_out_upper);
-        double T_HTR_calc;
-        while (error > 0.1)
+        if (ms_des_par.m_recomp_frac == 0.0)
         {
-            solve_HTR(T_HTR_guess, T_HTR_calc);
-            double guess_val = T_HTR_guess;
-            double calc_val = T_HTR_calc;
+            double y_T_diff = std::numeric_limits<double>::quiet_NaN();
+            int no_HTR_out_code = HTR_des_solver.test_member_function(m_temp_last[TURB_OUT], &y_T_diff);
 
-            error = std::abs(guess_val - calc_val);
-
-            // Update guess value
-            T_HTR_guess = 0.5 * (guess_val + calc_val);
+            if (no_HTR_out_code != 0 || std::abs(y_T_diff / m_temp_last[MC_IN]) > ms_des_par.m_des_tol)
+            {
+                error_code = 35;
+                return;
+            }
         }
+        else
+        {
+            double T_HTR_LP_out_lower = m_temp_last[MC_OUT];		//[K] Coldest possible temperature
+            double T_HTR_LP_out_upper = m_temp_last[TURB_OUT];		//[K] Hottest possible temperature
+
+            double T_HTR_LP_out_guess_lower = std::min(T_HTR_LP_out_upper - 2.0, std::max(T_HTR_LP_out_lower + 15.0, 220.0 + 273.15));	//[K] There is nothing special about these guesses...
+            double T_HTR_LP_out_guess_upper = std::min(T_HTR_LP_out_guess_lower + 20.0, T_HTR_LP_out_upper - 1.0);	//[K] There is nothing special about these guesses, either...
+
+            HTR_des_solver.settings(ms_des_par.m_des_tol * m_temp_last[MC_IN], 1000, T_HTR_LP_out_lower, T_HTR_LP_out_upper, false);
+
+            double T_HTR_LP_out_solved, tol_T_HTR_LP_out_solved;
+            T_HTR_LP_out_solved = tol_T_HTR_LP_out_solved = std::numeric_limits<double>::quiet_NaN();
+            int iter_T_HTR_LP_out = -1;
+
+            int T_HTR_LP_out_code = HTR_des_solver.solve(T_HTR_LP_out_guess_lower, T_HTR_LP_out_guess_upper, 0,
+                T_HTR_LP_out_solved, tol_T_HTR_LP_out_solved, iter_T_HTR_LP_out);
+
+            if (T_HTR_LP_out_code != C_monotonic_eq_solver::CONVERGED)
+            {
+                error_code = 35;
+                return;
+            }
+
+
+        }
+
+
+
+        //double T_HTR_LP_out_lower = m_temp_last[MC_OUT];		//[K] Coldest possible temperature
+        //double T_HTR_LP_out_upper = m_temp_last[TURB_OUT];		//[K] Hottest possible temperature
+
+        //double error = 1000;
+        //double T_HTR_guess = 0.5 * (T_HTR_LP_out_lower + T_HTR_LP_out_upper);
+        //double diff = std::numeric_limits<double>::quiet_NaN();
+        //while (error > 0.1)
+        //{
+        //    solve_HTR(T_HTR_guess, &diff);
+        //    double guess_val = T_HTR_guess;
+        //    double calc_val = T_HTR_guess + diff;
+
+        //    error = std::abs(guess_val - calc_val);
+
+        //    // Update guess value
+        //    T_HTR_guess = 0.5 * (guess_val + calc_val);
+        //}
     }
 
     // State 5 can now be fully defined
@@ -483,10 +556,13 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
 
 }
 
-int C_HTRBypass_Cycle::solve_HTR(double T_HTR_LP_OUT_guess, double& T_HTR_LP_out_calc)
+
+
+
+
+int C_HTRBypass_Cycle::solve_HTR(double T_HTR_LP_OUT_guess, double* diff_T_HTR_LP_out)
 {
     m_w_rc = m_m_dot_t = m_m_dot_rc = m_m_dot_mc = m_Q_dot_LT = m_Q_dot_HT = std::numeric_limits<double>::quiet_NaN();
-    double* diff_T_HTR_LP_out;
 
     // Set temperature guess
     m_temp_last[HTR_LP_OUT] = T_HTR_LP_OUT_guess;		//[K]	
@@ -509,21 +585,46 @@ int C_HTRBypass_Cycle::solve_HTR(double T_HTR_LP_OUT_guess, double& T_HTR_LP_out
         double T_LTR_LP_out_lower = this->m_temp_last[MC_OUT];		//[K] Coldest possible outlet temperature
         double T_LTR_LP_out_upper = this->m_temp_last[HTR_LP_OUT];	//[K] Hottest possible outlet temperature
 
-        double error = 1000;
-        double T_LTR_guess = 0.5 * (T_LTR_LP_out_lower + T_LTR_LP_out_upper);
-        double T_LTR_calc;
-        while (error > 0.1)
+        double T_LTR_LP_out_guess_upper = std::min(T_LTR_LP_out_upper, T_LTR_LP_out_lower + 15.0);	//[K] There is nothing special about using 15 here...
+        double T_LTR_LP_out_guess_lower = std::min(T_LTR_LP_out_guess_upper * 0.99, T_LTR_LP_out_lower + 2.0);	//[K] There is nothing special about using 2 here...
+
+        C_mono_htr_bypass_LTR_des LTR_des_eq(this);
+        C_monotonic_eq_solver LTR_des_solver(LTR_des_eq);
+
+        LTR_des_solver.settings(this->ms_des_par.m_des_tol * this->m_temp_last[MC_IN], 1000, T_LTR_LP_out_lower,
+                                T_LTR_LP_out_upper, false);
+
+        double T_LTR_LP_out_solved = std::numeric_limits<double>::quiet_NaN();
+        double tol_T_LTR_LP_out_solved = std::numeric_limits<double>::quiet_NaN();
+        int iter_T_LTR_LP_out = -1;
+
+        int T_LTR_LP_out_code = LTR_des_solver.solve(T_LTR_LP_out_guess_lower, T_LTR_LP_out_guess_upper, 0, T_LTR_LP_out_solved,
+            tol_T_LTR_LP_out_solved, iter_T_LTR_LP_out);
+
+        if (T_LTR_LP_out_code != C_monotonic_eq_solver::CONVERGED)
         {
-            solve_LTR(T_LTR_guess, T_LTR_calc);
-            double guess_val = T_LTR_guess;
-            double calc_val = T_LTR_calc;
-
-            error = std::abs(guess_val - calc_val);
-
-            // Update guess value
-            T_LTR_guess = 0.5 * (guess_val + calc_val);
-
+            return 31;
         }
+
+        //double error = 1000;
+        //double T_LTR_guess = 0.5 * (T_LTR_LP_out_lower + T_LTR_LP_out_upper);
+        //double diff = std::numeric_limits<double>::quiet_NaN();
+        //while (error > 0.1)
+        //{
+        //    solve_LTR(T_LTR_guess, &diff);
+        //    double guess_val = T_LTR_guess;
+        //    double calc_val = T_LTR_guess + diff;
+
+        //    error = std::abs(guess_val - calc_val);
+
+        //    // Update guess value
+        //    T_LTR_guess = 0.5 * (guess_val + calc_val);
+
+        //}
+
+
+
+
     }
         
     // Know LTR performance so we can calculate the HP outlet (Energy balance on LTR HP stream)
@@ -569,6 +670,7 @@ int C_HTRBypass_Cycle::solve_HTR(double T_HTR_LP_OUT_guess, double& T_HTR_LP_out
     }
 
     // Find the design solution of the HTR
+    double T_HTR_LP_out_calc = std::numeric_limits<double>::quiet_NaN();
     {
         // If there is no flow through HTR HP side
         if (m_m_dot_htr_hp < 1e-12)
@@ -580,7 +682,6 @@ int C_HTRBypass_Cycle::solve_HTR(double T_HTR_LP_OUT_guess, double& T_HTR_LP_out
         // If there is flow through HTR HP side
         else
         {
-            T_HTR_LP_out_calc = std::numeric_limits<double>::quiet_NaN();
             this->mc_HT_recup.design_for_target__calc_outlet(this->ms_des_par.m_HTR_target_code,
                 this->ms_des_par.m_HTR_UA, this->ms_des_par.m_HTR_min_dT, this->ms_des_par.m_HTR_eff_target,
                 this->ms_des_par.m_HTR_eff_max,
@@ -592,12 +693,14 @@ int C_HTRBypass_Cycle::solve_HTR(double T_HTR_LP_OUT_guess, double& T_HTR_LP_out
         
     }
 
+    *diff_T_HTR_LP_out = T_HTR_LP_out_calc - T_HTR_LP_OUT_guess;
+
+    return 0;
 }
 
-int C_HTRBypass_Cycle::solve_LTR(double T_LTR_LP_OUT_guess, double& T_LTR_LP_out_calc)
+int C_HTRBypass_Cycle::solve_LTR(double T_LTR_LP_OUT_guess, double *diff_T_LTR_LP_out)
 {
     m_w_rc = m_m_dot_t = m_m_dot_rc = m_m_dot_mc = m_Q_dot_LT = m_Q_dot_HT = std::numeric_limits<double>::quiet_NaN();
-    double* diff_T_LTR_LP_out;
 
     // Set LTR_LP_OUT guess
     this->m_temp_last[LTR_LP_OUT] = T_LTR_LP_OUT_guess;
@@ -665,7 +768,8 @@ int C_HTRBypass_Cycle::solve_LTR(double T_LTR_LP_OUT_guess, double& T_LTR_LP_out
     }
         
     // Solve LTR
-    T_LTR_LP_out_calc = std::numeric_limits<double>::quiet_NaN();
+    *diff_T_LTR_LP_out = std::numeric_limits<double>::quiet_NaN();
+    double T_LTR_LP_out_calc = std::numeric_limits<double>::quiet_NaN();
     {
         this->mc_LT_recup.design_for_target__calc_outlet(this->ms_des_par.m_LTR_target_code,
             this->ms_des_par.m_LTR_UA, this->ms_des_par.m_LTR_min_dT, this->ms_des_par.m_LTR_eff_target,
@@ -676,7 +780,44 @@ int C_HTRBypass_Cycle::solve_LTR(double T_LTR_LP_OUT_guess, double& T_LTR_LP_out
             m_Q_dot_LT, this->m_temp_last[LTR_HP_OUT], T_LTR_LP_out_calc);
 
     }
+
+    *diff_T_LTR_LP_out = T_LTR_LP_out_calc - T_LTR_LP_OUT_guess;
+
+    return 0;
 }
+
+
+
+int C_HTRBypass_Cycle::C_mono_htr_bypass_LTR_des::operator()(double T_LTR_LP_OUT_guess /*K*/, double* diff_T_LTR_LP_out)
+{
+    return m_htr_bypass_cycle->solve_LTR(T_LTR_LP_OUT_guess, diff_T_LTR_LP_out);
+}
+
+
+int C_HTRBypass_Cycle::C_mono_htr_bypass_HTR_des::operator()(double T_HTR_LP_OUT_guess /*K*/, double* diff_T_HTR_LP_out)
+{
+    return m_htr_bypass_cycle->solve_HTR(T_HTR_LP_OUT_guess, diff_T_HTR_LP_out);
+}
+
+
+int C_HTRBypass_Cycle::C_mono_htr_bypass_BP_des::operator()(double bp_frac_guess, double* diff_PHX_cold_approach)
+{
+    int error_code = 0;
+
+    this->m_htr_bypass_cycle->m_bp_frac = bp_frac_guess;
+    this->m_htr_bypass_cycle->design_core_standard(error_code);
+
+    double calc_cold_approach = this->m_htr_bypass_cycle->m_HTF_PHX_cold_approach;
+    double hot_approach = this->m_htr_bypass_cycle->m_T_HTF_PHX_inlet - this->m_htr_bypass_cycle->m_T_t_in;
+    double desired_cold_approach = hot_approach;
+
+    *diff_PHX_cold_approach = calc_cold_approach - desired_cold_approach;
+
+
+    return error_code;
+}
+
+
 
 void C_HTRBypass_Cycle::opt_design_core(int& error_code)
 {
@@ -715,6 +856,11 @@ void C_HTRBypass_Cycle::opt_design_core(int& error_code)
     std::vector<double> ub(0);
     std::vector<double> scale(0);
 
+    // DEBUG
+    //ms_opt_des_par.m_fixed_P_mc_out = true;
+    //ms_opt_des_par.m_fixed_PR_HP_to_LP = true;
+    //ms_opt_des_par.m_fixed_LT_frac = true;
+
     if (!ms_opt_des_par.m_fixed_P_mc_out)
     {
         x.push_back(ms_opt_des_par.m_P_mc_out_guess);
@@ -742,7 +888,6 @@ void C_HTRBypass_Cycle::opt_design_core(int& error_code)
         lb.push_back(0.0);
         ub.push_back(1.0);
         scale.push_back(0.05);
-
         index++;
     }
 

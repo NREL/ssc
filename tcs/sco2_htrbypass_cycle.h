@@ -39,6 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "heat_exchangers.h"
 #include "CO2_properties.h"
 
+#include "numeric_solvers.h"
 
 class C_HTRBypass_Cycle : public C_sco2_cycle_core
 {
@@ -264,8 +265,8 @@ private:
 
 
     // Added
-    int solve_HTR(double T_HTR_LP_OUT_guess, double& T_HTR_LP_out_calc);
-    int solve_LTR(double T_LTR_LP_OUT_guess, double& T_LTR_LP_out_calc);
+    int solve_HTR(double T_HTR_LP_OUT_guess, double* diff_T_HTR_LP_out);
+    int solve_LTR(double T_LTR_LP_OUT_guess, double* diff_T_LTR_LP_out);
 
 public:
 
@@ -331,6 +332,51 @@ public:
 
     // Called by 'nlopt_callback_opt_des_1', so needs to be public
     double design_cycle_return_objective_metric(const std::vector<double>& x);
+
+
+    class C_mono_htr_bypass_LTR_des : public C_monotonic_equation
+    {
+    private:
+        C_HTRBypass_Cycle *m_htr_bypass_cycle;
+
+    public:
+        C_mono_htr_bypass_LTR_des(C_HTRBypass_Cycle* htr_bypass_cycle)
+        {
+            m_htr_bypass_cycle = htr_bypass_cycle;
+        }
+
+        virtual int operator()(double T_LTR_LP_OUT_guess /*K*/, double* diff_T_LTR_LP_out /*K*/);
+    };
+
+    class C_mono_htr_bypass_HTR_des : public C_monotonic_equation
+    {
+    private:
+        C_HTRBypass_Cycle *m_htr_bypass_cycle;
+
+    public:
+        C_mono_htr_bypass_HTR_des(C_HTRBypass_Cycle* htr_bypass_cycle)
+        {
+            m_htr_bypass_cycle = htr_bypass_cycle;
+        }
+
+        virtual int operator()(double T_HTR_LP_OUT_guess /*K*/, double* diff_T_HTR_LP_out /*K*/);
+    };
+
+    class C_mono_htr_bypass_BP_des : public C_monotonic_equation
+    {
+    private:
+        C_HTRBypass_Cycle* m_htr_bypass_cycle;
+
+    public:
+        C_mono_htr_bypass_BP_des(C_HTRBypass_Cycle* htr_bypass_cycle)
+        {
+            m_htr_bypass_cycle = htr_bypass_cycle;
+        }
+
+        virtual int operator()(double bp_frac_guess, double* diff_bp_frac);
+    };
+
+
 
 
     // Unused

@@ -363,7 +363,6 @@ public:
                 DP_PC_main, DP_PHX, LTR_N_sub_hxrs, HTR_N_sub_hxrs, eta_mc, mc_comp_model_code, eta_rc,
                 eta_t, N_turbine, frac_fan_power, eta_fan, deltaP_cooler_frac, N_nodes_pass, T_amb_des, elevation));
 
-
             C_sco2_cycle_core::S_auto_opt_design_parameters des_params;
             {
                 des_params.m_T_pc_in = T_mc_in;		//[K]
@@ -403,11 +402,9 @@ public:
 
                 des_params.m_is_recomp_ok = 1;
 
-                
-
                 c_bp_cycle->auto_opt_design(des_params);
             }
-
+            
         }
 
 
