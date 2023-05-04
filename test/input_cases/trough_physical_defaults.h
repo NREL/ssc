@@ -323,7 +323,7 @@ ssc_data_t trough_physical_defaults()
     ssc_number_t p_tes_lengths[11] = { 0, 90, 100, 120, 0, 0, 0, 0, 80, 120, 80 };
     ssc_data_set_matrix(data, "tes_lengths", p_tes_lengths, 1, 11);
     ssc_data_set_number(data, "DP_SGS", 0);
-    ssc_data_set_number(data, "adjust:constant", 4);
+    ssc_data_set_number(data, "adjust_constant", 4);
     ssc_data_set_number(data, "use_solar_mult_or_aperture_area", 0);
     ssc_data_set_number(data, "specified_solar_multiple", 2);
     ssc_data_set_number(data, "specified_total_aperture", 877000);
