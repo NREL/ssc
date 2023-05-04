@@ -123,6 +123,9 @@ void voltage_table_t::initialize() {
             double V0 = params->voltage_table[i - 1][1];
             slope = (V - V0) / (DOD - DOD0);
             intercept = V0 - (slope * DOD0);
+
+            if (fabs(slope) < 1e-7)
+                throw std::runtime_error("voltage_table_t error: Battery voltage matrix cannot have two identical voltages.");
         }
         slopes.emplace_back(slope);
         intercepts.emplace_back(intercept);
