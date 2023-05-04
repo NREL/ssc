@@ -72,6 +72,7 @@ struct SGeothermal_Inputs
 		md_TemperatureEGSAmbientC = md_RatioInjectionToProduction = 0.0;
 		md_AdditionalPressure = 1.0;
         md_dtProdWell = md_dtProdWellChoice = 0.0;
+        md_UseWeatherFileConditions = 0.0;
 	}
 
 	calculationBasis me_cb;									// { NO_CALCULATION_BASIS, POWER_SALES, NUMBER_OF_WELLS };
@@ -152,7 +153,7 @@ struct SGeothermal_Outputs
 		maf_timestep_power = maf_timestep_test_values = maf_timestep_pressure = maf_timestep_dry_bulb = maf_timestep_wet_bulb = NULL;
 		mb_BrineEffectivenessCalculated = mb_FlashPressuresCalculated = false;
 		maf_hourly_power = NULL;
-        ElapsedHours = 0;
+        ElapsedHours = ElapsedMonths = 0;
 
 	}
 
@@ -185,6 +186,7 @@ struct SGeothermal_Outputs
 	double flash_count;
 	double max_secondlaw;				//Max 2nd Law efficiency
     double ElapsedHours;
+    double ElapsedMonths;
 
 
 // single values used in calculations, some also used in UI
@@ -394,6 +396,7 @@ private:
 	double calculateDH1(double pressureIn);
     double calculateDH2(double pressureIn);
 	double TemperatureWetBulbF(void);
+    double calc_twet(double T, double RH, double P);
 	double temperatureCondF(void); // D72 - deg F
 	double pressureSaturation(void); // D72 - psi
 	double pressureCondenser(void); // D74 - psi

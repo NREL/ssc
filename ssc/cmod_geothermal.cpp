@@ -77,6 +77,7 @@ static var_info _cm_vtab_geothermal[] = {
     { SSC_INPUT,        SSC_NUMBER,      "prod_well_choice",                   "Temperature loss in production well choice",                  "0/1",              "",             "GeoHourly",        "*",                        "",                "" },
 
     { SSC_INPUT,        SSC_NUMBER,      "wet_bulb_temp",                      "Wet Bulb Temperature",                         "C",              "",             "GeoHourly",        "*",                        "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "use_weather_file_conditions",                      "Use weather file ambient temperature",                         "0/1",              "",             "GeoHourly",        "?=0",                        "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "ambient_pressure",                   "Ambient pressure",                             "psi",            "",             "GeoHourly",        "*",                        "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "well_flow_rate",                     "Production flow rate per well",                "kg/s",           "",             "GeoHourly",        "*",                        "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "pump_efficiency",                    "Pump efficiency",                              "%",              "",             "GeoHourly",        "*",                        "",                "" },
@@ -294,7 +295,7 @@ public:
 		// flash inputs
 		geo_inputs.md_TemperatureWetBulbC = as_double("wet_bulb_temp");
 		geo_inputs.md_PressureAmbientPSI = as_double("ambient_pressure" );
-        geo_inputs.md_UseWeatherFileConditions = as_integer("use_weather_file_conditions");
+        geo_inputs.md_UseWeatherFileConditions = 0; //initially set to zero for UI calculations
 
 		//pumping parameters
 		geo_inputs.md_ProductionFlowRateKgPerS = as_double("well_flow_rate");
@@ -400,6 +401,8 @@ public:
 		else {
 			// running the model, we need to specify other inputs
 			geo_inputs.md_PotentialResourceMW = as_double("resource_potential");
+
+            geo_inputs.md_UseWeatherFileConditions = as_integer("use_weather_file_conditions");
 
 			// we need to create the SPowerBlockInputs & SPowerBlockParameters and set the inputs
 
