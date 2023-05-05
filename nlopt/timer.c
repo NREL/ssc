@@ -43,6 +43,9 @@
 #  include <windows.h>    
 #endif
 
+// header needed to build on MacOS "Call to undeclared function 'gettimeofday'; ISO C99 and later do not support implicit function declarations" compile error
+int     gettimeofday(struct timeval * __restrict, void * __restrict);
+
 /* return time in seconds since some arbitrary point in the past */
 double nlopt_seconds(void)
 {
