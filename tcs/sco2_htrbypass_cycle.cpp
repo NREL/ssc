@@ -46,18 +46,20 @@ void C_HTRBypass_Cycle::design_core(int& error_code)
 {
     // Temporary Hard coded parameters
     //ms_des_par.m_recomp_frac = 0.3;
-
-    m_dT_BP = 10;
-    m_T_HTF_PHX_inlet = 670 + 273;  // K
-    m_T_HTF_BP_outlet = 770;  // K
-
-
-
-    m_cp_HTF = 1.482e+03;           // J/kg K
+    //m_dT_BP = 10;
+    //m_T_HTF_PHX_inlet = 670 + 273;  // K
+    //m_T_HTF_BP_outlet = 650 + 273;  // K
+    //m_cp_HTF = 1.482e+03;           // J/kg K
     //ms_des_par.m_P_mc_in = 10000;
     //ms_des_par.m_P_mc_out = 25000;
     //m_T_t_in = 923.149;
 
+    // Check if HTF parameters were set
+    if (is_htf_set == false)
+    {
+        error_code = 560;
+        return;
+    }
 
     C_mono_htr_bypass_BP_des BP_des_eq(this);
     C_monotonic_eq_solver BP_des_solver(BP_des_eq);
@@ -80,70 +82,6 @@ void C_HTRBypass_Cycle::design_core(int& error_code)
         error_code = 35;
         return;
     }
-
-
-    // DEBUG
-    if (false)
-    {
-        // temp
-        double hot_approach = m_T_HTF_PHX_inlet - m_T_t_in;
-
-        // Iterating bp_frac so the cold approach value is correct
-        m_bp_frac = 0;
-        double des_HTF_PHX_cold_approach = hot_approach;
-
-        // local
-        double error = 100000;
-        double frac_low = 0.0;
-        double frac_high = 1;
-        m_bp_frac = 0.5 * (frac_low + frac_high);
-        int count = 0;
-        while (std::abs(error) > 0.5)
-        {
-            // Update Bypass Fraction Guess
-            m_bp_frac = 0.5 * (frac_low + frac_high);
-
-            // Run Calculation
-            design_core_standard(error_code);
-
-            // Get Results
-            double actual_approach = m_HTF_PHX_cold_approach;
-            error = actual_approach - des_HTF_PHX_cold_approach;
-
-            // Update Bounds
-            if (error < 0)
-                frac_low = m_bp_frac;
-            else
-                frac_high = m_bp_frac;
-
-            if (count > 50)
-                break;
-
-            count++;
-        }
-    }
-
-    // DEBUG
-    if (false)
-    {
-        std::vector<double> frac_vec = { 0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1 };
-        std::vector<double> cold_approach;
-
-        for (int i = 0; i < frac_vec.size(); i++)
-        {
-            m_bp_frac = frac_vec[i];
-
-            // Run Calculation
-            design_core_standard(error_code);
-
-            double actual_approach = m_HTF_PHX_cold_approach;
-            cold_approach.push_back(actual_approach);
-        }
-
-        int x = 0;
-    }
-
- 
 }
 
 void C_HTRBypass_Cycle::design_core_standard(int& error_code)
@@ -557,9 +495,6 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
 }
 
 
-
-
-
 int C_HTRBypass_Cycle::solve_HTR(double T_HTR_LP_OUT_guess, double* diff_T_HTR_LP_out)
 {
     m_w_rc = m_m_dot_t = m_m_dot_rc = m_m_dot_mc = m_Q_dot_LT = m_Q_dot_HT = std::numeric_limits<double>::quiet_NaN();
@@ -856,11 +791,6 @@ void C_HTRBypass_Cycle::opt_design_core(int& error_code)
     std::vector<double> ub(0);
     std::vector<double> scale(0);
 
-    // DEBUG
-    //ms_opt_des_par.m_fixed_P_mc_out = true;
-    //ms_opt_des_par.m_fixed_PR_HP_to_LP = true;
-    //ms_opt_des_par.m_fixed_LT_frac = true;
-
     if (!ms_opt_des_par.m_fixed_P_mc_out)
     {
         x.push_back(ms_opt_des_par.m_P_mc_out_guess);
@@ -1123,6 +1053,16 @@ void C_HTRBypass_Cycle::finalize_design(int& error_code)
 
 
 // Public Methods
+
+void C_HTRBypass_Cycle::set_htf_par(double T_htf_phx_in, double T_htf_bp_out, double cp_htf, double dT_bp)
+{
+    m_T_HTF_PHX_inlet = T_htf_phx_in;  // K
+    m_T_HTF_BP_outlet = T_htf_bp_out;  // K
+    m_cp_HTF = cp_htf;
+    m_dT_BP = dT_bp;
+
+    is_htf_set = true;
+}
 
 void C_HTRBypass_Cycle::design(S_design_parameters& des_par_in, int& error_code)
 {

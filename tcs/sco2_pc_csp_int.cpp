@@ -147,6 +147,52 @@ void C_sco2_phx_air_cooler::design_core()
 
 		s_cycle_config = "htr bypass";
 
+        // Get and Set HTF Parameters
+        {
+            int htf_code = ms_des_par.m_hot_fl_code;
+            util::matrix_t<double> htf_user_props = ms_des_par.mc_hot_fl_props;
+            HTFProperties htf_props;
+
+            if (htf_code != HTFProperties::User_defined && htf_code < HTFProperties::End_Library_Fluids)
+            {
+                if (!htf_props.SetFluid(htf_code, true))
+                {
+                    throw(C_csp_exception("Hot fluid code is not recognized", "C_HX_co2_to_htf::initialization"));
+                }
+            }
+            else if (htf_code == HTFProperties::User_defined)
+            {
+                int n_rows = (int)htf_user_props.nrows();
+                int n_cols = (int)htf_user_props.ncols();
+                if (n_rows > 2 && n_cols == 7)
+                {
+                    if (!htf_props.SetUserDefinedFluid(htf_user_props, true))
+                    {
+                        std::string error_msg = util::format(htf_props.UserFluidErrMessage(), n_rows, n_cols);
+                        throw(C_csp_exception(error_msg, "C_HX_co2_to_htf::initialization"));
+                    }
+                }
+                else
+                {
+                    std::string error_msg = util::format("The user defined hot fluid table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", n_rows, n_cols);
+                    throw(C_csp_exception(error_msg, "C_HX_co2_to_htf::initialization"));
+                }
+            }
+            else
+            {
+                throw(C_csp_exception("Hot fluid code is not recognized", "C_HX_co2_to_htf::initialization"));
+            }
+
+            double HTF_PHX_inlet = ms_des_par.m_T_htf_hot_in;
+            double cp_htf = htf_props.Cp(HTF_PHX_inlet) * 1000.0;   // Convert to J/kg K
+            double HTF_BP_outlet = ms_des_par.m_T_htf_bypass_out;
+            double deltaT_bp = ms_des_par.m_deltaT_bypass;
+
+            c_bp_cycle->set_htf_par(HTF_PHX_inlet, HTF_BP_outlet, cp_htf, deltaT_bp);
+
+        }
+        
+
         mpc_sco2_cycle = std::move(c_bp_cycle);
 	}
     else
@@ -172,6 +218,7 @@ void C_sco2_phx_air_cooler::design_core()
         mpc_sco2_cycle = std::move(c_rc_cycle);
     }
 
+    
 
 	// Set min temp
 	m_T_mc_in_min = mpc_sco2_cycle->get_design_limits().m_T_mc_in_min;		//[K]

@@ -244,6 +244,7 @@ private:
     double m_Q_dot_pc;  // pre cooler heat rejected
     double m_HTF_BP_cold_approach;
     double m_HTF_PHX_cold_approach;
+    bool is_htf_set = false;
 
     C_HX_co2_to_co2_CRM m_BP_HTX;
 
@@ -315,6 +316,10 @@ public:
 
         
     }
+
+    void set_htf_par(double T_htf_phx_in, double T_htf_bp_out, double cp_htf, double dT_bp);
+
+
 
     CO2_state mc_co2_props;
 

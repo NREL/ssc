@@ -331,84 +331,6 @@ public:
 
 	void exec() override
 	{
-        // Debug to launch HTR Bypass
-        if (false)
-        {
-            // inputs
-            C_sco2_cycle_core::E_turbo_gen_motor_config turbo_gen_motor_config = static_cast<C_sco2_cycle_core::E_turbo_gen_motor_config>(0);
-            double eta_generator = 1.0;
-            double T_mc_in = 314.15; // K
-            double W_dot_net = 50e3; // kW
-            double T_t_in = 664 + 273; // K
-            double P_high_limit = 25e3; // kPa
-            std::vector<double> DP_LTR = { -0.0056 , -0.0311 };
-            std::vector<double> DP_HTR = { -0.0056 , -0.0311 };
-            std::vector<double> DP_PC_main = { 0.00, -0.005 };
-            std::vector<double> DP_PHX = { -0.0056, 0.0 };
-            int LTR_N_sub_hxrs = 10;
-            int HTR_N_sub_hxrs = 10;
-            double eta_mc = 0.85;
-            double mc_comp_model_code = 1;
-            double eta_rc = 0.85;
-            double eta_t = 0.9;
-            double N_turbine = 30000.0;
-            double frac_fan_power = 0.02;
-            double eta_fan = 0.5;
-            double deltaP_cooler_frac = 0.005;
-            double N_nodes_pass = 10;
-            double T_amb_des = 35 + 273; // K
-            double elevation = 588; // m
-
-            std::unique_ptr<C_HTRBypass_Cycle> c_bp_cycle = std::unique_ptr<C_HTRBypass_Cycle>(new C_HTRBypass_Cycle(turbo_gen_motor_config, eta_generator, T_mc_in, W_dot_net, T_t_in, P_high_limit, DP_LTR, DP_HTR,
-                DP_PC_main, DP_PHX, LTR_N_sub_hxrs, HTR_N_sub_hxrs, eta_mc, mc_comp_model_code, eta_rc,
-                eta_t, N_turbine, frac_fan_power, eta_fan, deltaP_cooler_frac, N_nodes_pass, T_amb_des, elevation));
-
-            C_sco2_cycle_core::S_auto_opt_design_parameters des_params;
-            {
-                des_params.m_T_pc_in = T_mc_in;		//[K]
-                des_params.m_DP_PC_pre = DP_PC_main;
-                des_params.m_UA_rec_total = 15 * 1000 * (W_dot_net) / 50.0;	//[kW/K]
-                // LTR thermal design
-                des_params.m_LTR_target_code = 0;  //[-]
-                des_params.m_LTR_UA = 7500;                      //[kW/K]
-                des_params.m_LTR_min_dT = std::numeric_limits<double>::quiet_NaN();            //[K]
-                des_params.m_LTR_eff_target = std::numeric_limits<double>::quiet_NaN();    //[-]
-                des_params.m_LTR_eff_max = 1.0;       //[-]
-                //des_params.m_LTR_od_UA_target_type = 0;
-                // HTR thermal design
-                des_params.m_HTR_target_code = 0;    //[-]
-                des_params.m_HTR_UA = 7500.0;                  //[kW/K]
-                des_params.m_HTR_min_dT = std::numeric_limits<double>::quiet_NaN();          //[K]
-                des_params.m_HTR_eff_target = std::numeric_limits<double>::quiet_NaN();  //[-]
-                des_params.m_HTR_eff_max = 1.0;		//[-]
-                //des_params.m_HTR_od_UA_target_type = ms_des_par.m_HTR_od_UA_target_type;
-                //
-                des_params.m_eta_pc = 0.85;
-                des_params.m_des_tol = std::pow(10, -3);
-                des_params.m_des_opt_tol = std::pow(10, -3);
-
-                des_params.m_is_des_air_cooler = true;	//[-]
-
-                des_params.m_des_objective_type = 0;		//[-] 
-                des_params.m_min_phx_deltaT = 0;				//[C]
-
-                des_params.m_fixed_P_mc_out = 1;	//[-]
-
-                des_params.m_PR_HP_to_LP_guess = P_high_limit;    //[-]
-                des_params.m_fixed_PR_HP_to_LP = 1;    //[-]
-
-                des_params.m_f_PR_HP_to_IP_guess = P_high_limit;    //[-]
-                des_params.m_fixed_f_PR_HP_to_IP = 1;    //[-]
-
-                des_params.m_is_recomp_ok = 1;
-
-                c_bp_cycle->auto_opt_design(des_params);
-            }
-            
-        }
-
-
-
 		C_sco2_phx_air_cooler c_sco2_cycle;
 
 		int sco2_des_err = sco2_design_cmod_common(this, c_sco2_cycle);
@@ -438,7 +360,7 @@ public:
 		bool is_od_set_control = is_assigned("od_set_control");
         bool is_od_generate_udpc_assigned = is_assigned("od_generate_udpc");
 		if (is_od_cases_assigned && is_P_mc_in_od_sweep_assigned)
-		{
+		{ 
 			log("Both off design cases and main compressor inlet pressure sweep assigned. Only modeling off design cases");
 			is_P_mc_in_od_sweep_assigned = false;
 		}

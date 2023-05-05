@@ -810,6 +810,14 @@ var_info vtab_sco2_design[] = {
     { SSC_INPUT,  SSC_NUMBER,  "eta_air_cooler_fan",   "Air cooler fan isentropic efficiency",                   "",           "",    "Air Cooler Design",      "?=0.5", "",       "" },
     { SSC_INPUT,  SSC_NUMBER,  "N_nodes_air_cooler_pass", "Number of nodes in single air cooler pass",           "",           "",    "Air Cooler Design",      "?=10",  "",       "" },
 
+
+
+    // HTR Bypass Design
+    { SSC_INPUT,  SSC_NUMBER,  "T_htf_bypass_out",     "HTF design Bypass Outlet Temperature",                   "C",          "",    "System Design",      "cycle_config=3",     "",       "" },
+    { SSC_INPUT,  SSC_NUMBER,  "deltaT_bypass",        "sco2 Bypass Outlet Temp - HTR_HP_OUT Temp",              "C",          "",    "System Design",      "cycle_config=3",     "",       "" },
+
+
+
 	// ** Design OUTPUTS **
 		// System Design Solution
 	{ SSC_OUTPUT, SSC_NUMBER,  "T_htf_cold_des",       "HTF design cold temperature (PHX outlet)",               "C",          "System Design Solution",    "",      "*",     "",       "" },
@@ -1220,6 +1228,15 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 	s_sco2_des_par.m_deltaP_cooler_frac = cm->as_double("deltaP_cooler_frac");	//[-]
     s_sco2_des_par.m_eta_fan = cm->as_double("eta_air_cooler_fan");     // 0.5;
     s_sco2_des_par.m_N_nodes_pass = cm->as_integer("N_nodes_air_cooler_pass");     // 10;
+
+    // Bypass Configuration Parameters
+    if (s_sco2_des_par.m_cycle_config == 3)
+    {
+        s_sco2_des_par.m_T_htf_bypass_out = cm->as_double("T_htf_bypass_out") + 273.15; // [C] Convert to C
+        s_sco2_des_par.m_deltaT_bypass = cm->as_double("deltaT_bypass"); // [delta C]
+
+    }
+    
 
 	// For try/catch below
 	int out_type = -1;

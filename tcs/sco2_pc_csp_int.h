@@ -124,6 +124,14 @@ public:
         double m_eta_fan;               //[-] Fan isentropic efficiency
         int m_N_nodes_pass;             //[-] Number of nodes per pass
 
+
+        // Bypass Configuration Parameters
+        double m_T_htf_bypass_out;      // [K] HTF design Bypass Outlet
+        double m_deltaT_bypass;         // [delta K] sco2 Bypass Outlet Temp - HTR_HP_OUT Temp
+
+
+
+
 		S_des_par()
 		{
 			m_hot_fl_code = m_design_method = m_LTR_N_sub_hxrs = m_LTR_N_sub_hxrs = m_phx_N_sub_hx = -1;
