@@ -1162,16 +1162,16 @@ void cm_pvsamv1::exec()
         p_load_in = as_vector_ssc_number_t("load");
         nload = p_load_in.size();
         if (nload != nrec && nload != 8760)
-            throw exec_error("pvsamv1", "The electric load profile must have either the same time step as the weather file, or 8760 time steps.");
+            throw exec_error("pvsamv1", "Load must have either the same time step as the weather file, or 8760 time steps.");
     }
     if (is_assigned("crit_load"))
     {
         p_crit_load_in = as_vector_ssc_number_t("crit_load");
         size_t n_crit_load = p_crit_load_in.size();
         if (n_crit_load != nrec && n_crit_load != 8760)
-            throw exec_error("pvsamv1", "Critical electric load profile must have same number of values as weather file, or 8760.");
+            throw exec_error("pvsamv1", "Critical load crit_load must have either the same time step as the weather file, or 8760 time steps.");
         if (n_crit_load != nload)
-            throw exec_error("pvsamv1", "Critical load profile must have same number of values as load file.");
+            throw exec_error("pvsamv1", "Critical load crit_load must have same number of values as load.");
     }
 
     // resilience metrics for battery
@@ -1185,7 +1185,7 @@ void cm_pvsamv1::exec()
 
         // Single timestep or non-annual simulations are not enabled with batteries
         if (!Simulation->annualSimulation)
-            throw exec_error("pvsamv1", "The PV+Battery configuration requires a simulation period that is continuous over one or more years.");
+            throw exec_error("pvsamv1", "The PV Battery configuration requires a simulation period that is continuous over one or more years.");
 
         batt = std::make_shared<battstor>(*m_vartab, en_batt, nrec, ts_hour);
         batt->setSharedInverter(sharedInverter);
