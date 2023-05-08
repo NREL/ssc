@@ -1526,7 +1526,12 @@ weatherdata::weatherdata( var_data *data_table )
 	m_hdr.lat = get_number( data_table, "lat" );
 	m_hdr.lon = get_number( data_table, "lon" );
 	m_hdr.tz = get_number( data_table, "tz" );
-	m_hdr.elev = get_number( data_table, "elev" );
+    if (var_data* value = data_table->table.lookup("elev")) {
+        m_hdr.elev = get_number(data_table, "elev");
+    }
+    else {
+        m_message = "No elevation \"elev\" key found. Using 0 meters as elevation value";
+    }
 
 	// make sure two types of irradiance are provided
 	size_t nrec = 0;
