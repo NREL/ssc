@@ -91,8 +91,10 @@ void swh_common(ssc_data_t &data) {
 	set_array(data, "custom_mains", swhtest::custom_mains, 8760);
 	ssc_data_set_number(data, "use_custom_set", 0);
 	set_array(data, "custom_set", swhtest::custom_set , 8760);
-	ssc_data_set_number(data, "adjust:constant", 0);
-	ssc_data_set_number(data, "en_belpe", 0);
+	
+    ssc_data_set_number(data, "adjust_constant", 0.0);
+
+    ssc_data_set_number(data, "en_belpe", 0);
 	set_array(data, "load", swhtest::load, 8760);
 	ssc_data_set_number(data, "floor_area", 2000);
 	ssc_data_set_number(data, "Stories", 2);

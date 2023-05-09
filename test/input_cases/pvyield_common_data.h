@@ -428,8 +428,10 @@ void pvyield_no_financial_meteo(ssc_data_t& data)
     ssc_data_set_number(data, "inv_pd_pnt", 0);
     ssc_data_set_number(data, "inv_pd_vdco", 310);
     ssc_data_set_number(data, "inv_pd_vdcmax", 600);
-    ssc_data_set_number(data, "adjust:constant", 0);
-    ssc_data_set_number(data, "dc_adjust:constant", 0);
+
+    ssc_data_set_number(data, "adjust_constant", 0.0);
+    ssc_data_set_number(data, "dc_adjust_constant", 0.0);
+
     ssc_data_set_number(data, "inv_snl_eff_cec", 96.636932373046875);
     ssc_data_set_number(data, "inv_pd_eff", 95);
     ssc_data_set_number(data, "inv_cec_cg_eff_cec", 96.636306762695313);
@@ -490,8 +492,8 @@ void pvyield_no_financial_meteo(ssc_data_t& data)
 
 
     // shading inputs from Timo
-    ssc_data_set_number(data, "subarray1_shading:string_option", -1);
-    ssc_data_set_number(data, "subarray1_shading:diff", 0);
+    ssc_data_set_number(data, "subarray1_shading_string_option", -1);
+    ssc_data_set_number(data, "subarray1_shading_diff", 0);
 
 
 
@@ -869,8 +871,10 @@ void pvyield_bifacial_case(ssc_data_t& data)
     ssc_data_set_number(data, "inv_pd_pnt", 0);
     ssc_data_set_number(data, "inv_pd_vdco", 310);
     ssc_data_set_number(data, "inv_pd_vdcmax", 600);
-    ssc_data_set_number(data, "adjust:constant", 0);
-    ssc_data_set_number(data, "dc_adjust:constant", 0);
+
+    ssc_data_set_number(data, "adjust_constant", 0.0);
+    ssc_data_set_number(data, "dc_adjust_constant", 0.0);
+
     ssc_data_set_number(data, "inv_snl_eff_cec", 96.636932373046875);
     ssc_data_set_number(data, "inv_pd_eff", 95);
     ssc_data_set_number(data, "inv_cec_cg_eff_cec", 96.636306762695313);
@@ -929,8 +933,8 @@ void pvyield_bifacial_case(ssc_data_t& data)
     ssc_data_set_string(data, "ond_ModeAffEnum", "Efficiencyf_PIn");
 
     // shading inputs from Timo
-    ssc_data_set_number(data, "subarray1_shading:string_option", -1);
-    ssc_data_set_number(data, "subarray1_shading:diff", 0);
+    ssc_data_set_number(data, "subarray1_shading_string_option", -1);
+    ssc_data_set_number(data, "subarray1_shading_diff", 0);
 }
 
 void pvyield_user_support_80603_meteo(ssc_data_t& data)
@@ -1303,8 +1307,10 @@ void pvyield_user_support_80603_meteo(ssc_data_t& data)
     ssc_data_set_number(data, "inv_pd_pnt", 0);
     ssc_data_set_number(data, "inv_pd_vdco", 310);
     ssc_data_set_number(data, "inv_pd_vdcmax", 600);
-    ssc_data_set_number(data, "adjust:constant", 0);
-    ssc_data_set_number(data, "dc_adjust:constant", 0);
+
+    ssc_data_set_number(data, "adjust_constant", 0.0);
+    ssc_data_set_number(data, "dc_adjust_constant", 0.0);
+
     ssc_data_set_number(data, "inv_snl_eff_cec", 96.636932373046875);
     ssc_data_set_number(data, "inv_pd_eff", 95);
     ssc_data_set_number(data, "inv_cec_cg_eff_cec", 96.636306762695313);
@@ -1364,8 +1370,8 @@ void pvyield_user_support_80603_meteo(ssc_data_t& data)
     ssc_data_set_string(data, "ond_ModeAffEnum", "Efficiencyf_PIn");
 
     // shading inputs from Timo
-    ssc_data_set_number(data, "subarray1_shading:string_option", -1);
-    ssc_data_set_number(data, "subarray1_shading:diff", 0);
+    ssc_data_set_number(data, "subarray1_shading_string_option", -1);
+    ssc_data_set_number(data, "subarray1_shading_diff", 0);
 }
 
 
@@ -1740,8 +1746,10 @@ void pvyield_user_support_80603_AZ(ssc_data_t& data)
     ssc_data_set_number(data, "inv_pd_pnt", 0);
     ssc_data_set_number(data, "inv_pd_vdco", 310);
     ssc_data_set_number(data, "inv_pd_vdcmax", 600);
-    ssc_data_set_number(data, "adjust:constant", 0);
-    ssc_data_set_number(data, "dc_adjust:constant", 0);
+
+    ssc_data_set_number(data, "adjust_constant", 0.0);
+    ssc_data_set_number(data, "dc_adjust_constant", 0.0);
+
     ssc_data_set_number(data, "inv_snl_eff_cec", 96.636932373046875);
     ssc_data_set_number(data, "inv_pd_eff", 95);
     ssc_data_set_number(data, "inv_cec_cg_eff_cec", 96.636306762695313);
@@ -1801,8 +1809,8 @@ void pvyield_user_support_80603_AZ(ssc_data_t& data)
 
 
     // shading inputs from Timo
-    ssc_data_set_number(data, "subarray1_shading:string_option", -1);
-    ssc_data_set_number(data, "subarray1_shading:diff", 0);
+    ssc_data_set_number(data, "subarray1_shading_string_option", -1);
+    ssc_data_set_number(data, "subarray1_shading_diff", 0);
 }
 
 
@@ -2120,8 +2128,15 @@ void pvsamMPPT_nofinancial_default(ssc_data_t& data)
     ssc_data_set_number(data, "inv_pd_pnt", 0);
     ssc_data_set_number(data, "inv_pd_vdco", 310);
     ssc_data_set_number(data, "inv_pd_vdcmax", 600);
-    ssc_data_set_number(data, "adjust:constant", 0);
-    ssc_data_set_number(data, "dc_adjust:constant", 0);
+
+    var_table* adjust_vt = new var_table;
+    adjust_vt->assign("constant", var_data(0.0));
+    ssc_data_set_table(data, "adjust", adjust_vt);
+
+    var_table* dc_adjust_vt = new var_table;
+    dc_adjust_vt->assign("constant", var_data(0.0));
+    ssc_data_set_table(data, "dc_adjust", dc_adjust_vt);
+
     ssc_data_set_number(data, "inv_snl_eff_cec", 96.636932373046875);
     ssc_data_set_number(data, "inv_pd_eff", 95);
     ssc_data_set_number(data, "inv_cec_cg_eff_cec", 96.636306762695313);

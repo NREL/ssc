@@ -85,6 +85,7 @@ public:
 	bool setup(int nsteps=8760, int analysis_period=1);
 	ssc_number_t operator()(size_t time);
 	std::string error() { return m_error; }
+    size_t size() { return m_factors.size(); }
 };
 
 class forecast_price_signal
@@ -96,20 +97,6 @@ public:
 	forecast_price_signal(var_table *vt);
 	bool setup(size_t step_per_hour);
 	std::vector<ssc_number_t> forecast_price() { return m_forecast_price; }
-	ssc_number_t operator()(size_t time);
-	std::string error() { return m_error; }
-};
-
-
-class sf_adjustment_factors
-{
-	compute_module *m_cm;
-	std::vector<ssc_number_t> m_factors;
-	std::string m_error;
-public:
-	sf_adjustment_factors(compute_module *cm);
-	bool setup(int nsteps=8760);
-    int size();
 	ssc_number_t operator()(size_t time);
 	std::string error() { return m_error; }
 };

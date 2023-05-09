@@ -453,8 +453,8 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 
             // Charge limits and priority
             batt_vars->batt_initial_SOC = vt.as_double("batt_initial_SOC");
-            batt_vars->batt_maximum_SOC = vt.as_double("batt_maximum_soc");
-            batt_vars->batt_minimum_SOC = vt.as_double("batt_minimum_soc");
+            batt_vars->batt_maximum_SOC = vt.as_double("batt_maximum_SOC");
+            batt_vars->batt_minimum_SOC = vt.as_double("batt_minimum_SOC");
             if (vt.is_assigned("batt_minimum_outage_SOC")) {
                 batt_vars->batt_minimum_outage_SOC = vt.as_double("batt_minimum_outage_SOC");
             }

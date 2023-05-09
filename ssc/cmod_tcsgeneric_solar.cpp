@@ -377,7 +377,8 @@ public:
         size_t hours = 8760;
 
         //Load the solar field adjustment factors
-        sf_adjustment_factors sf_haf(this);
+//        sf_adjustment_factors sf_haf(this);
+        adjustment_factors sf_haf(this, "sf_adjust");
         if (!sf_haf.setup(hours))
 			throw exec_error("tcsgeneric_solar", "failed to setup sf adjustment factors: " + sf_haf.error());
         //allocate array to pass to tcs
