@@ -234,7 +234,8 @@ ssc_data_set_table( ) for example.
 */
 /**@{*/
 
-SSCEXPORT void ssc_data_set_var(ssc_data_t p_data, const char *name, ssc_var_t p_var);
+SSCEXPORT void ssc_data_set_var(ssc_data_t p_data, const char* name, ssc_var_t p_var);
+SSCEXPORT void ssc_data_set_var_match_case(ssc_data_t p_data, const char* name, ssc_var_t p_var);
 
 /** Assigns value of type @a SSC_STRING */
 SSCEXPORT void ssc_data_set_string( ssc_data_t p_data, const char *name, const char *value );
