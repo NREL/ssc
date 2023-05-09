@@ -261,7 +261,7 @@ SSCEXPORT bool ElectricityRates_format_as_URDBv8(ssc_data_t data) {
                         }
                     }
 
-                    if (fabs(reference_demand - monthly_demand_percent) < tol) {
+                    if (std::abs(reference_demand - monthly_demand_percent) < tol) {
                         all_same = false;
                     }
 
