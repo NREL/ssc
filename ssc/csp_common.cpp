@@ -1235,6 +1235,8 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
         s_sco2_des_par.m_T_htf_bypass_out = cm->as_double("T_htf_bypass_out") + 273.15; // [C] Convert to C
         s_sco2_des_par.m_deltaT_bypass = cm->as_double("deltaT_bypass"); // [delta C]
 
+        // Already assigned (above)
+        //s_sco2_des_par.m_phx_dt_cold_approach = cm->as_double("dT_PHX_cold_approach"); // [delta C]
     }
     
 

@@ -237,7 +237,8 @@ private:
     double m_m_dot_HTF;
     double m_Q_dot_BP;
     double m_T_HTF_PHX_inlet;
-    double m_T_HTF_BP_outlet;
+    double m_T_HTF_BP_outlet_target;
+    double m_T_HTF_BP_outlet_calc;
     double m_T_HTF_PHX_out;
     double m_dT_BP; // BYPASS_OUT - HTR_HP_OUT
     double m_Q_dot_total;
@@ -317,7 +318,7 @@ public:
         
     }
 
-    void set_htf_par(double T_htf_phx_in, double T_htf_bp_out, double cp_htf, double dT_bp);
+    void set_htf_par(double T_htf_phx_in, double T_htf_bp_out_target, double cp_htf, double dT_bp, double htf_phx_cold_approach);
 
 
 

@@ -187,8 +187,9 @@ void C_sco2_phx_air_cooler::design_core()
             double cp_htf = htf_props.Cp(HTF_PHX_inlet) * 1000.0;   // Convert to J/kg K
             double HTF_BP_outlet = ms_des_par.m_T_htf_bypass_out;
             double deltaT_bp = ms_des_par.m_deltaT_bypass;
+            double HTF_PHX_cold_approach = ms_des_par.m_phx_dt_cold_approach;
 
-            c_bp_cycle->set_htf_par(HTF_PHX_inlet, HTF_BP_outlet, cp_htf, deltaT_bp);
+            c_bp_cycle->set_htf_par(HTF_PHX_inlet, HTF_BP_outlet, cp_htf, deltaT_bp, HTF_PHX_cold_approach);
 
         }
         

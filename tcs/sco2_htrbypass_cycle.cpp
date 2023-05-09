@@ -66,8 +66,8 @@ void C_HTRBypass_Cycle::design_core(int& error_code)
     double BP_out_lower = 0;
     double BP_out_upper = 1.0;
 
-    double BP_out_guess_lower = 0.25;	//[K] There is nothing special about these guesses...
-    double BP_out_guess_upper = 0.75;	//[K] There is nothing special about these guesses, either...
+    double BP_out_guess_lower = 0;	//[K] 
+    double BP_out_guess_upper = 1;	//[K] 
 
     BP_des_solver.settings(ms_des_par.m_des_tol * m_temp_last[MC_IN], 1000, BP_out_lower, BP_out_upper, false);
 
@@ -461,17 +461,22 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
 
     // HTF
     {
+        // Use HTF Bypass cold approach to calculate PHX outlet Temperature
+        m_T_HTF_PHX_out = m_HTF_PHX_cold_approach + m_temp_last[MIXER2_OUT];
+
+        // Calculate HTF mdot
+        m_m_dot_HTF = m_Q_dot_PHX / ((m_T_HTF_PHX_inlet - m_T_HTF_PHX_out) * m_cp_HTF);
+
+        // Calculate Bypass Out Temperature
+        m_T_HTF_BP_outlet_calc = m_T_HTF_PHX_out - (m_Q_dot_BP / (m_m_dot_HTF * m_cp_HTF));
+
         // Calculate HTF Bypass Cold Approach
-        m_HTF_BP_cold_approach = m_T_HTF_BP_outlet - m_temp_last[MIXER_OUT];
+        m_HTF_BP_cold_approach = m_T_HTF_BP_outlet_calc - m_temp_last[MIXER_OUT];
 
-        // Calculate HTF Mdot
-        m_m_dot_HTF = m_Q_dot_total / ((m_T_HTF_PHX_inlet - m_T_HTF_BP_outlet) * m_cp_HTF);
+        //// Calculate PHX outlet Temp
+        //m_T_HTF_PHX_out = m_T_HTF_PHX_inlet - (m_Q_dot_PHX / (m_m_dot_HTF * m_cp_HTF));
 
-        // Calculate PHX outlet Temp
-        m_T_HTF_PHX_out = m_T_HTF_PHX_inlet - (m_Q_dot_PHX / (m_m_dot_HTF * m_cp_HTF));
-
-        // Calculate PHX Cold Approach
-        m_HTF_PHX_cold_approach = m_T_HTF_PHX_out - m_temp_last[MIXER2_OUT];
+        
     }
 
     // Set objective metric
@@ -735,18 +740,17 @@ int C_HTRBypass_Cycle::C_mono_htr_bypass_HTR_des::operator()(double T_HTR_LP_OUT
 }
 
 
-int C_HTRBypass_Cycle::C_mono_htr_bypass_BP_des::operator()(double bp_frac_guess, double* diff_PHX_cold_approach)
+int C_HTRBypass_Cycle::C_mono_htr_bypass_BP_des::operator()(double bp_frac_guess, double* diff_T_BP_HTF_out)
 {
     int error_code = 0;
 
     this->m_htr_bypass_cycle->m_bp_frac = bp_frac_guess;
     this->m_htr_bypass_cycle->design_core_standard(error_code);
 
-    double calc_cold_approach = this->m_htr_bypass_cycle->m_HTF_PHX_cold_approach;
-    double hot_approach = this->m_htr_bypass_cycle->m_T_HTF_PHX_inlet - this->m_htr_bypass_cycle->m_T_t_in;
-    double desired_cold_approach = hot_approach;
+    double target_bp_out = this->m_htr_bypass_cycle->m_T_HTF_BP_outlet_target;
+    double calc_bp_out = this->m_htr_bypass_cycle->m_T_HTF_BP_outlet_calc;
 
-    *diff_PHX_cold_approach = calc_cold_approach - desired_cold_approach;
+    *diff_T_BP_HTF_out = calc_bp_out - target_bp_out;
 
 
     return error_code;
@@ -1054,12 +1058,13 @@ void C_HTRBypass_Cycle::finalize_design(int& error_code)
 
 // Public Methods
 
-void C_HTRBypass_Cycle::set_htf_par(double T_htf_phx_in, double T_htf_bp_out, double cp_htf, double dT_bp)
+void C_HTRBypass_Cycle::set_htf_par(double T_htf_phx_in, double T_htf_bp_out_target, double cp_htf, double dT_bp, double htf_phx_cold_approach)
 {
     m_T_HTF_PHX_inlet = T_htf_phx_in;  // K
-    m_T_HTF_BP_outlet = T_htf_bp_out;  // K
+    m_T_HTF_BP_outlet_target = T_htf_bp_out_target;  // K
     m_cp_HTF = cp_htf;
     m_dT_BP = dT_bp;
+    m_HTF_PHX_cold_approach = htf_phx_cold_approach;
 
     is_htf_set = true;
 }
