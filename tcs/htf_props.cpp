@@ -91,6 +91,7 @@ bool HTFProperties::SetUserDefinedFluid( const util::matrix_t<double> &table )
 	// Set class member data
 	m_userTable = table;	
 	m_fluid = User_defined;
+    m_integration_points = 100;
 
 	// Specific which columns are used as the independent variable; these must be monotonically increasing
 	int ind_var_index[2] = {0, 6};	
@@ -119,8 +120,15 @@ bool HTFProperties::SetUserDefinedFluid( const util::matrix_t<double> &table )
 
 void HTFProperties::set_temp_enth_lookup()
 {
-	double T_low = 270.0 + 273.15;
-	double T_high = 600.0 + 273.15;
+    double T_low = this->min_temp();
+    double T_high = this->max_temp();
+
+    if (!std::isfinite(T_low)) {
+        T_low = 270.0 + 273.15;
+    }
+    if (!std::isfinite(T_high)) {
+        T_high = 720.0 + 273.15;
+    }
 
 	double delta_T_target = 1.0;
 
@@ -228,7 +236,7 @@ bool HTFProperties::equals(HTFProperties *comp_class)
 	return m_userTable.equals(	(*comp_class->get_prop_table()) );
 }
 
-double HTFProperties::Cp_ave(double T_cold_K, double T_hot_K, int n_points)
+double HTFProperties::Cp_ave(double T_cold_K, double T_hot_K)
 {
 	// Check that temperatures are at least positive values
 	if(T_cold_K <= 0.0)
@@ -242,23 +250,16 @@ double HTFProperties::Cp_ave(double T_cold_K, double T_hot_K, int n_points)
 		"HTFProperties::Cp_ave",1));
 	}
 	
-	// Check that 2 < n_points < 500
-	if(n_points < 2)
-		n_points = 2;
-
-	if(n_points > 500)
-		n_points = 500;
-
+    // Composite Midpoint Rule
 	double cp_sum = 0.0;
-	double T_i = std::numeric_limits<double>::quiet_NaN();
-	double delta_T = (T_hot_K - T_cold_K)/double(n_points-1);
-	for(int i = 0; i < n_points; i++)
+    double delta_T = (T_hot_K - T_cold_K) / double(m_integration_points);
+    double T_i = T_cold_K + delta_T / 2; // half step
+	for(int i = 0; i < m_integration_points; i++)
 	{
-		T_i = T_cold_K + delta_T*i;
-		cp_sum += Cp(T_i);
+        cp_sum += Cp(T_i);
+        T_i += delta_T;
 	}
-
-	return cp_sum/double(n_points);
+	return cp_sum/double(m_integration_points);
 }
 
 double HTFProperties::Cp( double T_K )
@@ -879,4 +880,16 @@ double HTFProperties::Re(double T_K, double P, double vel, double d)
 	// Outputs: Reynolds number [-]
 	double Re_num = dens(T_K, P) * vel * d / visc(T_K);
 	return Re_num;
+}
+
+void HTFProperties::set_integration_points(double n_points)
+{
+    // Check that 1 < n_points < 500
+    if (n_points < 1)
+        n_points = 1;
+
+    if (n_points > 500)
+        n_points = 500;
+
+    m_integration_points = n_points;
 }

@@ -590,7 +590,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		m_nhdrsec = (int)ceil(float(m_nLoops) / float(m_nfsec * 2));
 
 		//We need to determine design information about the field for purposes of header sizing ONLY
-		m_c_htf_ave = m_htfProps.Cp((m_T_loop_out_des + m_T_loop_in_des) / 2.0)*1000.;    //[J/kg-K] Specific heat
+		m_c_htf_ave = m_htfProps.Cp_ave(m_T_loop_in_des, m_T_loop_out_des) * 1000.;    //[J/kg-K] Specific heat
 
 		//Need to loop through to calculate the weighted average optical efficiency at design
 		//Start by initializing sensitive variables
@@ -873,7 +873,7 @@ double C_csp_trough_collector_receiver::get_pumping_parasitic_coef()
 
 double C_csp_trough_collector_receiver::get_min_power_delivery()
 {
-    double c_htf_ave = m_htfProps.Cp((m_T_startup + m_T_loop_in_des) / 2.0)*1000.;    //[J/kg-K] Specific heat
+    double c_htf_ave = m_htfProps.Cp_ave(m_T_loop_in_des, m_T_startup) * 1000.;    //[J/kg-K] Specific heat
     return m_m_dot_htfmin * m_nLoops * c_htf_ave * (m_T_startup - m_T_loop_in_des) * 1.e-6;     // [MWt]
 }
 
@@ -881,7 +881,7 @@ double C_csp_trough_collector_receiver::get_max_power_delivery(double T_cold_in 
 {
     double T_in = T_cold_in + 273.15;                                          // [K]
     double T_out = m_T_loop_out_des;                                           // [K]
-    double c_htf_ave = m_htfProps.Cp((T_out + T_in) / 2.0) * 1000.;            // [J/kg-K]
+    double c_htf_ave = m_htfProps.Cp_ave(T_in, T_out) * 1000.;                 // [J/kg-K]
     return m_m_dot_htfmax * m_nLoops * c_htf_ave * (T_out - T_in) * 1.e-6;     // [MWt]
 }
 
@@ -1519,7 +1519,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 	m_E_dot_HR_hot_subts = E_HR_hot / sim_info.ms_ts.m_step;		//[MWt]
 
 		// HTF out of system
-	m_c_htf_ave_ts_ave_temp = m_htfProps.Cp_ave(T_htf_cold_in, m_T_sys_h_t_int, 5)*1000.0;	//[J/kg-K]
+	m_c_htf_ave_ts_ave_temp = m_htfProps.Cp_ave(T_htf_cold_in, m_T_sys_h_t_int)*1000.0;	//[J/kg-K]
 	m_q_dot_htf_to_sink_subts = m_m_dot_htf_tot*m_c_htf_ave_ts_ave_temp*(m_T_sys_h_t_int - T_htf_cold_in)*1.E-6;
 
 	double Q_dot_balance_subts = m_q_dot_sca_abs_summed_subts - m_q_dot_xover_loss_summed_subts -
@@ -2644,7 +2644,7 @@ void C_csp_trough_collector_receiver::on(const C_csp_weatherreader::S_outputs &w
 		
 			// The controller also requires the receiver thermal output
 			// 7.12.16 Now using the timestep-integrated-average temperature
-		double c_htf_ave = m_htfProps.Cp((m_T_sys_h_t_int + T_cold_in) / 2.0);  //[kJ/kg-K]
+		double c_htf_ave = m_htfProps.Cp_ave(T_cold_in, m_T_sys_h_t_int);  //[kJ/kg-K]
 		cr_out_solver.m_q_thermal = (cr_out_solver.m_m_dot_salt_tot / 3600.0)*c_htf_ave*(m_T_sys_h_t_int - T_cold_in) / 1.E3;	//[MWt]
 		// Finally, the controller need the HTF outlet temperature from the field
 		cr_out_solver.m_T_salt_hot = m_T_sys_h_t_int - 273.15;		//[C]
@@ -3419,7 +3419,7 @@ overtemp_iter_flag: //10 continue     //Return loop for over-temp conditions
 				{
 					if (qq<3)
 					{
-						m_c_htf_ave = m_htfProps.Cp((m_T_loop_out_des + m_TCS_T_htf_in[0]) / 2.0)*1000.;    //Specific heat
+						m_c_htf_ave = m_htfProps.Cp_ave(m_TCS_T_htf_in[0], m_T_loop_out_des)*1000.;    //Specific heat
 						double qsum = 0.;
 						for (int i = 0; i<m_nSCA; i++){ qsum += m_q_abs_SCAtot[i]; }
 						m_m_dot_htfX = qsum / (m_c_htf_ave*(m_T_loop_out_des - m_TCS_T_htf_in[0]));
@@ -3788,7 +3788,7 @@ calc_final_metrics_goto:
 
 	// Average properties
 	rho_ave = m_htfProps.dens((m_TCS_T_htf_out[m_nSCA - 1] + m_TCS_T_sys_c) / 2.0, 0.0); //kg/m3
-	m_c_htf_ave = m_htfProps.Cp((m_TCS_T_sys_h + m_T_cold_in_1) / 2.0)*1000.0;  //MJW 12.7.2010
+	m_c_htf_ave = m_htfProps.Cp_ave(m_T_cold_in_1, m_TCS_T_sys_h) * 1000.0;  // [J/kg-K]
 
 	// Other calculated outputs
 	piping_hl_total = 0.0;
