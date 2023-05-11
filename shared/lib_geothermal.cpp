@@ -1128,12 +1128,12 @@ void CGeothermalAnalyzer::ReplaceReservoir(double dElapsedTimeInYears)
 double CGeothermalAnalyzer::GetTemperatureGradient(void) // degrees C per km
 {	// Conversation with Chad on August 30th 2010, 10am MT - just use the average gradient, even if it's changing at that point according to the depth/temp graph.
 	if (mo_geo_in.me_rt == HYDROTHERMAL) { return ((mo_geo_in.md_TemperatureResourceC - GetAmbientTemperatureC(BINARY)) / mo_geo_in.md_ResourceDepthM) * 1000; }
-	return ((mo_geo_in.md_TemperatureResourceC - mo_geo_in.md_TemperatureEGSAmbientC) / mo_geo_in.md_ResourceDepthM) * 1000;
+	return ((mo_geo_in.md_TemperatureResourceC - GetAmbientTemperatureC(BINARY)) / mo_geo_in.md_ResourceDepthM) * 1000;
 }
 
 double CGeothermalAnalyzer::GetResourceTemperatureC(void) // degrees C
 {
-	if ((mo_geo_in.me_rt == EGS) && (mo_geo_in.me_dc == DEPTH)) return ((mo_geo_in.md_ResourceDepthM / 1000) * GetTemperatureGradient()) + mo_geo_in.md_TemperatureEGSAmbientC;
+	if ((mo_geo_in.me_rt == EGS) && (mo_geo_in.me_dc == DEPTH)) return ((mo_geo_in.md_ResourceDepthM / 1000) * GetTemperatureGradient()) + GetAmbientTemperatureC(BINARY);
 	return mo_geo_in.md_TemperatureResourceC;
 }
 
@@ -1141,7 +1141,7 @@ double CGeothermalAnalyzer::GetTemperaturePlantDesignC(void) { return (mo_geo_in
 
 double CGeothermalAnalyzer::GetResourceDepthM(void) // meters
 {
-	if ((mo_geo_in.me_rt == EGS) && (mo_geo_in.me_dc == TEMPERATURE)) return 1000 * (mo_geo_in.md_TemperatureResourceC - mo_geo_in.md_TemperatureEGSAmbientC) / GetTemperatureGradient();
+	if ((mo_geo_in.me_rt == EGS) && (mo_geo_in.me_dc == TEMPERATURE)) return 1000 * (mo_geo_in.md_TemperatureResourceC - GetAmbientTemperatureC(BINARY)) / GetTemperatureGradient();
 	return mo_geo_in.md_ResourceDepthM;
 }
 
