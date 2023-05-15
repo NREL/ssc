@@ -161,8 +161,9 @@ extern module_entry_info
 	cm_entry_grid,
 	cm_entry_battery_stateful,
     cm_entry_csp_subcomponent,
+    cm_entry_hybrid_steps,
     cm_entry_hybrid
-	;
+    ;
 
 /* official module table */
 static module_entry_info *module_table[] = {
@@ -262,8 +263,9 @@ static module_entry_info *module_table[] = {
 	&cm_entry_grid,
 	&cm_entry_battery_stateful,
     &cm_entry_csp_subcomponent,
-    & cm_entry_hybrid,
-	0 };
+    &cm_entry_hybrid_steps,
+    &cm_entry_hybrid,
+0 };
 
 SSCEXPORT ssc_module_t ssc_module_create( const char *name )
 {

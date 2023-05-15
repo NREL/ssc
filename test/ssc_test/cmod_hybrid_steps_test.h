@@ -37,6 +37,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "cmod_json_comparison_test.h"
 
-class CmodHybridsTest : public JSONComparisonTest {};
+class CmodHybridStepsTest : public JSONComparisonTest {};
 
 #endif //SYSTEM_ADVISOR_MODEL_CMOD_HYBRIDS_TEST_H

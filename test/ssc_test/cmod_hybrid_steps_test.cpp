@@ -31,13 +31,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#include "cmod_hybrids_test.h"
+#include "cmod_hybrid_steps_test.h"
 
 #include "gtest/gtest.h"
 
 // TODO - update input JSON for test paths for resource files
 
-TEST_F(CmodHybridsTest, PVWattsv8) {
+TEST_F(CmodHybridStepsTest, PVWattsv8) {
 
     char file_path[256];
     int nfc1 = sprintf(file_path, "%s/test/input_json/hybrids/pvwattsv8.json", SSCDIR);
@@ -54,7 +54,7 @@ TEST_F(CmodHybridsTest, PVWattsv8) {
     sprintf(solar_resource_path, "%s/test/input_cases/general_data/phoenix_az_33.450495_-111.983688_psmv3_60_tmy.csv", std::getenv("SSCDIR"));
     ssc_data_set_string(pv_table, "solar_resource_file", solar_resource_path);
 
-    int errors = run_module(dat, "hybrid");
+    int errors = run_module(dat, "hybrid_steps");
     EXPECT_FALSE(errors);
     if (!errors)
     {
@@ -68,7 +68,7 @@ TEST_F(CmodHybridsTest, PVWattsv8) {
     dat = nullptr;
 }
 
-TEST_F(CmodHybridsTest, Wind) {
+TEST_F(CmodHybridStepsTest, Wind) {
 
     char file_path[256];
     int nfc1 = sprintf(file_path, "%s/test/input_json/hybrids/wind.json", SSCDIR);
@@ -85,7 +85,7 @@ TEST_F(CmodHybridsTest, Wind) {
     sprintf(wind_resource_path, "%s/test/input_cases/general_data/WY_Southern-Flat_Lands.srw", std::getenv("SSCDIR"));
     ssc_data_set_string(wind_table, "wind_resource_filename", wind_resource_path);
 
-    int errors = run_module(dat, "hybrid");
+    int errors = run_module(dat, "hybrid_steps");
     EXPECT_FALSE(errors);
     if (!errors)
     {
@@ -101,7 +101,7 @@ TEST_F(CmodHybridsTest, Wind) {
 }
 
 
-TEST_F(CmodHybridsTest, PVWattsv8Wind) {
+TEST_F(CmodHybridStepsTest, PVWattsv8Wind) {
 
     char file_path[256];
     int nfc1 = sprintf(file_path, "%s/test/input_json/hybrids/pvwattsv8wind.json", SSCDIR);
@@ -123,7 +123,7 @@ TEST_F(CmodHybridsTest, PVWattsv8Wind) {
     sprintf(wind_resource_path, "%s/test/input_cases/general_data/WY_Southern-Flat_Lands.srw", std::getenv("SSCDIR"));
     ssc_data_set_string(wind_table, "wind_resource_filename", wind_resource_path);
 
-    int errors = run_module(dat, "hybrid");
+    int errors = run_module(dat, "hybrid_steps");
 
     EXPECT_FALSE(errors);
     if (!errors)
