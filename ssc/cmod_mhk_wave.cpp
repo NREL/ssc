@@ -481,18 +481,39 @@ public:
             std::vector<int> day;
             std::vector<int> hour;
             std::vector<int> minute;
-
+            int hourdiff = 0;
             if (is_assigned("significant_wave_height") && is_assigned("energy_period")) { //Check if wave height and period variables are assigned
                 //number_records = as_integer("number_records");
                 //number_hours = as_integer("number_hours");
                 wave_height_input = as_vector_double("significant_wave_height");
                 wave_period_input = as_vector_double("energy_period");
                 number_records = wave_height_input.size();
-                number_hours = number_records * 3;
+                //number_hours = number_records * 3;
                 year = as_vector_integer("year");
                 month = as_vector_integer("month");
                 day = as_vector_integer("day");
                 hour = as_vector_integer("hour");
+                int hour0, hour1, hourdiff = 0;
+                std::vector<int> timecheck;
+                timecheck.resize(size_t(hour.size()));
+                for (size_t r = 0; r < hour.size(); r++) {
+                    if (r == 0) {
+                        //value_0 = split(buf);
+                        hour0 = hour[r];
+                    }
+                    if (r == 1) {
+                        //value_1 = split(buf);
+                        hour1 = hour[r];
+                        hourdiff = hour1 - hour0;
+                    }
+
+                    timecheck[r] = hour[r];
+                    if (r > 0) {
+                        if (timecheck[r] - timecheck[r - 1] != hourdiff && timecheck[r] != 0) {
+                            throw exec_error("mhk_wave", "Time steps are nonuniform");
+                        }
+                    }
+                }
                 minute = as_vector_integer("minute");
 
             }
@@ -540,9 +561,12 @@ public:
                         }
                     }
                 }
+                
             }
             else if (!is_assigned("significant_wave_height") || !is_assigned("energy_period")) //Both heights and periods must be assigned
                 throw exec_error("mhk_wave", "Wave height and Energy period arrays of equal length must be assigned");
+
+            number_hours = number_records * hourdiff;
 
             bool system_use_lifetime_output = (as_integer("system_use_lifetime_output") == 1);
             size_t nyears = 1;
@@ -581,7 +605,7 @@ public:
                 sys_degradation.push_back(1); // single year mode - degradation handled in financial models.
             }
             ssc_number_t* energy_hourly_kWh = allocate("energy_hourly_kWh", number_records_gen);
-            ssc_number_t* energy_hourly_kW = allocate("energy_hourly_kW", number_records_gen * 3); //8760 of kW values
+            ssc_number_t* energy_hourly_kW = allocate("energy_hourly_kW", number_records_gen * hourdiff); //8760 of kW values
             ssc_number_t* energy_hourly_gen = allocate("gen", number_records_gen);
             ssc_number_t* sig_wave_height_index_mat = allocate("sig_wave_height_index_mat", number_records);
             ssc_number_t* sig_wave_height_data = allocate("sig_wave_height_data", number_records);
