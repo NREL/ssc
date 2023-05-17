@@ -184,7 +184,7 @@ void C_sco2_phx_air_cooler::design_core()
             }
 
             double HTF_PHX_inlet = ms_des_par.m_T_htf_hot_in;
-            double cp_htf = htf_props.Cp(HTF_PHX_inlet) * 1000.0;   // Convert to J/kg K
+            double cp_htf = htf_props.Cp(HTF_PHX_inlet);
             double HTF_BP_outlet = ms_des_par.m_T_htf_bypass_out;
             double deltaT_bp = ms_des_par.m_deltaT_bypass;
             double HTF_PHX_cold_approach = ms_des_par.m_phx_dt_cold_approach;
@@ -363,27 +363,81 @@ void C_sco2_phx_air_cooler::design_core()
 	// Initialize the PHX
     mc_phx.initialize(ms_des_par.m_hot_fl_code, ms_des_par.mc_hot_fl_props, ms_des_par.m_phx_N_sub_hx, ms_des_par.m_phx_od_UA_target_type);
 
+    // Define state enumerable for sco2 into PHX
+    int phx_cold_inlet_state = C_sco2_cycle_core::HTR_HP_OUT;
+    if (ms_des_par.m_cycle_config == 3)
+        phx_cold_inlet_state = C_sco2_cycle_core::MIXER2_OUT;
+
 	// Design the PHX
-	double q_dot_des_phx = ms_des_solved.ms_rc_cycle_solved.m_W_dot_net / ms_des_solved.ms_rc_cycle_solved.m_eta_thermal;
+	
+    // Calculate q_dot_phx using sco2 enthalpies and mass flow (using thermal efficiency does not work for htr bypass)
+    double q_dot_des_phx_old = ms_des_solved.ms_rc_cycle_solved.m_W_dot_net / ms_des_solved.ms_rc_cycle_solved.m_eta_thermal;
+    double q_dot_des_phx = ms_des_solved.ms_rc_cycle_solved.m_m_dot_t
+        * (ms_des_solved.ms_rc_cycle_solved.m_enth[C_sco2_cycle_core::TURB_IN]
+        - ms_des_solved.ms_rc_cycle_solved.m_enth[phx_cold_inlet_state]);
+
 	//ms_phx_des_par.m_Q_dot_design = ms_des_solved.ms_rc_cycle_solved.m_W_dot_net / ms_des_solved.ms_rc_cycle_solved.m_eta_thermal;		//[kWt]
 	ms_phx_des_par.m_T_h_in = ms_des_par.m_T_htf_hot_in;	//[K] HTF hot inlet temperature 
 		// Okay, but CO2-HTF HX is assumed here. How does "structure inheritance" work?
 	ms_phx_des_par.m_P_h_in = 1.0;							// Assuming HTF is incompressible...
 	ms_phx_des_par.m_P_h_out = 1.0;						// Assuming HTF is incompressible...
 		// .................................................................................
-	ms_phx_des_par.m_T_c_in = ms_des_solved.ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::HTR_HP_OUT];		//[K]
-	ms_phx_des_par.m_P_c_in = ms_des_solved.ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::HTR_HP_OUT];		//[K]
-	ms_phx_des_par.m_P_c_out = ms_des_solved.ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::TURB_IN];		//[K]
-	ms_phx_des_par.m_m_dot_cold_des = ms_des_solved.ms_rc_cycle_solved.m_m_dot_t;	//[kg/s]
+    
+
+	ms_phx_des_par.m_T_c_in = ms_des_solved.ms_rc_cycle_solved.m_temp[phx_cold_inlet_state];		//[K]
+	ms_phx_des_par.m_P_c_in = ms_des_solved.ms_rc_cycle_solved.m_pres[phx_cold_inlet_state];		//[K]
+	ms_phx_des_par.m_P_c_out = ms_des_solved.ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::TURB_IN];		    //[K]
+	ms_phx_des_par.m_m_dot_cold_des = ms_des_solved.ms_rc_cycle_solved.m_m_dot_t;	                        //[kg/s]
 		// Calculating the HTF mass flow rate in 'design_and_calc_m_dot_htf'
 	ms_phx_des_par.m_m_dot_hot_des = std::numeric_limits<double>::quiet_NaN();
 		// Set maximum effectiveness
 	ms_phx_des_par.m_eff_max = 1.0;
-	
+
 	mc_phx.design_and_calc_m_dot_htf(ms_phx_des_par, q_dot_des_phx, ms_des_par.m_phx_dt_cold_approach, ms_des_solved.ms_phx_des_solved);
 
 	//*************************************************************************************
 	//*************************************************************************************
+
+    // Solve the Bypass HX (if necessary)
+    if (ms_des_par.m_cycle_config == 3)
+    {
+        // hard coded
+        int bp_N_subs_hx = ms_des_par.m_phx_N_sub_hx;
+        auto bp_od_UA_target_type = ms_des_par.m_phx_od_UA_target_type;
+
+        mc_bp.initialize(ms_des_par.m_hot_fl_code, ms_des_par.mc_hot_fl_props, bp_N_subs_hx, bp_od_UA_target_type);
+
+        // Calculate BP heat transfer
+        double m_dot_bp_sco2 = ms_des_solved.ms_rc_cycle_solved.m_bp_frac * (ms_des_solved.ms_rc_cycle_solved.m_m_dot_t);
+        double q_dot_des_bp = m_dot_bp_sco2 * (ms_des_solved.ms_rc_cycle_solved.m_enth[C_sco2_cycle_core::BYPASS_OUT]
+            - ms_des_solved.ms_rc_cycle_solved.m_enth[C_sco2_cycle_core::MIXER_OUT]);
+
+        // Hot Parameters (HTF)
+        ms_bp_des_par.m_T_h_in = mc_phx.ms_des_solved.m_T_h_out;    // [K] Inlet to Bypass is outlet of PHX
+        ms_bp_des_par.m_P_h_in = 1.0;	                            // Assuming HTF is incompressible...
+        ms_bp_des_par.m_P_h_out = 1.0;                              // Assuming HTF is incompressible...
+
+        // Cold Parameters (sco2)
+        ms_bp_des_par.m_T_c_in = ms_des_solved.ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::MIXER_OUT];   //[K]
+        ms_bp_des_par.m_P_c_in = ms_des_solved.ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::MIXER_OUT];   //[K]
+        ms_bp_des_par.m_P_c_out = ms_des_solved.ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::BYPASS_OUT]; //[K]
+        ms_bp_des_par.m_m_dot_cold_des = m_dot_bp_sco2;                                                   //[kg/s]
+
+        // Calculating the HTF mass flow rate in 'design_and_calc_m_dot_htf'
+        ms_bp_des_par.m_m_dot_hot_des = std::numeric_limits<double>::quiet_NaN();
+
+        // Set maximum effectiveness
+        ms_bp_des_par.m_eff_max = 1.0;
+
+        // Set Mass Flow (it is known because it is equal to PHX)
+        ms_bp_des_par.m_m_dot_hot_des = ms_phx_des_par.m_m_dot_hot_des;
+
+        // Design
+        if (ms_bp_des_par.m_m_dot_cold_des > 0)
+        {
+            mc_bp.design_calc_UA(ms_bp_des_par, q_dot_des_bp, ms_des_solved.ms_bp_des_solved);
+        }
+    }
 
 	return;
 }

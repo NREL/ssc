@@ -54,6 +54,19 @@ void C_HTRBypass_Cycle::design_core(int& error_code)
     //ms_des_par.m_P_mc_out = 25000;
     //m_T_t_in = 923.149;
 
+    //DEBUG
+    if (false)
+    {
+        std::vector<double> bp_fracs = { 0, 0.01, 0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.99,1 };
+        for (double bp : bp_fracs)
+        {
+            m_bp_frac = bp;
+
+            int temp_error = 0;
+            design_core_standard(temp_error);
+        }
+    }
+
     // Check if HTF parameters were set
     if (is_htf_set == false)
     {
@@ -64,12 +77,12 @@ void C_HTRBypass_Cycle::design_core(int& error_code)
     C_mono_htr_bypass_BP_des BP_des_eq(this);
     C_monotonic_eq_solver BP_des_solver(BP_des_eq);
     double BP_out_lower = 0;
-    double BP_out_upper = 1.0;
+    double BP_out_upper = 0.99;
 
     double BP_out_guess_lower = 0;	//[K] 
-    double BP_out_guess_upper = 1;	//[K] 
+    double BP_out_guess_upper = 0.99;	//[K] 
 
-    BP_des_solver.settings(ms_des_par.m_des_tol * m_temp_last[MC_IN], 1000, BP_out_lower, BP_out_upper, false);
+    BP_des_solver.settings(ms_des_par.m_des_tol, 1000, BP_out_lower, BP_out_upper, false);
 
     double BP_out_solved, tol_BP_out_solved;
     BP_out_solved = tol_BP_out_solved = std::numeric_limits<double>::quiet_NaN();
@@ -77,8 +90,25 @@ void C_HTRBypass_Cycle::design_core(int& error_code)
 
     int BP_out_code = BP_des_solver.solve(BP_out_guess_lower, BP_out_guess_upper, 0, BP_out_solved, tol_BP_out_solved, iter_BP_out);
 
-    if (BP_out_code != C_monotonic_eq_solver::CONVERGED)
+    // Check if Bypass Converged
+    if (BP_out_code == C_monotonic_eq_solver::CONVERGED)
     {
+        // Bypass Converged
+        return;
+    }
+    else if (BP_out_code == C_monotonic_eq_solver::SLOPE_NEG_NO_NEG_ERR)
+    {
+        // Target Outlet temperature not possible (too low), bypass is fully open
+        return;
+    }
+    else if (BP_out_code == C_monotonic_eq_solver::SLOPE_NEG_NO_POS_ERR)
+    {
+        // Target Outlet temperature not possible (too high), bypass is fully closed
+        return;
+    }
+    else
+    {
+        // Did not converge
         error_code = 35;
         return;
     }
@@ -335,25 +365,6 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
 
         }
 
-
-
-        //double T_HTR_LP_out_lower = m_temp_last[MC_OUT];		//[K] Coldest possible temperature
-        //double T_HTR_LP_out_upper = m_temp_last[TURB_OUT];		//[K] Hottest possible temperature
-
-        //double error = 1000;
-        //double T_HTR_guess = 0.5 * (T_HTR_LP_out_lower + T_HTR_LP_out_upper);
-        //double diff = std::numeric_limits<double>::quiet_NaN();
-        //while (error > 0.1)
-        //{
-        //    solve_HTR(T_HTR_guess, &diff);
-        //    double guess_val = T_HTR_guess;
-        //    double calc_val = T_HTR_guess + diff;
-
-        //    error = std::abs(guess_val - calc_val);
-
-        //    // Update guess value
-        //    T_HTR_guess = 0.5 * (guess_val + calc_val);
-        //}
     }
 
     // State 5 can now be fully defined
@@ -457,6 +468,8 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
 
         double qSum = m_Q_dot_total;
         double qSum_calc = m_Q_dot_BP + m_Q_dot_PHX;
+
+        int x = 0;
     }
 
     // HTF
@@ -554,16 +567,10 @@ int C_HTRBypass_Cycle::solve_HTR(double T_HTR_LP_OUT_guess, double* diff_T_HTR_L
         //    solve_LTR(T_LTR_guess, &diff);
         //    double guess_val = T_LTR_guess;
         //    double calc_val = T_LTR_guess + diff;
-
         //    error = std::abs(guess_val - calc_val);
-
         //    // Update guess value
         //    T_LTR_guess = 0.5 * (guess_val + calc_val);
-
         //}
-
-
-
 
     }
         
@@ -638,7 +645,7 @@ int C_HTRBypass_Cycle::solve_HTR(double T_HTR_LP_OUT_guess, double* diff_T_HTR_L
     return 0;
 }
 
-int C_HTRBypass_Cycle::solve_LTR(double T_LTR_LP_OUT_guess, double *diff_T_LTR_LP_out)
+int C_HTRBypass_Cycle::solve_LTR(double T_LTR_LP_OUT_guess, double* diff_T_LTR_LP_out)
 {
     m_w_rc = m_m_dot_t = m_m_dot_rc = m_m_dot_mc = m_Q_dot_LT = m_Q_dot_HT = std::numeric_limits<double>::quiet_NaN();
 
@@ -1048,10 +1055,154 @@ void C_HTRBypass_Cycle::auto_opt_design_core(int& error_code)
 
     int optimal_design_error_code = 0;
     design_core(optimal_design_error_code);
+
+    if (optimal_design_error_code != 0)
+    {
+        error_code = optimal_design_error_code;
+        return;
+    }
+
+    finalize_design(optimal_design_error_code);
+
+    error_code = optimal_design_error_code;
 }
 
 void C_HTRBypass_Cycle::finalize_design(int& error_code)
 {
+
+
+    // Design Main Compressor
+    {
+        int mc_design_err = m_mc_ms.design_given_outlet_state(m_mc_comp_model_code, m_temp_last[MC_IN],
+            m_pres_last[MC_IN],
+            m_m_dot_mc,
+            m_temp_last[MC_OUT],
+            m_pres_last[MC_OUT],
+            ms_des_par.m_des_tol);
+
+        if (mc_design_err != 0)
+        {
+            error_code = mc_design_err;
+            return;
+        }
+    }
+
+    // Design Recompressor
+    if (ms_des_par.m_recomp_frac > 0.01)
+    {
+        int rc_des_err = m_rc_ms.design_given_outlet_state(m_rc_comp_model_code, m_temp_last[LTR_LP_OUT],
+                                    m_pres_last[LTR_LP_OUT],
+                                    m_m_dot_rc,
+                                    m_temp_last[RC_OUT],
+                                    m_pres_last[RC_OUT],
+                                    ms_des_par.m_des_tol);
+
+        if (rc_des_err != 0)
+        {
+            error_code = rc_des_err;
+            return;
+        }
+
+        ms_des_solved.m_is_rc = true;
+    }
+    else
+    {
+        ms_des_solved.m_is_rc = false;
+    }
+
+    // Size Turbine
+    {
+        C_turbine::S_design_parameters t_des_par;
+        // Set turbine shaft speed
+        t_des_par.m_N_design = m_N_turbine;
+        t_des_par.m_N_comp_design_if_linked = m_mc_ms.get_design_solved()->m_N_design; //[rpm] m_mc.get_design_solved()->m_N_design;
+        // Turbine inlet state
+        t_des_par.m_P_in = m_pres_last[TURB_IN];
+        t_des_par.m_T_in = m_temp_last[TURB_IN];
+        t_des_par.m_D_in = m_dens_last[TURB_IN];
+        t_des_par.m_h_in = m_enth_last[TURB_IN];
+        t_des_par.m_s_in = m_entr_last[TURB_IN];
+        // Turbine outlet state
+        t_des_par.m_P_out = m_pres_last[TURB_OUT];
+        t_des_par.m_h_out = m_enth_last[TURB_OUT];
+        // Mass flow
+        t_des_par.m_m_dot = m_m_dot_t;
+
+        int turb_size_error_code = 0;
+        m_t.turbine_sizing(t_des_par, turb_size_error_code);
+
+        if (turb_size_error_code != 0)
+        {
+            error_code = turb_size_error_code;
+            return;
+        }
+    }
+
+    // Design air cooler
+    {
+        // Structure for design parameters that are dependent on cycle design solution
+        C_CO2_to_air_cooler::S_des_par_cycle_dep s_air_cooler_des_par_dep;
+        // Set air cooler design parameters that are dependent on the cycle design solution
+        s_air_cooler_des_par_dep.m_T_hot_in_des = m_temp_last[LTR_LP_OUT];  // [K]
+        s_air_cooler_des_par_dep.m_P_hot_in_des = m_pres_last[LTR_LP_OUT];  // [kPa]
+        s_air_cooler_des_par_dep.m_m_dot_total = m_m_dot_mc;                // [kg/s]
+
+        // This pressure drop is currently uncoupled from the cycle design
+        double cooler_deltaP = m_pres_last[LTR_LP_OUT] - m_pres_last[MC_IN];    // [kPa]
+        if (cooler_deltaP == 0.0)
+            s_air_cooler_des_par_dep.m_delta_P_des = m_deltaP_cooler_frac * m_pres_last[LTR_LP_OUT];    // [kPa]
+        else
+            s_air_cooler_des_par_dep.m_delta_P_des = cooler_deltaP; // [kPa]
+
+        s_air_cooler_des_par_dep.m_T_hot_out_des = m_temp_last[MC_IN];                          // [K]
+        s_air_cooler_des_par_dep.m_W_dot_fan_des = m_frac_fan_power * m_W_dot_net / 1000.0;     // [MWe]
+        // Structure for design parameters that are independent of cycle design solution
+        C_CO2_to_air_cooler::S_des_par_ind s_air_cooler_des_par_ind;
+        s_air_cooler_des_par_ind.m_T_amb_des = m_T_amb_des;         // [K]
+        s_air_cooler_des_par_ind.m_elev = m_elevation;              // [m]
+        s_air_cooler_des_par_ind.m_eta_fan = m_eta_fan;             // [-]
+        s_air_cooler_des_par_ind.m_N_nodes_pass = m_N_nodes_pass;   // [-]
+
+        if (ms_des_par.m_is_des_air_cooler && std::isfinite(m_deltaP_cooler_frac) && std::isfinite(m_frac_fan_power)
+            && std::isfinite(m_T_amb_des) && std::isfinite(m_elevation) && std::isfinite(m_eta_fan) && m_N_nodes_pass > 0)
+        {
+            mc_air_cooler.design_hx(s_air_cooler_des_par_ind, s_air_cooler_des_par_dep, ms_des_par.m_des_tol);
+        }
+    }
+
+    // Get 'design_solved' structure from component classes
+    ms_des_solved.ms_mc_ms_des_solved = *m_mc_ms.get_design_solved();
+    ms_des_solved.ms_rc_ms_des_solved = *m_rc_ms.get_design_solved();
+    ms_des_solved.ms_t_des_solved = *m_t.get_design_solved();
+    ms_des_solved.ms_LTR_des_solved = mc_LT_recup.ms_des_solved;
+    ms_des_solved.ms_HTR_des_solved = mc_HT_recup.ms_des_solved;
+    ms_des_solved.ms_mc_air_cooler = *mc_air_cooler.get_design_solved();
+
+    // Set solved design point metrics
+    ms_des_solved.m_temp = m_temp_last;
+    ms_des_solved.m_pres = m_pres_last;
+    ms_des_solved.m_enth = m_enth_last;
+    ms_des_solved.m_entr = m_entr_last;
+    ms_des_solved.m_dens = m_dens_last;
+
+    ms_des_solved.m_eta_thermal = m_eta_thermal_calc_last;
+    ms_des_solved.m_W_dot_net = m_W_dot_net_last;
+    ms_des_solved.m_m_dot_mc = m_m_dot_mc;
+    ms_des_solved.m_m_dot_rc = m_m_dot_rc;
+    ms_des_solved.m_m_dot_t = m_m_dot_t;
+    ms_des_solved.m_recomp_frac = m_m_dot_rc / m_m_dot_t;
+    ms_des_solved.m_bp_frac = m_bp_frac;
+
+    ms_des_solved.m_UA_LTR = ms_des_par.m_LTR_UA;
+    ms_des_solved.m_UA_HTR = ms_des_par.m_HTR_UA;
+
+    ms_des_solved.m_W_dot_t = m_W_dot_t;		//[kWe]
+    ms_des_solved.m_W_dot_mc = m_W_dot_mc;		//[kWe]
+    ms_des_solved.m_W_dot_rc = m_W_dot_rc;		//[kWe]
+
+    ms_des_solved.m_W_dot_cooler_tot = mc_air_cooler.get_design_solved()->m_W_dot_fan * 1.E3;	//[kWe] convert from MWe
+
+
 }
 
 
@@ -1062,7 +1213,7 @@ void C_HTRBypass_Cycle::set_htf_par(double T_htf_phx_in, double T_htf_bp_out_tar
 {
     m_T_HTF_PHX_inlet = T_htf_phx_in;  // K
     m_T_HTF_BP_outlet_target = T_htf_bp_out_target;  // K
-    m_cp_HTF = cp_htf;
+    m_cp_HTF = cp_htf;  // kJ/kg K
     m_dT_BP = dT_bp;
     m_HTF_PHX_cold_approach = htf_phx_cold_approach;
 

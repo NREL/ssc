@@ -25,6 +25,8 @@ public:
 		RC_OUT,			// Recompresor outlet
 		PC_IN,			// Precompressor inlet (partial cooling cycle)
 		PC_OUT,			// Precompressor outlet (partial cooling cycle)
+        BYPASS_OUT,     // Bypass outlet (htr bypass cycle)
+        MIXER2_OUT,     // Mixer 2 Outlet (htr bypass cycle)
 
 		END_SCO2_STATES
 	};
@@ -73,6 +75,7 @@ public:
 		double m_W_dot_rc;		//[kWe]
 		double m_W_dot_pc;		//[kWe]
 		double m_W_dot_t;		//[kWe]
+        double m_bp_frac;       //[-] Bypass Fraction
 
 		double m_W_dot_cooler_tot;	//[kWe]
 

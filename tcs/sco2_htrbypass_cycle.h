@@ -45,25 +45,25 @@ class C_HTRBypass_Cycle : public C_sco2_cycle_core
 {
 public:
 
-    enum E_htrbypass_cycle_state_points
-    {
-        // index values for c++ 0-based vectors for temperature, pressure, etc.
-        MC_IN = 0,		// Main compressor inlet
-        MC_OUT,			// Main compressor outlet
-        LTR_HP_OUT,		// Low temp recuperator high pressure outlet
-        MIXER_OUT,		// Mixer: LTR_HP_OUT + Recompressor outlet
-        HTR_HP_OUT,		// High temp recuperator high pressure outlet
-        TURB_IN,		// Turbine inlet
-        TURB_OUT,		// Turbine outlet
-        HTR_LP_OUT,		// High temp recuperator low pressure outlet
-        LTR_LP_OUT,		// Low temp recuperator low pressure outlet
-        RC_OUT,			// Recompresor outlet
-        BYPASS_OUT,
-        MIXER2_OUT,
+    //enum E_htrbypass_cycle_state_points
+    //{
+    //    // index values for c++ 0-based vectors for temperature, pressure, etc.
+    //    MC_IN = 0,		// Main compressor inlet
+    //    MC_OUT,			// Main compressor outlet
+    //    LTR_HP_OUT,		// Low temp recuperator high pressure outlet
+    //    MIXER_OUT,		// Mixer: LTR_HP_OUT + Recompressor outlet
+    //    HTR_HP_OUT,		// High temp recuperator high pressure outlet
+    //    TURB_IN,		// Turbine inlet
+    //    TURB_OUT,		// Turbine outlet
+    //    HTR_LP_OUT,		// High temp recuperator low pressure outlet
+    //    LTR_LP_OUT,		// Low temp recuperator low pressure outlet
+    //    RC_OUT,			// Recompresor outlet
+    //    BYPASS_OUT,
+    //    MIXER2_OUT,
 
 
-        END_SCO2_HTRBP_STATES
-    };
+    //    END_SCO2_HTRBP_STATES
+    //};
 
     struct S_design_parameters
     {
@@ -226,23 +226,23 @@ private:
     S_design_parameters ms_des_par_auto_opt;
 
     // NEW Internal Variables
-    double m_w_t;
-    double m_w_mc;
-    double m_w_rc;
+    double m_w_t;                       // kJ/kg
+    double m_w_mc;                      // kJ/kg
+    double m_w_rc;                      // kJ/kg
     double m_Q_dot_LT, m_Q_dot_HT;
     double m_bp_frac;
     double m_m_dot_bp;
     double m_m_dot_htr_hp;
-    double m_cp_HTF;
-    double m_m_dot_HTF;
+    double m_cp_HTF;                    // kJ/kg K
+    double m_m_dot_HTF;                 // kg/s
     double m_Q_dot_BP;
     double m_T_HTF_PHX_inlet;
     double m_T_HTF_BP_outlet_target;
     double m_T_HTF_BP_outlet_calc;
     double m_T_HTF_PHX_out;
-    double m_dT_BP; // BYPASS_OUT - HTR_HP_OUT
+    double m_dT_BP;                     // BYPASS_OUT - HTR_HP_OUT
     double m_Q_dot_total;
-    double m_Q_dot_pc;  // pre cooler heat rejected
+    double m_Q_dot_pc;                  // pre cooler heat rejected
     double m_HTF_BP_cold_approach;
     double m_HTF_PHX_cold_approach;
     bool is_htf_set = false;
@@ -301,7 +301,7 @@ public:
             N_nodes_pass,
             T_amb_des, elevation)
     {
-        m_temp_last.resize(END_SCO2_HTRBP_STATES);
+        m_temp_last.resize(END_SCO2_STATES);
         std::fill(m_temp_last.begin(), m_temp_last.end(), std::numeric_limits<double>::quiet_NaN());
         m_pres_last = m_enth_last = m_entr_last = m_dens_last = m_temp_last;
 
@@ -318,6 +318,14 @@ public:
         
     }
 
+    /// <summary>
+    /// Set HTF parameters
+    /// </summary>
+    /// <param name="T_htf_phx_in">K</param>
+    /// <param name="T_htf_bp_out_target">K</param>
+    /// <param name="cp_htf">kJ/kg K</param>
+    /// <param name="dT_bp">K</param>
+    /// <param name="htf_phx_cold_approach">K</param>
     void set_htf_par(double T_htf_phx_in, double T_htf_bp_out_target, double cp_htf, double dT_bp, double htf_phx_cold_approach);
 
 

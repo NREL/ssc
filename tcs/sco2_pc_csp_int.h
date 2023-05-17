@@ -182,6 +182,7 @@ public:
 	{
 		C_HX_counterflow_CRM::S_des_solved ms_phx_des_solved;
 		C_sco2_cycle_core::S_design_solved ms_rc_cycle_solved;
+        C_HX_counterflow_CRM::S_des_solved ms_bp_des_solved;
 	};
 
 	struct S_od_par
@@ -370,11 +371,14 @@ private:
     std::unique_ptr<C_sco2_cycle_core> mpc_sco2_cycle;
 
 	C_HX_co2_to_htf mc_phx;
+    C_HX_co2_to_htf mc_bp;  // Bypass Heat Exchanger
 
 	S_des_par ms_des_par;
 	C_sco2_cycle_core::S_auto_opt_design_hit_eta_parameters ms_cycle_des_par;
 	C_HX_counterflow_CRM::S_des_calc_UA_par ms_phx_des_par;
-		
+
+    C_HX_counterflow_CRM::S_des_calc_UA_par ms_bp_des_par; // Bypass HX Design Parameters
+
 	S_des_solved ms_des_solved;
 
 	S_od_par ms_od_par;
