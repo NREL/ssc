@@ -453,8 +453,8 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 
             // Charge limits and priority
             batt_vars->batt_initial_SOC = vt.as_double("batt_initial_SOC");
-            batt_vars->batt_maximum_SOC = vt.as_double("batt_maximum_soc");
-            batt_vars->batt_minimum_SOC = vt.as_double("batt_minimum_soc");
+            batt_vars->batt_maximum_SOC = vt.as_double("batt_maximum_SOC");
+            batt_vars->batt_minimum_SOC = vt.as_double("batt_minimum_SOC");
             if (vt.is_assigned("batt_minimum_outage_SOC")) {
                 batt_vars->batt_minimum_outage_SOC = vt.as_double("batt_minimum_outage_SOC");
             }
@@ -1152,11 +1152,19 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     }
 
     if (batt_vars->batt_loss_choice == losses_params::MONTHLY) {
+        if (*std::min_element(batt_vars->batt_losses_charging.begin(), batt_vars->batt_losses_charging.end()) < 0
+            || *std::min_element(batt_vars->batt_losses_discharging.begin(), batt_vars->batt_losses_discharging.end()) < 0
+            || *std::min_element(batt_vars->batt_losses_idle.begin(), batt_vars->batt_losses_idle.end()) < 0) {
+            throw exec_error("battery", "System loss inputs cannot include negative numbers.");
+        }
         losses_model = new losses_t(batt_vars->batt_losses_charging, batt_vars->batt_losses_discharging, batt_vars->batt_losses_idle);
     }
     else if (batt_vars->batt_loss_choice == losses_params::SCHEDULE) {
         if (!(batt_vars->batt_losses.size() == 1 || batt_vars->batt_losses.size() == nrec)) {
             throw exec_error("battery", "System loss input length must be 1 or equal to weather file length for time series input mode.");
+        }
+        if (*std::min_element(batt_vars->batt_losses.begin(), batt_vars->batt_losses.end()) < 0) {
+            throw exec_error("battery", "System loss inputs cannot include negative numbers.");
         }
         losses_model = new losses_t(batt_vars->batt_losses);
     }

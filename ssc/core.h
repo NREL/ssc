@@ -271,6 +271,8 @@ public:
 	ssc_number_t accumulate_annual_for_year(const std::string &hourly_var, const std::string &annual_var, double scale, size_t step_per_hour, size_t year = 1, size_t steps = 8760);
 	ssc_number_t *accumulate_monthly_for_year(const std::string &hourly_var, const std::string &annual_var, double scale, size_t step_per_hour, size_t year = 1);
 
+    var_table* get_var_table() { return m_vartab; }
+
 protected:
 	// called by 'compute' as necessary for precheck and postcheck
     bool evaluate();

@@ -43,6 +43,7 @@
 #  include <windows.h>    
 #endif
 
+int     gettimeofday(struct timeval * __restrict, void * __restrict);
 /* return time in seconds since some arbitrary point in the past */
 double nlopt_seconds(void)
 {

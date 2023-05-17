@@ -9,8 +9,8 @@ env:
   BUILD_TYPE: Release
 
 jobs:
-  build-on-ubuntu1804:
-    runs-on: ubuntu-18.04
+  build-on-ubuntu:
+    runs-on: ubuntu-latest
 
     steps:
     - name: Setup cmake
@@ -76,7 +76,7 @@ jobs:
             ${{env.SSCDIR}}/build/ssc/ssc.so
       
   build-on-mac:
-    runs-on: macos-11
+    runs-on: macos-latest
 
     steps:
     - name: Setup cmake

@@ -81,10 +81,10 @@ public:
 	std::string error() { return m_errorMsg; }
 
 protected:
-	/// index of resource type (temp=1,pres=2,speed=3,dir=4) for each measurement height
-	std::vector<int> m_dataid;	
-	/// measurement height corresponding to each column header; same size as m_dataid
-	std::vector<double> m_heights;
+	
+	std::vector<int> m_dataid;	// indexes of resource type (temp=1,pres=2,speed=3,dir=4) for each measurement height
+	std::vector<double> m_heights; /// measurement heights corresponding to each index in m_dataid
+    std::vector<int> m_colid; // indexes of columns in file that contain temperature, pressure, speed or direction data
 	std::vector<double> m_relativeHumidity;
 	std::string m_errorMsg;
 	

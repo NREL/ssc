@@ -144,7 +144,7 @@ static var_info _cm_vtab_hcpv[] = {
               //	{ SSC_OUTPUT,        SSC_ARRAY,      "hourly_energy",                   "Hourly Energy",                                                   "kWh",    "",        "Hourly",          "*",                    "LENGTH=8760",                              "" },
 
                   // monthly outputs
-                  { SSC_OUTPUT,        SSC_ARRAY,      "monthly_energy",                  "Monthly Energy",                                                  "kWh",    "",        "Monthly",          "*",                   "LENGTH=12",                                 "" },
+                  { SSC_OUTPUT,        SSC_ARRAY,      "monthly_energy",                  "Monthly Energy Gross",                                                  "kWh",    "",        "Monthly",          "*",                   "LENGTH=12",                                 "" },
                   { SSC_OUTPUT,        SSC_ARRAY,      "monthly_beam",                    "Beam irradiance",                                                 "kW/m2",  "",        "Monthly",          "*",                   "LENGTH=12",                                 "" },
                   { SSC_OUTPUT,        SSC_ARRAY,      "monthly_input_radiation",         "Input radiation",                                                 "kWh",    "",        "Monthly",          "*",                   "LENGTH=12",                                 "" },
                   { SSC_OUTPUT,        SSC_ARRAY,      "monthly_dc_net",                  "DC net",                                                          "kWh",    "",        "Monthly",          "*",                   "LENGTH=12",                                 "" },

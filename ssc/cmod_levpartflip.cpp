@@ -73,29 +73,9 @@ static var_info _cm_vtab_levpartflip[] = {
 /* Dispatch */
 	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",		"Lifetime hourly system outputs",	"0/1",  "0=hourly first year,1=hourly lifetime",	"Time of Delivery",	"*",	"INTEGER,MIN=0",                 "" },
 
-	// dispatch update TODO - remove SO output label below after consildated with CSP
-	{ SSC_INPUT, SSC_NUMBER, "ppa_multiplier_model", "PPA multiplier model", "0/1", "0=diurnal,1=timestep", "Time of Delivery", "?=0", "INTEGER,MIN=0", "" },
-	{ SSC_INPUT, SSC_ARRAY, "dispatch_factors_ts", "Dispatch payment factor array", "", "", "Time of Delivery", "ppa_multiplier_model=1", "", "" },
-
-	{ SSC_OUTPUT, SSC_ARRAY, "ppa_multipliers", "TOD factors", "", "", "Time of Delivery", "*", "", "" },
     /* PPA Buy Rate values */
     { SSC_INPUT, SSC_ARRAY, "utility_bill_w_sys", "Electricity bill with system", "$", "", "Utility Bill", "", "", "" },
     { SSC_OUTPUT, SSC_ARRAY, "cf_utility_bill", "Electricity purchase", "$", "", "", "", "LENGTH_EQUAL=cf_length", "" },
-
-
-
-	{ SSC_INPUT, SSC_NUMBER, "dispatch_factor1", "TOD factor for period 1", "", "", "Time of Delivery", "ppa_multiplier_model=0", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "dispatch_factor2", "TOD factor for period 2", "", "", "Time of Delivery", "ppa_multiplier_model=0", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "dispatch_factor3", "TOD factor for period 3", "", "", "Time of Delivery", "ppa_multiplier_model=0", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "dispatch_factor4", "TOD factor for period 4", "", "", "Time of Delivery", "ppa_multiplier_model=0", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "dispatch_factor5", "TOD factor for period 5", "", "", "Time of Delivery", "ppa_multiplier_model=0", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "dispatch_factor6", "TOD factor for period 6", "", "", "Time of Delivery", "ppa_multiplier_model=0", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "dispatch_factor7", "TOD factor for period 7", "", "", "Time of Delivery", "ppa_multiplier_model=0", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "dispatch_factor8", "TOD factor for period 8", "", "", "Time of Delivery", "ppa_multiplier_model=0", "", "" },
-	{ SSC_INPUT, SSC_NUMBER, "dispatch_factor9", "TOD factor for period 9", "", "", "Time of Delivery", "ppa_multiplier_model=0", "", "" },
-	{ SSC_INPUT, SSC_MATRIX, "dispatch_sched_weekday", "Diurnal weekday TOD periods", "1..9", "12 x 24 matrix", "Time of Delivery", "ppa_multiplier_model=0", "", "" },
-	{ SSC_INPUT, SSC_MATRIX, "dispatch_sched_weekend", "Diurnal weekend TOD periods", "1..9", "12 x 24 matrix", "Time of Delivery", "ppa_multiplier_model=0", "", "" },
-
 
 
 
@@ -709,7 +689,8 @@ extern var_info
     vtab_debt[],
     vtab_financial_metrics[],
     vtab_lcos_inputs[],
-    vtab_battery_replacement_cost[];
+    vtab_battery_replacement_cost[],
+    vtab_tod_dispatch_periods[];
 
 enum {
 	CF_energy_net,
@@ -972,7 +953,8 @@ public:
 		add_var_info(_cm_vtab_levpartflip);
         add_var_info(vtab_lcos_inputs);
 		add_var_info(vtab_battery_replacement_cost);
-	}
+        add_var_info(vtab_tod_dispatch_periods);
+    }
 
 	void exec( )
 	{
@@ -1076,12 +1058,8 @@ public:
         int add_om_num_types = as_integer("add_om_num_types");
         ssc_number_t nameplate1 = 0;
         ssc_number_t nameplate2 = 0;
-        std::vector<double> battery_discharged;
-        std::vector<double> fuelcell_discharged;
-        for (int i = 0; i <= nyears; i++) {
-            battery_discharged.push_back(0);
-            fuelcell_discharged.push_back(0);
-        }
+        std::vector<double> battery_discharged(nyears,0);
+        std::vector<double> fuelcell_discharged(nyears+1,0);
 
         if (add_om_num_types > 0) //PV Battery
         {
@@ -1092,14 +1070,27 @@ public:
             if (as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1)
                 battery_discharged = as_vector_double("batt_annual_discharge_energy");
         }
-        if (add_om_num_types > 1) // PV Battery Fuel Cell
+        if (battery_discharged.size() == 1) { // ssc #992
+            double first_val = battery_discharged[0];
+            battery_discharged.resize(nyears, first_val);
+        }
+        if (battery_discharged.size() != nyears)
+            throw exec_error("levpartflip", util::format("battery_discharged size (%d) incorrect",(int)battery_discharged.size()));
+
+        if (add_om_num_types > 1)
         {
-            escal_or_annual(CF_om_fixed2_expense, nyears, "om_fuelcell_fixed_cost", inflation_rate, 1.0, false, as_double("om_fixed_escal") * 0.01);
-            escal_or_annual(CF_om_production2_expense, nyears, "om_fuelcell_variable_cost", inflation_rate, 0.001, false, as_double("om_production_escal") * 0.01);
-            escal_or_annual(CF_om_capacity2_expense, nyears, "om_fuelcell_capacity_cost", inflation_rate, 1.0, false, as_double("om_capacity_escal") * 0.01);
+            escal_or_annual(CF_om_fixed2_expense, nyears, "om_fuelcell_fixed_cost", inflation_rate, 1.0, false, as_double("om_fixed_escal")*0.01);
+            escal_or_annual(CF_om_production2_expense, nyears, "om_fuelcell_variable_cost", inflation_rate, 0.001, false, as_double("om_production_escal")*0.01);
+            escal_or_annual(CF_om_capacity2_expense, nyears, "om_fuelcell_capacity_cost", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01);
             nameplate2 = as_number("om_fuelcell_nameplate");
             fuelcell_discharged = as_vector_double("fuelcell_annual_energy_discharged");
         }
+        if (fuelcell_discharged.size()== 2) { // ssc #992
+            double first_val = fuelcell_discharged[1];
+            fuelcell_discharged.resize(nyears+1, first_val);
+         }
+        if (fuelcell_discharged.size() != nyears+1)
+            throw exec_error("levpartflip", util::format("fuelcell_discharged size (%d) incorrect",(int)fuelcell_discharged.size()));
 
         // battery cost - replacement from lifetime analysis
         if ((as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1) && (as_integer("batt_replacement_option") > 0))

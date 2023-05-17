@@ -40,10 +40,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static var_info _cm_vtab_tcsgeneric_solar[] = {
 //   weather reader inputs
 //   VARTYPE            DATATYPE          NAME                LABEL                                                             UNITS              META            GROUP            REQUIRED_IF                CONSTRAINTS              UI_HINTS
-    { SSC_INPUT,        SSC_STRING,      "file_name",        "local weather file path",                                        "",                 "",             "Weather",        "*",                       "LOCAL_FILE",            "" },
-    { SSC_INPUT,        SSC_NUMBER,      "track_mode",       "Tracking mode",                                                  "",                 "",             "Weather",        "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "tilt",             "Tilt angle of surface/axis",                                     "",                 "",             "Weather",        "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "azimuth",          "Azimuth angle of surface/axis",                                  "",                 "",             "Weather",        "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_STRING,      "file_name",        "local weather file path",                                        "",                 "",             "weather",        "*",                       "LOCAL_FILE",            "" },
+    { SSC_INPUT,        SSC_NUMBER,      "track_mode",       "Tracking mode",                                                  "",                 "",             "weather",        "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tilt",             "Tilt angle of surface/axis",                                     "",                 "",             "weather",        "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "azimuth",          "Azimuth angle of surface/axis",                                  "",                 "",             "weather",        "*",                       "",                      "" },
 
 	{ SSC_INPUT, SSC_NUMBER, "system_capacity", "Nameplate capacity", "kW", "", "generic solar", "*", "", "" },
 
@@ -180,7 +180,7 @@ static var_info _cm_vtab_tcsgeneric_solar[] = {
 //    { SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",     "Hourly Energy",                                                  "kWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 
 	// monthly outputs
-	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",    "Monthly Energy",                                                 "kWh",          "",            "Generic CSP",    "*",                       "LENGTH=12",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",    "Monthly Energy Gross",                                                 "kWh",          "",            "Generic CSP",    "*",                       "LENGTH=12",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "monthly_w_gr",      "Total gross power production",                                   "kWh",          "",            "Generic CSP",    "*",                       "LENGTH=12",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "monthly_q_sf",      "Solar field delivered thermal power",                            "MWt",          "",            "Generic CSP",    "*",                       "LENGTH=12",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "monthly_q_to_pb",   "Thermal energy to the power conversion system",                  "MWt",          "",            "Generic CSP",    "*",                       "LENGTH=12",           "" },
@@ -377,7 +377,8 @@ public:
         size_t hours = 8760;
 
         //Load the solar field adjustment factors
-        sf_adjustment_factors sf_haf(this);
+//        sf_adjustment_factors sf_haf(this);
+        adjustment_factors sf_haf(this, "sf_adjust");
         if (!sf_haf.setup(hours))
 			throw exec_error("tcsgeneric_solar", "failed to setup sf adjustment factors: " + sf_haf.error());
         //allocate array to pass to tcs
