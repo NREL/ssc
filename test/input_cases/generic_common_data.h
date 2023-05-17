@@ -76,7 +76,9 @@ void generic_singleowner_battery_60min(ssc_data_t &data)
 	ssc_data_set_number( data, "analysis_period", 25 );
 	ssc_number_t p_generic_degradation[1] ={ 0 };
 	ssc_data_set_array( data, "generic_degradation", p_generic_degradation, 1 );
-	ssc_data_set_number( data, "adjust:constant", 0 );
+
+    ssc_data_set_number(data, "adjust_constant", 0.0);
+
 
 	ssc_data_set_number( data, "en_batt", 1 );
 	ssc_data_set_number( data, "batt_replacement_option", 0 );
@@ -199,8 +201,6 @@ void generic_singleowner_battery_60min(ssc_data_t &data)
 	ssc_data_set_number(data, "cp_battery_nameplate", 0);
 	ssc_data_set_array(data, "cp_capacity_credit_percent", p_ppa_price_input, 1);
 	ssc_data_set_array( data, "cp_capacity_payment_amount", p_ppa_price_input, 1);
-	ssc_number_t p_dispatch_tod_factors[9] ={ 1, 1, 1, 1, 1, 1, 1, 1, 1 };
-	ssc_data_set_array( data, "dispatch_tod_factors", p_dispatch_tod_factors, 9 );
 	ssc_number_t p_dispatch_sched_weekday[288] ={ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 	ssc_data_set_matrix( data, "dispatch_sched_weekday", p_dispatch_sched_weekday, 12, 24 );
 	ssc_number_t p_dispatch_sched_weekend[288] ={ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
@@ -352,15 +352,8 @@ void generic_singleowner_battery_60min(ssc_data_t &data)
 	ssc_data_set_number( data, "system_use_recapitalization", 0 );
 	ssc_data_set_number( data, "ppa_multiplier_model", 0 );
 	set_array( data, "dispatch_factors_ts", generictest::dispatch_factors_unused, 8147);
-	ssc_data_set_number( data, "dispatch_factor1", 1 );
-	ssc_data_set_number( data, "dispatch_factor2", 1 );
-	ssc_data_set_number( data, "dispatch_factor3", 1 );
-	ssc_data_set_number( data, "dispatch_factor4", 1 );
-	ssc_data_set_number( data, "dispatch_factor5", 1 );
-	ssc_data_set_number( data, "dispatch_factor6", 1 );
-	ssc_data_set_number( data, "dispatch_factor7", 1 );
-	ssc_data_set_number( data, "dispatch_factor8", 1 );
-	ssc_data_set_number( data, "dispatch_factor9", 1 );
+	ssc_number_t p_dispatch_tod_factors[9] = { 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+    ssc_data_set_array(data, "dispatch_tod_factors", p_dispatch_tod_factors, 9);
 	ssc_data_set_number( data, "total_installed_cost", 1554456064 );
 	ssc_data_set_number( data, "reserves_interest", 1.75 );
 	ssc_data_set_number( data, "equip1_reserve_cost", 0 );
@@ -451,7 +444,8 @@ void generic_commerical_battery_60min(ssc_data_t &data)
 	ssc_data_set_number(data, "analysis_period", 25);
 	ssc_number_t p_generic_degradation[1] = { 0 };
 	ssc_data_set_array(data, "generic_degradation", p_generic_degradation, 1);
-	ssc_data_set_number(data, "adjust:constant", 0);
+
+    ssc_data_set_number(data, "adjust_constant", 0.0);
 
 	ssc_data_set_number(data, "en_batt", 1);
 	set_array(data, "load", generictest::load_profile_path_60min, 8760);
