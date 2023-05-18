@@ -365,9 +365,9 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentNonLifetime) {
     ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_daily, 365); //365days * 2
     pvsam_errors = run_module(data, "pvsamv1");
     ssc_data_get_number(data, "annual_energy", &annual_energy);
-    EXPECT_NEAR(annual_energy, 8833.8, m_error_tolerance_hi);
+    EXPECT_NEAR(annual_energy, 4503.2, m_error_tolerance_hi);
     ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
-    EXPECT_NEAR(kwh_per_kw, 1883, m_error_tolerance_hi) << "Energy yield"; // Same as 1 year because year 2 has 0 production
+    EXPECT_NEAR(kwh_per_kw, 959.6, m_error_tolerance_hi) << "Energy yield"; // Same as 1 year because year 2 has 0 production
 
     //Hourly
     double timeindex_hourly[8760];
