@@ -88,6 +88,29 @@ public:
         EXPECT_TRUE(ssc_stateful_module_setup(mod, data));
     }
 
+    void CreateLMOLTOssc1023Model(double dt_hour = 1.)
+    { // from nrel-PySAM 4.1.0
+      /*
+        import PySAM.BatteryStateful as battery
+
+        b = battery.default('LMOLTO')
+       */
+        params_str = R"({"Qfull": 2.0, "Vnom_default": 2.4, "calendar_choice": 0.0, "chem": 1.0, "cycling_matrix": [ [20.0, 0.0, 100.0], [20.0, 10000.0, 90.0], [20.0, 20000.0, 85.42], [20.0, 30000.0, 83.33], [80.0, 0.0, 100.0], [80.0, 2000.0, 90.0], [80.0, 4000.0, 85.42], [80.0, 6000.0, 83.33]], "life_model": 2.0, "resistance": 0.001, "voltage_choice": 1.0, "voltage_matrix": [[0.0, 2.66443299], [3.538710415, 2.63900522], [10.42095268, 2.612970471], [17.30319495, 2.593547721], [24.18543722, 2.576117428], [31.06767949, 2.558760928], [37.94992175, 2.540459858], [44.83216402, 2.520372957], [51.71440629, 2.498618297], [58.59664856, 2.476125691], [65.47889082, 2.452821343], [72.36113309, 2.427554059], [79.24337536, 2.402080149], [86.12561763, 2.374171016], [93.00785989, 2.334867991], [97.39981713, 2.245030365], [98.58997933, 2.038415189], [98.6723647, 1.784428794], [99.07509979, 1.614765137], [100.0, 1.1]], "Cp": 900.0, "T_room_init": 20, "cap_vs_temp": [[-20.0, 72.33333333], [-10.0, 81.8], [0.0, 88.8], [10.0, 93.0], [23.0, 96.66666667], [45.0, 101.0], [60.0, 101.0]], "h": 7.5, "mass": 500.000, "nominal_energy": 10.0, "nominal_voltage": 200.0, "surface_area": 6.3 })";
+
+        data = json_to_ssc_data(params_str.c_str());
+        ssc_data_set_number(data, "dt_hr", dt_hour);
+
+        // python script additional inputs for setup to work
+        ssc_data_set_number(data, "control_mode", 1);
+        ssc_data_set_number(data, "initial_SOC", 20);
+        ssc_data_set_number(data, "minimum_SOC", 20);
+        ssc_data_set_number(data, "maximum_SOC", 90);
+        ssc_data_set_number(data, "input_power", 0);
+
+        mod = ssc_module_create("battery_stateful");
+        EXPECT_TRUE(ssc_stateful_module_setup(mod, data));
+    }
+
     void TearDown() override {
         ssc_data_free(data);
         ssc_module_free(mod);
