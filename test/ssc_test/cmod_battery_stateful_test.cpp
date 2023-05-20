@@ -442,7 +442,7 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, TestReplacementByCapa
 
 TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, ssc_1023) {
     double dt_hour = 1.0 / 60;
-    ssc_number_t power, soc;
+    ssc_number_t power, soc, current, temp;
 
     CreateLMOLTOssc1023Model(dt_hour);
 
@@ -451,7 +451,9 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, ssc_1023) {
         ssc_module_exec(mod, data);
         ssc_data_get_number(data, "P", &power);
         ssc_data_get_number(data, "SOC", &soc);
-        std::cout << i << ": Power=" << power << ", SOC=" << soc << "\n";
+        ssc_data_get_number(data, "I", &current);
+        ssc_data_get_number(data, "T_batt", &temp);
+        std::cout << i << ": Power=" << power << ", SOC=" << soc << ", I=" << current << ", T_Batt=" << temp << "\n";
     }
 }
 
