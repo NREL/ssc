@@ -256,9 +256,9 @@ double voltage_table_t::calculate_current_for_target_w(double P_watts, double q,
 
     P_watts /= params->num_cells_series;
     P_watts *= params->dt_hr;
-    double multiplier = 1.;
+    int multiplier = 1;
     if (P_watts < 0)
-        multiplier = -1.;
+        multiplier = -1;
 
     size_t row = 0;
     while (row < params->voltage_table.size() && DOD > params->voltage_table[row][0]) {
@@ -269,12 +269,12 @@ double voltage_table_t::calculate_current_for_target_w(double P_watts, double q,
     double B = qmax / 100.;
 
     double DOD_new = 0.;
-    double incr = 0;
-    double DOD_best = DOD_best = multiplier == -1. ? 0 : 100;
+    int incr = 0;
+    double DOD_best = DOD_best = (multiplier == -1) ? 0 : 100;
     double P_best = 0;
-    while (incr + row < slopes.size() && incr + row >= 0) {
-        size_t i = row + (size_t) incr;
-        incr += 1 * multiplier;
+    while (((incr + row) < slopes.size()) && ((incr + row) >= 0)) {
+        size_t i = row + incr;
+        incr += multiplier;
 
         double a = B * slopes[i];
         double b = A * slopes[i] + B * intercepts[i];
