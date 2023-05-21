@@ -453,7 +453,7 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, ssc_1023) {
         ssc_data_get_number(data, "SOC", &soc);
         ssc_data_get_number(data, "I", &current);
         ssc_data_get_number(data, "T_batt", &temp);
-        // following to check all iterations
+        // uncomment following to check all iterations
         //std::cout << i << ": Power=" << power << ", SOC=" << soc << ", I=" << current << ", T_Batt=" << temp << "\n";
     }
     EXPECT_NEAR(power, -0.1, 1e-4);
