@@ -344,15 +344,15 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     s.last_idx = 0;
     compareState(batteryModel, s, "runTest: 2");
 
-    size_t n_cycles = 400;
+    int n_cycles = 400;
 
     while (n_cycles-- > 0){
-        I *= -1;
+        I *= -1.0;
         while (batteryModel->SOC() < SOC_max - 1){
             batteryModel->run(idx++, I);
             capacity_passed += -batteryModel->I() * batteryModel->V() / 1000.;
         }
-        I *= -1;
+        I *= -1.0;
         while (batteryModel->SOC() > SOC_min + 1){
             batteryModel->run(idx++, I);
             capacity_passed += batteryModel->I() * batteryModel->V() / 1000.;

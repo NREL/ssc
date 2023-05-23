@@ -1135,6 +1135,9 @@ double util::interpolate(double x1, double y1, double x2, double y2, double xVal
 	if (x1 == x2) return y1;
 	if (y1 == y2) return y1;
 
+    if ((x2-x1) < 1.e-9)
+        return -1;
+    
 	double slope = (y2 - y1)/(x2 - x1);
 	double inter = y1 - (slope * x1);
 	return (slope*xValueToGetYValueFor) + inter;
@@ -1178,6 +1181,9 @@ double util::linterp_col( const util::matrix_t<double> &mat, size_t ixcol, doubl
 	// if at the end of the list, interpolate with last two values
 	if ( i == n )
 		i--;
+
+    if (i==0)
+        return std::numeric_limits<double>::quiet_NaN();
 
 	// now do linear interpolation between current row value
 	// and previous row value.  xval is between these row X values.

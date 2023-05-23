@@ -401,7 +401,7 @@ double voltage_dynamic_t::voltage_model_tremblay_hybrid(double Q_cell, double I,
 double voltage_dynamic_t::calculate_Qfull_mod(double qmax) {
     double C, x, Q_cell_mod;
     if (params->dynamic.Vcut != 0) {
-        C = (-1 * params->dynamic.Vcut + _E0 - params->resistance * qmax * params->dynamic.C_rate + _A * exp(-_B0 * qmax)) / _K;
+        C = (-1.0 * params->dynamic.Vcut + _E0 - params->resistance * qmax * params->dynamic.C_rate + _A * exp(-_B0 * qmax)) / _K;
         x = qmax / (C - 1);
         Q_cell_mod = qmax + x;
     }

@@ -180,5 +180,7 @@ TEST_F(CMBattwatts_cmod_battwatts, NoPV) {
 
     auto cycles = data.as_vector_ssc_number_t("batt_cycles");
     ssc_number_t maxCycles = *std::max_element(cycles.begin(), cycles.end());
+    for (size_t i=0; i<cycles.size();i++)
+        std::cout << "i=" << i << ", cycles=" << cycles[i] << "\n";
     EXPECT_NEAR(maxCycles, 520, 0.1);
 }
