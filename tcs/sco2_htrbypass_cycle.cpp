@@ -90,23 +90,37 @@ void C_HTRBypass_Cycle::design_core(int& error_code)
 
     int BP_out_code = BP_des_solver.solve(BP_out_guess_lower, BP_out_guess_upper, 0, BP_out_solved, tol_BP_out_solved, iter_BP_out);
 
+    
+
     // Check if Bypass Converged
-    if (BP_out_code == C_monotonic_eq_solver::CONVERGED)
-    {
-        // Bypass Converged
-        return;
-    }
-    else if (BP_out_code == C_monotonic_eq_solver::SLOPE_NEG_NO_NEG_ERR)
-    {
-        // Target Outlet temperature not possible (too low), bypass is fully open
-        return;
-    }
-    else if (BP_out_code == C_monotonic_eq_solver::SLOPE_NEG_NO_POS_ERR)
-    {
-        // Target Outlet temperature not possible (too high), bypass is fully closed
-        return;
-    }
-    else
+    
+    //if (BP_out_code == C_monotonic_eq_solver::CONVERGED)
+    //{
+    //    // Bypass Converged
+    //    return;
+    //}
+    //else if (BP_out_code == C_monotonic_eq_solver::SLOPE_NEG_NO_NEG_ERR)
+    //{
+    //    // Target Outlet temperature not possible (too low), bypass is fully open
+    //    return;
+    //}
+    // else if (BP_out_code == C_monotonic_eq_solver::SLOPE_NEG_NO_POS_ERR)
+    //{
+    //    // Target Outlet temperature not possible (too high), bypass is fully closed
+    //    return;
+    //}
+    // else
+    //{
+    //    error_code = 35;
+    //    return;
+    //}
+
+
+
+
+
+
+    if (BP_out_code == C_monotonic_eq_solver::NO_SOLUTION)
     {
         // Did not converge
         error_code = 35;
@@ -864,6 +878,9 @@ void C_HTRBypass_Cycle::opt_design_core(int& error_code)
 
         design_core(error_code);
 
+        int io = 0;
+        design_core_standard(io);
+
         /*
         m_W_dot_net_last = m_W_dot_net_opt;
         m_eta_thermal_last = m_eta_thermal_opt;
@@ -1019,37 +1036,37 @@ void C_HTRBypass_Cycle::auto_opt_design_core(int& error_code)
 
     // Is recompression fraction fixed or optimized?
     // If fixed, then we don't need to try simple cycle
-    if (ms_auto_opt_des_par.m_is_recomp_ok == 1.0 || ms_auto_opt_des_par.m_is_recomp_ok == 0.0)
-    {
+    //if (ms_auto_opt_des_par.m_is_recomp_ok == 1.0 || ms_auto_opt_des_par.m_is_recomp_ok == 0.0)
+    //{
 
-        // Complete 'ms_opt_des_par' for simple cycle
-        ms_opt_des_par.m_P_mc_out_guess = best_P_high;      //[kPa]
-        ms_opt_des_par.m_fixed_P_mc_out = true;
+    //    // Complete 'ms_opt_des_par' for simple cycle
+    //    ms_opt_des_par.m_P_mc_out_guess = best_P_high;      //[kPa]
+    //    ms_opt_des_par.m_fixed_P_mc_out = true;
 
-        if (ms_opt_des_par.m_fixed_PR_HP_to_LP)
-        {
-            ms_opt_des_par.m_PR_HP_to_LP_guess = ms_auto_opt_des_par.m_PR_HP_to_LP_guess;	//[-]
-        }
-        else
-        {
-            ms_opt_des_par.m_PR_HP_to_LP_guess = PR_mc_guess;		//[-]
-        }
+    //    if (ms_opt_des_par.m_fixed_PR_HP_to_LP)
+    //    {
+    //        ms_opt_des_par.m_PR_HP_to_LP_guess = ms_auto_opt_des_par.m_PR_HP_to_LP_guess;	//[-]
+    //    }
+    //    else
+    //    {
+    //        ms_opt_des_par.m_PR_HP_to_LP_guess = PR_mc_guess;		//[-]
+    //    }
 
-        ms_opt_des_par.m_recomp_frac_guess = 0.0;
-        ms_opt_des_par.m_fixed_recomp_frac = true;
-        ms_opt_des_par.m_LT_frac_guess = 1.0;
-        ms_opt_des_par.m_fixed_LT_frac = true;
+    //    ms_opt_des_par.m_recomp_frac_guess = 0.0;
+    //    ms_opt_des_par.m_fixed_recomp_frac = true;
+    //    ms_opt_des_par.m_LT_frac_guess = 1.0;
+    //    ms_opt_des_par.m_fixed_LT_frac = true;
 
-        int s_error_code = 0;
+    //    int s_error_code = 0;
 
-        opt_design_core(s_error_code);
+    //    opt_design_core(s_error_code);
 
-        if (s_error_code == 0 && m_objective_metric_opt > m_objective_metric_auto_opt)
-        {
-            ms_des_par_auto_opt = ms_des_par_optimal;
-            m_objective_metric_auto_opt = m_objective_metric_opt;
-        }
-    }
+    //    if (s_error_code == 0 && m_objective_metric_opt > m_objective_metric_auto_opt)
+    //    {
+    //        ms_des_par_auto_opt = ms_des_par_optimal;
+    //        m_objective_metric_auto_opt = m_objective_metric_opt;
+    //    }
+    //}
 
     ms_des_par = ms_des_par_auto_opt;
 

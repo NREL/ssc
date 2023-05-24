@@ -433,11 +433,62 @@ void C_sco2_phx_air_cooler::design_core()
         ms_bp_des_par.m_m_dot_hot_des = ms_phx_des_par.m_m_dot_hot_des;
 
         // Design
-        if (ms_bp_des_par.m_m_dot_cold_des > 0)
+        if (ms_bp_des_par.m_m_dot_cold_des > 0 && q_dot_des_bp > 1e-2)
         {
             mc_bp.design_calc_UA(ms_bp_des_par, q_dot_des_bp, ms_des_solved.ms_bp_des_solved);
         }
     }
+
+
+    //DEBUG
+    if (true)
+    {
+        double cost_LTR = ms_des_solved.ms_rc_cycle_solved.ms_LTR_des_solved.m_cost_bare_erected + ms_des_solved.ms_rc_cycle_solved.ms_LTR_des_solved.m_cost_equipment;
+        double cost_HTR = ms_des_solved.ms_rc_cycle_solved.ms_HTR_des_solved.m_cost_bare_erected + ms_des_solved.ms_rc_cycle_solved.ms_HTR_des_solved.m_cost_equipment;
+        double cost_MC = ms_des_solved.ms_rc_cycle_solved.ms_mc_ms_des_solved.m_cost_bare_erected + ms_des_solved.ms_rc_cycle_solved.ms_mc_ms_des_solved.m_cost_equipment;
+        double cost_RC = ms_des_solved.ms_rc_cycle_solved.ms_rc_ms_des_solved.m_cost_bare_erected + ms_des_solved.ms_rc_cycle_solved.ms_rc_ms_des_solved.m_cost_equipment;
+        double cost_T = ms_des_solved.ms_rc_cycle_solved.ms_t_des_solved.m_bare_erected_cost + ms_des_solved.ms_rc_cycle_solved.ms_t_des_solved.m_equipment_cost;
+        double cost_PHX = mc_phx.ms_des_solved.m_cost_bare_erected + mc_phx.ms_des_solved.m_cost_equipment;
+        double cost_BP = mc_bp.ms_des_solved.m_cost_bare_erected + mc_bp.ms_des_solved.m_cost_equipment;
+
+        double cost_bare_erected = ms_des_solved.ms_rc_cycle_solved.ms_LTR_des_solved.m_cost_bare_erected
+            + ms_des_solved.ms_rc_cycle_solved.ms_HTR_des_solved.m_cost_bare_erected
+            + ms_des_solved.ms_rc_cycle_solved.ms_mc_ms_des_solved.m_cost_bare_erected
+            + ms_des_solved.ms_rc_cycle_solved.ms_rc_ms_des_solved.m_cost_bare_erected
+            + ms_des_solved.ms_rc_cycle_solved.ms_t_des_solved.m_bare_erected_cost
+            + mc_phx.ms_des_solved.m_cost_bare_erected;
+
+        double cost_equipment = ms_des_solved.ms_rc_cycle_solved.ms_LTR_des_solved.m_cost_equipment
+            + ms_des_solved.ms_rc_cycle_solved.ms_HTR_des_solved.m_cost_equipment
+            + ms_des_solved.ms_rc_cycle_solved.ms_mc_ms_des_solved.m_cost_equipment
+            + ms_des_solved.ms_rc_cycle_solved.ms_rc_ms_des_solved.m_cost_equipment
+            + ms_des_solved.ms_rc_cycle_solved.ms_t_des_solved.m_equipment_cost
+            + mc_phx.ms_des_solved.m_cost_equipment;
+
+        if (std::isnan(mc_bp.ms_des_solved.m_cost_bare_erected) == false)
+        {
+            cost_bare_erected += mc_bp.ms_des_solved.m_cost_bare_erected;
+            cost_equipment += mc_bp.ms_des_solved.m_cost_equipment;
+        }
+
+
+        double total_cost = cost_bare_erected + cost_equipment;
+
+
+        // Back Calculate Heat into cycle
+        double W_net = ms_des_solved.ms_rc_cycle_solved.m_W_dot_mc + ms_des_solved.ms_rc_cycle_solved.m_W_dot_rc + ms_des_solved.ms_rc_cycle_solved.m_W_dot_t;
+        double Q_pc = ms_des_solved.ms_rc_cycle_solved.m_m_dot_mc * (ms_des_solved.ms_rc_cycle_solved.m_enth[8] - ms_des_solved.ms_rc_cycle_solved.m_enth[0]);
+
+        double Q_tot = W_net + Q_pc;
+        
+
+        
+
+
+        int x = 0;
+    }
+
+
 
 	return;
 }
