@@ -131,13 +131,11 @@ set(TCS_SRC
 		etes_dispatch.h
 		flat_plate_solar_collector.h
 		fmin.h
-		fmin_callbacks.h
 		heat_exchangers.h
 		htf_props.h
 		interconnect.h
 		interpolation_routines.h
 		ngcc_powerblock.h
-		nlopt_callbacks.h
 		numeric_solvers.h
         ptes_solver_design_point.h
 		sam_csp_util.h
