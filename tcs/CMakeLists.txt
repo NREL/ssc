@@ -41,11 +41,9 @@ set(TCS_SRC
 		dispatch_builder.cpp
 		etes_dispatch.cpp
 		fmin.cpp
-		fmin_callbacks.cpp
 		heat_exchangers.cpp
 		Heliostat_AzElAod.cpp
 		interconnect.cpp
-		nlopt_callbacks.cpp
 		numeric_solvers.cpp
         ptes_solver_design_point.cpp
 		sam_type250_input_generator.cpp
