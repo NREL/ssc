@@ -1060,7 +1060,7 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
             else if (n % 365 == 0) { //Daily
                 for (int a = 0; a < analysis_period; a++) {
                     for (int i = 0; i < nsteps; i++) {
-                        day = util::day_of(int(i / steps_per_hour));
+                        day = util::day_of_year(int(i / steps_per_hour));
                         m_factors[nsteps*a + i] *= (1.0 - p[a * 365 + day]/100.0); //input as factors not percentage
                     }
 
