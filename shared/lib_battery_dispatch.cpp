@@ -842,7 +842,7 @@ bool dispatch_automatic_t::check_constraints(double& I, size_t count)
 					dI = dQ_use / _dt_hour;
 				}
 				else if (SOC + dSOC < m_batteryPower->stateOfChargeMin - tolerance) {
-					double dSOC_use = (m_batteryPower->stateOfChargeMin - SOC);
+                    double dSOC_use = (m_batteryPower->stateOfChargeMin - SOC);
 					double dQ_use = dSOC_use * 0.01 * _Battery->charge_maximum_lifetime();
 					dI = dQ_use / _dt_hour;
 				}

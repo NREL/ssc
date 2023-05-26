@@ -194,6 +194,11 @@ void capacity_t::update_SOC() {
     else if (state->SOC < 0.)
         state->SOC = 0.;
 
+    // check within bounds ssc issue 1026
+    if (state->SOC > params->maximum_SOC)
+        state->SOC = params->maximum_SOC;
+    if (state->SOC < params->minimum_SOC)
+        state->SOC = params->minimum_SOC;
 }
 
 bool capacity_t::chargeChanged() { return state->chargeChange; }
