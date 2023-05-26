@@ -56,7 +56,7 @@ GTEST_API_ int main(int argc, char **argv) {
     //    ::testing::GTEST_FLAG(filter) = "CmodPVWatts*:CMPvwatts*";
     //::testing::GTEST_FLAG(filter) = "CMBatteryStatefulIntegration_cmod_battery_stateful.ssc_1023";
     // four tests failing on Mac M1 arm64
-    ::testing::GTEST_FLAG(filter) = /*"lib_battery_test.runTestCycleAt3C";:csp_common.TesSubcomponentCmod.Default:CMPvsamv1BatteryIntegration_cmod_pvsamv1.ResidentialDCBatteryModelPriceSignalDispatch:*/"CMBattwatts_cmod_battwatts.NoPV";
+    ::testing::GTEST_FLAG(filter) = "lib_battery_test.runTestCycleAt3C:csp_common.TesSubcomponentCmod.Default:CMPvsamv1BatteryIntegration_cmod_pvsamv1.ResidentialDCBatteryModelPriceSignalDispatch:CMBattwatts_cmod_battwatts.NoPV";
 
     //    filter to exclude
     //    ::testing::GTEST_FLAG(filter) = "-PVSmoothing_lib_battery_dispatch*";
