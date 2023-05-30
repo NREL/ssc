@@ -1128,12 +1128,12 @@ void CGeothermalAnalyzer::ReplaceReservoir(double dElapsedTimeInYears)
 double CGeothermalAnalyzer::GetTemperatureGradient(void) // degrees C per km
 {	// Conversation with Chad on August 30th 2010, 10am MT - just use the average gradient, even if it's changing at that point according to the depth/temp graph.
 	if (mo_geo_in.me_rt == HYDROTHERMAL) { return ((mo_geo_in.md_TemperatureResourceC - GetAmbientTemperatureC(BINARY)) / mo_geo_in.md_ResourceDepthM) * 1000; }
-	return ((mo_geo_in.md_TemperatureResourceC - mo_geo_in.md_TemperatureEGSAmbientC) / mo_geo_in.md_ResourceDepthM) * 1000;
+	return ((mo_geo_in.md_TemperatureResourceC - GetAmbientTemperatureC(BINARY)) / mo_geo_in.md_ResourceDepthM) * 1000;
 }
 
 double CGeothermalAnalyzer::GetResourceTemperatureC(void) // degrees C
 {
-	if ((mo_geo_in.me_rt == EGS) && (mo_geo_in.me_dc == DEPTH)) return ((mo_geo_in.md_ResourceDepthM / 1000) * GetTemperatureGradient()) + mo_geo_in.md_TemperatureEGSAmbientC;
+	if ((mo_geo_in.me_rt == EGS) && (mo_geo_in.me_dc == DEPTH)) return ((mo_geo_in.md_ResourceDepthM / 1000) * GetTemperatureGradient()) + GetAmbientTemperatureC(BINARY);
 	return mo_geo_in.md_TemperatureResourceC;
 }
 
@@ -1141,7 +1141,7 @@ double CGeothermalAnalyzer::GetTemperaturePlantDesignC(void) { return (mo_geo_in
 
 double CGeothermalAnalyzer::GetResourceDepthM(void) // meters
 {
-	if ((mo_geo_in.me_rt == EGS) && (mo_geo_in.me_dc == TEMPERATURE)) return 1000 * (mo_geo_in.md_TemperatureResourceC - mo_geo_in.md_TemperatureEGSAmbientC) / GetTemperatureGradient();
+	if ((mo_geo_in.me_rt == EGS) && (mo_geo_in.me_dc == TEMPERATURE)) return 1000 * (mo_geo_in.md_TemperatureResourceC - GetAmbientTemperatureC(BINARY)) / GetTemperatureGradient();
 	return mo_geo_in.md_ResourceDepthM;
 }
 
@@ -1259,7 +1259,7 @@ double CGeothermalAnalyzer::EGSLengthOverVelocity(double tempC)
 
 double CGeothermalAnalyzer::EGSAvailableEnergy()
 {	// watt-hr/lb - not sure why the flash constants are used to calc EGS available energy
-	return geothermal::oGFC.GetAEForFlashWattHrUsingC(mo_geo_in.md_TemperaturePlantDesignC, geothermal::TEMPERATURE_EGS_AMBIENT_C);
+	return geothermal::oGFC.GetAEForFlashWattHrUsingC(mo_geo_in.md_TemperaturePlantDesignC, GetAmbientTemperatureC(BINARY));
 }
 
 double CGeothermalAnalyzer::EGSReservoirConstant(double avgWaterTempC, double dDays)
@@ -1394,10 +1394,10 @@ double CGeothermalAnalyzer::pressureWellHeadPSI()
 
 double CGeothermalAnalyzer::pressureHydrostaticPSI()
 {	// calculate the hydrostatic pressure (at the bottom of the well)
-	double tempAmbientF = (geothermal::IMITATE_GETEM) ? physics::CelciusToFarenheit(geothermal::TEMPERATURE_EGS_AMBIENT_C) : physics::CelciusToFarenheit(11.6);
+	double tempAmbientF = (geothermal::IMITATE_GETEM) ? physics::CelciusToFarenheit(GetAmbientTemperatureC(BINARY)) : physics::CelciusToFarenheit(11.6);
 	double pressureAmbientBar = physics::PsiToBar(geothermal::oPressureAmbientConstants.evaluate(tempAmbientF));
     if (tempAmbientF <= 212) pressureAmbientBar = 1.014;
-	double tempF = (geothermal::IMITATE_GETEM) ? physics::CelciusToFarenheit(geothermal::TEMPERATURE_EGS_AMBIENT_C) : physics::CelciusToFarenheit(11.6);
+	double tempF = (geothermal::IMITATE_GETEM) ? physics::CelciusToFarenheit(GetAmbientTemperatureC(BINARY)) : physics::CelciusToFarenheit(11.6);
 	double densityAmbient = geothermal::LbPerCfToKgPerM3_B(geothermal::oDensityConstants.evaluate(tempF));
 
 	double tempAmbientC = (geothermal::IMITATE_GETEM) ? 10 : 11.6; // GETEM assumes 10 deg C ambient temperature here. Above, the assumption is 15 deg C ambient.
