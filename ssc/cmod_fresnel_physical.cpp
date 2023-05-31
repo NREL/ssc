@@ -308,20 +308,30 @@ static var_info _cm_vtab_fresnel_physical[] = {
         // Solar Field
     { SSC_OUTPUT,       SSC_NUMBER,     "q_dot_rec_des",                    "Receiver thermal output at design",                                    "MWt",          "",         "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "A_loop",                           "Aperture of a single loop",                                            "m2",           "",         "Receiver",                       "*",                                                                "",              "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "loop_opt_eff",                     "Loop optical efficiency",                                              "",             "",         "Receiver",                       "*",                                                                "",              "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "loop_therm_eff",                   "Loop thermal efficiency",                                              "",             "",         "Receiver",                       "*",                                                                "",              "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "loop_eff",                         "Total loop conversion efficiency",                                     "",             "",         "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "loop_opt_eff",                     "Loop optical efficiency at design",                                    "",             "",         "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "loop_therm_eff",                   "Loop thermal efficiency at design",                                    "",             "",         "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "loop_eff",                         "Total loop conversion efficiency at design",                           "",             "",         "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "sm1_aperture",                     "Total required aperture, SM=1",                                        "m2",           "",         "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "sm1_nLoops",                       "Required number of loops, SM=1",                                       "",             "",         "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "total_tracking_power",             "Design tracking power",                                                "MW",           "",         "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "A_field",                          "Total field aperture",                                                 "m2",           "",         "Receiver",                       "*",                                                                "",              "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "q_field_des",                      "Design Field power output",                                            "MW",           "",         "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "q_field_des",                      "Design field power output",                                            "MW",           "",         "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "field_area",                       "Solar field area",                                                     "acres",        "",         "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "total_land_area",                  "Total land area",                                                      "acres",        "",         "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "field_htf_min_temp",               "Minimum field htf temp",                                               "C",            "",         "Power Cycle",                    "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "field_htf_max_temp",               "Maximum field htf temp",                                               "C",            "",         "Power Cycle",                    "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "mdot_field_des",                   "Field design HTF mass flow rate",                                      "kg/s",         "",         "Receiver",                       "*",                                                                "",              "" },
 
+    { SSC_OUTPUT,       SSC_NUMBER,     "dP_field_des_SS",                  "Steady State Field design total pressure drop",                        "bar",          "",          "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "Q_field_des_SS",                   "Steady State Field design thermal power",                              "MW",           "",          "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "T_field_out_des_SS",               "Steady State Field design outlet temperature",                         "C",            "",          "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "m_dot_des_SS",                     "Steady State Field mass flow rate",                                    "kg/s",         "",          "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "m_dot_loop_des_SS",                "Steady State Loop mass flow rate",                                     "kg/s",         "",          "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "V_hdr_min_des_SS",                 "Steady State min header velocity",                                     "m/s",          "",          "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "V_hdr_max_des_SS",                 "Steady State max header velocity",                                     "m/s",          "",          "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "eta_optical_des_SS",               "Steady State optical efficiency",                                      "",             "",          "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "therm_eff_des_SS",                 "Steady State field optical efficiency",                                "",             "",          "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "eff_des_SS",                       "Steady State field total efficiency",                                  "",             "",          "Receiver",                       "*",                                                                "",              "" },
 
         // Collector and Receiver
     { SSC_OUTPUT,       SSC_NUMBER,     "DP_pressure_loss",                 "Total loop pressure loss at design",                                   "bar",          "",         "Receiver",                       "*",                                                                "",              "" },
@@ -1346,7 +1356,7 @@ public:
             double loop_opt_eff = c_fresnel.m_loop_opt_eff;
             double loop_therm_eff = c_fresnel.m_loop_therm_eff;
             double loop_eff = c_fresnel.m_loop_eff;
-            double sm1_aperture = c_fresnel.m_Ap_sm1;   // [m2]
+            double sm1_aperture = c_fresnel.m_Ap_sm1;                                       // [m2]
             double sm1_nLoops = c_fresnel.m_nLoops_sm1;
             double total_tracking_power = c_fresnel.m_W_dot_sca_tracking_nom;               // [MW]
             double A_field = c_fresnel.m_Ap_tot;                                            // [m2]
@@ -1358,6 +1368,18 @@ public:
 
             double field_htf_min_temp = c_fresnel.m_htfProps.min_temp() - 273.15;           // [C]
             double field_htf_max_temp = c_fresnel.m_htfProps.max_temp() - 273.15;           // [C]
+
+            // steady state results
+            double dP_field_des_SS = c_fresnel.m_dP_des_SS;                                    // [bar]
+            double Q_field_des_SS = c_fresnel.m_Q_field_des_SS / 1e6;                       // [MW]
+            double T_field_out_des_SS = c_fresnel.m_T_field_out_des_SS;                     // [C]
+            double m_dot_des_SS = c_fresnel.m_m_dot_des_SS;                                 // [kg/s]
+            double m_dot_loop_des_SS = c_fresnel.m_m_dot_loop_des_SS;                       // [kg/s]
+            double V_hdr_min_des_SS = c_fresnel.m_V_hdr_min_des_SS;                         // [m/s]
+            double V_hdr_max_des_SS = c_fresnel.m_V_hdr_max_des_SS;                         // [m/s]
+            double eta_optical_des_SS = c_fresnel.m_eta_optical_des_SS;
+            double therm_eff_des_SS = c_fresnel.m_therm_eff_des_SS;
+            double eff_des_SS = c_fresnel.m_eff_des_SS;
 
             // Assign
             {
@@ -1376,6 +1398,17 @@ public:
                 assign("field_htf_min_temp", field_htf_min_temp);
                 assign("field_htf_max_temp", field_htf_max_temp);
                 assign("mdot_field_des", mdot_field_des);
+
+                assign("dP_field_des_SS", dP_field_des_SS);
+                assign("Q_field_des_SS", Q_field_des_SS);
+                assign("T_field_out_des_SS", T_field_out_des_SS);
+                assign("m_dot_des_SS", m_dot_des_SS);
+                assign("m_dot_loop_des_SS", m_dot_loop_des_SS);
+                assign("V_hdr_min_des_SS", V_hdr_min_des_SS);
+                assign("V_hdr_max_des_SS", V_hdr_max_des_SS);
+                assign("eta_optical_des_SS", eta_optical_des_SS);
+                assign("therm_eff_des_SS", therm_eff_des_SS);
+                assign("eff_des_SS", eff_des_SS);
             }
 
             // Collector and Receiver

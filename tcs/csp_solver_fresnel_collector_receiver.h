@@ -207,7 +207,7 @@ private:
 
     // Design Point properties calculated in init()
     bool m_is_solar_mult_designed = false;              // Flag for whether solar multiple has been calculated
-    double m_opteff_des;	                            // [-] Design-point optical efficieny (theta = 0) from the solar field
+    double m_opteff_des;	                            // [-] Design-point optical efficiency (theta = 0) from the solar field
     vector<double> m_A_cs;	                            // [m^2] Cross-sectional area for HTF flow for each receiver and variant (why variant?)
     vector<double> m_D_h;	                            // [m^2] Hydraulic diameters for HTF flow for each receiver and variant (why variant?)	
     string m_piping_summary;
@@ -579,6 +579,18 @@ public:
     double m_opt_normal;                            // Collector optical loss at normal incidence
     double m_m_dot_design;	                        // [kg/s] Total solar field mass flow rate at design
     double m_m_dot_loop_des;                        // [kg/s] LOOP design mass flow rate
+
+        // Steady State Design Point Outputs
+    double m_dP_des_SS;                             // [bar] FIELD pressure drop at design (calculated in init (via steady_state -> On))
+    double m_T_field_out_des_SS;                    // [C] FIELD outlet temperature at design (calculated in init (via steady_state))
+    double m_Q_field_des_SS;                        // [Wt] Field thermal power at design (calculated in init (via steady_state))
+    double m_m_dot_des_SS;                          // [kg/s] Field mass flow rate at design (calculated in init (via steady_state))
+    double m_m_dot_loop_des_SS;                     // [kg/s] Loop mass flow rate at design (calculated in init (via steady_state))
+    double m_V_hdr_min_des_SS;                      // [m/s] Header min HTF velocity at design (calculated in init (via steady_state))
+    double m_V_hdr_max_des_SS;                      // [m/s] Header max HTF velocity at design (calculated in init (via steady_state))
+    double m_eta_optical_des_SS;                    // Optical Efficiency at Steady State design (calculated in init (via steady_state))
+    double m_therm_eff_des_SS;                      // Field Thermal efficiency at steady state design (calculated in init (via steady_state))
+    double m_eff_des_SS;                            // Field Total efficiency at steady state design (calculated in init (via steady_state))
 
     // Methods
 public:
