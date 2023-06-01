@@ -53,6 +53,8 @@ static const char* me_array_cable_length_doc =
 
 SSCEXPORT bool me_array_cable_length(ssc_data_t data);
 
+SSCEXPORT bool tidal_turbine_calculate_powercurve(ssc_data_t data);
+
 
 #ifdef __cplusplus
 }
