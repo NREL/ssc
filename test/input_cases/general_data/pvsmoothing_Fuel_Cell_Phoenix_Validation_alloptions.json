@@ -18,7 +18,7 @@
 	"en_snowloss" : 0,
 	"inv_eff" : 96,
 	"batt_simple_enable" : 0,
-	"adjust:constant" : 0,
+	"adjust_constant" : 0,
 	"fuelcell_availability_schedule" : [ [ 0,  0 ] ],
 	"fuelcell_degradation" : 0.0045662100456621002,
 	"fuelcell_degradation_restart" : 1,
