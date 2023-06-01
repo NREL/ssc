@@ -106,7 +106,7 @@ namespace geothermal
 	const double GETEM_KGM3_PER_LBF3 = (IMITATE_GETEM) ? (35.3146 / 2.20462) : physics::KGM3_PER_LBF3; // lbs/ft^3 per kg/m^3 
 	const double GETEM_LB_PER_KG = (IMITATE_GETEM) ? 2.20462 : physics::LB_PER_KG; // pounds per kilogram
 	const double GETEM_KW_PER_HP = (IMITATE_GETEM) ? 0.7457 : physics::KW_PER_HP; // kilowatts per unit of horsepower
-	const double GRAVITY_MS2 = (IMITATE_GETEM) ? 9.807 : physics::GRAVITY_MS2; // meters per second^2; this varies between 9.78 and 9.82 depending on latitude
+	const double GRAVITY_MS2 = 9.807; // meters per second^2; this varies between 9.78 and 9.82 depending on latitude
 	const double DAYS_PER_YEAR = 365.25;
 
 	double MetersToFeet(const double &m) { return m * GETEM_FT_IN_METER; }
@@ -743,7 +743,8 @@ double CGeothermalAnalyzer::GetInjectionPumpWorkft(void)
     double rho_sat = 1 / geothermal::oSVC.evaluate(T_star * 1.8 + 32);
     double viscosity = 407.22 * pow((T_star * 1.8 + 32), -1.194) / 3600;
     double rho_head = L_int * 3.28084 * rho_sat / 144;
-    double P_ratio = 0.5 * (rho_head + mp_geo_out->md_PressureLPFlashPSI) / P_sat;
+    double P_inject_wellhead = (mo_geo_in.me_ct == FLASH) ? mp_geo_out->md_PressureLPFlashPSI : geothermal::oPC.evaluate((GetTemperaturePlantDesignC() - DT_prod_well(mo_geo_in.md_dtProdWellChoice)) * 1.8 + 32) + physics::PSI_PER_BAR * mo_geo_in.md_ExcessPressureBar - mo_geo_in.md_PressureChangeAcrossSurfaceEquipmentPSI;
+    double P_ratio = 0.5 * (rho_head + P_inject_wellhead) / P_sat;
     double rho_correction = 1 + (7.15037e-19 * pow(physics::CelciusToFarenheit(T_star), 5.91303)) * (P_ratio - 1);
     double mu_correction = 1 + (4.02401e-18 * pow(physics::CelciusToFarenheit(T_star), 5.736882)) * (P_ratio - 1);
     double flow_cubic = flow_lbh / (3600 * rho_sat * rho_correction);
@@ -792,7 +793,7 @@ double CGeothermalAnalyzer::GetInjectionPumpWorkft(void)
     c = -2 * log10((surf_rough_casing / D_well_ft) / 3.7 + 2.51 * v / Re_well);
     f = pow((a - pow((v - a), 2) / (c - 2 * v + a)), -2);
     friction_head_loss = (f / D_well_ft) * pow(vel_well, 2) / (2 * 32.174);
-    if (mo_geo_in.me_ct == BINARY) friction_head_loss = friction_head_loss * 1.0 / 3.0;
+    //if (mo_geo_in.me_ct == BINARY) friction_head_loss = friction_head_loss * 1.0 / 3.0;
     friction_head_loss_ft = friction_head_loss * L_int * physics::FT_PER_METER;
     friction_head_psid = friction_head_loss_ft * rho_sat * rho_correction / 144;
     double P_bottomhole = P_upper_bottom_interval + rho_sat * rho_correction * physics::FT_PER_METER * L_int / 144 - friction_head_psid;
@@ -1148,9 +1149,9 @@ double CGeothermalAnalyzer::GetResourceDepthM(void) // meters
 double CGeothermalAnalyzer::GetAmbientTemperatureC(conversionTypes ct)
 {
 	if (ct == NO_CONVERSION_TYPE) ct = mo_geo_in.me_ct;
-	//return (ct == BINARY) ? geothermal::DEFAULT_AMBIENT_TEMPC_BINARY : (1.3842 * geothermal::WET_BULB_TEMPERATURE_FOR_FLASH_CALCS) + 5.1772 ;
-	//return (ct == BINARY) ? geothermal::DEFAULT_AMBIENT_TEMPC_BINARY : (TemperatureWetBulbF());
-    return physics::FarenheitToCelcius(TemperatureWetBulbF());
+	//return (ct == BINARY) ? geothermal::DEFAULT_AMBIENT_TEMPC_BINARY : (1.3842 * physics::FarenheitToCelcius(TemperatureWetBulbF())) + 5.1772 ;
+	return (ct == BINARY) ? geothermal::DEFAULT_AMBIENT_TEMPC_BINARY : physics::FarenheitToCelcius(TemperatureWetBulbF());
+    //return physics::FarenheitToCelcius(TemperatureWetBulbF());
 }
 
 double CGeothermalAnalyzer::InjectionTemperatureC() // calculate injection temperature in degrees C
@@ -1394,13 +1395,13 @@ double CGeothermalAnalyzer::pressureWellHeadPSI()
 
 double CGeothermalAnalyzer::pressureHydrostaticPSI()
 {	// calculate the hydrostatic pressure (at the bottom of the well)
-	double tempAmbientF = (geothermal::IMITATE_GETEM) ? physics::CelciusToFarenheit(GetAmbientTemperatureC(BINARY)) : physics::CelciusToFarenheit(11.6);
+	double tempAmbientF = physics::CelciusToFarenheit(11.6);
 	double pressureAmbientBar = physics::PsiToBar(geothermal::oPressureAmbientConstants.evaluate(tempAmbientF));
     if (tempAmbientF <= 212) pressureAmbientBar = 1.014;
-	double tempF = (geothermal::IMITATE_GETEM) ? physics::CelciusToFarenheit(GetAmbientTemperatureC(BINARY)) : physics::CelciusToFarenheit(11.6);
+	double tempF = physics::CelciusToFarenheit(11.6);
 	double densityAmbient = geothermal::LbPerCfToKgPerM3_B(geothermal::oDensityConstants.evaluate(tempF));
 
-	double tempAmbientC = (geothermal::IMITATE_GETEM) ? 10 : 11.6; // GETEM assumes 10 deg C ambient temperature here. Above, the assumption is 15 deg C ambient.
+	double tempAmbientC = 11.6; // GETEM assumes 10 deg C ambient temperature here. Above, the assumption is 15 deg C ambient.
 	double tempGradient = (mo_geo_in.me_rt == EGS) ? GetTemperatureGradient() / 1000 : (GetResourceTemperatureC() - tempAmbientC) / GetResourceDepthM();
 
 	// hydrostatic pressure at production well depth (GetResourceDepthFt) in bar
