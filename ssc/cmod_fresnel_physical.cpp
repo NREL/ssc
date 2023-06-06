@@ -328,7 +328,7 @@ static var_info _cm_vtab_fresnel_physical[] = {
     { SSC_OUTPUT,       SSC_NUMBER,     "mdot_field_des",                   "Field design HTF mass flow rate",                                      "kg/s",         "",         "Receiver",                       "*",                                                                "",              "" },
 
     { SSC_OUTPUT,       SSC_NUMBER,     "dP_field_des_SS",                  "Steady State Field design total pressure drop",                        "bar",          "",          "Receiver",                       "*",                                                                "",              "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "Q_field_des_SS",                   "Steady State Field design thermal power",                              "MW",           "",          "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "Q_field_des_SS",                   "Steady State Field design thermal power",                              "MWt",           "",          "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "T_field_out_des_SS",               "Steady State Field design outlet temperature",                         "C",            "",          "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "m_dot_des_SS",                     "Steady State Field mass flow rate",                                    "kg/s",         "",          "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "m_dot_loop_des_SS",                "Steady State Loop mass flow rate",                                     "kg/s",         "",          "Receiver",                       "*",                                                                "",              "" },
@@ -337,6 +337,17 @@ static var_info _cm_vtab_fresnel_physical[] = {
     { SSC_OUTPUT,       SSC_NUMBER,     "eta_optical_des_SS",               "Steady State optical efficiency",                                      "",             "",          "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "therm_eff_des_SS",                 "Steady State field optical efficiency",                                "",             "",          "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "eff_des_SS",                       "Steady State field total efficiency",                                  "",             "",          "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "W_dot_pump_des_SS",                "Steady State field pumping power",                                           "MWe",             "",          "Receiver",                       "*",                                                                "",              "" },
+
+
+    { SSC_OUTPUT,       SSC_NUMBER,     "T_loop_out_des_SS",                "Steady State loop design outlet temperature",                          "C",            "",          "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "Q_loop_des_SS",                    "Steady State loop design thermal power",                               "MWt",          "",          "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "therm_eff_loop_des_SS",            "Steady State loop optical efficiency",                                 "",             "",          "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "eff_loop_des_SS",                  "Steady State loop total efficiency",                                   "",             "",          "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "W_dot_pump_des_SS",                "Steady State field pumping power",                                     "MWe",          "",          "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "Q_loss_receiver_des_SS",           "Steady State field heat loss from receiver",                           "MWt",          "",          "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "Q_loss_hdr_rnr_des_SS",            "Steady State field heat loss from headers and runners",                "MWt",          "",          "Receiver",                       "*",                                                                "",              "" },
+
 
         // Collector and Receiver
     { SSC_OUTPUT,       SSC_NUMBER,     "DP_pressure_loss",                 "Total loop pressure loss at design",                                   "bar",          "",         "Receiver",                       "*",                                                                "",              "" },
@@ -1373,7 +1384,7 @@ public:
             double field_htf_max_temp = c_fresnel.m_htfProps.max_temp() - 273.15;           // [C]
 
             // steady state results
-            double dP_field_des_SS = c_fresnel.m_dP_des_SS;                                    // [bar]
+            double dP_field_des_SS = c_fresnel.m_dP_des_SS;                                 // [bar]
             double Q_field_des_SS = c_fresnel.m_Q_field_des_SS / 1e6;                       // [MW]
             double T_field_out_des_SS = c_fresnel.m_T_field_out_des_SS;                     // [C]
             double m_dot_des_SS = c_fresnel.m_m_dot_des_SS;                                 // [kg/s]
@@ -1383,6 +1394,14 @@ public:
             double eta_optical_des_SS = c_fresnel.m_eta_optical_des_SS;
             double therm_eff_des_SS = c_fresnel.m_therm_eff_des_SS;
             double eff_des_SS = c_fresnel.m_eff_des_SS;
+            double W_dot_pump_des_SS = c_fresnel.m_W_dot_pump_des_SS;                       // [MWe]
+
+            double T_loop_out_des_SS = c_fresnel.m_T_loop_out_des_SS;                       // [C]
+            double Q_loop_des_SS = c_fresnel.m_Q_loop_des_SS / 1e6;                         // [MW]
+            double therm_eff_loop_des_SS = c_fresnel.m_therm_eff_loop_des_SS;
+            double eff_loop_des_SS = c_fresnel.m_eff_loop_des_SS;
+            double Q_loss_receiver_des_SS = c_fresnel.m_Q_loss_receiver_des_SS;             // [MWt]
+            double Q_loss_hdr_rnr_des_SS = c_fresnel.m_Q_loss_hdr_rnr_des_SS;               // [MWt]
 
             // Assign
             {
@@ -1412,6 +1431,15 @@ public:
                 assign("eta_optical_des_SS", eta_optical_des_SS);
                 assign("therm_eff_des_SS", therm_eff_des_SS);
                 assign("eff_des_SS", eff_des_SS);
+                assign("W_dot_pump_des_SS", W_dot_pump_des_SS);
+
+                assign("T_loop_out_des_SS", T_loop_out_des_SS);
+                assign("Q_loop_des_SS", Q_loop_des_SS);
+                assign("therm_eff_loop_des_SS", therm_eff_loop_des_SS);
+                assign("eff_loop_des_SS", eff_loop_des_SS);
+
+                assign("Q_loss_receiver_des_SS", Q_loss_receiver_des_SS);
+                assign("Q_loss_hdr_rnr_des_SS", Q_loss_hdr_rnr_des_SS);
             }
 
             // Collector and Receiver

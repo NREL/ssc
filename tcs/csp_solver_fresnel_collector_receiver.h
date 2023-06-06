@@ -591,6 +591,13 @@ public:
     double m_eta_optical_des_SS;                    // Optical Efficiency at Steady State design (calculated in init (via steady_state))
     double m_therm_eff_des_SS;                      // Field Thermal efficiency at steady state design (calculated in init (via steady_state))
     double m_eff_des_SS;                            // Field Total efficiency at steady state design (calculated in init (via steady_state))
+    double m_Q_loop_des_SS;                         // [Wt] Loop thermal power at design (calculated in init (via steady_state))
+    double m_T_loop_out_des_SS;                     // [C] Loop outlet temperature at design (calculated in init (via steady_state))
+    double m_therm_eff_loop_des_SS;                 // Loop Thermal efficiency at steady state design (calculated in init (via steady_state))
+    double m_eff_loop_des_SS;                       // Loop Total efficiency at steady state design (calculated in init (via steady_state))
+    double m_W_dot_pump_des_SS;                     // [MWe] Loop Total efficiency at steady state design (calculated in init (via steady_state))
+    double m_Q_loss_receiver_des_SS;                // [MWt] Total Field Receiver thermal loss
+    double m_Q_loss_hdr_rnr_des_SS;                 // [MWt] Total field thermal loss from headers and runners
 
     // Methods
 public:

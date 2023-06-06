@@ -735,6 +735,8 @@ C_csp_fresnel_collector_receiver::E_loop_energy_balance_exit C_csp_fresnel_colle
         }
     }
 
+    q_dot_loss_HR_hot = m_Header_hl_hot + m_Runner_hl_hot;	//[W]
+
     m_T_field_out = m_T_rnr[2 * m_nrunsec - 1] - m_Runner_hl_hot / (m_dot_runner(m_m_dot_htf_tot, m_nfsec, 2 * m_nrunsec - 1) * m_c_hdr_hot);
 
     // Adjust the loop outlet temperature to account for thermal losses incurred in the hot header and the runner pipe
@@ -2048,6 +2050,7 @@ bool C_csp_fresnel_collector_receiver::init_fieldgeom()
     m_T_loop_dsn = m_T_loop;
 
     header_design(m_nhdrsec, m_nfsec, m_nrunsec, rho_ave, m_V_hdr_max, m_V_hdr_min, m_m_dot_design, m_D_hdr, m_D_runner, &m_piping_summary);
+    mc_csp_messages.add_message(C_csp_messages::NOTICE, m_piping_summary);
 
     /* ----- Set initial storage values ------ */
     double T_field_ini = 0.5 * (m_T_fp + m_T_loop_in_des);	//[K]
@@ -2857,70 +2860,100 @@ void C_csp_fresnel_collector_receiver::steady_state(const C_csp_weatherreader::S
 
 
     // Calculate Steady State Results
-    double temp_initial = m_T_loop_in_des;  // K
-    double temp_final = cr_out_solver.m_T_salt_hot + 273.15; // convert from C to K
-    double mdot = cr_out_solver.m_m_dot_salt_tot / 3600.0; // convert from kg/hr to kg/s
-    double c_htf_ave = m_htfProps.Cp((temp_initial + temp_final) / 2.0);  //[kJ/kg-K]
-    m_Q_field_des_SS = mdot * c_htf_ave * (temp_final - temp_initial) * 1000.0; // convert kW to W
-    m_T_field_out_des_SS = cr_out_solver.m_T_salt_hot;  // C
-    m_m_dot_des_SS = mdot;  // kg/s field
-    m_m_dot_loop_des_SS = mdot / float(m_nLoops);
-
-    // Steady State velocities
     {
-        double D_hdr_min = *std::min_element(m_D_hdr.begin(), m_D_hdr.end());
-        double D_hdr_max = *std::max_element(m_D_hdr.begin(), m_D_hdr.end());
-        double mdot_hdr = mdot / m_nfsec;
-        double rho_ave = m_htfProps.dens((temp_initial + temp_final) / 2.0, 0.0); //kg/m3
+        // Field Results
+        double temp_initial = htf_state_in.m_temp + 273.15;  // K
+        double temp_final = m_T_field_out;  // K
+        double mdot = cr_out_solver.m_m_dot_salt_tot / 3600.0; // convert from kg/hr to kg/s
+        double c_htf_ave = m_htfProps.Cp((temp_initial + temp_final) / 2.0);  //[kJ/kg-K]
+        m_Q_field_des_SS = mdot * c_htf_ave * (temp_final - temp_initial) * 1000.0; // convert kW to W
+        m_T_field_out_des_SS = cr_out_solver.m_T_salt_hot;  // C
+        m_m_dot_des_SS = mdot;  // kg/s field
+        m_m_dot_loop_des_SS = mdot / float(m_nLoops);
 
-        double V_min_calc = -1;
-        double V_max_calc = -1;
-        std::vector<double> mdot_vec;
-        for (int i = 0; i < m_nhdrsec; i++)
+        // Steady State velocities
         {
-            double mdot_hdr_section = this->m_dot_header(mdot, m_nfsec, this->m_nLoops, i);
-            double D_hdr_section = m_D_hdr[i];
+            double D_hdr_min = *std::min_element(m_D_hdr.begin(), m_D_hdr.end());
+            double D_hdr_max = *std::max_element(m_D_hdr.begin(), m_D_hdr.end());
+            double mdot_hdr = mdot / m_nfsec;
+            double rho_ave = m_htfProps.dens((temp_initial + temp_final) / 2.0, 0.0); //kg/m3
 
-            double V = (4.0 * mdot_hdr_section) / (rho_ave * CSP::pi * pow(D_hdr_section, 2.0));
-
-            if (i == 0)
+            double V_min_calc = -1;
+            double V_max_calc = -1;
+            std::vector<double> mdot_vec;
+            for (int i = 0; i < m_nhdrsec; i++)
             {
-                V_min_calc = V;
-                V_max_calc = V;
-            }
-            else if (V < V_min_calc)
-                V_min_calc = V;
-            else if (V > V_max_calc)
-                V_max_calc = V;
-            
+                double mdot_hdr_section = this->m_dot_header(mdot, m_nfsec, this->m_nLoops, i);
+                double D_hdr_section = m_D_hdr[i];
 
-            mdot_vec.push_back(mdot_hdr_section);
+                double V = (4.0 * mdot_hdr_section) / (rho_ave * CSP::pi * pow(D_hdr_section, 2.0));
+
+                if (i == 0)
+                {
+                    V_min_calc = V;
+                    V_max_calc = V;
+                }
+                else if (V < V_min_calc)
+                    V_min_calc = V;
+                else if (V > V_max_calc)
+                    V_max_calc = V;
+
+
+                mdot_vec.push_back(mdot_hdr_section);
+            }
+
+            m_V_hdr_min_des_SS = V_min_calc;
+            m_V_hdr_max_des_SS = V_max_calc;
+
+
+            double max_field_mdot = m_m_dot_htfmax * float(m_nLoops);
+            double max_hdr_mdot = max_field_mdot / m_nfsec;
+            double max_velocity_based_on_max_htf_mdot = (4.0 * max_hdr_mdot) / (rho_ave * CSP::pi * pow(0.48895, 2.0));
+
+            double min_field_mdot = m_m_dot_htfmin * float(m_nLoops);
+            double min_hdr_mdot = min_field_mdot / m_nfsec;
+            double min_velocity_based_on_min_htf_mdot = (4.0 * min_hdr_mdot) / (rho_ave * CSP::pi * pow(0.48895, 2.0));
         }
 
-        m_V_hdr_min_des_SS = V_min_calc;
-        m_V_hdr_max_des_SS = V_max_calc;
+        // SS optical efficiency is collector optical efficiency * receiver OPTICAL efficiency (does not consider heat loss)
+        m_eta_optical_des_SS = this->m_eta_optical * m_opt_derate;
 
+        // Field Efficiency
+        double Q_available = m_Ap_tot * weather.m_beam * m_eta_optical_des_SS;  // W
+        m_therm_eff_des_SS = m_Q_field_des_SS / Q_available;
+        m_eff_des_SS = m_eta_optical_des_SS * m_therm_eff_des_SS;
 
-        double max_field_mdot = m_m_dot_htfmax * float(m_nLoops);
-        double max_hdr_mdot = max_field_mdot / m_nfsec;
-        double max_velocity_based_on_max_htf_mdot = (4.0 * max_hdr_mdot) / (rho_ave * CSP::pi * pow(0.48895, 2.0));
+        // Loop Results
+        double loop_in = m_T_loop_in;                               // K
+        double loop_out = m_T_htf_out_t_int[m_nMod - 1];            // K
+        double c_htf_loop_ave = m_htfProps.Cp((loop_in + loop_out) / 2.0);  //[kJ/kg-K]
+        m_Q_loop_des_SS = m_m_dot_loop_des_SS * c_htf_loop_ave * (loop_out - loop_in) * 1000.0;  // convert kW to W
+        m_T_loop_out_des_SS = loop_out - 273.15;                    // Convert from K to C
+        double Q_loop_available = m_A_loop * weather.m_beam * m_eta_optical_des_SS; // W
+        m_therm_eff_loop_des_SS = m_Q_loop_des_SS / Q_loop_available;
+        m_eff_loop_des_SS = m_therm_eff_loop_des_SS * m_eta_optical_des_SS;
 
-        double min_field_mdot = m_m_dot_htfmin * float(m_nLoops);
-        double min_hdr_mdot = min_field_mdot / m_nfsec;
-        double min_velocity_based_on_min_htf_mdot = (4.0 * min_hdr_mdot) / (rho_ave * CSP::pi * pow(0.48895, 2.0));
+        // Pumping Power
+        m_W_dot_pump_des_SS = m_W_dot_pump;
+
+        // Thermal Losses
+        m_Q_loss_receiver_des_SS = m_q_dot_sca_loss_summed_fullts; // MWt
+        m_Q_loss_hdr_rnr_des_SS = m_q_dot_HR_cold_loss_fullts + m_q_dot_HR_hot_loss_fullts;  // MWt
+
     }
     
-    // SS optical efficiency is collector optical efficiency * receiver OPTICAL efficiency (does not consider heat loss)
-    m_eta_optical_des_SS = this->m_eta_optical * m_opt_derate;
 
-    double Q_available = m_Ap_tot * weather.m_beam * m_eta_optical_des_SS;
-    m_therm_eff_des_SS = m_Q_field_des_SS / Q_available;
-    m_eff_des_SS = m_eta_optical_des_SS * m_therm_eff_des_SS;
+
+
+
+
+
+
 
     // Re-run runner and header pipe sizing using the same diameters to get the actual mass flows and velocities at steady state
-    double m_dot_ss = cr_out_solver.m_m_dot_salt_tot / 3600.;           // [kg/s]
-    double rho_cold = m_htfProps.dens(T_htf_in_t_int_last[0], 10.e5); // [kg/m3]
-    double rho_hot = m_htfProps.dens(T_htf_out_t_int_last[m_nMod - 1], 10.e5); // [kg/m3]
+    double m_dot_ss = cr_out_solver.m_m_dot_salt_tot / 3600.;                   // [kg/s]
+    double rho_cold = m_htfProps.dens(T_htf_in_t_int_last[0], 10.e5);           // [kg/m3]
+    double rho_hot = m_htfProps.dens(T_htf_out_t_int_last[m_nMod - 1], 10.e5);  // [kg/m3]
     std::string summary;
 
     
