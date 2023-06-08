@@ -1,10 +1,10 @@
 {
-	"solar_resource_file" : "../../../input_cases/general_data/phoenix_az_33.450495_-111.983688_psmv3_60_tmy.csv",
-	"albedo" : [ 0.20000000000000001 ],
+	"solar_resource_file" : "C:/Users/mprillim/sam_dev/sam/deploy/solar_resource/phoenix_az_33.450495_-111.983688_psmv3_60_tmy.csv",
+	"albedo" : [ 0.20000000000000001, 0.20000000000000001, 0.20000000000000001, 0.20000000000000001, 0.20000000000000001, 0.20000000000000001, 0.20000000000000001, 0.20000000000000001, 0.20000000000000001, 0.20000000000000001, 0.20000000000000001, 0.20000000000000001 ],
     "use_wf_albedo" : 1,
     "system_use_lifetime_output" : 0,
     "analysis_period" : 25,
-    "system_capacity" : 50000,
+    "system_capacity" : 100000,
     "module_type" : 0,
     "dc_ac_ratio" : 0.02,
     "bifaciality" : 0,

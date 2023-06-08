@@ -84,6 +84,7 @@ public:
 	adjustment_factors(compute_module *cm, const std::string &prefix);
 	bool setup(int nsteps=8760, int analysis_period=1);
 	ssc_number_t operator()(size_t time);
+    size_t size();
 	std::string error() { return m_error; }
     size_t size() { return m_factors.size(); }
 };
@@ -100,7 +101,6 @@ public:
 	ssc_number_t operator()(size_t time);
 	std::string error() { return m_error; }
 };
-
 
 class shading_factor_calculator
 {

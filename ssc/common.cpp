@@ -1087,7 +1087,7 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
             else if (n % 365 == 0) { //Daily
                 for (int a = 0; a < analysis_period; a++) {
                     for (int i = 0; i < nsteps; i++) {
-                        day = util::day_of(int(i / steps_per_hour));
+                        day = util::day_of_year(int(i / steps_per_hour));
                         m_factors[nsteps*a + i] *= (1.0 - p[a * 365 + day]/100.0); //input as factors not percentage
                     }
 
@@ -1151,10 +1151,17 @@ ssc_number_t adjustment_factors::operator()( size_t time )
 	else return 0.0;
 }
 
+size_t adjustment_factors::size()
+{
+    return m_factors.size();
+}
 
 
 shading_factor_calculator::shading_factor_calculator()
 {
+    m_steps_per_hour = 1;
+    m_string_option = -1;
+    m_enTimestep = false;
 	m_enAzAlt = false;
 	m_enMxH = false;
     m_enTimestep = false;
@@ -1164,7 +1171,6 @@ shading_factor_calculator::shading_factor_calculator()
     m_string_option = -1;
     m_steps_per_hour = 1;
 }
-
 
 bool shading_factor_calculator::setup( compute_module *cm, const std::string &prefix )
 {
