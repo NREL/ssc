@@ -131,6 +131,7 @@ public:
         E_Q_DOT_INC_SF_COSTH,	   //[MWt]
         E_Q_DOT_REC_INC,		   //[MWt]
         E_Q_DOT_REC_THERMAL_LOSS,  //[MWt]
+        E_REC_THERMAL_EFF,
         E_Q_DOT_REC_ABS,		   //[MWt]
         E_Q_DOT_PIPING_LOSS,	   //[MWt]
         E_E_DOT_INTERNAL_ENERGY,   //[MWt]
@@ -150,30 +151,6 @@ public:
         E_W_DOT_SCA_TRACK,	//[MWe]
         E_W_DOT_PUMP,		//[MWe]
 
-
-        // From Fresnel
-        //E_THETA_L,          //[deg]
-        //E_PHI_T,
-        //E_ETA_OPTICAL,
-
-        //E_SF_DEF,
-        //E_Q_INC_SF_TOT,
-        //E_Q_ABS_TOT,
-        //E_Q_DUMP,
-        //E_Q_LOSS_TOT,
-        //E_PIPE_HL,
-        //E_Q_AVAIL,
-        //E_Q_LOSS_SPEC_TOT,
-        //E_ETA_THERMAL,
-        //E_E_BAL_STARTUP,
-        //E_M_DOT_AVAIL,
-        //E_M_DOT_HTF2,
-        //E_DP_TOT,
-        //E_T_SYS_C,
-        //E_T_SYS_H,
-        //E_T_LOOP_OUTLET,
-
-        //E_Q_I
     };
 
     enum struct E_loop_energy_balance_exit
@@ -666,7 +643,7 @@ public:
 
     virtual double calculate_optical_efficiency(const C_csp_weatherreader::S_outputs& weather, const C_csp_solver_sim_info& sim);
 
-    virtual double calculate_thermal_efficiency_approx(const C_csp_weatherreader::S_outputs& weather, double q_incident /*MW*/);
+    virtual double calculate_thermal_efficiency_approx(const C_csp_weatherreader::S_outputs& weather, double q_incident /*MW*/, const C_csp_solver_sim_info& sim);
 
     virtual double get_collector_area();
 

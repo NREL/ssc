@@ -504,7 +504,7 @@ public:
 
     virtual double calculate_optical_efficiency( const C_csp_weatherreader::S_outputs &weather, const C_csp_solver_sim_info &sim ) = 0;
 
-    virtual double calculate_thermal_efficiency_approx( const C_csp_weatherreader::S_outputs &weather, double q_incident ) = 0; //very approximate thermal efficiency for optimization projections
+    virtual double calculate_thermal_efficiency_approx( const C_csp_weatherreader::S_outputs &weather, double q_incident, const C_csp_solver_sim_info& sim) = 0; //very approximate thermal efficiency for optimization projections
 
     virtual double get_collector_area() = 0;
 };

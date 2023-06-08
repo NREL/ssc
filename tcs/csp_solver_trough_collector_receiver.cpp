@@ -1399,7 +1399,7 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
     double eta_thermal = q_abs_htf_total / q_inc_total;
     double eta_thermal_rel_abs = q_abs_htf_total / (q_abs_abs_total);       // the denominator should be Q_sol_abs
     double q_inc = get_collector_area() * eta_optical * weather.m_beam * 1.e-3;             // [kW]
-    double eta_thermal_est = calculate_thermal_efficiency_approx(weather, q_inc * 1.e-3);
+    double eta_thermal_est = calculate_thermal_efficiency_approx(weather, q_inc * 1.e-3, sim_info);
 
     intc_state = m_interconnects[m_interconnects.size() - 2].State(m_m_dot_htf_tot / (double)m_nLoops, m_T_htf_out_t_int[m_nSCA - 1], T_db, P_intc_in);
     m_T_loop[2 * m_nSCA + 2] = intc_state.temp_out;
@@ -4103,7 +4103,7 @@ double C_csp_trough_collector_receiver::calculate_optical_efficiency(const C_csp
 	return eta_optical;
 }
 
-double C_csp_trough_collector_receiver::calculate_thermal_efficiency_approx(const C_csp_weatherreader::S_outputs &weather, double q_incident /*MW*/)
+double C_csp_trough_collector_receiver::calculate_thermal_efficiency_approx(const C_csp_weatherreader::S_outputs &weather, double q_incident /*MW*/, const C_csp_solver_sim_info& sim)
 {
     // q_incident is the power incident (absorbed by the absorber) on all the HCE receivers, calculated using the DNI and optical efficiency
     if (q_incident <= 0) return 0.;
