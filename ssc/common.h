@@ -86,7 +86,6 @@ public:
 	ssc_number_t operator()(size_t time);
     size_t size();
 	std::string error() { return m_error; }
-    size_t size() { return m_factors.size(); }
 };
 
 class forecast_price_signal
