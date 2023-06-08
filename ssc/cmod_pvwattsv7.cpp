@@ -155,10 +155,17 @@ static var_info _cm_vtab_pvwattsv7[] = {
         { SSC_INPUT,        SSC_NUMBER,      "xfmr_nll",                       "GSU transformer no load loss (iron core)",    "%(ac)",     "",                                             "System Design",      "?=0.0",                   "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "xfmr_ll",                        "GSU transformer load loss (resistive)",       "%(ac)",     "",                                             "System Design",      "?=0.0",                   "",                              "" },
 
-        { SSC_INPUT,        SSC_MATRIX,      "shading:timestep",               "Time step beam shading loss",                 "%",         "",                                             "System Design",      "?",                        "",                             "" },
-        { SSC_INPUT,        SSC_MATRIX,      "shading:mxh",                    "Month x Hour beam shading loss",              "%",         "",                                             "System Design",      "?",                        "",                             "" },
-        { SSC_INPUT,        SSC_MATRIX,      "shading:azal",                   "Azimuth x altitude beam shading loss",        "%",         "",                                             "System Design",      "?",                        "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,      "shading:diff",                   "Diffuse shading loss",                        "%",         "",                                             "System Design",      "?",                        "",                             "" },
+//        { SSC_INPUT,        SSC_TABLE,      "shading",               "Shading loss table",                 "",         "",                                             "System Design",      "?",                        "",                             "" },
+        {SSC_INPUT, SSC_NUMBER,   "shading_en_string_option",           "Enable shading string option",             "0/1",    "0=false,1=true",                    "Shading",                                               "?=0",                                  "BOOLEAN",                    "" },
+        {SSC_INPUT, SSC_NUMBER,   "shading_string_option",      "Shading string option",                   "",       "0=shadingdb,1=average,2=maximum,3=minimum",  "Shading",                                               "?=-1",                               "INTEGER,MIN=-1,MAX=4","" },
+        {SSC_INPUT, SSC_NUMBER,   "shading_en_timestep",         "Enable timestep beam shading losses",          "0/1",    "0=false,1=true",                       "Shading",                                               "?=0",                                  "BOOLEAN",                    "" },
+        {SSC_INPUT, SSC_MATRIX,   "shading_timestep",           "Timestep beam shading losses",            "%",      "",                                           "Shading",                                               "?",                                  "",                    "" },
+        {SSC_INPUT, SSC_NUMBER,   "shading_en_mxh",               "Enable month x Hour beam shading losses",  "0/1",    "0=false,1=true",                          "Shading",                                               "?=0",                                  "BOOLEAN",                    "" },
+        {SSC_INPUT, SSC_MATRIX,   "shading_mxh",                "Month x Hour beam shading losses",        "%",      "",                                           "Shading",                                               "?",                                  "",                    "" },
+        {SSC_INPUT, SSC_NUMBER,   "shading_en_azal",               "Enable azimuth x altitude beam shading losses",          "0/1",    "0=false,1=true",           "Shading",                                               "?=0",                                  "BOOLEAN",                    "" },
+        {SSC_INPUT, SSC_MATRIX,   "shading_azal",               "Azimuth x altitude beam shading losses",  "%",      "",                                           "Shading",                                               "?",                                  "",                    "" },
+        {SSC_INPUT, SSC_NUMBER,   "shading_en_diff",               "Enable diffuse shading loss",          "0/1",    "0=false,1=true",                             "Shading",                                               "?=0",                                  "BOOLEAN",                    "" },
+        {SSC_INPUT, SSC_NUMBER,   "shading_diff",               "Diffuse shading loss",                    "%",      "",                                           "Shading",                                               "?",                                  "",                    "" },
 
         { SSC_INPUT,        SSC_NUMBER,      "batt_simple_enable",             "Enable Battery",                              "0/1",       "",                                             "System Design",     "?=0",                     "BOOLEAN",                        "" },
 
@@ -606,8 +613,9 @@ public:
 
         // read all the shading input data and calculate the hourly factors for use subsequently
         // timeseries beam shading factors cannot be used with non-annual data
-        if (is_assigned("shading:timestep") && !wdprov->annualSimulation())
-            throw exec_error("pvwattsv7", "Timeseries beam shading inputs cannot be used for a simulation period that is not continuous over one or more years.");
+        if (is_assigned("shading_en_timestep") && as_boolean("shading_en_timestep") && !wdprov->annualSimulation())
+                //        if (is_assigned("shading:timestep") && !wdprov->annualSimulation())
+                throw exec_error("pvwattsv7", "Timeseries beam shading inputs cannot be used for a simulation period that is not continuous over one or more years.");
         shading_factor_calculator shad;
         if (!shad.setup(this, ""))
             throw exec_error("pvwattsv7", shad.get_error());

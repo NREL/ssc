@@ -266,24 +266,6 @@ enum {
 
 
 
-//var_info vtab_dispatch_periods[] = {
-	/*   VARTYPE           DATATYPE         NAME                               LABEL                                       UNITS     META                                     GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-
-	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor1", "Dispatch period 1 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
-	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor2", "Dispatch period 2 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
-	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor3", "Dispatch period 3 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
-	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor4", "Dispatch period 4 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
-	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor5", "Dispatch period 5 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
-	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor6", "Dispatch period 6 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
-	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor7", "Dispatch period 7 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
-	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor8", "Dispatch period 8 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
-	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor9", "Dispatch period 9 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
-//	{ SSC_INPUT, SSC_MATRIX, "dispatch_sched_weekday", "Diurnal weekday dispatch periods", "1..9", "12 x 24 matrix", "Dispatch values", "*", "", "" },
-//	{ SSC_INPUT, SSC_MATRIX, "dispatch_sched_weekend", "Diurnal weekend dispatch periods", "1..9", "12 x 24 matrix", "Dispatch values", "*", "", "" },
-
-//	var_info_invalid };
-
-
 dispatch_calculations::dispatch_calculations(compute_module *cm, std::vector<double>& degradation, std::vector<double>& hourly_energy)
 {
 	init(cm, degradation, hourly_energy);
@@ -385,15 +367,16 @@ bool dispatch_calculations::compute_outputs( std::vector<double>& ppa)
 	}
 
 	size_t i;
-	double dispatch_factor1 = m_cm->as_double("dispatch_factor1");
-	double dispatch_factor2 = m_cm->as_double("dispatch_factor2");
-	double dispatch_factor3 = m_cm->as_double("dispatch_factor3");
-	double dispatch_factor4 = m_cm->as_double("dispatch_factor4");
-	double dispatch_factor5 = m_cm->as_double("dispatch_factor5");
-	double dispatch_factor6 = m_cm->as_double("dispatch_factor6");
-	double dispatch_factor7 = m_cm->as_double("dispatch_factor7");
-	double dispatch_factor8 = m_cm->as_double("dispatch_factor8");
-	double dispatch_factor9 = m_cm->as_double("dispatch_factor9");
+
+    double dispatch_factor1 = m_dispatch_tod_factors[0];
+	double dispatch_factor2 = m_dispatch_tod_factors[1];
+	double dispatch_factor3 = m_dispatch_tod_factors[2];
+	double dispatch_factor4 = m_dispatch_tod_factors[3];
+	double dispatch_factor5 = m_dispatch_tod_factors[4];
+	double dispatch_factor6 = m_dispatch_tod_factors[5];
+	double dispatch_factor7 = m_dispatch_tod_factors[6];
+	double dispatch_factor8 = m_dispatch_tod_factors[7];
+	double dispatch_factor9 = m_dispatch_tod_factors[8];
 
 	if (m_cm->as_integer("system_use_lifetime_output"))
 		process_lifetime_dispatch_output();
@@ -1148,40 +1131,40 @@ double dispatch_calculations::tod_energy_value(int period, int year)
 	switch (period)
 	{
 	case 1:
-		energy_value = m_cf.at(CF_TOD1Energy, year)
-			* m_cm->as_double("dispatch_factor1");
+        energy_value = m_cf.at(CF_TOD1Energy, year)
+            * m_dispatch_tod_factors[0];// m_cm->as_double("dispatch_factor1");
 		break;
 	case 2:
 		energy_value = m_cf.at(CF_TOD2Energy, year)
-			* m_cm->as_double("dispatch_factor2");
+			* m_dispatch_tod_factors[1];//m_cm->as_double("dispatch_factor2");
 		break;
 	case 3:
 		energy_value = m_cf.at(CF_TOD3Energy, year)
-			* m_cm->as_double("dispatch_factor3");
+			* m_dispatch_tod_factors[2];//m_cm->as_double("dispatch_factor3");
 		break;
 	case 4:
 		energy_value = m_cf.at(CF_TOD4Energy, year)
-			* m_cm->as_double("dispatch_factor4");
+			* m_dispatch_tod_factors[3];//m_cm->as_double("dispatch_factor4");
 		break;
 	case 5:
 		energy_value = m_cf.at(CF_TOD5Energy, year)
-			* m_cm->as_double("dispatch_factor5");
+			* m_dispatch_tod_factors[4];//m_cm->as_double("dispatch_factor5");
 		break;
 	case 6:
 		energy_value = m_cf.at(CF_TOD6Energy, year)
-			* m_cm->as_double("dispatch_factor6");
+			* m_dispatch_tod_factors[5];//m_cm->as_double("dispatch_factor6");
 		break;
 	case 7:
 		energy_value = m_cf.at(CF_TOD7Energy, year)
-			* m_cm->as_double("dispatch_factor7");
+			* m_dispatch_tod_factors[6];//m_cm->as_double("dispatch_factor7");
 		break;
 	case 8:
 		energy_value = m_cf.at(CF_TOD8Energy, year)
-			* m_cm->as_double("dispatch_factor8");
+			* m_dispatch_tod_factors[7];//m_cm->as_double("dispatch_factor8");
 		break;
 	case 9:
 		energy_value = m_cf.at(CF_TOD9Energy, year)
-			* m_cm->as_double("dispatch_factor9");
+			* m_dispatch_tod_factors[8];//m_cm->as_double("dispatch_factor9");
 		break;
 	}
 	return energy_value;
@@ -1221,44 +1204,24 @@ bool dispatch_calculations::setup()
 		throw general_error(m_error);
 	}
 
-	m_periods.resize(8760, 1);
+    m_dispatch_tod_factors = m_cm->as_vector_double("dispatch_tod_factors");
+    if (m_dispatch_tod_factors.size() != 9)
+        return false;
+
+    m_periods.resize(8760, 1);
 	ssc_number_t *ppa_multipliers = m_cm->allocate("ppa_multipliers", 8760);
 
 	for (int i = 0; i < 8760; i++)
 	{
 		m_periods[i] = tod[i];
 
-		switch (tod[i])
-		{
-		case 1:
-			ppa_multipliers[i] = m_cm->as_number("dispatch_factor1");
-			break;
-		case 2:
-			ppa_multipliers[i] = m_cm->as_number("dispatch_factor2");
-			break;
-		case 3:
-			ppa_multipliers[i] = m_cm->as_number("dispatch_factor3");
-			break;
-		case 4:
-			ppa_multipliers[i] = m_cm->as_number("dispatch_factor4");
-			break;
-		case 5:
-			ppa_multipliers[i] = m_cm->as_number("dispatch_factor5");
-			break;
-		case 6:
-			ppa_multipliers[i] = m_cm->as_number("dispatch_factor6");
-			break;
-		case 7:
-			ppa_multipliers[i] = m_cm->as_number("dispatch_factor7");
-			break;
-		case 8:
-			ppa_multipliers[i] = m_cm->as_number("dispatch_factor8");
-			break;
-		case 9:
-			ppa_multipliers[i] = m_cm->as_number("dispatch_factor9");
-			break;
-		}
-	}
+        if ((tod[i] < 1) || (tod[i] > 9)) {
+            m_error = util::format("invalid tod period %d for hour %d", tod[i], i);
+            throw general_error(m_error);
+        }
+
+        ppa_multipliers[i] = m_dispatch_tod_factors[tod[i] - 1];
+ 	}
 
 	return m_error.length() == 0;
 }
@@ -3337,6 +3300,17 @@ void check_financial_metrics::check_debt_percentage(compute_module* cm, ssc_numb
 }
 
 
+
+var_info vtab_tod_dispatch_periods[] = {
+    // TOD factors
+        { SSC_INPUT, SSC_NUMBER, "ppa_multiplier_model", "PPA multiplier model", "0/1", "0=diurnal,1=timestep", "Revenue", "?=0", "INTEGER,MIN=0", "" },
+        { SSC_INPUT, SSC_ARRAY, "dispatch_factors_ts", "Dispatch payment factor array", "", "", "Revenue", "ppa_multiplier_model=1", "", "" },
+
+        { SSC_OUTPUT, SSC_ARRAY, "ppa_multipliers", "TOD factors", "", "", "Revenue", "*", "", "" },
+        { SSC_INPUT,        SSC_ARRAY,      "dispatch_tod_factors",                   "TOD factors for periods 1 through 9",                           "",   "",                          "Revenue",             "ppa_multiplier_model=0",						   "",                 "" },
+        { SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekday",                 "Diurnal weekday TOD periods",                                   "1..9", "12 x 24 matrix",    "Revenue", "ppa_multiplier_model=0", "", "" },
+        { SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekend",                 "Diurnal weekend TOD periods",                                   "1..9", "12 x 24 matrix",    "Revenue", "ppa_multiplier_model=0", "", "" },
+        var_info_invalid };
 
 
 
