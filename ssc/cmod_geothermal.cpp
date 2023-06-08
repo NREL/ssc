@@ -89,6 +89,8 @@ static var_info _cm_vtab_geothermal[] = {
     { SSC_INPUT,        SSC_NUMBER,      "inj_well_diam",                      "Injection well diameter",                      "in",             "",             "GeoHourly",        "*",                        "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.inj_cost_curve_welltype",                      "Injection well type",                      "0/1",             "",             "GeoHourly",        "*",                        "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.prod_cost_curve_welltype",                      "Production well type",                      "0/1",             "",             "GeoHourly",        "*",                        "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.inj_cost_curve_welldiam",                      "Injection well diameter type",                      "0/1",             "0=LargerDiameter,1=SmallerDiameter",             "GeoHourly",        "*",                        "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.prod_cost_curve_welldiam",                      "Production well diameter type",                      "0/1",             "0=LargerDiameter,1=SmallerDiameter",             "GeoHourly",        "*",                        "",                "" },
 
     { SSC_INPUT,        SSC_NUMBER,      "design_temp",                        "Power block design temperature",               "C",              "",             "GeoHourly",        "*",                        "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "specify_pump_work",                  "Did user specify pump work?",                  "0 or 1",         "",             "GeoHourly",        "*",                        "INTEGER",         "" },
@@ -304,10 +306,12 @@ public:
 		geo_inputs.md_ExcessPressureBar = physics::PsiToBar( as_double("excess_pressure_pump") );
 		geo_inputs.md_DiameterProductionWellInches = as_double("well_diameter");
         geo_inputs.md_ProductionWellType = as_double("geotherm.cost.prod_cost_curve_welltype");
+        geo_inputs.md_ProductionWellDiam = as_double("geotherm.cost.prod_cost_curve_welldiam");
 		geo_inputs.md_DiameterPumpCasingInches = as_double("casing_size");
         geo_inputs.md_DiameterInjPumpCasingInches = as_double("inj_casing_size");
 		geo_inputs.md_DiameterInjectionWellInches = as_double("inj_well_diam");
         geo_inputs.md_InjectionWellType = as_double("geotherm.cost.inj_cost_curve_welltype");
+        geo_inputs.md_InjectionWellDiam = as_double("geotherm.cost.inj_cost_curve_welldiam");
 		geo_inputs.mb_CalculatePumpWork = ( 1 != as_integer("specify_pump_work") );
 		geo_inputs.md_UserSpecifiedPumpWorkKW = as_double("specified_pump_work_amount") * 1000; // entered in MW
 

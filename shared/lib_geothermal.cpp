@@ -101,8 +101,9 @@ namespace geothermal
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	const bool IMITATE_GETEM = false;
 	const double GETEM_FT_IN_METER = (IMITATE_GETEM) ? 3.28083 : physics::FT_PER_METER; // feet per meter - largest source of discrepancy
-	const double GETEM_PSI_PER_BAR = (IMITATE_GETEM) ? 14.50377 : physics::PSI_PER_BAR; // psi per bar
-	const double GETEM_PSI_PER_INHG = (IMITATE_GETEM) ? 0.49115 : physics::PSI_PER_INHG; // psi per inch of mercury
+	//const double GETEM_PSI_PER_BAR = (IMITATE_GETEM) ? 14.50377 : physics::PSI_PER_BAR; // psi per bar
+    const double GETEM_PSI_PER_BAR = 14.50377; // psi per bar
+    const double GETEM_PSI_PER_INHG = (IMITATE_GETEM) ? 0.49115 : physics::PSI_PER_INHG; // psi per inch of mercury
 	const double GETEM_KGM3_PER_LBF3 = (IMITATE_GETEM) ? (35.3146 / 2.20462) : physics::KGM3_PER_LBF3; // lbs/ft^3 per kg/m^3 
 	const double GETEM_LB_PER_KG = (IMITATE_GETEM) ? 2.20462 : physics::LB_PER_KG; // pounds per kilogram
 	const double GETEM_KW_PER_HP = (IMITATE_GETEM) ? 0.7457 : physics::KW_PER_HP; // kilowatts per unit of horsepower
@@ -732,7 +733,10 @@ double CGeothermalAnalyzer::GetInjectionPumpWorkft(void)
     double flow = mo_geo_in.md_ProductionFlowRateKgPerS / mo_geo_in.md_RatioInjectionToProduction; //kg/s
     double flow_lbh = flow * 2.20462 * 3600;
     //Upper interval
-    double D_well = mo_geo_in.md_DiameterInjPumpCasingInches;
+    
+    double D_well = 0;
+    if (mo_geo_in.md_InjectionWellDiam == 0) D_well = 12.5; //inches (larger diameter)
+    else D_well = 8.75; //inches (smaller diameter)
     double D_well_ft = D_well / 12;
     double A = 3.1415 * pow(D_well_ft, 2) / 4;
     double L_int = 0.8 * mo_geo_in.md_ResourceDepthM; //Length interval (m), how is this calculated?
@@ -768,7 +772,9 @@ double CGeothermalAnalyzer::GetInjectionPumpWorkft(void)
     flow = mo_geo_in.md_ProductionFlowRateKgPerS / mo_geo_in.md_RatioInjectionToProduction; //kg/s
     flow_lbh = flow * 2.20462 * 3600;
     //Upper interval
-    D_well = mo_geo_in.md_DiameterInjectionWellInches;
+    D_well = 0;
+    if (mo_geo_in.md_InjectionWellDiam == 0) D_well = 12.25; //inches (larger diameter)
+    else D_well = 8.50; //inches (smaller diameter)
     D_well_ft = D_well / 12;
     A = 3.1415 * pow(D_well_ft, 2) / 4;
     L_int = 0.2 * mo_geo_in.md_ResourceDepthM; //Length interval (m), how is this calculated?
@@ -795,6 +801,7 @@ double CGeothermalAnalyzer::GetInjectionPumpWorkft(void)
     friction_head_loss = (f / D_well_ft) * pow(vel_well, 2) / (2 * 32.174);
     //if (mo_geo_in.me_ct == BINARY) friction_head_loss = friction_head_loss * 1.0 / 3.0;
     friction_head_loss_ft = friction_head_loss * L_int * physics::FT_PER_METER;
+    if (mo_geo_in.me_rt == EGS) friction_head_loss_ft *= 1.0 / 3.0;
     friction_head_psid = friction_head_loss_ft * rho_sat * rho_correction / 144;
     double P_bottomhole = P_upper_bottom_interval + rho_sat * rho_correction * physics::FT_PER_METER * L_int / 144 - friction_head_psid;
     double bottom_hole_pressure = pressureInjectionWellBottomHolePSI();
@@ -819,7 +826,9 @@ double CGeothermalAnalyzer::GetProductionPumpWorkft(void)
     double flow = mo_geo_in.md_ProductionFlowRateKgPerS; //kg/s
     double flow_lbh = flow * 2.20462 * 3600;
     //Upper interval
-    double D_well = mo_geo_in.md_DiameterPumpCasingInches - 2 * 0.4;
+    double D_well = 0;
+    if (mo_geo_in.md_InjectionWellDiam == 0) D_well = 12.25; //inches (larger diameter)
+    else D_well = 8.50; //inches (smaller diameter)
     double D_well_ft = D_well / 12;
     double A = 3.1415 * pow(D_well_ft, 2) / 4;
     double L_int = 0.2 * mo_geo_in.md_ResourceDepthM; //Length interval (m), how is this calculated?
@@ -844,8 +853,9 @@ double CGeothermalAnalyzer::GetProductionPumpWorkft(void)
     double v = -2 * log10((surf_rough_casing / D_well_ft) / 3.7 + 2.51 * a / Re_well);
     double c = -2 * log10((surf_rough_casing / D_well_ft) / 3.7 + 2.51 * v / Re_well);
     double f = pow((a - pow((v - a), 2) / (c - 2 * v + a)), -2);
-    double friction_head_loss = (f / D_well_ft) * pow(vel_well, 2) / (2 * 32.174) * 1/3;
+    double friction_head_loss = (f / D_well_ft) * pow(vel_well, 2) / (2 * 32.174);
     double friction_head_loss_ft = friction_head_loss * L_int * physics::FT_PER_METER;
+    if (mo_geo_in.me_rt == EGS) friction_head_loss_ft *= 1.0 / 3.0;
     double friction_head_psid = friction_head_loss_ft * rho_sat * rho_correction / 144;
     double P_upper_bottom_interval = Prod_well_minus_bottomhole - rho_sat * rho_correction * physics::FT_PER_METER * L_int / 144 - friction_head_psid;
 
@@ -853,7 +863,9 @@ double CGeothermalAnalyzer::GetProductionPumpWorkft(void)
     flow = mo_geo_in.md_ProductionFlowRateKgPerS; //kg/s
     flow_lbh = flow * 2.20462 * 3600;
     //Upper interval
-    D_well = mo_geo_in.md_DiameterProductionWellInches;
+    D_well = 0;
+    if (mo_geo_in.md_InjectionWellDiam == 0) D_well = 12.5; //inches (larger diameter)
+    else D_well = 8.75; //inches (smaller diameter)
     D_well_ft = D_well / 12;
     A = 3.1415 * pow(D_well_ft, 2) / 4;
     L_int = 0.8 * mo_geo_in.md_ResourceDepthM; //Length interval (m), how is this calculated?
@@ -893,7 +905,9 @@ double CGeothermalAnalyzer::GetProductionPumpWorkft(void)
     flow = mo_geo_in.md_ProductionFlowRateKgPerS; //kg/s
     flow_lbh = flow * 2.20462 * 3600;
     //Upper interval
-    D_well = mo_geo_in.md_DiameterPumpCasingInches - 0.944;
+    D_well = 0;
+    if (mo_geo_in.md_InjectionWellDiam == 0) D_well = 9.625-0.944; //inches (larger diameter)
+    else D_well = 7.00-0.944; //inches (smaller diameter)
     D_well_ft = D_well / 12;
     A = 3.1415 * pow(D_well_ft, 2) / 4;
     L_int = 0.2 * mo_geo_in.md_ResourceDepthM; //Length interval (m), how is this calculated?

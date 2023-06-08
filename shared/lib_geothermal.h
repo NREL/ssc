@@ -106,10 +106,12 @@ struct SGeothermal_Inputs
 	double md_ExcessPressureBar;							// default 3.5 bar, [2B.Resource&Well Input].D205
 	double md_DiameterProductionWellInches;					// default 10 inches
     double md_ProductionWellType;                           // 0 open hole, 1 liner
+    double md_ProductionWellDiam;
 	double md_DiameterPumpCasingInches;						// default 9.925 inches
     double md_DiameterInjPumpCasingInches;
 	double md_DiameterInjectionWellInches;					// default 10 inches
     double md_InjectionWellType;                            // 0 open hole, 1 liner
+    double md_InjectionWellDiam;
 	double md_UserSpecifiedPumpWorkKW;
 	double md_PotentialResourceMW;							// MW, default = 200 MW, determines how many times reservoir can be replaced
 	double md_ResourceDepthM;								// meters, default 2000
