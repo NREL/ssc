@@ -157,7 +157,7 @@ class Flux
 	void fluxDensity(simulation_info *siminfo, FluxSurface &flux_surface, Hvector &helios, double tht, bool show_progress = false);
 
 	//A method to check if the flux point can be viewed by the heliostat
-	bool Flux::checkApertureSnout(sp_point& fp_g, sp_point* hloc, sp_point* aim, var_receiver* rec_var_map);
+	bool checkApertureSnout(sp_point& fp_g, sp_point* hloc, sp_point* aim, var_receiver* rec_var_map);
 
 	double hermiteFluxEval(Heliostat *H, double xs, double ys);
 
