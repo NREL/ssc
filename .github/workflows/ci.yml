@@ -124,7 +124,7 @@ jobs:
       # Build your program with the given configuration
       run: |
         cd ${SSCDIR}/build
-        make -j4
+        make -j
 
     - name: Test
       # Turn off fast fail for when the landbosse tests write to cerr
