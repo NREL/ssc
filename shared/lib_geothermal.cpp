@@ -1164,8 +1164,8 @@ double CGeothermalAnalyzer::GetAmbientTemperatureC(conversionTypes ct)
 {
 	if (ct == NO_CONVERSION_TYPE) ct = mo_geo_in.me_ct;
 	//return (ct == BINARY) ? geothermal::DEFAULT_AMBIENT_TEMPC_BINARY : (1.3842 * physics::FarenheitToCelcius(TemperatureWetBulbF())) + 5.1772 ;
-	return (ct == BINARY) ? geothermal::DEFAULT_AMBIENT_TEMPC_BINARY : physics::FarenheitToCelcius(TemperatureWetBulbF());
-    //return physics::FarenheitToCelcius(TemperatureWetBulbF());
+	//return (ct == BINARY) ? geothermal::DEFAULT_AMBIENT_TEMPC_BINARY : physics::FarenheitToCelcius(TemperatureWetBulbF());
+    return physics::FarenheitToCelcius(TemperatureWetBulbF());
 }
 
 double CGeothermalAnalyzer::InjectionTemperatureC() // calculate injection temperature in degrees C
