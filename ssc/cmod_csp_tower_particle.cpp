@@ -732,8 +732,8 @@ static var_info _cm_vtab_csp_tower_particle[] = {
 
     var_info_invalid };
 
-bool SortByPPAPrice(const pair<int, double>& lhs,
-    const pair<int, double>& rhs);
+//bool SortByPPAPrice(const pair<int, double>& lhs,
+//    const pair<int, double>& rhs);
 
 class cm_csp_tower_particle : public compute_module
 {
@@ -2783,7 +2783,7 @@ public:
             ppa_pairs[i].second = p_pricing_mult[i];
         }
 
-        std::sort(ppa_pairs.begin(), ppa_pairs.end(), SortByPPAPrice);
+        //std::sort(ppa_pairs.begin(), ppa_pairs.end(), SortByPPAPrice);
         int n_ppa_steps = 1000;
 
         double total_energy_in_sub_period = 0.0;
@@ -2829,10 +2829,10 @@ public:
     }
 };
 
-bool SortByPPAPrice(const pair<int, double>& lhs,
-    const pair<int, double>& rhs)
-{
-    return lhs.second > rhs.second;
-}
+//bool SortByPPAPrice(const pair<int, double>& lhs,
+//    const pair<int, double>& rhs)
+//{
+//    return lhs.second > rhs.second;
+//}
 
 DEFINE_MODULE_ENTRY(csp_tower_particle, "CSP free-falling particle tower with hierarchical controller and dispatch optimization", 1)
