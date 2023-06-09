@@ -427,7 +427,7 @@ double Ambient::calcInsolation(var_map &V, double /*azimuth*/, double zenith, in
 		break;
 	//case Ambient::CONSTANT:
     case var_ambient::INSOL_TYPE::CONSTANT_VALUE:
-		dni = V.sf.dni_des.val / (S0 * 1000.);
+		dni = V.sf.dni_des.val / (S0 * 1000.);  // TODO: Should this be dni_layout? and not dni_des? Or should we just remove dni_layout
 		break;
 	//case Ambient::MOON:
     case var_ambient::INSOL_TYPE::MOON_MODEL:

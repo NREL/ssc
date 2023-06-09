@@ -22,32 +22,31 @@ Project(solarpilot_core)
 include_directories(. ../nlopt ../lpsolve .. $ENV{CORETRACEDIR})
 
 set(SOLARPILOT_SRC
-	Ambient.cpp
-	API_structures.cpp
-	AutoPilot_API.cpp
-	#CoPilot_API.cpp
-	definitions.cpp
+	Ambient.cpp                Ambient.h
+	API_structures.cpp         API_structures.h
+	AutoPilot_API.cpp          AutoPilot_API.h
+	definitions.cpp            definitions.h
 	exceptions.hpp
-	Financial.cpp
-	Flux.cpp
-	fluxsim.cpp
-	heliodata.cpp
-	Heliostat.cpp
-	interop.cpp
-	IOUtil.cpp
-	Land.cpp
-	LayoutSimulateThread.cpp
-	mod_base.cpp
-	#MultiRecOptimize.cpp
-	OpticalMesh.cpp
-	optimize.cpp
-	Receiver.cpp
-	SolarField.cpp
-	solpos.cpp
-	STObject.cpp
-	string_util.cpp
-	STSimulateThread.cpp
-	Toolbox.cpp)
+	Financial.cpp              Financial.h
+	Flux.cpp                   Flux.h
+	fluxsim.cpp                fluxsim.h
+	heliodata.cpp              heliodata.h
+	Heliostat.cpp              Heliostat.h
+	interop.cpp                interop.h
+	IOUtil.cpp                 IOUtil.h
+	Land.cpp                   Land.h
+	LayoutSimulateThread.cpp   LayoutSimulateThread.h
+	mod_base.cpp               mod_base.h
+	OpticalMesh.cpp            OpticalMesh.h
+	optimize.cpp               optimize.h
+	Receiver.cpp               Receiver.h
+	SolarField.cpp             SolarField.h
+	solpos.cpp                 solpos00.h
+	sort_method.h
+	STObject.cpp               STObject.h
+	string_util.cpp            string_util.h
+	STSimulateThread.cpp       STSimulateThread.h
+	Toolbox.cpp                Toolbox.h)
 
 
 
@@ -68,7 +67,7 @@ if(MSVC)
 	endforeach()
 else()
 	if (APPLE)
-        add_compile_options( -fno-common)
+		add_compile_options( -fno-common)
   		add_definitions(-DWX_PRECOMP)
 	else()
 		add_definitions(-D__64BIT__)

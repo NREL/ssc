@@ -628,37 +628,35 @@ void AutoPilot::PreSimCallbackUpdate()
 	}
 }
 
-
 void AutoPilot::PostProcessLayout(sp_layout &layout)
 {
-    /*
-    Layout post-process.. collect the layout results and fill the data into the
-    layout structure for later use
-    Calculate all post layout parameters
-    */
+	/* 
+	Layout post-process.. collect the layout results and fill the data into the
+	layout structure for later use
+	*/
 
-    Hvector* hpos = _SF->getHeliostats();
-    layout.heliostat_positions.clear();
-    layout.heliostat_positions.reserve(hpos->size());
-    for (int i = 0; i < (int)hpos->size(); i++) {
-        sp_layout::h_position hp;
-        hp.location.x = hpos->at(i)->getLocation()->x;
-        hp.location.y = hpos->at(i)->getLocation()->y;
-        hp.location.z = hpos->at(i)->getLocation()->z;
+	Hvector *hpos = _SF->getHeliostats();
+	layout.heliostat_positions.clear();
+	for(int i=0; i<(int)hpos->size(); i++){
+		sp_layout::h_position hp;
+		hp.location.x = hpos->at(i)->getLocation()->x;
+		hp.location.y = hpos->at(i)->getLocation()->y;
+		hp.location.z = hpos->at(i)->getLocation()->z;
 
-        hp.cant_vector.i = hpos->at(i)->getCantVector()->i;
+		hp.cant_vector.i = hpos->at(i)->getCantVector()->i;
         hp.cant_vector.j = hpos->at(i)->getCantVector()->j;
         hp.cant_vector.k = hpos->at(i)->getCantVector()->k;
-
+		
         hp.aimpoint.x = hpos->at(i)->getAimPoint()->x;
-        hp.aimpoint.y = hpos->at(i)->getAimPoint()->y;
-        hp.aimpoint.z = hpos->at(i)->getAimPoint()->z;
+		hp.aimpoint.y = hpos->at(i)->getAimPoint()->y;
+		hp.aimpoint.z = hpos->at(i)->getAimPoint()->z;
 
-        hp.focal_length = hpos->at(i)->getFocalX();
-        hp.template_number = -1;
-        //hp.user_optics = false;
-        layout.heliostat_positions.push_back(hp);
-    }
+		hp.focal_length = hpos->at(i)->getFocalX();
+		hp.template_number = -1;
+		//hp.user_optics = false;
+		layout.heliostat_positions.push_back( hp );
+	}
+
 
     var_map *V = _SF->getVarMap();
     _SF->updateAllCalculatedParameters( *V );
