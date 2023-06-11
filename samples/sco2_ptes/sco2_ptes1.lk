@@ -1,0 +1,2 @@
+var("T_amb_des", 20.0);
+run("sco2_ptes");
