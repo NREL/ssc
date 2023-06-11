@@ -821,6 +821,14 @@ int util::day_of(double time)
 	return (daynum % 7);
 }
 
+int util::day_of_year(double time)
+{
+    /* returns day number 0..6 (Monday..Sunday) given
+       time: hour index in year 0..8759 */
+    int daynum = (((int)(time / 24.0)));   // day goes 0-364
+    return daynum;
+}
+
 int util::week_of(double time)
 {
 	/* returns week number 0..51 given
