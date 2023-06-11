@@ -30,48 +30,29 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "core.h"
+#ifndef __PTES_CYCLE_TEMPLATES_
+#define __PTES_CYCLE_TEMPLATES_
 
-#include "ptes_cycle_templates.h"
-#include "sco2_ptes.h"
-
-static var_info _cm_vtab_sco2_ptes[] = {
-
-    /*   VARTYPE   DATATYPE         NAME               LABEL                                      UNITS  META  GROUP REQUIRED_IF CONSTRAINTS         UI_HINTS*/
-    { SSC_INPUT,  SSC_NUMBER,  "T_amb_des",         "Ambient temperature at design",              "C",    "",  "", "*", "", ""},
-
-    var_info_invalid };
-
-class cm_sco2_ptes : public compute_module
+class C_ptes_cycle_core
 {
 public:
 
-    cm_sco2_ptes()
+    enum E_ptes_state_points
     {
-        add_var_info(_cm_vtab_sco2_ptes);
-    }
+        // Used for both charge and discharge cycles
+        PTES_COMP_IN,       // Compressor inlet
+        PTES_COMP_OUT,      // Compressor outlet
+        PTES_HHX_IN,        // Hot heat exchanger inlet
+        PTES_TURB_IN,       // Turbine inlet
+        PTES_TURB_OUT,      // Turbine outlet
+        PTES_LP_LT_COOL_IN, // Low-pressure low-temperature cooler inlet (could be other cooler locations for different configs)
+        PTES_CHX_IN,        // Cold heat exchanger inlet
 
-    void exec() override
-    {
-        double T_amb_des = as_double("T_amb_des");  //[C]
-
-        std::unique_ptr<C_ptes_cycle_core> ptes_cycle;
-
-        std::unique_ptr<C_sco2_ptes> sco2_ptes = std::unique_ptr<C_sco2_ptes>(new C_sco2_ptes(T_amb_des));
-
-
-        int test_blah = sco2_ptes->design_core();
-
-
-
-
-        ptes_cycle = std::move(sco2_ptes);
-
-        double a = 1.23;
-
-        return;
-    }
+        END_PTES_STATES
+    };
 
 };
 
-DEFINE_MODULE_ENTRY(sco2_ptes, "sco2 pumped thermal energy storage", 0)
+
+
+#endif

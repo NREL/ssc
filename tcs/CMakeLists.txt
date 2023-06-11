@@ -53,6 +53,7 @@ set(TCS_SRC
 		sco2_partialcooling_cycle.cpp
 		sco2_pc_csp_int.cpp
 		sco2_power_cycle.cpp
+		sco2_ptes.cpp
 		sco2_rec_util.cpp
 		sco2_recompression_cycle.cpp
 		sco2_test_type401.cpp
@@ -142,12 +143,14 @@ set(TCS_SRC
 		nlopt_callbacks.h
 		numeric_solvers.h
         ptes_solver_design_point.h
+		ptes_cycle_templates.h
 		sam_csp_util.h
 		sco2_cycle_components.h
 		sco2_cycle_templates.h
 		sco2_partialcooling_cycle.h
 		sco2_pc_csp_int.h
 		sco2_power_cycle.h
+		sco2_ptes.h
 		sco2_recompression_cycle.h
 		sco2_rec_util.h
 		storage_hx.h

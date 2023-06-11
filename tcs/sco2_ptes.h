@@ -30,48 +30,21 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "core.h"
+#ifndef __SCO2_PTES_
+#define __SCO2_PTES_ 
 
 #include "ptes_cycle_templates.h"
-#include "sco2_ptes.h"
 
-static var_info _cm_vtab_sco2_ptes[] = {
-
-    /*   VARTYPE   DATATYPE         NAME               LABEL                                      UNITS  META  GROUP REQUIRED_IF CONSTRAINTS         UI_HINTS*/
-    { SSC_INPUT,  SSC_NUMBER,  "T_amb_des",         "Ambient temperature at design",              "C",    "",  "", "*", "", ""},
-
-    var_info_invalid };
-
-class cm_sco2_ptes : public compute_module
+class C_sco2_ptes : public C_ptes_cycle_core
 {
+private:
+    double dummy_private;
+
 public:
+    C_sco2_ptes(double dummy_in) { dummy_private = dummy_in; }
 
-    cm_sco2_ptes()
-    {
-        add_var_info(_cm_vtab_sco2_ptes);
-    }
-
-    void exec() override
-    {
-        double T_amb_des = as_double("T_amb_des");  //[C]
-
-        std::unique_ptr<C_ptes_cycle_core> ptes_cycle;
-
-        std::unique_ptr<C_sco2_ptes> sco2_ptes = std::unique_ptr<C_sco2_ptes>(new C_sco2_ptes(T_amb_des));
-
-
-        int test_blah = sco2_ptes->design_core();
-
-
-
-
-        ptes_cycle = std::move(sco2_ptes);
-
-        double a = 1.23;
-
-        return;
-    }
-
+    int design_core();
 };
 
-DEFINE_MODULE_ENTRY(sco2_ptes, "sco2 pumped thermal energy storage", 0)
+#endif // __SCO2_PTES_
+
