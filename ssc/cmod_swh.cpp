@@ -284,7 +284,7 @@ public:
 		double test_flow = as_double("test_flow"); // collector test flow rate (kg/s)
 
 		/* collector properties */
-		double mdot_total = as_double("mdot"); // total system mass flow rate (kg/s)
+        double mdot_total = as_double("test_flow") * as_integer("ncoll"); // total system mass flow rate (kg/s)
 		double area_total = as_double("area_coll") * as_integer("ncoll"); // total solar collector area (m2)
 		double area_coll = as_double("area_coll");
 

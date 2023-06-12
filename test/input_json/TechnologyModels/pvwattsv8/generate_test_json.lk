@@ -1,0 +1,42 @@
+close_project();
+
+// configuration and compute module appended in simulate_ssc_tests
+casename_base =  "dc_ac_ratio_";
+
+// update folder based on where you would like the generated json files (one for input and one for output comparison for each configuration)
+// Windows
+folder = "C:/Projects/SAM/Documentation/GitHub/Issues/ssc_870/json";
+
+// to test all financial compute modules
+cmod_list="pvwattsv8";
+
+dcacratio = [ 0.02, 0.5, 1.0, 1.5, 2.0, 10.0 ];
+
+for (i=0; i< #dcacratio; i++) {
+	casename = casename_base + dcacratio[i];
+	create_case("PVWatts", "Single Owner", casename);
+
+	set('dc_ac_ratio', dcacratio[i]);
+
+	//Check that the case simulates ok
+	message2 = '';
+	if(!simulate_ssc_tests(folder, cmod_list, message2))
+	{
+		outln( 'fail\tfail\tfail' + message2);
+		continue;
+	}
+			
+	//Record the outputs of the case
+	annual_energy = get('annual_energy');
+	inv_eff_output = get('inv_eff_output');
+	
+	mineff = min(inv_eff_output);
+	maxeff = max(inv_eff_output);
+	avgeff = mean(inv_eff_output);
+	
+	str = replace( message2, '\n', ' ' );
+	str = replace( str, '\r', '' );
+	str = replace( str, '\t', ' ' );
+	outln( casename + '\t' + annual_energy + '\t' + mineff + '\t'  + maxeff + '\t' + avgeff + '\t' + str);
+
+}

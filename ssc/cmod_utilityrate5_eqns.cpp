@@ -110,7 +110,7 @@ bool try_get_rate_structure(var_table* vt, const std::string& ssc_name, bool pow
     return true;
 }
 
-SSCEXPORT bool ElectricityRates_format_as_URDBv7(ssc_data_t data) {
+SSCEXPORT bool ElectricityRates_format_as_URDBv8(ssc_data_t data) {
     auto vt = static_cast<var_table*>(data);
     if (!vt){
         return false;
@@ -238,6 +238,57 @@ SSCEXPORT bool ElectricityRates_format_as_URDBv7(ssc_data_t data) {
         }
         urdb_data.assign("flatdemandstructure", flat_demand_structure);
         urdb_data.assign("flatdemandmonths", flat_demand_months);
+    }
+
+    if (vt->is_assigned("ur_billing_demand_lookback_percentages") && vt->is_assigned("ur_enable_billing_demand")) {
+        if (vt->as_boolean("ur_enable_billing_demand")) {
+            std::vector<int> billing_demand(12);
+            util::matrix_t<double> billing_demand_matrix = vt->as_matrix("ur_billing_demand_lookback_percentages");
+            bool any_zeroes = false;
+            bool all_same = true;
+            double reference_demand = billing_demand_matrix.at(0, 0);
+            double tol = 1e-7;
+            for (size_t i = 0; i < 12; i++) {
+                double monthly_demand_percent = billing_demand_matrix.at(i, 0);
+                if (monthly_demand_percent < tol) {
+                    any_zeroes = true;
+                    billing_demand[i] = 0;
+                }
+                else {
+                    if (any_zeroes) {
+                        if (reference_demand < tol) {
+                            reference_demand = monthly_demand_percent;
+                        }
+                    }
+
+                    if (std::abs(reference_demand - monthly_demand_percent) < tol) {
+                        all_same = false;
+                    }
+
+                    billing_demand[i] = 1;
+                }
+            }
+
+            if (!all_same) {
+                // SAM supports 12 different percentages, but REopt and URDB only support one. Flag this for users
+                urdb_data.assign("warning", var_data("ur_billing_demand_lookback_percentages had multiple non-zero percentages. REopt/URDB only supports a single percentage for lookbackPercent. Using the last non-zero percent"));
+            }
+
+            // If zeroes are present, use the lookbackMonths structure to indicate which months are relevant
+            if (any_zeroes) {
+                urdb_data.assign("lookbackMonths", var_data(billing_demand));
+            }
+            else { // Else specify the lookback range in integer months. SAM supports these in tandem, REopt/URDB only supports one
+
+                if (vt->is_assigned("ur_billing_demand_lookback_period")) {
+                    urdb_data.assign("lookbackRange", vt->as_integer("ur_billing_demand_lookback_period"));
+                }
+                else {
+                    urdb_data.assign("error", var_data("ur_billing_demand_lookback_period is not assigned when the structure of ur_billing_demand_lookback_percentages requires it. please assign the lookback period, in months"));
+                }
+            }
+            urdb_data.assign("lookbackPercent", var_data(reference_demand / 100.0));
+        }
     }
 
     // tou
