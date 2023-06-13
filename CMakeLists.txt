@@ -154,10 +154,10 @@ endfunction()
 
 
 add_subdirectory(splinter)
-if (NOT SKIP_ORTOOLS)
-    add_subdirectory(or-tools)
-    add_subdirectory(ortools_sandbox)
-endif()
+add_subdirectory(shared)
+add_subdirectory(nlopt)
+add_subdirectory(lpsolve)
+add_subdirectory(solarpilot)
 add_subdirectory(tcs)
 add_subdirectory(ssc)
 

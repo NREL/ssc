@@ -40,13 +40,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_core.h"
 #include "csp_solver_pt_receiver.h"
 
-#include "../splinter/Core"
-#include "../splinter/LU"
-#include "../splinter/Cholesky"
-#include "../splinter/QR"
-#include "../splinter/SVD"
-#include "../splinter/Geometry"
-#include "../splinter/Eigenvalues"
+#include <Eigen/Core>
+#include <Eigen/LU>
+#include <Eigen/Cholesky>
+#include <Eigen/QR>
+#include <Eigen/SVD>
+#include <Eigen/Geometry>
+#include <Eigen/Eigenvalues>
 
 
 

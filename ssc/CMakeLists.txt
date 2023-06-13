@@ -6,7 +6,7 @@
 
 # For CMake build option `SAMAPI_EXPORT`, see ../CMakeLists.txt
 
-include_directories(. ../splinter ../shared ../nlopt ../lpsolve ../solarpilot ../tcs ../ssc)
+include_directories(. ../splinter/include ../splinter/thirdparty/Eigen ../shared ../nlopt ../lpsolve ../solarpilot ../tcs ../ssc)
 
 set(SSC_SRC
 		cmod_6parsolve.cpp
