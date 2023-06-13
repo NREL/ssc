@@ -115,8 +115,6 @@ public:
                 // don't do checks on less than 200 W/m2, errors are too big to really check
             }
 
-
-
             if (!std::isnan(wf.dn) && wf.dn > 1500) warn("beam irradiance (%lg) at record %d is greater than 1500", wf.dn, i);
             if (!std::isnan(wf.dn) && wf.dn < 0) warn("beam irradiance (%lg) at record %d is negative", wf.dn, i);
 
@@ -159,7 +157,6 @@ public:
             if (wf.pres < 200) warn("pressure (%lg) less than 200 millibar at record %d", wf.pres, i);
             if (wf.pres > 1100) warn("pressure greater than 1100 millibar at record %d", wf.pres, i);
 
-
             if (nwarnings >= 99)
             {
                 warn("bailing... too many warnings.");
@@ -168,10 +165,8 @@ public:
 
         }
 
-
-
         assign("nwarnings", var_data((ssc_number_t)nwarnings));
     }
 };
 
-DEFINE_MODULE_ENTRY(wfcheck, "Weather file checker.", 1);
+DEFINE_MODULE_ENTRY(wfcheck, "Weather file checker for solar resource data.", 1);

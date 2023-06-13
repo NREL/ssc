@@ -95,7 +95,8 @@ public:
         bool chargeOnlySystemExceedLoad,
         bool dischargeOnlyLoadExceedSystem,
         bool behindTheMeterDischargeToGrid,
-        double SOC_min_outage
+        double SOC_min_outage,
+        int load_forecast_mode
 		);
 
 	~dispatch_automatic_behind_the_meter_t() override {};
@@ -165,6 +166,9 @@ protected:
 
 	/*! Full time-series of loads [kW] */
 	double_vec _P_load_ac;
+
+    /*! Forecast mode for loads (look ahead, look behind, custom) */
+    int _load_forecast_mode;
 
 	/*! Full time-series of target power [kW] */
 	double_vec _P_target_input;

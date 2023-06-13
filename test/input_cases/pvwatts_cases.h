@@ -81,7 +81,7 @@ static int pvwatts_nofinancial_testfile(ssc_data_t &data)
 	//ssc_data_set_number(data, "enable_wind_stow", 0);
 	ssc_data_set_number(data, "inv_eff", 96);
 
-	ssc_data_set_number(data, "adjust:constant", 0);
+    ssc_data_set_number(data, "adjust_constant", 0.0);
 
 	return 0;
 

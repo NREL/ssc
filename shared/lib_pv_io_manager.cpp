@@ -295,6 +295,8 @@ void Irradiance_IO::AllocateOutputs(compute_module* cm)
     p_weatherFileGHI = cm->allocate("gh", numberOfWeatherFileRecords);
     p_weatherFileDNI = cm->allocate("dn", numberOfWeatherFileRecords);
     p_weatherFileDHI = cm->allocate("df", numberOfWeatherFileRecords);
+    p_weatherFilePOA.push_back(cm->allocate("wfpoa", numberOfWeatherFileRecords));
+
     p_sunPositionTime = cm->allocate("sunpos_hour", numberOfWeatherFileRecords);
     p_weatherFileWindSpeed = cm->allocate("wspd", numberOfWeatherFileRecords);
     p_weatherFileAmbientTemp = cm->allocate("tdry", numberOfWeatherFileRecords);

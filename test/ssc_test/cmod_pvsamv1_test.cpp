@@ -210,7 +210,12 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentLifetime) {
     double timeindex[1];
     for (int i = 0; i < 1; i++)
         timeindex[i] = 100;
-    ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex, 1);
+
+    ssc_data_set_number(data, "adjust_constant", 0.0);
+    ssc_data_set_number(data, "adjust_en_timeindex", 1.0);
+    ssc_data_set_array(data, "adjust_timeindex", timeindex, 1);
+
+
     pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
     ssc_number_t annual_energy;
     ssc_data_get_number(data, "annual_energy", &annual_energy);
@@ -220,7 +225,10 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentLifetime) {
     double timeindex_annual[2];
     for (int i = 0; i < 2; i++)
         timeindex_annual[i] = i*100;
-    ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_annual, 2);
+
+    ssc_data_set_array(data, "adjust_timeindex", timeindex_annual, 2);
+
+
     pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
     ssc_data_get_number(data, "annual_energy", &annual_energy);
     EXPECT_NEAR(annual_energy, 8833.8, m_error_tolerance_hi);
@@ -235,7 +243,9 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentLifetime) {
             timeindex_monthly[i] = 100.0;
         else
             timeindex_monthly[i] = 0.0;
-    ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_monthly, 24);
+    ssc_data_set_array(data, "adjust_timeindex", timeindex_monthly, 24);
+
+
     pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
     ssc_data_get_number(data, "annual_energy", &annual_energy);
     EXPECT_NEAR(annual_energy, 8833.8, m_error_tolerance_hi);
@@ -250,7 +260,9 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentLifetime) {
         else
             timeindex_weekly[i] = 0.0;
 
-    ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_weekly, 104); //52 Weeks * 2
+    ssc_data_set_array(data, "adjust_timeindex", timeindex_weekly, 104);
+
+
     pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
     ssc_data_get_number(data, "annual_energy", &annual_energy);
     EXPECT_NEAR(annual_energy, 8833.8, m_error_tolerance_hi);
@@ -264,7 +276,9 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentLifetime) {
             timeindex_daily[i] = 100;
         else
             timeindex_daily[i] = 0.0;
-    ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_daily, 730); //365days * 2
+    ssc_data_set_array(data, "adjust_timeindex", timeindex_daily, 730);
+
+
     pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
     ssc_data_get_number(data, "annual_energy", &annual_energy);
     EXPECT_NEAR(annual_energy, 8833.8, m_error_tolerance_hi);
@@ -278,7 +292,8 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentLifetime) {
             timeindex_hourly[i] = 100;
         else
             timeindex_hourly[i] = 0.0;
-    ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_hourly, 17520); //365days * 2
+    ssc_data_set_array(data, "adjust_timeindex", timeindex_hourly, 17520);
+
     pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
     ssc_data_get_number(data, "annual_energy", &annual_energy);
     EXPECT_NEAR(annual_energy, 8833.8, m_error_tolerance_hi);
@@ -292,12 +307,14 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentLifetime) {
             timeindex_subhourly[i] = 100;
         else
             timeindex_subhourly[i] = 0.0;
-    ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_subhourly, 35040); //365days * 2 steps per hour * 2 yr
+    ssc_data_set_array(data, "adjust_timeindex", timeindex_subhourly, 35040);
+
     pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
     ssc_data_get_number(data, "annual_energy", &annual_energy);
     EXPECT_NEAR(annual_energy, 8833.8, m_error_tolerance_hi);
     ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
     EXPECT_NEAR(kwh_per_kw, 1883, m_error_tolerance_hi) << "Energy yield"; // Same as 1 year because year 2 has 0 production
+
 }
 
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentNonLifetime) {
@@ -308,7 +325,12 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentNonLifetime) {
     double timeindex[1];
     for (int i = 0; i < 1; i++)
         timeindex[i] = 100;
-    ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex, 1);
+
+    ssc_data_set_number(data, "adjust_constant", 0.0);
+    ssc_data_set_number(data, "adjust_en_timeindex", 1.0);
+    ssc_data_set_array(data, "adjust_timeindex", timeindex, 1);
+
+
     int pvsam_errors = run_module(data, "pvsamv1");
     ssc_number_t annual_energy;
     ssc_data_get_number(data, "annual_energy", &annual_energy);
@@ -318,7 +340,9 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentNonLifetime) {
     double timeindex_annual[1];
     for (int i = 0; i < 1; i++)
         timeindex_annual[i] = 100;
-    ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_annual, 1);
+    ssc_data_set_array(data, "adjust_timeindex", timeindex_annual, 1);
+
+
     pvsam_errors = run_module(data, "pvsamv1");
     ssc_data_get_number(data, "annual_energy", &annual_energy);
     EXPECT_NEAR(annual_energy, 0, m_error_tolerance_hi);
@@ -333,7 +357,9 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentNonLifetime) {
             timeindex_monthly[i] = 100.0;
         else
             timeindex_monthly[i] = 0.0;
-    ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_monthly, 12);
+    ssc_data_set_array(data, "adjust_timeindex", timeindex_monthly, 12);
+
+
     pvsam_errors = run_module(data, "pvsamv1");
     ssc_data_get_number(data, "annual_energy", &annual_energy);
     EXPECT_NEAR(annual_energy, 4532.1, m_error_tolerance_hi);
@@ -348,7 +374,8 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentNonLifetime) {
         else
             timeindex_weekly[i] = 0.0;
 
-    ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_weekly, 52); //52 Weeks * 2
+    ssc_data_set_array(data, "adjust_timeindex", timeindex_weekly, 52);
+
     pvsam_errors = run_module(data, "pvsamv1");
     ssc_data_get_number(data, "annual_energy", &annual_energy);
     EXPECT_NEAR(annual_energy, 4560.7, m_error_tolerance_hi);
@@ -362,12 +389,13 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentNonLifetime) {
             timeindex_daily[i] = 100;
         else
             timeindex_daily[i] = 0.0;
-    ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_daily, 365); //365days * 2
+    ssc_data_set_array(data, "adjust_timeindex", timeindex_daily, 365);
+
     pvsam_errors = run_module(data, "pvsamv1");
     ssc_data_get_number(data, "annual_energy", &annual_energy);
-    EXPECT_NEAR(annual_energy, 8833.8, m_error_tolerance_hi);
+    EXPECT_NEAR(annual_energy, 4503.2, m_error_tolerance_hi);
     ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
-    EXPECT_NEAR(kwh_per_kw, 1883, m_error_tolerance_hi) << "Energy yield"; // Same as 1 year because year 2 has 0 production
+    EXPECT_NEAR(kwh_per_kw, 959.6, m_error_tolerance_hi) << "Energy yield"; // Same as 1 year because year 2 has 0 production
 
     //Hourly
     double timeindex_hourly[8760];
@@ -376,7 +404,8 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentNonLifetime) {
             timeindex_hourly[i] = 100;
         else
             timeindex_hourly[i] = 0.0;
-    ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_hourly, 8760); //365days * 2
+    ssc_data_set_array(data, "adjust_timeindex", timeindex_hourly, 8760);
+
     pvsam_errors = run_module(data, "pvsamv1");
     ssc_data_get_number(data, "annual_energy", &annual_energy);
     EXPECT_NEAR(annual_energy, 5293.7, m_error_tolerance_hi);
@@ -390,7 +419,8 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentNonLifetime) {
             timeindex_subhourly[i] = 100;
         else
             timeindex_subhourly[i] = 0.0;
-    ssc_data_set_array(data, "adjust:timeindex", (ssc_number_t*)timeindex_subhourly, 17520); //365days * 2 steps per hour * 2 yr
+    ssc_data_set_array(data, "adjust_timeindex", timeindex_subhourly, 17520);
+
     pvsam_errors = run_module(data, "pvsamv1");
     ssc_data_get_number(data, "annual_energy", &annual_energy);
     EXPECT_NEAR(annual_energy, 8833.8, m_error_tolerance_hi);
@@ -571,7 +601,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelSystemDesign)
     pairs["inverter_count"] = 22;
     pairs["subarray1_track_mode"] = 0;
 
-    std::vector<double> annual_energy_expected = { 185647, 243264, 259017, 217887, 195100 };
+    std::vector<double> annual_energy_expected = { 185649, 243262, 259014, 217887, 195101 };
 
     for (int tracking_option = 0; tracking_option != 5; tracking_option++)
     {
@@ -597,7 +627,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelSystemDesign)
     {
         ssc_number_t annual_energy;
         ssc_data_get_number(data, "annual_energy", &annual_energy);
-        EXPECT_NEAR(annual_energy, 238077, m_error_tolerance_hi) << "Annual energy.";
+        EXPECT_NEAR(annual_energy, 238076, m_error_tolerance_hi) << "Annual energy.";
     }
 
     // Test multiple sub-arrays with different tracking, tilt, azimuth, gcr, tracker rotation limit
@@ -631,12 +661,12 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelSystemDesign)
     std::vector<double> subarray2_track_mode = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     std::vector<double> subarray3_track_mode = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 0, 0, 0, 0, 0 };
     std::vector<double> subarray4_track_mode = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4 };
-    annual_energy_expected = { 170108, 178814, 185647, 168989, 178321, 185647, 174579, 180782, 185647, 174579, 180782,
-                                185647, 185647, 185638, 185647, 185647, 185647, 185647, 185647, 185647, 185647, 185647,
-                                185647, 185647, 185647, 185647, 179908, 185310, 165057, 179495, 185283, 163575, 181557,
-                                185413, 170978, 181557, 185413, 170978, 185647, 185647, 185647, 185647, 185647, 200729,
-                                207043, 194883, 188414, 185647, 203396, 208568, 195543, 188610, 185647, 197484, 200940,
-                                192246, 187626, 185647, 197484, 200940, 192246, 187626
+    annual_energy_expected = { 170111, 178818, 185649, 168992, 178325, 185649, 174582, 180785, 185649, 174582, 180785,
+                                185649, 185649, 185641, 185649, 185649, 185649, 185649, 185649, 185649, 185649, 185649,
+                                185649, 185649, 185649, 185649, 179910, 185311, 165057, 179497, 185285, 163576, 181560,
+                                185415, 170979, 181560, 185415, 170979, 185649, 185649, 185649, 185649, 185649, 200730,
+                                207044, 194885, 188416, 185649, 203396, 208568, 195544, 188613, 185649, 197485, 200942,
+                                192248, 187628, 185649, 197486, 200942, 192248, 187628
     };
 
     for (size_t i = 0; i != annual_energy_expected.size(); i++)
@@ -722,10 +752,16 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelShading)
     // 1. Add 3D Shading
     pairs["subarray1_azimuth"] = 90;
     pairs["subarray2_azimuth"] = 270;
-    set_matrix(data, "subarray1_shading:timestep", subarray1_shading, 8760, 2);
-    set_matrix(data, "subarray2_shading:timestep", subarray2_shading, 8760, 2);
-    pairs["subarray1_shading:diff"] = 10.010875701904297;
-    pairs["subarray2_shading:diff"] = 10.278481483459473;
+
+
+    pairs["subarray1_shading_en_timestep"] = 1;
+    pairs["subarray2_shading_en_timestep"] = 1;
+    pairs["subarray1_shading_en_diff"] = 1;
+    pairs["subarray2_shading_en_diff"] = 1;
+    set_matrix(data, "subarray1_shading_timestep", subarray1_shading, 8760, 2);
+    set_matrix(data, "subarray2_shading_timestep", subarray2_shading, 8760, 2);
+    pairs["subarray1_shading_diff"] = 10.010875701904297;
+    pairs["subarray2_shading_diff"] = 10.278481483459473;
 
     pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
     EXPECT_FALSE(pvsam_errors);
@@ -800,9 +836,16 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelLosses)
 
     // 2. Modify availability losses
     ssc_number_t p_adjust[3] = { 5268, 5436, 50 };
-    ssc_data_set_matrix(data, "adjust:periods", p_adjust, 1, 3);
+    ssc_data_set_number(data, "adjust_constant", 0.0);
+    ssc_data_set_number(data, "adjust_en_periods", 1.0);
+    ssc_data_set_matrix(data, "adjust_periods", p_adjust, 1, 3);
+
+
+
     ssc_number_t p_dc_adjust[3] = { 5088, 5256, 100 };
-    ssc_data_set_matrix(data, "dc_adjust:periods", p_dc_adjust, 1, 3);
+    ssc_data_set_number(data, "dc_adjust_constant", 0.0);
+    ssc_data_set_number(data, "dc_adjust_en_periods", 1.0);
+    ssc_data_set_matrix(data, "dc_adjust_periods", p_dc_adjust, 1, 3);
 
     pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
     EXPECT_FALSE(pvsam_errors);
