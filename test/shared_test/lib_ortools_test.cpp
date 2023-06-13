@@ -101,7 +101,7 @@ TEST(libORToolsTest, test)
                     LOG(INFO) << "Now solving an optimization horizon of " << opt_horizon
                         << " with a rolling horizon of " << roll_horizon
                         << std::endl;
-                    std::string res_file_name = root + res_dir
+                    std::string res_file_name = input_dir + res_dir
                         + std::to_string(opt_horizon) + "w_" + std::to_string(roll_horizon) + "r_" + results_file;
                     run.time = ptes_chp.rollingHorizonoptimize(opt_horizon, roll_horizon, res_file_name);
                     run.opt_horizon = opt_horizon;
@@ -124,7 +124,7 @@ TEST(libORToolsTest, test)
     }
 
     std::ofstream outputfile;
-    outputfile.open(root + res_dir + "times.txt", std::ios_base::app);
+    outputfile.open(input_dir + res_dir + "times.txt", std::ios_base::app);
     std::string var_header = "Opt. Horizon, Roll Horizon, Time (sec)";
     outputfile << var_header << std::endl;
     for (int i = 0; i < times.size(); i++) {
