@@ -317,9 +317,6 @@ private:
     double m_E_dot_HR_hot_fullts;			            // [MWt] SYSTEM hot header internal energy change
     double m_q_dot_htf_to_sink_fullts;		            // [MWt] SYSTEM thermal power to sink (or artificially added to system in recirculation...)
     double m_q_dot_freeze_protection;		            // [MWt] SYSTEM thermal freeze protection
-
-    
-
     
 
     
@@ -526,13 +523,15 @@ public:
     std::vector<double> m_T_hdr_dsn;                // [C]    Temperature entering header sections at design
     std::vector<double> m_P_hdr_dsn;                // [bar]  Gauge pessure in header sections at design
     std::vector<double> m_T_hdr;                    // [K]    Temperature entering header sections
+    std::vector<double> m_P_hdr;                    //[Pa]   Gauge pessure in header sections                 
                                                        
-                                                       
-    std::vector<double> m_DP_loop;                  // [bar]  Pressure drop in loop sections
     std::vector<double> m_T_loop_dsn;               // [C]    Temperature entering loop sections at design
-    std::vector<double> m_P_loop_dsn;               // [bar]  Gauge pessure in loop sections at design
+    std::vector<double> m_P_loop_dsn;               // [bar]  Gauge pressure in loop sections at design
     std::vector<double> m_T_loop;                   // [K]    Temperature entering loop sections
 
+    // Removed (polynomial model does not have pressure across individual receivers)
+    //std::vector<double> m_DP_loop;                  // [bar]  Pressure drop in loop sections
+    //std::vector<double> m_P_loop;                   //[Pa]   Gauge pessure in loop sections
 
     C_csp_reported_outputs mc_reported_outputs;
 

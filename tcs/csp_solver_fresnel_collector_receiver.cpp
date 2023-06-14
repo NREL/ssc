@@ -197,6 +197,7 @@ double C_csp_fresnel_collector_receiver::field_pressure_drop(double T_db, double
             return -1;
     }
 
+
     //-------SGS to field section
     m_m_dot_htf_tot = m_dot_htf * float(m_nLoops);
     double m_dot_run_in = std::numeric_limits<double>::quiet_NaN();
@@ -242,12 +243,19 @@ double C_csp_fresnel_collector_receiver::field_pressure_drop(double T_db, double
         }
 
         //Calculate pressure drop in cold header and hot header sections.. both use similar information
-        DP_hdr_cold = DP_hdr_cold + PressureDrop(m_dot_header, T_loop_in, 1.0, m_D_hdr[i], m_HDR_rough,
+
+        // COLD header
+        double dp_hdr_cold = PressureDrop(m_dot_header, T_loop_in, 1.0, m_D_hdr[i], m_HDR_rough,
             (m_L_crossover + 4.275) * 2., 0.0, x2, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); //*m_dot_header/m_dot_header_in  //mjw/tn 1.25.12 already account for m_dot_header in function call //mjw 5.11.11 scale by mass flow passing though
-        //if(ErrorFound()) return 1
-        DP_hdr_hot = DP_hdr_hot + PressureDrop(m_dot_header, T_loop_out, 1.0, m_D_hdr[i], m_HDR_rough,
+        m_DP_hdr[i] = dp_hdr_cold;
+        DP_hdr_cold += dp_hdr_cold;
+
+        // HOT header
+        double dp_hdr_hot = PressureDrop(m_dot_header, T_loop_out, 1.0, m_D_hdr[i], m_HDR_rough,
             (m_L_crossover + 4.275) * 2., x2, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0); //*m_dot_header/m_dot_header_in  //mjw 5.11.11
-        //if(ErrorFound()) return 1
+        m_DP_hdr[2 * m_nhdrsec - i - 1] = dp_hdr_hot;
+        DP_hdr_hot += dp_hdr_hot;
+        
         //Siphon off header mass flow rate at each loop.  Multiply by 2 because there are 2 loops per hdr section
         m_dot_header = max(m_dot_header - 2. * m_dot_htf, 0.0);
 
@@ -266,12 +274,13 @@ double C_csp_fresnel_collector_receiver::field_pressure_drop(double T_db, double
         if (i == m_nrunsec) { m_P_rnr[i] -= (DP_hdr_cold + DP_loop_tot + DP_IOCOP + DP_hdr_hot); }
     }
     
-    //m_P_hdr[0] = m_P_rnr[m_nrunsec - 1] - m_DP_rnr[m_nrunsec - 1];    // report pressures for farthest subfield
-    //for (int i = 1; i < 2 * m_nhdrsec; i++) {
-    //    m_P_hdr[i] = m_P_hdr[i - 1] - m_DP_hdr[i - 1];
-    //    if (i == m_nhdrsec) { m_P_hdr[i] -= (DP_loop_tot + DP_IOCOP); }
-    //}
-    //
+    m_P_hdr[0] = m_P_rnr[m_nrunsec - 1] - m_DP_rnr[m_nrunsec - 1];    // report pressures for farthest subfield
+    for (int i = 1; i < 2 * m_nhdrsec; i++) {
+        m_P_hdr[i] = m_P_hdr[i - 1] - m_DP_hdr[i - 1];
+        if (i == m_nhdrsec) { m_P_hdr[i] -= (DP_loop_tot + DP_IOCOP); }
+    }
+
+    // Polynomial does not have this information
     //m_P_loop[0] = m_P_hdr[m_nhdrsec - 1] - m_DP_hdr[m_nhdrsec - 1];   // report pressures for farthest loop
     //for (int i = 1; i < m_nMod; i++) {
     //    m_P_loop[i] = m_P_loop[i - 1] - m_DP_loop[i - 1];
@@ -341,7 +350,6 @@ void C_csp_fresnel_collector_receiver::set_output_value()
 
     mc_reported_outputs.value(E_W_DOT_SCA_TRACK, m_W_dot_sca_tracking);		//[MWe]
     mc_reported_outputs.value(E_W_DOT_PUMP, m_W_dot_pump);					//[MWe]
-
 
     // Fresnel
     //mc_reported_outputs.value(E_THETA_L, m_theta_L * r2d);
@@ -657,6 +665,8 @@ C_csp_fresnel_collector_receiver::E_loop_energy_balance_exit C_csp_fresnel_colle
 
         // Now calculate an energy balance using the timestep-average Bulk Temperature
         // ** THIS IS JUST A TEST: can comment out if necessary **
+        //
+        // REMOVED because polynomial heat loss model does not have necessary info
         //E_sca[i] = (m_A_cs[0] * m_L_mod * rho_htf_i * c_htf_i + m_L_mod * m_mc_bal_sca) * (m_T_htf_out_t_end[i] - m_T_htf_out_t_end_last[i]) * 1.E-6;	//[MJ] SCA basis
         //E_sca_htf[i] = m_dot_htf_loop * c_htf_i * (m_T_htf_out_t_int[i] - m_T_htf_in_t_int[i]) * sim_info.ms_ts.m_step / 1.E6;
         //E_sca_abs[i] = m_q_abs_SCAtot[i] * sim_info.ms_ts.m_step / 1.E6;
@@ -677,6 +687,9 @@ C_csp_fresnel_collector_receiver::E_loop_energy_balance_exit C_csp_fresnel_colle
             //Calculate inlet temperature of the next SCA
             m_T_htf_in_t_int[i + 1] = m_T_htf_out_t_int[i] - m_Pipe_hl_coef * m_D_abs_out[0] * CSP::pi * L_int * (m_T_htf_out_t_int[i] - T_db)
                                       / (m_dot_htf_loop * c_htf_i);
+
+            q_dot_loss_xover[i] = m_Pipe_hl_coef * m_D_abs_out[0] * CSP::pi * L_int * (m_T_htf_out_t_int[i] - T_db);
+
             //Add the internal energy of the crossover piping
             //TB Seems to be += (V + m) * dTemp?
             //m_E_int_loop[i] = m_E_int_loop[i] + L_int * (pow(m_D_abs_out[0], 2) / 4. * pi + m_mc_bal_sca / c_htf_i) * (m_T_htf_out_t_int[i] - 298.150); 
@@ -2138,11 +2151,17 @@ bool C_csp_fresnel_collector_receiver::init_fieldgeom()
     m_L_runner.resize(m_nrunsec);
     m_D_hdr.resize(m_nhdrsec);
     m_P_rnr.resize(2 * m_nrunsec);
+    m_P_hdr.resize(2 * m_nhdrsec);
     m_P_rnr_dsn = m_P_rnr;
     m_DP_rnr.resize(2 * m_nrunsec);
     m_T_rnr_dsn = m_T_rnr;
     m_T_hdr_dsn = m_T_hdr;
+    m_DP_hdr.resize(2 * m_nhdrsec);
     m_T_loop_dsn = m_T_loop;
+
+    // Removed (polynomial model does not have pressure across individual receivers)
+    //m_DP_loop.resize(2 * m_nMod + 3);
+    //m_P_loop.resize(2 * m_nMod + 3);
 
     header_design(m_nhdrsec, m_nfsec, m_nrunsec, rho_ave, m_V_hdr_max, m_V_hdr_min, m_m_dot_design, m_D_hdr, m_D_runner, &m_piping_summary);
     mc_csp_messages.add_message(C_csp_messages::NOTICE, m_piping_summary);
