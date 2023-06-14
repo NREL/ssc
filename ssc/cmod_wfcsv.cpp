@@ -134,4 +134,4 @@ public:
 	}
 };
 
-DEFINE_MODULE_ENTRY( wfcsvconv, "Converter for TMY2, TMY3, INTL, EPW, SMW weather files to standard CSV format", 1 )
+DEFINE_MODULE_ENTRY( wfcsvconv, "Converter for TMY2, TMY3, INTL, EPW, SMW weather files with solar resource data to SAM CSV format", 1 )
