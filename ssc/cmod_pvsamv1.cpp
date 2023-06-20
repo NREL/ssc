@@ -581,6 +581,11 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_INPUT, SSC_ARRAY,    "crit_load_escalation",                 "Annual critical load escalation",                     "%/year", "",                                                                                                                                                                                      "Load",                                               "?=0",                                "",                    "" },
         // NOTE:  other battery storage model inputs and outputs are defined in batt_common.h/batt_common.cpp
 
+        // PV subhourly clipping inputs
+        { SSC_INPUT, SSC_NUMBER,   "en_subhourly_clipping",                              "Enable subhourly clipping",                        "0/1",    "",                                                                                                                                                                                      "PV Losses",                                      "?=0",                                "INTEGER,MIN=0,MAX=1", "" },
+        { SSC_INPUT, SSC_MATRIX,   "subhourly_clipping_matrix",                   "PV Subhourly clipping correction matrix",             "",    "",                     "PV Losses",                      "en_subhourly_clipping=1",                    "",                               "" },
+
+
     // outputs
 
     /* environmental conditions */
@@ -2581,6 +2586,16 @@ void cm_pvsamv1::exec()
                 acpwr_gross = sharedInverter->powerAC_kW;
             }
 
+            if (as_boolean("en_subhourly_clipping")) {
+                //Calculate DNI clearness index (time step basis)
+
+                //Calculate Clipping Potential ((P_dc,dryclean - P_ac,0) / P_ac,0) (time step basis)
+
+                //Lookup bias error in matrix (unitless) [CP, DNI]
+
+            }
+
+
             ac_wiringloss = std::abs(acpwr_gross) * PVSystem->acLossPercent * 0.01;
 
             // accumulate first year annual energy
@@ -2831,6 +2846,7 @@ void cm_pvsamv1::exec()
             if (iyear == 0) {
                 annual_energy += (ssc_number_t)(PVSystem->p_systemACPower[idx] * ts_hour);
 
+                
             }
         }
         wdprov->rewind();
