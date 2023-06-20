@@ -37,8 +37,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static var_info _cm_vtab_hybrid[] = {
 /*   VARTYPE           DATATYPE         NAME                           LABEL                                UNITS     META                      GROUP                      REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,         SSC_TABLE,      "input",               "input_table input for one technology",             "","","",      "*",        "",      "" },
-    { SSC_OUTPUT,        SSC_TABLE,      "output",               "input_table output for one technology",           "","","",      "*",        "",      "" },
+	{ SSC_INPUT,         SSC_TABLE,      "input",               "input_table for multiple technologies and one financial market",             "","","",      "*",        "",      "" },
+    { SSC_OUTPUT,        SSC_TABLE,      "output",               "output_table for multiple technologies and one financial market",           "","","",      "*",        "",      "" },
 
 
 var_info_invalid };
@@ -51,104 +51,237 @@ public:
 	{
 		add_var_info( _cm_vtab_hybrid );
 	}
+/*
+pseudocode
 
+    //set up a list of the tables that have been passed in, and error check the list
+    Declare objects: generators, battery, fuel cell, grid, utility rate, financial- all null     *does utility rate table need to be separate from financial model table? or are they one? - separate tables - utility rates can be used as inputs to dispatch models.
+    For i=0, i<number of tables, i++
+        If PV or Wind table
+            Add to list of generators
+        elseif battery
+            If batteryList == null
+                batteryList = battery
+            Else
+                error (only one battery allowed)
+        elseif fuel cell
+            If fuelcellList == null
+                fuelcellList = fuel cell
+            Else
+                error (only one fuel cell allowed)
+        elseif grid
+            if gridlist == null
+                gridlist = grid
+            else
+                error (only one grid cmod allowed)
+        elseif utility rate
+            if utilityrateList == null
+                utilityrateList = utilityrate
+            Else
+                error (only one utility rate allowed)
+        elseif allowed financial model
+            If financialList == null
+                financialList = financial
+            Else
+                error (only one financial model allowed)     *this may not be true? are there some instances where >1 financial model is run? We currently do not run more than one financial model and the hybrid configuraiton should all be combined to the financial model inputs after the generators and grid and utilityrate compute modules are called
+        else
+            error (disallowed technology or financial model, report name)
+
+    //Check that all required cmods are defined
+    //We can consider battery, fuel cell, grid, and financial models all optional for max flexibility from SDK
+    if #generators <= 1
+        error
+    if utilityrate required but not defined     *how to tell? - in starup.lk the simlist of compute modules for each hybrid configuration
+        error
+
+    //Run all instances of PV, wind cmods (this would allow >1 PV or wind location from SDK)
+    //also find minimum timestep, installed cost, and total capacity
+    minimumTimestep = quietnan
+    hybridtotalinstalledcost, hybridcapacity = 0
+    for i=0, i<#generators, i++
+        hybridtotalinstalledcost += i_totalinstalledcost
+        hybridcapacity += i_capacity
+        run pv or wind cmod with inputs
+        get timeseries gen
+        get timestep
+            if timestep < minimumTimestep
+                minimumTimestep = timestep
+        run O&M calcs with O&M costs and gen     *how can O&M costs be tagged to a particular technology? this requires breaking om calcs into a library function if they're not already - they can be post tech run in the hybrids compute module using the o and m functions.
+        run incentives calcs with incentives and gen     *how can incentives be tagged to a particular technology? this requires breaking incentive calcs into a library function if they're not already - they can be post tech run calculated using the incentives function.
+
+    //add timeseries gen from all generators
+
+    for I = 0, i<8760 * minimumTimestep, i++
+        for j=0; j<#generators; j++
+            add generation from j for the correct timestep I
+
+    //Run battery with combined gen, battery specs, and utility rate if it can charge from grid
+    run battery
+    hybridtotalinstalledcost += battery_totalinstalledcost
+
+    //Run fuel cell with battery output
+    run fuel cell
+    hybridtotalinstalledcost += fuelcell_totalinstalledcost
+
+    //Run grid compute module with fuel cell output
+    run grid
+
+    //Run utilityrate if applicable
+    run utilityrate
+    save utilityratecosts
+
+    //Run financial model - is no financial model an option?
+    for year = 0; year<analysis period, year++
+        omcosts[year] = 0
+        incentives[year] = 0
+        for I = 0; i<#generators; i++
+            omcosts[year] += j_omcosts[year] *do we want all rolled into one or separate line items
+            incentives[year] = j_incentives[year] *do we want all rolled into one or separate line items
+    run financial model (omcosts, incentives, utilityratecosts, hybridtotalinstalledcost)
+    get financial model outputs
+
+*where is depreciation handled? In the financial model using the EBITDA line item and applying the selected depreciation schedule
+
+
+exmaple configuration from startup.lk from SAM
+setconfig('PVWatts Wind Battery Hybrid', 'Single Owner' );
+setmodules( ['pvwattsv8', 'wind', 'battery', 'grid', 'utilityrate5', 'singleowner']);
+
+*/
     void exec()
     {
         auto input_table = lookup("input");
         if (input_table->type != SSC_TABLE)
             throw exec_error("hybrid", "No input input_table found.");
 
-        if (input_table->table.is_assigned("steps")) {
+        // container for output tables
+        auto outputs = ssc_data_create();
 
-            auto& vec_steps = input_table->table.lookup("steps")->vec;
+        // setup generators and battery
+        if (input_table->table.is_assigned("compute_modules")) { // list of compute modules from configuration
 
-            auto outputs = ssc_data_create();
+            auto& vec_cms = input_table->table.lookup("compute_modules")->vec;
 
-            for (size_t i = 0; i < vec_steps.size(); i++) {
+            std::vector<std::string> generators;
+            std::vector<std::string> batteries;
+            std::vector<std::string> fuelcells;
+            std::vector<std::string> financials;  // remainder of compute modules e.g.  'grid', 'utilityrate5', 'singleowner' in above example "Hybrid" VarTable from SAM
 
-                auto& current_step = input_table->table.lookup(vec_steps[i].str)->table;
+            for (size_t i = 0; i < vec_cms.size(); i++) {
+                std::string computemodulename = vec_cms[i].str;
+                if ((computemodulename == "pvwattsv8") || (computemodulename == "wind"))
+                    generators.push_back(computemodulename);
+                else if (computemodulename == "battery")
+                    batteries.push_back(computemodulename);
+                else if (computemodulename == "fuelcell")
+                    fuelcells.push_back(computemodulename);
+                else
+                    financials.push_back(computemodulename);
+            }
 
-                if (current_step.is_assigned("run")) {
-                    // e.g.  "run": ["pvwattsv8", "windpower"]
+            // Hybrid system precheck
+            if (generators.size() < 1)
+                throw exec_error("hybrid", "Less than one generator specified.");
+            if (batteries.size() > 1)
+                throw exec_error("hybrid", "Only one battery bank allowed at this time.");
+            if (fuelcells.size() > 1)
+                throw exec_error("hybrid", "Only one fuel cell allowed at this time.");
 
-                    // TODO:remove after combine working testing aggregates - vectors or single values, etc.
-                    double cumulative_annual_energy = 0, annual_energy;
+            // run all generators and collect outputs and compute outputs
+            double minimumTimestep = std::numeric_limits<double>::max();
+            double hybridCapacity = 0, hybridTotalInstalledCost = 0;
+            int len, analysisPeriod;
+            double currentTimestep;
+            for (size_t i = 0; i < generators.size(); i++) {
 
-                    auto& vec_cms = current_step.lookup("run")->vec;
-                    // loop based on input_table of input_table inputs
-                    // loop for multiple hybrid compute modules starts here
+                auto& compute_module = generators[i];
+                auto compute_module_inputs = input_table->table.lookup(compute_module);
+                if (compute_module_inputs->type != SSC_TABLE)
+                    throw exec_error("hybrid", "No input input_table found for ." + compute_module);
 
-                    for (size_t i = 0; i < vec_cms.size(); i++) {
+                hybridCapacity += compute_module_inputs->table.lookup("system_capacity")->num;
+                hybridTotalInstalledCost += compute_module_inputs->table.lookup("total_installed_cost")->num;
+                analysisPeriod = compute_module_inputs->table.lookup("analysis_period")->num;
 
-                        auto& compute_module = vec_cms[i].str;
-                        auto compute_module_inputs = input_table->table.lookup(compute_module);
-                        if (compute_module_inputs->type != SSC_TABLE)
-                            throw exec_error("hybrid", "No input input_table found for ." + compute_module);
+                auto module = ssc_module_create(compute_module.c_str());
 
-                        auto module = ssc_module_create(compute_module.c_str());
+                auto& input = compute_module_inputs->table;
+                ssc_module_exec(module, static_cast<ssc_data_t>(&input));
 
-                        auto& input = compute_module_inputs->table;
-                        ssc_module_exec(module, static_cast<ssc_data_t>(&input));
+                auto compute_module_outputs = ssc_data_create();
 
-                        auto compute_module_outputs = ssc_data_create();
-
-                        int pidx = 0;
-                        while (const ssc_info_t p_inf = ssc_module_var_info(module, pidx++))
-                        {
-                            int var_type = ssc_info_var_type(p_inf);   // SSC_INPUT, SSC_OUTPUT, SSC_INOUT
-                            if (var_type == SSC_OUTPUT) { // maybe add INOUT
-                                auto var_name = ssc_info_name(p_inf);
-                                auto type = ssc_info_data_type(p_inf);
-                                auto var_value = input.lookup(var_name);
-                                ssc_data_set_var(compute_module_outputs, var_name, var_value);
-                            }
-                        }
-
-                        ssc_data_set_table(outputs, compute_module.c_str(), compute_module_outputs);
-
-                        ssc_data_get_number(compute_module_outputs, "annual_energy", &annual_energy);
-                        cumulative_annual_energy += annual_energy;
-
-                        ssc_module_free(module);
-                        ssc_data_free(compute_module_outputs);
+                int pidx = 0;
+                while (const ssc_info_t p_inf = ssc_module_var_info(module, pidx++))  {
+                    int var_type = ssc_info_var_type(p_inf);   // SSC_INPUT, SSC_OUTPUT, SSC_INOUT
+                    if ((var_type == SSC_OUTPUT) || (var_type == SSC_INOUT)) { // maybe remove INOUT
+                        auto var_name = ssc_info_name(p_inf);
+                        auto type = ssc_info_data_type(p_inf);
+                        auto var_value = input.lookup(var_name);
+                        ssc_data_set_var(compute_module_outputs, var_name, var_value);
                     }
-                    // need to agregate some outputs potenitally here
-                    ssc_data_set_number(outputs, "cumulative_annual_energy", cumulative_annual_energy);
-
                 }
-                else if (current_step.is_assigned("add")) {
-                    // e.g.    "combine": ["pvwattsv8:annual_energy", "windpower:annual_energy"]
-                    auto& vec_ccombines = current_step.lookup("add")->vec;
+                
+                // get minimum timestep from gen vector
+                ssc_number_t *gen = ssc_data_get_array(compute_module_outputs, "gen", &len);
+                currentTimestep = (double)len / 8760;
+                if (compute_module_inputs->table.lookup("system_use_lifetime_output")->num > 0)
+                    currentTimestep /= analysisPeriod;
+                if (currentTimestep < minimumTimestep)
+                    minimumTimestep = currentTimestep;
+                // add production O and M calculations
 
-                    // determine type to combine
-                    // here implement single number
-                    // TODO - check for valid output table and types
-                    std::string out_var_name = "output";
-                    ssc_number_t sum = 0;
-                    for (size_t i = 0; i < vec_ccombines.size(); i++) {
-                        auto cm_var = util::split(vec_ccombines[i].str, ":"); // TODO check size == 2
-                        out_var_name = cm_var[1];
-                        auto cm_output_table = ssc_data_get_table(outputs, cm_var[0].c_str());
-                        ssc_number_t output_value;
-                        if (ssc_data_get_number(cm_output_table, cm_var[1].c_str(), &output_value))
-                            sum += output_value;
-                    }
-                    ssc_data_set_number(outputs, out_var_name.c_str(), sum);
+                // add calculations to compute module outputs
+
+                ssc_data_set_table(outputs, compute_module.c_str(), compute_module_outputs);
+                ssc_module_free(module);
+                ssc_data_free(compute_module_outputs);
+
+            } // end of generators
+
+            /*
+                //add timeseries gen from all generators
+
+    for I = 0, i<8760 * minimumTimestep, i++
+        for j=0; j<#generators; j++
+            add generation from j for the correct timestep I
+
+    //Run battery with combined gen, battery specs, and utility rate if it can charge from grid
+    run battery
+    hybridtotalinstalledcost += battery_totalinstalledcost
+
+    //Run fuel cell with battery output
+    run fuel cell
+    hybridtotalinstalledcost += fuelcell_totalinstalledcost
+
+    //Run grid compute module with fuel cell output
+    run grid
+
+    //Run utilityrate if applicable
+    run utilityrate
+    save utilityratecosts
+
+    //Run financial model - is no financial model an option?
+    for year = 0; year<analysis period, year++
+        omcosts[year] = 0
+        incentives[year] = 0
+        for I = 0; i<#generators; i++
+            omcosts[year] += j_omcosts[year] *do we want all rolled into one or separate line items
+            incentives[year] = j_incentives[year] *do we want all rolled into one or separate line items
+    run financial model (omcosts, incentives, utilityratecosts, hybridtotalinstalledcost)
+    get financial model outputs
+
+            */
 
 
-                }
-                else {
-                    throw exec_error("hybrid", "No valid instruction found for step " + vec_steps[i].str);
-                }
+            // add Hybrid calculations to output
 
-            } // for vec_stpes
 
             assign("output", var_data(*(static_cast<var_table*>(outputs))));
             ssc_data_free(outputs);
 
         }
         else {
-            throw exec_error("hybrid", "No steps found.");
+            throw exec_error("hybrid", "No compute modules specified.");
         }
 	}
 };
