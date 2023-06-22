@@ -150,17 +150,17 @@ setmodules( ['pvwattsv8', 'wind', 'battery', 'grid', 'utilityrate5', 'singleowne
 */
     void exec()
     {
-        auto input_table = lookup("input");
+        var_data *input_table = lookup("input");
         if (input_table->type != SSC_TABLE)
             throw exec_error("hybrid", "No input input_table found.");
 
         // container for output tables
-        auto outputs = ssc_data_create();
+        ssc_data_t outputs = ssc_data_create();
 
         // setup generators and battery
         if (input_table->table.is_assigned("compute_modules")) { // list of compute modules from configuration
 
-            auto& vec_cms = input_table->table.lookup("compute_modules")->vec;
+            std::vector<var_data>& vec_cms = input_table->table.lookup("compute_modules")->vec;
 
             std::vector<std::string> generators;
             std::vector<std::string> batteries;
@@ -188,49 +188,50 @@ setmodules( ['pvwattsv8', 'wind', 'battery', 'grid', 'utilityrate5', 'singleowne
                 throw exec_error("hybrid", "Only one fuel cell allowed at this time.");
 
             // run all generators and collect outputs and compute outputs
-            double minimumTimestep = std::numeric_limits<double>::max();
-            double hybridCapacity = 0, hybridTotalInstalledCost = 0;
+            size_t maximumTimeStepsPerHour = 1, currentTimeStepsPerHour;
+            double hybridSystemCapacity = 0, hybridTotalInstalledCost = 0;
             int len, analysisPeriod;
-            double currentTimestep;
+            std::vector<size_t> genTimestepsPerHour;
+            std::vector<ssc_number_t *> genVecs;
             for (size_t i = 0; i < generators.size(); i++) {
 
-                auto& compute_module = generators[i];
-                auto compute_module_inputs = input_table->table.lookup(compute_module);
+                std::string& compute_module = generators[i];
+                var_data *compute_module_inputs = input_table->table.lookup(compute_module);
                 if (compute_module_inputs->type != SSC_TABLE)
                     throw exec_error("hybrid", "No input input_table found for ." + compute_module);
 
-                hybridCapacity += compute_module_inputs->table.lookup("system_capacity")->num;
+                hybridSystemCapacity += compute_module_inputs->table.lookup("system_capacity")->num;
                 hybridTotalInstalledCost += compute_module_inputs->table.lookup("total_installed_cost")->num;
                 analysisPeriod = compute_module_inputs->table.lookup("analysis_period")->num;
 
-                auto module = ssc_module_create(compute_module.c_str());
+                ssc_module_t module = ssc_module_create(compute_module.c_str());
 
-                auto& input = compute_module_inputs->table;
+                var_table& input = compute_module_inputs->table;
                 ssc_module_exec(module, static_cast<ssc_data_t>(&input));
 
-                auto compute_module_outputs = ssc_data_create();
+                ssc_data_t compute_module_outputs = ssc_data_create();
 
                 int pidx = 0;
                 while (const ssc_info_t p_inf = ssc_module_var_info(module, pidx++))  {
                     int var_type = ssc_info_var_type(p_inf);   // SSC_INPUT, SSC_OUTPUT, SSC_INOUT
                     if ((var_type == SSC_OUTPUT) || (var_type == SSC_INOUT)) { // maybe remove INOUT
                         auto var_name = ssc_info_name(p_inf);
-                        auto type = ssc_info_data_type(p_inf);
                         auto var_value = input.lookup(var_name);
                         ssc_data_set_var(compute_module_outputs, var_name, var_value);
                     }
                 }
                 
                 // get minimum timestep from gen vector
-                ssc_number_t *gen = ssc_data_get_array(compute_module_outputs, "gen", &len);
-                currentTimestep = (double)len / 8760;
-                if (compute_module_inputs->table.lookup("system_use_lifetime_output")->num > 0)
-                    currentTimestep /= analysisPeriod;
-                if (currentTimestep < minimumTimestep)
-                    minimumTimestep = currentTimestep;
-                // add production O and M calculations
-
-                // add calculations to compute module outputs
+                genVecs.push_back(ssc_data_get_array(compute_module_outputs, "gen", &len));
+                currentTimeStepsPerHour = (size_t)len / 8760;
+                if (compute_module_inputs->table.lookup("system_use_lifetime_output")->num > 0) // below - assuning single year only
+                    currentTimeStepsPerHour /= analysisPeriod;
+                if (currentTimeStepsPerHour > maximumTimeStepsPerHour)
+                    maximumTimeStepsPerHour = currentTimeStepsPerHour;
+                genTimestepsPerHour.push_back(currentTimeStepsPerHour);
+                // add production O and M calculations - done below before financial calculations
+                
+                // add calculations to compute module outputs - done above for regular ompute module outputs
 
                 ssc_data_set_table(outputs, compute_module.c_str(), compute_module_outputs);
                 ssc_module_free(module);
@@ -244,11 +245,61 @@ setmodules( ['pvwattsv8', 'wind', 'battery', 'grid', 'utilityrate5', 'singleowne
     for I = 0, i<8760 * minimumTimestep, i++
         for j=0; j<#generators; j++
             add generation from j for the correct timestep I
+*/
+            size_t genLength = 8760*maximumTimeStepsPerHour;// assumes single year gen
+            ssc_number_t *pGen = allocate("gen", genLength);
 
+            for (size_t i=0; i<genLength; i++) {
+                pGen[i] = 0.0;
+                for (size_t j=0; j<genVecs.size(); j++) {
+                    pGen[i] += genVecs[j][i/(genLength/genTimestepsPerHour[j])];
+                }
+            }
+            
+            
+            /*
     //Run battery with combined gen, battery specs, and utility rate if it can charge from grid
     run battery
     hybridtotalinstalledcost += battery_totalinstalledcost
+*/
+            if (batteries.size()>0) { // run single battery (refator running code below
+                std::string& compute_module = batteries[0];
+                var_data *compute_module_inputs = input_table->table.lookup(compute_module);
+                if (compute_module_inputs->type != SSC_TABLE)
+                    throw exec_error("hybrid", "No input input_table found for ." + compute_module);
 
+                hybridSystemCapacity += compute_module_inputs->table.lookup("system_capacity")->num;
+                hybridTotalInstalledCost += compute_module_inputs->table.lookup("total_installed_cost")->num;
+  
+                ssc_module_t module = ssc_module_create(compute_module.c_str());
+
+                var_table& input = compute_module_inputs->table;
+                ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);
+                
+                ssc_module_exec(module, static_cast<ssc_data_t>(&input));
+
+                ssc_data_t compute_module_outputs = ssc_data_create();
+
+                int pidx = 0;
+                while (const ssc_info_t p_inf = ssc_module_var_info(module, pidx++))  {
+                    int var_type = ssc_info_var_type(p_inf);   // SSC_INPUT, SSC_OUTPUT, SSC_INOUT
+                    if ((var_type == SSC_OUTPUT) || (var_type == SSC_INOUT)) { // maybe remove INOUT
+                        auto var_name = ssc_info_name(p_inf);
+                        auto var_value = input.lookup(var_name);
+                        ssc_data_set_var(compute_module_outputs, var_name, var_value);
+                    }
+                }
+                
+                // add production O and M calculations - done below before financial calculations
+                
+                // add calculations to compute module outputs - done above for regular ompute module outputs
+
+                ssc_data_set_table(outputs, compute_module.c_str(), compute_module_outputs);
+                ssc_module_free(module);
+                ssc_data_free(compute_module_outputs);
+
+            }
+            /*
     //Run fuel cell with battery output
     run fuel cell
     hybridtotalinstalledcost += fuelcell_totalinstalledcost
@@ -271,10 +322,52 @@ setmodules( ['pvwattsv8', 'wind', 'battery', 'grid', 'utilityrate5', 'singleowne
     get financial model outputs
 
             */
+            if (financials.size()>0) { // run remaining compute modules with necessary inputs
+                // TODO - note that single vartable is used to run multiple compute modules
+                // battery outputs need to be passed in
+                // setup test with modified defaults from hybrid system
+                // then update simulation.cpp to call hybrid
+                std::string& compute_module = financials[0];
+                var_data *compute_module_inputs = input_table->table.lookup(compute_module);
+                if (compute_module_inputs->type != SSC_TABLE)
+                    throw exec_error("hybrid", "No input input_table found for ." + compute_module);
+
+                hybridSystemCapacity += compute_module_inputs->table.lookup("system_capacity")->num;
+                hybridTotalInstalledCost += compute_module_inputs->table.lookup("total_installed_cost")->num;
+  
+                ssc_module_t module = ssc_module_create(compute_module.c_str());
+
+                var_table& input = compute_module_inputs->table;
+                ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);
+                
+                ssc_module_exec(module, static_cast<ssc_data_t>(&input));
+
+                ssc_data_t compute_module_outputs = ssc_data_create();
+
+                int pidx = 0;
+                while (const ssc_info_t p_inf = ssc_module_var_info(module, pidx++))  {
+                    int var_type = ssc_info_var_type(p_inf);   // SSC_INPUT, SSC_OUTPUT, SSC_INOUT
+                    if ((var_type == SSC_OUTPUT) || (var_type == SSC_INOUT)) { // maybe remove INOUT
+                        auto var_name = ssc_info_name(p_inf);
+                        auto var_value = input.lookup(var_name);
+                        ssc_data_set_var(compute_module_outputs, var_name, var_value);
+                    }
+                }
+                
+                // add production O and M calculations - done below before financial calculations
+                
+                // add calculations to compute module outputs - done above for regular ompute module outputs
+
+                ssc_data_set_table(outputs, compute_module.c_str(), compute_module_outputs);
+                ssc_module_free(module);
+                ssc_data_free(compute_module_outputs);
+
+            }
 
 
             // add Hybrid calculations to output
-
+            ssc_data_set_number(outputs, "total_installed_cost", hybridTotalInstalledCost);
+            ssc_data_set_number(outputs, "system_capacity", hybridSystemCapacity);
 
             assign("output", var_data(*(static_cast<var_table*>(outputs))));
             ssc_data_free(outputs);

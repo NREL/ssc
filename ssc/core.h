@@ -169,7 +169,7 @@ public:
 	public:
 		log_item() { }
 		log_item(int t, std::string s, float f=-1.0)
-			: type(t), text(move(s)), time(f) {  }
+        : type(t), text(std::move(s)), time(f) {  }
 
 		int type;
 
