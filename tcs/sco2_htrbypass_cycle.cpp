@@ -35,8 +35,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "CO2_properties.h"
 
-#include "nlopt.hpp"
-#include "nlopt_callbacks.h"
 
 #include "fmin.h"
 
@@ -54,17 +52,26 @@ void C_HTRBypass_Cycle::design_core(int& error_code)
     //ms_des_par.m_P_mc_out = 25000;
     //m_T_t_in = 923.149;
 
-    //DEBUG
+    
+    // DEBUG
     if (false)
     {
-        std::vector<double> bp_fracs = { 0, 0.01, 0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.99,1 };
-        for (double bp : bp_fracs)
-        {
-            m_bp_frac = bp;
+        ms_des_par.m_recomp_frac = 0;
+        m_bp_frac = 0.5;
 
-            int temp_error = 0;
-            design_core_standard(temp_error);
-        }
+        int temp_error = 0;
+        design_core_standard(temp_error);
+    }
+
+    //DEBUG solar flex
+    if (false)
+    {
+        m_bp_frac = 0.11;
+
+        int temp_error = 0;
+        design_core_standard(temp_error);
+
+        return;
     }
 
     // Check if HTF parameters were set
@@ -74,58 +81,125 @@ void C_HTRBypass_Cycle::design_core(int& error_code)
         return;
     }
 
-    C_mono_htr_bypass_BP_des BP_des_eq(this);
-    C_monotonic_eq_solver BP_des_solver(BP_des_eq);
-    double BP_out_lower = 0;
-    double BP_out_upper = 0.99;
-
-    double BP_out_guess_lower = 0;	//[K] 
-    double BP_out_guess_upper = 0.99;	//[K] 
-
-    BP_des_solver.settings(ms_des_par.m_des_tol, 1000, BP_out_lower, BP_out_upper, false);
-
-    double BP_out_solved, tol_BP_out_solved;
-    BP_out_solved = tol_BP_out_solved = std::numeric_limits<double>::quiet_NaN();
-    int iter_BP_out = -1;
-
-    int BP_out_code = BP_des_solver.solve(BP_out_guess_lower, BP_out_guess_upper, 0, BP_out_solved, tol_BP_out_solved, iter_BP_out);
-
     
 
-    // Check if Bypass Converged
-    
-    //if (BP_out_code == C_monotonic_eq_solver::CONVERGED)
-    //{
-    //    // Bypass Converged
-    //    return;
-    //}
-    //else if (BP_out_code == C_monotonic_eq_solver::SLOPE_NEG_NO_NEG_ERR)
-    //{
-    //    // Target Outlet temperature not possible (too low), bypass is fully open
-    //    return;
-    //}
-    // else if (BP_out_code == C_monotonic_eq_solver::SLOPE_NEG_NO_POS_ERR)
-    //{
-    //    // Target Outlet temperature not possible (too high), bypass is fully closed
-    //    return;
-    //}
-    // else
-    //{
-    //    error_code = 35;
-    //    return;
-    //}
-
-
-
-
-
-
-    if (BP_out_code == C_monotonic_eq_solver::NO_SOLUTION)
+    //DEBUG
+    if (false)
     {
-        // Did not converge
-        error_code = 35;
-        return;
+        int temp_error = 0;
+
+        std::vector<double> bp_frac_vec;
+        std::vector<double> calc_outlet_temp;
+        std::vector<double> outlet_err;
+        std::vector<double> eff_vec;
+        std::vector<double> obj_vec;
+        std::vector<double> sig_vec;
+        std::vector<double> log_vec;
+
+        for (double bp = 0.001; bp < 0.99; bp += 0.01)
+        {
+            m_objective_metric_bypass_frac_opt = -1000000000000000000;
+
+            design_bypass_frac_return_objective_metric({ bp });
+
+            double err = m_T_HTF_BP_outlet_calc - m_T_HTF_BP_outlet_target;
+            double span = m_T_HTF_PHX_inlet - m_T_HTF_BP_outlet_target;
+            double percent_err = std::abs(err) / span;
+            double sig = sigmoid(percent_err);
+            double log = logit(percent_err);
+
+            bp_frac_vec.push_back(bp);
+            calc_outlet_temp.push_back(m_T_HTF_BP_outlet_calc);
+            outlet_err.push_back(m_T_HTF_BP_outlet_calc - m_T_HTF_BP_outlet_target);
+            eff_vec.push_back(m_eta_thermal_calc_last);
+            obj_vec.push_back(m_objective_metric_bypass_frac_opt);
+            sig_vec.push_back(sig);
+            log_vec.push_back(log);
+
+        }
+
+        int x = 0;
+
     }
+
+
+    // Try Full Optization (not monotonic)
+    if (true)
+    {
+        m_objective_metric_bypass_frac_opt = -10000000;
+
+        // Set up instance of nlopt class and set optimization parameters
+        nlopt::opt		opt_des_cycle(nlopt::GN_DIRECT, 1);
+
+        std::vector<double> lb = { 0 };
+        std::vector<double> ub = { 0.99 };
+
+        opt_des_cycle.set_lower_bounds(lb);
+        opt_des_cycle.set_upper_bounds(ub);
+        opt_des_cycle.set_initial_step(0.01);
+        opt_des_cycle.set_xtol_rel(0.1);
+
+        // Set max objective function
+        std::vector<double> x;
+        x.push_back(0.1);
+        opt_des_cycle.set_max_objective(nlopt_cb_opt_bypass_frac_des, this);		// Calls wrapper/callback that calls 'design_point_eta', which optimizes design point eta through repeated calls to 'design'
+        double max_f = std::numeric_limits<double>::quiet_NaN();
+        nlopt::result   result_des_cycle = opt_des_cycle.optimize(x, max_f);
+
+        
+
+        m_bp_frac = x[0];
+        design_core_standard(error_code);
+
+        std::string s = make_result_csv_string();
+
+        int yx = 0;
+    }
+
+    // Monotonic Solver
+    if(false)
+    {
+        C_mono_htr_bypass_BP_des BP_des_eq(this);
+        C_monotonic_eq_solver BP_des_solver(BP_des_eq);
+        double BP_out_lower = 0;
+        double BP_out_upper = 0.99;
+
+        double BP_out_guess_lower = 0;	//[K] 
+        double BP_out_guess_upper = 0.99;	//[K] 
+
+        BP_des_solver.settings(ms_des_par.m_des_tol, 1000, BP_out_lower, BP_out_upper, false);
+
+        double BP_out_solved, tol_BP_out_solved;
+        BP_out_solved = tol_BP_out_solved = std::numeric_limits<double>::quiet_NaN();
+        int iter_BP_out = -1;
+
+        int BP_out_code = BP_des_solver.solve(BP_out_guess_lower, BP_out_guess_upper, 0, BP_out_solved, tol_BP_out_solved, iter_BP_out);
+
+        if (BP_out_code == C_monotonic_eq_solver::NO_SOLUTION)
+        {
+            // Did not converge
+            error_code = 35;
+            return;
+        }
+
+        // Modify objective function to account for hitting the target HTF outlet temperature
+        {
+            double target_bp_out = m_T_HTF_BP_outlet_target;
+            double calc_bp_out = m_T_HTF_BP_outlet_calc;
+
+            double temp_err = std::abs(calc_bp_out - target_bp_out);
+            double temp_span = m_T_HTF_PHX_inlet - m_T_HTF_BP_outlet_target;
+            double percent_err = temp_err / temp_span;
+
+            double penalty = 3 * std::pow(percent_err, 2.0);
+
+            m_objective_metric_last -= penalty;
+            int x = 0;
+
+        }
+    }
+
+    
 }
 
 void C_HTRBypass_Cycle::design_core_standard(int& error_code)
@@ -138,6 +212,66 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
     }
 
     CO2_state co2_props;
+
+
+    // DEBUG
+    {
+        // BP
+        double Q_dot_BP;
+        {
+            int prop_error_code = CO2_TP(194.3+273.15, 24.875 * 1e3, &co2_props);
+            double h1 = co2_props.enth;
+
+            CO2_TP(471 + 273.15, 24.775 * 1e3, &co2_props);
+            double h2 = co2_props.enth;
+
+            double mdot = 26.3; // kg/s
+
+            Q_dot_BP = mdot * (h2 - h1);
+        }
+        
+        // PHX
+        double Q_dot_PHX;
+        {
+            int prop_error_code = CO2_TP(470.6 + 273.15, 24.75 * 1e3, &co2_props);
+            double h1 = co2_props.enth;
+
+            CO2_TP(620 + 273.15, 24.55 * 1e3, &co2_props);
+            double h2 = co2_props.enth;
+
+            double mdot = 239; // kg/s
+
+            Q_dot_PHX = mdot * (h2 - h1);
+        }
+
+
+        // HTR
+        double Q_dot_HTR_LP;
+        double Q_dot_HTR_HP;
+        {
+            int prop_error_code = CO2_TP(481.6 + 273.15, 8.1 * 1e3, &co2_props);
+            double h1 = co2_props.enth;
+
+            CO2_TP(240.4 + 273.15, 8.06 * 1e3, &co2_props);
+            double h2 = co2_props.enth;
+
+            double mdot = 239; // kg/s
+            Q_dot_HTR_LP = mdot * (h2 - h1);
+
+
+            CO2_TP(194.4 + 273.15, 24.875 * 1e3, &co2_props);
+            double h3 = co2_props.enth;
+
+            CO2_TP(470.6 + 273.15, 24.75 * 1e3, &co2_props);
+            double h4 = co2_props.enth;
+
+            double mdot2 = 212.7; // kg/s
+            Q_dot_HTR_HP = mdot2 * (h4 - h3);
+        }
+
+
+        int x = 0;
+    }
 
     // Initialize Recuperators
     {
@@ -342,7 +476,7 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
         C_mono_htr_bypass_HTR_des HTR_des_eq(this);
         C_monotonic_eq_solver HTR_des_solver(HTR_des_eq);
 
-        if (ms_des_par.m_recomp_frac == 0.0)
+        /*if (ms_des_par.m_recomp_frac == 0.0)
         {
             double y_T_diff = std::numeric_limits<double>::quiet_NaN();
             int no_HTR_out_code = HTR_des_solver.test_member_function(m_temp_last[TURB_OUT], &y_T_diff);
@@ -352,8 +486,8 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
                 error_code = 35;
                 return;
             }
-        }
-        else
+        }*/
+        //else
         {
             double T_HTR_LP_out_lower = m_temp_last[MC_OUT];		//[K] Coldest possible temperature
             double T_HTR_LP_out_upper = m_temp_last[TURB_OUT];		//[K] Hottest possible temperature
@@ -747,6 +881,68 @@ int C_HTRBypass_Cycle::solve_LTR(double T_LTR_LP_OUT_guess, double* diff_T_LTR_L
     return 0;
 }
 
+std::string C_HTRBypass_Cycle::make_result_csv_string()
+{
+    std::string value_string;
+    std::vector<double> value_vec;
+
+    value_vec.push_back(this->m_T_HTF_BP_outlet_target);
+    value_vec.push_back(this->m_T_HTF_BP_outlet_calc);
+    value_vec.push_back(this->m_T_HTF_PHX_inlet - this->m_T_HTF_BP_outlet_calc);
+    value_vec.push_back(this->m_m_dot_HTF);
+    value_vec.push_back(this->m_bp_frac);
+    value_vec.push_back(this->ms_des_par.m_recomp_frac);
+    value_vec.push_back(this->m_eta_thermal_calc_last);
+    value_vec.push_back(this->m_pres_last[MC_IN]);
+    value_vec.push_back(this->m_pres_last[MC_OUT]);
+    value_vec.push_back(this->ms_des_par.m_LTR_UA);
+    value_vec.push_back(this->ms_des_par.m_HTR_UA);
+    value_vec.push_back(this->m_T_HTF_PHX_out);
+    value_vec.push_back(this->m_Q_dot_total);
+    value_vec.push_back(this->m_Q_dot_BP);
+    value_vec.push_back(this->m_Q_dot_PHX);
+    value_vec.push_back(this->m_m_dot_t);
+    value_vec.push_back(this->m_m_dot_bp);
+    value_vec.push_back(this->m_m_dot_htr_hp);
+    value_vec.push_back(this->m_m_dot_rc);
+    value_vec.push_back(this->m_m_dot_mc);
+    value_vec.push_back(this->m_objective_metric_opt);
+
+    // Write to string
+    for (double val : value_vec)
+    {
+        value_string.append(std::to_string(val));
+        value_string.append("\n");
+    }
+
+
+    // Write Temperatures
+    value_string.append("\n");
+    value_string.append("\n");
+    for (double val : this->m_temp_last)
+    {
+        value_string.append(std::to_string(val));
+        value_string.append("\n");
+    }
+
+    // Write Pressures
+    value_string.append("\n");
+    value_string.append("\n");
+    for (double val : this->m_pres_last)
+    {
+        value_string.append(std::to_string(val));
+        value_string.append("\n");
+    }
+
+
+
+    
+    
+
+
+    return value_string;
+}
+
 
 
 int C_HTRBypass_Cycle::C_mono_htr_bypass_LTR_des::operator()(double T_LTR_LP_OUT_guess /*K*/, double* diff_T_LTR_LP_out)
@@ -859,20 +1055,23 @@ void C_HTRBypass_Cycle::opt_design_core(int& error_code)
     error_code = 0;
     if (index > 0)
     {
-        // Ensure thermal efficiency is initialized to 0
-        m_objective_metric_opt = 0.0;
-
+        // Ensure thermal efficiency is initialized to negative value
+        m_objective_metric_opt = -100000000000;
+        
         // Set up instance of nlopt class and set optimization parameters
-        nlopt::opt		opt_des_cycle(nlopt::LN_SBPLX, index);
+        nlopt::opt		opt_des_cycle(nlopt::GN_CRS2_LM, index);
         opt_des_cycle.set_lower_bounds(lb);
         opt_des_cycle.set_upper_bounds(ub);
         opt_des_cycle.set_initial_step(scale);
-        opt_des_cycle.set_xtol_rel(ms_opt_des_par.m_des_opt_tol);
+        opt_des_cycle.set_xtol_rel(0.1);
 
         // Set max objective function
         opt_des_cycle.set_max_objective(nlopt_cb_opt_htr_bypass_des, this);		// Calls wrapper/callback that calls 'design_point_eta', which optimizes design point eta through repeated calls to 'design'
         double max_f = std::numeric_limits<double>::quiet_NaN();
         nlopt::result   result_des_cycle = opt_des_cycle.optimize(x, max_f);
+
+        // Check if forced stop
+        int flag = opt_des_cycle.get_force_stop();
 
         ms_des_par = ms_des_par_optimal;
 
@@ -880,6 +1079,10 @@ void C_HTRBypass_Cycle::opt_design_core(int& error_code)
 
         int io = 0;
         design_core_standard(io);
+
+        std::string val_string = make_result_csv_string();
+
+        int otu = 0;
 
         /*
         m_W_dot_net_last = m_W_dot_net_opt;
@@ -1302,7 +1505,7 @@ double C_HTRBypass_Cycle::design_cycle_return_objective_metric(const std::vector
     {
         PR_mc_local = x[index];
         if (PR_mc_local > 50.0)
-            return 0.0;
+            return -10000000000000.0;
         index++;
         P_mc_in = ms_des_par.m_P_mc_out / PR_mc_local;
     }
@@ -1364,23 +1567,82 @@ double C_HTRBypass_Cycle::design_cycle_return_objective_metric(const std::vector
 
     design_core(error_code);
 
-    double objective_metric = 0.0;
+
+
+    // Set Objective
+    double objective_metric = -10000000000.0;
     if (error_code == 0)
     {
-        objective_metric = m_objective_metric_last;
+        double eff = m_eta_thermal_calc_last;
 
-        if (m_objective_metric_last > m_objective_metric_opt)
+        double target_bp_out = m_T_HTF_BP_outlet_target;
+        double calc_bp_out = m_T_HTF_BP_outlet_calc;
+
+        double temp_err = std::abs(calc_bp_out - target_bp_out);
+        double temp_span = m_T_HTF_PHX_inlet - m_T_HTF_BP_outlet_target;
+        double percent_err = temp_err / temp_span;
+
+        double penalty = 10.0 * (sigmoid(percent_err) - 0.5);
+
+        objective_metric = eff - penalty;
+
+        if (objective_metric > m_objective_metric_opt)
         {
             ms_des_par_optimal = ms_des_par;
-            m_objective_metric_opt = m_objective_metric_last;
+            m_objective_metric_opt = objective_metric;
         }
     }
 
     return objective_metric;
 }
 
+// X is single bypass fraction value
+double C_HTRBypass_Cycle::design_bypass_frac_return_objective_metric(const std::vector<double>& x)
+{
+    m_bp_frac = x[0];
+
+    int error_code = 0;
+
+    design_core_standard(error_code);
+
+    double objective_metric = -10000000000.0;
+    if (error_code == 0)
+    {
+        double eff = m_eta_thermal_calc_last;
+
+        double target_bp_out = m_T_HTF_BP_outlet_target;
+        double calc_bp_out = m_T_HTF_BP_outlet_calc;
+
+        double temp_err = std::abs(calc_bp_out - target_bp_out);
+
+        
 
 
+        double temp_span = m_T_HTF_PHX_inlet - m_T_HTF_BP_outlet_target;
+        double percent_err = temp_err / temp_span;
+
+        //// Check if temperature hit target
+        //if (percent_err <= 0.000001)
+        //{
+        //    bp_frac_ptr->set_force_stop(10);
+        //}
+
+
+
+        double penalty = std::pow(percent_err, 2.0);
+
+        objective_metric = 0 - logit(percent_err);
+
+
+        if (objective_metric > m_objective_metric_bypass_frac_opt)
+        {
+            ms_des_par_bp_frac_optimal = ms_des_par;
+            m_objective_metric_bypass_frac_opt = objective_metric;
+        }
+    }
+
+    return objective_metric;
+}
 
 
 
@@ -1441,6 +1703,7 @@ void C_HTRBypass_Cycle::estimate_od_turbo_operation(double T_mc_in, double P_mc_
 }
 
 
+
 double nlopt_cb_opt_htr_bypass_des(const std::vector<double>& x, std::vector<double>& grad, void* data)
 {
     C_HTRBypass_Cycle* frame = static_cast<C_HTRBypass_Cycle*>(data);
@@ -1448,4 +1711,24 @@ double nlopt_cb_opt_htr_bypass_des(const std::vector<double>& x, std::vector<dou
         return frame->design_cycle_return_objective_metric(x);
     else
         return 0.0;
+}
+
+double nlopt_cb_opt_bypass_frac_des(const std::vector<double>& x, std::vector<double>& grad, void* data)
+{
+    C_HTRBypass_Cycle* frame = static_cast<C_HTRBypass_Cycle*>(data);
+    if (frame != NULL)
+        return frame->design_bypass_frac_return_objective_metric(x);
+    else
+        return 0.0;
+}
+
+
+double sigmoid(const double val)
+{
+    return 1.0 / (1.0 + std::exp(-1.0 * val));
+}
+
+double logit(const double val)
+{
+    return std::log(val / (1.0 - val));
 }

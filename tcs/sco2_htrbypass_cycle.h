@@ -41,6 +41,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "numeric_solvers.h"
 
+
+#include "nlopt.hpp"
+#include "nlopt_callbacks.h"
+
 class C_HTRBypass_Cycle : public C_sco2_cycle_core
 {
 public:
@@ -207,19 +211,24 @@ private:
     // Input/Ouput structures for class methods
     S_design_parameters ms_des_par;
     S_opt_design_parameters ms_opt_des_par;
+    
 
     // Results from last 'design' solution
     std::vector<double> m_temp_last, m_pres_last, m_enth_last, m_entr_last, m_dens_last;		// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
     double m_eta_thermal_calc_last;
     double m_W_dot_net_last;
     double m_m_dot_mc, m_m_dot_rc, m_m_dot_t;
-    double m_Q_dot_PHX, m_Q_dot_bypass, m_eta_bypass;
+    double m_Q_dot_PHX;
     double m_W_dot_mc, m_W_dot_rc, m_W_dot_t, m_W_dot_mc_bypass;
     double m_objective_metric_last;
+    double m_objective_metric_bypass_frac_last;
 
     // Structures and data for optimization
     S_design_parameters ms_des_par_optimal;
     double m_objective_metric_opt;
+    double m_objective_metric_bypass_frac_opt;
+
+    S_design_parameters ms_des_par_bp_frac_optimal;
 
     // Structures and data for auto-optimization
     double m_objective_metric_auto_opt;
@@ -270,6 +279,8 @@ private:
     int solve_HTR(double T_HTR_LP_OUT_guess, double* diff_T_HTR_LP_out);
     int solve_LTR(double T_LTR_LP_OUT_guess, double* diff_T_LTR_LP_out);
 
+    std::string make_result_csv_string();
+
 public:
 
     C_HTRBypass_Cycle(C_sco2_cycle_core::E_turbo_gen_motor_config turbo_gen_motor_config,
@@ -306,7 +317,7 @@ public:
         m_pres_last = m_enth_last = m_entr_last = m_dens_last = m_temp_last;
 
         m_eta_thermal_calc_last = m_m_dot_mc = m_m_dot_rc = m_m_dot_t = std::numeric_limits<double>::quiet_NaN();
-        m_Q_dot_PHX = m_Q_dot_bypass = m_eta_bypass = std::numeric_limits<double>::quiet_NaN();
+        m_Q_dot_PHX = std::numeric_limits<double>::quiet_NaN();
         m_W_dot_mc = m_W_dot_rc = m_W_dot_t = m_W_dot_mc_bypass = std::numeric_limits<double>::quiet_NaN();
         m_objective_metric_last = std::numeric_limits<double>::quiet_NaN();
 
@@ -347,6 +358,8 @@ public:
     // Called by 'nlopt_callback_opt_des_1', so needs to be public
     double design_cycle_return_objective_metric(const std::vector<double>& x);
 
+    // Called by 'nlopt_callback_opt_des_1', so needs to be public
+    double design_bypass_frac_return_objective_metric(const std::vector<double>& x);
 
     class C_mono_htr_bypass_LTR_des : public C_monotonic_equation
     {
@@ -444,5 +457,12 @@ public:
 
 
 double nlopt_cb_opt_htr_bypass_des(const std::vector<double>& x, std::vector<double>& grad, void* data);
+
+double nlopt_cb_opt_bypass_frac_des(const std::vector<double>& x, std::vector<double>& grad, void* data);
+
+
+double sigmoid(const double val);
+
+double logit(const double val);
 
 #endif
