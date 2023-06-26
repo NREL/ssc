@@ -225,7 +225,8 @@ setmodules( ['pvwattsv8', 'wind', 'battery', 'grid', 'utilityrate5', 'singleowne
                 }
                 
                 // get minimum timestep from gen vector
-                genVecs.push_back(ssc_data_get_array(compute_module_outputs, "gen", &len));
+                ssc_number_t* curGen = ssc_data_get_array(compute_module_outputs, "gen", &len);
+                genVecs.push_back(curGen);
                 currentTimeStepsPerHour = (size_t)len / 8760;
                 if (compute_module_inputs->table.lookup("system_use_lifetime_output")->num > 0) // below - assuming single year only
                     currentTimeStepsPerHour /= analysisPeriod;
@@ -239,9 +240,9 @@ setmodules( ['pvwattsv8', 'wind', 'battery', 'grid', 'utilityrate5', 'singleowne
                 ssc_number_t* pOMFixed = ((var_table*)compute_module_outputs)->allocate("cf_om_fixed", analysisPeriod+1); 
                 inflation_rate = compute_module_inputs->table.lookup("inflation_rate")->num;
 
-                escal_or_annual(pOMFixed, analysisPeriod, "om_fixed", inflation_rate, system_capacity, false, input.as_double("om_fixed_escal") * 0.01); // $ after multiplying by system capacity
-                escal_or_annual(pOMProduction, analysisPeriod, "om_production", inflation_rate, 0.001, false, input.as_double("om_production_escal") * 0.01); // $/kWh after conversion
-                escal_or_annual(pOMCapacity, analysisPeriod, "om_capacity", inflation_rate, 1.0, false, input.as_double("om_capacity_escal") * 0.01); // $
+                escal_or_annual(input, pOMFixed, analysisPeriod, "om_fixed", inflation_rate, system_capacity, false, input.as_double("om_fixed_escal") * 0.01); // $ after multiplying by system capacity
+                escal_or_annual(input, pOMProduction, analysisPeriod, "om_production", inflation_rate, 0.001, false, input.as_double("om_production_escal") * 0.01); // $/kWh after conversion
+                escal_or_annual(input, pOMCapacity, analysisPeriod, "om_capacity", inflation_rate, 1.0, false, input.as_double("om_capacity_escal") * 0.01); // $
 
                 // TODO: production - multiply by yearly gen (initially assume single year) - use degradation - specific to each generator
                 // pvwattsv8 - "degradation" applied in financial model - assuming single year analysis like standalone pvwatts/single owner configuration
@@ -266,9 +267,9 @@ setmodules( ['pvwattsv8', 'wind', 'battery', 'grid', 'utilityrate5', 'singleowne
                 }
 
                 if (compute_module == "pvwattsv8") {
-                    ssc_number_t* pOMLandLease = ((var_table*)compute_module_outputs)->allocate("cf_om_land_lease", analysisPeriod);
+                    ssc_number_t* pOMLandLease = ((var_table*)compute_module_outputs)->allocate("cf_om_land_lease", analysisPeriod + 1);
                     ssc_number_t total_land_area = compute_module_inputs->table.lookup("land_area")->num;
-                    escal_or_annual(pOMLandLease, analysisPeriod, "om_land_lease", inflation_rate, total_land_area, false, input.as_double("om_land_lease_escal") * 0.01);
+                    escal_or_annual(input, pOMLandLease, analysisPeriod, "om_land_lease", inflation_rate, total_land_area, false, input.as_double("om_land_lease_escal") * 0.01);
                 }
                 // add calculations to compute module outputs - done above for regular compute module outputs - done above with allocate to compute_module_outputs
 
@@ -343,9 +344,9 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 ssc_number_t* pOMCapacity = ((var_table*)compute_module_outputs)->allocate("cf_om_capacity", analysisPeriod+1);
                 ssc_number_t* pOMFixed = ((var_table*)compute_module_outputs)->allocate("cf_om_fixed", analysisPeriod+1);
                 inflation_rate = compute_module_inputs->table.lookup("inflation_rate")->num; // can retrieve from "Hybrid" vartable directly
-                escal_or_annual(pOMFixed, analysisPeriod, "om_fuelcell_fixed_cost", inflation_rate, 1.0, false, input.as_double("om_fixed_escal") * 0.01); // $
-                escal_or_annual(pOMProduction, analysisPeriod, "om_fuelcell_variable_cost", inflation_rate, 0.001, false, input.as_double("om_production_escal") * 0.01); // $/kW
-                escal_or_annual(pOMCapacity, analysisPeriod, "om_fuelcell_capacity_cost", inflation_rate, system_capacity, false, input.as_double("om_capacity_escal") * 0.01); // $
+                escal_or_annual(input, pOMFixed, analysisPeriod, "om_fuelcell_fixed_cost", inflation_rate, 1.0, false, input.as_double("om_fixed_escal") * 0.01); // $
+                escal_or_annual(input, pOMProduction, analysisPeriod, "om_fuelcell_variable_cost", inflation_rate, 0.001, false, input.as_double("om_production_escal") * 0.01); // $/kW
+                escal_or_annual(input, pOMCapacity, analysisPeriod, "om_fuelcell_capacity_cost", inflation_rate, system_capacity, false, input.as_double("om_capacity_escal") * 0.01); // $
                 nameplate = ((var_table*)compute_module_outputs)->as_number("om_fuelcell_nameplate");
                 fuelcell_discharged = ((var_table*)compute_module_outputs)->as_vector_double("fuelcell_annual_energy_discharged");
                 if (fuelcell_discharged.size() == 2) { // ssc #992
@@ -365,7 +366,7 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                         fuelcell_rep = ((var_table*)compute_module_outputs)->as_array("fuelcell_replacement_schedule", &count); // replacements per year user-defined
 
                     ssc_number_t* pFuelCellReplacement = ((var_table*)compute_module_outputs)->allocate("cf_fuelcell_replacement_cost_schedule", analysisPeriod+1);
-                    escal_or_annual(pFuelCellReplacement, analysisPeriod, "om_fuelcell_replacement_cost", inflation_rate, nameplate, false, input.as_double("om_replacement_cost_escal") * 0.01);
+                    escal_or_annual(input, pFuelCellReplacement, analysisPeriod, "om_fuelcell_replacement_cost", inflation_rate, nameplate, false, input.as_double("om_replacement_cost_escal") * 0.01);
 
                     for (size_t i = 0; i < (size_t)analysisPeriod && i < count; i++) {
                         pFuelCellReplacement[i + 1] = fuelcell_rep[i] * pFuelCellReplacement[i + 1];
@@ -422,9 +423,9 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 ssc_number_t* pOMCapacity = ((var_table*)compute_module_outputs)->allocate("cf_om_capacity", analysisPeriod+1);
                 ssc_number_t* pOMFixed = ((var_table*)compute_module_outputs)->allocate("cf_om_fixed", analysisPeriod+1);
                 inflation_rate = compute_module_inputs->table.lookup("inflation_rate")->num; // can retrieve from "Hybrid" vartable directly
-                escal_or_annual(pOMFixed, analysisPeriod, "om_batt_fixed_cost", inflation_rate, 1.0, false, input.as_double("om_fixed_escal") * 0.01);
-                escal_or_annual(pOMProduction, analysisPeriod, "om_batt_variable_cost", inflation_rate, 0.001, false, input.as_double("om_production_escal") * 0.01);
-                escal_or_annual(pOMCapacity, analysisPeriod, "om_batt_capacity_cost", inflation_rate, 1.0, false, input.as_double("om_capacity_escal") * 0.01);
+                escal_or_annual(input, pOMFixed, analysisPeriod, "om_batt_fixed_cost", inflation_rate, 1.0, false, input.as_double("om_fixed_escal") * 0.01);
+                escal_or_annual(input, pOMProduction, analysisPeriod, "om_batt_variable_cost", inflation_rate, 0.001, false, input.as_double("om_production_escal") * 0.01);
+                escal_or_annual(input, pOMCapacity, analysisPeriod, "om_batt_capacity_cost", inflation_rate, 1.0, false, input.as_double("om_capacity_escal") * 0.01);
                 std::vector<double> battery_discharged(analysisPeriod, 0);
                 nameplate = compute_module_inputs->table.lookup("om_batt_nameplate")->num;
                 //if (as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1)
@@ -462,7 +463,7 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                     double batt_cap = ((var_table*)compute_module_outputs)->as_double("batt_computed_bank_capacity");
                     // updated 10/17/15 per 10/14/15 meeting
                     ssc_number_t* pOMBattReplacementCost = ((var_table*)compute_module_outputs)->allocate("cf_battery_replacement_cost_schedule", analysisPeriod + 1);
-                    escal_or_annual(pOMBattReplacementCost, analysisPeriod, "om_batt_replacement_cost", inflation_rate, batt_cap, false, input.as_double("om_replacement_cost_escal") * 0.01);
+                    escal_or_annual(input, pOMBattReplacementCost, analysisPeriod, "om_batt_replacement_cost", inflation_rate, batt_cap, false, input.as_double("om_replacement_cost_escal") * 0.01);
 
                     for (int i = 0; i < analysisPeriod && i < (int)count; i++) {
                         // the cash flow sheets are 1 indexed, batt_rep and replacement_percent is zero indexed
@@ -474,7 +475,7 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                     double batt_cap = ((var_table*)compute_module_outputs)->as_double("batt_computed_bank_capacity");
                     // updated 10/17/15 per 10/14/15 meeting
                     ssc_number_t* pOMBattReplacementCost = ((var_table*)compute_module_outputs)->allocate("cf_battery_replacement_cost_schedule", analysisPeriod + 1);
-                    escal_or_annual(pOMBattReplacementCost, analysisPeriod, "om_batt_replacement_cost", inflation_rate, batt_cap, false, input.as_double("om_replacement_cost_escal") * 0.01);
+                    escal_or_annual(input, pOMBattReplacementCost, analysisPeriod, "om_batt_replacement_cost", inflation_rate, batt_cap, false, input.as_double("om_replacement_cost_escal") * 0.01);
                 }
 
                 // production O and M conversion to $
@@ -565,11 +566,11 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
         }
 	}
 
-    void escal_or_annual(ssc_number_t *cf, int nyears, const std::string& variable,
+    void escal_or_annual(var_table& vt, ssc_number_t *cf, int nyears, const std::string& variable,
         double inflation_rate, double scale, bool as_rate = true, double escal = 0.0)
     {
         size_t count;
-        ssc_number_t* arrp = as_array(variable, &count);
+        ssc_number_t* arrp = vt.as_array(variable, &count);
 
         if (as_rate)
         {

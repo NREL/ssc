@@ -35,12 +35,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "gtest/gtest.h"
 
-// TODO - update input JSON for test paths for resource files
 
-TEST_F(CmodHybridTest, PVWattsv8) {
+
+
+TEST_F(CmodHybridTest, PVWattsv8WindBatterySingleOwner) {
 
     char file_path[256];
-    int nfc1 = sprintf(file_path, "%s/test/input_json/hybrids/pvwattsv8.json", SSCDIR);
+    int nfc1 = sprintf(file_path, "%s/test/input_json/hybrids/PVWatts Wind Battery Hybrid_Single Owner.json", SSCDIR);
     std::ifstream file(file_path);
     std::ostringstream tmp;
     tmp << file.rdbuf();
@@ -54,71 +55,7 @@ TEST_F(CmodHybridTest, PVWattsv8) {
     sprintf(solar_resource_path, "%s/test/input_cases/general_data/phoenix_az_33.450495_-111.983688_psmv3_60_tmy.csv", std::getenv("SSCDIR"));
     ssc_data_set_string(pv_table, "solar_resource_file", solar_resource_path);
 
-    int errors = run_module(dat, "hybrid");
-    EXPECT_FALSE(errors);
-    if (!errors)
-    {
-        ssc_number_t annualenergy;
-        auto outputs = ssc_data_get_table(dat, "output");
-        auto pv_outputs = ssc_data_get_table(outputs, "pvwattsv8");
-        ssc_data_get_number(pv_outputs, "annual_energy", &annualenergy);
-        EXPECT_NEAR(annualenergy, 165112880, 165112880 * 0.01);
-    }
-    ssc_data_free(dat);
-    dat = nullptr;
-}
-
-TEST_F(CmodHybridTest, Wind) {
-
-    char file_path[256];
-    int nfc1 = sprintf(file_path, "%s/test/input_json/hybrids/wind.json", SSCDIR);
-    std::ifstream file(file_path);
-    std::ostringstream tmp;
-    tmp << file.rdbuf();
-    file.close();
-    ssc_data_t dat = json_to_ssc_data(tmp.str().c_str());
-    tmp.str("");
-
-    auto table = ssc_data_get_table(dat, "input");
-    auto wind_table = ssc_data_get_table(table, "windpower");
-    char wind_resource_path[256];
-    sprintf(wind_resource_path, "%s/test/input_cases/general_data/WY_Southern-Flat_Lands.srw", std::getenv("SSCDIR"));
-    ssc_data_set_string(wind_table, "wind_resource_filename", wind_resource_path);
-
-    int errors = run_module(dat, "hybrid");
-    EXPECT_FALSE(errors);
-    if (!errors)
-    {
-        ssc_number_t annualenergy;
-        auto outputs = ssc_data_get_table(dat, "output");
-        auto wind_outputs = ssc_data_get_table(outputs, "windpower");
-        ssc_data_get_number(wind_outputs, "annual_energy", &annualenergy);
-
-        EXPECT_NEAR(annualenergy, 201595968, 201595968 * 0.01);
-    }
-    ssc_data_free(dat);
-    dat = nullptr;
-}
-
-
-TEST_F(CmodHybridTest, PVWattsv8Wind) {
-
-    char file_path[256];
-    int nfc1 = sprintf(file_path, "%s/test/input_json/hybrids/pvwattsv8wind.json", SSCDIR);
-    std::ifstream file(file_path);
-    std::ostringstream tmp;
-    tmp << file.rdbuf();
-    file.close();
-    ssc_data_t dat = json_to_ssc_data(tmp.str().c_str());
-    tmp.str("");
-
-    auto table = ssc_data_get_table(dat, "input");
-    auto pv_table = ssc_data_get_table(table, "pvwattsv8");
-    char solar_resource_path[256];
-    sprintf(solar_resource_path, "%s/test/input_cases/general_data/phoenix_az_33.450495_-111.983688_psmv3_60_tmy.csv", std::getenv("SSCDIR"));
-    ssc_data_set_string(pv_table, "solar_resource_file", solar_resource_path);
-
-    auto wind_table = ssc_data_get_table(table, "windpower");
+    auto wind_table = ssc_data_get_table(table, "wind");
     char wind_resource_path[256];
     sprintf(wind_resource_path, "%s/test/input_cases/general_data/WY_Southern-Flat_Lands.srw", std::getenv("SSCDIR"));
     ssc_data_set_string(wind_table, "wind_resource_filename", wind_resource_path);
@@ -140,7 +77,7 @@ TEST_F(CmodHybridTest, PVWattsv8Wind) {
         ssc_data_get_number(pv_outputs, "annual_energy", &annualenergy);
         EXPECT_NEAR(annualenergy, 165112880, 165112880 * 0.01);
 
-        auto wind_outputs = ssc_data_get_table(outputs, "windpower");
+        auto wind_outputs = ssc_data_get_table(outputs, "wind");
         ssc_data_get_number(wind_outputs, "annual_energy", &annualenergy);
         EXPECT_NEAR(annualenergy, 201595968, 201595968 * 0.01);
     }

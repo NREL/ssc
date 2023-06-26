@@ -56,7 +56,7 @@ GTEST_API_ int main(int argc, char **argv) {
     //    ::testing::GTEST_FLAG(filter) = "CmodPVWatts*:CMPvwatts*";
     //::testing::GTEST_FLAG(filter) = "CMBatteryStatefulIntegration_cmod_battery_stateful.ssc_1023";
 
-       ::testing::GTEST_FLAG(filter) = "CmodHybridSteps*";
+       ::testing::GTEST_FLAG(filter) = "CmodHybridTest*";
 
 
     //    filter to exclude
