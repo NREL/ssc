@@ -51,103 +51,6 @@ public:
 	{
 		add_var_info( _cm_vtab_hybrid );
 	}
-/*
-pseudocode
-
-    //set up a list of the tables that have been passed in, and error check the list
-    Declare objects: generators, battery, fuel cell, grid, utility rate, financial- all null     *does utility rate table need to be separate from financial model table? or are they one? - separate tables - utility rates can be used as inputs to dispatch models.
-    For i=0, i<number of tables, i++
-        If PV or Wind table
-            Add to list of generators
-        elseif battery
-            If batteryList == null
-                batteryList = battery
-            Else
-                error (only one battery allowed)
-        elseif fuel cell
-            If fuelcellList == null
-                fuelcellList = fuel cell
-            Else
-                error (only one fuel cell allowed)
-        elseif grid
-            if gridlist == null
-                gridlist = grid
-            else
-                error (only one grid cmod allowed)
-        elseif utility rate
-            if utilityrateList == null
-                utilityrateList = utilityrate
-            Else
-                error (only one utility rate allowed)
-        elseif allowed financial model
-            If financialList == null
-                financialList = financial
-            Else
-                error (only one financial model allowed)     *this may not be true? are there some instances where >1 financial model is run? We currently do not run more than one financial model and the hybrid configuraiton should all be combined to the financial model inputs after the generators and grid and utilityrate compute modules are called
-        else
-            error (disallowed technology or financial model, report name)
-
-    //Check that all required cmods are defined
-    //We can consider battery, fuel cell, grid, and financial models all optional for max flexibility from SDK
-    if #generators <= 1
-        error
-    if utilityrate required but not defined     *how to tell? - in starup.lk the simlist of compute modules for each hybrid configuration
-        error
-
-    //Run all instances of PV, wind cmods (this would allow >1 PV or wind location from SDK)
-    //also find minimum timestep, installed cost, and total capacity
-    minimumTimestep = quietnan
-    hybridtotalinstalledcost, hybridcapacity = 0
-    for i=0, i<#generators, i++
-        hybridtotalinstalledcost += i_totalinstalledcost
-        hybridcapacity += i_capacity
-        run pv or wind cmod with inputs
-        get timeseries gen
-        get timestep
-            if timestep < minimumTimestep
-                minimumTimestep = timestep
-        run O&M calcs with O&M costs and gen     *how can O&M costs be tagged to a particular technology? this requires breaking om calcs into a library function if they're not already - they can be post tech run in the hybrids compute module using the o and m functions.
-        run incentives calcs with incentives and gen     *how can incentives be tagged to a particular technology? this requires breaking incentive calcs into a library function if they're not already - they can be post tech run calculated using the incentives function.
-
-    //add timeseries gen from all generators
-
-    for I = 0, i<8760 * minimumTimestep, i++
-        for j=0; j<#generators; j++
-            add generation from j for the correct timestep I
-
-    //Run battery with combined gen, battery specs, and utility rate if it can charge from grid
-    run battery
-    hybridtotalinstalledcost += battery_totalinstalledcost
-
-    //Run fuel cell with battery output
-    run fuel cell
-    hybridtotalinstalledcost += fuelcell_totalinstalledcost
-
-    //Run grid compute module with fuel cell output
-    run grid
-
-    //Run utilityrate if applicable
-    run utilityrate
-    save utilityratecosts
-
-    //Run financial model - is no financial model an option?
-    for year = 0; year<analysis period, year++
-        omcosts[year] = 0
-        incentives[year] = 0
-        for I = 0; i<#generators; i++
-            omcosts[year] += j_omcosts[year] *do we want all rolled into one or separate line items
-            incentives[year] = j_incentives[year] *do we want all rolled into one or separate line items
-    run financial model (omcosts, incentives, utilityratecosts, hybridtotalinstalledcost)
-    get financial model outputs
-
-*where is depreciation handled? In the financial model using the EBITDA line item and applying the selected depreciation schedule
-
-
-exmaple configuration from startup.lk from SAM
-setconfig('PVWatts Wind Battery Hybrid', 'Single Owner' );
-setmodules( ['pvwattsv8', 'wind', 'battery', 'grid', 'utilityrate5', 'singleowner']);
-
-*/
     void exec()
     {
         var_data *input_table = lookup("input");
@@ -169,7 +72,7 @@ setmodules( ['pvwattsv8', 'wind', 'battery', 'grid', 'utilityrate5', 'singleowne
 
             for (size_t i = 0; i < vec_cms.size(); i++) {
                 std::string computemodulename = vec_cms[i].str;
-                if ((computemodulename == "pvwattsv8") || (computemodulename == "wind"))
+                if ((computemodulename == "pvwattsv8") || (computemodulename == "windpower"))
                     generators.push_back(computemodulename);
                 else if (computemodulename == "battery")
                     batteries.push_back(computemodulename);
@@ -193,7 +96,9 @@ setmodules( ['pvwattsv8', 'wind', 'battery', 'grid', 'utilityrate5', 'singleowne
             ssc_number_t inflation_rate;
             int len, analysisPeriod;
             std::vector<size_t> genTimestepsPerHour;
-            std::vector<ssc_number_t *> genVecs;
+            std::vector<std::vector<double> > genVecs;
+
+
             for (size_t igen = 0; igen < generators.size(); igen++) {
 
                 std::string& compute_module = generators[igen];
@@ -225,9 +130,10 @@ setmodules( ['pvwattsv8', 'wind', 'battery', 'grid', 'utilityrate5', 'singleowne
                 }
                 
                 // get minimum timestep from gen vector
-                ssc_number_t* curGen = ssc_data_get_array(compute_module_outputs, "gen", &len);
+                auto curGen = ((var_table*)compute_module_outputs)->as_vector_double("gen");
+                //ssc_number_t* curGen = ssc_data_get_array(compute_module_outputs, "gen", &len);
                 genVecs.push_back(curGen);
-                currentTimeStepsPerHour = (size_t)len / 8760;
+                currentTimeStepsPerHour = curGen.size() / 8760;
                 if (compute_module_inputs->table.lookup("system_use_lifetime_output")->num > 0) // below - assuming single year only
                     currentTimeStepsPerHour /= analysisPeriod;
                 if (currentTimeStepsPerHour > maximumTimeStepsPerHour)
@@ -417,6 +323,11 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                         ssc_data_set_var(compute_module_outputs, var_name, var_value);
                     }
                 }
+                // get latest output
+
+                auto curGen = ((var_table*)compute_module_outputs)->as_vector_double("gen");;
+                genVecs.push_back(curGen);
+
                 // add production O and M calculations - done below before financial calculations
                 ssc_number_t nameplate = 0;
                 ssc_number_t* pOMProduction = ((var_table*)compute_module_outputs)->allocate("cf_om_production", analysisPeriod+1);
@@ -444,21 +355,21 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
 
                 // battery cost - replacement from lifetime analysis
 //                if ((as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1 || as_integer("en_wave_batt") == 1) && (as_integer("batt_replacement_option") > 0))
-                if (((var_table*)compute_module_outputs)->as_integer("batt_replacement_option") > 0) {
+                if (input.as_integer("batt_replacement_option") > 0) {
                     ssc_number_t* batt_rep = 0;
                     std::vector<ssc_number_t> replacement_percent;
                     size_t count;
                     batt_rep = ((var_table*)compute_module_outputs)->as_array("batt_bank_replacement", &count); // replacements per year calculated
 
                     // replace at capacity percent
-                    if (((var_table*)compute_module_outputs)->as_integer("batt_replacement_option") == 1) {
+                    if (input.as_integer("batt_replacement_option") == 1) {
 
                         for (int i = 0; i < (int)count; i++) {
                             replacement_percent.push_back(100);
                         }
                     }
                     else {// user specified
-                        replacement_percent = ((var_table*)compute_module_outputs)->as_vector_ssc_number_t("batt_replacement_schedule_percent");
+                        replacement_percent = input.as_vector_ssc_number_t("batt_replacement_schedule_percent");
                     }
                     double batt_cap = ((var_table*)compute_module_outputs)->as_double("batt_computed_bank_capacity");
                     // updated 10/17/15 per 10/14/15 meeting
@@ -488,7 +399,19 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 ssc_module_free(module);
                 ssc_data_free(compute_module_outputs);
             }
-            
+
+            bool use_batt_output = false;
+            ssc_number_t* pBattGen = 0;
+            int battGenLen = 0;
+            // update gen to battery output
+            if (batteries.size() > 0) {
+                use_batt_output = true;
+                battGenLen = (int)genVecs[genVecs.size() - 1].size();
+                pBattGen = ((var_table*)outputs)->allocate("batt_gen", battGenLen); // add to top level "output"
+                for (int i = 0; i < battGenLen; i++)
+                    pBattGen[i] = genVecs[genVecs.size() - 1][i];
+            }
+
  
 /*
     //Run grid compute module with fuel cell output
@@ -520,6 +443,9 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                     throw exec_error("hybrid", "No input input_table found for ." + hybridVarTable);
 
                 var_table& input = compute_module_inputs->table;
+                if (use_batt_output)
+                    ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pBattGen, battGenLen);  // check if need to update to battery output
+
 
                 // set additional inputs from previous results - note - remove these from UI?
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "total_installed_cost", hybridTotalInstalledCost);

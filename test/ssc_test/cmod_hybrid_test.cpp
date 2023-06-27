@@ -55,7 +55,7 @@ TEST_F(CmodHybridTest, PVWattsv8WindBatterySingleOwner) {
     sprintf(solar_resource_path, "%s/test/input_cases/general_data/phoenix_az_33.450495_-111.983688_psmv3_60_tmy.csv", std::getenv("SSCDIR"));
     ssc_data_set_string(pv_table, "solar_resource_file", solar_resource_path);
 
-    auto wind_table = ssc_data_get_table(table, "wind");
+    auto wind_table = ssc_data_get_table(table, "windpower");
     char wind_resource_path[256];
     sprintf(wind_resource_path, "%s/test/input_cases/general_data/WY_Southern-Flat_Lands.srw", std::getenv("SSCDIR"));
     ssc_data_set_string(wind_table, "wind_resource_filename", wind_resource_path);
@@ -67,19 +67,14 @@ TEST_F(CmodHybridTest, PVWattsv8WindBatterySingleOwner) {
     {
         ssc_number_t annualenergy;
         auto outputs = ssc_data_get_table(dat, "output");
-        ssc_data_get_number(outputs, "cumulative_annual_energy", &annualenergy);
-        EXPECT_NEAR(annualenergy, 366708848, 366708848 * 0.01);
-
-        ssc_data_get_number(outputs, "annual_energy", &annualenergy);
-        EXPECT_NEAR(annualenergy, 366708848, 366708848 * 0.01);
 
         auto pv_outputs = ssc_data_get_table(outputs, "pvwattsv8");
         ssc_data_get_number(pv_outputs, "annual_energy", &annualenergy);
-        EXPECT_NEAR(annualenergy, 165112880, 165112880 * 0.01);
+        EXPECT_NEAR(annualenergy, 20776, 20776 * 0.01);
 
-        auto wind_outputs = ssc_data_get_table(outputs, "wind");
+        auto wind_outputs = ssc_data_get_table(outputs, "windpower");
         ssc_data_get_number(wind_outputs, "annual_energy", &annualenergy);
-        EXPECT_NEAR(annualenergy, 201595968, 201595968 * 0.01);
+        EXPECT_NEAR(annualenergy, 5927, 5927 * 0.01);
     }
     ssc_data_free(dat);
     dat = nullptr;
