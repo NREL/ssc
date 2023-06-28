@@ -52,6 +52,20 @@ void C_HTRBypass_Cycle::design_core(int& error_code)
     //ms_des_par.m_P_mc_out = 25000;
     //m_T_t_in = 923.149;
 
+    // DEBUG
+    if (false)
+    {
+        std::vector<double> bp_vec = { 0.999 };
+        for (double bp : bp_vec)
+        {
+            m_bp_frac = bp;
+            design_core_standard(error_code);
+
+            std::string output = make_result_csv_string();
+
+            int o = 0;
+        }
+    }
     
     // DEBUG
     if (false)
@@ -63,13 +77,19 @@ void C_HTRBypass_Cycle::design_core(int& error_code)
         design_core_standard(temp_error);
     }
 
-    //DEBUG solar flex
-    if (false)
+    //DEBUG Alfani
+    if (true)
     {
-        m_bp_frac = 0.11;
+        m_bp_frac = 0.17386;
+        m_cp_HTF = 1.15;
+
 
         int temp_error = 0;
         design_core_standard(temp_error);
+
+        std::string output = make_result_csv_string();
+
+        int o = 0;
 
         return;
     }
@@ -137,7 +157,7 @@ void C_HTRBypass_Cycle::design_core(int& error_code)
         opt_des_cycle.set_lower_bounds(lb);
         opt_des_cycle.set_upper_bounds(ub);
         opt_des_cycle.set_initial_step(0.01);
-        opt_des_cycle.set_xtol_rel(0.1);
+        opt_des_cycle.set_xtol_rel(0.005);
 
         // Set max objective function
         std::vector<double> x;
@@ -215,7 +235,38 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
 
 
     // DEBUG
+    if(true)
     {
+        {
+            double Q = 15.364; // MW
+            double mdot = 140.17; // kg/s
+            double pres = 18.134; //MPa
+
+            double T2 = 346.69; // C
+
+            // Get h2
+            CO2_TP(T2 + 273.15, pres * 1e3, &co2_props);
+            double h2 = co2_props.enth;
+
+            // Calculate h1
+            double h1 = h2 - (Q * 1e3) / mdot;
+
+            // Get T1
+            CO2_PH(pres * 1e3, h1, &co2_props);
+            double T1 = co2_props.temp - 273.15;
+
+            int oiasdf = 0;
+        }
+        
+
+
+
+
+
+
+
+
+
         // BP
         double Q_dot_BP;
         {
@@ -1052,6 +1103,21 @@ void C_HTRBypass_Cycle::opt_design_core(int& error_code)
         index++;
     }
 
+    // DEBUG
+    if (false)
+    {
+        std::vector<double> recomp_vec = { 0.8 };
+        for (double re : recomp_vec)
+        {
+            ms_des_par.m_P_mc_out = ms_opt_des_par.m_P_mc_out_guess;
+            ms_des_par.m_P_mc_in = ms_des_par.m_P_mc_out / ms_opt_des_par.m_PR_HP_to_LP_guess;
+            ms_des_par.m_recomp_frac = re;
+            design_core(error_code);
+        }
+    }
+
+
+
     error_code = 0;
     if (index > 0)
     {
@@ -1059,11 +1125,11 @@ void C_HTRBypass_Cycle::opt_design_core(int& error_code)
         m_objective_metric_opt = -100000000000;
         
         // Set up instance of nlopt class and set optimization parameters
-        nlopt::opt		opt_des_cycle(nlopt::GN_CRS2_LM, index);
+        nlopt::opt		opt_des_cycle(nlopt::LN_SBPLX, index);
         opt_des_cycle.set_lower_bounds(lb);
         opt_des_cycle.set_upper_bounds(ub);
         opt_des_cycle.set_initial_step(scale);
-        opt_des_cycle.set_xtol_rel(0.1);
+        opt_des_cycle.set_xtol_rel(0.001);
 
         // Set max objective function
         opt_des_cycle.set_max_objective(nlopt_cb_opt_htr_bypass_des, this);		// Calls wrapper/callback that calls 'design_point_eta', which optimizes design point eta through repeated calls to 'design'
@@ -1614,25 +1680,13 @@ double C_HTRBypass_Cycle::design_bypass_frac_return_objective_metric(const std::
         double calc_bp_out = m_T_HTF_BP_outlet_calc;
 
         double temp_err = std::abs(calc_bp_out - target_bp_out);
-
-        
-
-
         double temp_span = m_T_HTF_PHX_inlet - m_T_HTF_BP_outlet_target;
         double percent_err = temp_err / temp_span;
 
-        //// Check if temperature hit target
-        //if (percent_err <= 0.000001)
-        //{
-        //    bp_frac_ptr->set_force_stop(10);
-        //}
-
-
-
         double penalty = std::pow(percent_err, 2.0);
 
-        objective_metric = 0 - logit(percent_err);
-
+        //objective_metric = 0 - logit(percent_err);
+        objective_metric = -temp_err;
 
         if (objective_metric > m_objective_metric_bypass_frac_opt)
         {
