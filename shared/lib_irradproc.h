@@ -759,7 +759,26 @@ void incidence(int mode, double tilt, double sazm, double rlim, double zen, doub
 * \param[out] diffc[2] horizon brightening
 */
 void perez(double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */);
-
+/**
+* Ineichen model for calculating clearsky irradiance components
+* solar radiation + ground reflected radiation for a tilted surface and returns the total plane-of-array irradiance(poa),
+* see also isotropic(), hdkr().
+*
+* Function does not check all input for valid entries; consequently, this should be
+* done before calling the function.  (Reference: Perez et al, Solar Energy Vol. 44, No.5, pp.271-289,1990.)
+*
+* \param[in] apparent_zenith apparent solar zenith angle in degrees
+* \param[in] absolute_airmass pressure corrected airmass
+* \param[in] linke_turbidity Linke turbidity
+* \param[in] altitude site altitude in meters
+* \param[in] dni_extra extraterrestrial direct normal irradiance (W/m2)
+* \param[in] perez_enhancement is the perez enhcancement factor applied (y/n). Setting to true may produce spurious results for times when the sun is near the horizon and the airmass is high. 
+* \param[out] clear_sky_resuls calculated clearsky  irradiances (W/m2)
+* \param[out] clearsky_results[0] clear sky ghi
+* \param[out] clearsky_results[1] clear sky dni
+* \param[out] clearsky_results[2] clear sky dhi
+*/
+void ineichen(double clearsky_results[3], double apparent_zenith, double absolute_airmass, double linke_turbidity = 1.0, double altitude = 0.0, double dni_extra = 1364.0, bool perez_enhancement = false);
 /**
 * Isotropic sky model for diffuse irradiance on a tilted surface, see also perez(), hdkr().
 *
@@ -779,6 +798,7 @@ void perez(double hextra, double dn, double df, double alb, double inc, double t
 * \param[out] diffc[1] circumsolar diffuse
 * \param[out] diffc[2] horizon brightening
 */
+
 void isotropic(double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */);
 
 /**
@@ -1000,11 +1020,14 @@ protected:
     double sunAnglesRadians[9];				///< Sun angles in radians calculated from solarpos()	
     double surfaceAnglesRadians[5];			///< Surface angles in radians calculated from incidence()
     double planeOfArrayIrradianceFront[3];	///< Front-side plane-of-array irradiance for beam, sky diffuse, ground diffuse (W/m2)
+    double planeOfArrayIrradianceFrontCS[3]; ///< Front-side plane-of-array clearsky irradiance for beam, sky diffuse, ground diffuse (W/m2)
     double planeOfArrayIrradianceRear[3];	///< Rear-side plane-of-array irradiance for beam, sky diffuse, ground diffuse (W/m2)
     double diffuseIrradianceFront[3];		///< Front-side diffuse irradiance for isotropic, circumsolar, and horizon (W/m2)
+    double diffuseIrradianceFrontCS[3];		///< Front-side diffuse clearsky irradiance for isotropic, circumsolar, and horizon (W/m2)
     double diffuseIrradianceRear[3];		///< Rear-side diffuse irradiance for isotropic, circumsolar, and horizon (W/m2)
     int timeStepSunPosition[3];				///< [0] effective hour of day used for sun position, [1] effective minute of hour used for sun position, [2] is sun up?  (0=no, 1=midday, 2=sunup, 3=sundown)
     double planeOfArrayIrradianceRearAverage; ///< Average rear side plane-of-array irradiance (W/m2)
+    double clearskyIrradiance[3];           /// [0] clearsky GHI, [1] clearsky DNI, [2] clearsky GHI from Ineichen model (W/m2);
     std::vector<double> planeOfArrayIrradianceRearSpatial;  ///< Spatial rear side plane-of-array irradiance (W/m2), where index 0 is at row bottom
     std::vector<double> groundIrradianceSpatial;            ///< Spatial irradiance incident on the ground in between rows, where index 0 is towards front of array
 

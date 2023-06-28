@@ -1692,6 +1692,38 @@ perez(double, double dn, double df, double alb, double inc, double tilt, double 
     }
 }
 
+void ineichen(double clearsky_results[3], double apparent_zenith, double absolute_airmass, double linke_turbidity = 1.0, double altitude = 0.0, double dni_extra = 1364.0, bool perez_enhancement = false) {
+    double cos_zenith = Max(cosd(apparent_zenith), 0);
+    double tl = linke_turbidity;
+
+    double fh1 = exp(-altitude / 8000.0);
+    double fh2 = exp(-altitude / 1250.0);
+    double cg1 = 5.09e-5 * altitude + 0.868;
+    double cg2 = 3.92e-5 * altitude + 0.0387;
+
+    double ghi = exp(-cg2 * absolute_airmass * (fh1 + fh2 * (tl - 1)));
+    if (perez_enhancement) ghi *= exp(0.01 * pow(absolute_airmass, 1.8));
+
+    ghi = cg1 * dni_extra * cos_zenith * tl / tl * Max(ghi, 0);
+
+    double b = 0.664 + 0.163 / fh1;
+
+    double bnci = b * exp(-0.09 * absolute_airmass * (tl - 1));
+    bnci = dni_extra * Max(bnci, 0);
+
+    double bnci_2 = ((1 - (0.1 - 0.2 * exp(-tl)) / (0.1 + 0.882 / fh1)) / cos_zenith);
+    bnci_2 = ghi * Min(Max(bnci_2, 0), 1e20);
+
+    double dni = Min(bnci, bnci_2);
+
+    double dhi = ghi - dni * cos_zenith;
+    clearsky_results[0] = ghi;
+    clearsky_results[1] = dni;
+    clearsky_results[2] = dhi;
+    return;
+}
+
+
 void irrad::setup() {
     year = month = day = hour = -999;
     minute = delt = latitudeDegrees = longitudeDegrees = timezone = -999;
@@ -2107,9 +2139,15 @@ int irrad::calc() {
         timeStepSunPosition[2] = 0;
     }
 
+    //clearsky
+    ineichen(clearskyIrradiance, RTOD * sunAnglesRadians[1], 1.5, 1.0, elevation);
+
 
     planeOfArrayIrradianceFront[0] = planeOfArrayIrradianceFront[1] = planeOfArrayIrradianceFront[2] = 0;
+    planeOfArrayIrradianceFrontCS[0] = planeOfArrayIrradianceFrontCS[1] = planeOfArrayIrradianceFrontCS[2] = 0;
     diffuseIrradianceFront[0] = diffuseIrradianceFront[1] = diffuseIrradianceFront[2] = 0;
+    diffuseIrradianceFrontCS[0] = diffuseIrradianceFrontCS[1] = diffuseIrradianceFrontCS[2] = 0;
+
     surfaceAnglesRadians[0] = surfaceAnglesRadians[1] = surfaceAnglesRadians[2] = surfaceAnglesRadians[3] = surfaceAnglesRadians[4] = 0;
 
     // do irradiance calculations if sun is up
@@ -2162,16 +2200,25 @@ int irrad::calc() {
                     isotropic(hextra, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo,
                               surfaceAnglesRadians[0], surfaceAnglesRadians[1], sunAnglesRadians[1],
                               planeOfArrayIrradianceFront, diffuseIrradianceFront);
+                    isotropic(hextra, clearskyIrradiance[1], clearskyIrradiance[2], albedo,
+                        surfaceAnglesRadians[0], surfaceAnglesRadians[1], sunAnglesRadians[1],
+                        planeOfArrayIrradianceFrontCS, diffuseIrradianceFrontCS);
                     break;
                 case 1:
                     hdkr(hextra, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, surfaceAnglesRadians[0],
                          surfaceAnglesRadians[1], sunAnglesRadians[1], planeOfArrayIrradianceFront,
                          diffuseIrradianceFront);
+                    hdkr(hextra, clearskyIrradiance[1], clearskyIrradiance[2], albedo, surfaceAnglesRadians[0],
+                        surfaceAnglesRadians[1], sunAnglesRadians[1], planeOfArrayIrradianceFrontCS,
+                        diffuseIrradianceFrontCS);
                     break;
                 default:
                     perez(hextra, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, surfaceAnglesRadians[0],
                           surfaceAnglesRadians[1], sunAnglesRadians[1], planeOfArrayIrradianceFront,
                           diffuseIrradianceFront);
+                    perez(hextra, clearskyIrradiance[1], clearskyIrradiance[2], albedo, surfaceAnglesRadians[0],
+                        surfaceAnglesRadians[1], sunAnglesRadians[1], planeOfArrayIrradianceFrontCS,
+                        diffuseIrradianceFrontCS);
                     break;
             }
         }
@@ -2179,8 +2226,12 @@ int irrad::calc() {
             int errorcode = poaDecomp(weatherFilePOA, surfaceAnglesRadians, sunAnglesRadians, albedo, poaAll,
                                       directNormal, diffuseHorizontal, globalHorizontal, planeOfArrayIrradianceFront,
                                       diffuseIrradianceFront);
+            int errorcode_cs = poaDecomp(weatherFilePOA, surfaceAnglesRadians, sunAnglesRadians, albedo, poaAll,
+                clearskyIrradiance[1], clearskyIrradiance[2], clearskyIrradiance[0], planeOfArrayIrradianceFrontCS,
+                diffuseIrradianceFrontCS);
             calculatedDirectNormal = directNormal;
             calculatedDiffuseHorizontal = diffuseHorizontal;
+            
             return errorcode; //this will return 0 if successful, otherwise 40, 41, or 42 if calculated decomposed dni, dhi, or ghi are negative
         }
     }
