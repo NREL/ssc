@@ -96,7 +96,7 @@ public:
             ssc_number_t inflation_rate;
             int len, analysisPeriod;
             std::vector<size_t> genTimestepsPerHour;
-            std::vector<std::vector<double> > genVecs;
+            //std::vector<std::vector<double> > genVecs;
 
 
             for (size_t igen = 0; igen < generators.size(); igen++) {
@@ -115,6 +115,8 @@ public:
                 ssc_module_t module = ssc_module_create(compute_module.c_str());
 
                 var_table& input = compute_module_inputs->table;
+
+                ssc_module_exec_set_print(1);
                 ssc_module_exec(module, static_cast<ssc_data_t>(&input));
 
                 ssc_data_t compute_module_outputs = ssc_data_create();
@@ -130,10 +132,11 @@ public:
                 }
                 
                 // get minimum timestep from gen vector
-                auto curGen = ((var_table*)compute_module_outputs)->as_vector_double("gen");
-                //ssc_number_t* curGen = ssc_data_get_array(compute_module_outputs, "gen", &len);
-                genVecs.push_back(curGen);
-                currentTimeStepsPerHour = curGen.size() / 8760;
+                // double memory usage (at least)
+                //auto curGen = ((var_table*)compute_module_outputs)->as_vector_double("gen");
+                ssc_number_t* curGen = ssc_data_get_array(compute_module_outputs, "gen", &len);
+                //genVecs.push_back(curGen);
+                currentTimeStepsPerHour = len / 8760;
                 if (compute_module_inputs->table.lookup("system_use_lifetime_output")->num > 0) // below - assuming single year only
                     currentTimeStepsPerHour /= analysisPeriod;
                 if (currentTimeStepsPerHour > maximumTimeStepsPerHour)
@@ -150,7 +153,7 @@ public:
                 escal_or_annual(input, pOMProduction, analysisPeriod, "om_production", inflation_rate, 0.001, false, input.as_double("om_production_escal") * 0.01); // $/kWh after conversion
                 escal_or_annual(input, pOMCapacity, analysisPeriod, "om_capacity", inflation_rate, 1.0, false, input.as_double("om_capacity_escal") * 0.01); // $
 
-                // TODO: production - multiply by yearly gen (initially assume single year) - use degradation - specific to each generator
+                // production - multiply by yearly gen (initially assume single year) - use degradation - specific to each generator
                 // pvwattsv8 - "degradation" applied in financial model - assuming single year analysis like standalone pvwatts/single owner configuration
                 // wind - "degradation" applied in financial model - assumes system availability already applied to "gen" output
                 ssc_number_t* pEnergyNet = ((var_table*)compute_module_outputs)->allocate("cf_energy_net", analysisPeriod + 1);
@@ -191,14 +194,32 @@ public:
     for I = 0, i<8760 * minimumTimestep, i++
         for j=0; j<#generators; j++
             add generation from j for the correct timestep I
+            need lifetime "gen" for utility rate and financial modules with system_use_lifetime_output set to 1 so that degradation is accounted for.
 */
-            size_t genLength = 8760*maximumTimeStepsPerHour;// assumes single year gen
-            ssc_number_t *pGen = ((var_table*)outputs)->allocate("gen", genLength); // add to top level "output"
+            size_t genLength = 8760*maximumTimeStepsPerHour*analysisPeriod;// assumes single year gen
+            ssc_number_t *pGen = ((var_table*)outputs)->allocate("gen", genLength); // add to top level "output" - assumes analysis period the same for all generators
 
-            for (size_t i=0; i<genLength; i++) {
+
+            size_t idx = 0;
+            for (size_t i=0; i<genLength; i++) 
                 pGen[i] = 0.0;
-                for (size_t j=0; j<genVecs.size(); j++) {
-                    pGen[i] += genVecs[j][i/(genLength/genTimestepsPerHour[j])]; // sum instantaneous power kW
+            for (size_t g = 0; g < generators.size(); g++) {
+                var_table generator_outputs = ((var_table*)outputs)->lookup(generators[g])->table;
+                // retrieve each generator "gen" and "cf_degradation"
+                size_t count_gen;
+                ssc_number_t* gen = generator_outputs.as_array("gen", &count_gen);
+                size_t count_degrade;
+                ssc_number_t* cf_degradation = generator_outputs.as_array("cf_degradation", &count_degrade);
+                size_t idx = 0;
+                for (size_t y = 1; y<=analysisPeriod; y++) {
+                    for (size_t h = 0; h < 8760; h++) {
+                        for (size_t sph = 0; sph < maximumTimeStepsPerHour; sph++) {
+                            size_t offset = sph / maximumTimeStepsPerHour / genTimestepsPerHour[g];
+                            if (offset > genTimestepsPerHour[g]) offset = genTimestepsPerHour[g];
+                            pGen[idx] += gen[h + offset] * cf_degradation[y];
+                            idx++;
+                        }
+                    }
                 }
             }
             /*
@@ -309,7 +330,9 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
 
                 var_table& input = compute_module_inputs->table;
                 ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);  // check if issue with lookahead dispatch with hourly PV and subhourly wind
-                
+                ssc_data_set_number(static_cast<ssc_data_t>(&input), "system_use_lifetime_output", 1);
+
+                ssc_module_exec_set_print(1);
                 ssc_module_exec(module, static_cast<ssc_data_t>(&input));
 
                 ssc_data_t compute_module_outputs = ssc_data_create();
@@ -325,8 +348,8 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 }
                 // get latest output
 
-                auto curGen = ((var_table*)compute_module_outputs)->as_vector_double("gen");;
-                genVecs.push_back(curGen);
+                //auto curGen = ((var_table*)compute_module_outputs)->as_vector_double("gen");;
+                //genVecs.push_back(curGen);
 
                 // add production O and M calculations - done below before financial calculations
                 ssc_number_t nameplate = 0;
@@ -402,15 +425,14 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
 
             bool use_batt_output = false;
             ssc_number_t* pBattGen = 0;
-            int battGenLen = 0;
+            size_t battGenLen = 0;
             // update gen to battery output
             if (batteries.size() > 0) {
                 use_batt_output = true;
-                battGenLen = (int)genVecs[genVecs.size() - 1].size();
-                pBattGen = ((var_table*)outputs)->allocate("batt_gen", battGenLen); // add to top level "output"
-                for (int i = 0; i < battGenLen; i++)
-                    pBattGen[i] = genVecs[genVecs.size() - 1][i];
-            }
+                //battGenLen = (int)genVecs[genVecs.size() - 1].size();
+                var_table battery_outputs = ((var_table*)outputs)->lookup(batteries[0])->table;
+                pBattGen = battery_outputs.as_array("gen", &battGenLen);
+              }
 
  
 /*
@@ -443,9 +465,11 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                     throw exec_error("hybrid", "No input input_table found for ." + hybridVarTable);
 
                 var_table& input = compute_module_inputs->table;
-                if (use_batt_output)
-                    ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pBattGen, battGenLen);  // check if need to update to battery output
 
+//                if (use_batt_output)
+//                    ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pBattGen, battGenLen);  // check if need to update to battery output
+                ssc_data_set_number(static_cast<ssc_data_t>(&input), "system_use_lifetime_output", 1);
+                ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, genLength);
 
                 // set additional inputs from previous results - note - remove these from UI?
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "total_installed_cost", hybridTotalInstalledCost);
@@ -458,8 +482,10 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 for (size_t i = 0; i < financials.size(); i++) {
                     std::string compute_module = financials[i];
                     ssc_module_t module = ssc_module_create(compute_module.c_str());
-
+                    ssc_module_exec_set_print(1);
                     ssc_module_exec(module, static_cast<ssc_data_t>(&input));
+                    //ssc_module_exec_simple_nothread(module, static_cast<ssc_data_t>(&input)
+
 
                     int pidx = 0;
                     while (const ssc_info_t p_inf = ssc_module_var_info(module, pidx++)) {

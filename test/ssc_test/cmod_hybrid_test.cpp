@@ -65,16 +65,20 @@ TEST_F(CmodHybridTest, PVWattsv8WindBatterySingleOwner) {
     EXPECT_FALSE(errors);
     if (!errors)
     {
-        ssc_number_t annualenergy;
+        ssc_number_t pvannualenergy, windannualenergy, npv;
         auto outputs = ssc_data_get_table(dat, "output");
 
         auto pv_outputs = ssc_data_get_table(outputs, "pvwattsv8");
-        ssc_data_get_number(pv_outputs, "annual_energy", &annualenergy);
-        EXPECT_NEAR(annualenergy, 20776, 20776 * 0.01);
+        ssc_data_get_number(pv_outputs, "annual_energy", &pvannualenergy);
+        EXPECT_NEAR(pvannualenergy, 20776, 20776 * 0.01);
 
         auto wind_outputs = ssc_data_get_table(outputs, "windpower");
-        ssc_data_get_number(wind_outputs, "annual_energy", &annualenergy);
-        EXPECT_NEAR(annualenergy, 5927, 5927 * 0.01);
+        ssc_data_get_number(wind_outputs, "annual_energy", &windannualenergy);
+        EXPECT_NEAR(windannualenergy, 5927, 5927 * 0.01);
+
+        auto hybrid_outputs = ssc_data_get_table(outputs, "Hybrid");
+        ssc_data_get_number(hybrid_outputs, "project_return_aftertax_npv", &npv);
+        EXPECT_NEAR(npv, -87495, 87495 * 0.01);
     }
     ssc_data_free(dat);
     dat = nullptr;
