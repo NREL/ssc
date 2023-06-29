@@ -96,7 +96,6 @@ public:
             ssc_number_t inflation_rate;
             int len, analysisPeriod;
             std::vector<size_t> genTimestepsPerHour;
-            //std::vector<std::vector<double> > genVecs;
 
 
             for (size_t igen = 0; igen < generators.size(); igen++) {
@@ -116,7 +115,7 @@ public:
 
                 var_table& input = compute_module_inputs->table;
 
-                ssc_module_exec_set_print(1);
+                //ssc_module_exec_set_print(1);
                 ssc_module_exec(module, static_cast<ssc_data_t>(&input));
 
                 ssc_data_t compute_module_outputs = ssc_data_create();
@@ -132,10 +131,7 @@ public:
                 }
                 
                 // get minimum timestep from gen vector
-                // double memory usage (at least)
-                //auto curGen = ((var_table*)compute_module_outputs)->as_vector_double("gen");
                 ssc_number_t* curGen = ssc_data_get_array(compute_module_outputs, "gen", &len);
-                //genVecs.push_back(curGen);
                 currentTimeStepsPerHour = len / 8760;
                 if (compute_module_inputs->table.lookup("system_use_lifetime_output")->num > 0) // below - assuming single year only
                     currentTimeStepsPerHour /= analysisPeriod;
@@ -332,7 +328,7 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);  // check if issue with lookahead dispatch with hourly PV and subhourly wind
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "system_use_lifetime_output", 1);
 
-                ssc_module_exec_set_print(1);
+                //ssc_module_exec_set_print(1);
                 ssc_module_exec(module, static_cast<ssc_data_t>(&input));
 
                 ssc_data_t compute_module_outputs = ssc_data_create();
@@ -347,10 +343,6 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                     }
                 }
                 // get latest output
-
-                //auto curGen = ((var_table*)compute_module_outputs)->as_vector_double("gen");;
-                //genVecs.push_back(curGen);
-
                 // add production O and M calculations - done below before financial calculations
                 ssc_number_t nameplate = 0;
                 ssc_number_t* pOMProduction = ((var_table*)compute_module_outputs)->allocate("cf_om_production", analysisPeriod+1);
@@ -429,10 +421,8 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
             // update gen to battery output
             if (batteries.size() > 0) {
                 use_batt_output = true;
-                //battGenLen = (int)genVecs[genVecs.size() - 1].size();
-                var_table battery_outputs = ((var_table*)outputs)->lookup(batteries[0])->table;
-                pBattGen = battery_outputs.as_array("gen", &battGenLen);
-              }
+                pBattGen = ((var_table*)outputs)->lookup(batteries[0])->table.as_array("gen", &battGenLen);
+            }
 
  
 /*
@@ -455,9 +445,9 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
 
             */
             if (financials.size()>0) { // run remaining compute modules with necessary inputs
-                // TODO - note that single vartable is used to run multiple compute modules
-                // battery outputs need to be passed in
-                // setup test with modified defaults from hybrid system
+                // note that single vartable is used to run multiple compute modules
+                // battery outputs passed in if present
+                // setup test with modified defaults from hybrid system cmod_hybrid_test
                 // then update simulation.cpp to call hybrid
                 std::string hybridVarTable("Hybrid");
                 var_data* compute_module_inputs = input_table->table.lookup(hybridVarTable);// TODO - better naming of combined vartable?
@@ -466,11 +456,12 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
 
                 var_table& input = compute_module_inputs->table;
 
-//                if (use_batt_output)
-//                    ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pBattGen, battGenLen);  // check if need to update to battery output
+                if (use_batt_output)
+                    ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pBattGen, battGenLen);  // check if need to update to battery output
+                else
+                    ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, genLength);
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "system_use_lifetime_output", 1);
-                ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, genLength);
-
+ 
                 // set additional inputs from previous results - note - remove these from UI?
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "total_installed_cost", hybridTotalInstalledCost);
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "system_capacity", hybridSystemCapacity);
@@ -482,7 +473,7 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 for (size_t i = 0; i < financials.size(); i++) {
                     std::string compute_module = financials[i];
                     ssc_module_t module = ssc_module_create(compute_module.c_str());
-                    ssc_module_exec_set_print(1);
+                    //ssc_module_exec_set_print(1);
                     ssc_module_exec(module, static_cast<ssc_data_t>(&input));
                     //ssc_module_exec_simple_nothread(module, static_cast<ssc_data_t>(&input)
 
@@ -503,8 +494,6 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 ssc_data_set_table(outputs, hybridVarTable.c_str(), hybridFinancialOutputs);
                 ssc_data_free(hybridFinancialOutputs);
             }
-
-
             // add Hybrid calculations to output - in "Hybrid" vartable output above
             //ssc_data_set_number(outputs, "total_installed_cost", hybridTotalInstalledCost);
             //ssc_data_set_number(outputs, "system_capacity", hybridSystemCapacity);
