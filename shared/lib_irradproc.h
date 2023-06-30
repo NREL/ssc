@@ -778,7 +778,7 @@ void perez(double hextra, double dn, double df, double alb, double inc, double t
 * \param[out] clearsky_results[1] clear sky dni
 * \param[out] clearsky_results[2] clear sky dhi
 */
-void ineichen(double clearsky_results[3], double apparent_zenith, double absolute_airmass, double linke_turbidity = 1.0, double altitude = 0.0, double dni_extra = 1364.0, bool perez_enhancement = false);
+void ineichen(double clearsky_results[3], double apparent_zenith, double absolute_airmass, double linke_turbidity, double altitude, double dni_extra, bool perez_enhancement);
 /**
 * Isotropic sky model for diffuse irradiance on a tilted surface, see also perez(), hdkr().
 *
