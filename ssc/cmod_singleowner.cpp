@@ -1191,13 +1191,6 @@ public:
 				for (i = 0; i < nyears && i < (int)count_degrad; i++) cf.at(CF_degradation, i + 1) = (1.0 - degrad[i] / 100.0);
 			}
 		}
-/* testing gen not imported */
-        size_t count_gen = 0;
-        ssc_number_t* gen = 0;
-        gen = as_array("gen", &count_gen);
-
-        auto genvec = as_vector_ssc_number_t("gen");
-
 
 		hourly_energy_calcs.calculate(this);
 
