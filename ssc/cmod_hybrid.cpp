@@ -53,6 +53,7 @@ public:
 	}
     void exec()
     {
+        ssc_number_t percent = 0;
         var_data *input_table = lookup("input");
         if (input_table->type != SSC_TABLE)
             throw exec_error("hybrid", "No input input_table found.");
@@ -182,6 +183,9 @@ public:
                 ssc_module_free(module);
                 ssc_data_free(compute_module_outputs);
 
+                percent = 100.0f * ((float)igen / (float)(generators.size() + fuelcells.size() + batteries.size() + financials.size()));
+                update("", percent);
+
             } // end of generators
 
             /*
@@ -305,6 +309,10 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 ssc_data_set_table(outputs, compute_module.c_str(), compute_module_outputs);
                 ssc_module_free(module);
                 ssc_data_free(compute_module_outputs);
+
+                percent = 100.0f * ((float)(generators.size() + fuelcells.size()) / (float)(generators.size() + fuelcells.size() + batteries.size() + financials.size()));
+                update("", percent);
+
             }
 
             /* TODO - test hybrid output from fuel cell in future
@@ -412,6 +420,9 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 ssc_data_set_table(outputs, compute_module.c_str(), compute_module_outputs);
                 ssc_module_free(module);
                 ssc_data_free(compute_module_outputs);
+
+                percent = 100.0f * ((float)(generators.size() + fuelcells.size() + batteries.size()) / (float)(generators.size() + fuelcells.size() + batteries.size() + financials.size()));
+                update("", percent);
             }
 
             bool use_batt_output = false;
@@ -498,10 +509,16 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                     }
  
                     ssc_module_free(module);
+
+                    percent = 100.0f *((float)(i + generators.size() + fuelcells.size() + batteries.size()) / (float)(generators.size() + fuelcells.size() + batteries.size() + financials.size()));
+                    update("", percent);
+
                 }
 
                 ssc_data_set_table(outputs, hybridVarTable.c_str(), hybridFinancialOutputs);
                 ssc_data_free(hybridFinancialOutputs);
+
+
             }
             // add Hybrid calculations to output - in "Hybrid" vartable output above
             //ssc_data_set_number(outputs, "total_installed_cost", hybridTotalInstalledCost);
