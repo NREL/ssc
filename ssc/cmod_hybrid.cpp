@@ -328,7 +328,6 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);  // check if issue with lookahead dispatch with hourly PV and subhourly wind
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "system_use_lifetime_output", 1);
 
-                //ssc_module_exec_set_print(1);
                 ssc_module_exec(module, static_cast<ssc_data_t>(&input));
 
                 ssc_data_t compute_module_outputs = ssc_data_create();
@@ -457,9 +456,12 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 var_table& input = compute_module_inputs->table;
 
                 if (use_batt_output)
-                    ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pBattGen, battGenLen);  // check if need to update to battery output
+                    ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pBattGen, (int)battGenLen);  // check if need to update to battery output
                 else
-                    ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, genLength);
+                    ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);
+                ssc_data_set_number(static_cast<ssc_data_t>(&input), "system_use_lifetime_output", 1);
+
+                ssc_data_set_array(&(compute_module_inputs->table), "gen", pGen, (int)genLength);
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "system_use_lifetime_output", 1);
  
                 // set additional inputs from previous results - note - remove these from UI?
@@ -472,6 +474,13 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
 
                 for (size_t i = 0; i < financials.size(); i++) {
                     std::string compute_module = financials[i];
+
+                    // reset overwritten value
+                    if (use_batt_output)
+                        ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pBattGen, (int)battGenLen);  // check if need to update to battery output
+                    else
+                        ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);
+
                     ssc_module_t module = ssc_module_create(compute_module.c_str());
                     //ssc_module_exec_set_print(1);
                     ssc_module_exec(module, static_cast<ssc_data_t>(&input));
