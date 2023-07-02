@@ -486,12 +486,6 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 for (size_t i = 0; i < financials.size(); i++) {
                     std::string compute_module = financials[i];
 
-                    // reset overwritten value
-                    if (use_batt_output)
-                        ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pBattGen, (int)battGenLen);  // check if need to update to battery output
-                    else
-                        ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);
-
                     ssc_module_t module = ssc_module_create(compute_module.c_str());
                     //ssc_module_exec_set_print(1);
                     ssc_module_exec(module, static_cast<ssc_data_t>(&input));
