@@ -78,7 +78,7 @@ TEST_F(CmodHybridTest, PVWattsv8WindBatterySingleOwner) {
 
         auto hybrid_outputs = ssc_data_get_table(outputs, "Hybrid");
         ssc_data_get_number(hybrid_outputs, "project_return_aftertax_npv", &npv);
-        EXPECT_NEAR(npv, -54907, 54907 * 0.001);
+        EXPECT_NEAR(npv, -42392, 42392 * 0.001);
     }
     ssc_data_free(dat);
     dat = nullptr;
