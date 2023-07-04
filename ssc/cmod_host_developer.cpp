@@ -84,7 +84,7 @@ static var_info _cm_vtab_host_developer[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "lnte_nom",                 "Host indifference point levelized nominal",                       "cents/kWh",    "",                      "Cash Flow",      "*",                       "",                                         "" },
 // End Host specific inputs and outputs
 // -------------------
-	{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "", "", "System Output", "*", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "", "", "System Output", "system_use_lifetime_output=0", "", "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			              "System nameplate capacity",		                               "kW",                "",                        "System Output",             "*",					   "MIN=1e-3",                      "" },
 
 	/*loan moratorium from Sara for India Documentation\India\Loan Moratorum
