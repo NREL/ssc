@@ -4685,6 +4685,10 @@ void EvacReceiverModel::FQ_56CONV_v2(double T_5, double T_6, double P_6, double 
                 n = 0.36;
             }
 
+            // TB 2023 initialize C and m to be nan
+            m = std::numeric_limits<double>::quiet_NaN();
+            C = std::numeric_limits<double>::quiet_NaN();
+
             if (Re_D5 < 40.0) {
                 C = 0.75;
                 m = 0.4;
