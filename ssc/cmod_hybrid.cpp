@@ -350,7 +350,7 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                     }
                 }
                 // get latest output
-                // add production O and M calculations - done below before financial calculations
+                // add production O and M calculations - done below before financial calculations - note that these values do not have ssc_module_var_info values - need to be INOUT to subsequent compute modules
                 ssc_number_t nameplate = 0;
                 ssc_number_t* pOMProduction = ((var_table*)compute_module_outputs)->allocate("cf_om_production", analysisPeriod+1);
                 ssc_number_t* pOMCapacity = ((var_table*)compute_module_outputs)->allocate("cf_om_capacity", analysisPeriod+1);
