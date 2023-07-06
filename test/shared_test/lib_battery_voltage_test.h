@@ -134,7 +134,7 @@ protected:
 
     // Additional test case based on voltage table from a user. documented in SSC issue 412
     void CreateModel_SSC_412(double dt_hr) {
-        std::vector<double> voltage_vals = { 0, 1.7, 4, 1.7, 5, 1.58, 60, 1.5, 85, 1.4, 90, 1.3, 93, 1.2, 95, 1, 96, 0.9 };
+        std::vector<double> voltage_vals = { 0, 1.7, 4, 1.69, 5, 1.58, 60, 1.5, 85, 1.4, 90, 1.3, 93, 1.2, 95, 1, 96, 0.9 };
         util::matrix_t<double> voltage_table(9, 2, &voltage_vals);
 
         voltage_nom = 1.5;
