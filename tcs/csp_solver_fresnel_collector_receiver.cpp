@@ -3134,94 +3134,96 @@ double C_csp_fresnel_collector_receiver::calculate_thermal_efficiency_approx(con
     // q_incident is the power incident (absorbed by the absorber) on all the HCE receivers, calculated using the DNI and optical efficiency
     if (q_incident <= 0) return 0.;
 
-    // Incidence angle
-    int doy = DateTime::CalculateDayOfYear(weather.m_year, weather.m_month, weather.m_day);      // day of year
-    double time_start = ((doy - 1) * 24 + weather.m_hour + weather.m_minute / 60.) * 3600.;
-    double step = 3600.;
-    double time = time_start + step;
-    double time_hr = time / 3600.;  		                // [hr]
-    double dt_hr = step / 3600.;    			            // [hr]
-    double hour = fmod(time_hr, 24.);				        // [hr]
-    int day_of_year = (int)ceil(time_hr / 24.);             // Day of the year
-    double B = (day_of_year - 1) * 360.0 / 365.0 * CSP::pi / 180.0;                 // Duffie & Beckman 1.5.3b
-    double EOT = 229.2 * (0.000075 + 0.001868 * cos(B) - 0.032077 * sin(B) - 0.014615 * cos(B * 2.0) - 0.04089 * sin(B * 2.0));     // Eqn of time in minutes
-    double Dec = 23.45 * sin(360.0 * (284.0 + day_of_year) / 365.0 * CSP::pi / 180.0) * CSP::pi / 180.0;    // Declination in radians (Duffie & Beckman 1.6.1)
-    double SolarNoon = 12. - ((m_shift) * 180.0 / CSP::pi) / 15.0 - EOT / 60.0;     // Solar Noon and time in hours
-    double HrA = hour - dt_hr;
-    double StdTime = HrA + 0.5 * dt_hr;
-    double SolarTime = StdTime + ((m_shift) * 180.0 / CSP::pi) / 15.0 + EOT / 60.0;
-    double omega = (SolarTime - 12.0) * 15.0 * CSP::pi / 180.0;                     // m_hour angle (arc of sun) in radians
-    double SolarAlt = asin(sin(Dec) * sin(m_latitude) + cos(m_latitude) * cos(Dec) * cos(omega));
-    double SolarAz = (weather.m_solazi - 180.) * m_d2r;		// [rad] Solar azimuth angle
-    double CosTh = sqrt(1.0 - pow(cos(SolarAlt - 0) - cos(0) * cos(SolarAlt) * (1.0 - cos(SolarAz - m_ColAz)), 2));
-    double Theta = acos(CosTh);                             // [rad]
-
-    // Incidence angle modifier (IAM) from Burkholder & Kutscher 2008
-    double IamF1 = 0.000884;
-    double IamF2 = -0.0000537;
-    double IAM;
-    if (CosTh == 0) {
-        IAM = 0;
-    }
-    else {
-        IAM = std::min(1., (CosTh + IamF1 * Theta + IamF2 * pow(Theta, 2.)) / CosTh);
-    }
-
-    // Heat loss, where temperatures are in [C] per Burkholder & Kutscher 2008
-    // model coefficients for 2008 Schott PTR70 (vacuum) receiver
-    double A0 = 4.05;
-    double A1 = 0.247;
-    double A2 = -0.00146;
-    double A3 = 5.65e-06;
-    double A4 = 7.62e-08;
-    double A5 = -1.7;
-    double A6 = 0.0125;
-    double PerfFac = 1;
-    double T_amb = weather.m_tdry;                                // [C]
-    double W_spd = std::abs(weather.m_wspd);
-    double DNI = weather.m_beam;
-    double T_out_des = m_T_loop_out_des - 273.15;                 // [C] (converted from [C] to [K] in init and now back to [C])
-    double T_in_des = m_T_loop_in_des - 273.15;                   // [C] (converted from [C] in [K] in init and now back to [C])
-    double HLTerm1 = (A0 + A5 * sqrt(W_spd)) * (T_out_des - T_in_des);
-    double HLTerm2 = (A1 + A6 * sqrt(W_spd)) * ((pow(T_out_des, 2) - pow(T_in_des, 2)) / 2. - T_amb * (T_out_des - T_in_des));
-    double HLTerm3 = ((A2 + A4 * DNI * CosTh * IAM) / 3.) * (pow(T_out_des, 3) - pow(T_in_des, 3));
-    double HLTerm4 = (A3 / 4.) * (pow(T_out_des, 4) - pow(T_in_des, 4));
-    double HL = (HLTerm1 + HLTerm2 + HLTerm3 + HLTerm4) / (T_out_des - T_in_des);		//[W/m]
-    double HL_hces = std::max(HL * m_L_tot * m_nLoops * PerfFac, 0.); // [W] convert from W/m to W for entire field
-
-    
-    // Piping heat loss, at average hot/cold design temperature
-    double T_avg_des = 0.5 * (T_out_des + T_in_des);              // [C]
-
-    double row_distance = m_L_crossover; // use crossover as row distance
-    //double HL_headers_old = m_nfsec * (2 * m_nhdrsec) * row_distance * m_D_hdr[0] * CSP::pi * m_Pipe_hl_coef * (T_avg_des - T_amb);   // [W]
-
-
-    double HL_headers = 0;
-    // Sum hot headers heat loss
-    for (int i = 0; i < m_nhdrsec; i++)
+    // DEBUG (old estimation)
+    if (false)
     {
-        HL_headers += m_L_crossover * m_D_hdr[i] * CSP::pi * m_Pipe_hl_coef * (T_avg_des - T_amb);
+        // Incidence angle
+        int doy = DateTime::CalculateDayOfYear(weather.m_year, weather.m_month, weather.m_day);      // day of year
+        double time_start = ((doy - 1) * 24 + weather.m_hour + weather.m_minute / 60.) * 3600.;
+        double step = 3600.;
+        double time = time_start + step;
+        double time_hr = time / 3600.;  		                // [hr]
+        double dt_hr = step / 3600.;    			            // [hr]
+        double hour = fmod(time_hr, 24.);				        // [hr]
+        int day_of_year = (int)ceil(time_hr / 24.);             // Day of the year
+        double B = (day_of_year - 1) * 360.0 / 365.0 * CSP::pi / 180.0;                 // Duffie & Beckman 1.5.3b
+        double EOT = 229.2 * (0.000075 + 0.001868 * cos(B) - 0.032077 * sin(B) - 0.014615 * cos(B * 2.0) - 0.04089 * sin(B * 2.0));     // Eqn of time in minutes
+        double Dec = 23.45 * sin(360.0 * (284.0 + day_of_year) / 365.0 * CSP::pi / 180.0) * CSP::pi / 180.0;    // Declination in radians (Duffie & Beckman 1.6.1)
+        double SolarNoon = 12. - ((m_shift) * 180.0 / CSP::pi) / 15.0 - EOT / 60.0;     // Solar Noon and time in hours
+        double HrA = hour - dt_hr;
+        double StdTime = HrA + 0.5 * dt_hr;
+        double SolarTime = StdTime + ((m_shift) * 180.0 / CSP::pi) / 15.0 + EOT / 60.0;
+        double omega = (SolarTime - 12.0) * 15.0 * CSP::pi / 180.0;                     // m_hour angle (arc of sun) in radians
+        double SolarAlt = asin(sin(Dec) * sin(m_latitude) + cos(m_latitude) * cos(Dec) * cos(omega));
+        double SolarAz = (weather.m_solazi - 180.) * m_d2r;		// [rad] Solar azimuth angle
+        double CosTh = sqrt(1.0 - pow(cos(SolarAlt - 0) - cos(0) * cos(SolarAlt) * (1.0 - cos(SolarAz - m_ColAz)), 2));
+        double Theta = acos(CosTh);                             // [rad]
+
+        // Incidence angle modifier (IAM) from Burkholder & Kutscher 2008
+        double IamF1 = 0.000884;
+        double IamF2 = -0.0000537;
+        double IAM;
+        if (CosTh == 0) {
+            IAM = 0;
+        }
+        else {
+            IAM = std::min(1., (CosTh + IamF1 * Theta + IamF2 * pow(Theta, 2.)) / CosTh);
+        }
+
+        // Heat loss, where temperatures are in [C] per Burkholder & Kutscher 2008
+        // model coefficients for 2008 Schott PTR70 (vacuum) receiver
+        double A0 = 4.05;
+        double A1 = 0.247;
+        double A2 = -0.00146;
+        double A3 = 5.65e-06;
+        double A4 = 7.62e-08;
+        double A5 = -1.7;
+        double A6 = 0.0125;
+        double PerfFac = 1;
+        double T_amb = weather.m_tdry;                                // [C]
+        double W_spd = std::abs(weather.m_wspd);
+        double DNI = weather.m_beam;
+        double T_out_des = m_T_loop_out_des - 273.15;                 // [C] (converted from [C] to [K] in init and now back to [C])
+        double T_in_des = m_T_loop_in_des - 273.15;                   // [C] (converted from [C] in [K] in init and now back to [C])
+        double HLTerm1 = (A0 + A5 * sqrt(W_spd)) * (T_out_des - T_in_des);
+        double HLTerm2 = (A1 + A6 * sqrt(W_spd)) * ((pow(T_out_des, 2) - pow(T_in_des, 2)) / 2. - T_amb * (T_out_des - T_in_des));
+        double HLTerm3 = ((A2 + A4 * DNI * CosTh * IAM) / 3.) * (pow(T_out_des, 3) - pow(T_in_des, 3));
+        double HLTerm4 = (A3 / 4.) * (pow(T_out_des, 4) - pow(T_in_des, 4));
+        double HL = (HLTerm1 + HLTerm2 + HLTerm3 + HLTerm4) / (T_out_des - T_in_des);		//[W/m]
+        double HL_hces = std::max(HL * m_L_tot * m_nLoops * PerfFac, 0.); // [W] convert from W/m to W for entire field
+
+
+        // Piping heat loss, at average hot/cold design temperature
+        double T_avg_des = 0.5 * (T_out_des + T_in_des);              // [C]
+
+        double row_distance = m_L_crossover; // use crossover as row distance
+        //double HL_headers_old = m_nfsec * (2 * m_nhdrsec) * row_distance * m_D_hdr[0] * CSP::pi * m_Pipe_hl_coef * (T_avg_des - T_amb);   // [W]
+
+
+        double HL_headers = 0;
+        // Sum hot headers heat loss
+        for (int i = 0; i < m_nhdrsec; i++)
+        {
+            HL_headers += m_L_crossover * m_D_hdr[i] * CSP::pi * m_Pipe_hl_coef * (T_avg_des - T_amb);
+        }
+        HL_headers *= 2.0; // multiply to account for cold headers
+        HL_headers *= m_nfsec; // account for field sections
+
+
+
+        double HL_runners = 0.;
+        for (int i = 0; i < m_nrunsec; i++) {
+            HL_runners += 2. * m_L_runner[i] * CSP::pi * m_D_runner[i] * m_Pipe_hl_coef * (T_avg_des - T_amb);   // [W]
+        }
+        HL_runners *= 2.0; // account for cold headers
+
+
+        double HL_total = HL_hces + HL_headers + HL_runners;
+        double eta_therm_approx = std::max(1. - HL_total * 1.e-6 / q_incident, 0.);
     }
-    HL_headers *= 2.0; // multiply to account for cold headers
-    HL_headers *= m_nfsec; // account for field sections
 
-
-
-    double HL_runners = 0.;
-    for (int i = 0; i < m_nrunsec; i++) {
-        HL_runners += 2. * m_L_runner[i] * CSP::pi * m_D_runner[i] * m_Pipe_hl_coef * (T_avg_des - T_amb);   // [W]
-    }
-    HL_runners *= 2.0; // account for cold headers
-    
-
-    double HL_total = HL_hces + HL_headers + HL_runners;
-    double eta_therm_approx = std::max(1. - HL_total * 1.e-6 / q_incident, 0.);
-
-
-    // DEBUG
+    // New Estimate (using steady state)
     double q_eff = 0;
-    if (true)
     {
         C_csp_solver_htf_1state htfInletState;
         htfInletState.m_temp = m_T_loop_in_des - 273.15;
@@ -3253,7 +3255,7 @@ double C_csp_fresnel_collector_receiver::calculate_thermal_efficiency_approx(con
         q_eff = q_thermal / Q_available;
 
 
-        double eff_old = eta_therm_approx;
+        //double eff_old = eta_therm_approx;
         double eff_new = q_eff;
         
 
