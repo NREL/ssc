@@ -44,13 +44,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static var_info _cm_vtab_pvwatts[] = {
 
 /*   VARTYPE           DATATYPE         NAME                         LABEL                              UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_ARRAY,       "beam",				       "Direct normal radiation",         "W/m2",  "",                      "Weather",      "*",                       "",                                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "poa_beam",                   "Incident direct normal radiation","W/m2",  "",                      "Weather",      "*",                       "LENGTH_EQUAL=beam",                        "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "poa_skydiff",                "Incident sky diffuse radiation",  "W/m2",  "",                      "Weather",      "*",                       "LENGTH_EQUAL=beam",                    "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "poa_gnddiff",                "Incident ground diffuse irradiance","W/m2","",                      "Weather",      "*",                       "LENGTH_EQUAL=beam",                    "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "tdry",                       "Dry bulb temperature",           "'C",     "",                      "Weather",      "*",                       "LENGTH_EQUAL=beam",                    "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "wspd",                       "Wind speed",                     "m/s",    "",                      "Weather",      "*",                       "LENGTH_EQUAL=beam",                    "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "incidence",                  "Incidence angle to surface",     "deg",    "",                      "Weather",      "*",                       "LENGTH_EQUAL=beam",                    "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "beam",				       "Direct normal radiation",         "W/m2",  "",                      "weather",      "*",                       "",                                         "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "poa_beam",                   "Incident direct normal radiation","W/m2",  "",                      "weather",      "*",                       "LENGTH_EQUAL=beam",                        "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "poa_skydiff",                "Incident sky diffuse radiation",  "W/m2",  "",                      "weather",      "*",                       "LENGTH_EQUAL=beam",                    "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "poa_gnddiff",                "Incident ground diffuse irradiance","W/m2","",                      "weather",      "*",                       "LENGTH_EQUAL=beam",                    "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "tdry",                       "Dry bulb temperature",           "'C",     "",                      "weather",      "*",                       "LENGTH_EQUAL=beam",                    "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "wspd",                       "Wind speed",                     "m/s",    "",                      "weather",      "*",                       "LENGTH_EQUAL=beam",                    "" },
+	{ SSC_INPUT,        SSC_ARRAY,       "incidence",                  "Incidence angle to surface",     "deg",    "",                      "weather",      "*",                       "LENGTH_EQUAL=beam",                    "" },
 	
 	{ SSC_INPUT,        SSC_NUMBER,      "step",                       "Time step of input data",        "sec",    "",                       "PVWatts",     "?=3600",                       "POSITIVE",                    "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "system_size",                "Nameplate capacity",             "kW",     "",                      "PVWatts",      "*",                       "MIN=0.5,MAX=100000",                       "" },

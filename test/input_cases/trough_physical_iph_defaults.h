@@ -263,7 +263,6 @@ ssc_data_t trough_physical_iph_defaults()
     ssc_data_set_matrix(data, "sf_hdr_wallthicks", p_sf_hdr_wallthicks, 1, 1);
     ssc_number_t p_sf_hdr_lengths[1] = { -1 };
     ssc_data_set_matrix(data, "sf_hdr_lengths", p_sf_hdr_lengths, 1, 1);
-    ssc_data_set_number(data, "adjust:constant", 4);
     ssc_data_set_number(data, "use_solar_mult_or_aperture_area", -1);
     ssc_data_set_number(data, "specified_solar_multiple", 2.5);
     ssc_data_set_number(data, "specified_total_aperture", -1);
@@ -272,6 +271,8 @@ ssc_data_t trough_physical_iph_defaults()
     ssc_data_set_number(data, "disp_wlim_maxspec", 10.e37);
     ssc_number_t p_trough_loop_control[13] = { 4, 1, 1, 4, 1, 1, 3, 1, 1, 2, 1, 1, 1 };
     ssc_data_set_array(data, "trough_loop_control", p_trough_loop_control, 13);
+
+    ssc_data_set_number(data, "adjust_constant", 4.0);
 
     return data;
 }

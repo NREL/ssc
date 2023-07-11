@@ -107,6 +107,9 @@ static ssc_equation_entry ssc_equation_table [] = {
         {"Calculate_thermal_params", Calculate_thermal_params,
             "Battery", calculate_thermal_params_doc,
             false, false},
+        {"Reopt_size_standalone_battery_post",  Reopt_size_standalone_battery_params,
+            "Battery", Reopt_size_standalone_battery_params_doc,
+            false, true},
 
         // Battery stateful
         {"Calculate_thermal_params", Calculate_thermal_params,
@@ -162,8 +165,8 @@ static ssc_equation_entry ssc_equation_table [] = {
             true, false},
 
         // Utility Rate
-        {"ElectricityRates_format_as_URDBv7", ElectricityRates_format_as_URDBv7,
-            "UtilityRate5", ElectricityRates_format_as_URDBv7_doc,
+        {"ElectricityRates_format_as_URDBv7", ElectricityRates_format_as_URDBv8,
+            "UtilityRate5", ElectricityRates_format_as_URDBv8_doc,
             false, true},
 
         // analysis period change

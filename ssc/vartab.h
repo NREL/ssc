@@ -209,5 +209,10 @@ void vt_get_matrix(var_table* vt, const std::string& name, util::matrix_t<double
 
 void vt_get_matrix_vec(var_table* vt, const std::string& name, std::vector<std::vector<double>>& mat);
 
+void map_input(var_table* vt, const std::string& sam_name, var_table* reopt_table, const std::string& reopt_name,
+    bool sum = false, bool to_ratio = false);
+
+void map_optional_input(var_table* vt, const std::string& sam_name, var_table* reopt_table, const std::string& reopt_name,
+    double def_val, bool to_ratio = false);
 
 #endif

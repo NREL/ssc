@@ -43,7 +43,7 @@ public:
 	HTFProperties();
 	
 	// The absolute value of these matter because we need to pass them in from SAM UI & cmods
-	enum {
+	enum E_HTF_PROPS {
 		Air = 1,
 		Stainless_AISI316,
 		Water_liquid,
@@ -120,17 +120,16 @@ public:
 
 	// 12.11.15 twn: Add method to calculate Cp as average of values throughout temperature range
 	//               rather than at the range's midpoint
-	double Cp_ave(double T_cold_K, double T_hot_K, int n_points);
+	double Cp_ave(double T_cold_K, double T_hot_K);
 
 	const util::matrix_t<double> *get_prop_table();
 	//bool equals(const util::matrix_t<double> *comp_table);
 	bool equals(HTFProperties *comp_class);
+    void set_integration_points(double n_points);
 
 private:
-	static const int m_m = 2;		// Integer for interpolation routine
 
 	Linear_Interp User_Defined_Props;		// Define interpolation class in case user defined propeties are required
-
 	Linear_Interp mc_temp_enth_lookup;		// Enthalpy-temperature relationship, populated by pre-processor: 'set_temp_enth_lookup' 
 	void set_temp_enth_lookup();
 	bool m_is_temp_enth_avail;
@@ -139,7 +138,7 @@ private:
 	util::matrix_t<double> m_userTable;	// User table of properties
 
 	std::string uf_err_msg;	//Error message when the user HTF table is invalid
-	
+    int m_integration_points = 5;
 };
 
 class AbsorberProps
