@@ -1529,7 +1529,7 @@ int C_comp_multi_stage::design_given_outlet_state(int comp_model_code, double T_
 
     double max_calc_tip_speed = mv_c_stages[0]->ms_des_solved.m_tip_ratio;      //[-]
 
-	double tip_speed_limit = 0.85;
+    double tip_speed_limit = 0.85;
 
 	CO2_state co2_props;
 

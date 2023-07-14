@@ -49,7 +49,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 SSCEXPORT int ssc_version()
 {
-	return 279;
+	return 280;
 }
 
 SSCEXPORT const char *ssc_build_info()
@@ -545,13 +545,22 @@ SSCEXPORT ssc_var_t ssc_data_lookup_case(ssc_data_t p_data, const char *name)
     return vt->lookup_match_case(name);
 }
 
-SSCEXPORT void ssc_data_set_var(ssc_data_t p_data, const char *name, ssc_var_t p_var)
+SSCEXPORT void ssc_data_set_var(ssc_data_t p_data, const char* name, ssc_var_t p_var)
 {
     auto vt = static_cast<var_table*>(p_data);
     if (!vt) return;
     auto vd = static_cast<var_data*>(p_var);
     if (!p_var) return;
     vt->assign(name, *vd);
+}
+
+SSCEXPORT void ssc_data_set_var_match_case(ssc_data_t p_data, const char* name, ssc_var_t p_var)
+{
+    auto vt = static_cast<var_table*>(p_data);
+    if (!vt) return;
+    auto vd = static_cast<var_data*>(p_var);
+    if (!p_var) return;
+    vt->assign_match_case(name, *vd);
 }
 
 SSCEXPORT void ssc_data_set_string( ssc_data_t p_data, const char *name, const char *value )
