@@ -1288,6 +1288,19 @@ SSCEXPORT void ssc_module_extproc_output( ssc_handler_t p_handler, const char *o
 	if (hi)	hi->on_stdout( output_line );
 }
 
+SSCEXPORT ssc_bool_t ssc_module_add_var_info(ssc_module_t p_mod, ssc_info_t v)
+{
+    compute_module* cm = static_cast<compute_module*>(p_mod);
+    if (!p_mod) return 0;
+
+    var_info* vi = static_cast<var_info*>(v);
+    if (!vi) return 0;
+    cm->add_var_info(vi);
+
+    return 1;
+}
+
+
 SSCEXPORT const char *ssc_module_log( ssc_module_t p_mod, int index, int *item_type, float *time )
 {
 	compute_module *cm = static_cast<compute_module*>(p_mod);

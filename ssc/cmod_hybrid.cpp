@@ -40,8 +40,19 @@ static var_info _cm_vtab_hybrid[] = {
 	{ SSC_INPUT,         SSC_TABLE,      "input",               "input_table for multiple technologies and one financial market",             "","","",      "*",        "",      "" },
     { SSC_OUTPUT,        SSC_TABLE,      "output",               "output_table for multiple technologies and one financial market",           "","","",      "*",        "",      "" },
 
-
 var_info_invalid };
+
+// for cost outputs calculated below
+static var_info _cm_vtab_hybrid_om[] = {
+    /*   VARTYPE           DATATYPE         NAME                           LABEL                                UNITS     META                      GROUP                      REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+        { SSC_OUTPUT,         SSC_ARRAY,      "cf_om_production",     "production O&M costs",             "$","","",      "",        "",      "" },
+        { SSC_OUTPUT,         SSC_ARRAY,      "cf_om_capacity",     "capacity O&M costs",             "$","","",      "",        "",      "" },
+        { SSC_OUTPUT,         SSC_ARRAY,      "cf_om_fixed",     "fixed O&M costs",             "$","","",      "",        "",      "" },
+        { SSC_OUTPUT,         SSC_ARRAY,      "cf_om_land_lease",     "land lease O&M costs",             "$","","",      "",        "",      "" },
+        { SSC_OUTPUT,         SSC_ARRAY,      "cf_energy_net",     "land lease O&M costs",             "$","","",      "",        "",      "" },
+
+    var_info_invalid };
+
 
 class cm_hybrid : public compute_module
 {
@@ -130,7 +141,10 @@ public:
                         ssc_data_set_var(compute_module_outputs, var_name, var_value);
                     }
                 }
-                
+
+                // add o and m outputs
+                ssc_module_add_var_info(module, _cm_vtab_hybrid_om);
+
                 // get minimum timestep from gen vector
                 ssc_number_t* curGen = ssc_data_get_array(compute_module_outputs, "gen", &len);
                 currentTimeStepsPerHour = len / 8760;
