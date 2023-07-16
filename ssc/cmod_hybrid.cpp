@@ -42,17 +42,17 @@ static var_info _cm_vtab_hybrid[] = {
 
 var_info_invalid };
 
+/*moved to common.cpp 
 // for cost outputs calculated below
 static var_info _cm_vtab_hybrid_om[] = {
-    /*   VARTYPE           DATATYPE         NAME                           LABEL                                UNITS     META                      GROUP                      REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
         { SSC_OUTPUT,         SSC_ARRAY,      "cf_om_production",     "production O&M costs",             "$","","",      "",        "",      "" },
         { SSC_OUTPUT,         SSC_ARRAY,      "cf_om_capacity",     "capacity O&M costs",             "$","","",      "",        "",      "" },
         { SSC_OUTPUT,         SSC_ARRAY,      "cf_om_fixed",     "fixed O&M costs",             "$","","",      "",        "",      "" },
         { SSC_OUTPUT,         SSC_ARRAY,      "cf_om_land_lease",     "land lease O&M costs",             "$","","",      "",        "",      "" },
-        { SSC_OUTPUT,         SSC_ARRAY,      "cf_energy_net",     "land lease O&M costs",             "$","","",      "",        "",      "" },
+        { SSC_OUTPUT,         SSC_ARRAY,      "cf_energy_net",     "annual energy",             "kWh","","",      "",        "",      "" },
 
     var_info_invalid };
-
+*/
 
 class cm_hybrid : public compute_module
 {
@@ -126,8 +126,10 @@ public:
                 ssc_module_t module = ssc_module_create(compute_module.c_str());
 
                 var_table& input = compute_module_inputs->table;
+                ssc_data_set_number(static_cast<ssc_data_t>(&input), "is_hybrid", 1);
 
-                //ssc_module_exec_set_print(1);
+
+                ssc_module_exec_set_print(1);
                 ssc_module_exec(module, static_cast<ssc_data_t>(&input));
 
                 ssc_data_t compute_module_outputs = ssc_data_create();
@@ -143,7 +145,7 @@ public:
                 }
 
                 // add o and m outputs
-                ssc_module_add_var_info(module, _cm_vtab_hybrid_om);
+                //ssc_module_add_var_info(module, _cm_vtab_hybrid_om);
 
                 // get minimum timestep from gen vector
                 ssc_number_t* curGen = ssc_data_get_array(compute_module_outputs, "gen", &len);
@@ -158,7 +160,7 @@ public:
                 ssc_number_t* pOMProduction = ((var_table*)compute_module_outputs)->allocate("cf_om_production", analysisPeriod+1);
                 ssc_number_t* pOMCapacity = ((var_table*)compute_module_outputs)->allocate("cf_om_capacity", analysisPeriod+1);
                 ssc_number_t* pOMFixed = ((var_table*)compute_module_outputs)->allocate("cf_om_fixed", analysisPeriod+1); 
-                inflation_rate = compute_module_inputs->table.lookup("inflation_rate")->num;
+                inflation_rate = compute_module_inputs->table.lookup("inflation_rate")->num * 0.01;
 
                 escal_or_annual(input, pOMFixed, analysisPeriod, "om_fixed", inflation_rate, system_capacity, false, input.as_double("om_fixed_escal") * 0.01); // $ after multiplying by system capacity
                 escal_or_annual(input, pOMProduction, analysisPeriod, "om_production", inflation_rate, 0.001, false, input.as_double("om_production_escal") * 0.01); // $/kWh after conversion
@@ -263,6 +265,7 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
 
                 var_table& input = compute_module_inputs->table;
                 ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);  // check if issue with hourly PV and subhourly wind
+                ssc_data_set_number(static_cast<ssc_data_t>(&input), "is_hybrid", 1);
 
                 ssc_module_exec(module, static_cast<ssc_data_t>(&input));
 
@@ -284,7 +287,7 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 ssc_number_t* pOMProduction = ((var_table*)compute_module_outputs)->allocate("cf_om_production", analysisPeriod+1);
                 ssc_number_t* pOMCapacity = ((var_table*)compute_module_outputs)->allocate("cf_om_capacity", analysisPeriod+1);
                 ssc_number_t* pOMFixed = ((var_table*)compute_module_outputs)->allocate("cf_om_fixed", analysisPeriod+1);
-                inflation_rate = compute_module_inputs->table.lookup("inflation_rate")->num; // can retrieve from "Hybrid" vartable directly
+                inflation_rate = compute_module_inputs->table.lookup("inflation_rate")->num * 0.01; // can retrieve from "Hybrid" vartable directly
                 escal_or_annual(input, pOMFixed, analysisPeriod, "om_fuelcell_fixed_cost", inflation_rate, 1.0, false, input.as_double("om_fixed_escal") * 0.01); // $
                 escal_or_annual(input, pOMProduction, analysisPeriod, "om_fuelcell_variable_cost", inflation_rate, 0.001, false, input.as_double("om_production_escal") * 0.01); // $/kW
                 escal_or_annual(input, pOMCapacity, analysisPeriod, "om_fuelcell_capacity_cost", inflation_rate, system_capacity, false, input.as_double("om_capacity_escal") * 0.01); // $
@@ -349,6 +352,8 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 var_table& input = compute_module_inputs->table;
                 ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);  // check if issue with lookahead dispatch with hourly PV and subhourly wind
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "system_use_lifetime_output", 1);
+                ssc_data_set_number(static_cast<ssc_data_t>(&input), "is_hybrid", 1);
+
 
                 ssc_module_exec(module, static_cast<ssc_data_t>(&input));
 
@@ -369,7 +374,7 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 ssc_number_t* pOMProduction = ((var_table*)compute_module_outputs)->allocate("cf_om_production", analysisPeriod+1);
                 ssc_number_t* pOMCapacity = ((var_table*)compute_module_outputs)->allocate("cf_om_capacity", analysisPeriod+1);
                 ssc_number_t* pOMFixed = ((var_table*)compute_module_outputs)->allocate("cf_om_fixed", analysisPeriod+1);
-                inflation_rate = compute_module_inputs->table.lookup("inflation_rate")->num; // can retrieve from "Hybrid" vartable directly
+                inflation_rate = compute_module_inputs->table.lookup("inflation_rate")->num * 0.01; // can retrieve from "Hybrid" vartable directly
                 escal_or_annual(input, pOMFixed, analysisPeriod, "om_batt_fixed_cost", inflation_rate, 1.0, false, input.as_double("om_fixed_escal") * 0.01);
                 escal_or_annual(input, pOMProduction, analysisPeriod, "om_batt_variable_cost", inflation_rate, 0.001, false, input.as_double("om_production_escal") * 0.01);
                 escal_or_annual(input, pOMCapacity, analysisPeriod, "om_batt_capacity_cost", inflation_rate, 1.0, false, input.as_double("om_capacity_escal") * 0.01);
