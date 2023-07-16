@@ -42,16 +42,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 void C_HTRBypass_Cycle::design_core(int& error_code)
 {
-    // Temporary Hard coded parameters
-    //ms_des_par.m_recomp_frac = 0.3;
-    //m_dT_BP = 10;
-    //m_T_HTF_PHX_inlet = 670 + 273;  // K
-    //m_T_HTF_BP_outlet = 650 + 273;  // K
-    //m_cp_HTF = 1.482e+03;           // J/kg K
-    //ms_des_par.m_P_mc_in = 10000;
-    //ms_des_par.m_P_mc_out = 25000;
-    //m_T_t_in = 923.149;
-
     // DEBUG
     if (false)
     {
@@ -77,8 +67,139 @@ void C_HTRBypass_Cycle::design_core(int& error_code)
         design_core_standard(temp_error);
     }
 
-    //DEBUG Alfani
-    if (true)
+    // DEBUG sco2 flex
+    if (false)
+    {
+        m_bp_frac = 0.11;
+        m_cp_HTF = 1.5375;
+
+
+        int temp_error = 0;
+        design_core_standard(temp_error);
+
+        std::string output = make_result_csv_string();
+
+        int o = 0;
+
+        // Calculate Recuperator Balances
+        {
+            // HTR
+            double Q_htr_lp;
+            double Q_htr_hp;
+            {
+                double h1_lp = m_enth_last[TURB_OUT];
+                double h2_lp = m_enth_last[HTR_LP_OUT];
+                double mdot_lp = m_m_dot_t;
+
+                Q_htr_lp = mdot_lp * (h2_lp - h1_lp);
+
+                double h1_hp = m_enth_last[MIXER_OUT];
+                double h2_hp = m_enth_last[HTR_HP_OUT];
+                double mdot_hp = m_m_dot_htr_hp;
+
+                Q_htr_hp = mdot_hp * (h2_hp - h1_hp);
+            }
+
+            // LTR
+            double Q_ltr_lp;
+            double Q_ltr_hp;
+            {
+                double h1_lp = m_enth_last[HTR_LP_OUT];
+                double h2_lp = m_enth_last[LTR_LP_OUT];
+                double mdot_lp = m_m_dot_t;
+
+                Q_ltr_lp = mdot_lp * (h2_lp - h1_lp);
+
+                double h1_hp = m_enth_last[MC_OUT];
+                double h2_hp = m_enth_last[LTR_HP_OUT];
+                double mdot_hp = m_m_dot_mc;
+
+                Q_ltr_hp = mdot_hp * (h2_hp - h1_hp);
+            }
+
+            CO2_state co2_props;
+
+            // HTR (sco2 flex)
+            double Q_dot_HTR_LP_paper;
+            double Q_dot_HTR_HP_paper;
+            {
+                int prop_error_code = CO2_TP(481.6 + 273.15, 8.1 * 1e3, &co2_props);
+                double h1 = co2_props.enth;
+                double cp1 = co2_props.cp * 1e3;
+
+                CO2_TP(204.4 + 273.15, 8.06 * 1e3, &co2_props);
+                double h2 = co2_props.enth;
+                double cp2 = co2_props.cp * 1e3;
+
+                double mdot = 239; // kg/s
+                Q_dot_HTR_LP_paper = mdot * (h2 - h1);
+
+
+                double cp_LP = (cp1 + cp2) / 2.0;
+
+
+
+                CO2_TP(194.4 + 273.15, 24.875 * 1e3, &co2_props);
+                double h3 = co2_props.enth;
+                double cp3 = co2_props.cp * 1e3;
+
+                CO2_TP(470.6 + 273.15, 24.75 * 1e3, &co2_props);
+                double h4 = co2_props.enth;
+                double cp4 = co2_props.cp * 1e3;
+
+                double mdot2 = 212.7; // kg/s
+                Q_dot_HTR_HP_paper = mdot2 * (h4 - h3);
+
+                double cp_HP = (cp3 + cp4) / 2.0;
+
+                double pu = 0;
+            }
+
+
+            // LTR (sco2 flex)
+            double Q_dot_LTR_LP_paper;
+            double Q_dot_LTR_HP_paper;
+            {
+                int prop_error_code = CO2_TP(204.4 + 273.15, 8.06 * 1e3, &co2_props);
+                double h1 = co2_props.enth;
+                double cp1 = co2_props.cp * 1e3;
+
+                CO2_TP(80 + 273.15, 8.019 * 1e3, &co2_props);
+                double h2 = co2_props.enth;
+                double cp2 = co2_props.cp * 1e3;
+
+                double mdot = 239; // kg/s
+                Q_dot_LTR_LP_paper = mdot * (h2 - h1);
+
+                double cp_LP = (cp1 + cp2) / 2.0;
+
+
+                CO2_TP(69.9 + 273.15, 25 * 1e3, &co2_props);
+                double h3 = co2_props.enth;
+                double cp3 = co2_props.cp * 1e3;
+
+                CO2_TP(194.3 + 273.15, 24.875 * 1e3, &co2_props);
+                double h4 = co2_props.enth;
+                double cp4 = co2_props.cp * 1e3;
+
+                double mdot2 = 153.7; // kg/s
+                Q_dot_LTR_HP_paper = mdot2 * (h4 - h3);
+
+
+                double cp_HP = (cp3 + cp4) / 2.0;
+
+
+                double pu = 0;
+            }
+
+            int pox = 0;
+        }
+
+        return;
+    }
+
+    // DEBUG Alfani 2019
+    if (false)
     {
         m_bp_frac = 0.17386;
         m_cp_HTF = 1.15;
@@ -92,6 +213,170 @@ void C_HTRBypass_Cycle::design_core(int& error_code)
         int o = 0;
 
         return;
+    }
+
+    // DEBUG Alfani 2020
+    if (true)
+    {
+        m_bp_frac = 0.114;
+
+        int temp_error = 0;
+        design_core_standard(temp_error);
+
+        std::string output = make_result_csv_string();
+
+        int o = 0;
+
+        // Calculate Recuperator Balances
+        {
+            // HTR
+            double Q_htr_lp;
+            double Q_htr_hp;
+            {
+                double h1_lp = m_enth_last[TURB_OUT];
+                double h2_lp = m_enth_last[HTR_LP_OUT];
+                double mdot_lp = m_m_dot_t;
+
+                Q_htr_lp = mdot_lp * (h2_lp - h1_lp);
+
+                double h1_hp = m_enth_last[MIXER_OUT];
+                double h2_hp = m_enth_last[HTR_HP_OUT];
+                double mdot_hp = m_m_dot_htr_hp;
+
+                Q_htr_hp = mdot_hp * (h2_hp - h1_hp);
+            }
+
+            // LTR
+            double Q_ltr_lp;
+            double Q_ltr_hp;
+            {
+                double h1_lp = m_enth_last[HTR_LP_OUT];
+                double h2_lp = m_enth_last[LTR_LP_OUT];
+                double mdot_lp = m_m_dot_t;
+
+                Q_ltr_lp = mdot_lp * (h2_lp - h1_lp);
+
+                double h1_hp = m_enth_last[MC_OUT];
+                double h2_hp = m_enth_last[LTR_HP_OUT];
+                double mdot_hp = m_m_dot_mc;
+
+                Q_ltr_hp = mdot_hp * (h2_hp - h1_hp);
+            }
+
+            CO2_state co2_props;
+
+            // HTR (sco2 flex)
+            double Q_dot_HTR_LP_paper;
+            double Q_dot_HTR_HP_paper;
+            {
+                double T1_C = 485.27;
+                double T2_C = 198.72;
+                double T3_C = 188.72;
+                double T4_C = 475.27;
+
+                double P1_C = 8.422;
+                double P2_C = 8.380;
+                double P3_C = 24.995;
+                double P4_C = 24.984;
+
+                double mdot_lp = 1041.54;
+                double mdot_hp = 1041.54 * (1.0 - 0.114);
+
+
+
+                int prop_error_code = CO2_TP(T1_C + 273.15, P1_C * 1e3, &co2_props);
+                double h1 = co2_props.enth;
+
+                CO2_TP(T2_C + 273.15, P2_C * 1e3, &co2_props);
+                double h2 = co2_props.enth;
+
+
+                Q_dot_HTR_LP_paper = mdot_lp * (h2 - h1);
+
+
+
+                CO2_TP(T3_C + 273.15, P3_C * 1e3, &co2_props);
+                double h3 = co2_props.enth;
+
+                CO2_TP(T4_C + 273.15, P4_C * 1e3, &co2_props);
+                double h4 = co2_props.enth;
+
+
+                Q_dot_HTR_HP_paper = mdot_hp * (h4 - h3);
+
+
+
+                double pu = 0;
+            }
+
+
+            // LTR (sco2 flex)
+            double Q_dot_LTR_LP_paper;
+            double Q_dot_LTR_HP_paper;
+            {
+                double T1_C = 198.72;
+                double T2_C = 76.01;
+                double T3_C = 65.91;
+                double T4_C = 188.72;
+
+                double P1_C = 8.380;
+                double P2_C = 8.338;
+                double P3_C = 25;
+                double P4_C = 24.995;
+
+                double mdot_lp = 1041.54;
+                double mdot_hp = 677.31;
+
+
+
+                int prop_error_code = CO2_TP(T1_C + 273.15, P1_C * 1e3, &co2_props);
+                double h1 = co2_props.enth;
+
+                CO2_TP(T2_C + 273.15, P2_C * 1e3, &co2_props);
+                double h2 = co2_props.enth;
+
+
+                Q_dot_LTR_LP_paper = mdot_lp * (h2 - h1);
+
+
+
+                CO2_TP(T3_C + 273.15, P3_C * 1e3, &co2_props);
+                double h3 = co2_props.enth;
+
+                CO2_TP(T4_C + 273.15, P4_C * 1e3, &co2_props);
+                double h4 = co2_props.enth;
+
+
+                Q_dot_LTR_HP_paper = mdot_hp * (h4 - h3);
+
+
+
+                double pu = 0;
+            }
+
+            int pox = 0;
+        }
+
+        return;
+    }
+
+    // DEBUG Alfani 2020 Various BP
+    if (false)
+    {
+        std::vector<double> bp_vec = { 0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,0.999};
+
+        for (double bp : bp_vec)
+        {
+            m_bp_frac = bp;
+
+            int temp_error = 0;
+            design_core_standard(temp_error);
+
+            std::string output = make_result_csv_string();
+
+            int asdf = 0;
+        }
+
     }
 
     // Check if HTF parameters were set
@@ -157,7 +442,7 @@ void C_HTRBypass_Cycle::design_core(int& error_code)
         opt_des_cycle.set_lower_bounds(lb);
         opt_des_cycle.set_upper_bounds(ub);
         opt_des_cycle.set_initial_step(0.01);
-        opt_des_cycle.set_xtol_rel(0.005);
+        opt_des_cycle.set_xtol_rel(0.05);
 
         // Set max objective function
         std::vector<double> x;
@@ -259,14 +544,6 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
         }
         
 
-
-
-
-
-
-
-
-
         // BP
         double Q_dot_BP;
         {
@@ -296,32 +573,7 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
         }
 
 
-        // HTR
-        double Q_dot_HTR_LP;
-        double Q_dot_HTR_HP;
-        {
-            int prop_error_code = CO2_TP(481.6 + 273.15, 8.1 * 1e3, &co2_props);
-            double h1 = co2_props.enth;
-
-            CO2_TP(240.4 + 273.15, 8.06 * 1e3, &co2_props);
-            double h2 = co2_props.enth;
-
-            double mdot = 239; // kg/s
-            Q_dot_HTR_LP = mdot * (h2 - h1);
-
-
-            CO2_TP(194.4 + 273.15, 24.875 * 1e3, &co2_props);
-            double h3 = co2_props.enth;
-
-            CO2_TP(470.6 + 273.15, 24.75 * 1e3, &co2_props);
-            double h4 = co2_props.enth;
-
-            double mdot2 = 212.7; // kg/s
-            Q_dot_HTR_HP = mdot2 * (h4 - h3);
-        }
-
-
-        int x = 0;
+        
     }
 
     // Initialize Recuperators
@@ -522,6 +774,7 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
         }
     }
 
+
     // Solve the recuperators
     {
         C_mono_htr_bypass_HTR_des HTR_des_eq(this);
@@ -545,6 +798,9 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
 
             double T_HTR_LP_out_guess_lower = std::min(T_HTR_LP_out_upper - 2.0, std::max(T_HTR_LP_out_lower + 15.0, 220.0 + 273.15));	//[K] There is nothing special about these guesses...
             double T_HTR_LP_out_guess_upper = std::min(T_HTR_LP_out_guess_lower + 20.0, T_HTR_LP_out_upper - 1.0);	//[K] There is nothing special about these guesses, either...
+
+            //T_HTR_LP_out_guess_lower = T_HTR_LP_out_lower;
+            //T_HTR_LP_out_guess_upper = T_HTR_LP_out_upper;
 
             HTR_des_solver.settings(ms_des_par.m_des_tol * m_temp_last[MC_IN], 1000, T_HTR_LP_out_lower, T_HTR_LP_out_upper, false);
 
@@ -691,6 +947,58 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
         
     }
 
+    // Define Heat Exchangers and Air Cooler
+    {
+        // PHX
+        C_HeatExchanger::S_design_parameters PHX_des_par;
+        PHX_des_par.m_DP_design[0] = m_pres_last[MIXER2_OUT] - m_pres_last[TURB_IN];
+        PHX_des_par.m_DP_design[1] = 0.0;
+        PHX_des_par.m_m_dot_design[0] = m_m_dot_t;
+        PHX_des_par.m_m_dot_design[1] = 0.0;
+        PHX_des_par.m_Q_dot_design = m_m_dot_t * (m_enth_last[TURB_IN] - m_enth_last[MIXER2_OUT]);
+        m_PHX.initialize(PHX_des_par);
+
+        // BPX
+        C_HeatExchanger::S_design_parameters BPX_des_par;
+        BPX_des_par.m_DP_design[0] = m_pres_last[MIXER_OUT] - m_pres_last[BYPASS_OUT];
+        BPX_des_par.m_DP_design[1] = 0.0;
+        BPX_des_par.m_m_dot_design[0] = m_m_dot_bp;
+        BPX_des_par.m_m_dot_design[1] = 0.0;
+        BPX_des_par.m_Q_dot_design = m_m_dot_bp * (m_enth_last[BYPASS_OUT] - m_enth_last[MIXER_OUT]);
+        m_BPX.initialize(BPX_des_par);
+
+        // Design air cooler
+        // Structure for design parameters that are dependent on cycle design solution
+        C_CO2_to_air_cooler::S_des_par_cycle_dep s_air_cooler_des_par_dep;
+        // Set air cooler design parameters that are dependent on the cycle design solution
+        s_air_cooler_des_par_dep.m_T_hot_in_des = m_temp_last[C_sco2_cycle_core::LTR_LP_OUT];		//[K]
+        s_air_cooler_des_par_dep.m_P_hot_in_des = m_pres_last[C_sco2_cycle_core::LTR_LP_OUT];		//[kPa]
+        s_air_cooler_des_par_dep.m_m_dot_total = m_m_dot_mc;		//[kg/s]
+
+        // This pressure drop is currently uncoupled from the cycle design
+        double cooler_deltaP = m_pres_last[C_sco2_cycle_core::LTR_LP_OUT] - m_pres_last[C_sco2_cycle_core::MC_IN];	//[kPa]
+        if (cooler_deltaP == 0.0)
+            s_air_cooler_des_par_dep.m_delta_P_des = m_deltaP_cooler_frac * m_pres_last[C_sco2_cycle_core::LTR_LP_OUT];	//[kPa]
+        else
+            s_air_cooler_des_par_dep.m_delta_P_des = cooler_deltaP;	//[kPa]
+
+        s_air_cooler_des_par_dep.m_T_hot_out_des = m_temp_last[C_sco2_cycle_core::MC_IN];			//[K]
+        s_air_cooler_des_par_dep.m_W_dot_fan_des = m_frac_fan_power * m_W_dot_net / 1000.0;		//[MWe]
+        // Structure for design parameters that are independent of cycle design solution
+        C_CO2_to_air_cooler::S_des_par_ind s_air_cooler_des_par_ind;
+        s_air_cooler_des_par_ind.m_T_amb_des = m_T_amb_des;		//[K]
+        s_air_cooler_des_par_ind.m_elev = m_elevation;			//[m]
+        s_air_cooler_des_par_ind.m_eta_fan = m_eta_fan;          //[-]
+        s_air_cooler_des_par_ind.m_N_nodes_pass = m_N_nodes_pass;    //[-]
+
+        if (ms_des_par.m_is_des_air_cooler && std::isfinite(m_deltaP_cooler_frac) && std::isfinite(m_frac_fan_power)
+            && std::isfinite(m_T_amb_des) && std::isfinite(m_elevation) && std::isfinite(m_eta_fan) && m_N_nodes_pass > 0)
+        {
+            mc_air_cooler.design_hx(s_air_cooler_des_par_ind, s_air_cooler_des_par_dep, ms_des_par.m_des_tol);
+        }
+
+    }
+
     // Set objective metric
     {
 
@@ -739,6 +1047,9 @@ int C_HTRBypass_Cycle::solve_HTR(double T_HTR_LP_OUT_guess, double* diff_T_HTR_L
 
         double T_LTR_LP_out_guess_upper = std::min(T_LTR_LP_out_upper, T_LTR_LP_out_lower + 15.0);	//[K] There is nothing special about using 15 here...
         double T_LTR_LP_out_guess_lower = std::min(T_LTR_LP_out_guess_upper * 0.99, T_LTR_LP_out_lower + 2.0);	//[K] There is nothing special about using 2 here...
+
+        //double T_LTR_LP_out_guess_upper = T_LTR_LP_out_lower + 273.15;
+        //double T_LTR_LP_out_guess_lower = T_LTR_LP_out_upper + 273.15;
 
         C_mono_htr_bypass_LTR_des LTR_des_eq(this);
         C_monotonic_eq_solver LTR_des_solver(LTR_des_eq);
@@ -946,8 +1257,8 @@ std::string C_HTRBypass_Cycle::make_result_csv_string()
     value_vec.push_back(this->m_eta_thermal_calc_last);
     value_vec.push_back(this->m_pres_last[MC_IN]);
     value_vec.push_back(this->m_pres_last[MC_OUT]);
-    value_vec.push_back(this->ms_des_par.m_LTR_UA);
-    value_vec.push_back(this->ms_des_par.m_HTR_UA);
+    value_vec.push_back(this->mc_LT_recup.ms_des_solved.m_UA_calc_at_eff_max);
+    value_vec.push_back(this->mc_HT_recup.ms_des_solved.m_UA_calc_at_eff_max);
     value_vec.push_back(this->m_T_HTF_PHX_out);
     value_vec.push_back(this->m_Q_dot_total);
     value_vec.push_back(this->m_Q_dot_BP);
@@ -1683,10 +1994,13 @@ double C_HTRBypass_Cycle::design_bypass_frac_return_objective_metric(const std::
         double temp_span = m_T_HTF_PHX_inlet - m_T_HTF_BP_outlet_target;
         double percent_err = temp_err / temp_span;
 
-        double penalty = std::pow(percent_err, 2.0);
+        //double penalty = std::pow(percent_err, 2.0);
 
         //objective_metric = 0 - logit(percent_err);
-        objective_metric = -temp_err;
+        //objective_metric = -temp_err;
+
+        // Adjust sigmoid
+        objective_metric = 1 - sigmoid(temp_err);
 
         if (objective_metric > m_objective_metric_bypass_frac_opt)
         {

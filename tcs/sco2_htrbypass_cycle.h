@@ -201,7 +201,7 @@ private:
     C_turbine m_t;
     C_comp_multi_stage m_mc_ms;
     C_comp_multi_stage m_rc_ms;
-    C_HeatExchanger m_PHX, m_PC;
+    C_HeatExchanger m_PHX, m_PC, m_BPX;
 
     C_HX_co2_to_co2_CRM mc_LT_recup;
     C_HX_co2_to_co2_CRM mc_HT_recup;
