@@ -963,17 +963,24 @@ void calculate_resilience_outputs(compute_module *cm, std::unique_ptr<resilience
 	cm->assign("avg_critical_load", resilience->get_avg_crit_load_kwh());
 }
 
-// for cost outputs calculated below
+// for o and m cost outputs calculated in cmod_hybrid
 var_info vtab_hybrid_tech_om[] = {
     /*   VARTYPE           DATATYPE         NAME                           LABEL                UNITS     META                      GROUP           REQUIRED_IF      CONSTRAINTS     UI_HINTS*/
-    { SSC_INPUT,          SSC_NUMBER,     "is_hybrid",              "hybrid configuration",      "0/1", "0=singletech,1=hybrid",    "HybridTech",       "?=0",      "",             "" },
-    { SSC_OUTPUT,         SSC_ARRAY,      "cf_om_production",       "production O&M costs",      "$",   "",                         "HybridTech",       "",         "",             "" },
-    { SSC_OUTPUT,         SSC_ARRAY,      "cf_om_capacity",         "capacity O&M costs",        "$",   "",                         "HybridTech",       "",         "",             "" },
-    { SSC_OUTPUT,         SSC_ARRAY,      "cf_om_fixed",            "fixed O&M costs",           "$",   "",                         "HybridTech",       "",         "",             "" },
-    { SSC_OUTPUT,         SSC_ARRAY,      "cf_om_land_lease",       "land lease O&M costs",      "$",   "",                         "HybridTech",       "",         "",             "" },
-    { SSC_OUTPUT,         SSC_ARRAY,      "cf_energy_net",          "annual energy",             "kWh", "",                         "HybridTech",       "",         "",             "" },
+//    { SSC_INPUT,  SSC_NUMBER,     "is_hybrid",              "hybrid configuration",      "0/1", "0=singletech,1=hybrid",    "HybridTech",       "?=0",      "",             "" },
+    { SSC_OUTPUT,   SSC_ARRAY,      "cf_om_production",                     "production O&M costs",      "$",   "",             "HybridTech",       "",         "",             "" },
+    { SSC_OUTPUT,   SSC_ARRAY,      "cf_om_capacity",                       "capacity O&M costs",        "$",   "",             "HybridTech",       "",         "",             "" },
+    { SSC_OUTPUT,   SSC_ARRAY,      "cf_om_fixed",                          "fixed O&M costs",           "$",   "",             "HybridTech",       "",         "",             "" },
+    { SSC_OUTPUT,   SSC_ARRAY,      "cf_om_land_lease",                     "land lease O&M costs",      "$",   "",             "HybridTech",       "",         "",             "" },
+    { SSC_OUTPUT,   SSC_ARRAY,      "cf_battery_replacement_cost_schedule", "replacement O&M costs",     "$",   "",             "HybridTech",       "",         "",             "" },
+    { SSC_OUTPUT,   SSC_ARRAY,      "cf_energy_net",                        "annual energy",             "kWh", "",             "HybridTech",       "",         "",             "" },
+var_info_invalid };
 
-    var_info_invalid };
+// for o and m cost outputs calculated in cmod_hybrid and added to operating expenses
+var_info vtab_hybrid_fin_om[] = {
+    /*   VARTYPE           DATATYPE         NAME                           LABEL                UNITS     META                      GROUP           REQUIRED_IF      CONSTRAINTS     UI_HINTS*/
+//    { SSC_INPUT,          SSC_NUMBER,     "is_hybrid",              "hybrid configuration",      "0/1", "0=singletech,1=hybrid",    "HybridFin",       "?=0",      "",             "" },
+    { SSC_INPUT,          SSC_ARRAY,      "cf_hybrid_om_sum",       "Hybrid O&M costs",          "$",   "",                         "HybridFin",       "",         "",             "" },
+var_info_invalid };
 
 
 

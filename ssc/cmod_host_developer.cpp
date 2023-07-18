@@ -684,6 +684,8 @@ enum {
 	CF_om_opt_fuel_2_expense,
 	CF_om_opt_fuel_1_expense,
 
+    CF_om_hybrid_sum,
+
 	CF_federal_tax_frac,
 	CF_state_tax_frac,
 	CF_effective_tax_frac,
@@ -917,6 +919,7 @@ public:
 		add_var_info(vtab_battery_replacement_cost);
         add_var_info(vtab_lcos_inputs);
         add_var_info(vtab_tod_dispatch_periods);
+        add_var_info(vtab_hybrid_fin_om);
     }
 
 	void exec( )
@@ -967,7 +970,11 @@ public:
 			cf.at(CF_effective_tax_frac, i) = cf.at(CF_state_tax_frac, i) +
 			(1.0 - cf.at(CF_state_tax_frac, i))*cf.at(CF_federal_tax_frac, i);
 
-
+        if (is_assigned("cf_hybrid_om_sum")) {
+            arrp = as_array("cf_hybrid_om_sum", &count);
+            for (i = 0; i < count && i <= nyears; i++)
+                cf.at(CF_om_hybrid_sum, i) = arrp[i];
+        }
 
 		double nom_discount_rate = (1 + inflation_rate)*(1 + disc_real) - 1;
 		double host_nom_discount_rate = (1 + inflation_rate)*(1 + host_disc_real) - 1;
@@ -1387,6 +1394,7 @@ public:
 				+ cf.at(CF_property_tax_expense,i)
 				+ cf.at(CF_insurance_expense,i)
 				+ cf.at(CF_battery_replacement_cost,i)
+                + cf.at(CF_om_hybrid_sum, i)
                 //+ cf.at(CF_utility_bill, i)
 				+ cf.at(CF_Recapitalization,i);
 		}

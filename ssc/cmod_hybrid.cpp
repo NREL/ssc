@@ -126,7 +126,7 @@ public:
                 ssc_module_t module = ssc_module_create(compute_module.c_str());
 
                 var_table& input = compute_module_inputs->table;
-                ssc_data_set_number(static_cast<ssc_data_t>(&input), "is_hybrid", 1);
+                //ssc_data_set_number(static_cast<ssc_data_t>(&input), "is_hybrid", 1);
 
 
                 ssc_module_exec_set_print(1);
@@ -162,9 +162,9 @@ public:
                 ssc_number_t* pOMFixed = ((var_table*)compute_module_outputs)->allocate("cf_om_fixed", analysisPeriod+1); 
                 inflation_rate = compute_module_inputs->table.lookup("inflation_rate")->num * 0.01;
 
-                escal_or_annual(input, pOMFixed, analysisPeriod, "om_fixed", inflation_rate, system_capacity, false, input.as_double("om_fixed_escal") * 0.01); // $ after multiplying by system capacity
+                escal_or_annual(input, pOMFixed, analysisPeriod, "om_fixed", inflation_rate, 1.0, false, input.as_double("om_fixed_escal") * 0.01); // $ 
                 escal_or_annual(input, pOMProduction, analysisPeriod, "om_production", inflation_rate, 0.001, false, input.as_double("om_production_escal") * 0.01); // $/kWh after conversion
-                escal_or_annual(input, pOMCapacity, analysisPeriod, "om_capacity", inflation_rate, 1.0, false, input.as_double("om_capacity_escal") * 0.01); // $
+                escal_or_annual(input, pOMCapacity, analysisPeriod, "om_capacity", inflation_rate, system_capacity, false, input.as_double("om_capacity_escal") * 0.01); // $ after multiplying by system capacity
 
                 // production - multiply by yearly gen (initially assume single year) - use degradation - specific to each generator
                 // pvwattsv8 - "degradation" applied in financial model - assuming single year analysis like standalone pvwatts/single owner configuration
@@ -265,7 +265,7 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
 
                 var_table& input = compute_module_inputs->table;
                 ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);  // check if issue with hourly PV and subhourly wind
-                ssc_data_set_number(static_cast<ssc_data_t>(&input), "is_hybrid", 1);
+                //ssc_data_set_number(static_cast<ssc_data_t>(&input), "is_hybrid", 1);
 
                 ssc_module_exec(module, static_cast<ssc_data_t>(&input));
 
@@ -352,7 +352,7 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 var_table& input = compute_module_inputs->table;
                 ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);  // check if issue with lookahead dispatch with hourly PV and subhourly wind
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "system_use_lifetime_output", 1);
-                ssc_data_set_number(static_cast<ssc_data_t>(&input), "is_hybrid", 1);
+                //ssc_data_set_number(static_cast<ssc_data_t>(&input), "is_hybrid", 1);
 
 
                 ssc_module_exec(module, static_cast<ssc_data_t>(&input));
@@ -377,7 +377,6 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 inflation_rate = compute_module_inputs->table.lookup("inflation_rate")->num * 0.01; // can retrieve from "Hybrid" vartable directly
                 escal_or_annual(input, pOMFixed, analysisPeriod, "om_batt_fixed_cost", inflation_rate, 1.0, false, input.as_double("om_fixed_escal") * 0.01);
                 escal_or_annual(input, pOMProduction, analysisPeriod, "om_batt_variable_cost", inflation_rate, 0.001, false, input.as_double("om_production_escal") * 0.01);
-                escal_or_annual(input, pOMCapacity, analysisPeriod, "om_batt_capacity_cost", inflation_rate, 1.0, false, input.as_double("om_capacity_escal") * 0.01);
                 std::vector<double> battery_discharged(analysisPeriod, 0);
                 nameplate = compute_module_inputs->table.lookup("om_batt_nameplate")->num;
                 //if (as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1)
@@ -396,6 +395,7 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
 
                 // battery cost - replacement from lifetime analysis
 //                if ((as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1 || as_integer("en_wave_batt") == 1) && (as_integer("batt_replacement_option") > 0))
+                double batt_cap = 0.0;
                 if (input.as_integer("batt_replacement_option") > 0) {
                     ssc_number_t* batt_rep = 0;
                     std::vector<ssc_number_t> replacement_percent;
@@ -412,7 +412,7 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                     else {// user specified
                         replacement_percent = input.as_vector_ssc_number_t("batt_replacement_schedule_percent");
                     }
-                    double batt_cap = ((var_table*)compute_module_outputs)->as_double("batt_computed_bank_capacity");
+                    batt_cap = ((var_table*)compute_module_outputs)->as_double("batt_computed_bank_capacity");
                     // updated 10/17/15 per 10/14/15 meeting
                     ssc_number_t* pOMBattReplacementCost = ((var_table*)compute_module_outputs)->allocate("cf_battery_replacement_cost_schedule", analysisPeriod + 1);
                     escal_or_annual(input, pOMBattReplacementCost, analysisPeriod, "om_batt_replacement_cost", inflation_rate, batt_cap, false, input.as_double("om_replacement_cost_escal") * 0.01);
@@ -424,11 +424,12 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 }
                 else
                 {
-                    double batt_cap = ((var_table*)compute_module_outputs)->as_double("batt_computed_bank_capacity");
+                    batt_cap = ((var_table*)compute_module_outputs)->as_double("batt_computed_bank_capacity");
                     // updated 10/17/15 per 10/14/15 meeting
                     ssc_number_t* pOMBattReplacementCost = ((var_table*)compute_module_outputs)->allocate("cf_battery_replacement_cost_schedule", analysisPeriod + 1);
                     escal_or_annual(input, pOMBattReplacementCost, analysisPeriod, "om_batt_replacement_cost", inflation_rate, batt_cap, false, input.as_double("om_replacement_cost_escal") * 0.01);
                 }
+                escal_or_annual(input, pOMCapacity, analysisPeriod, "om_batt_capacity_cost", inflation_rate, batt_cap, false, input.as_double("om_capacity_escal") * 0.01);
 
                 // production O and M conversion to $
                 for (size_t i = 1; i <= (size_t)analysisPeriod; i++)
@@ -473,6 +474,51 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
     get financial model outputs
 
             */
+            ssc_number_t* pHybridOMSum = ((var_table*)outputs)->allocate("cf_hybrid_om_sum", analysisPeriod + 1); // add to top level "output" - assumes analysis period the same for all generators
+
+             for (size_t i = 0; i <= analysisPeriod; i++)
+                pHybridOMSum[i] = 0.0;
+            for (size_t g = 0; g < generators.size(); g++) {
+                var_table generator_outputs = ((var_table*)outputs)->lookup(generators[g])->table;
+                size_t count_gen;
+                ssc_number_t* om_production = generator_outputs.as_array("cf_om_production", &count_gen);
+                ssc_number_t* om_fixed = generator_outputs.as_array("cf_om_fixed", &count_gen);
+                ssc_number_t* om_capacity = generator_outputs.as_array("cf_om_capacity", &count_gen);
+                ssc_number_t* om_landlease = NULL;
+                if (generators[g] == "pvwattsv8")
+                    om_landlease = generator_outputs.as_array("cf_om_land_lease", &count_gen);
+                for (size_t y = 1; y <= analysisPeriod; y++) {
+                    pHybridOMSum[y] += om_production[y] + om_fixed[y] + om_capacity[y];
+                    if (generators[g] == "pvwattsv8")
+                        pHybridOMSum[y] += om_landlease[y];
+                }
+            }
+            for (size_t f = 0;f < fuelcells.size(); f++) {
+                var_table fuelcell_outputs = ((var_table*)outputs)->lookup(fuelcells[f])->table;
+                size_t count_fc;
+                ssc_number_t* om_production = fuelcell_outputs.as_array("cf_om_production", &count_fc);
+                ssc_number_t* om_fixed = fuelcell_outputs.as_array("cf_om_fixed", &count_fc);
+                ssc_number_t* om_capacity = fuelcell_outputs.as_array("cf_om_capacity", &count_fc);
+                for (size_t y = 1; y <= analysisPeriod; y++) {
+                    pHybridOMSum[y] += om_production[y] + om_fixed[y] + om_capacity[y];
+                }
+            }
+
+            for (size_t b = 0; b < batteries.size(); b++) {
+                var_table batteries_outputs = ((var_table*)outputs)->lookup(batteries[b])->table;
+                size_t count_b;
+                ssc_number_t* om_production = batteries_outputs.as_array("cf_om_production", &count_b);
+                ssc_number_t* om_fixed = batteries_outputs.as_array("cf_om_fixed", &count_b);
+                ssc_number_t* om_capacity = batteries_outputs.as_array("cf_om_capacity", &count_b);
+                ssc_number_t* om_replacement = batteries_outputs.as_array("cf_battery_replacement_cost_schedule", &count_b);
+                for (size_t y = 1; y <= analysisPeriod; y++) {
+                    pHybridOMSum[y] += om_production[y] + om_fixed[y] + om_capacity[y] + om_replacement[y];
+                }
+            }
+
+
+
+
             if (financials.size()>0) { // run remaining compute modules with necessary inputs
                 // note that single vartable is used to run multiple compute modules
                 // battery outputs passed in if present
@@ -491,13 +537,14 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                     ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "system_use_lifetime_output", 1);
 
-                ssc_data_set_array(&(compute_module_inputs->table), "gen", pGen, (int)genLength);
+//                ssc_data_set_array(&(compute_module_inputs->table), "gen", pGen, (int)genLength);
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "system_use_lifetime_output", 1);
  
                 // set additional inputs from previous results - note - remove these from UI?
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "total_installed_cost", hybridTotalInstalledCost);
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "system_capacity", hybridSystemCapacity);
 
+                ssc_data_set_array(&(compute_module_inputs->table), "cf_hybrid_om_sum", pHybridOMSum, (int)(analysisPeriod+1));
 
                 // run remaining compute modules in sequence and add results to "Hybrid" VarTable
                 ssc_data_t hybridFinancialOutputs = ssc_data_create();
