@@ -357,6 +357,11 @@ void C_HTRBypass_Cycle::design_core(int& error_code)
             int pox = 0;
         }
 
+        // Calculate Paper Heat Exchange
+        {
+
+        }
+
         return;
     }
 
@@ -841,16 +846,28 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
         m_dens_last[HTR_HP_OUT] = co2_props.dens;
     }
 
-    // Calculate total heat coming into cycle
+    // Calculate total work and heat metrics
     {
+        // Work
         m_W_dot_mc = m_w_mc * m_m_dot_mc;		//[kWe]
         m_W_dot_rc = m_w_rc * m_m_dot_rc;		//[kWe]
         m_W_dot_t = m_w_t * m_m_dot_t;		//[kWe]
         m_W_dot_net_last = m_W_dot_mc + m_W_dot_rc + m_W_dot_t;
 
-        m_Q_dot_pc = m_m_dot_mc * (m_enth_last[LTR_LP_OUT] - m_enth_last[MC_IN]);
+        // Air Cooler (heat rejection unit)
+        m_W_dot_air_cooler = m_frac_fan_power * m_W_dot_net;
+        m_Q_dot_air_cooler = m_m_dot_mc * (m_enth_last[LTR_LP_OUT] - m_enth_last[MC_IN]);
 
-        m_Q_dot_total = m_W_dot_net_last + m_Q_dot_pc;
+        // Total Heat Entering sco2
+        m_Q_dot_total = m_W_dot_net_last + m_Q_dot_air_cooler;
+
+        // LTR
+        m_Q_dot_LTR_LP = m_m_dot_t * (m_enth_last[HTR_LP_OUT] - m_enth_last[LTR_LP_OUT]);
+        m_Q_dot_LTR_HP = m_m_dot_mc * (m_enth_last[LTR_HP_OUT] - m_enth_last[MC_OUT]);
+
+        // LTR
+        m_Q_dot_HTR_LP = m_m_dot_t * (m_enth_last[TURB_OUT] - m_enth_last[HTR_LP_OUT]);
+        m_Q_dot_HTR_HP = m_m_dot_htr_hp * (m_enth_last[HTR_HP_OUT] - m_enth_last[MIXER_OUT]);
     }
 
     // Calculate Bypass Energy
@@ -919,7 +936,7 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
         double bp_temp_in = m_temp_last[MIXER_OUT];
         double bp_temp_out = m_temp_last[BYPASS_OUT];
 
-        double real_q_dot_total = m_W_dot_t + m_Q_dot_pc;
+        double real_q_dot_total = m_W_dot_t + m_Q_dot_air_cooler;
 
         double qSum = m_Q_dot_total;
         double qSum_calc = m_Q_dot_BP + m_Q_dot_PHX;
@@ -958,6 +975,8 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
         PHX_des_par.m_Q_dot_design = m_m_dot_t * (m_enth_last[TURB_IN] - m_enth_last[MIXER2_OUT]);
         m_PHX.initialize(PHX_des_par);
 
+        
+
         // BPX
         C_HeatExchanger::S_design_parameters BPX_des_par;
         BPX_des_par.m_DP_design[0] = m_pres_last[MIXER_OUT] - m_pres_last[BYPASS_OUT];
@@ -983,7 +1002,7 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
             s_air_cooler_des_par_dep.m_delta_P_des = cooler_deltaP;	//[kPa]
 
         s_air_cooler_des_par_dep.m_T_hot_out_des = m_temp_last[C_sco2_cycle_core::MC_IN];			//[K]
-        s_air_cooler_des_par_dep.m_W_dot_fan_des = m_frac_fan_power * m_W_dot_net / 1000.0;		//[MWe]
+        s_air_cooler_des_par_dep.m_W_dot_fan_des = m_W_dot_air_cooler / 1000.0;	//[MWe]
         // Structure for design parameters that are independent of cycle design solution
         C_CO2_to_air_cooler::S_des_par_ind s_air_cooler_des_par_ind;
         s_air_cooler_des_par_ind.m_T_amb_des = m_T_amb_des;		//[K]
@@ -1015,6 +1034,13 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
         {
             m_objective_metric_last = m_eta_thermal_calc_last;
         }
+    }
+
+
+    // DEBUG
+    // Define full HX classes
+    {
+
     }
 
 }
@@ -1251,24 +1277,44 @@ std::string C_HTRBypass_Cycle::make_result_csv_string()
     value_vec.push_back(this->m_T_HTF_BP_outlet_target);
     value_vec.push_back(this->m_T_HTF_BP_outlet_calc);
     value_vec.push_back(this->m_T_HTF_PHX_inlet - this->m_T_HTF_BP_outlet_calc);
+    value_vec.push_back(this->m_T_HTF_PHX_out);
     value_vec.push_back(this->m_m_dot_HTF);
+
+    value_vec.push_back(this->m_eta_thermal_calc_last);
+    value_vec.push_back(this->m_objective_metric_opt);
+    value_vec.push_back(this->m_objective_metric_bypass_frac_opt);
+
     value_vec.push_back(this->m_bp_frac);
     value_vec.push_back(this->ms_des_par.m_recomp_frac);
-    value_vec.push_back(this->m_eta_thermal_calc_last);
-    value_vec.push_back(this->m_pres_last[MC_IN]);
-    value_vec.push_back(this->m_pres_last[MC_OUT]);
+    double LTR_frac = this->mc_LT_recup.ms_des_solved.m_UA_calc_at_eff_max /
+        (this->mc_LT_recup.ms_des_solved.m_UA_calc_at_eff_max + this->mc_HT_recup.ms_des_solved.m_UA_calc_at_eff_max);
+    value_vec.push_back(LTR_frac);
     value_vec.push_back(this->mc_LT_recup.ms_des_solved.m_UA_calc_at_eff_max);
     value_vec.push_back(this->mc_HT_recup.ms_des_solved.m_UA_calc_at_eff_max);
-    value_vec.push_back(this->m_T_HTF_PHX_out);
+    value_vec.push_back(this->m_pres_last[MC_IN]);
+    value_vec.push_back(this->m_pres_last[MC_OUT]);
+
+    value_vec.push_back(this->m_W_dot_t);
+    value_vec.push_back(this->m_W_dot_mc);
+    value_vec.push_back(this->m_W_dot_rc);
+    value_vec.push_back(this->m_W_dot_air_cooler);
     value_vec.push_back(this->m_Q_dot_total);
-    value_vec.push_back(this->m_Q_dot_BP);
     value_vec.push_back(this->m_Q_dot_PHX);
+    value_vec.push_back(this->m_Q_dot_BP);
+    value_vec.push_back(this->m_Q_dot_air_cooler);
+    value_vec.push_back(this->m_Q_dot_LTR_HP);
+    value_vec.push_back(this->m_Q_dot_LTR_LP);
+    value_vec.push_back(this->m_Q_dot_HTR_HP);
+    value_vec.push_back(this->m_Q_dot_HTR_LP);
+
     value_vec.push_back(this->m_m_dot_t);
+    value_vec.push_back(this->m_m_dot_mc);
+    value_vec.push_back(this->m_m_dot_rc);
     value_vec.push_back(this->m_m_dot_bp);
     value_vec.push_back(this->m_m_dot_htr_hp);
-    value_vec.push_back(this->m_m_dot_rc);
-    value_vec.push_back(this->m_m_dot_mc);
-    value_vec.push_back(this->m_objective_metric_opt);
+    
+    
+    
 
     // Write to string
     for (double val : value_vec)

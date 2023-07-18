@@ -239,6 +239,7 @@ private:
     double m_w_mc;                      // kJ/kg
     double m_w_rc;                      // kJ/kg
     double m_Q_dot_LT, m_Q_dot_HT;
+    double m_Q_dot_LTR_LP, m_Q_dot_LTR_HP, m_Q_dot_HTR_LP, m_Q_dot_HTR_HP;
     double m_bp_frac;
     double m_m_dot_bp;
     double m_m_dot_htr_hp;
@@ -251,12 +252,13 @@ private:
     double m_T_HTF_PHX_out;
     double m_dT_BP;                     // BYPASS_OUT - HTR_HP_OUT
     double m_Q_dot_total;
-    double m_Q_dot_pc;                  // pre cooler heat rejected
     double m_HTF_BP_cold_approach;
     double m_HTF_PHX_cold_approach;
     bool is_htf_set = false;
+    double m_W_dot_air_cooler;
+    double m_Q_dot_air_cooler;
 
-    C_HX_co2_to_co2_CRM m_BP_HTX;
+    
 
     // New opt
     bool m_found_opt;
