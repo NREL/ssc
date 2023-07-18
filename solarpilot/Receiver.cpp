@@ -993,17 +993,18 @@ void Receiver::DefineReceiverGeometry(int nflux_x, int nflux_y)
 	}
 	else if (rec_type == var_receiver::REC_TYPE::FALLING_PARTICLE) {
 		//1) Indicate which specific geometry type should be used with "_rec_geom"
-		//_rec_geom = (Receiver::REC_GEOM_TYPE::PLANE_RECT);
+		//_rec_geom = (Receiver::REC_GEOM_TYPE::PLANE_RECT); //Set during updateCalculatedParameters() call
 		//2) Calculate and set the number of surfaces used for the recever.Resize "_surfaces".
 		int n_troughs = _var_receiver->norm_heights_depths.val.nrows();
 		getVarMap()->n_panels.val = n_troughs + 1;
 		_surfaces.resize(1 + n_troughs + 1); //Aperture plus curtains between troughs (n+1)
-		//3) Calculate and set the normal vector for each surface(if not curved surfaces) with setNormalVector(Vect).
-		//Create flux surface for aperture
+		//3) Calculate and set the normal vector for each surface (if not curved surfaces) with setNormalVector(Vect).
+		//Create flux surface for aperture -> always at index zero
 		FluxSurface* S = &_surfaces.at(0);
 		S->setParent(this);
 		S->setSurfaceGeometry(_var_receiver->rec_height.val, _var_receiver->rec_width.val, 0.);
-		sp_point loc(_var_receiver->rec_offset_x_global.Val(), _var_receiver->rec_offset_y_global.Val(), _var_receiver->rec_offset_z_global.Val());
+		sp_point loc;
+		loc.Set(0., 0., 0.);	//the flux surface offset relative to receiver coordinates should be zero for single-aperture receivers
 		S->setSurfaceOffset(loc);
 
 		// Aperture surface normal
@@ -1024,6 +1025,7 @@ void Receiver::DefineReceiverGeometry(int nflux_x, int nflux_y)
 		if (_var_receiver->norm_curtain_width.val < 1.0)
 			throw spexception("Normalized curtain width must be greater than or equal to 1.0.");
 
+		// _var_receiver->curtain_total_height.Val(); Can't be used because updateCalculatedParameters() is called after this one
 		double max_height = _var_receiver->norm_curtain_height.val * _var_receiver->rec_height.val;	// Particle curtain maximum height
 		double max_depth = _var_receiver->max_curtain_depth.val;		// Particle curtain maximum depth (from the aperture)
 		double curtain_width = _var_receiver->norm_curtain_width.val * _var_receiver->rec_width.val; // Particle curtain width
@@ -1031,33 +1033,41 @@ void Receiver::DefineReceiverGeometry(int nflux_x, int nflux_y)
 		double last_trough_height = 1.0;	// Normalized height of previous trough 
 		double last_trough_depth = 1.0;		// Normalized depth of the previous trough
 
+		int y_flux_res;
+		int nflux_y_remaining = nflux_y;
 		// Generate all particle curtains - Starting at the top of the curtain and working down
 		for (int i = 1; i <= n_troughs + 1; i++) {
 			S = &_surfaces.at(i);
 			S->setParent(this);
 			
 			double curtain_height;
-			double height_norm = 1.0, depth_norm = 1.0;
-			if (i != n_troughs + 1) {
-				height_norm = _var_receiver->norm_heights_depths.val.at(i - 1, 0); // height
-				depth_norm = _var_receiver->norm_heights_depths.val.at(i - 1, 1); // depth
+			double height_norm = 0.0, depth_norm = 0.0;
+			if (i != n_troughs + 1) { // Not the last curtain
+				height_norm = _var_receiver->norm_heights_depths.val.at(i - 1, 0);
+				depth_norm = _var_receiver->norm_heights_depths.val.at(i - 1, 1);
 
 				// Value checking
 				if (height_norm > last_trough_height)
 					throw spexception("Troughs heights must be in descending order.");
-				else if (height_norm <= 0)
+				else if (height_norm <= 0.0)
 					throw spexception("Troughs heights must be greater than zero.");
+				else if (height_norm >= 1.0)
+					throw spexception("Troughs heights must be less than one.");
 				if (depth_norm > last_trough_depth)
 					throw spexception("Troughs depths must be in descending order.");
-				else if (depth_norm <= 0)
+				else if (depth_norm <= 0.0)
 					throw spexception("Troughs depths must be greater than zero.");
+				else if (depth_norm >= 1.0)
+					throw spexception("Troughs depths must be less than one.");
 
-				curtain_height = (last_trough_height - height_norm) * max_height;
+				y_flux_res = (int)std::round((last_trough_height - height_norm) * nflux_y);
+				nflux_y_remaining -= y_flux_res;
 			}
 			else {
-				// Last curtain 
-				curtain_height = last_trough_height * max_height;
+				y_flux_res = nflux_y_remaining;
 			}
+
+			curtain_height = (last_trough_height - height_norm) * max_height;
 
 			// Set up flux surface for a curved curtain
 			bool is_curtain_curved = _var_receiver->curtain_type.mapval() == var_receiver::CURTAIN_TYPE::CURVED;
@@ -1088,14 +1098,14 @@ void Receiver::DefineReceiverGeometry(int nflux_x, int nflux_y)
 			sp_point pc;
 			double depth_offset = last_trough_depth * max_depth;
 			if (is_curtain_curved) depth_offset -= curtain_radius; // Offset must account for radius of curtain
-			pc.x = -nv.i * depth_offset + _var_receiver->rec_offset_x_global.Val();
-			pc.y = -nv.j * depth_offset + _var_receiver->rec_offset_y_global.Val();
+			pc.x = -nv.i * depth_offset;
+			pc.y = -nv.j * depth_offset;
 			pc.z = last_trough_height * max_height - curtain_height / 2.0
-				- _var_receiver->rec_height.val / 2.0 + _var_receiver->rec_offset_z_global.Val();
+				- _var_receiver->rec_height.val / 2.0;
 			S->setSurfaceOffset(pc);
 
 			//5) Define the precision of the flux map.
-			S->setFluxPrecision(nflux_x, nflux_y);
+			S->setFluxPrecision(nflux_x, y_flux_res);
 			//6) Define the maximum flux for each panel.
 			S->setMaxFlux(_var_receiver->peak_flux.val);
 			//7) Call the method to set up the flux hit test grid.

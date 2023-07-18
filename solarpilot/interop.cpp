@@ -1399,8 +1399,6 @@ bool interop::SolTraceFluxBinning(SimControl& SimC, SolarField& SF)
 			rh = RV->rec_height.val;
 			rw = RV->rec_width.val;
 
-			sp_point offset(RV->rec_offset_x_global.Val(), RV->rec_offset_y_global.Val(), RV->optical_height.Val());   //optical height includes z offset
-
 			//The number of points in the flux grid 
 			//(x-axis receiver width, y axis is receiver height)
 			nfx = fs->getFluxNX();
@@ -1415,11 +1413,8 @@ bool interop::SolTraceFluxBinning(SimControl& SimC, SolarField& SF)
 				if (SimC._STSim->IntData.smap[j] != apstage || abs(SimC._STSim->IntData.emap[j]) != 1) continue;    //only consider rays that interact with this element
 
 				//Where did the ray hit relative to the location of the receiver?
-				rayhit.Set(SimC._STSim->IntData.hitx[j] - offset.x, SimC._STSim->IntData.hity[j] - offset.y, SimC._STSim->IntData.hitz[j] - offset.z);
-
-				//Do any required transform to get the ray intersection into receiver coordinates
-				Toolbox::rotation(PI - raz, 2, rayhit);
-				Toolbox::rotation(-rel, 0, rayhit);
+				rayhit.Set(SimC._STSim->IntData.hitx[j], SimC._STSim->IntData.hity[j], SimC._STSim->IntData.hitz[j]);
+				// Hit position is in stage coordinates which already account for offset and azimuth
 
 				//Calculate the point location in relative cylindrical coorinates
 				pw = 0.5 + rayhit.i / rw;    //0 at "starboard" side, increase towards "port"
@@ -1435,12 +1430,16 @@ bool interop::SolTraceFluxBinning(SimControl& SimC, SolarField& SF)
 
 			// Get curtain surface flux
 			int n_panels = RV->n_panels.val;
-			Arec = Rec->getAbsorberArea();
-			dqspec = SimC._STSim->IntData.q_ray * Hv->reflect_ratio.val / Arec * (float)(nfx * nfy * n_panels);
-
 			// Loop through curtain surfaces
 			for (int i = 1; i <= n_panels; i++) {
 				fs = &Rec->getFluxSurfaces()->at(i);
+
+				nfx = fs->getFluxNX();
+				nfy = fs->getFluxNY();
+
+				Arec = fs->getSurfaceArea();
+				dqspec = SimC._STSim->IntData.q_ray * Hv->reflect_ratio.val / Arec * (float)(nfx * nfy);
+
 				fs->ClearFluxGrid();
 				fg = fs->getFluxMap();
 
@@ -1449,25 +1448,19 @@ bool interop::SolTraceFluxBinning(SimControl& SimC, SolarField& SF)
 				rel = 0.0;
 				raz = RV->rec_azimuth.val * D2R;
 
-				double ap_height = RV->rec_height.val;
-
 				rh = fs->getSurfaceHeight();
 				rw = RV->max_curtain_width.Val();
 
 				sp_point offset = *fs->getSurfaceOffset();
-				offset.z += RV->optical_height.Val();
+				double curtain_depth = sqrt(pow(offset.x, 2) + pow(offset.y, 2));
 
-				for (int j = 0; j < SimC._STSim->IntData.nint; j++)
+				for (int j = 0; j < SimC._STSim->IntData.nint; j++) // TODO: Looping through interactions multiple times is inefficient
 				{    //loop through each intersection
-
+					// Flux map is incident flux not absorbed
 					if (SimC._STSim->IntData.smap[j] != rstage1 || abs(SimC._STSim->IntData.emap[j]) != e_ind) continue;    //only consider rays that interact with this element
 
 					//Where did the ray hit relative to the location of the receiver?
-					rayhit.Set(SimC._STSim->IntData.hitx[j] - offset.x, SimC._STSim->IntData.hity[j] - offset.y, SimC._STSim->IntData.hitz[j] - offset.z);
-
-					//Do any required transform to get the ray intersection into receiver coordinates
-					Toolbox::rotation(PI - raz, 2, rayhit);
-					Toolbox::rotation(-rel, 0, rayhit);
+					rayhit.Set(SimC._STSim->IntData.hitx[j], SimC._STSim->IntData.hity[j] + curtain_depth, SimC._STSim->IntData.hitz[j] - offset.z);
 
 					//Calculate the point location in relative cylindrical coorinates
 					pw = 0.5 + rayhit.i / rw;    //0 at "starboard" side, increase towards "port"
@@ -1491,8 +1484,6 @@ bool interop::SolTraceFluxBinning(SimControl& SimC, SolarField& SF)
 			return false;
 			break;
 		}
-
-
 	}
 	return true;
 }

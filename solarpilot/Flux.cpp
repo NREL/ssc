@@ -2185,9 +2185,9 @@ void Flux::fluxDensity(simulation_info *siminfo, FluxSurface &flux_surface, Hvec
 	
 	//get the flux grid
 	FluxGrid* grid = flux_surface.getFluxMap();
-	int 
-		nfx = (int)grid->size(),
-		nfy = (int)grid->at(0).size();
+	int
+		nfx = flux_surface.getFluxNX(),
+		nfy = flux_surface.getFluxNY();
 
 	//Get receiver variable map
 	var_receiver* rec_var_map = flux_surface.getParent()->getVarMap();
@@ -2615,7 +2615,7 @@ void Flux::simpleAimPoint(sp_point *Aim, sp_point *AimF, Heliostat &H, SolarFiel
 	Total flux limitations are NOT considered here. For detailed flux mapping, use the calculateAimPoints() method.
 
 	This call returns the relevant information within "Aim" and does not set the local value of the aimpoint for "H"
-	This call also returns relevant information for "AimF" - the aim point in flux plan coordinates
+	This call also returns relevant information for "AimF" - the aim point in flux plane coordinates
 
 	*/
 
@@ -3264,7 +3264,7 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 				FluxGrid *FG = rec->getFluxSurfaces()->at(i).getFluxMap();
 				for (size_t j = 0; j < FG->size(); j++) {
 					for (size_t k = 0; k < FG->front().size(); k++) {
-						FG->at(j).at(k).flux *= (double)(Rv->n_panels.val) / flux_all_surfs; 
+						FG->at(j).at(k).flux *= 1.0 / flux_all_surfs; 
 					}
 				}
 			}

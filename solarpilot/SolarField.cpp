@@ -1385,7 +1385,7 @@ bool SolarField::PrepareFieldLayout(SolarField &SF, WeatherData *wdata, bool ref
         hptr->installPanels();
 
 		//Assign a unique ID to the heliostat
-		hptr->setId(i);
+		hptr->setId(i);	// TODO: ID values change from their original values here...
 
 		//Update progress
 		//_sim_info.setSimulationProgress(double(i)/double(Npos));
@@ -4233,7 +4233,7 @@ void SolarField::AnalyticalFluxSimulation(Hvector &helios)
 				{
 					for (size_t k = 0; k < fg->front().size(); k++)
 					{
-						fg->at(j).at(k).flux *= (double)(_var_map->recs.at(n).n_panels.val) / total_flux;
+						fg->at(j).at(k).flux *= 1.0 / total_flux;
 					}
 				}
 			}
@@ -4277,18 +4277,14 @@ void SolarField::CalcDimensionalFluxProfiles(Hvector &helios)
 
 		for(unsigned int i=0; i<surfaces->size(); i++)
         {
-			double Arec = (*rec)->getAbsorberArea();
-			if ((*rec)->getVarMap()->rec_type.mapval() == var_receiver::REC_TYPE::FALLING_PARTICLE && i == 0)
-				Arec = (*rec)->getVarMap()->rec_width.val * (*rec)->getVarMap()->rec_height.val;	// Receiver Aperture Area
-
 			FluxSurface *fs = &surfaces->at(i);
-					
+			double Asur = fs->getSurfaceArea();
 			//Take the normalized flux values and multiply to get flux density [kW/m2]
 			FluxGrid *grid = fs->getFluxMap();
 			double fmax=0.;
 			int nfy = fs->getFluxNY(), nfx = fs->getFluxNX();
 			double nfynfx = (double)(nfy*nfx);
-            double anode = Arec / nfynfx;
+            double anode = Asur / nfynfx;
 			for(int j=0; j<nfy; j++){
 				for(int k=0; k<nfx; k++){
 					double *pt = &grid->at(k).at(j).flux;

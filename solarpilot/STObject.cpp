@@ -45,6 +45,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using namespace std;
 
+//#define FALLPARTICLE_HERMITE_VALIDATION
 #ifdef SP_USE_SOLTRACE
 
 ST_OpticalProperties::ST_OpticalProperties()
@@ -586,6 +587,9 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 	/* 
 	Take the geometry specified in the SolarField SF and the heliostats listed in helios and create a 
 	SolTrace simulation object.
+
+	NOTE: If this function is modified for any reason, 
+	please update load_soltrace_structure() within copylot.py in the api directory of SolarPILOT deploy.
 	*/
 
     var_map *V = SF.getVarMap();
@@ -946,7 +950,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 					element->Origin[1] = P->y + Floc.y;
 					element->Origin[2] = P->z + Floc.z;
 
-					element->AimPoint[0] = element->Origin[0] + Faim.i*1000.;
+					element->AimPoint[0] = element->Origin[0] + Faim.i*1000.;	// Mult. by 1000. due to numerical precision
 					element->AimPoint[1] = element->Origin[1] + Faim.j*1000.;
 					element->AimPoint[2] = element->Origin[2] + Faim.k*1000.;
 
@@ -1243,6 +1247,14 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 				// Modifying last stage added
 				ST_Stage* snout_stage = StageList.back(); //Renaming r_stage
 				snout_stage->ZRot = rv->rec_azimuth.val;
+				snout_stage->Origin[0] = rec_offset.x;		// Accounting for offsets (this is different than other receiver types)
+				snout_stage->Origin[1] = rec_offset.y;
+				snout_stage->Origin[2] = rec_offset.z;
+
+				snout_stage->AimPoint[0] = snout_stage->Origin[0];
+				snout_stage->AimPoint[1] = snout_stage->Origin[1];
+				snout_stage->AimPoint[2] = snout_stage->Origin[2] + 1.0;
+
 				snout_stage->Name = "SNOUT";
 				snout_stage->Virtual = false;
 				snout_stage->MultiHitsPerRay = true;
@@ -1253,30 +1265,34 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 				std::string snout_opt_name = "SNOUT Surface";
 				copt->Name = snout_opt_name;
 				//set the optical properties. (Front)
-				copt->Front.DistributionType = 'f'; // diffuse
+				copt->Front.DistributionType = 'f'; // diffuse surface
 				copt->Front.OpticSurfNumber = 0;
 				copt->Front.ApertureStopOrGratingType = 0;
-				copt->Front.Reflectivity = 0.0; // Assuming white paint -> 0.9
-				copt->Front.Transmissivity = 0.;
+				copt->Front.Reflectivity = 0.8;
 				copt->Front.RMSSlopeError = 0.00001;
 				copt->Front.RMSSpecError = 1000.;
+
 				//back surface optics
 				copt->Back.DistributionType = 'f';
 				copt->Back.OpticSurfNumber = 0;
 				copt->Back.ApertureStopOrGratingType = 0;
-				copt->Back.Reflectivity = 0.0; // Assuming white paint  -> 0.9
-				copt->Back.Transmissivity = 0.;
+				copt->Back.Reflectivity = 0.8;
 				copt->Back.RMSSlopeError = 0.00001;
 				copt->Back.RMSSpecError = 1000.;
+
+#ifdef FALLPARTICLE_HERMITE_VALIDATION
+				copt->Front.Reflectivity = 0.0;
+				copt->Back.Reflectivity = 0.0;
+#endif // FALLPARTICLE_HERMITE_VALIDATION
 
 				//SNOUT Top Panel
 				snout_stage->ElementList.push_back(new ST_Element());
 				element = snout_stage->ElementList.back();
 				element->Enabled = true;
 
-				element->Origin[0] = rec_offset.x;
-				element->Origin[1] = rec_offset.y;
-				element->Origin[2] = rv->rec_height.val / 2. + rec_offset.z;
+				element->Origin[0] = 0.0;
+				element->Origin[1] = 0.0;
+				element->Origin[2] = rv->rec_height.val / 2.;
 
 				element->AimPoint[0] = element->Origin[0];
 				element->AimPoint[1] = element->Origin[1] - sin(rv->snout_vert_top_angle.val * D2R);
@@ -1304,9 +1320,9 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 				element = snout_stage->ElementList.back();
 				element->Enabled = true;
 
-				element->Origin[0] = rec_offset.x;
-				element->Origin[1] = rec_offset.y;
-				element->Origin[2] = -rv->rec_height.val / 2. + rec_offset.z;
+				element->Origin[0] = 0.0;
+				element->Origin[1] = 0.0;
+				element->Origin[2] = -rv->rec_height.val / 2.;
 
 				element->AimPoint[0] = element->Origin[0];
 				element->AimPoint[1] = element->Origin[1] + sin(rv->snout_vert_bot_angle.val * D2R);
@@ -1334,9 +1350,9 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 				element = snout_stage->ElementList.back();
 				element->Enabled = true;
 
-				element->Origin[0] = rv->rec_width.val / 2. + rec_offset.x;
-				element->Origin[1] = rec_offset.y;
-				element->Origin[2] = rec_offset.z;
+				element->Origin[0] = rv->rec_width.val / 2.;
+				element->Origin[1] = 0.0;
+				element->Origin[2] = 0.0;
 
 				element->AimPoint[0] = element->Origin[0] - cos(rv->snout_horiz_angle.val / 2. * D2R);
 				element->AimPoint[1] = element->Origin[1] + sin(rv->snout_horiz_angle.val / 2. * D2R);
@@ -1364,9 +1380,9 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 				element = snout_stage->ElementList.back();
 				element->Enabled = true;
 
-				element->Origin[0] = -rv->rec_width.val / 2. + rec_offset.x;
-				element->Origin[1] = 0. + rec_offset.y;
-				element->Origin[2] = 0. + rec_offset.z;
+				element->Origin[0] = -rv->rec_width.val / 2.;
+				element->Origin[1] = 0.0;
+				element->Origin[2] = 0.0;
 
 				element->AimPoint[0] = element->Origin[0] + cos(rv->snout_horiz_angle.val / 2. * D2R);
 				element->AimPoint[1] = element->Origin[1] + sin(rv->snout_horiz_angle.val / 2. * D2R);
@@ -1391,23 +1407,6 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 
 				/*--- Re-adding receiver stage ---*/
 				StageList.push_back(new ST_Stage());
-				ST_Stage* r_stage = StageList.back();
-				//Global origin
-				r_stage->Origin[0] = 0.;
-				r_stage->Origin[1] = 0.;
-				r_stage->Origin[2] = 0.;
-				//Aim point
-				r_stage->AimPoint[0] = 0.;
-				r_stage->AimPoint[1] = 0.;
-				r_stage->AimPoint[2] = 1.;
-				// Accounting for azimuth angle in stage z rotation
-				r_stage->ZRot = rv->rec_azimuth.val;
-				//{virtual stage, multiple hits per ray, trace through} UI checkboxes
-				r_stage->Virtual = false;
-				r_stage->MultiHitsPerRay = true;
-				r_stage->TraceThrough = false;
-				//Name
-				r_stage->Name = "Receiver";
 
 				//append an optics set, required for the receiver
 				OpticsList.push_back(new ST_OpticalPropertySet());
@@ -1422,13 +1421,24 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 			ap_stage->Virtual = true;
 			ap_stage->TraceThrough = false;
 
+			//Global origin - making stage origin account for offsets
+			ap_stage->Origin[0] = rec_offset.x;
+			ap_stage->Origin[1] = rec_offset.y;
+			ap_stage->Origin[2] = rec_offset.z;
+			//Aim point
+			ap_stage->AimPoint[0] = ap_stage->Origin[0];
+			ap_stage->AimPoint[1] = ap_stage->Origin[1];
+			ap_stage->AimPoint[2] = ap_stage->Origin[2] + 1.;
+			// Accounting for azimuth angle in stage z rotation
+			ap_stage->ZRot = rv->rec_azimuth.val;
+
 			ap_stage->ElementList.push_back(new ST_Element());
 			element = ap_stage->ElementList.back();
 			element->Enabled = true;
 
-			element->Origin[0] = rec_offset.x;
-			element->Origin[1] = rec_offset.y;
-			element->Origin[2] = rec_offset.z;
+			element->Origin[0] = 0.0;		
+			element->Origin[1] = 0.0;
+			element->Origin[2] = 0.0;
 
 			element->AimPoint[0] = element->Origin[0];
 			element->AimPoint[1] = element->Origin[1] + 1;
@@ -1449,13 +1459,13 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 			StageList.push_back(new ST_Stage());
 			ST_Stage* r_stage = StageList.back();
 			//Global origin
-			r_stage->Origin[0] = 0.;
-			r_stage->Origin[1] = 0.;
-			r_stage->Origin[2] = 0.;
+			r_stage->Origin[0] = rec_offset.x;	// making stage origin account for offsets
+			r_stage->Origin[1] = rec_offset.y;
+			r_stage->Origin[2] = rec_offset.z;
 			//Aim point
-			r_stage->AimPoint[0] = 0.;
-			r_stage->AimPoint[1] = 0.;
-			r_stage->AimPoint[2] = 1.;
+			r_stage->AimPoint[0] = r_stage->Origin[0];
+			r_stage->AimPoint[1] = r_stage->Origin[1];
+			r_stage->AimPoint[2] = r_stage->Origin[2] + 1.;
 			// Accounting for azimuth angle in stage z rotation
 			r_stage->ZRot = rv->rec_azimuth.val;
 			//{virtual stage, multiple hits per ray, trace through} UI checkboxes
@@ -1467,22 +1477,32 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 
 			//**** Add optics stage *****//
 			copt->Name = (rv->rec_name.val).c_str();
-			//set the optical properties. This should be a diffuse surface, make it a pillbox distribution w/ equal angular reflection probability.
-			copt->Front.DistributionType = 'g'; // 'f';
+			//set the particle curtain optical properties.
+			copt->Front.DistributionType = 'g';
 			copt->Front.OpticSurfNumber = 0;
 			copt->Front.ApertureStopOrGratingType = 0;
-			copt->Front.Reflectivity = 1. - rv->absorptance.val;
-			//copt->Front.Transmissivity = 0.3; // TODO: Update this to change properties as a function of curtain height
-			copt->Front.RMSSlopeError = PI / 4.; // 0.00001;
-			copt->Front.RMSSpecError = PI / 4.; // 10000.;
+			copt->Front.Transmissivity = 0.3; // TODO: Update this to change properties as a function of curtain height
+			copt->Front.RMSSlopeError = 0.00001;
+			copt->Front.RMSSpecError = 1000.;  //PI / 4.; // 10000.;
+			copt->Front.RefractiveIndex[0] = 1.0; // Real part
 			//back
-			copt->Back.DistributionType = 'g'; // 'f';
+			copt->Back.DistributionType =  'g';
 			copt->Back.OpticSurfNumber = 0;
 			copt->Back.ApertureStopOrGratingType = 0;
+			copt->Back.Transmissivity = 0.3;
+			copt->Back.RMSSlopeError = 0.00001; // PI / 4.; // 0.00001;
+			copt->Back.RMSSpecError = 1000.; // PI / 4.; // 10000.;
+			copt->Back.RefractiveIndex[0] = 1.0;  // Real part
+
+#ifdef FALLPARTICLE_HERMITE_VALIDATION
+			copt->Front.Reflectivity = 1. - rv->absorptance.val;
+			copt->Front.RMSSlopeError = PI / 4.;
+			copt->Front.RMSSpecError = PI / 4.;
+
 			copt->Back.Reflectivity = 1. - rv->absorptance.val;
-			//copt->Front.Transmissivity = 0.3;
-			copt->Back.RMSSlopeError = PI / 4.; // 0.00001;
-			copt->Back.RMSSpecError = PI / 4.; // 10000.;
+			copt->Back.RMSSlopeError = PI / 4.;
+			copt->Back.RMSSpecError = PI / 4.;
+#endif // FALLPARTICLE_HERMITE_VALIDATION
 
 			sp_point* pos;
 			//**** Add particle curtain *****//
@@ -1501,9 +1521,9 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 					curtain_depth = surface.getSurfaceRadius() - curtain_depth;
 				}
 
-				element->Origin[0] = rec_offset.x;
-				element->Origin[1] = -curtain_depth + rec_offset.y;
-				element->Origin[2] = pos->z + rec_offset.z;
+				element->Origin[0] = 0.0;
+				element->Origin[1] = -curtain_depth;
+				element->Origin[2] = pos->z;
 
 				element->AimPoint[0] = element->Origin[0];
 				element->AimPoint[1] = element->Origin[1] + 1.;
@@ -1525,14 +1545,16 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 					element->Su_A = 1. / surface.getSurfaceRadius();
 				}
 
-				element->InteractionType = 2; // 1; // Refraction surface for transmissivity
+				element->InteractionType = 1; // Refraction surface for transmissivity
+#ifdef FALLPARTICLE_HERMITE_VALIDATION
+				element->InteractionType = 2; // Reflection surface for reflectivity
+#endif // FALLPARTICLE_HERMITE_VALIDATION
 				element->OpticName = (rv->rec_name.val).c_str();
 				element->Optics = copt;
 				element->Comment = "Particle Curtain " + std::to_string(s);
 			}
 			
 			//**** Cavity Surfaces *****//
-			
 			// Create a diffuse-like optic surface 
 			std::string cavity_opt_name = "Cavity Surface";
 			OpticsList.push_back(new ST_OpticalPropertySet());
@@ -1542,29 +1564,37 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 			copt->Front.DistributionType = 'f';
 			copt->Front.OpticSurfNumber = 0;
 			copt->Front.ApertureStopOrGratingType = 0;
-			copt->Front.Reflectivity = rv->absorptance.val; // 0.9; // Assuming white paint -> we could assume absorptance
-			copt->Front.Transmissivity = 0.;
+			copt->Front.Reflectivity = 0.8; // TODO: we could assume absorptance
 			copt->Front.RMSSlopeError = 0.00001;
 			copt->Front.RMSSpecError = 1000.;
 			//back surface optics
 			copt->Back.DistributionType = 'f';
 			copt->Back.OpticSurfNumber = 0;
 			copt->Back.ApertureStopOrGratingType = 0;
-			copt->Front.Transmissivity = 0.; 
-			copt->Back.Reflectivity = rv->absorptance.val; // 0.9; // Assuming white paint
+			copt->Back.Reflectivity = 0.8;
 			copt->Back.RMSSlopeError = 0.00001;
 			copt->Back.RMSSpecError = 1000.;
 
-			//Bottom
-			double back_cavity_offset = 0.5;   // [m] assumed distance between curtain and back of cavity
+#ifdef FALLPARTICLE_HERMITE_VALIDATION
+			// TODO (BILL): The reason validation requires the cavity reflectivity to equal 1 is because the current approach uses
+			// the overlap projections of the snout and the aperture and doesn't account for the curtain...
+			// Therefore, all flux entering the aperature is assumed to hit the curtain...
+			// We could improve this by using the overlap projection of the curain, aperature, and snout...
+			// This approach would make the hermite an underestimater which is currently an overestimator
+			copt->Front.Reflectivity = 1.0;  //rv->absorptance.val; // 0.0;
+			copt->Back.Reflectivity = 1.0; //rv->absorptance.val; //0.0;
+#endif // FALLPARTICLE_HERMITE_VALIDATION
 
+			double back_cavity_offset = 0.5;   // [m] assumed distance between curtain and back of cavity 
+			// TODO (BILL): This should be normalized or set by user
+			//Bottom
 			r_stage->ElementList.push_back(new ST_Element());
 			element = r_stage->ElementList.back();
 			element->Enabled = true;
 
-			element->Origin[0] = rec_offset.x;
-			element->Origin[1] = -(rv->max_curtain_depth.val + back_cavity_offset) / 2. + rec_offset.y;
-			element->Origin[2] = - rv->rec_height.val/2. + rec_offset.z;
+			element->Origin[0] = 0.0;
+			element->Origin[1] = -(rv->max_curtain_depth.val + back_cavity_offset) / 2.;
+			element->Origin[2] = -rv->rec_height.val / 2.;
 
 			element->AimPoint[0] = element->Origin[0];
 			element->AimPoint[1] = element->Origin[1];
@@ -1586,9 +1616,9 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 			element = r_stage->ElementList.back();
 			element->Enabled = true;
 
-			element->Origin[0] = rec_offset.x; 
-			element->Origin[1] = -rv->max_curtain_depth.val - back_cavity_offset + rec_offset.y;
-			element->Origin[2] = -rv->rec_height.val / 2. + rv->curtain_total_height.Val() / 2. + rec_offset.z;
+			element->Origin[0] = 0.0;
+			element->Origin[1] = -rv->max_curtain_depth.val - back_cavity_offset;
+			element->Origin[2] = -rv->rec_height.val / 2. + rv->curtain_total_height.Val() / 2.;
 
 			element->AimPoint[0] = element->Origin[0];
 			element->AimPoint[1] = element->Origin[1] + 1;
@@ -1610,9 +1640,9 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 			element = r_stage->ElementList.back();
 			element->Enabled = true;
 
-			element->Origin[0] = rec_offset.x;
-			element->Origin[1] = -(rv->max_curtain_depth.val + back_cavity_offset) / 2. + rec_offset.y;
-			element->Origin[2] = -rv->rec_height.val / 2. + rv->curtain_total_height.Val() + rec_offset.z;
+			element->Origin[0] = 0.0;
+			element->Origin[1] = -(rv->max_curtain_depth.val + back_cavity_offset) / 2.;
+			element->Origin[2] = -rv->rec_height.val / 2. + rv->curtain_total_height.Val();
 
 			element->AimPoint[0] = element->Origin[0];
 			element->AimPoint[1] = element->Origin[1];
@@ -1634,10 +1664,9 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 			element = r_stage->ElementList.back();
 			element->Enabled = true;
 
-			//sp_point el_orig;
-			element->Origin[0] = rv->max_curtain_width.Val() / 2. + rec_offset.x;
-			element->Origin[1] = -(rv->max_curtain_depth.val + back_cavity_offset) / 2. + rec_offset.y;
-			element->Origin[2] = -rv->rec_height.val / 2. + rv->curtain_total_height.Val() / 2. + rec_offset.z;
+			element->Origin[0] = rv->max_curtain_width.Val() / 2.;
+			element->Origin[1] = -(rv->max_curtain_depth.val + back_cavity_offset) / 2.;
+			element->Origin[2] = -rv->rec_height.val / 2. + rv->curtain_total_height.Val() / 2.;
 
 			element->AimPoint[0] = element->Origin[0] - 1;
 			element->AimPoint[1] = element->Origin[1];
@@ -1659,9 +1688,9 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 			element = r_stage->ElementList.back();
 			element->Enabled = true;
 
-			element->Origin[0] = -rv->max_curtain_width.Val() / 2. + rec_offset.x;
-			element->Origin[1] = -(rv->max_curtain_depth.val + back_cavity_offset) / 2. + rec_offset.y;
-			element->Origin[2] = -rv->rec_height.val / 2. + rv->curtain_total_height.Val() / 2. + rec_offset.z;
+			element->Origin[0] = -rv->max_curtain_width.Val() / 2.;
+			element->Origin[1] = -(rv->max_curtain_depth.val + back_cavity_offset) / 2.;
+			element->Origin[2] = -rv->rec_height.val / 2. + rv->curtain_total_height.Val() / 2.;
 
 			element->AimPoint[0] = element->Origin[0] + 1;
 			element->AimPoint[1] = element->Origin[1];
@@ -1684,9 +1713,9 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 				element = r_stage->ElementList.back();
 				element->Enabled = true;
 
-				element->Origin[0] = rec_offset.x;
-				element->Origin[1] = rec_offset.y;
-				element->Origin[2] = rv->rec_height.val / 2. + (rv->curtain_total_height.Val() - rv->rec_height.val) / 2. + rec_offset.z;
+				element->Origin[0] = 0.0;
+				element->Origin[1] = 0.0;
+				element->Origin[2] = rv->rec_height.val / 2. + (rv->curtain_total_height.Val() - rv->rec_height.val) / 2.;
 
 				element->AimPoint[0] = element->Origin[0];
 				element->AimPoint[1] = element->Origin[1] - 1;
@@ -1709,9 +1738,9 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 			element = r_stage->ElementList.back();
 			element->Enabled = true;
 
-			element->Origin[0] = rv->max_curtain_width.Val() / 2. - (rv->max_curtain_width.Val() - rv->rec_width.val) / 4. + rec_offset.x;
-			element->Origin[1] = rec_offset.y;
-			element->Origin[2] = rec_offset.z;
+			element->Origin[0] = rv->max_curtain_width.Val() / 2. - (rv->max_curtain_width.Val() - rv->rec_width.val) / 4.;
+			element->Origin[1] = 0.0;
+			element->Origin[2] = 0.0;
 
 			element->AimPoint[0] = element->Origin[0];
 			element->AimPoint[1] = element->Origin[1] - 1;
@@ -1733,9 +1762,9 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 			element = r_stage->ElementList.back();
 			element->Enabled = true;
 
-			element->Origin[0] = -rv->max_curtain_width.Val() / 2. + (rv->max_curtain_width.Val() - rv->rec_width.val) / 4. + rec_offset.x;
-			element->Origin[1] = rec_offset.y;
-			element->Origin[2] = rec_offset.z;
+			element->Origin[0] = -rv->max_curtain_width.Val() / 2. + (rv->max_curtain_width.Val() - rv->rec_width.val) / 4.;
+			element->Origin[1] = 0.0;
+			element->Origin[2] = 0.0;
 
 			element->AimPoint[0] = element->Origin[0];
 			element->AimPoint[1] = element->Origin[1] - 1.;
@@ -1751,6 +1780,8 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 			element->OpticName = cavity_opt_name;
 			element->Optics = copt;
 			element->Comment = "Cavity Front West";
+
+
 			break;
 		}
 		case Receiver::REC_GEOM_TYPE::PLANE_ELLIPSE:
