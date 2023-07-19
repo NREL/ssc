@@ -1092,8 +1092,9 @@ double CGeothermalAnalyzer::Gringarten()
 double CGeothermalAnalyzer::RameyWellbore()
 {
     double alpharock = mo_geo_in.md_EGSThermalConductivity / (mo_geo_in.md_EGSRockDensity * mo_geo_in.md_EGSSpecificHeatConstant);
-    if (mp_geo_out->ElapsedHours < 0.1) return 0;
-    double time = mp_geo_out->ElapsedHours * 3600; //elapsed time (s)
+    double time = 0;
+    if (mp_geo_out->ElapsedHours < 0.1) time = 0.1;
+    else time = mp_geo_out->ElapsedHours * 3600; //elapsed time (s)
     double utilfactor = 1.0; //capacity factor?
     double avg_gradient = 2 / GetResourceDepthM(); //local average geothermal gradient
     double framey = -1.0 * log(1.1 * (0.3048 * (mo_geo_in.md_DiameterProductionWellInches / (2 * 12)) / sqrt(4.0 * alpharock * time * utilfactor))) - 0.29;
@@ -1293,9 +1294,11 @@ double CGeothermalAnalyzer::GetPressureChangeAcrossReservoir()
 	// all this is from [7C.EGS Subsrfce HX]
 	double waterTempC = (geothermal::IMITATE_GETEM) ? dEGSAverageWaterTemperatureC1 : EGSAverageWaterTemperatureC2(); // degrees C
 	double days = geothermal::EGS_TIME_INPUT * geothermal::DAYS_PER_YEAR;
-	//double tempEGSProductionC = GetResourceTemperatureC() + (geothermal::TEMPERATURE_EGS_INJECTIONC - GetResourceTemperatureC()) * EGSReservoirConstant(waterTempC, days);
+	double tempEGSProductionC_old = GetResourceTemperatureC() + (geothermal::TEMPERATURE_EGS_INJECTIONC - GetResourceTemperatureC()) * EGSReservoirConstant(waterTempC, days);
     double tempEGSProductionCtest = Gringarten();
     double tempEGSProductionC = Gringarten();
+    double dEGSAverageReservoirTemperatureF_old = physics::CelciusToFarenheit((geothermal::TEMPERATURE_EGS_INJECTIONC + tempEGSProductionC_old) / 2);
+
     double dEGSAverageReservoirTemperatureF = physics::CelciusToFarenheit((geothermal::TEMPERATURE_EGS_INJECTIONC + tempEGSProductionC) / 2);
     double pres_out = 0;
     double t = mp_geo_out->ElapsedHours * 3600; //elapsed time (s)
@@ -1436,8 +1439,11 @@ double CGeothermalAnalyzer::flowRateTotal(void) {
 
 double CGeothermalAnalyzer::GetNumberOfWells(void)
 {
-	if (mo_geo_in.me_cb == NUMBER_OF_WELLS)
-		mp_geo_out->md_NumberOfWells = mo_geo_in.md_NumberOfWells;
+    if (mo_geo_in.me_cb == NUMBER_OF_WELLS) {
+
+        mp_geo_out->md_NumberOfWells = mo_geo_in.md_NumberOfWells;
+        mp_geo_out->md_NumberOfWellsInj = mo_geo_in.md_NumberOfWells / mo_geo_in.md_RatioInjectionToProduction;
+    }
 	else
 	{
 		double netBrineEffectiveness = GetPlantBrineEffectiveness() - GetPumpWorkWattHrPerLb();
