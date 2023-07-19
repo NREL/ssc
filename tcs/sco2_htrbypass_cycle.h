@@ -257,7 +257,8 @@ private:
     bool is_htf_set = false;
     double m_W_dot_air_cooler;
     double m_Q_dot_air_cooler;
-
+    C_HX_co2_to_htf c_phx;
+    C_HX_co2_to_htf c_bp;  // Bypass Heat Exchanger
     
 
     // New opt

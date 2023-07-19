@@ -1036,13 +1036,6 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
         }
     }
 
-
-    // DEBUG
-    // Define full HX classes
-    {
-
-    }
-
 }
 
 
@@ -1276,13 +1269,16 @@ std::string C_HTRBypass_Cycle::make_result_csv_string()
 
     value_vec.push_back(this->m_T_HTF_BP_outlet_target);
     value_vec.push_back(this->m_T_HTF_BP_outlet_calc);
+    value_vec.push_back(this->m_T_HTF_PHX_inlet);
     value_vec.push_back(this->m_T_HTF_PHX_inlet - this->m_T_HTF_BP_outlet_calc);
     value_vec.push_back(this->m_T_HTF_PHX_out);
     value_vec.push_back(this->m_m_dot_HTF);
+    value_vec.push_back(std::numeric_limits<double>::quiet_NaN());
 
     value_vec.push_back(this->m_eta_thermal_calc_last);
     value_vec.push_back(this->m_objective_metric_opt);
     value_vec.push_back(this->m_objective_metric_bypass_frac_opt);
+    value_vec.push_back(std::numeric_limits<double>::quiet_NaN());
 
     value_vec.push_back(this->m_bp_frac);
     value_vec.push_back(this->ms_des_par.m_recomp_frac);
@@ -1293,6 +1289,7 @@ std::string C_HTRBypass_Cycle::make_result_csv_string()
     value_vec.push_back(this->mc_HT_recup.ms_des_solved.m_UA_calc_at_eff_max);
     value_vec.push_back(this->m_pres_last[MC_IN]);
     value_vec.push_back(this->m_pres_last[MC_OUT]);
+    value_vec.push_back(std::numeric_limits<double>::quiet_NaN());
 
     value_vec.push_back(this->m_W_dot_t);
     value_vec.push_back(this->m_W_dot_mc);
@@ -1306,26 +1303,35 @@ std::string C_HTRBypass_Cycle::make_result_csv_string()
     value_vec.push_back(this->m_Q_dot_LTR_LP);
     value_vec.push_back(this->m_Q_dot_HTR_HP);
     value_vec.push_back(this->m_Q_dot_HTR_LP);
+    value_vec.push_back(std::numeric_limits<double>::quiet_NaN());
 
     value_vec.push_back(this->m_m_dot_t);
     value_vec.push_back(this->m_m_dot_mc);
     value_vec.push_back(this->m_m_dot_rc);
     value_vec.push_back(this->m_m_dot_bp);
     value_vec.push_back(this->m_m_dot_htr_hp);
-    
-    
+    value_vec.push_back(std::numeric_limits<double>::quiet_NaN());
+
+    value_vec.push_back(this->mc_LT_recup.ms_des_solved.m_UA_calc_at_eff_max);
+    value_vec.push_back(this->mc_LT_recup.ms_des_solved.m_min_DT_design);
+    value_vec.push_back(this->mc_LT_recup.ms_des_solved.m_eff_design);
+    value_vec.push_back(this->mc_HT_recup.ms_des_solved.m_UA_calc_at_eff_max);
+    value_vec.push_back(this->mc_HT_recup.ms_des_solved.m_min_DT_design);
+    value_vec.push_back(this->mc_HT_recup.ms_des_solved.m_eff_design);
+
     
 
     // Write to string
     for (double val : value_vec)
     {
-        value_string.append(std::to_string(val));
+        if(std::isnan(val) != true)
+            value_string.append(std::to_string(val));
+
         value_string.append("\n");
     }
 
 
     // Write Temperatures
-    value_string.append("\n");
     value_string.append("\n");
     for (double val : this->m_temp_last)
     {
@@ -1334,7 +1340,6 @@ std::string C_HTRBypass_Cycle::make_result_csv_string()
     }
 
     // Write Pressures
-    value_string.append("\n");
     value_string.append("\n");
     for (double val : this->m_pres_last)
     {
