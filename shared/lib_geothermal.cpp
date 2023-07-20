@@ -1008,10 +1008,12 @@ double CGeothermalAnalyzer::Gringarten()
     double t_D = (pow(p_w * c_w, 2) / (4 * k_r * p_r * c_r)) * pow(Q / (h_f * w_f), 2) * t;
     double x = t_D;
     if (t_D < t_d_vec[0]) {
-        T_D = 1.0;
+        //T_D = 1.0;
+        T_D = 0.0;
     }
     else if (t_D > t_d_vec[t_d_vec.size() - 1]) {
-        T_D = 1.0;
+        //T_D = 1.0;
+        T_D = 0.0;
     }
     else {
         while (t_it <= 0) {
@@ -1079,8 +1081,10 @@ double CGeothermalAnalyzer::Gringarten()
         if (y2 != y1 && x2 != x1) {
             T_D = ((y2 - y) / (y2 - y1)) * ((x2 - x) / (x2 - x1) * td_x1y1 + (x - x1) / (x2 - x1) * td_x2y1) + ((y - y1) / (y2 - y1)) * ((x2 - x) / (x2 - x1) * td_x1y2 + (x - x1) / (x2 - x1) * td_x2y2);
         }
-        else
-            T_D = 1.0;
+        else {
+            //T_D = 1.0;
+            T_D = 0.0;
+        }
     }
 
     double working_temp = GetResourceTemperatureC() - T_D * (GetResourceTemperatureC() - geothermal::TEMPERATURE_EGS_INJECTIONC);
@@ -1093,7 +1097,7 @@ double CGeothermalAnalyzer::RameyWellbore()
 {
     double alpharock = mo_geo_in.md_EGSThermalConductivity / (mo_geo_in.md_EGSRockDensity * mo_geo_in.md_EGSSpecificHeatConstant);
     double time = 0;
-    if (mp_geo_out->ElapsedHours < 0.1) time = 0.1;
+    if (mp_geo_out->ElapsedHours < 0.1) time = 744 * 3600;
     else time = mp_geo_out->ElapsedHours * 3600; //elapsed time (s)
     double utilfactor = 1.0; //capacity factor?
     double avg_gradient = 2 / GetResourceDepthM(); //local average geothermal gradient
