@@ -49,29 +49,8 @@ class C_HTRBypass_Cycle : public C_sco2_cycle_core
 {
 public:
 
-    //enum E_htrbypass_cycle_state_points
-    //{
-    //    // index values for c++ 0-based vectors for temperature, pressure, etc.
-    //    MC_IN = 0,		// Main compressor inlet
-    //    MC_OUT,			// Main compressor outlet
-    //    LTR_HP_OUT,		// Low temp recuperator high pressure outlet
-    //    MIXER_OUT,		// Mixer: LTR_HP_OUT + Recompressor outlet
-    //    HTR_HP_OUT,		// High temp recuperator high pressure outlet
-    //    TURB_IN,		// Turbine inlet
-    //    TURB_OUT,		// Turbine outlet
-    //    HTR_LP_OUT,		// High temp recuperator low pressure outlet
-    //    LTR_LP_OUT,		// Low temp recuperator low pressure outlet
-    //    RC_OUT,			// Recompresor outlet
-    //    BYPASS_OUT,
-    //    MIXER2_OUT,
-
-
-    //    END_SCO2_HTRBP_STATES
-    //};
-
     struct S_design_parameters
     {
-        // Parameters SHARED with recompression
 
         double m_P_mc_in;					//[kPa] Compressor inlet pressure
         double m_P_mc_out;					//[kPa] Compressor outlet pressure
@@ -93,6 +72,7 @@ public:
         NS_HX_counterflow_eqs::E_UA_target_type m_HTR_od_UA_target_type;
 
         double m_recomp_frac;				//[-] Fraction of flow that bypasses the precooler and the main compressor at the design point
+        double m_bypass_frac;                   //[-] Fraction of flow that bypasses the HTR and passes through the Bypass HX 
         double m_des_tol;						//[-] Convergence tolerance
 
         // Air cooler parameters
@@ -108,6 +88,7 @@ public:
                 m_LTR_UA = m_LTR_min_dT = m_LTR_eff_target = m_LTR_eff_max =
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max =
                 m_recomp_frac =
+                m_bypass_frac =
                 m_des_tol =
                 std::numeric_limits<double>::quiet_NaN();
 
@@ -164,6 +145,8 @@ public:
 
         double m_recomp_frac_guess;			//[-] Initial guess for design-point recompression fraction
         bool m_fixed_recomp_frac;			//[-] if true, recomp_frac is fixed at recomp_frac_guess
+        double m_bypass_frac_guess;			//[-] Initial guess for design-point bypass fraction
+        bool m_fixed_bypass_frac;           //[-] if true, bypass_frac is fixed at bypass_frac_guess
 
         double m_LT_frac_guess;				//[-] Initial guess for fraction of UA_rec_total that is in the low-temperature recuperator
         bool m_fixed_LT_frac;				//[-] if true, LT_frac is fixed at LT_frac_guess
@@ -240,7 +223,6 @@ private:
     double m_w_rc;                      // kJ/kg
     double m_Q_dot_LT, m_Q_dot_HT;
     double m_Q_dot_LTR_LP, m_Q_dot_LTR_HP, m_Q_dot_HTR_LP, m_Q_dot_HTR_HP;
-    double m_bp_frac;
     double m_m_dot_bp;
     double m_m_dot_htr_hp;
     double m_cp_HTF;                    // kJ/kg K

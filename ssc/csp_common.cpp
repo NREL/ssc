@@ -779,11 +779,12 @@ var_info vtab_sco2_design[] = {
     { SSC_INPUT,  SSC_NUMBER,  "HTR_n_sub_hx",         "HTR number of model subsections",                        "-",          "High temperature recuperator",    "Heat Exchanger Design",      "?=10",  "",       "" },
     { SSC_INPUT,  SSC_NUMBER,  "HTR_od_model",         "0: mass flow scale, 1: conductance ratio model",         "-",          "High temperature recuperator",    "Heat Exchanger Design",      "?=1",   "",       "" },
 
-    { SSC_INPUT,  SSC_NUMBER,  "cycle_config",         "1 = recompression, 2 = partial cooling",                 "",           "High temperature recuperator",    "Heat Exchanger Design",      "?=1",   "",       "" },
+    { SSC_INPUT,  SSC_NUMBER,  "cycle_config",         "1 = recompression, 2 = partial cooling, 3 = recomp with htr bypass", "", "High temperature recuperator",  "Heat Exchanger Design",      "?=1",   "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "is_recomp_ok",         "1 = Yes, 0 = simple cycle only, < 0 = fix f_recomp to abs(input)","",  "High temperature recuperator",    "Heat Exchanger Design",      "?=1",   "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "is_P_high_fixed",      "1 = Yes (=P_high_limit), 0 = No, optimized (default)",                   "",           "High temperature recuperator",    "Heat Exchanger Design",      "?=0",   "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "is_PR_fixed",          "0 = No, >0 = fixed pressure ratio at input <0 = fixed LP at abs(input)",                      "High temperature recuperator",           "",    "Heat Exchanger Design",      "?=0",   "",       "" },
     { SSC_INPUT,  SSC_NUMBER,  "is_IP_fixed",          "partial cooling config: 0 = No, >0 = fixed HP-IP pressure ratio at input, <0 = fixed IP at abs(input)","","High temperature recuperator","Heat Exchanger Design","?=0", "",       "" },
+    { SSC_INPUT,  SSC_NUMBER,  "is_bypass_ok",         "1 = Yes, 0 = No Bypass, < 0 = fix bp_frac to abs(input)","",  "High temperature recuperator",    "Heat Exchanger Design",      "?=1",   "",       "" },
 
     { SSC_INPUT,  SSC_NUMBER,  "des_objective",        "[2] = hit min phx deltat then max eta, [else] max eta",  "",           "High temperature recuperator",    "Heat Exchanger Design",      "?=0",   "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "min_phx_deltaT",       "Minimum design temperature difference across PHX",       "C",          "High temperature recuperator",    "Heat Exchanger Design",      "?=0",   "",       "" },
@@ -816,7 +817,8 @@ var_info vtab_sco2_design[] = {
     { SSC_INPUT,  SSC_NUMBER,  "T_htf_bypass_out",     "HTF design Bypass Outlet Temperature",                   "C",          "",    "System Design",      "cycle_config=3",     "",       "" },
     { SSC_INPUT,  SSC_NUMBER,  "deltaT_bypass",        "sco2 Bypass Outlet Temp - HTR_HP_OUT Temp",              "C",          "",    "System Design",      "cycle_config=3",     "",       "" },
 
-
+    // DEBUG
+    //{ SSC_OUTPUT,  SSC_STRING,  "debug_string",        "output string used for debug",              "C",          "",    "System Design",      "cycle_config=3",     "",       "" },
 
 	// ** Design OUTPUTS **
 		// System Design Solution
@@ -825,11 +827,13 @@ var_info vtab_sco2_design[] = {
 	{ SSC_OUTPUT, SSC_NUMBER,  "eta_thermal_calc",     "Calculated cycle thermal efficiency",                    "-",          "System Design Solution",    "",      "*",     "",       "" },
     { SSC_OUTPUT, SSC_NUMBER,  "m_dot_co2_full",       "CO2 mass flow rate through HTR, PHX, turbine",           "kg/s",       "System Design Solution",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "recomp_frac",          "Recompression fraction",                                 "-",          "System Design Solution",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "cycle_cost",           "Cycle cost bare erected",                                "M$",         "System Design Solution",    "",      "*",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "bypass_frac",          "Bypass fraction",                                        "-",          "System Design Solution",    "",      "cycle_config=3",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "cycle_cost",           "Cycle cost bare erected",                                "M$",         "System Design Solution",    "",      "*",     "",       "" },
     { SSC_OUTPUT, SSC_NUMBER,  "cycle_spec_cost",      "Cycle specific cost bare erected",                       "$/kWe",      "System Design Solution",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "cycle_spec_cost_thermal", "Cycle specific (thermal) cost bare erected",          "$/kWt",      "System Design Solution",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "W_dot_net_less_cooling", "System power output subtracting cooling parastics",    "MWe,"        "System Design Solution",    "",      "*",     "",       "" },
     { SSC_OUTPUT, SSC_NUMBER,  "eta_thermal_net_less_cooling_des","Calculated cycle thermal efficiency using W_dot_net_less_cooling", "-", "System Design Solution","",  "*", "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "T_htf_bp_out_des",     "HTF design cold temperature (PHX outlet)",               "C",          "System Design Solution",    "",      "cycle_config=3",     "",       "" },
     // Compressor
 	{ SSC_OUTPUT, SSC_NUMBER,  "T_comp_in",            "Compressor inlet temperature",                           "C",          "Compressor",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "P_comp_in",            "Compressor inlet pressure",                              "MPa",        "Compressor",    "",      "*",     "",       "" },
@@ -943,7 +947,20 @@ var_info vtab_sco2_design[] = {
     { SSC_OUTPUT, SSC_NUMBER,  "PHX_cost_equipment",   "PHX cost equipment",                                     "M$",         "PHX Design Solution",    "",      "*",     "",       "" },
     { SSC_OUTPUT, SSC_NUMBER,  "PHX_cost_bare_erected","PHX cost equipment and install",                         "M$",         "PHX Design Solution",    "",      "*",     "",       "" },
     { SSC_OUTPUT, SSC_NUMBER,  "PHX_min_dT",           "PHX min temperature difference",                         "C",          "PHX Design Solution",    "",      "*",     "",       "" },
-		// main compressor cooler
+        // BPX Design Solution
+    { SSC_OUTPUT, SSC_NUMBER,  "UA_BPX",               "BPX Conductance",                                        "MW/K",       "BPX Design Solution",    "",      "cycle_config=3",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "eff_BPX",              "BPX effectiveness",                                      "",           "BPX Design Solution",    "",      "cycle_config=3",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "NTU_BPX",              "BPX NTU",                                                "",           "BPX Design Solution",    "",      "cycle_config=3",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "T_co2_BPX_in",         "CO2 temperature at BPX inlet",                           "C",          "BPX Design Solution",    "",      "cycle_config=3",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "P_co2_BPX_in",         "CO2 pressure at BPX inlet",                              "MPa",        "BPX Design Solution",    "",      "cycle_config=3",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "deltaT_HTF_BPX",       "HTF temp difference across BPX",                         "C",          "BPX Design Solution",    "",      "cycle_config=3",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "q_dot_BPX",            "BPX heat transfer",                                      "MWt",        "BPX Design Solution",    "",      "cycle_config=3",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "BPX_co2_deltaP_des",   "BPX co2 side design pressure drop",                      "-",          "BPX Design Solution",    "",      "cycle_config=3",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "BPX_cost_equipment",   "BPX cost equipment",                                     "M$",         "BPX Design Solution",    "",      "cycle_config=3",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "BPX_cost_bare_erected","BPX cost equipment and install",                         "M$",         "BPX Design Solution",    "",      "cycle_config=3",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "BPX_min_dT",           "BPX min temperature difference",                         "C",          "BPX Design Solution",    "",      "cycle_config=3",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "BPX_m_dot",            "BPX sco2 mass flow rate",                                "kg/s",       "BPX Design Solution",    "",      "cycle_config=3",     "",       "" },
+    // main compressor cooler
 	{ SSC_OUTPUT, SSC_NUMBER,  "mc_cooler_T_in",       "Low pressure cross flow cooler inlet temperature",       "C",          "Low Pressure Cooler",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "mc_cooler_P_in",       "Low pressure cross flow cooler inlet pressure",          "MPa",        "Low Pressure Cooler",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "mc_cooler_rho_in",     "Low pressure cross flow cooler inlet density",           "kg/m3",      "Low Pressure Cooler",    "",      "*",     "",       "" },
@@ -1069,6 +1086,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 	}
 
     s_sco2_des_par.m_is_recomp_ok = cm->as_double("is_recomp_ok");
+    s_sco2_des_par.m_is_bypass_ok = cm->as_double("is_bypass_ok");
 
 	s_sco2_des_par.m_P_high_limit = cm->as_double("P_high_limit")*1000.0;		//[kPa], convert from MPa
 	s_sco2_des_par.m_fixed_P_mc_out = cm->as_integer("is_P_high_fixed");		//[-]
@@ -1264,6 +1282,13 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 		throw exec_error("sco2_csp_system", csp_exception.m_error_message);
 	}
 
+    //// DEBUG
+    //{
+    //    cm->assign("debug_string", var_data("test"));
+    //}
+
+    
+
 	// If all calls were successful, log to SSC any messages from sco2_recomp_csp
 	while (c_sco2_cycle.mc_messages.get_message(&out_type, &out_msg))
 	{
@@ -1272,7 +1297,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 
 	// Helpful to know right away whether cycle contains recompressor
 	bool is_rc = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_is_rc;
-
+    
 	// Get data for P-h cycle plot
 	std::vector<double> P_t;		//[MPa]
 	std::vector<double> h_t;		//[kJ/kg]
@@ -1441,13 +1466,15 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 	double comp_power_sum = 0.0; //[MWe]
 	double m_dot_htf_design = c_sco2_cycle.get_phx_des_par()->m_m_dot_hot_des;	//[kg/s]
 	double T_htf_cold_calc = c_sco2_cycle.get_design_solved()->ms_phx_des_solved.m_T_h_out;		//[K]
+    double T_htf_bypass_out = c_sco2_cycle.get_design_solved()->ms_bp_des_solved.m_T_h_out;     //[K]
 	cm->assign("T_htf_cold_des", (ssc_number_t)(T_htf_cold_calc - 273.15));		//[C] convert from K
 	cm->assign("m_dot_htf_des", (ssc_number_t)m_dot_htf_design);				//[kg/s]
 	cm->assign("eta_thermal_calc", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_eta_thermal);	//[-]
 	cm->assign("m_dot_co2_full", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_m_dot_t);		//[kg/s]
 	cm->assign("recomp_frac", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_recomp_frac);		//[-]
-	// Compressor
-	cm->assign("T_comp_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::MC_IN] - 273.15));		//[C] convert from K
+    cm->assign("T_htf_bp_out_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_bp_des_solved.m_T_h_out);
+    // Compressor
+    cm->assign("T_comp_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::MC_IN] - 273.15));		//[C] convert from K
 	cm->assign("P_comp_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::MC_IN] / 1000.0));		//[MPa] convert from kPa
 	cm->assign("P_comp_out", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::MC_OUT] / 1000.0));		//[MPa] convert from kPa
 	cm->assign("mc_T_out", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::MC_OUT] - 273.15));		//[C] convert from K
@@ -1715,7 +1742,30 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
     cm->assign("PHX_cost_bare_erected", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_phx_des_solved.m_cost_bare_erected);	//[M$]
 	cost_equip_sum += c_sco2_cycle.get_design_solved()->ms_phx_des_solved.m_cost_equipment;	//[M$]
     cost_bare_erected_sum += c_sco2_cycle.get_design_solved()->ms_phx_des_solved.m_cost_bare_erected;	//[M$];
-		// Low Pressure Cooler
+        // BPX
+    if (s_sco2_des_par.m_cycle_config == 3)
+    {
+        cm->assign("bypass_frac", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_bypass_frac);
+        cm->assign("UA_BPX", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_bp_des_solved.m_UA_design * 1.E-3));	//[MW/K] convert from kW/K
+        cm->assign("eff_BPX", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_bp_des_solved.m_eff_design);				//[-]
+        cm->assign("NTU_BPX", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_bp_des_solved.m_NTU_design);				//[-]
+        cm->assign("T_co2_BPX_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::MIXER_OUT] - 273.15));	//[C]
+        cm->assign("P_co2_BPX_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::MIXER_OUT] * 1.E-3));		//[MPa] convert from kPa
+        cm->assign("deltaT_HTF_BPX", (ssc_number_t)(T_htf_cold_calc - T_htf_bypass_out));		//[K]
+        cm->assign("q_dot_BPX", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_bp_des_solved.m_Q_dot_design * 1.E-3));	//[MWt] convert from kWt
+        cm->assign("BPX_min_dT", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_bp_des_solved.m_min_DT_design));	//[C/K]
+        double PHX_deltaP_frac = 1.0 - c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::BYPASS_OUT] /
+            c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::MIXER_OUT];   //[-] Fractional pressure drop through co2 side of PHX
+        cm->assign("BPX_co2_deltaP_des", (ssc_number_t)PHX_deltaP_frac);
+        cm->assign("BPX_cost_equipment", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_bp_des_solved.m_cost_equipment);	//[M$]
+        cm->assign("BPX_cost_bare_erected", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_bp_des_solved.m_cost_bare_erected);	//[M$]
+        cm->assign("BPX_m_dot", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_bypass_frac *
+            c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_m_dot_t));
+        cost_equip_sum += c_sco2_cycle.get_design_solved()->ms_bp_des_solved.m_cost_equipment;	//[M$]
+        cost_bare_erected_sum += c_sco2_cycle.get_design_solved()->ms_bp_des_solved.m_cost_bare_erected;	//[M$];
+    }
+
+        // Low Pressure Cooler
 	cm->assign("mc_cooler_T_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_air_cooler.m_T_in_co2 - 273.15));	//[C]
 	cm->assign("mc_cooler_P_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_air_cooler.m_P_in_co2 / 1.E3));		//[MPa]
 	cm->assign("mc_cooler_rho_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_dens[C_sco2_cycle_core::LTR_LP_OUT]));	//[kg/m3]

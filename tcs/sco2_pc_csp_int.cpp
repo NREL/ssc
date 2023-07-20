@@ -333,6 +333,7 @@ void C_sco2_phx_air_cooler::design_core()
         des_params.m_fixed_f_PR_HP_to_IP = ms_des_par.m_fixed_f_PR_HP_to_IP;    //[-]
 
 		des_params.m_is_recomp_ok = ms_des_par.m_is_recomp_ok;
+        des_params.m_is_bypass_ok = ms_des_par.m_is_bypass_ok;
 
 		auto_err_code = mpc_sco2_cycle->auto_opt_design(des_params);
 	}
@@ -408,7 +409,7 @@ void C_sco2_phx_air_cooler::design_core()
         mc_bp.initialize(ms_des_par.m_hot_fl_code, ms_des_par.mc_hot_fl_props, bp_N_subs_hx, bp_od_UA_target_type);
 
         // Calculate BP heat transfer
-        double m_dot_bp_sco2 = ms_des_solved.ms_rc_cycle_solved.m_bp_frac * (ms_des_solved.ms_rc_cycle_solved.m_m_dot_t);
+        double m_dot_bp_sco2 = ms_des_solved.ms_rc_cycle_solved.m_bypass_frac * (ms_des_solved.ms_rc_cycle_solved.m_m_dot_t);
         double q_dot_des_bp = m_dot_bp_sco2 * (ms_des_solved.ms_rc_cycle_solved.m_enth[C_sco2_cycle_core::BYPASS_OUT]
             - ms_des_solved.ms_rc_cycle_solved.m_enth[C_sco2_cycle_core::MIXER_OUT]);
 

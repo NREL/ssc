@@ -99,7 +99,8 @@ public:
 		double m_des_opt_tol;				//[-] Optimization tolerance
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 		double m_is_recomp_ok;				//[-] 1 = Yes, 0 = simple cycle only, < 0 = fix f_recomp to abs(input)
-	
+        double m_is_bypass_ok;              //[-] 1 = Yes, 0 = no bypass, < 0 = fix bp_frac to abs(input)
+
 		int m_des_objective_type;			//[2] = min phx deltat then max eta, [else] max eta
 		double m_min_phx_deltaT;			//[C]
 	

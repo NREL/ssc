@@ -75,7 +75,7 @@ public:
 		double m_W_dot_rc;		//[kWe]
 		double m_W_dot_pc;		//[kWe]
 		double m_W_dot_t;		//[kWe]
-        double m_bp_frac;       //[-] Bypass Fraction
+        double m_bypass_frac;       //[-] Bypass Fraction
 
 		double m_W_dot_cooler_tot;	//[kWe]
 
@@ -210,6 +210,7 @@ public:
 		bool m_is_des_air_cooler;		//[-] False will skip physical air cooler design. UA will not be available for cost models.
 
 		double m_is_recomp_ok;			//[-] 1 = Yes, 0 = simple cycle only, < 0 = fix f_recomp to abs(input)
+        double m_is_bypass_ok;          //[-] 1 = Yes, 0 = no bypass, < 0 = fix bp_frac to abs(input)
 
 		bool m_fixed_P_mc_out;			//[-] if true, P_mc_out is fixed at 'm_P_high_limit'
 
