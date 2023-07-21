@@ -1093,40 +1093,40 @@ public:
             throw exec_error("singleowner", util::format("fuelcell_discharged size (%d) incorrect",(int)fuelcell_discharged.size()));
 
         // battery cost - replacement from lifetime analysis
-        if ((as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1 || as_integer("en_wave_batt") == 1) && (as_integer("batt_replacement_option") > 0))
-        {
-            ssc_number_t* batt_rep = 0;
-            std::vector<ssc_number_t> replacement_percent;
+        if (as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1 || as_integer("en_wave_batt") == 1) {
+            if (as_integer("batt_replacement_option") > 0)    {
+                ssc_number_t* batt_rep = 0;
+                    std::vector<ssc_number_t> replacement_percent;
 
-            batt_rep = as_array("batt_bank_replacement", &count); // replacements per year calculated
+                    batt_rep = as_array("batt_bank_replacement", &count); // replacements per year calculated
 
-            // replace at capacity percent
-            if (as_integer("batt_replacement_option") == 1) {
+                    // replace at capacity percent
+                    if (as_integer("batt_replacement_option") == 1) {
 
-                for (i = 0; i < (int)count; i++) {
-                    replacement_percent.push_back(100);
+                        for (i = 0; i < (int)count; i++) {
+                            replacement_percent.push_back(100);
+                        }
+                    }
+                    else {// user specified
+                        replacement_percent = as_vector_ssc_number_t("batt_replacement_schedule_percent");
+                    }
+                double batt_cap = as_double("batt_computed_bank_capacity");
+                // updated 10/17/15 per 10/14/15 meeting
+                escal_or_annual(CF_battery_replacement_cost_schedule, nyears, "om_batt_replacement_cost", inflation_rate, batt_cap, false, as_double("om_replacement_cost_escal") * 0.01);
+
+                for (i = 0; i < nyears && i < (int)count; i++) {
+                    // the cash flow sheets are 1 indexed, batt_rep and replacement_percent is zero indexed
+                    cf.at(CF_battery_replacement_cost, i + 1) = batt_rep[i] * replacement_percent[i] * 0.01 *
+                        cf.at(CF_battery_replacement_cost_schedule, i + 1);
                 }
             }
-            else {// user specified
-                replacement_percent = as_vector_ssc_number_t("batt_replacement_schedule_percent");
-            }
-            double batt_cap = as_double("batt_computed_bank_capacity");
-            // updated 10/17/15 per 10/14/15 meeting
-            escal_or_annual(CF_battery_replacement_cost_schedule, nyears, "om_batt_replacement_cost", inflation_rate, batt_cap, false, as_double("om_replacement_cost_escal") * 0.01);
-
-            for (i = 0; i < nyears && i < (int)count; i++) {
-                // the cash flow sheets are 1 indexed, batt_rep and replacement_percent is zero indexed
-                cf.at(CF_battery_replacement_cost, i + 1) = batt_rep[i] * replacement_percent[i] * 0.01 *
-                    cf.at(CF_battery_replacement_cost_schedule, i + 1);
+            else
+            {
+                double batt_cap = as_double("batt_computed_bank_capacity");
+                // updated 10/17/15 per 10/14/15 meeting
+                escal_or_annual(CF_battery_replacement_cost_schedule, nyears, "om_batt_replacement_cost", inflation_rate, batt_cap, false, as_double("om_replacement_cost_escal") * 0.01);
             }
         }
-        else
-        {
-            double batt_cap = as_double("batt_computed_bank_capacity");
-            // updated 10/17/15 per 10/14/15 meeting
-            escal_or_annual(CF_battery_replacement_cost_schedule, nyears, "om_batt_replacement_cost", inflation_rate, batt_cap, false, as_double("om_replacement_cost_escal") * 0.01);
-        }
-
 
 		// fuelcell cost - replacement from lifetime analysis
 		if (is_assigned("fuelcell_replacement_option") && (as_integer("fuelcell_replacement_option") > 0))
@@ -3112,7 +3112,7 @@ public:
     }
     /////////////////////////////////////////////////////////////////////////////////////////
 
-    if (as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1 || as_integer("en_wave_batt") == 1) {
+    if (as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1 || as_integer("en_wave_batt") == 1 || as_integer("is_hybrid") == 1) {
         update_battery_outputs(this, nyears);
     }
 

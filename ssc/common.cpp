@@ -978,7 +978,7 @@ var_info_invalid };
 // for o and m cost outputs calculated in cmod_hybrid and added to operating expenses
 var_info vtab_hybrid_fin_om[] = {
     /*   VARTYPE           DATATYPE         NAME                           LABEL                UNITS     META                      GROUP           REQUIRED_IF      CONSTRAINTS     UI_HINTS*/
-//    { SSC_INPUT,          SSC_NUMBER,     "is_hybrid",              "hybrid configuration",      "0/1", "0=singletech,1=hybrid",    "HybridFin",       "?=0",      "",             "" },
+    { SSC_INPUT,          SSC_NUMBER,     "is_hybrid",              "hybrid configuration",      "0/1", "0=singletech,1=hybrid",    "HybridFin",       "?=0",      "",             "" },
     { SSC_INPUT,          SSC_ARRAY,      "cf_hybrid_om_sum",       "Hybrid O&M costs",          "$",   "",                         "HybridFin",       "",         "",             "" },
 var_info_invalid };
 
@@ -1861,15 +1861,17 @@ std::vector<double> scalefactors::get_factors(const char* name)
 
 void prepend_to_output(compute_module* cm, std::string var_name, size_t count, ssc_number_t value) {
     size_t orig_count = 0;
-    ssc_number_t* arr = cm->as_array(var_name, &orig_count);
-    arr = cm->resize_array(var_name, count);
-    if (count > orig_count) {
-        size_t diff = count - orig_count;
-        for (int i = (int)orig_count - 1; i >= 0; i--) {
-            arr[i + diff] = arr[i];
-        }
-        for (int i = 0; i < (int)diff; i++) {
-            arr[i] = value;
+    if (cm->is_assigned(var_name)) {
+        ssc_number_t* arr = cm->as_array(var_name, &orig_count);
+        arr = cm->resize_array(var_name, count);
+        if (count > orig_count) {
+            size_t diff = count - orig_count;
+            for (int i = (int)orig_count - 1; i >= 0; i--) {
+                arr[i + diff] = arr[i];
+            }
+            for (int i = 0; i < (int)diff; i++) {
+                arr[i] = value;
+            }
         }
     }
 }

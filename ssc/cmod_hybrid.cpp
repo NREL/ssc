@@ -435,6 +435,17 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 for (size_t i = 1; i <= (size_t)analysisPeriod; i++)
                     pOMProduction[i] *= battery_discharged[i - 1];
 
+
+
+                // resize annual outputs
+                size_t arr_length = analysisPeriod + 1;
+                ssc_number_t yr_0_value = 0.0;
+                prepend_to_output((var_table*)compute_module_outputs, "batt_bank_replacement", arr_length, yr_0_value);
+                prepend_to_output((var_table*)compute_module_outputs, "batt_annual_charge_energy", arr_length, yr_0_value);
+                prepend_to_output((var_table*)compute_module_outputs, "batt_annual_discharge_energy", arr_length, yr_0_value);
+                prepend_to_output((var_table*)compute_module_outputs, "batt_annual_charge_from_system", arr_length, yr_0_value);
+
+
                 // add calculations to compute module outputs - done above for regular compute module outputs
 
                 ssc_data_set_table(outputs, compute_module.c_str(), compute_module_outputs);
@@ -535,9 +546,10 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                     ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pBattGen, (int)battGenLen);  // check if need to update to battery output
                 else
                     ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);
-                ssc_data_set_number(static_cast<ssc_data_t>(&input), "system_use_lifetime_output", 1);
 
-//                ssc_data_set_array(&(compute_module_inputs->table), "gen", pGen, (int)genLength);
+                if (batteries.size() > 0)
+                    ssc_data_set_number(static_cast<ssc_data_t>(&input), "is_hybrid", 1); // for updating battery outputs to annual length in update_battery_outputs in common_financial.cpp
+
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "system_use_lifetime_output", 1);
  
                 // set additional inputs from previous results - note - remove these from UI?
@@ -624,6 +636,24 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
             {
                 for (int i = 0; i < nyears && i < (int)count; i++)
                     cf[ i + 1] = arrp[i] * scale;
+            }
+        }
+    }
+
+
+    void prepend_to_output(var_table* vt, std::string var_name, size_t count, ssc_number_t value) {
+        size_t orig_count = 0;
+        if (vt->is_assigned(var_name)) {
+            ssc_number_t* arr = vt->as_array(var_name, &orig_count);
+            arr = vt->resize_array(var_name, count);
+            if (count > orig_count) {
+                size_t diff = count - orig_count;
+                for (int i = (int)orig_count - 1; i >= 0; i--) {
+                    arr[i + diff] = arr[i];
+                }
+                for (int i = 0; i < (int)diff; i++) {
+                    arr[i] = value;
+                }
             }
         }
     }
