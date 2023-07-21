@@ -69,6 +69,7 @@ set(SSC_SRC
 		cmod_mhk_tidal.cpp
 		cmod_mhk_wave.cpp
 		cmod_mspt_sf_and_rec_isolated.cpp
+        cmod_mspt_iph.cpp
 		cmod_poacalib.cpp
         cmod_ptes_design_point.cpp
 		cmod_pv6parmod.cpp
