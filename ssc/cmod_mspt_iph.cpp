@@ -245,48 +245,10 @@ static var_info _cm_vtab_mspt_iph[] = {
 { SSC_INPUT,     SSC_MATRIX, "weekday_schedule",                   "12x24 CSP operation Time-of-Use Weekday schedule",                                                                                        "",             "",                                  "System Control",                           "*",                                                                "",              ""},
 { SSC_INPUT,     SSC_MATRIX, "weekend_schedule",                   "12x24 CSP operation Time-of-Use Weekend schedule",                                                                                        "",             "",                                  "System Control",                           "*",                                                                "",              ""},
 { SSC_INPUT,     SSC_NUMBER, "is_tod_pc_target_also_pc_max",       "Is the TOD target cycle heat input also the max cycle heat input?",                                                                       "",             "",                                  "System Control",                           "?=0",                                                              "",              ""},
-{ SSC_INPUT,     SSC_NUMBER, "can_cycle_use_standby",              "Can the cycle use standby operation?",                                                                                                    "",             "",                                  "System Control",                           "?=0",                                                              "",              "SIMULATION_PARAMETER"},
-{ SSC_INPUT,     SSC_NUMBER, "disp_horizon",                       "Time horizon for dispatch optimization",                                                                                                  "hour",         "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
-{ SSC_INPUT,     SSC_NUMBER, "disp_frequency",                     "Frequency for dispatch optimization calculations",                                                                                        "hour",         "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
-{ SSC_INPUT,     SSC_NUMBER, "disp_steps_per_hour",                "Time steps per hour for dispatch optimization calculations",                                                                              "",             "",                                  "System Control",                           "?=1",                                                              "",              "SIMULATION_PARAMETER"},
-{ SSC_INPUT,     SSC_NUMBER, "disp_max_iter",                      "Max number of dispatch optimization iterations",                                                                                          "",             "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
-{ SSC_INPUT,     SSC_NUMBER, "disp_timeout",                       "Max dispatch optimization solve duration",                                                                                                "s",            "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
-{ SSC_INPUT,     SSC_NUMBER, "disp_mip_gap",                       "Dispatch optimization solution tolerance",                                                                                                "",             "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
-{ SSC_INPUT,     SSC_NUMBER, "disp_spec_bb",                       "Dispatch optimization B&B heuristic",                                                                                                     "",             "",                                  "System Control",                           "?=-1",                                                             "",              "SIMULATION_PARAMETER"},
-{ SSC_INPUT,     SSC_NUMBER, "disp_reporting",                     "Dispatch optimization reporting level",                                                                                                   "",             "",                                  "System Control",                           "?=-1",                                                             "",              "SIMULATION_PARAMETER"},
-{ SSC_INPUT,     SSC_NUMBER, "disp_spec_presolve",                 "Dispatch optimization presolve heuristic",                                                                                                "",             "",                                  "System Control",                           "?=-1",                                                             "",              "SIMULATION_PARAMETER"},
-{ SSC_INPUT,     SSC_NUMBER, "disp_spec_scaling",                  "Dispatch optimization scaling heuristic",                                                                                                 "",             "",                                  "System Control",                           "?=-1",                                                             "",              "SIMULATION_PARAMETER"},
-{ SSC_INPUT,     SSC_NUMBER, "disp_time_weighting",                "Dispatch optimization future time discounting factor",                                                                                    "",             "",                                  "System Control",                           "?=0.99",                                                           "",              ""},
-{ SSC_INPUT,     SSC_NUMBER, "is_write_ampl_dat",                  "Write AMPL data files for dispatch run",                                                                                                  "",             "",                                  "System Control",                           "?=0",                                                              "",              "SIMULATION_PARAMETER"},
-{ SSC_INPUT,     SSC_STRING, "ampl_data_dir",                      "AMPL data file directory",                                                                                                                "",             "",                                  "System Control",                           "?=''",                                                             "",              "SIMULATION_PARAMETER"},
-{ SSC_INPUT,     SSC_NUMBER, "is_ampl_engine",                     "Run dispatch optimization with external AMPL engine",                                                                                     "",             "",                                  "System Control",                           "?=0",                                                              "",              "SIMULATION_PARAMETER"},
-{ SSC_INPUT,     SSC_STRING, "ampl_exec_call",                     "System command to run AMPL code",                                                                                                         "",             "",                                  "System Control",                           "?='ampl sdk_solution.run'",                                        "",              "SIMULATION_PARAMETER"},
-{ SSC_INPUT,     SSC_NUMBER, "disp_rsu_cost_rel",                  "Receiver startup cost",                                                                                                                   "$/MWt/start",  "",                                  "System Control",                           "",                                                                 "",              ""},
-{ SSC_INPUT,     SSC_NUMBER, "disp_csu_cost_rel",                  "Cycle startup cost",                                                                                                                      "$/MWe-cycle/start", "",                             "System Control",                           "",                                                                 "",              ""},
-{ SSC_INPUT,     SSC_NUMBER, "disp_pen_ramping",                   "Dispatch cycle production change penalty",                                                                                                "$/MWe-change", "",                                  "System Control",                           "",                                                                 "",              ""},
-{ SSC_INPUT,     SSC_NUMBER, "disp_inventory_incentive",           "Dispatch storage terminal inventory incentive multiplier",                                                                                "",             "",                                  "System Control",                           "?=0.0",                                                            "",              "SIMULATION_PARAMETER"},
+
+// Receiver control
 { SSC_INPUT,     SSC_NUMBER, "q_rec_standby",                      "Receiver standby energy consumption",                                                                                                     "kWt",          "",                                  "System Control",                           "?=9e99",                                                           "",              "SIMULATION_PARAMETER"},
 { SSC_INPUT,     SSC_NUMBER, "q_rec_heattrace",                    "Receiver heat trace energy consumption during startup",                                                                                   "kWe-hr",       "",                                  "System Control",                           "?=0.0",                                                            "",              "SIMULATION_PARAMETER"},
-{ SSC_INPUT,     SSC_NUMBER, "is_wlim_design",                     "Use fixed design-point net electricity generation limits (dispatch opt only)",                                                            "",             "",                                  "System Control",                           "?=0",                                                              "",              "" },
-{ SSC_INPUT,     SSC_NUMBER, "disp_wlim_maxspec",                  "Fixed design-point max net power to the grid (dispatch opt only)",                                                                        "",             "",                                  "System Control",                           "is_wlim_design=1",                                                 "",              "" },
-{ SSC_INPUT,     SSC_NUMBER, "is_wlim_series",                     "Use time-series net electricity generation limits (dispatch opt only)",                                                                   "",             "",                                  "System Control",                           "?=0",                                                              "",              "SIMULATION_PARAMETER"},
-{ SSC_INPUT,     SSC_ARRAY,  "wlim_series",                        "Time series net electicity generation limits (dispatch opt only)",                                                                        "kWe",          "",                                  "System Control",                           "is_wlim_series=1",                                                 "",              "SIMULATION_PARAMETER"},
-
-// Pricing schedules and multipliers
-    // Ideally this would work with sim_type = 2, but UI inputs availability depends on financial mode
-{ SSC_INPUT,     SSC_NUMBER, "ppa_multiplier_model",               "PPA multiplier model 0: dispatch factors dispatch_factorX, 1: hourly multipliers dispatch_factors_ts",                                    "0/1",          "0=diurnal,1=timestep",              "Time of Delivery Factors",                 "?=0", /*need a default so this var works in required_if*/          "INTEGER,MIN=0", "SIMULATION_PARAMETER"},
-{ SSC_INPUT,     SSC_NUMBER, "ppa_soln_mode",                      "PPA solution mode (0=Specify IRR target, 1=Specify PPA price)",                                                                           "",             "",                                  "Financial Solution Mode",                  "sim_type=1&ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",   "SIMULATION_PARAMETER" },
-{ SSC_INPUT,     SSC_ARRAY,  "dispatch_factors_ts",                "Dispatch payment factor array",                                                                                                           "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=1&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER"},
-{ SSC_INPUT,     SSC_NUMBER, "en_electricity_rates",               "Enable electricity rates for grid purchase",                                                                                              "0/1",          "",                                  "Electricity Rates",                        "?=0",                                                                         "",              "SIMULATION_PARAMETER"},
-{ SSC_INPUT,     SSC_MATRIX, "dispatch_sched_weekday",             "PPA pricing weekday schedule, 12x24",                                                                                                     "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER"},
-{ SSC_INPUT,     SSC_MATRIX, "dispatch_sched_weekend",             "PPA pricing weekend schedule, 12x24",                                                                                                     "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER"},
-{ SSC_INPUT,     SSC_ARRAY,  "dispatch_tod_factors",               "TOD factors for periods 1 through 9",                                                                                                     "",
-    "We added this array input after SAM 2022.12.21 to replace the functionality of former single value inputs dispatch_factor1 through dispatch_factor9",                                                                                                         "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
-
-{ SSC_INPUT,     SSC_NUMBER, "is_dispatch_series",                 "Use time-series dispatch factors",                                                                                                        "",             "",                                  "System Control",                           "?=0",                                                                         "",              "SIMULATION_PARAMETER"},
-{ SSC_INPUT,     SSC_ARRAY,  "dispatch_series",                    "Time series dispatch factors",                                                                                                            "",             "",                                  "System Control",                           "",                                                                            "",              "SIMULATION_PARAMETER"},
-{ SSC_INPUT,     SSC_ARRAY,  "ppa_price_input",			           "PPA prices - yearly",			                                                                                                          "$/kWh",	      "",	                               "Revenue",			                       "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",      	       "SIMULATION_PARAMETER"},
-{ SSC_INPUT,     SSC_MATRIX, "mp_energy_market_revenue",           "Energy market revenue input",                                                                                                             "",             "Lifetime x 2[Cleared Capacity(MW),Price($/MWh)]", "Revenue",                    "csp_financial_model=6&is_dispatch=1&sim_type=1",                              "",              "SIMULATION_PARAMETER"},
 
 // Costs
 { SSC_INPUT,     SSC_NUMBER, "tower_fixed_cost",                   "Tower fixed cost",                                                                                                                        "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
@@ -663,84 +625,6 @@ public:
         int sim_type = as_integer("sim_type");      // 1 (default): timeseries, 2: design only
 
         bool is_dispatch = as_boolean("is_dispatch");
-
-        // *****************************************************
-        // Check deprecated variables
-            // Piping loss coefficient
-        bool is_piping_loss_assigned = is_assigned("piping_loss");
-        bool is_piping_loss_coefficient_assigned = is_assigned("piping_loss_coefficient");
-
-        if (is_piping_loss_assigned && is_piping_loss_coefficient_assigned) {
-            log("We replaced the functionality of input variable piping_loss with new input variable piping_loss_coefficient,"
-                " so the model does not use your piping_loss input.");
-        }
-        else if (is_piping_loss_assigned) {
-            throw exec_error("tcsmolten_salt", "We replaced the functionality of input variable piping_loss [Wt/m] with new input variable piping_loss_coefficient [Wt/m2-K]."
-                " The new input scales piping thermal losses as a function of receiver thermal power and design-point temperatures."
-                " Please define piping_loss_coefficient in your script.");
-        }
-
-        bool is_csp_pt_tes_init_hot_htf_percent_assigned = is_assigned("csp.pt.tes.init_hot_htf_percent");
-        bool is_tes_hot_htf_percent_assigned = is_assigned("tes_hot_htf_percent_assigned");
-        if (is_csp_pt_tes_init_hot_htf_percent_assigned && is_tes_hot_htf_percent_assigned) {
-            log("We renamed input variable csp.pt.tes.init_hot_htf_percent to tes_init_hot_htf_percent,"
-                " you provided both inputs, so the model does not use your csp.pt.tes.init_hot_htf_percent input.");
-        }
-        else if (is_csp_pt_tes_init_hot_htf_percent_assigned) {
-            throw exec_error("tcsmolten_salt", "We renamed input variable csp.pt.tes.init_hot_htf_percent to tes_init_hot_htf_percent,"
-                " please define tes_init_hot_htf_percent in your script.");
-        }
-
-        if (is_assigned("P_boil")) {
-            log("We removed boiler pressure (P_boil) as a user input to the Rankine Cycle model. Because the cycle efficiency"
-                " is provided by the user, the boiler pressure input does not modify the efficiency as one might expect. Instead the model"
-                " uses boiler pressure in second order calculations to 1) define a boiling temperature to normalize off-design HTF temperature and"
-                " 2) estimate steam mass flow for cycle make-up water calculations. Because boiler pressure only has influences"
-                " results in these minor non-intuitive ways, we decided to hardcode the valu to 100 bar.");
-        }
-
-        if (is_dispatch) {
-            // Cycle startup cost disp_csu_cost
-            bool is_disp_csu_cost_assigned = is_assigned("disp_csu_cost");
-            bool is_disp_csu_cost_rel_assigned = is_assigned("disp_csu_cost_rel");
-
-            if (is_disp_csu_cost_assigned && is_disp_csu_cost_rel_assigned) {
-                log("We replaced the functionality of input variable disp_csu_cost with new input variable disp_csu_cost_rel,"
-                    " so the model does not use your disp_csu_cost input.");
-            }
-            else if (is_disp_csu_cost_assigned) {
-                throw exec_error("tcsmolten_salt", "We replaced the functionality of input variable disp_csu_cost [$/start] with new input variable disp_csu_cost_rel [$/MWe-cycle/start]."
-                    " The new input represents cycle startup costs normalized by the cycle design capacity."
-                    " Please define disp_csu_cost_rel in your script.");
-            }
-
-            // Receiver startup cost disp_rsu_cost
-            bool is_disp_rsu_cost_assigned = is_assigned("disp_rsu_cost");
-            bool is_disp_rsu_cost_rel_assigned = is_assigned("disp_rsu_cost_rel");
-
-            if (is_disp_rsu_cost_assigned && is_disp_rsu_cost_rel_assigned) {
-                log("We replaced the funcationality of input variable disp_rsu_cost with new input variable disp_rsu_cost_rel,"
-                    " so the model does not use your disp_rsu_cost input.");
-            }
-            else if (is_disp_rsu_cost_assigned) {
-                throw exec_error("tcsmolten_salt", "We replaced the functionality of input variable disp_rsu_cost [$/start] with new input variable disp_rsu_cost_rel [$/MWe-cycle/start]."
-                    " The new input represents receiver startup costs normalized by the receiver design thermal power."
-                    " Please define disp_rsu_cost_rel in your script.");
-            }
-
-            // Cycle ramping
-            bool is_disp_pen_delta_w_assigned = is_assigned("disp_pen_delta_w");
-            bool is_disp_pen_ramping_assigned = is_assigned("disp_pen_ramping");
-            if (is_disp_pen_delta_w_assigned && is_disp_pen_ramping_assigned) {
-                log("We replaced the functionality of input variable disp_pen_delta_w with new input variable disp_pen_ramping,"
-                    " so the model does not use your disp_pen_delta_w input");
-            }
-            else if (is_disp_pen_delta_w_assigned) {
-                throw exec_error("tcsmolten_salt", "We replaced the functionality of input variable disp_pen_delta_w [$/kWe-change] with new input variable disp_pen_ramping [$/MWe-change]."
-                    " The new input represents the receiver startup costs in an optimization model that uses absolute grid prices."
-                    " Please define disp_pen_ramping in your script. SAM's default value in the molten salt power tower model is 1.0");
-            }
-        }
 
         // *****************************************************
         // *****************************************************
@@ -1653,33 +1537,11 @@ public:
         storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_HOT_TANK, allocate("mass_tes_hot", n_steps_fixed), n_steps_fixed);
         storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HTF_PUMP, allocate("tes_htf_pump_power", n_steps_fixed), n_steps_fixed);
 
-
-
         // TOU parameters
         C_csp_tou_block_schedules tou;
         C_csp_tou_block_schedules::S_params* tou_params = &tou.ms_params;
         tou_params->mc_csp_ops.mc_weekdays = as_matrix("weekday_schedule");
         tou_params->mc_csp_ops.mc_weekends = as_matrix("weekend_schedule");
-
-        if (is_dispatch)
-        {
-            tou.mc_dispatch_params.m_w_lim_full.resize(n_steps_full);
-            std::fill(tou.mc_dispatch_params.m_w_lim_full.begin(), tou.mc_dispatch_params.m_w_lim_full.end(), 9.e99);
-            if (as_boolean("is_wlim_series"))
-            {
-                size_t n_wlim_series = 0;
-                ssc_number_t* wlim_series = as_array("wlim_series", &n_wlim_series);
-                if (n_wlim_series != n_steps_full)
-                    throw exec_error("tcsmolten_salt", "Invalid net electricity generation limit series dimension. Matrix must have " + util::to_string((int)n_steps_full) + " rows.");
-                for (size_t i = 0; i < n_steps_full; i++)
-                    tou.mc_dispatch_params.m_w_lim_full.at(i) = (double)wlim_series[i];
-            }
-            else if (as_boolean("is_wlim_design")) {
-                double wlim_design = as_double("disp_wlim_maxspec");
-                for (size_t i = 0; i < n_steps_full; i++)
-                    tou.mc_dispatch_params.m_w_lim_full.at(i) = wlim_design;
-            }
-        }
 
         tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = as_boolean("is_tod_pc_target_also_pc_max");
         tou.mc_dispatch_params.m_is_block_dispatch = !as_boolean("is_dispatch");      //mw
@@ -1709,112 +1571,7 @@ public:
 
         double ppa_price_year1 = std::numeric_limits<double>::quiet_NaN();
         if (sim_type == 1) {
-            if (csp_financial_model > 0 && csp_financial_model < 5) {   // Single Owner financial models
-
-                // Get first year base ppa price
-                bool is_ppa_price_input_assigned = is_assigned("ppa_price_input");
-                if (is_dispatch && !is_ppa_price_input_assigned) {
-                    throw exec_error("tcsmolten_salt", "\n\nYou selected dispatch optimization which requires that the array input ppa_price_input is defined\n");
-                }
-
-                if (is_ppa_price_input_assigned) {
-                    size_t count_ppa_price_input;
-                    ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
-                    ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
-                }
-                else {
-                    ppa_price_year1 = 1.0;      //[-] don't need ppa multiplier if not optimizing
-                }
-
-                int ppa_soln_mode = as_integer("ppa_soln_mode");    // PPA solution mode (0=Specify IRR target, 1=Specify PPA price)
-                if (ppa_soln_mode == 0 && is_dispatch) {
-                    throw exec_error("tcsmolten_salt", "\n\nYou selected dispatch optimization and the Specify IRR Target financial solution mode, "
-                        "but dispatch optimization requires known absolute electricity prices. Dispatch optimization requires "
-                        "the Specify PPA Price financial solution mode. You can continue using dispatch optimization and iteratively "
-                        "solve for the PPA that results in a target IRR by running a SAM Parametric analysis or script.\n");
-                }
-
-                int en_electricity_rates = as_integer("en_electricity_rates");  // 0 = Use PPA, 1 = Use Retail
-                if (en_electricity_rates == 1 && is_dispatch) {
-                    throw exec_error("tcsmolten_salt", "\n\nYou selected dispatch optimization and the option to Use Retail Electricity Rates on the Electricity Purchases page, "
-                        "but the dispatch optimization model currently does not accept separate buy and sell prices. Please use the Use PPA or Market Prices option "
-                        "on the Electricity Purchases page.\n");
-                }
-
-                // Time-of-Delivery factors by time step:
-                int ppa_mult_model = as_integer("ppa_multiplier_model");
-                if (ppa_mult_model == 1)        // use dispatch_ts input
-                {
-                    tou_params->mc_pricing.mv_is_diurnal = false;
-
-                    if (is_assigned("dispatch_factors_ts") || is_dispatch) {
-                        size_t nmultipliers;
-                        ssc_number_t* multipliers = as_array("dispatch_factors_ts", &nmultipliers);
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(nmultipliers, 0.0);
-                        for (size_t ii = 0; ii < nmultipliers; ii++)
-                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][ii] = multipliers[ii];
-                    }
-                    else { // if no dispatch optimization, don't need an input pricing schedule
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
-                    }
-                }
-                else if (ppa_mult_model == 0) // standard diurnal input
-                {
-                    tou_params->mc_pricing.mv_is_diurnal = true;
-
-                    // Most likely use case is to use schedules and TOD. So assume if at least one is provided, then user intended to use this approach
-                    // the 'else' option applies non-feasible electricity prices, so we want to guard against selecting that it appears users
-                    // are trying to use the schedules. 
-                    bool is_one_assigned = is_assigned("dispatch_sched_weekday") || is_assigned("dispatch_sched_weekend") || is_assigned("dispatch_tod_factors");
-
-                    if (is_one_assigned || is_dispatch) {
-
-                        tou_params->mc_pricing.mc_weekdays = as_matrix("dispatch_sched_weekday");
-                        if (tou_params->mc_pricing.mc_weekdays.ncells() == 1) { tou_params->mc_pricing.mc_weekdays.resize_fill(12, 24, 1.); };
-                        tou_params->mc_pricing.mc_weekends = as_matrix("dispatch_sched_weekend");
-                        if (tou_params->mc_pricing.mc_weekends.ncells() == 1) { tou_params->mc_pricing.mc_weekends.resize_fill(12, 24, 1.); };
-
-                        auto dispatch_tod_factors = as_vector_double("dispatch_tod_factors");
-                        if (dispatch_tod_factors.size() != 9)
-                            throw exec_error("tcsmolten_salt", util::format("\n\nDispatch TOD factors has %d periods instead of the expected 9.\n", (int)dispatch_tod_factors.size()));
-
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, 0.0);
-
-                        for (size_t i = 0; i < 9; i++)
-                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][i] = dispatch_tod_factors[i];
-
-                    }
-                    else {
-                        // If electricity pricing data is not available, then dispatch to a uniform schedule
-                        tou_params->mc_pricing.mc_weekdays.resize_fill(12, 24, 1.);
-                        tou_params->mc_pricing.mc_weekends.resize_fill(12, 24, 1.);
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, -1.0);
-                    }
-                }
-            }
-            else if (csp_financial_model == 6) {     // use 'mp_energy_market_revenue' -> from Merchant Plant model
-
-                tou_params->mc_pricing.mv_is_diurnal = false;
-
-                if (is_dispatch) {
-                    util::matrix_t<double> mp_energy_market_revenue = as_matrix("mp_energy_market_revenue"); // col 0 = cleared capacity, col 1 = $/MWh
-                    size_t n_rows = mp_energy_market_revenue.nrows();
-                    if (n_rows < n_steps_fixed) {
-                        string ppa_msg = util::format("mp_energy_market_revenue input has %d rows but there are %d number of timesteps", n_rows, n_steps_fixed);
-                        throw exec_error("tcsmolten_salt", ppa_msg);
-                    }
-
-                    double conv_dolmwh_to_centkwh = 0.1;
-                    tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, 0.0);
-                    for (size_t ii = 0; ii < n_steps_fixed; ii++) {
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][ii] = mp_energy_market_revenue(ii, 1) * conv_dolmwh_to_centkwh; //[cents/kWh]
-                    }
-                }
-                else { // if no dispatch optimization, don't need an input pricing schedule
-                    tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
-                }
-            }
-            else if (csp_financial_model == 8) {        // No Financial Model
+            if (csp_financial_model == 8) {        // No Financial Model
                 if (is_dispatch) {
                     throw exec_error("tcsmolten_salt", "Can't select dispatch optimization if No Financial model");
                 }
@@ -1826,7 +1583,7 @@ public:
                 }
             }
             else {
-                throw exec_error("tcsmolten_salt", "csp_financial_model must be 1, 2, 3, 4, or 6");
+                throw exec_error("mspt_iph", "csp_financial_model must 8");
             }
         }
         else if (sim_type == 2) {
@@ -1849,30 +1606,7 @@ public:
         // *****************************************************
         // System dispatch
         csp_dispatch_opt dispatch;
-
-        if (as_boolean("is_dispatch")) {
-
-            double heater_startup_cost = 0.0;
-            if (is_parallel_heater) {
-                double heater_mult = as_double("heater_mult");            //[-]
-                double q_dot_heater_des = q_dot_pc_des * heater_mult;     //[MWt]
-                heater_startup_cost = as_double("disp_hsu_cost_rel") * q_dot_heater_des;    //[$/start]
-            }
-
-            dispatch.solver_params.set_user_inputs(as_boolean("is_dispatch"), as_integer("disp_steps_per_hour"), as_integer("disp_frequency"), as_integer("disp_horizon"),
-                as_integer("disp_max_iter"), as_double("disp_mip_gap"), as_double("disp_timeout"),
-                as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_spec_scaling"), as_integer("disp_reporting"),
-                as_boolean("is_write_ampl_dat"), as_boolean("is_ampl_engine"), as_string("ampl_data_dir"), as_string("ampl_exec_call"));
-
-            double disp_csu_cost_calc = as_double("disp_csu_cost_rel") * q_dot_pc_des; //[$/start]
-            double disp_rsu_cost_calc = as_double("disp_rsu_cost_rel") * q_dot_rec_des;   //[$/start]
-            dispatch.params.set_user_params(as_boolean("can_cycle_use_standby"), as_double("disp_time_weighting"),
-                disp_rsu_cost_calc, heater_startup_cost, disp_csu_cost_calc, as_double("disp_pen_ramping"),
-                as_double("disp_inventory_incentive"), as_double("q_rec_standby"), as_double("q_rec_heattrace"), ppa_price_year1);
-        }
-        else {
-            dispatch.solver_params.dispatch_optimize = false;
-        }
+        dispatch.solver_params.dispatch_optimize = false;
 
         // Instantiate Solver       
         C_csp_solver csp_solver(weather_reader,
@@ -1991,30 +1725,6 @@ public:
         {
             log(out_msg, out_type);
         }
-
-
-        //if the pricing schedule is provided as hourly, overwrite the tou schedule
-        if (as_boolean("is_dispatch_series"))
-        {
-            size_t n_dispatch_series;
-            ssc_number_t* dispatch_series = as_array("dispatch_series", &n_dispatch_series);
-
-            //     if( n_dispatch_series != n_steps_fixed)
-                     //throw exec_error("tcsmolten_salt", "Invalid dispatch pricing series dimension. Array length must match number of simulation time steps ("+my_to_string(n_steps_fixed)+").");
-
-                 //resize the m_hr_tou array
-            if (tou_params->mc_pricing.m_hr_tou != 0)
-                delete[] tou_params->mc_pricing.m_hr_tou;
-            tou_params->mc_pricing.m_hr_tou = new double[n_steps_fixed];
-            //set the tou period as unique for each time step
-            for (size_t i = 0; i < n_steps_fixed; i++)
-                tou_params->mc_pricing.m_hr_tou[i] = i + 1;
-            //allocate reported arrays
-            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed);
-            for (size_t i = 0; i < n_steps_fixed; i++)
-                tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][i] = dispatch_series[i];
-        }
-
 
         // *****************************************************
         // System design is complete, get design parameters from component models as necessary
@@ -2558,36 +2268,6 @@ public:
 
         assign("annual_eta_rec_th", (ssc_number_t)(1.0 - as_number("annual_q_rec_loss") / as_number("annual_q_rec_inc")));
         assign("annual_eta_rec_th_incl_refl", (ssc_number_t)(as_number("rec_absorptance") * as_number("annual_eta_rec_th")));
-
-        accumulate_annual_for_year("disp_objective", "disp_objective_ann", sim_setup.m_report_step / 3600.0 / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed / steps_per_hour);
-        accumulate_annual_for_year("disp_solve_iter", "disp_iter_ann", sim_setup.m_report_step / 3600.0 / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed / steps_per_hour);
-        accumulate_annual_for_year("disp_presolve_nconstr", "disp_presolve_nconstr_ann", sim_setup.m_report_step / 3600.0 / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed / steps_per_hour);
-        accumulate_annual_for_year("disp_presolve_nvar", "disp_presolve_nvar_ann", sim_setup.m_report_step / 3600.0 / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed / steps_per_hour);
-        accumulate_annual_for_year("disp_solve_time", "disp_solve_time_ann", sim_setup.m_report_step / 3600.0 / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed / steps_per_hour);
-        accumulate_annual_for_year("disp_solve_state", "disp_solve_state_ann", sim_setup.m_report_step / 3600.0 / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed / steps_per_hour);
-
-        // Reporting dispatch solution counts
-        size_t n_flag, n_gap = 0;
-        ssc_number_t* subopt_flag = as_array("disp_subopt_flag", &n_flag);
-        ssc_number_t* rel_mip_gap = as_array("disp_rel_mip_gap", &n_gap);
-
-        std::vector<int> flag;
-        std::vector<double> gap;
-        flag.resize(n_flag);
-        gap.resize(n_flag);
-        for (size_t i = 0; i < n_flag; i++) {
-            flag[i] = (int)subopt_flag[i];
-            gap[i] = (double)rel_mip_gap[i];
-        }
-
-        double avg_gap = 0;
-        if (as_boolean("is_dispatch")) {
-            std::string disp_sum_msg;
-            dispatch.count_solutions_by_type(flag, (int)as_double("disp_frequency"), disp_sum_msg);
-            log(disp_sum_msg, SSC_NOTICE);
-            avg_gap = dispatch.calc_avg_subopt_gap(gap, flag, (int)as_double("disp_frequency"));
-        }
-        assign("avg_suboptimal_rel_mip_gap", (ssc_number_t)avg_gap);
 
         // Calculated Outputs
             // First, sum power cycle water consumption timeseries outputs
