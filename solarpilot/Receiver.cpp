@@ -996,6 +996,9 @@ void Receiver::DefineReceiverGeometry(int nflux_x, int nflux_y)
 		//_rec_geom = (Receiver::REC_GEOM_TYPE::PLANE_RECT); //Set during updateCalculatedParameters() call
 		//2) Calculate and set the number of surfaces used for the recever.Resize "_surfaces".
 		int n_troughs = _var_receiver->norm_heights_depths.val.nrows();
+        if (_var_receiver->norm_heights_depths.val.at(0, 0) == 0) {
+            n_troughs = 0; // norm_height of zero means there is no troughs
+        }
 		getVarMap()->n_panels.val = n_troughs + 1;
 		_surfaces.resize(1 + n_troughs + 1); //Aperture plus curtains between troughs (n+1)
 		//3) Calculate and set the normal vector for each surface (if not curved surfaces) with setNormalVector(Vect).

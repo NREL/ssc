@@ -201,7 +201,7 @@ public:
 	void resize(size_t nr, size_t nc, size_t nl)
 	{
 		if (nr < 1 || nc < 1 || nl < 1) return;
-		if (nr == n_rows && nc == n_cols && n_layers) return;
+		if (nr == n_rows && nc == n_cols && nl == n_layers) return;
 			
 		if (t_array) delete [] t_array;
 		t_array = new T[ nr * nc * nl];

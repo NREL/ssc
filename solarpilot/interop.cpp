@@ -1657,7 +1657,7 @@ bool interop::DoManagedLayout(SimControl& SimC, SolarField& SF, var_map& V, Layo
 	//follow-on stuff
 	Vect sun = Ambient::calcSunVectorFromAzZen(SF.getVarMap()->sf.sun_az_des.Val() * D2R, (90. - SF.getVarMap()->sf.sun_el_des.Val()) * D2R);
 	SF.calcHeliostatShadows(sun);    if (SF.ErrCheck()) return false;
-	V.land.bound_area.Setval(SF.getLandObject()->getLandBoundArea());
+	V.land.bound_area.Setval(SF.getLandObject()->getLandBoundArea() / 4046.86 ); // [m^2] -> [acres]
 
 	return true;
 

@@ -565,7 +565,7 @@ bool AutoPilot::Setup(var_map &V, bool /*for_optimize*/)
 		_SF->PrepareFieldLayout(*_SF, 0, true);	//Run the layout method in refresh_only mode
         Vect sun = Ambient::calcSunVectorFromAzZen( _SF->getVarMap()->sf.sun_az_des.Val()*D2R, (90. - _SF->getVarMap()->sf.sun_el_des.Val())*D2R );   
 		_SF->calcHeliostatShadows(sun);
-        double area = V.land.land_area.Val();  //acre
+        double area = V.land.land_area.Val();  //acre -> TODO (Bill) why is this here?
 		V.land.bound_area.Setval( area );
         V.land.land_area.Setval( area );
 	}
@@ -608,8 +608,11 @@ void AutoPilot::GenerateDesignPointSimulations(var_map &V, vector<string> &wdata
 	day, hour, month,  dni, tdry, pres, wspd
 	1..,  0..,  1-12, W/m2,    C,  bar,  m/s
 	*/
-    
-	interop::GenerateSimulationWeatherData(V, -1, wdata);	
+#ifdef _DEBUG
+    interop::GenerateSimulationWeatherData(V, var_solarfield::DES_SIM_DETAIL::SINGLE_SIMULATION_POINT, wdata);
+#else
+	interop::GenerateSimulationWeatherData(V, -1, wdata);
+#endif
 }
 
 void AutoPilot::PreSimCallbackUpdate()
@@ -725,7 +728,7 @@ void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, in
     }
 
 	fluxtab.flux_surfaces.clear();
-	//resize the results to accommodate each receiver surface
+	//resize the results to accommodate each receiver surfaces
 	int nsurftot=0;
 	for(int i=0; i<(int)_SF->getReceivers()->size(); i++){
 		for(int j=0; j<(int)_SF->getReceivers()->at(i)->getFluxSurfaces()->size(); j++){
@@ -734,8 +737,12 @@ void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, in
 	}
 	fluxtab.flux_surfaces.resize(nsurftot);
 	//resize the flux surfaces to match the flux data and the number of annual simulation positions
-	for(int i=0; i<nsurftot; i++)
-		fluxtab.flux_surfaces.at(i).flux_data.resize(flux_res_y, flux_res_x, nflux_sim);
+    for (int i = 0; i < (int)_SF->getReceivers()->size(); i++) {//for all receivers
+        for (int j = 0; j < (int)_SF->getReceivers()->at(i)->getFluxSurfaces()->size(); j++) {//for all receiver
+            FluxSurface *fs = &_SF->getReceivers()->at(i)->getFluxSurfaces()->at(j);
+            fluxtab.flux_surfaces.at(i+j).flux_data.resize(fs->getFluxNY(), fs->getFluxNX(), nflux_sim); // TODO (Bill): why is the resizing here?
+        }
+    }
 }
 
 void AutoPilot::PostProcessFlux(sim_result &result, sp_flux_map &fluxmap, int flux_layer)
@@ -1062,6 +1069,9 @@ bool AutoPilot::CalculateFluxMapsOV1(vector<vector<double> > &sunpos, vector<vec
 	overload to provide the flux data in a simple 2D vector arrangement. Each flux map is provided 
 	in a continuous sequence, and it is up to the user to separate out the data based on knowledge
 	of the number of flux maps and dimension of each flux map.
+
+    NOTE: This function does not support multiple flux surfaces
+    This is not used in current production code...
 	*/
 
 	//Call the main algorithm
