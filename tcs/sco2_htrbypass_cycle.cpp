@@ -132,7 +132,7 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
 
 
     // DEBUG
-    if(true)
+    if(false)
     {
         {
             double Q = 15.364; // MW
@@ -308,7 +308,6 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
             eta_t_isen = m_eta_t;
     }
 
-
     // Determine the outlet state and specific work for the main compressor and turbine.
     
     // Main compressor
@@ -385,7 +384,6 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
             return;
         }
     }
-
 
     // Solve the recuperators
     {
@@ -553,11 +551,29 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
 
     // HTF
     {
-        // Use HTF Bypass cold approach to calculate PHX outlet Temperature
-        m_T_HTF_PHX_out = m_HTF_PHX_cold_approach + m_temp_last[MIXER2_OUT];
+        // Check if HTF mdot is already assigned
+        if (m_set_HTF_mdot > 0)
+        {
+            // Mdot is Set
+            m_m_dot_HTF = m_set_HTF_mdot;
 
-        // Calculate HTF mdot
-        m_m_dot_HTF = m_Q_dot_PHX / ((m_T_HTF_PHX_inlet - m_T_HTF_PHX_out) * m_cp_HTF);
+            // Calculate PHX HTF Outlet Temperature
+            m_T_HTF_PHX_out = m_T_HTF_PHX_inlet - m_Q_dot_PHX / (m_m_dot_HTF * m_cp_HTF);
+
+            // Back Calculate PHX cold approach
+            m_HTF_PHX_cold_approach = m_T_HTF_PHX_out - m_temp_last[MIXER2_OUT];
+        }
+        else
+        {
+            // Use HTF Bypass cold approach to calculate PHX outlet Temperature
+            m_T_HTF_PHX_out = m_HTF_PHX_cold_approach + m_temp_last[MIXER2_OUT];
+
+            // Calculate HTF mdot
+            m_m_dot_HTF = m_Q_dot_PHX / ((m_T_HTF_PHX_inlet - m_T_HTF_PHX_out) * m_cp_HTF);
+        }
+        
+
+        
 
         // Calculate Bypass Out Temperature
         m_T_HTF_BP_outlet_calc = m_T_HTF_PHX_out - (m_Q_dot_BP / (m_m_dot_HTF * m_cp_HTF));
@@ -1447,13 +1463,14 @@ void C_HTRBypass_Cycle::finalize_design(int& error_code)
 
 // Public Methods
 
-void C_HTRBypass_Cycle::set_htf_par(double T_htf_phx_in, double T_htf_bp_out_target, double cp_htf, double dT_bp, double htf_phx_cold_approach)
+void C_HTRBypass_Cycle::set_htf_par(double T_htf_phx_in, double T_htf_bp_out_target, double cp_htf, double dT_bp, double htf_phx_cold_approach, double set_HTF_mdot)
 {
     m_T_HTF_PHX_inlet = T_htf_phx_in;  // K
     m_T_HTF_BP_outlet_target = T_htf_bp_out_target;  // K
     m_cp_HTF = cp_htf;  // kJ/kg K
     m_dT_BP = dT_bp;
     m_HTF_PHX_cold_approach = htf_phx_cold_approach;
+    m_set_HTF_mdot = set_HTF_mdot;
 
     is_htf_set = true;
 }
@@ -1715,7 +1732,6 @@ void C_HTRBypass_Cycle::off_design_recompressor(double T_in, double P_in, double
 void C_HTRBypass_Cycle::estimate_od_turbo_operation(double T_mc_in, double P_mc_in, double f_recomp, double T_t_in, double phi_mc, int& mc_error_code, double& mc_w_tip_ratio, double& P_mc_out, int& rc_error_code, double& rc_w_tip_ratio, double& rc_phi, bool is_update_ms_od_solved)
 {
 }
-
 
 
 double nlopt_cb_opt_htr_bypass_des(const std::vector<double>& x, std::vector<double>& grad, void* data)

@@ -816,6 +816,7 @@ var_info vtab_sco2_design[] = {
     // HTR Bypass Design
     { SSC_INPUT,  SSC_NUMBER,  "T_htf_bypass_out",     "HTF design Bypass Outlet Temperature",                   "C",          "",    "System Design",      "cycle_config=3",     "",       "" },
     { SSC_INPUT,  SSC_NUMBER,  "deltaT_bypass",        "sco2 Bypass Outlet Temp - HTR_HP_OUT Temp",              "C",          "",    "System Design",      "cycle_config=3",     "",       "" },
+    { SSC_INPUT,  SSC_NUMBER,  "set_HTF_mdot",         "For HTR Bypass ONLY, 0 = calculate HTF mdot (need to set dT_PHX_cold_approach), > 0 = HTF mdot kg/s",   "kg/s",       "",    "System Design",      "?=0",     "",       "" },
 
     // DEBUG
     //{ SSC_OUTPUT,  SSC_STRING,  "debug_string",        "output string used for debug",              "C",          "",    "System Design",      "cycle_config=3",     "",       "" },
@@ -1252,6 +1253,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
     {
         s_sco2_des_par.m_T_htf_bypass_out = cm->as_double("T_htf_bypass_out") + 273.15; // [C] Convert to C
         s_sco2_des_par.m_deltaT_bypass = cm->as_double("deltaT_bypass"); // [delta C]
+        s_sco2_des_par.m_set_HTF_mdot = cm->as_double("set_HTF_mdot"); // [kg/s] For HTR Bypass ONLY, 0 = calculate HTF mdot (need to set dT_PHX_cold_approach), > 0 = HTF mdot
 
         // Already assigned (above)
         //s_sco2_des_par.m_phx_dt_cold_approach = cm->as_double("dT_PHX_cold_approach"); // [delta C]
@@ -1472,7 +1474,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 	cm->assign("eta_thermal_calc", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_eta_thermal);	//[-]
 	cm->assign("m_dot_co2_full", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_m_dot_t);		//[kg/s]
 	cm->assign("recomp_frac", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_recomp_frac);		//[-]
-    cm->assign("T_htf_bp_out_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_bp_des_solved.m_T_h_out);
+    cm->assign("T_htf_bp_out_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_bp_des_solved.m_T_h_out - 273.15);    // [C]
     // Compressor
     cm->assign("T_comp_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::MC_IN] - 273.15));		//[C] convert from K
 	cm->assign("P_comp_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::MC_IN] / 1000.0));		//[MPa] convert from kPa

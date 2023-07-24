@@ -233,6 +233,7 @@ private:
     double m_T_HTF_BP_outlet_calc;
     double m_T_HTF_PHX_out;
     double m_dT_BP;                     // BYPASS_OUT - HTR_HP_OUT
+    double m_set_HTF_mdot;
     double m_Q_dot_total;
     double m_HTF_BP_cold_approach;
     double m_HTF_PHX_cold_approach;
@@ -322,7 +323,8 @@ public:
     /// <param name="cp_htf">kJ/kg K</param>
     /// <param name="dT_bp">K</param>
     /// <param name="htf_phx_cold_approach">K</param>
-    void set_htf_par(double T_htf_phx_in, double T_htf_bp_out_target, double cp_htf, double dT_bp, double htf_phx_cold_approach);
+    /// <param name="set_HTF_mdot">K</param>
+    void set_htf_par(double T_htf_phx_in, double T_htf_bp_out_target, double cp_htf, double dT_bp, double htf_phx_cold_approach, double set_HTF_mdot);
 
 
 

@@ -129,7 +129,7 @@ public:
         // Bypass Configuration Parameters
         double m_T_htf_bypass_out;      // [K] HTF design Bypass Outlet
         double m_deltaT_bypass;         // [delta K] sco2 Bypass Outlet Temp - HTR_HP_OUT Temp
-
+        double m_set_HTF_mdot;          // [kg/s] For HTR Bypass ONLY, 0 = calculate HTF mdot (need to set dT_PHX_cold_approach), > 0 = HTF mdot kg/s
 
 
 
