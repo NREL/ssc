@@ -42,17 +42,6 @@ static var_info _cm_vtab_hybrid[] = {
 
 var_info_invalid };
 
-/*moved to common.cpp 
-// for cost outputs calculated below
-static var_info _cm_vtab_hybrid_om[] = {
-        { SSC_OUTPUT,         SSC_ARRAY,      "cf_om_production",     "production O&M costs",             "$","","",      "",        "",      "" },
-        { SSC_OUTPUT,         SSC_ARRAY,      "cf_om_capacity",     "capacity O&M costs",             "$","","",      "",        "",      "" },
-        { SSC_OUTPUT,         SSC_ARRAY,      "cf_om_fixed",     "fixed O&M costs",             "$","","",      "",        "",      "" },
-        { SSC_OUTPUT,         SSC_ARRAY,      "cf_om_land_lease",     "land lease O&M costs",             "$","","",      "",        "",      "" },
-        { SSC_OUTPUT,         SSC_ARRAY,      "cf_energy_net",     "annual energy",             "kWh","","",      "",        "",      "" },
-
-    var_info_invalid };
-*/
 
 class cm_hybrid : public compute_module
 {
@@ -213,7 +202,8 @@ public:
             need lifetime "gen" for utility rate and financial modules with system_use_lifetime_output set to 1 so that degradation is accounted for.
 */
             size_t genLength = 8760*maximumTimeStepsPerHour*analysisPeriod;// assumes single year gen
-            ssc_number_t *pGen = ((var_table*)outputs)->allocate("gen", genLength); // add to top level "output" - assumes analysis period the same for all generators
+            ssc_number_t* pGen = ((var_table*)outputs)->allocate("gen", genLength); // add to top level "output" - assumes analysis period the same for all generators
+//            ssc_number_t* pGen = ((var_table*)outputs)->allocate("gen", genLength); // move to top level to use accumlate funtions below - fails precheck
 
 
             size_t idx = 0;
@@ -238,6 +228,31 @@ public:
                     }
                 }
             }
+
+            // monthly energy generated
+            size_t step_per_hour = maximumTimeStepsPerHour;
+            double ts_hour = 1.0 / step_per_hour; //timestep in fraction of hours (decimal)
+//            ssc_number_t* pGenMonthly = accumulate_monthly_for_year("gen", "monthly_energy", ts_hour, step_per_hour);
+            size_t annual_values = step_per_hour * 8760;
+            ssc_number_t* pGenMonthly = ((var_table*)outputs)->allocate("monthly_energy", 12);
+            size_t c = 0;
+            for (int m = 0; m < 12; m++) // each month
+            {
+                pGenMonthly[m] = 0;
+                for (size_t d = 0; d < util::nday[m]; d++) // for each day in each month
+                    for (int h = 0; h < 24; h++) // for each hour in each day
+                        for (size_t j = 0; j < step_per_hour; j++)
+                            pGenMonthly[m] += pGen[c++];
+            }
+
+//            ssc_number_t pGenAnnual  = accumulate_annual_for_year("gen", "annual_energy", ts_hour, step_per_hour);
+            ssc_number_t pGenAnnual = 0;
+            for (size_t i = 0; i < genLength; i++)
+                pGenAnnual += pGen[i];
+            ((var_table*)outputs)->assign("annual_energy", var_data(pGenAnnual));
+
+
+
             /*
             //Run fuel cell with combined output like in PV-FuelCell-Battery configuration
             run fuel cell
@@ -543,7 +558,7 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 var_table& input = compute_module_inputs->table;
 
                 if (use_batt_output)
-                    ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pBattGen, (int)battGenLen);  // check if need to update to battery output
+                    ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pBattGen, (int)battGenLen);  // TODO: check if need to update to battery output
                 else
                     ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);
 
@@ -557,6 +572,12 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "system_capacity", hybridSystemCapacity);
 
                 ssc_data_set_array(&(compute_module_inputs->table), "cf_hybrid_om_sum", pHybridOMSum, (int)(analysisPeriod+1));
+
+                // set monthly and annual energy generated above and for outputs from financial models
+                ssc_data_set_array(&(compute_module_inputs->table), "monthly_energy", pGenMonthly, 12);
+                ssc_data_set_number(static_cast<ssc_data_t>(&input), "annual_energy", pGenAnnual);
+
+
 
                 // run remaining compute modules in sequence and add results to "Hybrid" VarTable
                 ssc_data_t hybridFinancialOutputs = ssc_data_create();
