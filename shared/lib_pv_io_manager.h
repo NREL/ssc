@@ -346,6 +346,12 @@ struct PVSystem_IO
     std::vector<ssc_number_t *> p_poaRearSpatial;
     std::vector<ssc_number_t *> p_groundRear;
 
+    std::vector<ssc_number_t*> p_poaBeamFrontCS;
+    std::vector<ssc_number_t*> p_poaDiffuseFrontCS;
+    std::vector<ssc_number_t*> p_poaGroundFrontCS;
+    std::vector<ssc_number_t*> p_DNIIndex;
+    //std::vector<ssc_number_t*> p_ClippingPotential;
+
 	// MPPT level outputs
 	std::vector<ssc_number_t *> p_mpptVoltage; /// An output vector containing input DC voltage in V to each mppt input
 	std::vector<ssc_number_t *> p_dcPowerNetPerMppt; /// An output vector containing Net DC Power in W for each mppt input
@@ -493,6 +499,9 @@ public:
 		double poaBeamFront;	/// POA due to beam irradiance on the front of the subarray [W/m2]
 		double poaDiffuseFront; /// POA due to diffuse irradiance on the front of the subarray [W/m2]
 		double poaGroundFront;  /// POA due to ground reflection on the front of the subarray [W/m2]
+        double poaBeamFrontCS;	/// POA due to clearsky beam irradiance on the front of the subarray [W/m2]
+        double poaDiffuseFrontCS; /// POA due to clearsky diffuse irradiance on the front of the subarray [W/m2]
+        double poaGroundFrontCS;  /// POA due to clearsky ground reflection on the front of the subarray [W/m2]
 		double poaRear;			/// POA total irradiance on the back of the subarray if bifacial modules [W/m2]
 		double poaTotal;		/// POA total of front and rear side of array [W/m2]
 		bool sunUp;				/// Flag indicating whether the sun is up or not
@@ -507,6 +516,7 @@ public:
 
 	//calculated- subarray power
 	double dcPowerSubarray; /// DC power for this subarray [W]
+    double dcPowerSubarrayCS;
 
 };
 
@@ -567,7 +577,7 @@ public:
 	double temperatureCellCelcius; /// The weighted moving average  cell temperature of the module [C]
 	double temperatureCellCelciusSS; /// The SS average cell temperature of the module [C]
 	double angleOfIncidenceModifier; /// The angle of incidence modifier on the total poa front-side irradiance [0-1]
-
+    double dcPowerWCS;
 };
 
 

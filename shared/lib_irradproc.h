@@ -1128,6 +1128,10 @@ public:
     void get_poa(double* beam, double* skydiff, double* gnddiff,
         double* isotrop, double* circum, double* horizon);
 
+    /// Return the front-side plane-of-array irradiance and diffuse components of irradiation
+    void get_poa_clearsky(double* beam, double* skydiff, double* gnddiff,
+        double* isotrop, double* circum, double* horizon);
+
     /// Return the rear-side average total plane-of-array irradiance
     double get_poa_rear();
 

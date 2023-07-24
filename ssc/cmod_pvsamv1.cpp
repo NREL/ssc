@@ -1516,6 +1516,7 @@ void cm_pvsamv1::exec()
                 }
                 // beam, skydiff, and grounddiff IN THE PLANE OF ARRAY (W/m2)
                 double ibeam, iskydiff, ignddiff;
+                double ibeam_csky, iskydiff_csky, ignddiff_csky;
                 double aoi, stilt, sazi, rot, btd;
 
                 // Ensure that the usePOAFromWF flag is false unless a reference cell has been used.
@@ -1547,8 +1548,12 @@ void cm_pvsamv1::exec()
                 irr.get_sun(&solazi, &solzen, &solalt, 0, 0, 0, &sunup, 0, 0, 0);
                 irr.get_angles(&aoi, &stilt, &sazi, &rot, &btd);
                 irr.get_poa(&ibeam, &iskydiff, &ignddiff, 0, 0, 0);
+                irr.get_poa_clearsky(&ibeam_csky, &iskydiff_csky, &ignddiff_csky, 0, 0, 0);
                 alb = irr.getAlbedo();
                 alb_spatial = irr.getAlbedoSpatial();
+
+
+                
 
                 if (iyear == 0 || save_full_lifetime_variables == 1)
                     Irradiance->p_sunPositionTime[idx] = (ssc_number_t)irr.get_sunpos_calc_hour();
@@ -1895,6 +1900,11 @@ void cm_pvsamv1::exec()
                     PVSystem->p_surfaceAzimuth[nn][idx] = (ssc_number_t)sazi;
                     PVSystem->p_derateSoiling[nn][idx] = (ssc_number_t)soiling_factor;
 
+                    PVSystem->p_poaBeamFrontCS[nn][idx] = (ssc_number_t)ibeam_csky;
+                    PVSystem->p_poaDiffuseFrontCS[nn][idx] = (ssc_number_t)(iskydiff_csky);
+                    PVSystem->p_poaDiffuseFrontCS[nn][idx] = (ssc_number_t)(ignddiff_csky);
+                    PVSystem->p_DNIIndex[nn][idx] = (ssc_number_t)(ibeam / ibeam_csky);
+
                     // only save first-year spatial outputs
                     if (iyear == 0) {
                         if (idx == 0) {
@@ -1976,6 +1986,10 @@ void cm_pvsamv1::exec()
                 Subarrays[nn]->poa.sunUp = sunup;
                 Subarrays[nn]->poa.surfaceTiltDegrees = stilt;
                 Subarrays[nn]->poa.surfaceAzimuthDegrees = sazi;
+
+                Subarrays[nn]->poa.poaBeamFrontCS = ibeam_csky;
+                Subarrays[nn]->poa.poaDiffuseFrontCS = iskydiff_csky;
+                Subarrays[nn]->poa.poaGroundFrontCS = ignddiff_csky;
             }
 
             std::vector<double> mpptVoltageClipping; //a vector to store power that is clipped due to the inverter MPPT low & high voltage limits for each subarray
@@ -2054,6 +2068,7 @@ void cm_pvsamv1::exec()
                 //now calculate power for each subarray on this mppt input. stringVoltage will still be -1 if mismatch calcs aren't enabled, or the value decided by mismatch calcs if they are enabled
                 std::vector<pvinput_t> in{ num_subarrays }; //create arrays for the pv input and output structures because we have to deal with them in multiple loops to check for MPPT clipping
                 std::vector<pvoutput_t> out{ num_subarrays };
+                pvoutput_t out_temp_csky(0, 0, 0, 0, 0, 0, 0, 0);
                 double tcell = wf.tdry;
                 double tcellSS = wf.tdry;
 
@@ -2067,6 +2082,14 @@ void cm_pvsamv1::exec()
                         Subarrays[nn]->poa.surfaceTiltDegrees, Subarrays[nn]->poa.surfaceAzimuthDegrees,
                         ((double)wf.hour) + wf.minute / 60.0,
                         radmode, Subarrays[nn]->poa.usePOAFromWF);
+
+                    pvinput_t in_temp_csky(Subarrays[nn]->poa.poaBeamFrontCS, Subarrays[nn]->poa.poaDiffuseFrontCS, Subarrays[nn]->poa.poaGroundFrontCS, Subarrays[nn]->poa.poaRear* bifaciality, Subarrays[nn]->poa.poaTotal,
+                        wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
+                        solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, hdr.elev,
+                        Subarrays[nn]->poa.surfaceTiltDegrees, Subarrays[nn]->poa.surfaceAzimuthDegrees,
+                        ((double)wf.hour) + wf.minute / 60.0,
+                        radmode, Subarrays[nn]->poa.usePOAFromWF);
+                    
                     pvoutput_t out_temp(0, 0, 0, 0, 0, 0, 0, 0);
                     in[nn] = in_temp;
                     out[nn] = out_temp;
@@ -2149,6 +2172,8 @@ void cm_pvsamv1::exec()
                         // end Transient Thermal model
 
                         (*Subarrays[nn]->Module->moduleModel)(in[nn], tcell, module_voltage, out[nn]);
+                        //ClearSky DC calculations
+                        (*Subarrays[nn]->Module->moduleModel)(in_temp_csky, tcell, module_voltage, out_temp_csky);
                     }
                 }
 
@@ -2234,6 +2259,9 @@ void cm_pvsamv1::exec()
                             wf.month, wf.day, wf.hour, wf.minute, Subarrays[nn]->poa.poaTotal), SSC_NOTICE);
                     }
 
+                    //Clearsky DC power
+                    Subarrays[nn]->Module->dcPowerWCS = out_temp_csky.Power;
+
                     // save DC module outputs for this subarray
                     Subarrays[nn]->Module->dcPowerW = out[nn].Power;
                     Subarrays[nn]->Module->dcEfficiency = out[nn].Efficiency * 100;
@@ -2249,6 +2277,8 @@ void cm_pvsamv1::exec()
                     Subarrays[nn]->Module->currentShortCircuit = out[nn].Isc_oper;
                     Subarrays[nn]->Module->voltageOpenCircuit = out[nn].Voc_oper;
                     Subarrays[nn]->Module->angleOfIncidenceModifier = out[nn].AOIModifier;
+
+
 
                     // Lifetime dcStringVoltage
                     dcStringVoltage[nn].push_back(Subarrays[nn]->Module->dcVoltage * Subarrays[nn]->nModulesPerString);
@@ -2286,6 +2316,8 @@ void cm_pvsamv1::exec()
 
                 // scale power and mppt voltage clipping to subarray dimensions
                 Subarrays[nn]->dcPowerSubarray = Subarrays[nn]->Module->dcPowerW * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
+                Subarrays[nn]->dcPowerSubarrayCS = Subarrays[nn]->Module->dcPowerWCS * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
+
                 if (iyear == 0 || save_full_lifetime_variables == 1) mpptVoltageClipping[nn] *= Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
 
                 // Calculate and apply snow coverage losses if activated
@@ -2499,6 +2531,8 @@ void cm_pvsamv1::exec()
             }
 
             double dcPower_kW = PVSystem->p_systemDCPower[idx];
+
+            double dcPwer_kw_csky = PVSystem->p_systemDCPower[idx]
 
             // Battery replacement
             if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))

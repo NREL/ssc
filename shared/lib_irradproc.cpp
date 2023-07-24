@@ -1884,6 +1884,17 @@ void irrad::get_poa(double *beam, double *skydiff, double *gnddiff,
     if (horizon != 0) *horizon = diffuseIrradianceFront[2];
 }
 
+void irrad::get_poa_clearsky(double* beam, double* skydiff, double* gnddiff,
+    double* isotrop, double* circum, double* horizon) {
+    if (beam != 0) *beam = planeOfArrayIrradianceFrontCS[0];
+    if (skydiff != 0) *skydiff = planeOfArrayIrradianceFrontCS[1];
+    if (gnddiff != 0) *gnddiff = planeOfArrayIrradianceFrontCS[2];
+    if (isotrop != 0) *isotrop = diffuseIrradianceFrontCS[0];
+    if (circum != 0) *circum = diffuseIrradianceFrontCS[1];
+    if (horizon != 0) *horizon = diffuseIrradianceFrontCS[2];
+}
+
+
 double irrad::get_poa_rear() {
     return planeOfArrayIrradianceRearAverage;
 }
