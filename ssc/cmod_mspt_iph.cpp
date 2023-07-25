@@ -1563,7 +1563,7 @@ public:
 
         double ppa_price_year1 = std::numeric_limits<double>::quiet_NaN();
         if (sim_type == 1) {
-            if (csp_financial_model == 8) {        // No Financial Model
+            if (csp_financial_model == 8 || csp_financial_model == 7) {        // No Financial Model or LCOH
                 if (is_dispatch) {
                     throw exec_error("tcsmolten_salt", "Can't select dispatch optimization if No Financial model");
                 }
