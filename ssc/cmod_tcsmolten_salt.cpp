@@ -1259,7 +1259,7 @@ public:
             helio_pos.resize(N_hel, 2);
             for (int i = 0; i < N_hel; i++) {
                 helio_pos(i, 0) = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.x;
-                helio_pos(i, 0) = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.y;
+                helio_pos(i, 1) = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.y;
             }
 
             THT = spi.sf.tht.val;

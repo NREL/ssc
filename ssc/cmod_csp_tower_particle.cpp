@@ -135,7 +135,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_INPUT,     SSC_NUMBER, "opt_max_iter",                       "Max number iteration steps",                                                                                                              "",             "",                                  "Heliostat Field",                          "?=200",                                                            "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "opt_conv_tol",                       "Optimization convergence tolerance",                                                                                                      "",             "",                                  "Heliostat Field",                          "?=0.001",                                                          "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "opt_flux_penalty",                   "Optimization flux overage penalty",                                                                                                       "",             "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
-    //{ SSC_INPUT,     SSC_NUMBER, "opt_algorithm",                      "Optimization algorithm",                                                                                                                  "",             "",                                  "Heliostat Field",                          "?=1",                                                              "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "opt_algorithm",                      "Optimization algorithm",                                                                                                                  "",             "",                                  "Heliostat Field",                          "?=1",                                                              "",              ""},
 
     
     // Receiver parameters
@@ -162,7 +162,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_INPUT,     SSC_NUMBER, "norm_curtain_height",                "Normalized particle curtain height",                                                                                                      "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "norm_curtain_width",                 "Normalized particle curtain width",                                                                                                       "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "max_curtain_depth",                  "Particle curtain entrance depth",                                                                                                         "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
-    { SSC_INPUT,     SSC_MATRIX, "norm_heights_depths",                "Normalized troughs heights and depths",                                                                                                   "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_INPUT,     SSC_MATRIX, "norm_heights_depths",                "Normalized troughs heights and depths, pass [[0,0]] for no curtain troughs",                                                              "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "curtain_type",                       "Flat=0;Curved=1",                                                                                                                         "",             "",                                  "Tower and Receiver",                       "?=0",                                                              "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "curtain_radius",                     "Particle curtain radius",                                                                                                                 "m",            "",                                  "Tower and Receiver",                       "curtain_type=1",                                                   "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "is_snout",                           "Is SNOUT enabled?",                                                                                                                       "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
@@ -775,8 +775,7 @@ public:
         double land_max_abs = std::numeric_limits<double>::quiet_NaN();         // [m] maximum distance from tower?
         double land_min_abs = std::numeric_limits<double>::quiet_NaN();         // [m] minimum distance from tower
         
-        assign("is_optimize", 0);           // Run heliostat layout and tower optimization
-        bool is_optimize = false;
+        
         int n_flux_y = 20;                   // Number of points in the vertical direction of flux surface
         int n_flux_x = 10;                   // Number of points in the horizontal direction of flux surface
         // TODO (Bill): Make these user inputs, if Janna agrees
@@ -798,100 +797,20 @@ public:
             assign("n_flux_y", n_flux_y);
             assign("n_flux_x", n_flux_x);
 
-            if ((field_model_type == 0 || field_model_type == 1) && sim_type == 1) {
-                // Auto-design. Generate a new system (is_optimize = true) or field layout
-
-                // TODO (Bill): Ask Ty about this comment
-                // What if sim_type = 2?
-                // If from the UI, then probably never want to actually layout the field and geometry
-                //   because there are macros for that
-                // If called from a script.... then maybe?
-                // So.. maybe add optional input like "is_layout_field_in_design_only" and default to False?
-
-                if (field_model_type == 0) {
-                    // Optimize design field and tower/receiver geometry
-                    // TODO (Bill): Test if optimization works... aspect might be difficult
-                    assign("is_optimize", 1);
-                    is_optimize = true;
-                    //throw exec_error("csp_tower_particle", "Field and receiver optimization is not currently supported.");
-                }
-
-                assign("calc_fluxmaps", 1); // Include fluxmap calculations
-
-                spi.run(weather_reader.m_weather_data_provider);    // Runs SolarPILOT
-
-                if (is_optimize) {
-                    //Optimization iteration history
-                    vector<vector<double> > steps;
-                    vector<double> obj, flux;
-                    spi.getOptimizationSimulationHistory(steps, obj, flux);
-                    size_t nr = steps.size();
-                    if (nr > 0) {
-                        size_t nc = steps.front().size() + 2;
-                        ssc_number_t* ssc_hist = allocate("opt_history", nr, nc);       // TODO (Bill): who owns "opt_history"? GUI?
-                        for (size_t i = 0; i < nr; i++) {
-
-                            for (size_t j = 0; j < steps.front().size(); j++)
-                                ssc_hist[i * nc + j] = (ssc_number_t)steps.at(i).at(j);
-                            ssc_hist[i * nc + nc - 2] = (ssc_number_t)obj.at(i);
-                            ssc_hist[i * nc + nc - 1] = (ssc_number_t)flux.at(i);
-                        }
-                    }
-                }
-
-                // Collect the optical efficiency data and sun positions
-                if (spi.fluxtab.zeniths.size() > 0 && spi.fluxtab.azimuths.size() > 0
-                    && spi.fluxtab.efficiency.size() > 0) {
-                    size_t nvals = spi.fluxtab.efficiency.size();
-                    mt_eta_map.resize(nvals, 3);
-
-                    for (size_t i = 0; i < nvals; i++) {
-                        mt_eta_map(i, 0) = spi.fluxtab.azimuths[i] * 180. / CSP::pi;      //Convention is usually S=0, E<0, W>0 
-                        mt_eta_map(i, 1) = spi.fluxtab.zeniths[i] * 180. / CSP::pi;       //Provide zenith angle
-                        mt_eta_map(i, 2) = spi.fluxtab.efficiency[i];
-                    }
-                }
-                else
-                    throw exec_error("solarpilot", "failed to calculate a correct optical efficiency table");
-
-                // Collect the flux map data
-                //   - SolarPILOT provides flux_data in a 3D matrix (y, x, sun position) per flux surface
-                //   - The Heliostat Field interpolation method needs flux_data for the receiver in a 2D matrix of size (y * sun position, x)
-                //   - Here we collect the flux data and transform it to desired format
-                // Front flux surface is the aperture and is the same discretization as all curtains combined
-                block_t<double>* flux_data = &spi.fluxtab.flux_surfaces.front().flux_data;
-                if (flux_data->ncols() > 0 && flux_data->nlayers() > 0) {
-                    int nflux_y = (int)flux_data->nrows();
-                    int nflux_x = (int)flux_data->ncols();
-                    mt_flux_maps.resize(nflux_y * flux_data->nlayers(), nflux_x);
-
-                    // nlayers is number of solar positions (i.e. flux maps)
-                    for (size_t sp = 0; sp < flux_data->nlayers(); sp++) {
-                        int n_surfs = spi.fluxtab.flux_surfaces.size();
-                        int y_pos_basis = 0;
-                        double flux_receiver = 0.0; // for debugging?
-                        // Start at k=1 because the first surface in flux_surfaces is the aperture, which we don't want
-                        for (int k = 1; k < n_surfs; k++) { // for each curtain surface
-                            flux_data = &spi.fluxtab.flux_surfaces[k].flux_data;
-                            int surf_nflux_y = flux_data->nrows(); // Get flux surface y-discretization size
-
-                            for (int y = 0; y < surf_nflux_y; y++) {
-                                for (int x = 0; x < nflux_x; x++) {
-                                    // collect flux data on curtain
-                                    mt_flux_maps(sp * nflux_y + y_pos_basis + y, x) = flux_data->at(y, x, sp);
-                                    flux_receiver += mt_flux_maps(sp * nflux_y + y_pos_basis + y, x);
-                                }
-                            }
-                            y_pos_basis += surf_nflux_y;
-                        }
-                        if (y_pos_basis != nflux_y)
-                            throw exec_error("solarpilot", "Collecting receiver flux map has failed contact support");
-                    }
-                }
-                else
-                    throw exec_error("solarpilot", "failed to calculate a correct flux map table");
+            // Default configuration specific case will overwrite these values
+            assign("is_optimize", 0);            // Turn-off heliostat layout and tower optimization
+            assign("calc_fluxmaps", 1);          // Include flux map calculations
+            if (field_model_type == 0 && sim_type == 1) { // Optimize design field and tower/receiver geometry
+                // TODO (Bill): Test if optimization works...
+                // Is receiver area being using in the objective function
+                assign("is_optimize", 1);
             }
-            else if (field_model_type == 2 || field_model_type == 3) {
+            else if (field_model_type == 3 || sim_type == 2) {
+                assign("calc_fluxmaps", 0); // efficiency and flux maps are provide by the user
+            }
+
+            // Process user provide solar field and check if it's for a cavity receiver
+            if (field_model_type == 2 || field_model_type == 3) { 
                 // Only calculates a flux map, so need to "assign" 'helio_positions_in' for SolarPILOT cmod
                 util::matrix_t<double> helio_pos_temp = as_matrix("helio_positions");
                 size_t n_h_rows = helio_pos_temp.nrows();
@@ -922,34 +841,46 @@ public:
                             "3) Enter new heliostat positions\n");
                     }
                 }
+            }
 
-                // 'calc_fluxmaps' defaults to false in solarpilot cmod, so overwrite here if we want flux maps
-                if (sim_type == 1 && field_model_type == 2) {
-                    assign("calc_fluxmaps", 1);
+            spi.run(weather_reader.m_weather_data_provider);    // Runs SolarPILOT
+
+            //Optimization iteration history
+            if (field_model_type == 0) { // is optimize
+                vector<vector<double> > steps;
+                vector<double> obj, flux;
+                spi.getOptimizationSimulationHistory(steps, obj, flux);
+                size_t nr = steps.size();
+                if (nr > 0) {
+                    size_t nc = steps.front().size() + 2;
+                    ssc_number_t* ssc_hist = allocate("opt_history", nr, nc);       // TODO (Bill): who owns "opt_history"? GUI?
+                    for (size_t i = 0; i < nr; i++) {
+                        for (size_t j = 0; j < steps.front().size(); j++)
+                            ssc_hist[i * nc + j] = (ssc_number_t)steps.at(i).at(j);
+                        ssc_hist[i * nc + nc - 2] = (ssc_number_t)obj.at(i);
+                        ssc_hist[i * nc + nc - 1] = (ssc_number_t)flux.at(i);
+                    }
                 }
-                else if(sim_type == 2 || field_model_type == 3) {
-                    assign("calc_fluxmaps", 0);
-                }
+            }
 
-                spi.run(weather_reader.m_weather_data_provider);
-
-                if (sim_type == 1 && field_model_type == 2) {
-                    //collect the optical efficiency data and sun positions
+            // Collect the optical efficiency and flux map data
+            if (field_model_type <= 2) {
+                if (sim_type == 1) {
+                    // Collect the optical efficiency data and sun positions
                     if (spi.fluxtab.zeniths.size() > 0 && spi.fluxtab.azimuths.size() > 0
-                        && spi.fluxtab.efficiency.size() > 0)
-                    {
+                        && spi.fluxtab.efficiency.size() > 0) {
                         size_t nvals = spi.fluxtab.efficiency.size();
                         mt_eta_map.resize(nvals, 3);
 
-                        for (size_t i = 0; i < nvals; i++)
-                        {
-                            mt_eta_map(i, 0) = spi.fluxtab.azimuths[i] * 180. / CSP::pi;    //Convention is usually S=0, E<0, W>0 
-                            mt_eta_map(i, 1) = spi.fluxtab.zeniths[i] * 180. / CSP::pi;     //Provide zenith angle
+                        for (size_t i = 0; i < nvals; i++) {
+                            mt_eta_map(i, 0) = spi.fluxtab.azimuths[i] * 180. / CSP::pi;      //Convention is usually S=0, E<0, W>0 
+                            mt_eta_map(i, 1) = spi.fluxtab.zeniths[i] * 180. / CSP::pi;       //Provide zenith angle
                             mt_eta_map(i, 2) = spi.fluxtab.efficiency[i];
                         }
                     }
                     else
                         throw exec_error("solarpilot", "failed to calculate a correct optical efficiency table");
+
                     // Collect the flux map data
                     //   - SolarPILOT provides flux_data in a 3D matrix (y, x, sun position) per flux surface
                     //   - The Heliostat Field interpolation method needs flux_data for the receiver in a 2D matrix of size (y * sun position, x)
@@ -986,25 +917,20 @@ public:
                     }
                     else
                         throw exec_error("solarpilot", "failed to calculate a correct flux map table");
-
                 }
-                else if (field_model_type == 3) {
-
-                    mt_eta_map = as_matrix("eta_map");
-                    mt_flux_maps = as_matrix("flux_maps");
-                }
-                else if (field_model_type == 2 && sim_type == 2) {
-
-                    // TODO (Bill): update these?
+                else { // sim_type == 2
+                    // Filling maps with dummy values
                     mt_eta_map.resize_fill(1, 3, std::numeric_limits<double>::quiet_NaN());
                     mt_flux_maps.resize_fill(1, 12, std::numeric_limits<double>::quiet_NaN());
-
                 }
-                else{
-                    string msg = util::format("Invalid combination of field_model_type and sim_type");
-
-                    throw exec_error("CSP Solver", msg);
-                }
+            }
+            else if (field_model_type == 3) { // Read in user efficiency and flux maps
+                mt_eta_map = as_matrix("eta_map");
+                mt_flux_maps = as_matrix("flux_maps");
+            }
+            else {
+                string msg = util::format("Invalid combination of field_model_type and sim_type");
+                throw exec_error("CSP Solver", msg);
             }
 
             N_hel = (int)spi.layout.heliostat_positions.size();
@@ -1012,7 +938,7 @@ public:
             helio_pos.resize(N_hel, 2);
             for (int i = 0; i < N_hel; i++) {
                 helio_pos(i, 0) = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.x;
-                helio_pos(i, 0) = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.y;
+                helio_pos(i, 1) = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.y;
             }
 
             THT = spi.sf.tht.val;
@@ -1060,12 +986,11 @@ public:
         else
         {
             string msg = util::format("One field performance modeling option must be set to True");
-
             throw exec_error("CSP Solver", msg);
         }
 
         // *****************************************************
-        // simulation setup         // TODO (Bill): Why is this created so far from simulation... due to n_steps_fixed
+        // simulation setup
         // *****************************************************
         // Set steps per hour
         C_csp_solver::S_sim_setup sim_setup;
@@ -1079,15 +1004,13 @@ public:
         {
             double sph_d = 3600. / weather_reader.m_weather_data_provider->step_sec();
             steps_per_hour = (int)( sph_d + 1.e-5 );
-            if( (double)steps_per_hour != sph_d )
-                throw spexception("The time step duration must be evenly divisible within an hour.");
+            if ((double)steps_per_hour != sph_d)
+                throw exec_error("CSP Solver", "The time step duration must be evenly divisible within an hour.");
         }
 
         size_t n_steps_fixed = (size_t)steps_per_hour * 8760;   //[-]
         if( as_boolean("vacuum_arrays") )
-        {
             n_steps_fixed = steps_per_hour * (size_t)( (sim_setup.m_sim_time_end - sim_setup.m_sim_time_start)/3600. );
-        }
         sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;  //[s]
 
 #ifndef TESTING
