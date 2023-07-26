@@ -51,6 +51,8 @@ class solarpilot_invoke : public var_map
 
 public:
 
+    void getHeliostatFieldEfficiency(util::matrix_t<double> &eta_map);
+    void getReceiverFluxMaps(util::matrix_t<double>& flux_maps);
 	void getOptimizationSimulationHistory(std::vector<std::vector<double> > &sim_points, std::vector<double> &obj_values, std::vector<double> &flux_values);
 	void setOptimizationSimulationHistory(std::vector<std::vector<double> > &sim_points, std::vector<double> &obj_values, std::vector<double> &flux_values);
 

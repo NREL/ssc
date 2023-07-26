@@ -749,7 +749,7 @@ public:
         // 3 = user flux and eta maps, pass heliostat_positions to SolarPILOT for layout
         // 4 = user flux and eta maps, no SolarPILOT, input A_sf_in, total_land_area_in, and N_hel
         int field_model_type = as_integer("field_model_type");
-        assign("receiver_type", 3); // Falling particle receiver
+        assign("receiver_type", var_receiver::REC_TYPE::FALLING_PARTICLE);
 
         if (sim_type == 2 && field_model_type < 2) {
             field_model_type = 2;  //skip heliostat design? if design only option
@@ -802,7 +802,7 @@ public:
             assign("calc_fluxmaps", 1);          // Include flux map calculations
             if (field_model_type == 0 && sim_type == 1) { // Optimize design field and tower/receiver geometry
                 // TODO (Bill): Test if optimization works...
-                // Is receiver area being using in the objective function
+                // How receiver area being using in the objective function
                 assign("is_optimize", 1);
             }
             else if (field_model_type == 3 || sim_type == 2) {
@@ -842,7 +842,6 @@ public:
                     }
                 }
             }
-
             spi.run(weather_reader.m_weather_data_provider);    // Runs SolarPILOT
 
             //Optimization iteration history
@@ -867,58 +866,13 @@ public:
             if (field_model_type <= 2) {
                 if (sim_type == 1) {
                     // Collect the optical efficiency data and sun positions
-                    if (spi.fluxtab.zeniths.size() > 0 && spi.fluxtab.azimuths.size() > 0
-                        && spi.fluxtab.efficiency.size() > 0) {
-                        size_t nvals = spi.fluxtab.efficiency.size();
-                        mt_eta_map.resize(nvals, 3);
-
-                        for (size_t i = 0; i < nvals; i++) {
-                            mt_eta_map(i, 0) = spi.fluxtab.azimuths[i] * 180. / CSP::pi;      //Convention is usually S=0, E<0, W>0 
-                            mt_eta_map(i, 1) = spi.fluxtab.zeniths[i] * 180. / CSP::pi;       //Provide zenith angle
-                            mt_eta_map(i, 2) = spi.fluxtab.efficiency[i];
-                        }
-                    }
-                    else
-                        throw exec_error("solarpilot", "failed to calculate a correct optical efficiency table");
+                    spi.getHeliostatFieldEfficiency(mt_eta_map);
 
                     // Collect the flux map data
-                    //   - SolarPILOT provides flux_data in a 3D matrix (y, x, sun position) per flux surface
-                    //   - The Heliostat Field interpolation method needs flux_data for the receiver in a 2D matrix of size (y * sun position, x)
-                    //   - Here we collect the flux data and transform it to desired format
-                    // Front flux surface is the aperture and is the same discretization as all curtains combined
-                    block_t<double>* flux_data = &spi.fluxtab.flux_surfaces.front().flux_data;
-                    if (flux_data->ncols() > 0 && flux_data->nlayers() > 0) {
-                        int nflux_y = (int)flux_data->nrows();
-                        int nflux_x = (int)flux_data->ncols();
-                        mt_flux_maps.resize(nflux_y * flux_data->nlayers(), nflux_x);
-
-                        // nlayers is number of solar positions (i.e. flux maps)
-                        for (size_t sp = 0; sp < flux_data->nlayers(); sp++) {
-                            int n_surfs = spi.fluxtab.flux_surfaces.size();
-                            int y_pos_basis = 0;
-                            double flux_receiver = 0.0; // for debugging?
-                            // Start at k=1 because the first surface in flux_surfaces is the aperture, which we don't want
-                            for (int k = 1; k < n_surfs; k++) { // for each curtain surface
-                                flux_data = &spi.fluxtab.flux_surfaces[k].flux_data;
-                                int surf_nflux_y = flux_data->nrows(); // Get flux surface y-discretization size
-
-                                for (int y = 0; y < surf_nflux_y; y++) {
-                                    for (int x = 0; x < nflux_x; x++) {
-                                        // collect flux data on curtain
-                                        mt_flux_maps(sp * nflux_y + y_pos_basis + y, x) = flux_data->at(y, x, sp);
-                                        flux_receiver += mt_flux_maps(sp * nflux_y + y_pos_basis + y, x);
-                                    }
-                                }
-                                y_pos_basis += surf_nflux_y;
-                            }
-                            if (y_pos_basis != nflux_y)
-                                throw exec_error("solarpilot", "Collecting receiver flux map has failed contact support");
-                        }
-                    }
-                    else
-                        throw exec_error("solarpilot", "failed to calculate a correct flux map table");
+                    spi.getReceiverFluxMaps(mt_flux_maps);
                 }
-                else { // sim_type == 2
+                else {
+                    // sim_type == 2
                     // Filling maps with dummy values
                     mt_eta_map.resize_fill(1, 3, std::numeric_limits<double>::quiet_NaN());
                     mt_flux_maps.resize_fill(1, 12, std::numeric_limits<double>::quiet_NaN());

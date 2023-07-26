@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "core.h"
 #include "lib_weatherfile.h"
 #include "lib_util.h"
+#include "sam_csp_util.h"
 #include <sstream>
 
 #include "common.h"
@@ -701,6 +702,135 @@ bool solarpilot_invoke::postsim_calcs(compute_module *cm)
 
 }
 
+void solarpilot_invoke::getHeliostatFieldEfficiency(util::matrix_t<double> &eta_map) {
+    /*
+    Populates heliostat field efficiency matrix
+    */
+
+    if (fluxtab.zeniths.size() > 0 && fluxtab.azimuths.size() > 0
+        && fluxtab.efficiency.size() > 0) {
+        size_t nvals = fluxtab.efficiency.size();
+        eta_map.resize(nvals, 3);
+
+        for (size_t i = 0; i < nvals; i++) {
+            eta_map(i, 0) = fluxtab.azimuths[i] * 180. / CSP::pi;      //Convention is usually S=0, E<0, W>0 
+            eta_map(i, 1) = fluxtab.zeniths[i] * 180. / CSP::pi;       //Provide zenith angle
+            eta_map(i, 2) = fluxtab.efficiency[i];
+        }
+    }
+    else
+        throw exec_error("solarpilot", "failed to calculate a correct optical efficiency table");
+}
+
+void solarpilot_invoke::getReceiverFluxMaps(util::matrix_t<double>& flux_maps) {
+    //   - SolarPILOT provides flux_data in a 3D matrix (y, x, sun position) per flux surface
+    //   - The Heliostat Field interpolation method needs flux_data for the receiver in a 2D matrix of size (y * sun position, x)
+    //   - Here we collect the flux data and transform it to desired format
+    
+    block_t<double>* flux_data = &fluxtab.flux_surfaces.front().flux_data;
+    if (flux_data->ncols() > 0 && flux_data->nlayers() > 0) {
+        switch (recs.front().rec_type.mapval()) {
+            case var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL:
+            {
+                int nflux_y = (int)flux_data->nrows();
+                int nflux_x = (int)flux_data->ncols();
+
+                flux_maps.resize(nflux_y * flux_data->nlayers(), nflux_x);
+
+                int cur_row = 0;
+
+                for (size_t i = 0; i < flux_data->nlayers(); i++)
+                {
+                    for (int j = 0; j < nflux_y; j++)
+                    {
+                        for (int k = 0; k < nflux_x; k++)
+                        {
+                            flux_maps(cur_row, k) = flux_data->at(j, k, i);
+                            //fluxdata[cur_row * nflux_x + k] = (float)flux_data->at(j, k, i);
+                        }
+                        cur_row++;
+                    }
+                }
+                break;
+            }
+            case var_receiver::REC_TYPE::CAVITY:
+            {
+                int nflux_y = (int)flux_data->nrows();
+                int nflux_x = (int)flux_data->ncols();
+
+                int n_sp_surfaces = fluxtab.flux_surfaces.size();
+                int n_panels_cav_sp = n_sp_surfaces - 1;
+
+                if (nflux_y > 1) {
+                    throw exec_error("solarpilot", "cavity flux maps currently only work for nflux_y = 1");
+                }
+
+                flux_maps.resize(nflux_y * flux_data->nlayers(), n_panels_cav_sp);
+
+                int cur_row = 0;
+
+                // nlayers is number of solar positions (i.e. flux maps)
+                for (size_t i = 0; i < flux_data->nlayers(); i++) {
+
+                    int j = 0;
+
+                    double flux_receiver = 0.0;
+
+                    // Start at k=1 because the first surface in flux_surfaces is the aperture, which we don't want
+                    for (int k = 1; k <= n_panels_cav_sp; k++) {
+
+                        block_t<double>* flux_data = &fluxtab.flux_surfaces[k].flux_data; //.front().flux_data;  //there should be only one flux stack for SAM
+
+                        double flux_local = 0.0;
+                        for (int l = 0; l < nflux_x; l++) {
+                            flux_local += flux_data->at(j, l, i);
+                        }
+
+                        // Adjust k to start flux maps with first receiver surface
+                        flux_maps(cur_row, k - 1) = flux_local;
+                        flux_receiver += flux_local;
+                    }
+
+                    cur_row++;
+                }
+                break;
+            }
+            case var_receiver::REC_TYPE::FALLING_PARTICLE:
+            {
+                // Front flux surface is the aperture and is the same discretization as all curtains combined
+                int nflux_y = (int)flux_data->nrows();
+                int nflux_x = (int)flux_data->ncols();
+                flux_maps.resize(nflux_y * flux_data->nlayers(), nflux_x);
+
+                // nlayers is number of solar positions (i.e. flux maps)
+                for (size_t sp = 0; sp < flux_data->nlayers(); sp++) {
+                    int n_surfs = fluxtab.flux_surfaces.size();
+                    int y_pos_basis = 0;
+                    double flux_receiver = 0.0; // for debugging?
+                    // Start at k=1 because the first surface in flux_surfaces is the aperture, which we don't want
+                    for (int k = 1; k < n_surfs; k++) { // for each curtain surface
+                        flux_data = &fluxtab.flux_surfaces[k].flux_data;
+                        int surf_nflux_y = flux_data->nrows(); // Get flux surface y-discretization size
+
+                        for (int y = 0; y < surf_nflux_y; y++) {
+                            for (int x = 0; x < nflux_x; x++) {
+                                // collect flux data on curtain
+                                flux_maps(sp * nflux_y + y_pos_basis + y, x) = flux_data->at(y, x, sp);
+                                flux_receiver += flux_maps(sp * nflux_y + y_pos_basis + y, x);
+                            }
+                        }
+                        y_pos_basis += surf_nflux_y;
+                    }
+                    if (y_pos_basis != nflux_y)
+                        throw exec_error("solarpilot", "Collecting receiver flux map has failed contact support");
+                }
+                break;
+            }
+        }
+    }
+    else
+        throw exec_error("solarpilot", "failed to calculate a correct flux map table");
+}
 
 void solarpilot_invoke::getOptimizationSimulationHistory(vector<vector<double> > &sim_points, vector<double> &obj_values, vector<double> &flux_values)
 {
