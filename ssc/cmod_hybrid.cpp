@@ -101,6 +101,9 @@ public:
 
             for (size_t igen = 0; igen < generators.size(); igen++) {
 
+                percent = 100.0f * ((float)igen / (float)(generators.size() + fuelcells.size() + batteries.size() + financials.size()));
+                update("", percent);
+
                 std::string& compute_module = generators[igen];
                 var_data *compute_module_inputs = input_table->table.lookup(compute_module);
                 if (compute_module_inputs->type != SSC_TABLE)
@@ -188,9 +191,6 @@ public:
                 ssc_module_free(module);
                 ssc_data_free(compute_module_outputs);
 
-                percent = 100.0f * ((float)igen / (float)(generators.size() + fuelcells.size() + batteries.size() + financials.size()));
-                update("", percent);
-
             } // end of generators
 
             /*
@@ -266,6 +266,11 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 */
 
             if (fuelcells.size()>0) { // run single fuel cell if present 
+
+                percent = 100.0f * ((float)(generators.size() + fuelcells.size()) / (float)(generators.size() + fuelcells.size() + batteries.size() + financials.size()));
+                update("", percent);
+
+
                 std::string& compute_module = fuelcells[0];
                 var_data *compute_module_inputs = input_table->table.lookup(compute_module);
                 if (compute_module_inputs->type != SSC_TABLE)
@@ -342,9 +347,6 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 ssc_module_free(module);
                 ssc_data_free(compute_module_outputs);
 
-                percent = 100.0f * ((float)(generators.size() + fuelcells.size()) / (float)(generators.size() + fuelcells.size() + batteries.size() + financials.size()));
-                update("", percent);
-
             }
 
             /* TODO - test hybrid output from fuel cell in future
@@ -353,6 +355,10 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
     hybridtotalinstalledcost += battery_totalinstalledcost
 */
             if (batteries.size()>0) { // run single battery (refator running code below)
+
+                percent = 100.0f * ((float)(generators.size() + fuelcells.size() + batteries.size()) / (float)(generators.size() + fuelcells.size() + batteries.size() + financials.size()));
+                update("", percent);
+
                 std::string& compute_module = batteries[0];
                 var_data *compute_module_inputs = input_table->table.lookup(compute_module);
                 if (compute_module_inputs->type != SSC_TABLE)
@@ -369,7 +375,7 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "system_use_lifetime_output", 1);
                 //ssc_data_set_number(static_cast<ssc_data_t>(&input), "is_hybrid", 1);
 
-
+                //ssc_module_exec_with_handler(module, static_cast<ssc_data_t>(&input),default_internal_handler, m_handler); // handler not passed into compute module
                 ssc_module_exec(module, static_cast<ssc_data_t>(&input));
 
                 ssc_data_t compute_module_outputs = ssc_data_create();
@@ -467,8 +473,6 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 ssc_module_free(module);
                 ssc_data_free(compute_module_outputs);
 
-                percent = 100.0f * ((float)(generators.size() + fuelcells.size() + batteries.size()) / (float)(generators.size() + fuelcells.size() + batteries.size() + financials.size()));
-                update("", percent);
             }
 
             bool use_batt_output = false;
@@ -583,6 +587,10 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 ssc_data_t hybridFinancialOutputs = ssc_data_create();
 
                 for (size_t i = 0; i < financials.size(); i++) {
+
+                    percent = 100.0f * ((float)(i + generators.size() + fuelcells.size() + batteries.size()) / (float)(generators.size() + fuelcells.size() + batteries.size() + financials.size()));
+                    update("", percent);
+
                     std::string compute_module = financials[i];
 
                     ssc_module_t module = ssc_module_create(compute_module.c_str());
@@ -602,9 +610,6 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                     }
  
                     ssc_module_free(module);
-
-                    percent = 100.0f *((float)(i + generators.size() + fuelcells.size() + batteries.size()) / (float)(generators.size() + fuelcells.size() + batteries.size() + financials.size()));
-                    update("", percent);
 
                 }
 
