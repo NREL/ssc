@@ -678,6 +678,7 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO* 
     }
 
     numberOfInverters = cm->as_integer("inverter_count");
+    numberOfInvertersClipping = cm->as_integer("calculated_num_inverter_dcac_unity");
     ratedACOutput = Inverter->ratedACOutput * numberOfInverters;
     acDerate = 1 - cm->as_double("acwiring_loss") / 100;
     acLossPercent = (1 - acDerate) * 100;

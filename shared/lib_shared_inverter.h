@@ -53,7 +53,7 @@ public:
 
     /// Construct a shared inverter by registering the previously constructed inverter
     SharedInverter(int inverterType, size_t numberOfInverters,
-        sandia_inverter_t* sandiaInverter, partload_inverter_t* partloadInverter, ond_inverter* ondInverter);
+        sandia_inverter_t* sandiaInverter, partload_inverter_t* partloadInverter, ond_inverter* ondInverter, size_t numberOfInvertersClipping = 0);
 
     SharedInverter(const SharedInverter& orig);
 
@@ -96,6 +96,7 @@ public:
     // calculated values for the current timestep
     double powerDC_kW;
     double powerAC_kW;
+    double powerAC_kW_clipping;
     double efficiencyAC;        // 0-100
     double powerClipLoss_kW;
     double powerConsumptionLoss_kW;
@@ -109,10 +110,12 @@ protected:
 
     int m_inverterType;  ///< The inverter type
     size_t m_numInverters;  ///< The number of inverters in the system
+    size_t m_numInvertersClipping;
     double m_nameplateAC_kW; ///< The total nameplate AC capacity for all inverters in kW
 
     /// Temperate Derating: each curve contains DC voltage and pairs of start-derate temp [C] and slope [efficiency% lost per C]
     bool m_tempEnabled;
+    bool m_subhourlyClippingEnabled;
     std::vector<std::vector<double>> m_thermalDerateCurves;		/// ordered by DC V	
     /// Given a temp, find which slope to apply
     void findPointOnCurve(size_t idx, double T, double& startT, double& slope);

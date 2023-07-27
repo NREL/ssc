@@ -39,14 +39,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_util.h"
 
 SharedInverter::SharedInverter(int inverterType, size_t numberOfInverters,
-    sandia_inverter_t* sandiaInverter, partload_inverter_t* partloadInverter, ond_inverter* ondInverter)
+    sandia_inverter_t* sandiaInverter, partload_inverter_t* partloadInverter, ond_inverter* ondInverter, size_t numberOfInvertersClipping)
 {
     m_inverterType = inverterType;
     m_numInverters = numberOfInverters;
+    m_numInvertersClipping = numberOfInvertersClipping;
     m_sandiaInverter = sandiaInverter;
     m_partloadInverter = partloadInverter;
     m_ondInverter = ondInverter;
     m_tempEnabled = false;
+    m_subhourlyClippingEnabled = false;
 
     if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
         m_nameplateAC_kW = m_numInverters * m_sandiaInverter->Paco * util::watt_to_kilowatt;
@@ -77,6 +79,8 @@ SharedInverter::SharedInverter(const SharedInverter& orig) {
     m_partloadInverter = orig.m_partloadInverter;
     m_ondInverter = orig.m_ondInverter;
     efficiencyAC = orig.efficiencyAC;
+
+    m_subhourlyClippingEnabled = orig.m_subhourlyClippingEnabled;
 
     powerDC_kW = orig.powerDC_kW;
     powerAC_kW = orig.powerAC_kW;
@@ -244,6 +248,7 @@ double SharedInverter::getInverterDCMaxPower(double p_dc_rated)
 void SharedInverter::calculateACPower(const double powerDC_kW_in, const double DCStringVoltage, double tempC)
 {
     double P_par, P_lr;
+    double P_par_clipping, P_lr_clipping;
     bool negativePower = powerDC_kW_in < 0 ? true : false;
 
 
@@ -253,6 +258,7 @@ void SharedInverter::calculateACPower(const double powerDC_kW_in, const double D
     // Power quantities go in and come out in units of W
     double powerDC_Watts = powerDC_kW_in * util::kilowatt_to_watt;
     double powerAC_Watts = 0.0;
+    double powerAC_Watts_clipping = 0.0;
     Tdry_C = tempC;
     StringV = DCStringVoltage;
     double tempLoss = 0.0;
@@ -261,6 +267,10 @@ void SharedInverter::calculateACPower(const double powerDC_kW_in, const double D
         calculateTempDerate(DCStringVoltage, tempC, powerDC_Watts, power_ratio, tempLoss);
     }
 
+    if (m_numInvertersClipping > 0) {
+        m_sandiaInverter->acpower(std::abs(powerDC_Watts) / m_numInvertersClipping, DCStringVoltage, &powerAC_Watts_clipping, &P_par_clipping, &P_lr_clipping, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW);
+
+    }
 
     if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
         m_sandiaInverter->acpower(std::abs(powerDC_Watts) / m_numInverters, DCStringVoltage, &powerAC_Watts, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW);
@@ -280,6 +290,7 @@ void SharedInverter::calculateACPower(const double powerDC_kW_in, const double D
     // Convert units to kW- no need to scale to system size because passed in as power to total number of inverters
     powerDC_kW = powerDC_Watts * util::watt_to_kilowatt;
     convertOutputsToKWandScale(tempLoss, powerAC_Watts);
+    powerAC_kW_clipping = powerAC_Watts / 1000.0;
 
     // In event shared inverter is charging a battery only, need to re-convert to negative power
     if (negativePower) {

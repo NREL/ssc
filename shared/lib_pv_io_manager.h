@@ -283,6 +283,7 @@ struct PVSystem_IO
 
 	size_t numberOfSubarrays;
 	size_t numberOfInverters;
+    size_t numberOfInvertersClipping;
 
 	Irradiance_IO * Irradiance;
 	Simulation_IO * Simulation;
@@ -350,7 +351,7 @@ struct PVSystem_IO
     std::vector<ssc_number_t*> p_poaDiffuseFrontCS;
     std::vector<ssc_number_t*> p_poaGroundFrontCS;
     std::vector<ssc_number_t*> p_DNIIndex;
-    //std::vector<ssc_number_t*> p_ClippingPotential;
+    std::vector<ssc_number_t*> p_ClippingPotential;
 
 	// MPPT level outputs
 	std::vector<ssc_number_t *> p_mpptVoltage; /// An output vector containing input DC voltage in V to each mppt input
@@ -415,6 +416,7 @@ struct PVSystem_IO
     ssc_number_t *p_dcLifetimeLoss; // kWdc
 
 	ssc_number_t *p_systemDCPower; // kWdc
+    ssc_number_t* p_systemDCPowerCS; // kWdc
 	ssc_number_t *p_systemACPower; // kWac
 };
 

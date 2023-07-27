@@ -71,6 +71,7 @@ static var_info _cm_vtab_pvsamv1[] = {
         {SSC_INPUT, SSC_NUMBER,   "irrad_mode",                           "Irradiance input translation mode",                   "",       "0=beam&diffuse,1=total&beam,2=total&diffuse,3=poa_reference,4=poa_pyranometer",                                                                                                         "Solar Resource",                                        "?=0",                                "INTEGER,MIN=0,MAX=4", "" },
         {SSC_INPUT, SSC_NUMBER,   "sky_model",                            "Diffuse sky model",                                   "",       "0=isotropic,1=hkdr,2=perez",                                                                                                                                                            "Solar Resource",                                        "?=2",                                "INTEGER,MIN=0,MAX=2", "" },
         {SSC_INPUT, SSC_NUMBER,   "inverter_count",                       "Number of inverters",                                 "",       "",                                                                                                                                                                                      "System Design",                                         "*",                                  "INTEGER,POSITIVE",    "" },
+        {SSC_INPUT, SSC_NUMBER,   "calculated_num_inverter_dcac_unity",                       "Number of inverters for DC:AC ratio of 1",                                 "",       "",                                                                                                                                                                                      "System Design",                                         "",                                  "INTEGER,POSITIVE",    "" },
         {SSC_INPUT, SSC_NUMBER,   "enable_mismatch_vmax_calc",            "Enable mismatched subarray Vmax calculation",         "",       "",                                                                                                                                                                                      "System Design",                                         "?=0",                                "BOOLEAN",             "" },
         {SSC_INPUT, SSC_NUMBER,   "calculate_rack_shading",               "Calculate rack shading",                              "",       "",                                                                                                                                                                                      "Losses",                                                "?=0",                                "BOOLEAN",             "" },
         {SSC_INPUT, SSC_NUMBER,   "calculate_bifacial_electrical_mismatch", "Calculate bifacial electrical mismatch",            "",       "",                                                                                                                                                                                      "Losses",                                                "?=1",                                "BOOLEAN",             "" },
@@ -2532,7 +2533,7 @@ void cm_pvsamv1::exec()
 
             double dcPower_kW = PVSystem->p_systemDCPower[idx];
 
-            double dcPwer_kw_csky = PVSystem->p_systemDCPower[idx]
+            double dcPower_kW_csky = PVSystem->p_systemDCPowerCS[idx];
 
             // Battery replacement
             if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
@@ -2566,6 +2567,11 @@ void cm_pvsamv1::exec()
                 if (batt->is_outage_step(idx % 8760)) {
                     offline = batt->is_offline(idx);
                 }
+            }
+
+            if (as_boolean("enable_subhourly_clipping")) {
+                sharedInverter->calculateACPower(dcPower_kW_csky, dcVoltagePerMppt[0], Irradiance->weatherRecord.tdry); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
+
             }
 
             //run AC power calculation
@@ -2622,11 +2628,39 @@ void cm_pvsamv1::exec()
 
             if (as_boolean("en_subhourly_clipping")) {
                 //Calculate DNI clearness index (time step basis)
-
+                double dni_clearness_index = PVSystem->p_DNIIndex[0][idx];
                 //Calculate Clipping Potential ((P_dc,dryclean - P_ac,0) / P_ac,0) (time step basis)
+                sharedInverter->calculateACPower(dcPower_kW_csky, dcVoltagePerMppt[0], Irradiance->weatherRecord.tdry); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
+                double clip_pot = (dcPower_kW_csky - sharedInverter->powerAC_kW_clipping) / sharedInverter->powerAC_kW_clipping;
+                //Lookup matrix for percentage effect based on DNI index, Clipping potential                                                                                                        //Lookup bias error in matrix (unitless) [CP, DNI]
+                util::matrix_t<double> sub_clipping_matrix = as_matrix("subhourly_clipping_matrix");
+                size_t nrows = sub_clipping_matrix.nrows();
+                size_t ncols = sub_clipping_matrix.ncols();
+                size_t dni_row = 0;
+                size_t clip_pot_col = 0;
+                double clip_correction = 0;
+                if (dni_clearness_index < sub_clipping_matrix.at(1, 0)) dni_row = 1;
+                else if (dni_clearness_index > sub_clipping_matrix.at(nrows - 1, 0)) dni_row = nrows - 1;
+                else {
+                    for (size_t r = 1; r < nrows; r++) {
+                        if (dni_clearness_index > sub_clipping_matrix.at(r, 0) && dni_clearness_index < sub_clipping_matrix.at(r + 1, 0)) {
+                            dni_row = r;
+                        }
+                    }
+                }
 
-                //Lookup bias error in matrix (unitless) [CP, DNI]
+                //Clipping potential indexing
+                if (clip_pot < sub_clipping_matrix.at(0, 1)) clip_pot_col = 1;
+                else if (clip_pot > sub_clipping_matrix.at(0, ncols - 1)) clip_pot_col = ncols - 1;
+                else {
+                    for (size_t c = 1; c < ncols; c++) {
+                        if (clip_pot > sub_clipping_matrix.at(0, c) && clip_pot < sub_clipping_matrix.at(0, c + 1)) {
+                            clip_pot_col = c;
+                        }
+                    }
+                }
 
+                acpwr_gross *= sub_clipping_matrix.at(dni_row, clip_pot_col);
             }
 
 
