@@ -366,6 +366,7 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
                 eta_rc_isen = m_eta_rc;
 
             int rc_error_code = 0;
+
             calculate_turbomachinery_outlet_1(m_temp_last[MC_OUT], m_pres_last[LTR_LP_OUT], m_pres_last[RC_OUT], eta_rc_isen,
                 true, rc_error_code, m_w_rc);
 
@@ -427,6 +428,8 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
                 return;
             }
 
+            double test = 0;
+            solve_HTR(T_HTR_LP_out_solved, &test);
 
         }
 
