@@ -780,6 +780,7 @@ public:
         int n_flux_x = 10;                   // Number of points in the horizontal direction of flux surface
         // TODO (Bill): Make these user inputs, if Janna agrees
         //      - n_flux_y must be greater than the number of troughs in the curtain
+        //      - Add a limit to these values <= 50?
 
         if (field_model_type < 4) {
             // Field types 0-3 require solarPILOT
@@ -801,8 +802,7 @@ public:
             assign("is_optimize", 0);            // Turn-off heliostat layout and tower optimization
             assign("calc_fluxmaps", 1);          // Include flux map calculations
             if (field_model_type == 0 && sim_type == 1) { // Optimize design field and tower/receiver geometry
-                // TODO (Bill): Test if optimization works...
-                // How receiver area being using in the objective function
+                // TODO (Bill): Update optimization if cost function change
                 assign("is_optimize", 1);
             }
             else if (field_model_type == 3 || sim_type == 2) {
@@ -845,22 +845,22 @@ public:
             spi.run(weather_reader.m_weather_data_provider);    // Runs SolarPILOT
 
             //Optimization iteration history
-            if (field_model_type == 0) { // is optimize
-                vector<vector<double> > steps;
-                vector<double> obj, flux;
-                spi.getOptimizationSimulationHistory(steps, obj, flux);
-                size_t nr = steps.size();
-                if (nr > 0) {
-                    size_t nc = steps.front().size() + 2;
-                    ssc_number_t* ssc_hist = allocate("opt_history", nr, nc);       // TODO (Bill): who owns "opt_history"? GUI?
-                    for (size_t i = 0; i < nr; i++) {
-                        for (size_t j = 0; j < steps.front().size(); j++)
-                            ssc_hist[i * nc + j] = (ssc_number_t)steps.at(i).at(j);
-                        ssc_hist[i * nc + nc - 2] = (ssc_number_t)obj.at(i);
-                        ssc_hist[i * nc + nc - 1] = (ssc_number_t)flux.at(i);
-                    }
-                }
-            }
+            //if (field_model_type == 0) { // is optimize
+            //    vector<vector<double> > steps;
+            //    vector<double> obj, flux;
+            //    spi.getOptimizationSimulationHistory(steps, obj, flux);
+            //    size_t nr = steps.size();
+            //    if (nr > 0) {
+            //        size_t nc = steps.front().size() + 2;
+            //        ssc_number_t* ssc_hist = allocate("opt_history", nr, nc);       // TODO (Bill): who owns "opt_history"? GUI?
+            //        for (size_t i = 0; i < nr; i++) {
+            //            for (size_t j = 0; j < steps.front().size(); j++)
+            //                ssc_hist[i * nc + j] = (ssc_number_t)steps.at(i).at(j);
+            //            ssc_hist[i * nc + nc - 2] = (ssc_number_t)obj.at(i);
+            //            ssc_hist[i * nc + nc - 1] = (ssc_number_t)flux.at(i);
+            //        }
+            //    }
+            //}
 
             // Collect the optical efficiency and flux map data
             if (field_model_type <= 2) {
@@ -919,7 +919,7 @@ public:
             // Need to specify:
             // 1) reflective area (scale flux map)
             // 2) number heliostats for heliostats (tracking parasitics)
-            // 3) total land area before radiative cooling
+            // 3) total land area
             // 4) tower and receiver dimensions
             N_hel = as_number("N_hel");
             A_sf = as_number("A_sf_in");        //[m2]
@@ -967,7 +967,6 @@ public:
             n_steps_fixed = steps_per_hour * (size_t)( (sim_setup.m_sim_time_end - sim_setup.m_sim_time_start)/3600. );
         sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;  //[s]
 
-#ifndef TESTING
         // ***********************************************
         // Power cycle
         // ***********************************************
@@ -1061,17 +1060,12 @@ public:
         p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_W_DOT_COOLER, allocate("P_cooling_tower_tot", n_steps_fixed), n_steps_fixed);
         p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_P_COND, allocate("P_cond", n_steps_fixed), n_steps_fixed);
         p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_P_COND_ITER_ERR, allocate("P_cond_iter_err", n_steps_fixed), n_steps_fixed);
-
         p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_ETA_THERMAL, allocate("eta", n_steps_fixed), n_steps_fixed);
 
-
-        //// *********************************************************
-        //// *********************************************************
-        //// *********************************************************
-        ////      Now set Type 222 parameters
-        //// *********************************************************
-        //// *********************************************************
-        //// *********************************************************
+#ifndef TESTING
+        // *********************************************************
+        //      Receiver model
+        // *********************************************************
 
         double A_rec = std::numeric_limits<double>::quiet_NaN();        // TODO: This needs to be calculated
 
@@ -2171,7 +2165,7 @@ public:
             for (size_t j = 0; j < rec_n_flux_y; j++) { // for all y flux positions
                 idx = rec_n_flux_y * n_cols_flux_maps * i + n_cols_flux_maps * j;
                 flux_maps_for_import[idx] = flux_maps_out[idx] = azi_angle;
-                flux_maps_for_import[idx] = flux_maps_out[idx + 1] = zen_angle;
+                flux_maps_for_import[idx + 1] = flux_maps_out[idx + 1] = zen_angle;
                 size_t flux_map_row;
                 for (size_t k = 2; k < n_cols_flux_maps; k++) {
                     flux_map_row = rec_n_flux_y * i + j;

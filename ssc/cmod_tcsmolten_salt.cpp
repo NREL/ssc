@@ -977,6 +977,7 @@ public:
                 if (is_optimize)
                 {
                     //Optimization iteration history
+                    // TODO (Bill): who owns "opt_history"? GUI? It doesn't appear anywhere...
                     vector<vector<double> > steps;
                     vector<double> obj, flux;
                     spi.getOptimizationSimulationHistory(steps, obj, flux);
@@ -984,7 +985,7 @@ public:
                     if (nr > 0)
                     {
                         size_t nc = steps.front().size() + 2;
-                        ssc_number_t* ssc_hist = allocate("opt_history", nr, nc);
+                        ssc_number_t* ssc_hist = allocate("opt_history", nr, nc);   
                         for (size_t i = 0; i < nr; i++) {
 
                             for (size_t j = 0; j < steps.front().size(); j++)

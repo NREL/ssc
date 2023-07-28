@@ -340,7 +340,7 @@ void C_pt_sf_perf_interp::call(const C_csp_weatherreader::S_outputs &weather, do
 
     for (int j = 0; j < m_n_flux_y; j++) { // for all flux y-points
         for (int i = 0; i < m_n_flux_x; i++) { // for all flux x-points
-            // scaling flux map to absolute power, Solarfield area * field efficiency * DNI / feceiver node area
+            // scaling flux map to absolute power, Solar field area * field efficiency * DNI / receiver node area
             ms_outputs.m_flux_map_out(j, i) *= ms_params.m_A_sf*eta_field/m_A_rec_flux_node*weather.m_beam*1.E-3;  //[kW/m2]
         }
     }
@@ -356,11 +356,11 @@ void C_pt_sf_perf_interp::call(const C_csp_weatherreader::S_outputs &weather, do
 void C_pt_sf_perf_interp::off(const C_csp_weatherreader::S_outputs& weather,
     const C_csp_solver_sim_info &sim_info)
 {
-	// Increase call-per-timestep counter
+	// Increase call-per-time step counter
 	// Converge() sets it to -1, so on first call this line will adjust it = 0
 	m_ncall++;
 
-	// Get sim info
+	// Get simulation info
 	double step = sim_info.ms_ts.m_step;
 
     m_is_field_tracking = false;
