@@ -30,6 +30,7 @@ set(SSC_SRC
 		cmod_csp_common_eqns.cpp
 		cmod_csp_common_eqns.h
 		cmod_csp_dsg_lf_ui.cpp
+		cmod_csp_tower_particle.cpp
 		cmod_csp_subcomponent.cpp
         cmod_csp_trough_eqns.cpp
 		cmod_csp_trough_eqns.h

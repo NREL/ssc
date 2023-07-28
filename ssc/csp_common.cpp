@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "core.h"
 #include "lib_weatherfile.h"
 #include "lib_util.h"
+#include "sam_csp_util.h"
 #include <sstream>
 
 #include "common.h"
@@ -199,8 +200,57 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
 
         rf->absorptance.val = 1.0;      // don't apply absorptivity in solarpilot for cavity receivers - performance model will do this
     }
+    else if (rec_type == 3) {
+        rf->rec_type.val = "Falling particle";
+        rf->rec_height.val = m_cmod->as_double("rec_height");
+        rf->rec_width.val = m_cmod->as_double("rec_width");
+
+        // Curtain dimenisons
+        rf->norm_curtain_height.val = m_cmod->as_double("norm_curtain_height");  // [-]
+        rf->norm_curtain_width.val = m_cmod->as_double("norm_curtain_width");    // [-]
+        rf->max_curtain_depth.val = m_cmod->as_double("max_curtain_depth");      // [m]
+        // Reading in normizalized curtain heights and depths
+        // TODO (Bill): needs to be fixed, doesn't seem to be importing correctly
+        util::matrix_t<double> norm_heights_depths = m_cmod->as_matrix("norm_heights_depths");  // [-]  
+        std::string format = "%f,%f;";
+        std::string nhd_input;
+        char row[200];
+        for (size_t i = 0; i < norm_heights_depths.nrows(); i++)
+        {
+            sprintf(row, format.c_str(), norm_heights_depths.at(i, 0), norm_heights_depths.at(i, 1));
+            nhd_input.append(row);
+        }
+        rf->norm_heights_depths.set_from_string(nhd_input.c_str());
+
+
+        // TODO (Bill): Do I need a helper function here to pre-calculate values like curtain height and width?
+        rf->curtain_total_height.Setval(rf->norm_curtain_height.val * rf->rec_height.val);
+        rf->max_curtain_width.Setval(rf->norm_curtain_width.val * rf->rec_width.val);
+
+        int curtain_type = m_cmod->as_integer("curtain_type");
+        if (curtain_type == 0) {
+            rf->curtain_type.val = "Flat";
+        }
+        else if (curtain_type == 1) {
+            rf->curtain_type.val = "Curved";
+            rf->curtain_radius.val = m_cmod->as_double("curtain_radius");    // [m]
+        }
+        else {
+            throw exec_error("solarpilot cmod", "curtain type must be 0 (flat) or 1 (curved)");
+        }
+
+        rf->is_snout.val = m_cmod->as_boolean("is_snout");
+        if (rf->is_snout.val) {
+            rf->snout_depth.val = m_cmod->as_double("snout_depth");                     // [m]
+            rf->snout_horiz_angle.val = m_cmod->as_double("snout_horiz_angle");         // [deg]
+            rf->snout_vert_bot_angle.val = m_cmod->as_double("snout_vert_bot_angle");   // [deg]
+            rf->snout_vert_top_angle.val = m_cmod->as_double("snout_vert_top_angle");   // [deg]
+        }
+
+        rf->absorptance.val = 1.0;      // don't apply absorptivity in solarpilot for falling particle receivers - performance model will do this
+    }
     else {
-        throw exec_error("solarpilot cmod", "receiver type must be 0 (external) or 1 (cavity)");
+        throw exec_error("solarpilot cmod", "receiver type must be 0 (external), 1 (cavity), or 3 (falling particle)");
     }
 
 	rf->therm_loss_base.val = m_cmod->as_double("rec_hl_perm2");
@@ -252,8 +302,15 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
 	wdata->header(&hdr);
 
     // If cavity in southern hemisphere, then receiver faces south
-    if (rec_type == 1 && hdr.lat < 0) {
-        rf->rec_azimuth.val = 180;
+    if (rec_type == 1 || rec_type == 3) {
+        sf.is_opt_zoning.val = false;   // Turning off optical zoning for flat receivers
+        if (hdr.lat < 0) {
+            rf->rec_azimuth.val = 180;
+        }
+        else {
+            sf.accept_max.val = 90.0;
+            sf.accept_min.val = -90.0;
+        }
     }
 
     amb.latitude.val = hdr.lat;
@@ -382,6 +439,31 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
                     if (!m_sapi->Optimize(/*opt.algorithm.mapval(),*/ optvars, upper, lower, stepsize, &names))
                         return false;
 
+                }
+                else if (rec_type == 3){
+
+                    int nv = 3;
+                    vector<double*> optvars(nv);
+                    vector<double> upper(nv, HUGE_VAL);
+                    vector<double> lower(nv, -HUGE_VAL);
+                    vector<double> stepsize(nv);
+                    vector<string> names(nv);
+
+                    //pointers
+                    optvars.at(0) = &sf.tht.val;
+                    optvars.at(1) = &recs.front().rec_height.val;   // TODO (Bill): Set-up receiver cost to use aperture area
+                    optvars.at(2) = &recs.front().rec_width.val;
+                    //names
+                    names.at(0) = (split(sf.tht.name, ".")).back();
+                    names.at(1) = (split(recs.front().rec_height.name, ".")).back();
+                    names.at(2) = (split(recs.front().rec_width.name, ".")).back();
+                    //step size
+                    stepsize.at(0) = sf.tht.val * opt.max_step.val;
+                    stepsize.at(1) = recs.front().rec_height.val * opt.max_step.val;
+                    stepsize.at(2) = recs.front().rec_width.val * opt.max_step.val;
+
+                    if (!m_sapi->Optimize(/*opt.algorithm.mapval(),*/ optvars, upper, lower, stepsize, &names))
+                        return false;
                 }
             }
 
@@ -620,6 +702,135 @@ bool solarpilot_invoke::postsim_calcs(compute_module *cm)
 
 }
 
+void solarpilot_invoke::getHeliostatFieldEfficiency(util::matrix_t<double> &eta_map) {
+    /*
+    Populates heliostat field efficiency matrix
+    */
+
+    if (fluxtab.zeniths.size() > 0 && fluxtab.azimuths.size() > 0
+        && fluxtab.efficiency.size() > 0) {
+        size_t nvals = fluxtab.efficiency.size();
+        eta_map.resize(nvals, 3);
+
+        for (size_t i = 0; i < nvals; i++) {
+            eta_map(i, 0) = fluxtab.azimuths[i] * 180. / CSP::pi;      //Convention is usually S=0, E<0, W>0 
+            eta_map(i, 1) = fluxtab.zeniths[i] * 180. / CSP::pi;       //Provide zenith angle
+            eta_map(i, 2) = fluxtab.efficiency[i];
+        }
+    }
+    else
+        throw exec_error("solarpilot", "failed to calculate a correct optical efficiency table");
+}
+
+void solarpilot_invoke::getReceiverFluxMaps(util::matrix_t<double>& flux_maps) {
+    //   - SolarPILOT provides flux_data in a 3D matrix (y, x, sun position) per flux surface
+    //   - The Heliostat Field interpolation method needs flux_data for the receiver in a 2D matrix of size (y * sun position, x)
+    //   - Here we collect the flux data and transform it to desired format
+    
+    block_t<double>* flux_data = &fluxtab.flux_surfaces.front().flux_data;
+    if (flux_data->ncols() > 0 && flux_data->nlayers() > 0) {
+        switch (recs.front().rec_type.mapval()) {
+            case var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL:
+            {
+                int nflux_y = (int)flux_data->nrows();
+                int nflux_x = (int)flux_data->ncols();
+
+                flux_maps.resize(nflux_y * flux_data->nlayers(), nflux_x);
+
+                int cur_row = 0;
+
+                for (size_t i = 0; i < flux_data->nlayers(); i++)
+                {
+                    for (int j = 0; j < nflux_y; j++)
+                    {
+                        for (int k = 0; k < nflux_x; k++)
+                        {
+                            flux_maps(cur_row, k) = flux_data->at(j, k, i);
+                            //fluxdata[cur_row * nflux_x + k] = (float)flux_data->at(j, k, i);
+                        }
+                        cur_row++;
+                    }
+                }
+                break;
+            }
+            case var_receiver::REC_TYPE::CAVITY:
+            {
+                int nflux_y = (int)flux_data->nrows();
+                int nflux_x = (int)flux_data->ncols();
+
+                int n_sp_surfaces = fluxtab.flux_surfaces.size();
+                int n_panels_cav_sp = n_sp_surfaces - 1;
+
+                if (nflux_y > 1) {
+                    throw exec_error("solarpilot", "cavity flux maps currently only work for nflux_y = 1");
+                }
+
+                flux_maps.resize(nflux_y * flux_data->nlayers(), n_panels_cav_sp);
+
+                int cur_row = 0;
+
+                // nlayers is number of solar positions (i.e. flux maps)
+                for (size_t i = 0; i < flux_data->nlayers(); i++) {
+
+                    int j = 0;
+
+                    double flux_receiver = 0.0;
+
+                    // Start at k=1 because the first surface in flux_surfaces is the aperture, which we don't want
+                    for (int k = 1; k <= n_panels_cav_sp; k++) {
+
+                        block_t<double>* flux_data = &fluxtab.flux_surfaces[k].flux_data; //.front().flux_data;  //there should be only one flux stack for SAM
+
+                        double flux_local = 0.0;
+                        for (int l = 0; l < nflux_x; l++) {
+                            flux_local += flux_data->at(j, l, i);
+                        }
+
+                        // Adjust k to start flux maps with first receiver surface
+                        flux_maps(cur_row, k - 1) = flux_local;
+                        flux_receiver += flux_local;
+                    }
+
+                    cur_row++;
+                }
+                break;
+            }
+            case var_receiver::REC_TYPE::FALLING_PARTICLE:
+            {
+                // Front flux surface is the aperture and is the same discretization as all curtains combined
+                int nflux_y = (int)flux_data->nrows();
+                int nflux_x = (int)flux_data->ncols();
+                flux_maps.resize(nflux_y * flux_data->nlayers(), nflux_x);
+
+                // nlayers is number of solar positions (i.e. flux maps)
+                for (size_t sp = 0; sp < flux_data->nlayers(); sp++) {
+                    int n_surfs = fluxtab.flux_surfaces.size();
+                    int y_pos_basis = 0;
+                    double flux_receiver = 0.0; // for debugging?
+                    // Start at k=1 because the first surface in flux_surfaces is the aperture, which we don't want
+                    for (int k = 1; k < n_surfs; k++) { // for each curtain surface
+                        flux_data = &fluxtab.flux_surfaces[k].flux_data;
+                        int surf_nflux_y = flux_data->nrows(); // Get flux surface y-discretization size
+
+                        for (int y = 0; y < surf_nflux_y; y++) {
+                            for (int x = 0; x < nflux_x; x++) {
+                                // collect flux data on curtain
+                                flux_maps(sp * nflux_y + y_pos_basis + y, x) = flux_data->at(y, x, sp);
+                                flux_receiver += flux_maps(sp * nflux_y + y_pos_basis + y, x);
+                            }
+                        }
+                        y_pos_basis += surf_nflux_y;
+                    }
+                    if (y_pos_basis != nflux_y)
+                        throw exec_error("solarpilot", "Collecting receiver flux map has failed contact support");
+                }
+                break;
+            }
+        }
+    }
+    else
+        throw exec_error("solarpilot", "failed to calculate a correct flux map table");
+}
 
 void solarpilot_invoke::getOptimizationSimulationHistory(vector<vector<double> > &sim_points, vector<double> &obj_values, vector<double> &flux_values)
 {
@@ -694,7 +905,7 @@ double solarpilot_invoke::GetTotalLandArea()
 double solarpilot_invoke::GetBaseLandArea()
 {
     // Base land area occupied by heliostats [acres]
-    return land.bound_area.Val() / 4046.86 /*acres/m^2*/;  // [acres] Land area occupied by heliostats
+    return land.bound_area.Val();  // [acres] Land area occupied by heliostats
 }
 
 bool ssc_cmod_solarpilot_callback( simulation_info *siminfo, void *data )

@@ -104,7 +104,7 @@ public:
 	void PreSimCallbackUpdate();
 	void SetExternalSFObject(SolarField *SF);
 	bool Setup(var_map &V, bool for_optimize = false);
-    void PostProcessLayout(sp_layout& layout);
+	void PostProcessLayout(sp_layout& layout);
 	//generate weather data
 	void GenerateDesignPointSimulations(var_map &V, std::vector<std::string> &hourly_weather_data);
 	//Simulation methods
@@ -121,7 +121,7 @@ public:
 	bool IsSimulationCancelled();
     //other
     sp_optimize *GetOptimizationObject();
-
+    
     struct API_CANT_TYPE { enum A {NONE, ON_AXIS, EQUINOX, SOLSTICE_SUMMER, SOLSTICE_WINTER }; };
 	
 };

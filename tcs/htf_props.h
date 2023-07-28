@@ -79,7 +79,8 @@ public:
         N07740,         // Nickel alloy
         Methanol,
         Salt_45MgCl2_39KCl_16NaCl, // Zhao 2020 Molten Chloride Thermophysical Properties, Chemical Optimization, and Purification Purification
-		End_Library_Fluids,
+        Bauxite_particles, // Albrecht 2019 "PARAMETRIC ANALYSIS OF PARTICLE CSP SYSTEM PERFORMANCE AND COST TO INTRINSIC PARTICLE PROPERTIES AND OPERATING CONDITIONS" 
+        End_Library_Fluids,
 		User_defined = 50
 	};
 	

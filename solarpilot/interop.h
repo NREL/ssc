@@ -36,8 +36,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <map>
 #include <vector>
-#include <stdio.h>
 #include <limits>
+#include <stdio.h>
 
 #include "string_util.h"
 #include "mod_base.h"
@@ -202,13 +202,14 @@ public:
 	ST_System* _STSim;
 
 	SimControl();
+	~SimControl();
 
 	void SetThreadCount(int nthreads);
 
-    #ifdef SP_USE_THREADS
-    int (*soltrace_callback)(st_uint_t, st_uint_t, st_uint_t, st_uint_t, st_uint_t, void*);
+#ifdef SP_USE_SOLTRACE
+	int (*soltrace_callback)(st_uint_t, st_uint_t, st_uint_t, st_uint_t, st_uint_t, void*);
 	void* soltrace_callback_data;
-    #endif
+#endif
 
 	int (*message_callback)(const char*, void*);
 	void* message_callback_data;
@@ -304,7 +305,7 @@ public:
 
 	void process_analytical_simulation(SolarField &SF, sim_params &P, int nsim_type, double sun_az_zen[2], Hvector* helios=0, Rvector* recs=0);
 
-	void process_raytrace_simulation(SolarField &SF, sim_params &P, int nsim_type, double sun_az_zen[2], Hvector &helios, double qray, int *emap, int *smap, int *rnum, int ntot, double *boxinfo);
+	void process_raytrace_simulation(SolarField& SF, sim_params& P, int nsim_type, double sun_az_zen[2], Hvector& helios, ST_System* STsim);
 
 	void process_flux(SolarField *SF, bool normalize);
 	
