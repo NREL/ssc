@@ -1258,7 +1258,8 @@ void C_HTRBypass_Cycle::auto_opt_design_core(int& error_code)
         }
     }
 
-    if (ms_auto_opt_des_par.m_is_recomp_ok != 0)
+    // NO longer check if recompression fraction makes cycle simple
+    if (true)
     {
         // Complete 'ms_opt_des_par' for recompression cycle
         ms_opt_des_par.m_P_mc_out_guess = best_P_high;      //[kPa]
@@ -1274,7 +1275,7 @@ void C_HTRBypass_Cycle::auto_opt_design_core(int& error_code)
         }
 
         // Is recompression fraction fixed or optimized?
-        if (ms_auto_opt_des_par.m_is_recomp_ok < 0.0)
+        if (ms_auto_opt_des_par.m_is_recomp_ok <= 0.0)
         {   // fixed
             ms_opt_des_par.m_recomp_frac_guess = std::abs(ms_auto_opt_des_par.m_is_recomp_ok);
             ms_opt_des_par.m_fixed_recomp_frac = true;

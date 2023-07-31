@@ -834,7 +834,9 @@ var_info vtab_sco2_design[] = {
 	{ SSC_OUTPUT, SSC_NUMBER,  "cycle_spec_cost_thermal", "Cycle specific (thermal) cost bare erected",          "$/kWt",      "System Design Solution",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "W_dot_net_less_cooling", "System power output subtracting cooling parastics",    "MWe,"        "System Design Solution",    "",      "*",     "",       "" },
     { SSC_OUTPUT, SSC_NUMBER,  "eta_thermal_net_less_cooling_des","Calculated cycle thermal efficiency using W_dot_net_less_cooling", "-", "System Design Solution","",  "*", "",       "" },
-    { SSC_OUTPUT, SSC_NUMBER,  "T_htf_bp_out_des",     "HTF design cold temperature (PHX outlet)",               "C",          "System Design Solution",    "",      "cycle_config=3",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "T_htf_bp_out_des",     "HTF design htr bypass cold temperature (BPX outlet)",    "C",          "System Design Solution",    "",      "cycle_config=3",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "dT_htf_des",           "HTF temperature difference",                             "C",          "System Design Solution",    "",      "*",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "q_dot_in_total",       "Total heat from HTF into cycle",                         "MW",         "System Design Solution",    "",      "*",     "",       "" },
     // Compressor
 	{ SSC_OUTPUT, SSC_NUMBER,  "T_comp_in",            "Compressor inlet temperature",                           "C",          "Compressor",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "P_comp_in",            "Compressor inlet pressure",                              "MPa",        "Compressor",    "",      "*",     "",       "" },
@@ -936,7 +938,8 @@ var_info vtab_sco2_design[] = {
 	{ SSC_OUTPUT, SSC_NUMBER,  "HTR_min_dT",           "High temp recuperator min temperature difference",       "C",          "Recuperators",    "",      "*",     "",       "" },
     { SSC_OUTPUT, SSC_NUMBER,  "HTR_cost_equipment",   "High temp recuperator cost equipment",                   "M$",         "Recuperators",    "",      "*",     "",       "" },
     { SSC_OUTPUT, SSC_NUMBER,  "HTR_cost_bare_erected","High temp recuperator cost equipment and install",       "M$",         "Recuperators",    "",      "*",     "",       "" },
-		// PHX Design Solution
+    { SSC_OUTPUT, SSC_NUMBER,  "HTR_HP_m_dot",         "High temp recuperator high pressure mass flow rate",     "kg/s",       "Recuperators",    "",      "*",     "",       "" },
+    // PHX Design Solution
 	{ SSC_OUTPUT, SSC_NUMBER,  "UA_PHX",               "PHX Conductance",                                        "MW/K",       "PHX Design Solution",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "eff_PHX",              "PHX effectiveness",                                      "",           "PHX Design Solution",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "NTU_PHX",              "PHX NTU",                                                "",           "PHX Design Solution",    "",      "*",     "",       "" },
@@ -1488,6 +1491,18 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
     cm->assign("mc_psi_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_psi_des);     //[-] ideal head coefficient
     cm->assign("mc_tip_ratio_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_tip_ratio_max);		//[-]
 
+    double htf_outlet = cm->as_double("cycle_config") == 3 ? T_htf_bypass_out : T_htf_cold_calc;
+    double dT_htf = cm->as_double("T_htf_hot_des") - (htf_outlet - 273.15);
+    cm->assign("dT_htf_des", (ssc_number_t)dT_htf);
+
+    double q_dot_total = c_sco2_cycle.get_design_solved()->ms_phx_des_solved.m_Q_dot_design * 1.E-3; // [MWt]
+    if (s_sco2_des_par.m_cycle_config == 3)
+    {
+        double q_dot_BPX = c_sco2_cycle.get_design_solved()->ms_bp_des_solved.m_Q_dot_design * 1.E-3;	//[MWt] convert from kWt
+        q_dot_total += q_dot_BPX;
+    }
+    cm->assign("q_dot_in_total", (ssc_number_t)q_dot_total);
+
 	int n_mc_stages = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_n_stages;
 	cm->assign("mc_n_stages", (ssc_number_t)n_mc_stages);	//[-]
 	cm->assign("mc_N_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_ms_des_solved.m_N_design);	//[rpm]
@@ -1728,7 +1743,16 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
     cm->assign("recup_total_UA_calculated", (ssc_number_t)(recup_total_UA_calculated));	//[MW/K]
     cm->assign("recup_total_cost_equipment", (ssc_number_t)(recup_total_cost_equip));	//[MW/K]
     cm->assign("recup_total_cost_bare_erected", (ssc_number_t)(recup_total_cost_bare_erected));
-		// PHX
+
+    double htr_hp_m_dot = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_m_dot_t;
+    if (s_sco2_des_par.m_cycle_config == 3)
+    {
+        double mdot_t = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_m_dot_t;
+        htr_hp_m_dot = mdot_t * (1.0 - c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_bypass_frac);
+    }
+    cm->assign("HTR_HP_m_dot", (ssc_number_t)htr_hp_m_dot);
+
+    // PHX
 	cm->assign("UA_PHX", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_phx_des_solved.m_UA_design*1.E-3));	//[MW/K] convert from kW/K
 	cm->assign("eff_PHX", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_phx_des_solved.m_eff_design);				//[-]
 	cm->assign("NTU_PHX", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_phx_des_solved.m_NTU_design);				//[-]
