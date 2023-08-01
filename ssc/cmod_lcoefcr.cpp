@@ -105,8 +105,12 @@ static var_info vtab_lcoefcr_design[] =
         // General Inputs
 
         // "Performance" Inputs
-    { SSC_INPUT,        SSC_NUMBER,      "total_installed_cost",     "Total installed cost",                       "$",      "",       "System Costs",         "sim_type=1",               "",         "SIMULATION_PARAMETER" },
-    { SSC_INPUT,        SSC_NUMBER,      "fixed_operating_cost",     "Annual fixed operating cost",                "$",      "",       "Simple LCOE",          "sim_type=1",               "",         "SIMULATION_PARAMETER" },
+    { SSC_INPUT,        SSC_NUMBER,      "total_installed_cost",     "Total installed cost",                                        "$",       "",       "System Costs",  "sim_type=1",     "",        "SIMULATION_PARAMETER" },
+                                                                                                                                                                                           
+    { SSC_INPUT,        SSC_NUMBER,      "annual_electricity_consumption","Annual electricity consumption with avail derate",       "kWe-hr",  "",       "IPH LCOH",      "sim_type=1",     "",        "SIMULATION_PARAMETER" },
+    { SSC_INPUT,        SSC_NUMBER,      "electricity_rate",              "Cost of electricity used to operate pumps and trackers", "$/kWe-hr","",       "IPH LCOH",      "sim_type=1",     "",        "SIMULATION_PARAMETER" },
+    { SSC_INPUT,        SSC_NUMBER,      "fixed_operating_cost",     "Annual fixed operating cost",                                 "$",       "",       "Simple LCOE",   "sim_type=1",     "",        "SIMULATION_PARAMETER" },
+
     { SSC_INPUT,        SSC_NUMBER,      "variable_operating_cost",  "Annual variable operating cost",             "$/kWh",  "",       "Simple LCOE",          "sim_type=1",               "",         "SIMULATION_PARAMETER" },
     { SSC_INPUT,        SSC_NUMBER,      "annual_energy",            "Annual energy production",                   "kWh",    "",       "Simple LCOE",          "sim_type=1",               "",         "SIMULATION_PARAMETER" },
 
@@ -196,9 +200,15 @@ public:
         // *****************************************************
 
         double aep = as_double("annual_energy");           // kWh annual output, get from performance model
-        double foc = as_double("fixed_operating_cost");    // $
+        double foc_in = as_double("fixed_operating_cost");    // $
         double voc = as_double("variable_operating_cost"); // $/kWh
         double icc = as_double("total_installed_cost");            // $
+
+        double electricity_rate = as_number("electricity_rate");                                //[$/kWe-hr]
+        double annual_electricity_consumption = as_number("annual_electricity_consumption");    //[kWe-hr]
+        double annual_electricity_cost = electricity_rate*annual_electricity_consumption;       //[$]
+
+        double foc = foc_in + annual_electricity_cost;      //[$]
 
         double lcoe = (fixed_charge_rate * icc + foc) / aep + voc; //$/kWh
 
