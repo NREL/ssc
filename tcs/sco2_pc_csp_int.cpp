@@ -434,10 +434,23 @@ void C_sco2_phx_air_cooler::design_core()
         // Set Mass Flow (it is known because it is equal to PHX)
         ms_bp_des_par.m_m_dot_hot_des = ms_phx_des_par.m_m_dot_hot_des;
 
+        
+
         // Design
         if (ms_bp_des_par.m_m_dot_cold_des > 0 && q_dot_des_bp > 1e-2)
         {
             mc_bp.design_calc_UA(ms_bp_des_par, q_dot_des_bp, ms_des_solved.ms_bp_des_solved);
+        }
+        // No Mass Flow
+        else
+        {
+            ms_des_solved.ms_bp_des_solved.m_T_h_out = mc_phx.ms_des_solved.m_T_h_out;
+            ms_des_solved.ms_bp_des_solved.m_cost_bare_erected = 0;
+            ms_des_solved.ms_bp_des_solved.m_cost_equipment = 0;
+            ms_des_solved.ms_bp_des_solved.m_UA_design = 0;
+            ms_des_solved.ms_bp_des_solved.m_eff_design = 0;
+            ms_des_solved.ms_bp_des_solved.m_min_DT_design = 0;
+            ms_des_solved.ms_bp_des_solved.m_Q_dot_design = 0;
         }
     }
 

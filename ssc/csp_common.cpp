@@ -837,7 +837,7 @@ var_info vtab_sco2_design[] = {
     { SSC_OUTPUT, SSC_NUMBER,  "T_htf_bp_out_des",     "HTF design htr bypass cold temperature (BPX outlet)",    "C",          "System Design Solution",    "",      "cycle_config=3",     "",       "" },
     { SSC_OUTPUT, SSC_NUMBER,  "dT_htf_des",           "HTF temperature difference",                             "C",          "System Design Solution",    "",      "*",     "",       "" },
     { SSC_OUTPUT, SSC_NUMBER,  "q_dot_in_total",       "Total heat from HTF into cycle",                         "MW",         "System Design Solution",    "",      "*",     "",       "" },
-    // Compressor
+        // Compressor
 	{ SSC_OUTPUT, SSC_NUMBER,  "T_comp_in",            "Compressor inlet temperature",                           "C",          "Compressor",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "P_comp_in",            "Compressor inlet pressure",                              "MPa",        "Compressor",    "",      "*",     "",       "" },
 	{ SSC_OUTPUT, SSC_NUMBER,  "P_comp_out",           "Compressor outlet pressure",                             "MPa",        "Compressor",    "",      "*",     "",       "" },
