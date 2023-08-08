@@ -72,7 +72,9 @@ struct SGeothermal_Inputs
 		md_TemperatureEGSAmbientC = md_RatioInjectionToProduction = 0.0;
 		md_AdditionalPressure = 1.0;
         md_dtProdWell = md_dtProdWellChoice = 0.0;
-	}
+        md_NumberOfWellsProdExp = md_NumberOfWellsInjDrilled = md_NumberOfWellsProdDrilled = md_FailedWells = md_StimSuccessRate = md_DrillSuccessRate = 0;
+        md_FailedInjFlowRatio = md_FailedProdFlowRatio = 0;
+    }
 
 	calculationBasis me_cb;									// { NO_CALCULATION_BASIS, POWER_SALES, NUMBER_OF_WELLS };
 	conversionTypes me_ct;
@@ -91,6 +93,14 @@ struct SGeothermal_Inputs
 	size_t mi_TotalMakeupCalculations;						// mi_ProjectLifeYears * mi_MakeupCalculationsPerYear
 
 	double md_DesiredSalesCapacityKW;						// entered or calculated, linked to 'cb'
+    double md_NumberOfWellsProdExp;
+    double md_NumberOfWellsProdDrilled;
+    double md_NumberOfWellsInjDrilled;
+    double md_FailedWells;
+    double md_FailedInjFlowRatio;
+    double md_FailedProdFlowRatio;
+    double md_StimSuccessRate;
+    double md_DrillSuccessRate;
 	double md_NumberOfWells;								// entered or calculated, depending on 'cb'
     double md_NumberofWellsInj;
 	double md_PlantEfficiency;								// not in GETEM - essentially the ratio of plant brine effectiveness to max possible brine effectiveness
@@ -152,11 +162,20 @@ struct SGeothermal_Outputs
 		mb_BrineEffectivenessCalculated = mb_FlashPressuresCalculated = false;
 		maf_hourly_power = NULL;
         ElapsedHours = 0;
-
+        md_NumberOfWellsProdExp = md_NumberOfWellsProdDrilled = md_NumberOfWellsInjDrilled = md_FailedWells = md_StimSuccessRate = md_DrillSuccessRate = 0;
+        md_FailedInjFlowRatio = md_FailedProdFlowRatio = 0;
 	}
 
 	//Following list of variables used as inputs in cmod_geothermal_costs.cpp for calculating direct geothermal plant cost:
 	double md_NumberOfWells;
+    double md_NumberOfWellsProdExp;
+    double md_NumberOfWellsProdDrilled;
+    double md_NumberOfWellsInjDrilled;
+    double md_FailedWells;
+    double md_FailedInjFlowRatio;
+    double md_FailedProdFlowRatio;
+    double md_StimSuccessRate;
+    double md_DrillSuccessRate;
     double md_NumberOfWellsInj;
 	double md_PumpWorkKW;
 	double eff_secondlaw;				//Overall Plant 2nd Law Efficiency 

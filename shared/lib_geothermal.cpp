@@ -1461,6 +1461,22 @@ double CGeothermalAnalyzer::GetNumberOfWells(void)
         mp_geo_out->md_BrineEff = GetPlantBrineEffectiveness();
         mp_geo_out->md_PumpWorkWattHrPerLb = GetPumpWorkWattHrPerLb();
 		mp_geo_out->md_NumberOfWells = mo_geo_in.md_DesiredSalesCapacityKW / netCapacityPerWell;
+        mp_geo_out->md_NumberOfWellsProdExp = mp_geo_out->md_NumberOfWells - mp_geo_out->md_FailedWells;
+        mp_geo_out->md_NumberOfWellsProdDrilled = mp_geo_out->md_NumberOfWellsProdExp / (1 - (1 - mp_geo_out->md_StimSuccessRate) * (1 - mp_geo_out->md_DrillSuccessRate));
+        double num_prod_wells_successful = mp_geo_out->md_NumberOfWellsProdDrilled * mp_geo_out->md_DrillSuccessRate;
+        double num_prod_wells_failed = mp_geo_out->md_NumberOfWellsProdDrilled * (1 - mp_geo_out->md_DrillSuccessRate);
+        double inj_flow = flowRatePerWell() * mp_geo_out->md_NumberOfWells;
+        double failed_prod_wells_inj = mp_geo_out->md_NumberOfWellsProdDrilled - num_prod_wells_successful;
+        double friction = 0.1;
+        double prod_failed_inj_rate = (mp_geo_out->md_FailedProdFlowRatio * 1000 / mo_geo_in.md_ReservoirDeltaPressure) *
+            GetPressureChangeAcrossReservoir() / mo_geo_in.md_RatioInjectionToProduction + GetInjectionPumpWorkft() * InjectionDensity() / 144.0 + pressureWellHeadPSI() -
+            friction * pow(mp_geo_out->md_FailedProdFlowRatio, 2) - pressureHydrostaticPSI();
+        double inj_rate_failed_prod_wells = MIN(0, flowRatePerWell()); //Injectivity of failed production well?
+        double inj_rate_failed_inj_wells = MIN(0, flowRatePerWell());
+        mp_geo_out->md_NumberOfWellsInj = (inj_flow - (failed_prod_wells_inj * inj_rate_failed_prod_wells)) / (flowPerWellInj + inj_rate_failed_inj_wells * (1 / (mp_geo_out->md_DrillSuccessRate - 1)));
+        mp_geo_out->md_NumberOfWellsInjDrilled = (1 / mp_geo_out->md_DrillSuccessRate) * mp_geo_out->md_NumberOfWellsInj;
+        double num_inj_wells_successful = mp_geo_out->md_NumberOfWellsInjDrilled * mp_geo_out->md_DrillSuccessRate;
+        double num_inj_wells_failed = mp_geo_out->md_NumberOfWellsInjDrilled * (1 - mp_geo_out->md_DrillSuccessRate);
         mp_geo_out->md_NumberOfWellsInj = (mo_geo_in.md_DesiredSalesCapacityKW / (netBrineEffectiveness / 1000)) * (mp_geo_out->md_FractionGFInjected) / flowPerWellInj;
         mp_geo_out->md_InjPump_hp = ( (mp_geo_out->md_NumberOfWellsInj * flowPerWellInj * GetInjectionPumpWorkft()) / (60 * 33000) ) / mo_geo_in.md_GFPumpEfficiency;
 	}

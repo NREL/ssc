@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "common.h"
 
 
-static var_info _cm_vtab_geothermal_costs[] = {
+static var_info _cm_vtab_geothermal_om_costs[] = {
 	/*   VARTYPE			DATATYPE         NAME                              LABEL                                                       UNITS		META                      GROUP                   REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
 		{ SSC_INPUT,        SSC_NUMBER,     "conversion_type",					"Conversion Type",											"",			"",						"GeoHourly",			    "*",                        "INTEGER",					    "" },
@@ -283,7 +283,7 @@ public:
 
 	cm_geothermal_costs() {
 
-		add_var_info(_cm_vtab_geothermal_costs);
+		add_var_info(_cm_vtab_geothermal_om_costs);
 	}
 
 
@@ -297,6 +297,11 @@ public:
         //OM Cost calculations
         double percent_drilling_cost_om = as_double("percent_drilling_cost_om");
         double well_om = percent_drilling_cost_om * as_double("geotherm.cost.prod_inj_total");
+        double field_om = percent_drilling_cost_om * as_double("geotherm.cost.surf_total");
+        double flow_rate = as_double("well_flow_rate");
+        double chemical_inhibitor_cost = 0;
+        if (conversion_type == 1) chemical_inhibitor_cost = 22.5;
+        double chemical_costs = flow_rate * as_double("geotherm.cost.prod_per_well") * 3600 * 24 * 365 * 0.95 * 
 
 
 		if (conversion_type == 0) {
@@ -541,4 +546,4 @@ public:
 
 };
 
-DEFINE_MODULE_ENTRY(geothermal_costs, "Geothermal monthly and hourly models using general power block code from TRNSYS Type 224 code by M.Wagner, and some GETEM model code.", 3);
+DEFINE_MODULE_ENTRY(geothermal_om_costs, "Geothermal monthly and hourly models using general power block code from TRNSYS Type 224 code by M.Wagner, and some GETEM model code.", 3);
