@@ -45,7 +45,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_util.h"
 #include "csp_solver_core.h"
 #include "csp_solver_pt_sf_perf_interp.h"
-#include "csp_solver_mspt_receiver_222.h"
+#include "csp_solver_falling_particle_receiver.h"
+//#include "csp_solver_mspt_receiver_222.h"
 //#include "csp_solver_mspt_receiver.h"
 #include "csp_solver_mspt_collector_receiver.h"
 #include "csp_solver_pc_Rankine_indirect_224.h"
@@ -61,7 +62,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ctime>
 
-#define TESTING
+//#define TESTING
 
 static var_info _cm_vtab_csp_tower_particle[] = {
 
@@ -1063,6 +1064,7 @@ public:
         p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_ETA_THERMAL, allocate("eta", n_steps_fixed), n_steps_fixed);
 
 #ifndef TESTING
+
         // *********************************************************
         //      Receiver model
         // *********************************************************
@@ -1085,7 +1087,32 @@ public:
             throw exec_error("csp_tower_particle", "'rec_clearsky_model' must be specified when 'rec_clearsky_fraction' > 0.0.");
 
         // TODO (Janna): Replace receiver model
-        std::unique_ptr<C_pt_receiver> receiver = std::unique_ptr<C_mspt_receiver_222>(new C_mspt_receiver_222(
+
+        // Hard-coding inputs for now...
+        int model_type = 0;  // 0 = Fixed efficiency, 1 = Sandia efficiency correlation for free-falling receiver, 2 = Sandia efficiency correlation for multi-stage receiver, 3 = Detailed receiver model
+        double fixed_efficiency = 0.85; // Only used if model_type = 0
+        double ap_height = 5.0;
+        double ap_width = 5.0;
+        A_rec = ap_height * ap_width;
+        double ap_height_ratio = 1.0;
+        double ap_width_ratio = 1.0;
+        double ap_curtain_depth_ratio = 0.33;
+        bool is_ap_at_bot = false;
+        double particle_dp = 350e-6;
+        double particle_abs = 0.9;
+        double curtain_emis = 0.9;
+        double dthdy = 0.0087;
+        int hadv_model = 0;
+        double hadv_user = 200;
+        double cav_emis = 0.8;
+        double cav_twall = 0.05;
+        double cav_kwall = 0.2;
+        double cav_hext = 10;
+        int n_x = n_flux_x;
+        int n_y = n_flux_y;
+        int n_zone_control = 1;
+
+        std::unique_ptr<C_pt_receiver> receiver = std::unique_ptr<C_falling_particle_receiver>(new C_falling_particle_receiver(
             THT, as_double("epsilon"),
             as_double("T_htf_hot_des"), as_double("T_htf_cold_des"),
             as_double("f_rec_min"), q_dot_rec_des,
@@ -1097,10 +1124,16 @@ public:
             as_integer("rec_htf"), as_matrix("field_fl_props"),
             as_integer("mat_tube"),
             rec_night_recirc,
-            as_integer("N_panels"), rec_width, rec_height,  // rec_width == D_rec
-            as_integer("Flow_type"), as_integer("crossover_shift"), as_double("hl_ffact"),
+            model_type, fixed_efficiency,
+            ap_height, ap_width, ap_height_ratio, ap_width_ratio,
+            ap_curtain_depth_ratio, is_ap_at_bot,
+            particle_dp, particle_abs, curtain_emis,
+            dthdy, hadv_model, hadv_user,
+            cav_emis, cav_twall, cav_kwall, cav_hext,
+            as_double("hl_ffact"), n_x, n_y, n_zone_control,
             as_double("T_htf_hot_des"), as_double("rec_clearsky_fraction")
         ));   // steady-state receiver
+
         //if (!as_boolean("is_rec_model_trans") && !as_boolean("is_rec_startup_trans")) {
         //    //std::unique_ptr<C_mspt_receiver_222> ss_receiver = std::make_unique<C_mspt_receiver_222>();   // new to C++14
  
@@ -1113,7 +1146,8 @@ public:
 
 #endif // !TESTING
 
-        double A_rec = 25.; // TODO (Janna): Replace with true active receiver area. We could get this from SolarPILOT if we want 
+
+        //double A_rec = 25.; // TODO (Janna): Replace with true active receiver area. We could get this from SolarPILOT if we want 
         // *******************************
         // *******************************
         // Construct heliostat field class after receiver
@@ -1198,10 +1232,7 @@ public:
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_T_HTF_OUT, allocate("T_rec_out", n_steps_fixed), n_steps_fixed);
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_PIPE_LOSS, allocate("q_piping_losses", n_steps_fixed), n_steps_fixed);
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_LOSS, allocate("q_thermal_loss", n_steps_fixed), n_steps_fixed);
-            // Cavity-specific outputs
-        //if (rec_type == 1) {
-        //    collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_REFL_LOSS, allocate("q_dot_reflection_loss", n_steps_fixed), n_steps_fixed);
-        //}
+        collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_REFL_LOSS, allocate("q_dot_reflection_loss", n_steps_fixed), n_steps_fixed);
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_W_DOT_TRACKING, allocate("pparasi", n_steps_fixed), n_steps_fixed);
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_W_DOT_PUMP, allocate("P_tower_pump", n_steps_fixed), n_steps_fixed);
 
@@ -1682,6 +1713,7 @@ public:
             // *************************
             // Solar field
         assign("N_hel_calc", N_hel);                    //[-]
+        assign("refl_image_error", refl_image_error);   //[mrad]
         assign("heliostat_area", heliostat_area);   //[m2]
         assign("average_attenuation", average_attenuation); //[%]
         assign("A_sf", (ssc_number_t)A_sf);         //[m2]
