@@ -301,7 +301,12 @@ public:
         double flow_rate = as_double("well_flow_rate");
         double chemical_inhibitor_cost = 0;
         if (conversion_type == 1) chemical_inhibitor_cost = 22.5;
-        double chemical_costs = flow_rate * as_double("geotherm.cost.prod_per_well") * 3600 * 24 * 365 * 0.95 * 
+        double chemical_costs = flow_rate * as_double("geotherm.cost.prod_per_well") * 3600 * 24 * 365 * 0.95 * chemical_inhibitor_cost / 1000000;
+
+        double makeup_water = water_loss * water_cost;
+        double pump_om = 0; //Too complicated
+        doulbe field_labor_om = 
+
 
 
 		if (conversion_type == 0) {
