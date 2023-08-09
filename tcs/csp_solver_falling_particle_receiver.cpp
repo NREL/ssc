@@ -1501,7 +1501,7 @@ void C_falling_particle_receiver::calculate_view_factors()
 {
     int i, j, k, isym, ksym, ib, iw;
 
-    int ny = m_n_y - 1;  // Soln in y-direction is defined at node locations including inlet and outlet
+    int ny = m_n_y - 1;  // Solution in y-direction is defined at node locations including inlet and outlet
     int nx = m_n_x;
     int nelem = get_nelem();
     double dy = m_curtain_height / ny;
@@ -1887,10 +1887,10 @@ double C_falling_particle_receiver::sum_over_rows_and_cols(util::matrix_t<double
         nrsum -= 1;
 
     double msum = 0.0;
-    for (int j = 0; j < nrsum; j++)
-    {
-        for (int i = 0; i < nc; i++)
+    for (int j = 0; j < nrsum; j++) {
+        for (int i = 0; i < nc; i++) {
             msum += mat.at(j, i);
+        }
     }
     return msum;
 }

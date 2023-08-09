@@ -128,8 +128,9 @@ protected:
     double m_ap_width_ratio;            // Aperture width / curtain width [-]
     double m_ap_curtain_depth_ratio;    // (Distance between aperture and particle curtain) / aperture height [-]
     bool m_is_ap_at_bot;                // Is aperture positioned at the bottom of the cavity?  // TODO: Ask Bill if this option is in the optical model
+                                                                                                    // (Bill) The bottom of the aperture and curtain always align 
     bool m_is_curtain_flat;             // [-]
-    double m_curtain_rad;                 // Curtain radius of curvature (only used if m_is_curtain_flat = False) [-]
+    double m_curtain_rad;               // Curtain radius of curvature (only used if m_is_curtain_flat = False) [-]
 
 
     // Particle and curtain properties

@@ -1068,8 +1068,7 @@ public:
         //      Receiver model
         // *********************************************************
 
-        double A_rec = std::numeric_limits<double>::quiet_NaN();        // TODO: This needs to be calculated
-        // Calculate cavity receiver area and height below. Don't set diameter or aspect ratio for cavity receiver
+        double A_rec = std::numeric_limits<double>::quiet_NaN();        
 
         //bool is_rec_model_trans = as_boolean("is_rec_model_trans");
         bool is_rec_model_clearsky = as_double("rec_clearsky_fraction") > 0.0;
@@ -1085,15 +1084,15 @@ public:
         // TODO (Janna): Replace receiver model
 
         // Hard-coding inputs for now...
-        int model_type = 0;  // 0 = Fixed efficiency, 1 = Sandia efficiency correlation for free-falling receiver, 2 = Sandia efficiency correlation for multi-stage receiver, 3 = Detailed receiver model
+        int model_type = 2;  // 0 = Fixed efficiency, 1 = Sandia efficiency correlation for free-falling receiver, 2 = Sandia efficiency correlation for multi-stage receiver, 3 = Detailed receiver model
         double fixed_efficiency = 0.85; // Only used if model_type = 0
-        double ap_height = 5.0;
-        double ap_width = 5.0;
+        double ap_height = rec_height;  // 5.0  // TODO (Janna): we can change these variable names if it is confusing
+        double ap_width = rec_width;    // 5.0
         A_rec = ap_height * ap_width;
-        double ap_height_ratio = 1.0;
-        double ap_width_ratio = 1.0;
-        double ap_curtain_depth_ratio = 0.33;
-        bool is_ap_at_bot = false;
+        double ap_height_ratio = 1.0 / as_double("norm_curtain_height"); //1.0;  // SolarPILOT defines this the opposite ratio 
+        double ap_width_ratio = 1.0 / as_double("norm_curtain_width");   //1.0;  // same as above
+        double ap_curtain_depth_ratio = as_double("max_curtain_depth") / rec_height; //  0.33;
+        bool is_ap_at_bot = true;   // This is always true // false
         double particle_dp = 350e-6;
         double particle_abs = 0.9;
         double curtain_emis = 0.9;
@@ -1291,7 +1290,7 @@ public:
             as_double("hot_tank_max_heat"),
             as_double("cold_tank_Thtr"),
             as_double("cold_tank_max_heat"),
-            0.0,                                    // MSPT assumes direct storage, so no user input here: hardcode = 0.0
+            0.0,                                    // MSPT assumes direct storage, so no user input here: hard-code = 0.0
             as_double("T_htf_cold_des"),
             as_double("T_htf_hot_des"),
             as_double("T_htf_hot_des"),
@@ -1341,7 +1340,7 @@ public:
         }
 
         tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = as_boolean("is_tod_pc_target_also_pc_max");
-        tou.mc_dispatch_params.m_is_block_dispatch = ! as_boolean("is_dispatch");      //mw
+        tou.mc_dispatch_params.m_is_block_dispatch = ! as_boolean("is_dispatch");
         tou.mc_dispatch_params.m_use_rule_1 = true;
         tou.mc_dispatch_params.m_standby_off_buffer = 2.0;
         tou.mc_dispatch_params.m_use_rule_2 = false;
@@ -1370,7 +1369,7 @@ public:
         if (sim_type == 1) {
             if (csp_financial_model > 0 && csp_financial_model < 5) {   // Single Owner financial models
 
-                // Get first year base ppa price
+                // Get first year base PPA price
                 bool is_ppa_price_input_assigned = is_assigned("ppa_price_input");
                 if (is_dispatch && !is_ppa_price_input_assigned) {
                     throw exec_error("csp_tower_particle", "\n\nYou selected dispatch optimization which requires that the array input ppa_price_input is defined\n");
@@ -1382,7 +1381,7 @@ public:
                     ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
                 }
                 else {
-                    ppa_price_year1 = 1.0;      //[-] don't need ppa multiplier if not optimizing
+                    ppa_price_year1 = 1.0;      //[-] don't need PPA multiplier if not optimizing
                 }
 
                 int ppa_soln_mode = as_integer("ppa_soln_mode");    // PPA solution mode (0=Specify IRR target, 1=Specify PPA price)
@@ -1824,7 +1823,7 @@ public:
         csp_solver.get_design_parameters(W_dot_bop_design, W_dot_fixed_parasitic_design);
 
                 // Calculate net system *generation* capacity including HTF pumps and system parasitics
-        double plant_net_capacity_calc = W_dot_cycle_des - W_dot_col_tracking_des - W_dot_rec_pump_des -
+        double plant_net_capacity_calc = W_dot_cycle_des - W_dot_col_tracking_des - //W_dot_rec_pump_des - //TODO(Bill): This needs to be updated
                                         W_dot_pc_pump_des - W_dot_pc_cooling_des - W_dot_bop_design - W_dot_fixed_parasitic_design;    //[MWe]
 
         double plant_net_conv_calc = plant_net_capacity_calc / W_dot_cycle_des; //[-]
