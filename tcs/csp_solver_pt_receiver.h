@@ -194,7 +194,7 @@ protected:
     double m_T_htf_hot_des;			    //[K] hot outlet HTF temperature at design, converted from C in constructor
     double m_T_htf_cold_des;		    //[K] cold inlet HTF temperature at design, converted from C in constructor
     double m_f_rec_min;				    //[-] minimum receiver thermal output as fraction of design
-    double m_q_rec_des;				    //[MW] design recever thermal output, converted to [W] in init()
+    double m_q_rec_des;				    //[MW] design receiver thermal output, converted to [W] in init()
     double m_rec_su_delay;			    //[hr] required startup time
     double m_rec_qf_delay;			    //[-] required startup energy as fraction of design thermal output
     double m_m_dot_htf_max_frac;	    //[-] maximum receiver HTF mass flow as fraction of design mass flow

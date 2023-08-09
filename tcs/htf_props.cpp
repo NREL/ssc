@@ -535,6 +535,8 @@ double HTFProperties::visc(double T_K)
 		return 3.E-8*T_C*T_C - 1.E-5*T_C + 0.0011;
     case Salt_45MgCl2_39KCl_16NaCl:
         return 0.689*std::exp(1224.73/T_K)*1.E-3;   // convert from cP; Zhao 2020 Molten Chloride Thermophysical Properties, Chemical Optimization, and Purification Purification
+    case Bauxite_particles:
+        throw(C_csp_exception("HTF viscosity function called. Bauxite particles do not have a viscosity!"));
     case User_defined:
 		if ( m_userTable.nrows() < 3 )
 					return std::numeric_limits<double>::quiet_NaN();

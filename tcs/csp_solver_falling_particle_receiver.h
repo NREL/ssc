@@ -74,7 +74,7 @@ protected:
         double Q_adv;			    // Total advection loss (W)
         double Q_transport;         // Total thermal loss from particle transport (W)
         double Q_thermal;           // Total thermal power delivered to the particles (including losses from particle transport) (W)
-        double eta;                 // Receiver efficienty (energy to particles / solar energy incident on curtain)
+        double eta;                 // Receiver efficiency (energy to particles / solar energy incident on curtain)
         double hadv;                // Advective loss coefficient (including wind effects) (W/m2/K)
 
         //util::matrix_t<double> m_dot_per_zone;  // Particle mass flow per control zone (kg/s)
@@ -160,11 +160,11 @@ protected:
     int m_n_zone_control;   // Number of particle flow control "zones" (must result in an integer number of discretized width positions included in each flow control zone)
 
 
-    //--- Hardcoded parameters
+    //--- Hard-coded parameters
     double m_tol_od;            //[-]
     double m_eta_therm_des_est; //[-]
     bool m_use_constant_piping_loss;
-    bool m_include_back_wall_convection;    // Include convective heat trasnfer to back wall (assuming air velocity is the same as the local particle velocity)
+    bool m_include_back_wall_convection;    // Include convective heat transfer to back wall (assuming air velocity is the same as the local particle velocity)
     bool m_include_wall_axial_conduction;   // Include axial conduction in the back wall
 
     //--- Calculated parameters

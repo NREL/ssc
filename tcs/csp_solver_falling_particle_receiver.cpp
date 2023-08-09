@@ -113,7 +113,7 @@ C_falling_particle_receiver::C_falling_particle_receiver(double h_tower /*m*/, d
     m_n_zone_control = 1;
 
 
-    // Hardcoded (for now?) parameters
+    // Hard-coded (for now?) parameters
     m_tol_od = 0.001;		    //[-] Tolerance for over-design iteration
     m_eta_therm_des_est = 0.9;  //[-] Estimated and used to calculate min incident flux
     m_use_constant_piping_loss = true;
@@ -183,6 +183,10 @@ void C_falling_particle_receiver::init()
     m_E_su_prev = m_q_rec_des * m_rec_qf_delay;	//[W-hr] Startup energy
     m_t_su_prev = m_rec_su_delay;				//[hr] Startup time requirement
 
+    double c_htf_des = field_htfProps.Cp((m_T_htf_hot_des + m_T_htf_cold_des) / 2.0) * 1000.0;		//[J/kg-K] Specific heat at design conditions
+    m_m_dot_htf_des = m_q_rec_des / (c_htf_des * (m_T_htf_hot_des - m_T_htf_cold_des));					//[kg/s]
+    m_m_dot_htf_max = m_m_dot_htf_max_frac * m_m_dot_htf_des;	//[kg/s]
+
     // If no startup requirements, then receiver is always ON
         // ... in the sense that the controller doesn't need to worry about startup
     if (m_E_su_prev == 0.0 && m_t_su_prev == 0.0) {
@@ -195,7 +199,7 @@ void C_falling_particle_receiver::init()
 
 
     // Calculate view factors
-    if (m_model_type == 0)
+    if (m_model_type == 3)
         calculate_view_factors();
     
 
@@ -248,6 +252,10 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
     const C_pt_receiver::S_inputs& inputs,
     const C_csp_solver_sim_info& sim_info)
 {
+    // Increase call-per-timestep counter
+    // Converge() sets it to -1, so on first call this line will adjust it = 0
+    m_ncall++;
+
     double step = sim_info.ms_ts.m_step;	//[s]
     double time = sim_info.ms_ts.m_time;	//[s]
 
@@ -258,7 +266,7 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
 
     double T_particle_cold_in = htf_state_in.m_temp + 273.15;	//[K] Cold particle inlet temp, convert from C
     double P_amb = weather.m_pres * 100.0;	//[Pa] Ambient pressure, convert from mbar
-    double T_dp = weather.m_tdew + 273.15;	//[K] Dewpoint temperature, convert from C
+    double T_dp = weather.m_tdew + 273.15;	//[K] Dew point temperature, convert from C
     double T_amb = weather.m_tdry + 273.15;	//[K] Dry bulb temperature, convert from C
     double I_bn = weather.m_beam;           //[W/m2]
     double v_wind_10 = weather.m_wspd;      //[m/s]
@@ -267,15 +275,11 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
     double hour = time / 3600.0;			//[hr] Hour of the year
     double T_sky = CSP::skytemp(T_amb, T_dp, hour);     //[K]
 
-    double clearsky_adj = std::fmax(clearsky_dni, I_bn);  // Adjust clearsky DNI to be the actual DNI, if the actual DNI is higher
+    double clearsky_adj = std::fmax(clearsky_dni, I_bn);  // Adjust clear-sky DNI to be the actual DNI, if the actual DNI is higher
     double clearsky_to_input_dni = clearsky_adj / I_bn;
     if (I_bn < 1.E-6) {
         clearsky_to_input_dni = 1.0;
     }
-
-    // Increase call-per-timestep counter
-        // Converge() sets it to -1, so on first call this line will adjust it = 0
-    m_ncall++;
 
     bool rec_is_off = false;
     double od_control = std::numeric_limits<double>::quiet_NaN();
@@ -297,18 +301,16 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
     m_E_su = std::numeric_limits<double>::quiet_NaN();
     m_t_su = std::numeric_limits<double>::quiet_NaN();
 
-    if (input_operation_mode < C_csp_collector_receiver::OFF || input_operation_mode > C_csp_collector_receiver::STEADY_STATE)
-    {
+    if (input_operation_mode < C_csp_collector_receiver::OFF || input_operation_mode > C_csp_collector_receiver::STEADY_STATE) {
         error_msg = util::format("Input operation mode must be either [0,1,2], but value is %d", input_operation_mode);
         throw(C_csp_exception(error_msg, "MSPT receiver timestep performance call"));
     }
 
-    // Check resoluation of flux map input compared to resolution of the particle curtain discretization
+    // Check resolution of flux map input compared to resolution of the particle curtain discretization
     // TODO: Generalize to allow different resolution
     int n_flux_y = (int)flux_map_input->nrows();
     int n_flux_x = (int)flux_map_input->ncols();
-    if (n_flux_y != m_n_y || n_flux_x != m_n_x)
-    {
+    if (n_flux_y != m_n_y || n_flux_x != m_n_x) {
         error_msg = "The falling particle receiver model flux map input must match the specified discretization resolution of the particle curtain";
         throw(C_csp_exception(error_msg, "MSPT receiver timestep performance call"));
     }
@@ -348,7 +350,7 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
     //    //     the corresponding required *component* defocus decreases, because less flux on receiver
     //    // So this line helps "correctly" allocate defocus from the component to the controller
     //    // But, this likely makes the defocus iteration trickier because the iterator
-    //    //    won't see a reponse in output mass flow or heat until m_od_control is back to 1.0
+    //    //    won't see a response in output mass flow or heat until m_od_control is back to 1.0
     //    // Component defocus also depends on inlet temperature, which can make current method tricky
     //    //    because the mass_flow_and_defocus code will only adjust m_od_control down, not up
     //    //    and then following calls-iterations use the previous m_od_control as a baseline
@@ -379,22 +381,20 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
     soln.rec_is_off = rec_is_off;
 
     if ((std::isnan(clearsky_to_input_dni) || clearsky_to_input_dni < 0.9999) && m_csky_frac > 0.0001)
-        throw(C_csp_exception("Clearsky DNI to measured is NaN or less than 1 but is required >= 1 in the clearsky receiver model"));
+        throw(C_csp_exception("Clear-sky DNI to measured is NaN or less than 1 but is required >= 1 in the clear-sky receiver model"));
 
     // Get total incident flux before defocus is applied
     util::matrix_t<double> mt_q_dot_inc_pre_defocus = calculate_flux_profiles(flux_sum, 1.0, 1.0, 1.0, flux_map_input);  // W/m2
     Q_inc_pre_defocus = 0.0;
-    for (int j = 0; j < m_n_y; j++)
-    {
-        for (int i = 0; i < m_n_x; i++)
-        {
+    for (int j = 0; j < m_n_y; j++) {
+        for (int i = 0; i < m_n_x; i++) {
             Q_inc_pre_defocus += mt_q_dot_inc_pre_defocus.at(j,i) * m_curtain_elem_area;
         }
     }
 
-    if (rec_is_off)
+    if (rec_is_off) {
         soln.q_dot_inc.resize_fill(m_n_y, m_n_x, 0.0);
-
+    }
     else
     {
         //--- Solve for mass flow at actual and/or clear-sky DNI extremes
@@ -447,7 +447,7 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
             soln.rec_is_off = soln_clearsky.rec_is_off;
             soln.od_control = soln_clearsky.od_control;
             soln.q_dot_inc = calculate_flux_profiles(flux_sum, 1.0, plant_defocus, soln_clearsky.od_control, flux_map_input);  // Absorbed flux profiles at actual DNI and clear-sky defocus
-            calculate_steady_state_soln(soln, 0.00025, m_use_constant_piping_loss);  // Solve energy balances at clearsky mass flow rate and actual DNI conditions
+            calculate_steady_state_soln(soln, 0.00025, m_use_constant_piping_loss);  // Solve energy balances at clear-sky mass flow rate and actual DNI conditions
         }
 
         else  // Receiver can operate and flow control based on a weighted average of clear-sky and actual DNI
@@ -510,7 +510,7 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
     q_thermal_steadystate = soln.Q_thermal;
     q_thermal_csky = 0.0;
     if (m_csky_frac > 0.0001)
-        q_thermal_csky = soln_clearsky.Q_thermal;  // Steady state thermal power with clearsky DNI
+        q_thermal_csky = soln_clearsky.Q_thermal;  // Steady state thermal power with clear-sky DNI
 
 
 
@@ -1142,7 +1142,7 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
 
             //--- Calculate losses
 
-            //--- Check convergence and update tempeature solution
+            //--- Check convergence and update temperature solution
         }
     }
 
@@ -1186,19 +1186,19 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
     double cp = field_htfProps.Cp(T_particle_prop) * 1000.0;   //[J/kg-K] 
 
 	double m_dot_guess;
-	if (soln_exists)  // Use existing solution as intial guess
+	if (soln_exists)  // Use existing solution as initial guess
 	{
 		m_dot_guess = soln.m_dot_tot;
 	}
-	else  // Set inital guess for mass flow solution
+	else  // Set initial guess for mass flow solution
 	{
         double Qinc = sum_over_rows_and_cols(soln.q_dot_inc, true) * m_curtain_elem_area;  // Total solar power incident on curtain [W]
-        double eta_guess = m_model_type == 2 ? m_fixed_efficiency : 0.85;
+        double eta_guess = m_model_type == 0 ? m_fixed_efficiency : 0.85;
         m_dot_guess = eta_guess * Qinc / (cp * (m_T_particle_hot_target - soln.T_particle_cold_in));	//[kg/s] Particle mass flow rate
 	}
 
 
-	// Set soluion tolerance
+	// Set solution tolerance
 	double T_hot_guess = 9999.9;		//[K] Initial guess value for error calculation
 	double err = -999.9;					//[-] Relative outlet temperature error
 	double tol = std::numeric_limits<double>::quiet_NaN();
@@ -1237,7 +1237,7 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
 				break;
 			}
 		}
-		//else if (err > 0.0)  // Solution has converged but outlet T is above target.  CSP solver seems to perform better with slighly under-design temperature than with slighly over-design temperatures. 
+		//else if (err > 0.0)  // Solution has converged but outlet T is above target.  CSP solver seems to perform better with slightly under-design temperature than with slightly over-design temperatures. 
 		//	m_dot_salt_guess *= (soln.T_salt_hot - soln.T_salt_cold_in) / ((1.0 - 0.5*tol) * m_T_salt_hot_target - soln.T_salt_cold_in);
 		else
 			converged = true;
@@ -1413,7 +1413,7 @@ void C_falling_particle_receiver::calculate_local_curtain_optical_properties(dou
     double tcs = Nl*tc0*4*f*pow(Ps*phis, 2) / phis;
     double tcbf = pow(rhol1, 2) * tc0 * (pow(1-phis, 2*Nl) - Nl*pow(1-phis, 2) + Nl - 1) / pow(pow(phis, 2) - 2*phis, 2);
     tauc = tc0 + tcs + tcbf;  //Curtain transmittance
-    tauc *= m_tauc_mult;  // Optionally adjust by a user-provided mutliplier for transmissivity (default value of multiplier = 1.0)
+    tauc *= m_tauc_mult;  // Optionally adjust by a user-provided multiplier for transmissivity (default value of multiplier = 1.0)
     return;
 }
 
@@ -1490,7 +1490,7 @@ double C_falling_particle_receiver::calculate_wall_convection_coeff(double vel, 
 
 int C_falling_particle_receiver::get_nelem()
 {
-    int ny = m_n_y - 1;  // Soln in y-direction is defined at node locations including inlet and outlet
+    int ny = m_n_y - 1;  // Solution in y-direction is defined at node locations including inlet and outlet
     int nx = m_n_x;
     int nelem = 1 + 3 * nx * ny + 1;   // One element for the aperture, nx*ny elements on each side of the curtain and the back wall, one element for front wall
     return nelem;
@@ -1632,7 +1632,7 @@ void C_falling_particle_receiver::calculate_coeff_matrix(util::matrix_t<double>&
     // TODO: Generalize to include view factors between each curtain element and all back wall elements
     //       Simplify loops below if each curtain element can only see one back wall element (most of the elements in K are zero)
     int i, i1, i2, x, y, iback, ifront;
-    int ny = m_n_y - 1;  // Soln in y-direction is defined at node locations including inlet and outlet
+    int ny = m_n_y - 1;  // Solution in y-direction is defined at node locations including inlet and outlet
     int nx = m_n_x;
     int nelem = get_nelem();
     K.resize_fill(nelem, nelem, 0.0);  // Curtain height/width elements are ordered as (y0,x0), (y0,x1)... (y0,xn), (y1,x0)...
@@ -1652,7 +1652,7 @@ void C_falling_particle_receiver::calculate_coeff_matrix(util::matrix_t<double>&
             K.at(i1, i2) -= rho.at(i1) * m_vf.at(i1, i2);
 
             // Add modifications accounting for transmissivity of curtain
-            if (i1 >= 1 && i1 < 1 + (nx * ny))  // Element on front ofcurtain
+            if (i1 >= 1 && i1 < 1 + (nx * ny))  // Element on front of curtain
             {
                 iback = i1 + nx * ny;       // Corresponding element on the back of the curtain
                 x = (i1 - 1) % nx;          // Width position on curtain
@@ -1682,7 +1682,7 @@ void C_falling_particle_receiver::calculate_radiative_exchange(util::matrix_t<do
                                                                 util::matrix_t<double>& qnetc, util::matrix_t<double>& qnetw, double qnetwf, double qnetap)
 {
     // Curtain height/width elements are ordered as (y0,x0), (y0,x1)... (y0,xn), (y1,x0)...
-    int ny = m_n_y - 1;  // Soln in y-direction is defined at node locations including inlet and outlet
+    int ny = m_n_y - 1;  // Solution in y-direction is defined at node locations including inlet and outlet
     int nx = m_n_x;
     int nelem = get_nelem();
     util::matrix_t<double> J, qin, qnet;

@@ -93,6 +93,7 @@ C_pt_receiver::C_pt_receiver(double h_tower /*m*/, double epsilon /*-*/,
     m_rec_pump_coef = std::numeric_limits<double>::quiet_NaN();
     m_vel_htf_des = std::numeric_limits<double>::quiet_NaN();
     m_m_dot_htf_des = std::numeric_limits<double>::quiet_NaN();
+    m_m_dot_htf_max = std::numeric_limits<double>::quiet_NaN();
 
     // State variables
     m_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;

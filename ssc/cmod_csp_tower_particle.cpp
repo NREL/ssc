@@ -105,7 +105,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_INPUT,     SSC_NUMBER, "p_track",                            "Heliostat tracking energy",                                                                                                               "kWe",          "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "hel_stow_deploy",                    "Stow/deploy elevation angle",                                                                                                             "deg",          "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "v_wind_max",                         "Heliostat max wind velocity",                                                                                                             "m/s",          "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
-    // TODO (Bill): Talk to Ty about removing
+    // TODO (Bill): Talk to Ty about removing -> these should be passed into C_pt_sf_perf_interp but are hard-coded instead
     //{ SSC_INPUT,     SSC_NUMBER, "interp_nug",                         "Interpolation nugget",                                                                                                                    "-",            "",                                  "Heliostat Field",                          "?=0",                                                              "",              "SIMULATION_PARAMETER"},
     //{ SSC_INPUT,     SSC_NUMBER, "interp_beta",                        "Interpolation beta coef.",                                                                                                                "-",            "",                                  "Heliostat Field",                          "?=1.99",                                                           "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_MATRIX, "helio_aim_points",                   "Heliostat aim point table",                                                                                                               "m",            "",                                  "Heliostat Field",                          "?",                                                                "",              "SIMULATION_PARAMETER"},
@@ -168,7 +168,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_INPUT,     SSC_NUMBER, "curtain_radius",                     "Particle curtain radius",                                                                                                                 "m",            "",                                  "Tower and Receiver",                       "curtain_type=1",                                                   "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "is_snout",                           "Is SNOUT enabled?",                                                                                                                       "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "snout_depth",                        "Distance from aperture window to SNOUT front plane",                                                                                      "m",            "",                                  "Tower and Receiver",                       "is_snout=1",                                                       "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "snout_horiz_angle",                  "SNOUT spanning angle defined in the aperture vertical midplane",                                                                          "deg",          "",                                  "Tower and Receiver",                       "is_snout=1",                                                       "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "snout_horiz_angle",                  "SNOUT spanning angle defined in the aperture vertical mid-plane",                                                                          "deg",          "",                                  "Tower and Receiver",                       "is_snout=1",                                                       "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "snout_vert_bot_angle",               "SNOUT bottom surface angle from aperture normal",                                                                                         "deg",          "",                                  "Tower and Receiver",                       "is_snout=1",                                                       "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "snout_vert_top_angle",               "SNOUT top surface angle from aperture normal",                                                                                            "deg",          "",                                  "Tower and Receiver",                       "is_snout=1",                                                       "",              "" },
 
@@ -246,7 +246,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     // Steam Rankine cycle
     { SSC_INPUT,     SSC_NUMBER, "dT_cw_ref",                          "Reference condenser cooling water inlet/outlet temperature difference",                                                                   "C",            "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "T_amb_des",                          "Reference ambient temperature at design point",                                                                                           "C",            "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "CT",                                 "Condensor type: 1=evaporative, 2=air, 3=hybrid",                                                                                          "",             "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "CT",                                 "Condenser type: 1=evaporative, 2=air, 3=hybrid",                                                                                          "",             "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "T_approach",                         "Cooling tower approach temperature",                                                                                                      "C",            "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "T_ITD_des",                          "ITD at design for dry system",                                                                                                            "C",            "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "P_cond_ratio",                       "Condenser pressure ratio",                                                                                                                "",             "",                                  "Rankine Cycle",                            "pc_config=0",                                                      "",              ""},
@@ -503,8 +503,6 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "const_per_interest_total",           "Total interest costs, all loans",                                                                                                         "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "construction_financing_cost",        "Total construction financing cost",                                                                                                       "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
 
-
-
     // ****************************************************************************************************************************************
     // Timeseries Simulation Outputs here:
     // ****************************************************************************************************************************************
@@ -531,16 +529,16 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_OUTPUT,    SSC_ARRAY,  "q_dot_rec_inc",                      "Receiver incident thermal power",                                                                                                         "MWt",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "eta_therm",                          "Receiver thermal efficiency",                                                                                                             "",             "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "Q_thermal",                          "Receiver thermal power to HTF less piping loss",                                                                                          "MWt",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
-    { SSC_OUTPUT,    SSC_ARRAY,  "pparasi",                            "Field tracking power",                                                                                                                    "MWe",          "",                                  "",                                         "sim_type=1",                                                       "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "pparasi",                            "Field tracking power",                                                                                                                    "MWe",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
 
     { SSC_OUTPUT,    SSC_ARRAY,  "m_dot_rec",                          "Receiver mass flow rate",                                                                                                                 "kg/s",         "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "q_startup",                          "Receiver startup thermal energy consumed",                                                                                                "MWt",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "T_rec_in",                           "Receiver HTF inlet temperature",                                                                                                          "C",            "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "T_rec_out",                          "Receiver HTF outlet temperature",                                                                                                         "C",            "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "q_piping_losses",                    "Receiver header/tower piping losses",                                                                                                     "MWt",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
-    { SSC_OUTPUT,    SSC_ARRAY,  "q_thermal_loss",                     "Receiver convection and emission losses",                                                                                                 "MWt",          "",                                  "",                                         "sim_type=1",                                                       "",              "" },
-    { SSC_OUTPUT,    SSC_ARRAY,  "q_dot_reflection_loss",              "Receiver reflection losses",                                                                                                              "MWt",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
-    { SSC_OUTPUT,    SSC_ARRAY,  "P_tower_pump",                       "Receiver and tower HTF pumping power",                                                                                                    "MWe",          "",                                  "",                                         "sim_type=1",                                                       "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "q_thermal_loss",                     "Receiver convection and emission losses",                                                                                                 "MWt",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
+    //{ SSC_OUTPUT,    SSC_ARRAY,  "q_dot_reflection_loss",              "Receiver reflection losses",                                                                                                              "MWt",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
+    { SSC_OUTPUT,    SSC_ARRAY,  "P_tower_pump",                       "Receiver and tower HTF pumping power",                                                                                                    "MWe",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
 
     //{ SSC_OUTPUT,    SSC_ARRAY,  "T_rec_out_end",                      "Receiver HTF outlet temperature at end of timestep",                                                                                      "C",            "",								   "CR",                                       "sim_type=1&is_rec_model_trans=1",                                  "",              ""},
     //{ SSC_OUTPUT,    SSC_ARRAY,  "T_rec_out_max",                      "Receiver maximum HTF outlet temperature during timestep",                                                                                 "C",            "",                                  "CR",                                       "sim_type=1&is_rec_model_trans=1",                                  "",              ""},
@@ -782,6 +780,9 @@ public:
         // TODO (Bill): Make these user inputs, if Janna agrees
         //      - n_flux_y must be greater than the number of troughs in the curtain
         //      - Add a limit to these values <= 50?
+        double helio_optical_error_mrad = as_number("helio_optical_error_mrad");        //[mrad]
+        refl_image_error = std::sqrt(2. * helio_optical_error_mrad * 2. * helio_optical_error_mrad * 2.);   //[mrad]
+        assign("refl_image_error", refl_image_error);   //[mrad]
 
         if (field_model_type < 4) {
             // Field types 0-3 require solarPILOT
@@ -790,9 +791,9 @@ public:
             h_helio = as_double("helio_height");     //[m] Heliostat height - for system costing
 
             // Set up "cmod_solarpilot.cpp" conversions as necessary
-            double helio_optical_error_mrad = as_number("helio_optical_error_mrad");        //[mrad]
-            refl_image_error = std::sqrt(2. * helio_optical_error_mrad * 2. * helio_optical_error_mrad * 2.);   //[mrad]
-            assign("refl_image_error", refl_image_error);   //[mrad]
+            //double helio_optical_error_mrad = as_number("helio_optical_error_mrad");        //[mrad]
+            //refl_image_error = std::sqrt(2. * helio_optical_error_mrad * 2. * helio_optical_error_mrad * 2.);   //[mrad]
+            //assign("refl_image_error", refl_image_error);   //[mrad]
             assign("helio_optical_error", (ssc_number_t)(helio_optical_error_mrad * 1.E-3));
 
             // Set 'n_flux_x' and 'n_flux_y' here, for now
@@ -1063,18 +1064,13 @@ public:
         p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_P_COND_ITER_ERR, allocate("P_cond_iter_err", n_steps_fixed), n_steps_fixed);
         p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_ETA_THERMAL, allocate("eta", n_steps_fixed), n_steps_fixed);
 
-#ifndef TESTING
-
         // *********************************************************
         //      Receiver model
         // *********************************************************
 
         double A_rec = std::numeric_limits<double>::quiet_NaN();        // TODO: This needs to be calculated
-
-        // Calculate external receiver area, height, diameter here
         // Calculate cavity receiver area and height below. Don't set diameter or aspect ratio for cavity receiver
 
-        //std::unique_ptr<C_pt_receiver> receiver;
         //bool is_rec_model_trans = as_boolean("is_rec_model_trans");
         bool is_rec_model_clearsky = as_double("rec_clearsky_fraction") > 0.0;
 
@@ -1119,8 +1115,7 @@ public:
             as_double("rec_su_delay"), as_double("rec_qf_delay"),
             as_double("csp.pt.rec.max_oper_frac"), as_double("eta_pump"),
             as_double("d_tube_out"), as_double("th_tube"),
-            as_double("piping_loss_coefficient"), as_double("piping_length_const"),
-            as_double("piping_length_mult"),
+            as_double("piping_loss_coefficient"), as_double("piping_length_const"), as_double("piping_length_mult"),
             as_integer("rec_htf"), as_matrix("field_fl_props"),
             as_integer("mat_tube"),
             rec_night_recirc,
@@ -1134,20 +1129,9 @@ public:
             as_double("T_htf_hot_des"), as_double("rec_clearsky_fraction")
         ));   // steady-state receiver
 
-        //if (!as_boolean("is_rec_model_trans") && !as_boolean("is_rec_startup_trans")) {
-        //    //std::unique_ptr<C_mspt_receiver_222> ss_receiver = std::make_unique<C_mspt_receiver_222>();   // new to C++14
- 
-
-        //    //receiver = std::move(ss_receiver);
-        //}
-
         // Test mspt_receiver initialization
         //receiver.init();
 
-#endif // !TESTING
-
-
-        //double A_rec = 25.; // TODO (Janna): Replace with true active receiver area. We could get this from SolarPILOT if we want 
         // *******************************
         // *******************************
         // Construct heliostat field class after receiver
@@ -1206,9 +1190,6 @@ public:
             // What happens when no callback to reference?
         //heliostatfield.init();
 
-#ifndef TESTING
-
-
         // Now try to instantiate mspt_collector_receiver
         C_csp_mspt_collector_receiver collector_receiver(heliostatfield, *receiver);
         // Then try init() call here, which should call inits from both classes
@@ -1221,7 +1202,6 @@ public:
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_FIELD_Q_DOT_INC, allocate("q_sf_inc", n_steps_fixed), n_steps_fixed);
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_FIELD_ETA_OPT, allocate("eta_field", n_steps_fixed), n_steps_fixed);
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_FIELD_ADJUST, allocate("sf_adjust_out", n_steps_fixed), n_steps_fixed);
-
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_REC_DEFOCUS, allocate("rec_defocus", n_steps_fixed), n_steps_fixed);
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_INC, allocate("q_dot_rec_inc", n_steps_fixed), n_steps_fixed);
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_ETA_THERMAL, allocate("eta_therm", n_steps_fixed), n_steps_fixed);
@@ -1294,10 +1274,7 @@ public:
         }
         p_heater = p_electric_resistance;
 
-#endif // !TESTING
 
-
-#ifndef TESTING
         // Thermal energy storage
         C_csp_two_tank_tes storage(
             as_integer("rec_htf"),
@@ -1335,10 +1312,8 @@ public:
         storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_COLD_TANK, allocate("mass_tes_cold", n_steps_fixed), n_steps_fixed);
         storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_HOT_TANK, allocate("mass_tes_hot", n_steps_fixed), n_steps_fixed);
         storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HTF_PUMP, allocate("tes_htf_pump_power", n_steps_fixed), n_steps_fixed);
-#endif // !TESTING
 
 
-#ifndef TESTING
         // TOU parameters
         C_csp_tou_block_schedules tou;
         C_csp_tou_block_schedules::S_params *tou_params = &tou.ms_params;
@@ -1519,9 +1494,7 @@ public:
             tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
             }
 
-#endif // !TESTING
 
-#ifndef TESTING
         // *****************************************************
         //
 
@@ -1704,7 +1677,6 @@ public:
             for( size_t i=0; i<n_steps_fixed; i++)
                 tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][i] = dispatch_series[i];
         }
-#endif // !TESTING
 
 
         // *****************************************************
@@ -1729,7 +1701,6 @@ public:
             p_helio_positions_calc[i * 2 + 1] = (ssc_number_t)helio_pos(i, 1);   //[m] y
         }
 
-#ifndef TESTING
 
         double W_dot_col_tracking_des = collector_receiver.get_tracking_power();    //[MWe]
         assign("W_dot_col_tracking_des", W_dot_col_tracking_des);       //[MWe]
@@ -1779,10 +1750,6 @@ public:
         assign("W_dot_heater_des", (ssc_number_t)W_dot_heater_des_calc);    //[MWe]
         assign("E_heater_su_des", (ssc_number_t)E_heater_su_des);           //[MWt-hr]
 
-#endif // !TESTING
-
-
-#ifndef TESTING
             // *************************
             // Thermal Energy Storage
         double V_tes_htf_avail_calc /*m3*/, V_tes_htf_total_calc /*m3*/,
@@ -2099,7 +2066,6 @@ public:
         assign("const_per_interest_total", (ssc_number_t)const_per_interest_total);
         assign("construction_financing_cost", (ssc_number_t)construction_financing_cost);
 
-#endif // !TESTING
 
         // *****************************************************
         // If calling cmod to run design only, return here
@@ -2109,7 +2075,6 @@ public:
         // *****************************************************
         // *****************************************************
 
-#ifndef  TESTING
         update("Begin timeseries simulation...", 0.0);
 
         try
@@ -2165,8 +2130,6 @@ public:
             p_m_dot_pc[i] = (ssc_number_t)(p_m_dot_pc[i] / 3600.0);     //[kg/s] convert from kg/hr
             p_m_dot_water_pc[i] = (ssc_number_t)(p_m_dot_water_pc[i] / 3600.0); //[kg/s] convert from kg/hr
         }
-#endif // ! TESTING
-
 
         // Set output data from heliostat class
         size_t n_rows_eta_map = heliostatfield.ms_params.m_eta_map.nrows();             // Number of solar positions
@@ -2259,7 +2222,6 @@ public:
             gap[i] = (double)rel_mip_gap[i];
         }
 
-#ifndef TESTING
         double avg_gap = 0;
         if (as_boolean("is_dispatch")) {
             std::string disp_sum_msg;
@@ -2342,8 +2304,6 @@ public:
         if (p_electric_resistance != NULL) {
             delete p_electric_resistance;
         }
-#endif // !TESTING
-
 
         std::clock_t clock_end = std::clock();
         double sim_cpu_run_time = (clock_end - clock_start) / (double)CLOCKS_PER_SEC;		//[s]
