@@ -40,6 +40,7 @@ set(SSC_SRC
 		cmod_financial_eqns.h
 		cmod_fossilgen.cpp
         cmod_fresnel_physical.cpp
+        cmod_fresnel_physical_iph.cpp
 		cmod_fuelcell.cpp
 		cmod_fuelcell.h
 		cmod_generic_system-builder.cpp
