@@ -239,7 +239,6 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
     /*Capital Costs*/{ SSC_INPUT,    SSC_NUMBER,         "solar_field_spec_cost",       "Solar Field Cost per m2",                                                               "$/m2",                "",                             "Capital_Costs",                 "?=0",       "",              "" },
     /*Capital Costs*/{ SSC_INPUT,    SSC_NUMBER,         "htf_system_spec_cost",        "HTF System Cost Per m2",                                                                "$/m2",                "",                             "Capital_Costs",                 "?=0",       "",              "" },
     /*Capital Costs*/{ SSC_INPUT,    SSC_NUMBER,         "storage_spec_cost",           "Storage cost per kWht",                                                                 "$/kWht",              "",                             "Capital_Costs",                 "?=0",       "",              "" },
-    /*Capital Costs*/{ SSC_INPUT,    SSC_NUMBER,         "fossil_spec_cost",            "Fossil Backup Cost per kWe",                                                            "$/kWe",               "",                             "Capital_Costs",                 "?=0",       "",              "" },
     /*Capital Costs*/{ SSC_INPUT,    SSC_NUMBER,         "heat_sink_spec_cost",         "Heat Sink Cost per kWt",                                                                "$/kWt",               "",                             "Capital_Costs",                 "?=0",       "",              "" },
     /*Capital Costs*/{ SSC_INPUT,    SSC_NUMBER,         "bop_spec_cost",               "Balance of Plant Cost per kWe",                                                         "$/kWe",               "",                             "Capital_Costs",                 "?=0",       "",              "" },
     /*Capital Costs*/{ SSC_INPUT,    SSC_NUMBER,         "contingency_percent",         "Contingency Percent",                                                                   "%",                   "",                             "Capital_Costs",                 "?=0",       "",              "" },
@@ -343,7 +342,6 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
     { SSC_OUTPUT,       SSC_NUMBER,     "solar_field_cost",                 "Solar field cost",                                                     "$",          "",         "Capital Costs",                              "",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "htf_system_cost",                  "HTF system cost",                                                      "$",          "",         "Capital Costs",                              "",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "ts_cost",                          "Thermal storage cost",                                                 "$",          "",         "Capital Costs",                              "",                                                                "",              "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "fossil_backup_cost",               "Fossil backup cost",                                                   "$",          "",         "Capital Costs",                              "",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "heat_sink_cost",                   "Heat sink cost",                                                       "$",          "",         "Capital Costs",                              "",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "bop_cost",                         "Balance of plant cost",                                                "$",          "",         "Capital Costs",                              "",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "contingency_cost",                 "Contingency cost",                                                     "$",          "",         "Capital Costs",                              "",                                                                "",              "" },
@@ -1220,7 +1218,6 @@ public:
             double solar_field_spec_cost = as_double("solar_field_spec_cost");
             double htf_system_spec_cost = as_double("htf_system_spec_cost");
             double storage_spec_cost = as_double("storage_spec_cost");
-            double fossil_spec_cost = as_double("fossil_spec_cost");
             double heat_sink_spec_cost = as_double("heat_sink_spec_cost");
             double bop_spec_cost = as_double("bop_spec_cost");
             double contingency_percent = as_double("contingency_percent");
@@ -1242,7 +1239,6 @@ public:
             double htf_system_area = c_fresnel.m_Ap_tot;
             // Q_tes
             double heat_sink_mwt = as_double("q_pb_design");
-            double fossil_backup_mwt = heat_sink_mwt;       // MWe
             double power_plant_mwt = heat_sink_mwt;         // MWe
             double bop_mwt = heat_sink_mwt;                 // MWe
             // total_land_area                      // m2
@@ -1250,15 +1246,16 @@ public:
             double sales_tax_rate = as_double("sales_tax_rate");
 
             // Define outputs
-            double heat_sink_cost_out, ts_cost_out, site_improvements_cost_out, bop_cost_out, solar_field_cost_out, htf_system_cost_out, fossil_backup_cost_out, contingency_cost_out,
+            double heat_sink_cost_out, ts_cost_out, site_improvements_cost_out, bop_cost_out, solar_field_cost_out, htf_system_cost_out, contingency_cost_out,
                 total_direct_cost_out, epc_total_cost_out, plm_total_cost_out, total_indirect_cost_out, sales_tax_total_out, total_installed_cost_out, installed_per_capacity_out;
+            double dummy;
 
             // Calculate Costs
-            N_mspt::calculate_mslf_costs(site_improvements_area, site_improvements_spec_cost, solar_field_area, solar_field_spec_cost, htf_system_area, htf_system_spec_cost, Q_tes, storage_spec_cost, fossil_backup_mwt,
-                fossil_spec_cost, heat_sink_mwt, heat_sink_spec_cost, bop_mwt, bop_spec_cost, contingency_percent, total_land_area, nameplate_des, epc_cost_per_acre, epc_cost_percent_direct, epc_cost_per_watt,
+            N_mspt::calculate_mslf_costs(site_improvements_area, site_improvements_spec_cost, solar_field_area, solar_field_spec_cost, htf_system_area, htf_system_spec_cost, Q_tes, storage_spec_cost,0,0,
+                heat_sink_mwt, heat_sink_spec_cost, bop_mwt, bop_spec_cost, contingency_percent, total_land_area, nameplate_des, epc_cost_per_acre, epc_cost_percent_direct, epc_cost_per_watt,
                 epc_cost_fixed, plm_cost_per_acre, plm_cost_percent_direct, plm_cost_per_watt, plm_cost_fixed, sales_tax_rate, sales_tax_percent,
 
-                heat_sink_cost_out, ts_cost_out, site_improvements_cost_out, bop_cost_out, solar_field_cost_out, htf_system_cost_out, fossil_backup_cost_out, contingency_cost_out,
+                heat_sink_cost_out, ts_cost_out, site_improvements_cost_out, bop_cost_out, solar_field_cost_out, htf_system_cost_out, dummy, contingency_cost_out,
                 total_direct_cost_out, epc_total_cost_out, plm_total_cost_out, total_indirect_cost_out, sales_tax_total_out, total_installed_cost_out, installed_per_capacity_out);
 
             // Assign Outputs
@@ -1267,7 +1264,6 @@ public:
                 assign("solar_field_cost", solar_field_cost_out);
                 assign("htf_system_cost", htf_system_cost_out);
                 assign("ts_cost", ts_cost_out);
-                assign("fossil_backup_cost", fossil_backup_cost_out);
                 assign("heat_sink_cost", heat_sink_cost_out);
                 assign("bop_cost", bop_cost_out);
                 assign("contingency_cost", contingency_cost_out);
