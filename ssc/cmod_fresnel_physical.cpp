@@ -98,7 +98,7 @@ static var_info _cm_vtab_fresnel_physical[] = {
     /*X*/     /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "rec_su_delay",                "Fixed startup delay time for the receiver",                                             "hr",                  "",                             "Solar_Field",          "*",                "",                 "" },
     /*X*/     /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "rec_qf_delay",                "Energy-based receiver startup delay (fraction of rated thermal power)",                 "-",                   "",                             "Solar_Field",          "*",                "",                 "" },
     /*X*/     /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "p_start",                     "Collector startup energy, per SCA",                                                     "kWe-hr",              "",                             "Solar_Field",          "*",                "",                 "" },
-
+    /*X*/     /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "L_rnr_pb",                    "Length of runner pipe in power block",                                                  "m",                   "",                             "Solar_Field",          "*",                "",                 "" },
 
     // Collector and Receiver
 
@@ -157,7 +157,7 @@ static var_info _cm_vtab_fresnel_physical[] = {
     /*X*/     /*Power Cycle*/{ SSC_INPUT,    SSC_NUMBER,         "cycle_max_frac",              "Maximum turbine over design operation fraction",                                        "",                    "",                             "Powerblock",           "*",                "",                 "" },
     /*X*/     /*Power Cycle*/{ SSC_INPUT,    SSC_NUMBER,         "cycle_cutoff_frac",           "Minimum turbine operation fraction before shutdown",                                    "",                    "",                             "Powerblock",           "*",                "",                 "" },
     /*X*/  /*startup script*/{ SSC_INPUT,    SSC_NUMBER,         "pc_config",                   "0: Steam Rankine (224), 1: user defined",                                               "-",                   "",                             "Powerblock",           "",                 "INTEGER",          "" },
-    /*X*/     /*Power Cycle*/{ SSC_INPUT,    SSC_NUMBER,         "L_rnr_pb",                    "Length of runner pipe in power block",                                                  "m",                   "",                             "Powerblock",           "*",                "",                 "" },
+    
 
 
     // Steam Rankine Cycle										     							 											

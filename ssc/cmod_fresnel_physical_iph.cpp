@@ -97,7 +97,7 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
     /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "rec_su_delay",                "Fixed startup delay time for the receiver",                                             "hr",                  "",                             "Solar_Field",          "*",                "",                 "" },
     /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "rec_qf_delay",                "Energy-based receiver startup delay (fraction of rated thermal power)",                 "-",                   "",                             "Solar_Field",          "*",                "",                 "" },
     /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "p_start",                     "Collector startup energy, per SCA",                                                     "kWe-hr",              "",                             "Solar_Field",          "*",                "",                 "" },
-
+    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "L_rnr_pb",                    "Length of runner pipe in power block",                                                  "m",                   "",                             "Solar_Field",          "*",                "",                 "" },
 
     // Collector and Receiver
 
@@ -693,7 +693,7 @@ public:
                 c_fresnel.m_DP_coefs = as_vector_double("DP_coefs");
                 c_fresnel.m_rec_htf_vol = as_number("rec_htf_vol");
 
-                c_fresnel.m_L_rnr_pb = 0; // No power block line length
+                c_fresnel.m_L_rnr_pb = as_number("L_rnr_pb"); // No power block line length
                 c_fresnel.m_rec_su_delay = as_number("rec_su_delay");
                 c_fresnel.m_rec_qf_delay = as_number("rec_qf_delay");
                 c_fresnel.m_p_start = as_number("p_start");
