@@ -288,8 +288,8 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
     //double T_particle_prop, cp_particle, q_dot_inc_pre_defocus;
     //T_particle_prop = cp_particle = q_dot_inc_pre_defocus = std::numeric_limits<double>::quiet_NaN();
 
-    double m_dot_tot, T_particle_hot, eta, T_htf_prop, cp_htf;
-    m_dot_tot = T_particle_hot = eta = T_htf_prop = cp_htf = std::numeric_limits<double>::quiet_NaN();
+    double m_dot_tot, T_particle_hot, eta, T_htf_prop, cp_htf, W_lift;
+    m_dot_tot = T_particle_hot = eta = T_htf_prop = cp_htf = W_lift = std::numeric_limits<double>::quiet_NaN();
     double Q_inc, Q_refl, Q_adv, Q_rad, Q_transport, Q_thermal, Q_inc_pre_defocus;
     Q_inc = Q_refl = Q_adv = Q_rad = Q_transport = Q_thermal = Q_inc_pre_defocus = std::numeric_limits<double>::quiet_NaN();
     double q_thermal_steadystate, q_thermal_csky;
@@ -637,9 +637,12 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
         od_control = 1.0;		//[-]
     }
 
+    // Particle lift power
+    W_lift = m_dot_tot * (m_h_tower + m_curtain_height) * 9.8067 / m_eta_pump;
+
     outputs.m_m_dot_salt_tot = m_dot_tot * 3600.0;		//[kg/hr] convert from kg/s
     outputs.m_eta_therm = eta;						    //[-] RECEIVER thermal efficiency (includes radiation and convective losses. reflection losses are contained in receiver flux model)
-    outputs.m_W_dot_pump = 0.0;				            //[MW] convert from W
+    outputs.m_W_dot_pump =  W_lift / 1.E6;				            //[MW] convert from W
     outputs.m_q_conv_sum = Q_adv / 1.E6;				//[MW] convert from W
     outputs.m_q_rad_sum = Q_rad / 1.E6;					//[MW] convert from W
     outputs.m_q_dot_refl_loss = Q_refl / 1.E6;

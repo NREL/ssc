@@ -155,7 +155,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_INPUT,     SSC_NUMBER, "rec_su_delay",                       "Fixed startup delay time for the receiver",                                                                                               "hr",           "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "rec_qf_delay",                       "Energy-based receiver startup delay (fraction of rated thermal power)",                                                                   "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "csp.pt.rec.max_oper_frac",           "Maximum receiver mass flow rate fraction",                                                                                                "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "eta_pump",                           "Receiver HTF pump efficiency",                                                                                                            "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "eta_lift",                           "Receiver particle lift efficiency",                                                                                                            "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "piping_length_mult",                 "Piping length multiplier",                                                                                                                "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "piping_length_const",                "Piping constant length",                                                                                                                  "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
 
@@ -237,7 +237,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
 
     // Power Cycle Inputs
     { SSC_INPUT,     SSC_NUMBER, "pc_config",                          "PC configuration 0=Steam Rankine (224), 1=user defined",                                                                                  "",             "",                                  "Power Cycle",                              "?=0",                                                              "INTEGER",       ""},
-    { SSC_INPUT,     SSC_NUMBER, "pb_pump_coef",                       "Pumping power to move 1kg of HTF through PB loop",                                                                                        "kW/kg",        "",                                  "Power Cycle",                              "*",                                                                "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "phx_height",                         "Height particles travel from Hot TES outlet to the top of the PHX",                                                                       "m",            "",                                  "Power Cycle",                              "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "startup_time",                       "Time needed for power block startup",                                                                                                     "hr",           "",                                  "Power Cycle",                              "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "startup_frac",                       "Fraction of design thermal power needed for startup",                                                                                     "none",         "",                                  "Power Cycle",                              "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "cycle_max_frac",                     "Maximum turbine over design operation fraction",                                                                                          "",             "",                                  "Power Cycle",                              "*",                                                                "",              ""},
@@ -539,7 +539,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_OUTPUT,    SSC_ARRAY,  "q_piping_losses",                    "Receiver header/tower piping losses",                                                                                                     "MWt",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "q_thermal_loss",                     "Receiver convection and emission losses",                                                                                                 "MWt",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     //{ SSC_OUTPUT,    SSC_ARRAY,  "q_dot_reflection_loss",              "Receiver reflection losses",                                                                                                              "MWt",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
-    { SSC_OUTPUT,    SSC_ARRAY,  "P_tower_pump",                       "Receiver and tower HTF pumping power",                                                                                                    "MWe",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
+    { SSC_OUTPUT,    SSC_ARRAY,  "P_tower_lift",                       "Receiver and tower particle lift power",                                                                                                    "MWe",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
 
     //{ SSC_OUTPUT,    SSC_ARRAY,  "T_rec_out_end",                      "Receiver HTF outlet temperature at end of timestep",                                                                                      "C",            "",								   "CR",                                       "sim_type=1&is_rec_model_trans=1",                                  "",              ""},
     //{ SSC_OUTPUT,    SSC_ARRAY,  "T_rec_out_max",                      "Receiver maximum HTF outlet temperature during timestep",                                                                                 "C",            "",                                  "CR",                                       "sim_type=1&is_rec_model_trans=1",                                  "",              ""},
@@ -991,7 +991,9 @@ public:
             pc->m_q_sby_frac = as_double("q_sby_frac");
             pc->m_startup_time = as_double("startup_time");
             pc->m_startup_frac = as_double("startup_frac");
-            pc->m_htf_pump_coef = as_double("pb_pump_coef");
+
+            // Calculate power block pumping coefficient based on TES and PHX heights
+            pc->m_htf_pump_coef = ((as_double("h_tank") + as_double("phx_height")) * 9.8067 / as_double("eta_lift")) / 1.e3; // Convert from W/kg/s to kW/kg/s
             pc->m_pc_fl = as_integer("rec_htf");                            // power cycle HTF is same as receiver HTF
             pc->m_pc_fl_props = as_matrix("field_fl_props");
 
@@ -1113,7 +1115,7 @@ public:
             as_double("T_htf_hot_des"), as_double("T_htf_cold_des"),
             as_double("f_rec_min"), q_dot_rec_des,
             as_double("rec_su_delay"), as_double("rec_qf_delay"),
-            as_double("csp.pt.rec.max_oper_frac"), as_double("eta_pump"),
+            as_double("csp.pt.rec.max_oper_frac"), as_double("eta_lift"),
             as_double("d_tube_out"), as_double("th_tube"),
             as_double("piping_loss_coefficient"), as_double("piping_length_const"), as_double("piping_length_mult"),
             as_integer("rec_htf"), as_matrix("field_fl_props"),
@@ -1214,7 +1216,7 @@ public:
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_LOSS, allocate("q_thermal_loss", n_steps_fixed), n_steps_fixed);
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_REFL_LOSS, allocate("q_dot_reflection_loss", n_steps_fixed), n_steps_fixed);
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_W_DOT_TRACKING, allocate("pparasi", n_steps_fixed), n_steps_fixed);
-        collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_W_DOT_PUMP, allocate("P_tower_pump", n_steps_fixed), n_steps_fixed);
+        collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_W_DOT_PUMP, allocate("P_tower_lift", n_steps_fixed), n_steps_fixed);
 
             // Transient model specific outputs
         //if (is_rec_model_trans) {
@@ -1298,7 +1300,7 @@ public:
             as_double("T_htf_cold_des"),
             as_double("h_tank_min"),
             as_double("tes_init_hot_htf_percent"),
-            as_double("pb_pump_coef"),
+            0.0,
             as_boolean("tanks_in_parallel"),        //[-]
             as_double("packed_vol_frac"),
             1.85,                                   //[m/s]
