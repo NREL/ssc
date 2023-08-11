@@ -1028,6 +1028,7 @@ public:
             as_double("init_hot_htf_percent"),
             as_double("pb_pump_coef"),
             as_boolean("tanks_in_parallel"),
+            1.0,
             as_double("V_tes_des"),
             as_boolean("calc_design_pipe_vals"),
             as_double("tes_pump_coef"),

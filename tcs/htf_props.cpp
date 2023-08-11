@@ -439,7 +439,7 @@ double HTFProperties::dens(double T_K, double P)
             return -5.878E-1*T_C + 1974.0;  // Zhao 2020 Molten Chloride Thermophysical Properties, Chemical Optimization, and Purification Purification
         case Bauxite_particles:
             // This doesn't not account for volume fraction
-            return 3300;            // Albrecht 2019 "Design and operating considerations for a shell-and-plate, moving packed-bed, particle-to-sCO2 heat exchanger"
+            return 3300.0;            // Albrecht 2019 "Design and operating considerations for a shell-and-plate, moving packed-bed, particle-to-sCO2 heat exchanger"
         case User_defined:
 			if ( m_userTable.nrows() < 3 )
 						return std::numeric_limits<double>::quiet_NaN();

@@ -667,6 +667,7 @@ public:
             as_double("tes_init_hot_htf_percent"),
             0.0,                               //[kW/kg/s] No htf pump losses in direct TES
             false,                             //[-] False: Field HTF always goes to TES. PC HTF always comes from TES. ETES should not simultaneously operate heater and cycle
+            1.0,                               //[-]
             1.85,                              //[m/s]
             false                              // for now, to get 'tanks_in_parallel' to work
         );
@@ -723,6 +724,7 @@ public:
             100.0 - as_double("tes_init_hot_htf_percent"),   //[-] Cold storage is charged when cold tank is full
             0.0,                                             //[kW/kg/s] No htf pump losses in direct TES
             false,                                           //[-] False: Field HTF always goes to TES. PC HTF always comes from TES. ETES should not simultaneously operate heater and cycle
+            1.0,                                             //[-]
             1.85,                                            //[m/s]
             false                                            // for now, to get 'tanks_in_parallel' to work
         ));

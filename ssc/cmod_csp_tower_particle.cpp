@@ -228,6 +228,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_INPUT,     SSC_NUMBER, "u_tank",                             "Loss coefficient from the tank",                                                                                                          "W/m2-K",       "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "tank_pairs",                         "Number of equivalent tank pairs",                                                                                                         "",             "",                                  "Thermal Storage",                          "*",                                                                "INTEGER",       ""},
     { SSC_INPUT,     SSC_NUMBER, "cold_tank_Thtr",                     "Minimum allowable cold tank HTF temperature",                                                                                             "C",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "packed_vol_frac",                    "Packed volume fraction",                                                                                             "-",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     // TES parameters - 2 tank
     { SSC_INPUT,     SSC_NUMBER, "h_tank_min",                         "Minimum allowable HTF height in storage tank",                                                                                            "m",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "hot_tank_Thtr",                      "Minimum allowable hot tank HTF temperature",                                                                                              "C",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
@@ -1298,7 +1299,8 @@ public:
             as_double("h_tank_min"),
             as_double("tes_init_hot_htf_percent"),
             as_double("pb_pump_coef"),
-            as_boolean("tanks_in_parallel"),        //[-]       
+            as_boolean("tanks_in_parallel"),        //[-]
+            as_double("packed_vol_frac"),
             1.85,                                   //[m/s]
             false                                   // for now, to get 'tanks_in_parallel' to work
         );

@@ -740,6 +740,7 @@ public:
 		    as_double("init_hot_htf_percent"),		  //[-]
 		    as_double("pb_pump_coef"),		          //[kWe/kg/s]
             as_boolean("tanks_in_parallel"),          //[-]
+            1.0,
 		    1.85,                                     //[m/s]
             false                                     // for now, to get 'tanks_in_parallel' to work
         );
