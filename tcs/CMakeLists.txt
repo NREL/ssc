@@ -100,7 +100,6 @@ set(TCS_SRC
 		atmospheric_aod.h
 		base_dispatch.h
 		cavity_calcs.h
-		co2props_nn1.h
 		co2_compressor_library.h
 		CO2_properties.h
 		co2_testing.h
