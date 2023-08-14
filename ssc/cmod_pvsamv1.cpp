@@ -583,8 +583,8 @@ static var_info _cm_vtab_pvsamv1[] = {
         // NOTE:  other battery storage model inputs and outputs are defined in batt_common.h/batt_common.cpp
 
         // PV subhourly clipping inputs
-        { SSC_INPUT, SSC_NUMBER,   "en_subhourly_clipping",                              "Enable subhourly clipping",                        "0/1",    "",                                                                                                                                                                                      "PV Losses",                                      "?=0",                                "INTEGER,MIN=0,MAX=1", "" },
-        { SSC_INPUT, SSC_MATRIX,   "subhourly_clipping_matrix",                   "PV Subhourly clipping correction matrix",             "",    "",                     "PV Losses",                      "en_subhourly_clipping=1",                    "",                               "" },
+        { SSC_INPUT, SSC_NUMBER,   "enable_subhourly_clipping",                              "Enable subhourly clipping",                        "0/1",    "",                                                                                                                                                                                      "PV Losses",                                      "?=0",                                "INTEGER,MIN=0,MAX=1", "" },
+        { SSC_INPUT, SSC_MATRIX,   "subhourly_clipping_matrix",                   "PV Subhourly clipping correction matrix",             "",    "",                     "PV Losses",                      "enable_subhourly_clipping=1",                    "",                               "" },
 
 
     // outputs
@@ -2626,7 +2626,7 @@ void cm_pvsamv1::exec()
                 acpwr_gross = sharedInverter->powerAC_kW;
             }
 
-            if (as_boolean("en_subhourly_clipping")) {
+            if (as_boolean("enable_subhourly_clipping")) {
                 //Calculate DNI clearness index (time step basis)
                 double dni_clearness_index = PVSystem->p_DNIIndex[0][idx];
                 //Calculate Clipping Potential ((P_dc,dryclean - P_ac,0) / P_ac,0) (time step basis)
@@ -2660,7 +2660,7 @@ void cm_pvsamv1::exec()
                     }
                 }
 
-                acpwr_gross *= sub_clipping_matrix.at(dni_row, clip_pot_col);
+                acpwr_gross *= (1 - sub_clipping_matrix.at(dni_row, clip_pot_col));
             }
 
 

@@ -861,6 +861,12 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
             p_derateSelfShadingDiffuse.push_back(cm->allocate(prefix + "ss_diffuse_derate", numberOfWeatherFileRecords));
             p_derateSelfShadingReflected.push_back(cm->allocate(prefix + "ss_reflected_derate", numberOfWeatherFileRecords));
 
+            p_poaBeamFrontCS.push_back(cm->allocate(prefix + "poa_beam_front_cs", numberOfWeatherFileRecords));
+            p_poaDiffuseFrontCS.push_back(cm->allocate(prefix + "poa_diffuse_front_cs", numberOfWeatherFileRecords));
+            p_poaGroundFrontCS.push_back(cm->allocate(prefix + "poa_ground_front_cs", numberOfWeatherFileRecords));
+            p_DNIIndex.push_back(cm->allocate(prefix + "dni_index", numberOfWeatherFileRecords));
+            p_ClippingPotential.push_back(cm->allocate(prefix + "clipping_potential", numberOfWeatherFileRecords));
+
             if (enableSnowModel) {
                 p_snowLoss.push_back(cm->allocate(prefix + "snow_loss", numberOfWeatherFileRecords));
                 p_snowCoverage.push_back(cm->allocate(prefix + "snow_coverage", numberOfWeatherFileRecords));
@@ -928,6 +934,8 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
     p_dcLifetimeLoss = cm->allocate("dc_lifetime_loss", numberOfWeatherFileRecords);
     p_systemDCPower = cm->allocate("dc_net", numberOfLifetimeRecords);
     p_systemACPower = cm->allocate("gen", numberOfLifetimeRecords);
+
+    p_systemDCPowerCS = cm->allocate("dc_net_clearsky", numberOfLifetimeRecords);
 
     if (Simulation->useLifetimeOutput)
     {
