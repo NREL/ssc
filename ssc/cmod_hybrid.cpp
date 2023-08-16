@@ -97,7 +97,7 @@ public:
             ssc_number_t inflation_rate;
             int len, analysisPeriod;
             std::vector<size_t> genTimestepsPerHour;
-
+            bool ts_adj = false; // keep track of whether time step is adjusted for log messages
 
             for (size_t igen = 0; igen < generators.size(); igen++) {
 
@@ -107,7 +107,7 @@ public:
                 std::string& compute_module = generators[igen];
                 var_data *compute_module_inputs = input_table->table.lookup(compute_module);
                 if (compute_module_inputs->type != SSC_TABLE)
-                    throw exec_error("hybrid", "No input input_table found for ." + compute_module);
+                    throw exec_error("hybrid", "No input input_table found for " + compute_module);
 
                 ssc_number_t system_capacity = compute_module_inputs->table.lookup("system_capacity")->num;
 
@@ -142,10 +142,14 @@ public:
                 // get minimum timestep from gen vector
                 ssc_number_t* curGen = ssc_data_get_array(compute_module_outputs, "gen", &len);
                 currentTimeStepsPerHour = len / 8760;
+                log(util::format("Simulation time step is %d minutes for %s.", 60 / int(maximumTimeStepsPerHour), compute_module.c_str()), SSC_NOTICE);
                 if (compute_module_inputs->table.lookup("system_use_lifetime_output")->num > 0) // below - assuming single year only
                     currentTimeStepsPerHour /= analysisPeriod;
                 if (currentTimeStepsPerHour > maximumTimeStepsPerHour)
+                {
                     maximumTimeStepsPerHour = currentTimeStepsPerHour;
+                    ts_adj = true;
+                }
                 genTimestepsPerHour.push_back(currentTimeStepsPerHour);
 
                 // add production O and M calculations - done below before financial calculations, production, capacity, annual and land lease...
@@ -201,6 +205,7 @@ public:
             add generation from j for the correct timestep I
             need lifetime "gen" for utility rate and financial modules with system_use_lifetime_output set to 1 so that degradation is accounted for.
 */
+            if ( ts_adj ) log(util::format("Simulation time step for hybrid system is %d minutes.", 60 / int(maximumTimeStepsPerHour), SSC_NOTICE));
             size_t genLength = 8760*maximumTimeStepsPerHour*analysisPeriod;// assumes single year gen
             ssc_number_t* pGen = ((var_table*)outputs)->allocate("gen", genLength); // add to top level "output" - assumes analysis period the same for all generators
 //            ssc_number_t* pGen = ((var_table*)outputs)->allocate("gen", genLength); // move to top level to use accumlate funtions below - fails precheck
