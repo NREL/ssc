@@ -690,7 +690,7 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO* 
     enableSnowModel = cm->as_boolean("en_snow_model");
 
     // The shared inverter of the PV array and a tightly-coupled DC connected battery
-    std::unique_ptr<SharedInverter> tmpSharedInverter(new SharedInverter(Inverter->inverterType, numberOfInverters, &Inverter->sandiaInverter, &Inverter->partloadInverter, &Inverter->ondInverter));
+    std::unique_ptr<SharedInverter> tmpSharedInverter(new SharedInverter(Inverter->inverterType, numberOfInverters, &Inverter->sandiaInverter, &Inverter->partloadInverter, &Inverter->ondInverter, numberOfInvertersClipping));
     m_sharedInverter = std::move(tmpSharedInverter);
 
     // Register shared inverter with inverter_IO
