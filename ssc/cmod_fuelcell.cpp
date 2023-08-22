@@ -118,6 +118,7 @@ cm_fuelcell::cm_fuelcell()
 	add_var_info(vtab_fuelcell_input);
 	add_var_info(vtab_fuelcell_output);
 	add_var_info(vtab_technology_outputs);
+    add_var_info(vtab_hybrid_tech_om);
 }
 
 // Have to add this since compute module isn't actually fully constructed until compute is called with

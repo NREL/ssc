@@ -281,7 +281,7 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 if (compute_module_inputs->type != SSC_TABLE)
                     throw exec_error("hybrid", "No input input_table found for ." + compute_module);
 
-                ssc_number_t system_capacity = compute_module_inputs->table.lookup("system_capacity")->num; // TODO: check capacity definitions for batteries and hybrid systems
+                ssc_number_t system_capacity = compute_module_inputs->table.lookup("fuelcell_power_nameplate")->num; // TODO: check capacity definitions for batteries and hybrid systems
                 hybridSystemCapacity += system_capacity;
                 hybridTotalInstalledCost += compute_module_inputs->table.lookup("total_installed_cost")->num;
                 analysisPeriod = (int)compute_module_inputs->table.lookup("analysis_period")->num;
@@ -312,14 +312,15 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 ssc_number_t* pOMProduction = ((var_table*)compute_module_outputs)->allocate("cf_om_production", analysisPeriod+1);
                 ssc_number_t* pOMCapacity = ((var_table*)compute_module_outputs)->allocate("cf_om_capacity", analysisPeriod+1);
                 ssc_number_t* pOMFixed = ((var_table*)compute_module_outputs)->allocate("cf_om_fixed", analysisPeriod+1);
+                ssc_number_t* pFuelCellReplacement = ((var_table*)compute_module_outputs)->allocate("cf_fuelcell_replacement_cost_schedule", analysisPeriod + 1);
                 inflation_rate = compute_module_inputs->table.lookup("inflation_rate")->num * 0.01; // can retrieve from "Hybrid" vartable directly
                 escal_or_annual(input, pOMFixed, analysisPeriod, "om_fuelcell_fixed_cost", inflation_rate, 1.0, false, input.as_double("om_fixed_escal") * 0.01); // $
                 escal_or_annual(input, pOMProduction, analysisPeriod, "om_fuelcell_variable_cost", inflation_rate, 0.001, false, input.as_double("om_production_escal") * 0.01); // $/kW
                 escal_or_annual(input, pOMCapacity, analysisPeriod, "om_fuelcell_capacity_cost", inflation_rate, system_capacity, false, input.as_double("om_capacity_escal") * 0.01); // $
-                nameplate = ((var_table*)compute_module_outputs)->as_number("om_fuelcell_nameplate");
+                nameplate = system_capacity;
                 fuelcell_discharged = ((var_table*)compute_module_outputs)->as_vector_double("fuelcell_annual_energy_discharged");
                 if (fuelcell_discharged.size() == 2) { // ssc #992
-                    double first_val = fuelcell_discharged[1];
+                    double first_val = fuelcell_discharged[0]; // first value differs here!
                     fuelcell_discharged.resize(analysisPeriod + 1, first_val);
                 }
                 if (fuelcell_discharged.size() != (size_t)analysisPeriod + 1)
@@ -334,11 +335,15 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                     else // user specified
                         fuelcell_rep = ((var_table*)compute_module_outputs)->as_array("fuelcell_replacement_schedule", &count); // replacements per year user-defined
 
-                    ssc_number_t* pFuelCellReplacement = ((var_table*)compute_module_outputs)->allocate("cf_fuelcell_replacement_cost_schedule", analysisPeriod+1);
                     escal_or_annual(input, pFuelCellReplacement, analysisPeriod, "om_fuelcell_replacement_cost", inflation_rate, nameplate, false, input.as_double("om_replacement_cost_escal") * 0.01);
 
                     for (size_t i = 0; i < (size_t)analysisPeriod && i < count; i++) {
                         pFuelCellReplacement[i + 1] = fuelcell_rep[i] * pFuelCellReplacement[i + 1];
+                    }
+                }
+                else {
+                    for (size_t i = 0; i < (size_t)analysisPeriod; i++) {
+                        pFuelCellReplacement[i + 1] = 0.0;
                     }
                 }
                 // production O and M conversion to $
@@ -534,8 +539,9 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 ssc_number_t* om_production = fuelcell_outputs.as_array("cf_om_production", &count_fc);
                 ssc_number_t* om_fixed = fuelcell_outputs.as_array("cf_om_fixed", &count_fc);
                 ssc_number_t* om_capacity = fuelcell_outputs.as_array("cf_om_capacity", &count_fc);
+                ssc_number_t* om_replacement = fuelcell_outputs.as_array("cf_fuelcell_replacement_cost_schedule", &count_fc);// optional
                 for (size_t y = 1; y <= analysisPeriod; y++) {
-                    pHybridOMSum[y] += om_production[y] + om_fixed[y] + om_capacity[y];
+                    pHybridOMSum[y] += om_production[y] + om_fixed[y] + om_capacity[y] + om_replacement[y];
                 }
             }
 
