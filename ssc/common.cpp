@@ -972,6 +972,7 @@ var_info vtab_hybrid_tech_om[] = {
     { SSC_OUTPUT,   SSC_ARRAY,      "cf_om_fixed",                          "fixed O&M costs",           "$",   "",             "HybridTech",       "",         "",             "" },
     { SSC_OUTPUT,   SSC_ARRAY,      "cf_om_land_lease",                     "land lease O&M costs",      "$",   "",             "HybridTech",       "",         "",             "" },
     { SSC_OUTPUT,   SSC_ARRAY,      "cf_battery_replacement_cost_schedule", "replacement O&M costs",     "$",   "",             "HybridTech",       "",         "",             "" },
+    { SSC_OUTPUT,   SSC_ARRAY,      "cf_fuelcell_replacement_cost_schedule", "replacement O&M costs",     "$",   "",             "HybridTech",       "",         "",             "" },
     { SSC_OUTPUT,   SSC_ARRAY,      "cf_energy_net",                        "annual energy",             "kWh", "",             "HybridTech",       "",         "",             "" },
 var_info_invalid };
 
