@@ -182,7 +182,7 @@ protected:
 
 	/**
 	The dispatch mode.
-	For behind-the-meter dispatch: 0 = PEAK_SHAVING, 1 = MAINTAIN_TARGET, 2 = CUSTOM, 3 = MANUAL, 4 = FORECAST
+	For behind-the-meter dispatch: 0 = PEAK_SHAVING, 1 = MAINTAIN_TARGET, 2 = CUSTOM, 3 = MANUAL, 4 = FORECAST, 5 = CARBON_FREE
 	For front-of-meter dispatch: 0 = FOM_AUTOMATED_ECONOMIC, 1 = FOM_PV_SMOOTHING, 2 = FOM_CUSTOM_DISPATCH, 3 = FOM_MANUAL
 	*/
 	int _mode;

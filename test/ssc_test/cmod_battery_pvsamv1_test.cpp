@@ -117,17 +117,17 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelIntegr
     pairs["analysis_period"] = 1;
     set_array(data, "load", load_profile_path, 8760); // Load is required for peak shaving controllers
 
-    ssc_number_t expectedEnergy[3] = { 8741, 8741, 8831 };
-    ssc_number_t expectedBatteryChargeEnergy[3] = { 1442, 1443, 258 };
-    ssc_number_t expectedBatteryDischargeEnergy[3] = { 1321, 1323, 233 };
+    ssc_number_t expectedEnergy[4] = { 8741, 8741, 8831, 8719 };
+    ssc_number_t expectedBatteryChargeEnergy[4] = { 1442, 1443, 258, 1398 };
+    ssc_number_t expectedBatteryDischargeEnergy[4] = { 1321, 1323, 233, 1282 };
 
-    ssc_number_t peakKwCharge[3] = { -2.91, -2.66, -2.25 };
-    ssc_number_t peakKwDischarge[3] = { 1.39, 1.73, 0.97 };
-    ssc_number_t peakCycles[3] = { 1, 1, 1 };
-    ssc_number_t avgCycles[3] = { 1, 1, 0.4904 };
+    ssc_number_t peakKwCharge[4] = { -2.91, -2.66, -2.25, -2.87 };
+    ssc_number_t peakKwDischarge[4] = { 1.39, 1.73, 0.97, 1.40 };
+    ssc_number_t peakCycles[4] = { 1, 1, 1, 1 };
+    ssc_number_t avgCycles[4] = { 1, 1, 0.4904, 1 };
 
-    // Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
-    for (int i = 0; i < 3; i++) {
+    // Test peak shaving look ahead, peak shaving look behind, and automated grid power target, and carbon-free energy. Others require additional input data
+    for (int i = 0; i < 4; i++) {
         switch (i) {
             case 0:
                 // Peak shaving, look ahead
@@ -147,7 +147,12 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelIntegr
                 pairs["batt_dispatch_wf_forecast_choice"] = 0;
                 pairs["batt_dispatch_load_forecast_choice"] = 0;
                 break;
-
+            case 3:
+                // Carbon-free energy dispatch, which is set internally to grid power targets with a constant target of zero
+                pairs["batt_dispatch_choice"] = 5;
+                pairs["batt_dispatch_wf_forecast_choice"] = 0;
+                pairs["batt_dispatch_load_forecast_choice"] = 0;
+                break;
         }
 
         int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
@@ -350,20 +355,20 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegr
     pairs["analysis_period"] = 1;
     set_array(data, "load", load_profile_path, 8760); // Load is required for peak shaving controllers
 
-    ssc_number_t expectedEnergy[3] = { 8781, 8784, 8846 };
-    ssc_number_t expectedBatteryChargeEnergy[3] = { 1412.75, 1414.89, 253.2 };
-    ssc_number_t expectedBatteryDischargeEnergy[3] = { 1283.8, 1285.88, 226.3 };
+    ssc_number_t expectedEnergy[4] = { 8781, 8784, 8846, 8757 };
+    ssc_number_t expectedBatteryChargeEnergy[4] = { 1412.75, 1414.89, 253.2, 1328.4 };
+    ssc_number_t expectedBatteryDischargeEnergy[4] = { 1283.8, 1285.88, 226.3, 1247.2 };
 
-    ssc_number_t peakKwCharge[3] = { -3.06, -2.91, -2.51 };
-    ssc_number_t peakKwDischarge[3] = { 1.40, 1.74, 0.967 };
-    ssc_number_t peakCycles[3] = { 1, 1, 1 };
-    ssc_number_t avgCycles[3] = { 1.0, 1.0, 0.4794 };
+    ssc_number_t peakKwCharge[4] = { -3.06, -2.91, -2.51, -3.06 };
+    ssc_number_t peakKwDischarge[4] = { 1.40, 1.74, 0.967, 1.41 };
+    ssc_number_t peakCycles[4] = { 1, 1, 1, 1 };
+    ssc_number_t avgCycles[4] = { 1.0, 1.0, 0.4794, 1.0 };
 
-    ssc_number_t q_rel[3] = { 97.198, 97.204, 97.239 };
-    ssc_number_t cyc_avg[3] = { 33.73, 33.80, 12.381 };
+    ssc_number_t q_rel[4] = { 97.198, 97.204, 97.239, 97.206 };
+    ssc_number_t cyc_avg[4] = { 33.73, 33.80, 12.381, 33.66 };
 
     // Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 4; i++) {
         switch (i) {
         case 0:
             // Peak shaving, look ahead
@@ -383,7 +388,12 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegr
             pairs["batt_dispatch_wf_forecast_choice"] = 0;
             pairs["batt_dispatch_load_forecast_choice"] = 0;
             break;
-
+        case 3:
+            // Input grid power targets
+            pairs["batt_dispatch_choice"] = 5;
+            pairs["batt_dispatch_wf_forecast_choice"] = 0;
+            pairs["batt_dispatch_load_forecast_choice"] = 0;
+            break;
         }
 
         int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
