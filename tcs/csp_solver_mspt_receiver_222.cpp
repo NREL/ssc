@@ -49,7 +49,8 @@ C_mspt_receiver_222::C_mspt_receiver_222(double h_tower /*m*/, double epsilon /*
     int night_recirc /*-*/,
     int n_panels /*-*/, double d_rec /*m*/, double h_rec /*m*/,
     int flow_type /*-*/, int crossover_shift /*-*/, double hl_ffact /*-*/,
-    double T_salt_hot_target /*C*/, double csky_frac /*-*/) : C_pt_receiver(h_tower, epsilon,
+    double T_salt_hot_target /*C*/, double csky_frac /*-*/,
+    bool is_calc_od_tube /*-*/, double W_dot_rec_target /*MWe*/) : C_pt_receiver(h_tower, epsilon,
         T_htf_hot_des, T_htf_cold_des,
         f_rec_min, q_dot_rec_des,
         rec_su_delay, rec_qf_delay,
@@ -70,6 +71,9 @@ C_mspt_receiver_222::C_mspt_receiver_222(double h_tower /*m*/, double epsilon /*
     m_hl_ffact = hl_ffact;      //[-]
     m_T_salt_hot_target = T_salt_hot_target + 273.15;   //[K] convert from C
     m_csky_frac = csky_frac;    //[-]
+
+    m_is_calc_od_tube = is_calc_od_tube;    //[-]
+    m_W_dot_rec_target = W_dot_rec_target;  //[MWe]
 
     // Hardcoded (for now?) parameters
     m_tol_od = 0.001;		//[-] Tolerance for over-design iteration
@@ -193,12 +197,39 @@ void C_mspt_receiver_222::init()
 {
     C_pt_receiver::init();
 
-    init_mspt_common();
+    if (m_is_calc_od_tube && std::isfinite(m_W_dot_rec_target)) {
 
-    design_point_steady_state(m_eta_thermal_des_calc,
-        m_W_dot_rec_pump_des_calc,
-        m_W_dot_pumping_tower_share, m_W_dot_pumping_rec_share, 
-        m_rec_pump_coef, m_vel_htf_des);
+        // Guess OD
+        double od_tube_init = m_od_tube;    //[m]
+
+        C_MEQ__calc_OD_des_for_W_dot_pump_rec c_rec_des_eq(this);
+        C_monotonic_eq_solver c_rec_des_solver(c_rec_des_eq);
+
+        c_rec_des_solver.settings(1.E-4, 25, 0.002, 0.5, true);
+
+        double od_tol_solved = std::numeric_limits<double>::quiet_NaN();
+        double od_solved = std::numeric_limits<double>::quiet_NaN();
+        int od_iter_solved = -1;
+        int od_code = 0;
+
+        try {
+            od_code = c_rec_des_solver.solve(m_od_tube, 0.9 * m_od_tube, m_W_dot_rec_target, od_solved, od_tol_solved, od_iter_solved);
+        }
+        catch (C_csp_exception) {
+            throw(C_csp_exception("receiver tube design iteration failed"));
+        }
+
+    }
+    else {
+
+        init_mspt_common();
+
+        design_point_steady_state(m_eta_thermal_des_calc,
+            m_W_dot_rec_pump_des_calc,
+            m_W_dot_pumping_tower_share, m_W_dot_pumping_rec_share,
+            m_rec_pump_coef, m_vel_htf_des);
+
+    }
 	
 	m_ncall = -1;
 
@@ -511,6 +542,28 @@ void C_mspt_receiver_222::call(const C_csp_weatherreader::S_outputs& weather,
         plant_defocus,
         flux_map_input, input_operation_mode,
         T_salt_cold_in);
+}
+ 
+C_mspt_receiver_222::C_MEQ__calc_OD_des_for_W_dot_pump_rec::C_MEQ__calc_OD_des_for_W_dot_pump_rec(C_mspt_receiver_222* pc_rec)
+{
+    mpc_rec = pc_rec;
+}
+
+int C_mspt_receiver_222::C_MEQ__calc_OD_des_for_W_dot_pump_rec::operator()(double OD /*m*/, double* W_dot_pump_des /*MWe*/)
+{
+    mpc_rec->m_od_tube = OD;        //[m]
+
+    mpc_rec->init_mspt_common();
+
+    mpc_rec->design_point_steady_state(mpc_rec->m_eta_thermal_des_calc,
+        mpc_rec->m_W_dot_rec_pump_des_calc,
+        mpc_rec->m_W_dot_pumping_tower_share, mpc_rec->m_W_dot_pumping_rec_share,
+        mpc_rec->m_rec_pump_coef, mpc_rec->m_vel_htf_des);
+
+    // Check design pressure drop against some target
+    *W_dot_pump_des = mpc_rec->m_W_dot_pumping_rec_share;       //[MWe]
+
+    return 0;
 }
 
 C_mspt_receiver_222::C_MEQ__q_dot_des::C_MEQ__q_dot_des(C_mspt_receiver_222* pc_rec)
@@ -1117,10 +1170,15 @@ void C_mspt_receiver_222::calculate_steady_state_soln(s_steady_state_soln &soln,
 				soln.q_dot_loss.at(i_fp) = soln.q_dot_rad.at(i_fp) + soln.q_dot_conv.at(i_fp);			//[W] Total overall losses per node
 				soln.q_dot_abs.at(i_fp) = soln.q_dot_inc.at(i_fp) - soln.q_dot_loss.at(i_fp);			//[W] Absorbed flux at each node
 
-				// Calculate the temperature drop across the receiver tube wall... assume a cylindrical thermal resistance
+				// Calculate the temperature drop across the receiver tube wall
 				double T_wall = (soln.T_s.at(i_fp) + soln.T_panel_ave.at(i_fp)) / 2.0;				//[K] The temperature at which the conductivity of the wall is evaluated
 				double k_tube = tube_material.cond(T_wall);											//[W/m-K] The conductivity of the wall
-				double R_tube_wall = m_th_tube / (k_tube*m_h_rec*m_d_rec*pow(CSP::pi, 2) / 2.0 / (double)m_n_panels);	//[K/W] The thermal resistance of the wall
+
+                double R_tube_wall = m_th_tube / (k_tube*m_h_rec*m_d_rec*pow(CSP::pi, 2) / 2.0 / (double)m_n_panels);	//[K/W] The thermal resistance of the wall
+
+                // switching to using cylindrical resistance term. Remove '2' from before CSP::pi because only using front half of tube
+                // in default case, makes 1.0002 difference in annual energy
+                //double R_tube_wall = log(m_od_tube/m_id_tube)/(CSP::pi*m_h_rec*k_tube)/(double)m_n_t;
 
 				// Calculations for the inside of the tube						
 				double mu_coolant = field_htfProps.visc(T_coolant_prop);							//[kg/m-s] Absolute viscosity of the coolant

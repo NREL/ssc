@@ -1726,7 +1726,7 @@ int C_PartialCooling_Cycle::solve_OD_mc_cooler_fan_power(double T_amb /*K*/, dou
     double tol_acc = od_tol / 10.0;
 
     int IP_err_code = mc_mc_air_cooler.off_design_given_T_out(T_amb, mv_temp_od[PC_OUT], mv_pres_od[PC_OUT],
-        ms_od_solved.m_m_dot_mc, mv_temp_od[MC_IN], tol_acc, od_tol, W_dot_mc_cooler_fan, P_co2_out);
+        ms_od_solved.m_m_dot_mc, mv_temp_od[MC_IN], tol_acc, tol_acc, W_dot_mc_cooler_fan, P_co2_out);
 
     ms_od_solved.ms_mc_air_cooler_od_solved = mc_mc_air_cooler.get_od_solved();
 
@@ -1739,7 +1739,7 @@ int C_PartialCooling_Cycle::solve_OD_pc_cooler_fan_power(double T_amb /*K*/, dou
     double tol_acc = od_tol / 10.0;
 
     int LP_err_code = mc_pc_air_cooler.off_design_given_T_out(T_amb, mv_temp_od[LTR_LP_OUT], mv_pres_od[LTR_LP_OUT],
-        ms_od_solved.m_m_dot_pc, mv_temp_od[PC_IN], tol_acc, od_tol, W_dot_pc_cooler_fan, P_co2_out);
+        ms_od_solved.m_m_dot_pc, mv_temp_od[PC_IN], tol_acc, tol_acc, W_dot_pc_cooler_fan, P_co2_out);
 
     ms_od_solved.ms_pc_air_cooler_od_solved = mc_pc_air_cooler.get_od_solved();
 
