@@ -351,7 +351,6 @@ struct PVSystem_IO
     std::vector<ssc_number_t*> p_poaDiffuseFrontCS;
     std::vector<ssc_number_t*> p_poaGroundFrontCS;
     std::vector<ssc_number_t*> p_DNIIndex;
-    std::vector<ssc_number_t*> p_ClippingPotential;
 
 	// MPPT level outputs
 	std::vector<ssc_number_t *> p_mpptVoltage; /// An output vector containing input DC voltage in V to each mppt input
@@ -418,6 +417,9 @@ struct PVSystem_IO
 	ssc_number_t *p_systemDCPower; // kWdc
     ssc_number_t* p_systemDCPowerCS; // kWdc
 	ssc_number_t *p_systemACPower; // kWac
+
+    ssc_number_t *p_subhourlyClippingLoss;
+    ssc_number_t* p_ClippingPotential;
 };
 
 /**

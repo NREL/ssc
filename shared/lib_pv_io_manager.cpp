@@ -860,12 +860,10 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
             p_derateSelfShading.push_back(cm->allocate(prefix + "ss_derate", numberOfWeatherFileRecords));
             p_derateSelfShadingDiffuse.push_back(cm->allocate(prefix + "ss_diffuse_derate", numberOfWeatherFileRecords));
             p_derateSelfShadingReflected.push_back(cm->allocate(prefix + "ss_reflected_derate", numberOfWeatherFileRecords));
-
+            p_DNIIndex.push_back(cm->allocate(prefix + "dni_index", numberOfWeatherFileRecords));
             p_poaBeamFrontCS.push_back(cm->allocate(prefix + "poa_beam_front_cs", numberOfWeatherFileRecords));
             p_poaDiffuseFrontCS.push_back(cm->allocate(prefix + "poa_diffuse_front_cs", numberOfWeatherFileRecords));
             p_poaGroundFrontCS.push_back(cm->allocate(prefix + "poa_ground_front_cs", numberOfWeatherFileRecords));
-            p_DNIIndex.push_back(cm->allocate(prefix + "dni_index", numberOfWeatherFileRecords));
-            p_ClippingPotential.push_back(cm->allocate(prefix + "clipping_potential", numberOfWeatherFileRecords));
 
             if (enableSnowModel) {
                 p_snowLoss.push_back(cm->allocate(prefix + "snow_loss", numberOfWeatherFileRecords));
@@ -928,6 +926,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 
     p_inverterACOutputPreLoss = cm->allocate("ac_gross", numberOfWeatherFileRecords);
     p_acWiringLoss = cm->allocate("ac_wiring_loss", numberOfWeatherFileRecords);
+    p_ClippingPotential = cm->allocate("clipping_potential", numberOfWeatherFileRecords);
     p_transmissionLoss = cm->allocate("ac_transmission_loss", numberOfWeatherFileRecords);
     p_acPerfAdjLoss = cm->allocate("ac_perf_adj_loss", numberOfWeatherFileRecords);
     p_acLifetimeLoss = cm->allocate("ac_lifetime_loss", numberOfWeatherFileRecords);
@@ -936,6 +935,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
     p_systemACPower = cm->allocate("gen", numberOfLifetimeRecords);
 
     p_systemDCPowerCS = cm->allocate("dc_net_clearsky", numberOfLifetimeRecords);
+    p_subhourlyClippingLoss = cm->allocate("subhourly_clipping_loss", numberOfLifetimeRecords);
 
     if (Simulation->useLifetimeOutput)
     {
