@@ -383,6 +383,7 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 var_table& input = compute_module_inputs->table;
                 ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);  // check if issue with lookahead dispatch with hourly PV and subhourly wind
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "system_use_lifetime_output", 1);
+                ssc_data_set_number(static_cast<ssc_data_t>(&input), "en_batt", 1); // should be done at UI level
                 //ssc_data_set_number(static_cast<ssc_data_t>(&input), "is_hybrid", 1);
 
                 //ssc_module_exec_with_handler(module, static_cast<ssc_data_t>(&input),default_internal_handler, m_handler); // handler not passed into compute module
