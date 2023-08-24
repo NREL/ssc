@@ -73,7 +73,7 @@ public:
 
             for (size_t i = 0; i < vec_cms.size(); i++) {
                 std::string computemodulename = vec_cms[i].str;
-                if ((computemodulename == "pvwattsv8") || (computemodulename == "windpower"))
+                if ((computemodulename == "pvsamv1") || (computemodulename == "pvwattsv8") || (computemodulename == "windpower"))
                     generators.push_back(computemodulename);
                 else if (computemodulename == "battery")
                     batteries.push_back(computemodulename);
@@ -121,7 +121,7 @@ public:
                 //ssc_data_set_number(static_cast<ssc_data_t>(&input), "is_hybrid", 1);
 
 
-                //ssc_module_exec_set_print(1);
+                ssc_module_exec_set_print(1);
                 ssc_module_exec(module, static_cast<ssc_data_t>(&input));
 
                 ssc_data_t compute_module_outputs = ssc_data_create();
@@ -165,24 +165,41 @@ public:
                 // production - multiply by yearly gen (initially assume single year) - use degradation - specific to each generator
                 // pvwattsv8 - "degradation" applied in financial model - assuming single year analysis like standalone pvwatts/single owner configuration
                 // wind - "degradation" applied in financial model - assumes system availability already applied to "gen" output
+                // pvsamv1 - "degradation" applied in performance model
                 ssc_number_t* pEnergyNet = ((var_table*)compute_module_outputs)->allocate("cf_energy_net", analysisPeriod + 1);
                 ssc_number_t* pDegradation = ((var_table*)compute_module_outputs)->allocate("cf_degradation", analysisPeriod + 1);
-                size_t count_degrad = 0;
-                ssc_number_t* degrad = 0;
-                degrad = input.as_array("degradation", &count_degrad);
-                if (count_degrad == 1) {
-                    for (int i = 1; i <= analysisPeriod; i++)
-                        pDegradation[i] = pow((1.0 - degrad[0] / 100.0), i - 1);
+
+                if (compute_module_inputs->table.lookup("system_use_lifetime_output")->num > 0) { // e.g. pvsamv1
+                    size_t timestepsPerYear = len / analysisPeriod;
+                    for (int i = 0; i < analysisPeriod; i++) {
+                        pDegradation[i + 1] = 1.0;
+                        pEnergyNet[i + 1] = 0;
+                        for (size_t j = 0; j < timestepsPerYear; j++) { // steps per year
+                            pEnergyNet[i + 1] += curGen[i * timestepsPerYear + j]*currentTimeStepsPerHour; // power to energy
+                        }
+                    }
                 }
-                else if (count_degrad > 0) {
-                    for (int i = 0; i < analysisPeriod && i < (int)count_degrad; i++)
-                        pDegradation[i + 1] = (1.0 - degrad[i] / 100.0);
+                else {
+                    size_t count_degrad = 0;
+                    ssc_number_t* degrad = 0;
+                    degrad = input.as_array("degradation", &count_degrad);
+                    if (count_degrad == 1) {
+                        for (int i = 1; i <= analysisPeriod; i++)
+                            pDegradation[i] = pow((1.0 - degrad[0] / 100.0), i - 1);
+                    }
+                    else if (count_degrad > 0) {
+                        for (int i = 0; i < analysisPeriod && i < (int)count_degrad; i++)
+                            pDegradation[i + 1] = (1.0 - degrad[i] / 100.0);
+                    }
+                    ssc_number_t first_year_energy = ((var_table*)compute_module_outputs)->as_double("annual_energy"); // first year energy value
+                    for (int i = 1; i <= analysisPeriod; i++) {
+                        pEnergyNet[i] = first_year_energy * pDegradation[i];
+                    }
                 }
-                ssc_number_t first_year_energy = ((var_table*)compute_module_outputs)->as_double("annual_energy"); // first year energy value
                 for (int i = 1; i <= analysisPeriod; i++) {
-                    pEnergyNet[i] = first_year_energy * pDegradation[i];
                     pOMProduction[i] *= pEnergyNet[i];
                 }
+
                 // optional land lease o and m costs if present - set to zero by default
                 if (compute_module_inputs->table.lookup("om_land_lease")) {
                     ssc_number_t* pOMLandLease = ((var_table*)compute_module_outputs)->allocate("cf_om_land_lease", analysisPeriod + 1);
