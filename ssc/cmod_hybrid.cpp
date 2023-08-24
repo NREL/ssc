@@ -183,8 +183,8 @@ public:
                     pEnergyNet[i] = first_year_energy * pDegradation[i];
                     pOMProduction[i] *= pEnergyNet[i];
                 }
-
-                if (compute_module == "pvwattsv8") {
+                // optional land lease o and m costs if present - set to zero by default
+                if (compute_module_inputs->table.lookup("om_land_lease")) {
                     ssc_number_t* pOMLandLease = ((var_table*)compute_module_outputs)->allocate("cf_om_land_lease", analysisPeriod + 1);
                     ssc_number_t total_land_area = compute_module_inputs->table.lookup("land_area")->num;
                     escal_or_annual(input, pOMLandLease, analysisPeriod, "om_land_lease", inflation_rate, total_land_area, false, input.as_double("om_land_lease_escal") * 0.01);
@@ -526,11 +526,11 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 ssc_number_t* om_fixed = generator_outputs.as_array("cf_om_fixed", &count_gen);
                 ssc_number_t* om_capacity = generator_outputs.as_array("cf_om_capacity", &count_gen);
                 ssc_number_t* om_landlease = NULL;
-                if (generators[g] == "pvwattsv8")
+                if (generator_outputs.lookup("cf_om_land_lease"))
                     om_landlease = generator_outputs.as_array("cf_om_land_lease", &count_gen);
                 for (size_t y = 1; y <= analysisPeriod; y++) {
                     pHybridOMSum[y] += om_production[y] + om_fixed[y] + om_capacity[y];
-                    if (generators[g] == "pvwattsv8")
+                    if (generator_outputs.lookup("cf_om_land_lease"))
                         pHybridOMSum[y] += om_landlease[y];
                 }
             }
