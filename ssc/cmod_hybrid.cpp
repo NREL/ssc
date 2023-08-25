@@ -309,7 +309,16 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);  // check if issue with hourly PV and subhourly wind
                 //ssc_data_set_number(static_cast<ssc_data_t>(&input), "is_hybrid", 1);
 
-                ssc_module_exec(module, static_cast<ssc_data_t>(&input));
+                if (!ssc_module_exec(module, static_cast<ssc_data_t>(&input))) {
+                    // merge in hybrid vartable for configurations where battery and fuel cell dispatch are combined and not in the technology bin
+                    std::string hybridVarTable("Hybrid");
+                    var_data* hybrid_inputs = input_table->table.lookup(hybridVarTable);// TODO - better naming of combined vartable?
+                    if (compute_module_inputs->type != SSC_TABLE)
+                        throw exec_error("hybrid", "No input input_table found for ." + hybridVarTable);
+                    var_table& hybridinput = hybrid_inputs->table;
+                    input.merge(hybridinput, false);
+                    ssc_module_exec(module, static_cast<ssc_data_t>(&input));
+                }
 
                 ssc_data_t compute_module_outputs = ssc_data_create();
 
@@ -404,7 +413,18 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 //ssc_data_set_number(static_cast<ssc_data_t>(&input), "is_hybrid", 1);
 
                 //ssc_module_exec_with_handler(module, static_cast<ssc_data_t>(&input),default_internal_handler, m_handler); // handler not passed into compute module
-                ssc_module_exec(module, static_cast<ssc_data_t>(&input));
+                if (!ssc_module_exec(module, static_cast<ssc_data_t>(&input))) {
+                    // merge in hybrid vartable for configurations where battery and fuel cell dispatch are combined and not in the technology bin
+                    std::string hybridVarTable("Hybrid");
+                    var_data* hybrid_inputs = input_table->table.lookup(hybridVarTable);// TODO - better naming of combined vartable?
+                    if (compute_module_inputs->type != SSC_TABLE)
+                        throw exec_error("hybrid", "No input input_table found for ." + hybridVarTable);
+                    var_table& hybridinput = hybrid_inputs->table;
+                    input.merge(hybridinput, false);
+                    ssc_data_set_number(static_cast<ssc_data_t>(&input), "en_batt", 1); // should be done at UI level
+
+                    ssc_module_exec(module, static_cast<ssc_data_t>(&input));
+                }
 
                 ssc_data_t compute_module_outputs = ssc_data_create();
 
