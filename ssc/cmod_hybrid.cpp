@@ -73,7 +73,7 @@ public:
 
             for (size_t i = 0; i < vec_cms.size(); i++) {
                 std::string computemodulename = vec_cms[i].str;
-                if ((computemodulename == "pvwattsv8") || (computemodulename == "windpower"))
+                if ((computemodulename == "pvsamv1") || (computemodulename == "pvwattsv8") || (computemodulename == "windpower"))
                     generators.push_back(computemodulename);
                 else if (computemodulename == "battery")
                     batteries.push_back(computemodulename);
@@ -121,7 +121,7 @@ public:
                 //ssc_data_set_number(static_cast<ssc_data_t>(&input), "is_hybrid", 1);
 
 
-                //ssc_module_exec_set_print(1);
+                ssc_module_exec_set_print(1);
                 ssc_module_exec(module, static_cast<ssc_data_t>(&input));
 
                 ssc_data_t compute_module_outputs = ssc_data_create();
@@ -165,26 +165,43 @@ public:
                 // production - multiply by yearly gen (initially assume single year) - use degradation - specific to each generator
                 // pvwattsv8 - "degradation" applied in financial model - assuming single year analysis like standalone pvwatts/single owner configuration
                 // wind - "degradation" applied in financial model - assumes system availability already applied to "gen" output
+                // pvsamv1 - "degradation" applied in performance model
                 ssc_number_t* pEnergyNet = ((var_table*)compute_module_outputs)->allocate("cf_energy_net", analysisPeriod + 1);
                 ssc_number_t* pDegradation = ((var_table*)compute_module_outputs)->allocate("cf_degradation", analysisPeriod + 1);
-                size_t count_degrad = 0;
-                ssc_number_t* degrad = 0;
-                degrad = input.as_array("degradation", &count_degrad);
-                if (count_degrad == 1) {
-                    for (int i = 1; i <= analysisPeriod; i++)
-                        pDegradation[i] = pow((1.0 - degrad[0] / 100.0), i - 1);
+
+                if (compute_module_inputs->table.lookup("system_use_lifetime_output")->num > 0) { // e.g. pvsamv1
+                    size_t timestepsPerYear = len / analysisPeriod;
+                    for (int i = 0; i < analysisPeriod; i++) {
+                        pDegradation[i + 1] = 1.0;
+                        pEnergyNet[i + 1] = 0;
+                        for (size_t j = 0; j < timestepsPerYear; j++) { // steps per year
+                            pEnergyNet[i + 1] += curGen[i * timestepsPerYear + j]*currentTimeStepsPerHour; // power to energy
+                        }
+                    }
                 }
-                else if (count_degrad > 0) {
-                    for (int i = 0; i < analysisPeriod && i < (int)count_degrad; i++)
-                        pDegradation[i + 1] = (1.0 - degrad[i] / 100.0);
+                else {
+                    size_t count_degrad = 0;
+                    ssc_number_t* degrad = 0;
+                    degrad = input.as_array("degradation", &count_degrad);
+                    if (count_degrad == 1) {
+                        for (int i = 1; i <= analysisPeriod; i++)
+                            pDegradation[i] = pow((1.0 - degrad[0] / 100.0), i - 1);
+                    }
+                    else if (count_degrad > 0) {
+                        for (int i = 0; i < analysisPeriod && i < (int)count_degrad; i++)
+                            pDegradation[i + 1] = (1.0 - degrad[i] / 100.0);
+                    }
+                    ssc_number_t first_year_energy = ((var_table*)compute_module_outputs)->as_double("annual_energy"); // first year energy value
+                    for (int i = 1; i <= analysisPeriod; i++) {
+                        pEnergyNet[i] = first_year_energy * pDegradation[i];
+                    }
                 }
-                ssc_number_t first_year_energy = ((var_table*)compute_module_outputs)->as_double("annual_energy"); // first year energy value
                 for (int i = 1; i <= analysisPeriod; i++) {
-                    pEnergyNet[i] = first_year_energy * pDegradation[i];
                     pOMProduction[i] *= pEnergyNet[i];
                 }
 
-                if (compute_module == "pvwattsv8") {
+                // optional land lease o and m costs if present - set to zero by default
+                if (compute_module_inputs->table.lookup("om_land_lease")) {
                     ssc_number_t* pOMLandLease = ((var_table*)compute_module_outputs)->allocate("cf_om_land_lease", analysisPeriod + 1);
                     ssc_number_t total_land_area = compute_module_inputs->table.lookup("land_area")->num;
                     escal_or_annual(input, pOMLandLease, analysisPeriod, "om_land_lease", inflation_rate, total_land_area, false, input.as_double("om_land_lease_escal") * 0.01);
@@ -292,7 +309,16 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);  // check if issue with hourly PV and subhourly wind
                 //ssc_data_set_number(static_cast<ssc_data_t>(&input), "is_hybrid", 1);
 
-                ssc_module_exec(module, static_cast<ssc_data_t>(&input));
+                if (!ssc_module_exec(module, static_cast<ssc_data_t>(&input))) {
+                    // merge in hybrid vartable for configurations where battery and fuel cell dispatch are combined and not in the technology bin
+                    std::string hybridVarTable("Hybrid");
+                    var_data* hybrid_inputs = input_table->table.lookup(hybridVarTable);// TODO - better naming of combined vartable?
+                    if (compute_module_inputs->type != SSC_TABLE)
+                        throw exec_error("hybrid", "No input input_table found for ." + hybridVarTable);
+                    var_table& hybridinput = hybrid_inputs->table;
+                    input.merge(hybridinput, false);
+                    ssc_module_exec(module, static_cast<ssc_data_t>(&input));
+                }
 
                 ssc_data_t compute_module_outputs = ssc_data_create();
 
@@ -383,10 +409,22 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 var_table& input = compute_module_inputs->table;
                 ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);  // check if issue with lookahead dispatch with hourly PV and subhourly wind
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "system_use_lifetime_output", 1);
+                ssc_data_set_number(static_cast<ssc_data_t>(&input), "en_batt", 1); // should be done at UI level
                 //ssc_data_set_number(static_cast<ssc_data_t>(&input), "is_hybrid", 1);
 
                 //ssc_module_exec_with_handler(module, static_cast<ssc_data_t>(&input),default_internal_handler, m_handler); // handler not passed into compute module
-                ssc_module_exec(module, static_cast<ssc_data_t>(&input));
+                if (!ssc_module_exec(module, static_cast<ssc_data_t>(&input))) {
+                    // merge in hybrid vartable for configurations where battery and fuel cell dispatch are combined and not in the technology bin
+                    std::string hybridVarTable("Hybrid");
+                    var_data* hybrid_inputs = input_table->table.lookup(hybridVarTable);// TODO - better naming of combined vartable?
+                    if (compute_module_inputs->type != SSC_TABLE)
+                        throw exec_error("hybrid", "No input input_table found for ." + hybridVarTable);
+                    var_table& hybridinput = hybrid_inputs->table;
+                    input.merge(hybridinput, false);
+                    ssc_data_set_number(static_cast<ssc_data_t>(&input), "en_batt", 1); // should be done at UI level
+
+                    ssc_module_exec(module, static_cast<ssc_data_t>(&input));
+                }
 
                 ssc_data_t compute_module_outputs = ssc_data_create();
 
@@ -525,11 +563,11 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 ssc_number_t* om_fixed = generator_outputs.as_array("cf_om_fixed", &count_gen);
                 ssc_number_t* om_capacity = generator_outputs.as_array("cf_om_capacity", &count_gen);
                 ssc_number_t* om_landlease = NULL;
-                if (generators[g] == "pvwattsv8")
+                if (generator_outputs.lookup("cf_om_land_lease"))
                     om_landlease = generator_outputs.as_array("cf_om_land_lease", &count_gen);
                 for (size_t y = 1; y <= analysisPeriod; y++) {
                     pHybridOMSum[y] += om_production[y] + om_fixed[y] + om_capacity[y];
-                    if (generators[g] == "pvwattsv8")
+                    if (generator_outputs.lookup("cf_om_land_lease"))
                         pHybridOMSum[y] += om_landlease[y];
                 }
             }
