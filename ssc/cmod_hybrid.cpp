@@ -121,7 +121,7 @@ public:
                 //ssc_data_set_number(static_cast<ssc_data_t>(&input), "is_hybrid", 1);
 
 
-                ssc_module_exec_set_print(1);
+                //ssc_module_exec_set_print(1);
                 ssc_module_exec(module, static_cast<ssc_data_t>(&input));
 
                 ssc_data_t compute_module_outputs = ssc_data_create();
