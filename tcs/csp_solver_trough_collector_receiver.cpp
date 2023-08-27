@@ -1811,6 +1811,7 @@ void C_csp_trough_collector_receiver::loop_optical_eta(const C_csp_weatherreader
             }
 		}
 
+        m_dni = weather.m_beam;                         //[W/m2]
 		m_dni_costh = weather.m_beam * m_CosTh_ave;		//[W/m2]
 
 		// Assume that whenever trough is in STARTUP OR ON, we're using the nominal tracking load
@@ -2095,6 +2096,7 @@ void C_csp_trough_collector_receiver::off(const C_csp_weatherreader::S_outputs &
 	// Get optical properties
 		// Should reflect that the collector is not tracking and probably (but not necessarily) DNI = 0
 	loop_optical_eta_off();
+    m_dni = weather.m_beam;
 
 	// Set mass flow rate to minimum allowable
 	double m_dot_htf_loop = m_m_dot_htfmin;		//[kg/s]
@@ -3999,11 +4001,14 @@ void C_csp_trough_collector_receiver::converged()
 
 	m_ss_init_complete = true;
 
-	// Check that, if trough is ON, if outlet temperature at the end of the timestep is colder than the Startup Temperature
-	if( m_operating_mode == ON && m_T_sys_h_t_end < m_T_startup)
-	{
-		m_operating_mode = OFF;
-	}
+    // Check that, if trough is ON, if outlet temperature at the end of the timestep is colder than the Startup Temperature
+    if (m_operating_mode == ON && m_T_sys_h_t_end < m_T_startup)
+    {
+        if (m_dni < 1.0)
+            m_operating_mode = OFF;
+        else
+            m_operating_mode = STARTUP;
+    }
 
 	// TCS Temperature Tracking
 	m_TCS_T_sys_c_converged = m_TCS_T_sys_c_last = m_TCS_T_sys_c;		//[K]

@@ -172,6 +172,7 @@ private:
 	
 	double m_costh;				//[-] Cosine of the incidence angle between sun and trough aperture
 	double m_dni_costh;			//[W/m2] DNI x cos(theta) product
+    double m_dni;               //[W/m2]
 	double m_W_dot_sca_tracking;	//[MWe] SCA tracking power
 	// Collector-receiver equivalent(weighted over variants AND all SCAs) optical efficiency
 		// m_ColOptEff * m_Shadowing * m_Dirt_HCE * m_alpha_abs * m_tau_envelope
