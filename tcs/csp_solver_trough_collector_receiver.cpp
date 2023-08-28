@@ -4291,7 +4291,9 @@ void C_csp_trough_collector_receiver::EvacReceiver(double T_1_in, double m_dot, 
 	int m_qq, q5_iter, T1_iter, q_conv_iter;
 
 	double T_save_tot, colopteff_tot;
-	
+
+    double q_3Reflect = 0.0; // 8.28.23 tmb: added to keep track of absorber reflection losses
+
 	//cc--> note that xx and yy have size 'nea'
 
 	//-------
@@ -4391,11 +4393,15 @@ lab_keep_guess:
 
 	colopteff_tot = m_ColOptEff(ct, sca_num)*m_Dirt_HCE(hn, hv)*m_Shadowing(hn, hv);	//The total optical efficiency
 
+    
+
 	if (m_GlazingIntact(hn, hv)){   //These calculations (q_3SolAbs,q_5solAbs) are not dependent on temperature, so only need to be computed once per call to subroutine
 
 		q_3SolAbs = m_q_i * colopteff_tot * m_Tau_envelope.at(hn, hv) * m_alpha_abs.at(hn, hv);  //[W/m]  
 		//We must account for the radiation absorbed as it passes through the envelope
-		q_5solabs = m_q_i * colopteff_tot * m_alpha_env(hn, hv);   //[W/m]  
+		q_5solabs = m_q_i * colopteff_tot * m_alpha_env(hn, hv);   //[W/m]
+
+        q_3Reflect = m_q_i * colopteff_tot * m_Tau_envelope.at(hn, hv) * (1.0 - m_alpha_abs.at(hn, hv));  //[W/m]  
 	}
 	else{
 		//Calculate the absorbed energy 
@@ -4403,6 +4409,7 @@ lab_keep_guess:
 		//No envelope
 		q_5solabs = 0.0;                            //[W/m]
 
+        q_3Reflect = m_q_i * colopteff_tot * (1.0 - m_alpha_abs.at(hn, hv));  //[W/m]  
 	}
 
 	is_e_table = false;
@@ -4749,7 +4756,11 @@ lab_keep_guess:
 
 	// 10.6.2016 twn: q_5solabs is already reported as an optical loss, so don't report as a thermal loss...
 		//q_heatloss = q_34tot + q_cond_bracket + q_5solabs;   //[W/m]
-	q_heatloss = q_34tot + q_cond_bracket;		//[W/m]
+
+    // 08.28.2023 tmb: add reflected radiation losses
+        //q_heatloss = q_34tot + q_cond_bracket;		//[W/m]
+    q_34tot += q_3Reflect;
+    q_heatloss = q_34tot + q_cond_bracket;     // [W/m]
 
 	//Save temperatures
 	m_T_save[1] = T_2;
