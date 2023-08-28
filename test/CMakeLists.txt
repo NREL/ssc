@@ -80,8 +80,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR MSVC)
             NAMES libgtest.a gtest.lib libgtest.so
             PATHS $ENV{GTEST_DIR} ${GTDIR}/build/lib ${GTDIR}/build/lib/Debug)
     target_link_libraries(Test debug ${GTESTD_LIB})
-endif()
-if (CMAKE_BUILD_TYPE STREQUAL "Release" OR MSVC)
+else()
     find_library( GTEST_LIB
             NAMES libgtest.a gtest.lib libgtest.so
             PATHS $ENV{GTEST_DIR} ${GTDIR}/build/lib ${GTDIR}/build/lib/Release)
