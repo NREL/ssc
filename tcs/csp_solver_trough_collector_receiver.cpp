@@ -4759,8 +4759,7 @@ lab_keep_guess:
 
     // 08.28.2023 tmb: add reflected radiation losses
         //q_heatloss = q_34tot + q_cond_bracket;		//[W/m]
-    q_34tot += q_3Reflect;
-    q_heatloss = q_34tot + q_cond_bracket;     // [W/m]
+    q_heatloss = q_34tot + q_cond_bracket + q_3Reflect;     // [W/m]
 
 	//Save temperatures
 	m_T_save[1] = T_2;
