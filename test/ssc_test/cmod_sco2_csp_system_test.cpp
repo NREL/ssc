@@ -111,11 +111,11 @@ NAMESPACE_TEST(sco2_tests, SCO2Cycle, Parametrics)
     
     CmodUnderTest sco2 = CmodUnderTest("sco2_csp_system", data);
 
-    /*
+    
     int errors = sco2.RunModule();
-    */
+    
 
-    bool errors = false;
+    //bool errors = false;
     EXPECT_FALSE(errors);
 
     /*
