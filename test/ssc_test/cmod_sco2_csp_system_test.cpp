@@ -108,9 +108,10 @@ NAMESPACE_TEST(sco2_tests, SCO2Cycle, Parametrics)
     ssc_data_set_number(data, "is_design_air_cooler", 1);
     ssc_data_set_number(data, "eta_air_cooler_fan", 0.5);
     
-    /*
+    
     CmodUnderTest sco2 = CmodUnderTest("sco2_csp_system", data);
 
+    /*
     int errors = sco2.RunModule();
     */
 
