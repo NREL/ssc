@@ -63,7 +63,7 @@ GTEST_API_ int main(int argc, char **argv) {
     // run multiple test
     //    ::testing::GTEST_FLAG(filter) = "CMPvwattsv8Integration_cmod_pvwattsv8.DefaultNoFinancialModel_cmod_pvwattsv8:CMPvwattsv8Integration_cmod_pvwattsv8.NonAnnual";
 
-    ::testing::GTEST_FLAG(filter) = "sco2_tests*";
+    //::testing::GTEST_FLAG(filter) = "sco2_tests*";
 
     int status = RUN_ALL_TESTS();
 
