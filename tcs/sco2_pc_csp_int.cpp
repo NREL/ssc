@@ -151,7 +151,11 @@ void C_sco2_phx_air_cooler::design_core()
 
 	// Set min temp
 	m_T_mc_in_min = mpc_sco2_cycle->get_design_limits().m_T_mc_in_min;		//[K]
-	
+
+
+    return;
+
+
 	if (ms_des_par.m_design_method == 1)
 	{
 		// Design the cycle to hit a specified efficiency
