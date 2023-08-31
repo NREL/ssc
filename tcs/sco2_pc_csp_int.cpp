@@ -146,6 +146,8 @@ void C_sco2_phx_air_cooler::design_core()
 
 		s_cycle_config = "recompression";
 
+        return;
+
         mpc_sco2_cycle = std::move(c_rc_cycle);
 	}
 
@@ -265,13 +267,6 @@ void C_sco2_phx_air_cooler::design_core()
         des_params.m_fixed_f_PR_HP_to_IP = ms_des_par.m_fixed_f_PR_HP_to_IP;    //[-]
 
 		des_params.m_is_recomp_ok = ms_des_par.m_is_recomp_ok;
-
-
-
-        return;
-
-
-
 
 		auto_err_code = mpc_sco2_cycle->auto_opt_design(des_params);
 	}
