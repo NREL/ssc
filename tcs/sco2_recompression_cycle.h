@@ -536,7 +536,6 @@ public:
 
 		m_eta_phx_max = m_over_deltaP_eta_max = m_UA_diff_eta_max = std::numeric_limits<double>::quiet_NaN();
 
-        return;
 		// Set design limits!!!!
 		//ms_des_limits.m_UA_net_power_ratio_max = 2.0;		//[-/K]
 		//ms_des_limits.m_UA_net_power_ratio_min = 1.E-5;		//[-/K]

@@ -65,8 +65,6 @@ void C_sco2_phx_air_cooler::design(S_des_par des_par)
 	ms_des_par = des_par;
 
 	design_core();
-
-    return;
 }
 
 void C_sco2_phx_air_cooler::C_P_LP_in_iter_tracker::reset_vectors()

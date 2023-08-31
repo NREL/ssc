@@ -477,8 +477,6 @@ public:
 		get_CO2_info(&s_co2_info);
 
 		ms_des_limits.m_T_mc_in_min = ceil(s_co2_info.T_critical);		//[K]
-
-        return;
 	}
 
     S_od_deltaP ms_od_deltaP;
