@@ -1246,7 +1246,12 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 	}
 
 
+
+
     return -1;
+
+
+
 
 
 	// If all calls were successful, log to SSC any messages from sco2_recomp_csp

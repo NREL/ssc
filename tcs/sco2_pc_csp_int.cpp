@@ -286,6 +286,14 @@ void C_sco2_phx_air_cooler::design_core()
 		mc_messages.add_notice(out_msg);
 	}
 
+
+
+
+    return;
+
+
+
+
 	ms_des_solved.ms_rc_cycle_solved = *mpc_sco2_cycle->get_design_solved();
 
 	// Initialize the PHX
