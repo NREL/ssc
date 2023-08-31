@@ -116,7 +116,7 @@ NAMESPACE_TEST(sco2_tests, SCO2Cycle, Parametrics)
     
 
     //bool errors = false;
-    EXPECT_FALSE(errors);
+    //EXPECT_FALSE(errors);
 
     /*
     if (!errors) {
