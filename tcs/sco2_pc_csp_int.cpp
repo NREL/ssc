@@ -146,9 +146,9 @@ void C_sco2_phx_air_cooler::design_core()
 
 		s_cycle_config = "recompression";
 
-        return;
-
         mpc_sco2_cycle = std::move(c_rc_cycle);
+
+        return;
 	}
 
 	// Set min temp
