@@ -104,6 +104,11 @@ void C_sco2_phx_air_cooler::design_core()
     double T_mc_in = ms_des_par.m_T_amb_des + ms_des_par.m_dt_mc_approach;	//[K]
     double T_t_in = ms_des_par.m_T_htf_hot_in - ms_des_par.m_phx_dt_hot_approach;	//[K]
 
+
+    return;
+
+
+
 	if (ms_des_par.m_cycle_config == 2)
 	{
         std::unique_ptr<C_PartialCooling_Cycle> c_pc_cycle = std::unique_ptr<C_PartialCooling_Cycle>(new C_PartialCooling_Cycle(
