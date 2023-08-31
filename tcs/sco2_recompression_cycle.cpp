@@ -2703,6 +2703,12 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
 	// Outer optimization loop
 	m_objective_metric_auto_opt = 0.0;
 
+
+
+    return;
+
+
+
 	double best_P_high = m_P_high_limit;		//[kPa]
 	double PR_mc_guess = 2.5;				//[-]
 	if (!ms_opt_des_par.m_fixed_P_mc_out)
