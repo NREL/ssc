@@ -1229,6 +1229,12 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 	c_sco2_cycle.mf_callback_update = ssc_cmod_update;
 	c_sco2_cycle.mp_mf_update = (void*)(cm);
 
+
+
+    return -1;
+
+
+
 	try
 	{
 		c_sco2_cycle.design(s_sco2_des_par);
