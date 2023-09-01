@@ -116,9 +116,9 @@ NAMESPACE_TEST(sco2_tests, SCO2Cycle, Parametrics)
     
 
     //bool errors = false;
-    //EXPECT_FALSE(errors);
+    EXPECT_FALSE(errors);
 
-    /*
+    
     if (!errors) {
         EXPECT_NEAR_FRAC(sco2.GetOutput("T_htf_cold_des"), 529.6897, kErrorToleranceLo);
         EXPECT_NEAR_FRAC(sco2.GetOutput("eta_thermal_calc"), 0.5071197, kErrorToleranceLo);
@@ -137,5 +137,5 @@ NAMESPACE_TEST(sco2_tests, SCO2Cycle, Parametrics)
         EXPECT_FLOATS_NEARLY_EQ(sco2.GetOutputVector("W_dot_net_less_cooling_od"), W_dot_net_less_cooling_od_exp, kErrorToleranceLo*W_dot_net_less_cooling_od_exp[0]);
 
     }
-    */
+    
 }

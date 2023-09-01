@@ -340,14 +340,6 @@ public:
 		if (sco2_des_err != 0)
 			return;
 
-
-
-        return;
-
-
-
-
-
 		double m_dot_htf_design = c_sco2_cycle.get_phx_des_par()->m_m_dot_hot_des;	//[kg/s]
 
 		bool is_rc = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_is_rc;
