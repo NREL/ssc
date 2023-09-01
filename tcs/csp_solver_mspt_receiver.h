@@ -215,6 +215,7 @@ public:
         int n_panels /*-*/, double d_rec /*m*/, double h_rec /*m*/,
         int flow_type /*-*/, int crossover_shift /*-*/, double hl_ffact /*-*/,
         double T_salt_hot_target /*C*/, double csky_frac /*-*/,
+        bool is_calc_od_tube /*-*/, double W_dot_rec_target /*MWe*/,
         bool is_transient /*-*/, bool is_startup_transient /*-*/,
         double rec_tm_mult /*-*/, double u_riser /*m/s*/,
         double th_riser /*mm*/, double riser_tm_mult /*-*/,

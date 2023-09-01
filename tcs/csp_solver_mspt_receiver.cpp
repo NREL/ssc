@@ -52,6 +52,7 @@ C_mspt_receiver::C_mspt_receiver(double h_tower /*m*/, double epsilon /*-*/,
     int n_panels /*-*/, double d_rec /*m*/, double h_rec /*m*/,
     int flow_type /*-*/, int crossover_shift /*-*/, double hl_ffact /*-*/,
     double T_salt_hot_target /*C*/, double csky_frac /*-*/,
+    bool is_calc_od_tube /*-*/, double W_dot_rec_target /*MWe*/,
     bool is_transient /*-*/, bool is_startup_transient,
     double rec_tm_mult /*-*/, double u_riser /*m/s*/,
     double th_riser /*mm*/, double riser_tm_mult /*-*/,
@@ -73,7 +74,8 @@ C_mspt_receiver::C_mspt_receiver(double h_tower /*m*/, double epsilon /*-*/,
         night_recirc,
         n_panels, d_rec, h_rec,
         flow_type, crossover_shift, hl_ffact,
-        T_salt_hot_target, csky_frac)
+        T_salt_hot_target, csky_frac,
+        is_calc_od_tube, W_dot_rec_target)
 {    
 	m_ncall = -1;
 
