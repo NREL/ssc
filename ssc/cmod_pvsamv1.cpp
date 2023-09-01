@@ -2735,7 +2735,12 @@ void cm_pvsamv1::exec()
                 }
 
                 //acpwr_gross *= (1 - sub_clipping_matrix.at(dni_row, clip_pot_col));
-                ac_subhourlyclipping_loss = sub_clipping_matrix.at(dni_row, clip_pot_col) * std::abs(acpwr_gross);
+                if (dcPower_kW_csky > 0.0) {
+                    ac_subhourlyclipping_loss = sub_clipping_matrix.at(dni_row, clip_pot_col) * std::abs(acpwr_gross);
+                }
+                else { //No inverter clipping at night time, skip checks?
+                    ac_subhourlyclipping_loss = 0.0;
+                }
                 //annual_subhourly_clipping_loss += ac_subhourlyclipping_loss;
             }
             
