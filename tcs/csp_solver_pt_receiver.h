@@ -165,7 +165,7 @@ public:
 
     double get_q_dot_rec_des();     //[MWt]
 
-    void get_design_geometry(double& L_tower_piping /*m*/);
+    void get_design_geometry(double& L_tower_piping /*m*/, double& od_tube_calc /*m*/);
 
     void get_design_performance(double& eta_thermal /*-*/,
         double& W_dot_rec_pump /*MWe*/, double& W_dot_pumping_tower_share /*MWe*/, double& W_dot_pumping_rec_share /*MWe*/,

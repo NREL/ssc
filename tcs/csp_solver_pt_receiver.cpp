@@ -227,9 +227,10 @@ double C_pt_receiver::get_q_dot_rec_des()     //[MWt]
     return m_q_rec_des * 1.E-6;     //[MWt]
 }
 
-void C_pt_receiver::get_design_geometry(double& L_tower_piping /*m*/)
+void C_pt_receiver::get_design_geometry(double& L_tower_piping /*m*/, double& od_tube_calc /*m*/)
 {
     L_tower_piping = m_L_piping;    //[m]
+    od_tube_calc = m_od_tube;       //[m]
 }
 
 void C_pt_receiver::get_design_performance(double& eta_thermal /*-*/,
