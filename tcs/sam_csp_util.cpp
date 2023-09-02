@@ -774,6 +774,7 @@ C_air_cooled_condenser::C_air_cooled_condenser(int tech_type /*-*/, double P_con
 
     // Calculate design point for condenser map adjustment
     m_T_map_des_norm = m_T_amb_des / T_map_des;     //[-]
+
     if (m_T_map_des_norm >= T_map_min_norm) {
         m_P_map_des_norm = PvsQT(1, m_T_map_des_norm);
     }
@@ -797,6 +798,7 @@ void C_air_cooled_condenser::off_design(double T_amb /*K*/, double q_dot_reject 
     double T = T_amb / T_map_des;
 
     double P_cond_bar;
+
     if (T >= T_map_min_norm) {                             // If T is less than 0.9, then fit is not valid
         double Q = q_dot_reject / m_q_dot_reject_des;
         double P = PvsQT(Q, T);
@@ -807,6 +809,7 @@ void C_air_cooled_condenser::off_design(double T_amb /*K*/, double q_dot_reject 
     }
 
     water_state wp;
+
     if ((P_cond_bar < m_P_cond_min_bar) && (m_tech_type != 4)) // No lower limit on Isopentane
     {
         for (size_t i = 2; i <= m_n_pl_inc; i++)
@@ -840,6 +843,7 @@ void C_air_cooled_condenser::off_design(double T_amb /*K*/, double q_dot_reject 
 
     // These temperature calculations are for the isentropic expansion across the fan, not accounting for heat gain in the ACC
     double T_fan_in_K = T_amb;                                         // [K] Fan inlet temperature
+
     double T_fan_out_C = T_fan_in_K * pow(m_P_cond_ratio_des, (R / m_c_air)) - 273.15;  // [C] Fan outlet temperature
     double dT_fan = T_fan_out_C - (T_fan_in_K - 273.5);                           // [C] Temperature increase in fan
 

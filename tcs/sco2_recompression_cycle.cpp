@@ -4421,7 +4421,7 @@ int C_RecompCycle::solve_OD_mc_cooler_fan_power(double T_amb /*K*/, double od_to
     double tol_acc = od_tol / 10.0;
 
     int ac_err_code = mc_air_cooler.off_design_given_T_out(T_amb, m_temp_od[LTR_LP_OUT], m_pres_od[LTR_LP_OUT],
-        ms_od_solved.m_m_dot_mc, m_temp_od[MC_IN], tol_acc, od_tol,
+        ms_od_solved.m_m_dot_mc, m_temp_od[MC_IN], tol_acc, tol_acc,
         W_dot_mc_cooler_fan, P_co2_out);
 
     ms_od_solved.ms_mc_air_cooler_od_solved = mc_air_cooler.get_od_solved();
