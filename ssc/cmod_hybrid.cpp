@@ -119,6 +119,7 @@ public:
 
                 var_table& input = compute_module_inputs->table;
                 //ssc_data_set_number(static_cast<ssc_data_t>(&input), "is_hybrid", 1);
+                ssc_data_set_number(static_cast<ssc_data_t>(&input), "en_batt", 0); // should be done at UI level
 
 
                 //ssc_module_exec_set_print(1);
@@ -244,7 +245,7 @@ public:
                         for (size_t sph = 0; sph < maximumTimeStepsPerHour; sph++) {
                             size_t offset = sph / maximumTimeStepsPerHour / genTimestepsPerHour[g];
                             if (offset > genTimestepsPerHour[g]) offset = genTimestepsPerHour[g];
-                            pGen[idx] += gen[h + offset] * cf_degradation[y];
+                            pGen[idx] += gen[h + offset] * cf_degradation[y]; // Not valid for lifetime output - e.g. pvsamv1
                             idx++;
                         }
                     }
