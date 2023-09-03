@@ -226,9 +226,8 @@ public:
             if ( ts_adj ) log(util::format("Simulation time step for hybrid system is %d minutes.", 60 / int(maximumTimeStepsPerHour), SSC_NOTICE));
             size_t genLength = 8760*maximumTimeStepsPerHour*analysisPeriod;// assumes single year gen
             ssc_number_t* pGen = ((var_table*)outputs)->allocate("gen", genLength); // add to top level "output" - assumes analysis period the same for all generators
-//            ssc_number_t* pGen = ((var_table*)outputs)->allocate("gen", genLength); // move to top level to use accumlate funtions below - fails precheck
 
-
+            // TODO - test for different timesteps for each generator and lifetime and non-lifetime generators
             size_t idx = 0;
             for (size_t i=0; i<genLength; i++) 
                 pGen[i] = 0.0;
@@ -245,7 +244,10 @@ public:
                         for (size_t sph = 0; sph < maximumTimeStepsPerHour; sph++) {
                             size_t offset = sph / maximumTimeStepsPerHour / genTimestepsPerHour[g];
                             if (offset > genTimestepsPerHour[g]) offset = genTimestepsPerHour[g];
-                            pGen[idx] += gen[h + offset] * cf_degradation[y]; // Not valid for lifetime output - e.g. pvsamv1
+                            if (count_gen == genLength)
+                                pGen[idx] += gen[idx]; // lifetime output with degradation and availability
+                            else
+                                pGen[idx] += gen[h + offset] * cf_degradation[y];
                             idx++;
                         }
                     }
