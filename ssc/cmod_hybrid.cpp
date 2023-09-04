@@ -73,7 +73,7 @@ public:
 
             for (size_t i = 0; i < vec_cms.size(); i++) {
                 std::string computemodulename = vec_cms[i].str;
-                if ((computemodulename == "pvsamv1") || (computemodulename == "pvwattsv8") || (computemodulename == "windpower"))
+                if ((computemodulename == "pvsamv1") || (computemodulename == "pvwattsv8") || (computemodulename == "windpower") || (computemodulename == "generic_system"))
                     generators.push_back(computemodulename);
                 else if (computemodulename == "battery")
                     batteries.push_back(computemodulename);
