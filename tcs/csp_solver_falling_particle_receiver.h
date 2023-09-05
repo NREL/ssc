@@ -39,6 +39,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_core.h"
 #include "csp_solver_pt_receiver.h"
 
+#include "../splinter/QR"
+
 class C_falling_particle_receiver : public C_pt_receiver
 {
 
@@ -48,6 +50,7 @@ protected:
     {
         C_csp_collector_receiver::E_csp_cr_modes mode;
         bool rec_is_off;
+        bool converged;
 
         double T_amb;				// Dry bulb temperature (K)
         double v_wind_10;			// Wind speed at 10m (m/s)
@@ -75,6 +78,7 @@ protected:
         double Q_transport;         // Total thermal loss from particle transport (W)
         double Q_thermal;           // Total thermal power delivered to the particles (including losses from particle transport) (W)
         double eta;                 // Receiver efficiency (energy to particles / solar energy incident on curtain)
+        double eta_with_transport;  // Receiver efficiency including loss from particle transport (energy to particles / solar energy incident on curtain)
         double hadv;                // Advective loss coefficient (including wind effects) (W/m2/K)
 
         //util::matrix_t<double> m_dot_per_zone;  // Particle mass flow per control zone (kg/s)
@@ -89,13 +93,6 @@ protected:
 
 
         util::matrix_t<double> q_dot_inc;  // Curtain element incident solar energy (W/m2)
-        //util::matrix_t<double> q_dot_conv; // Curtain element convection loss (W/m2)
-        //util::matrix_t<double> q_dot_rad;  // Curtain element IR radiation loss (W/m2)
-        //util::matrix_t<double> q_dot_loss; // Curtain element total convection and IR radiation loss (W/m2)
-        //util::matrix_t<double> q_dot_htf;  // Curtain element energy to HTF (W/m2)
-
-        util::matrix_t<double> K;
-        util::matrix_t<double> Kinv;
 
         s_steady_state_soln()
         {
@@ -111,26 +108,35 @@ protected:
 
             mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
             rec_is_off = true;
+            converged = false;
         }
     };
 
     //--- Input parameters defined in constructor
 
-    // Model specs
-    int m_model_type;           // 0 = Fixed efficiency, 1 = Sandia efficiency correlation for free-falling receiver, 2 = Sandia efficiency correlation for multi-stage receiver, 3 = Detailed receiver model
+    // Model specifications
+    int m_model_type;           // 0 = Fixed efficiency, 1 = Sandia efficiency correlation for free-falling receiver, 2 = Sandia efficiency correlation for multi-stage receiver, 3 = Detailed quasi-2D physics-based receiver model
     double m_fixed_efficiency;  // User-defined fixed efficiency, only used if m_model_type == 0
+
+    int m_rad_model_type;       // Model used for advective loss (only used if m_model_type == 3):  0 = Sandia's formulation with hard-coded fudged view factor, 1 = new formulation
+    double m_vf_rad_type_0;     // "View factor" to use if m_rad_model_type == 0
+
+    int m_hadv_model_type;      // Model used for advective loss (only used if m_model_type ==3): 0 = user-defined constant value, 1 = Sandia's correlation
+    double m_hadv_user;         // User-provided constant advective loss coefficient (Only used if m_model_type >=3 and m_hadv_model = 0)
 
 
     // Cavity and curtain geometry
     double m_ap_height;                 // Aperture height [m]
     double m_ap_width;                  // Aperture width [m]
-    double m_ap_height_ratio;           // Aperture height / curtain height [-]
-    double m_ap_width_ratio;            // Aperture width / curtain width [-]
+    double m_ap_height_ratio;           // Curtain height / aperture height [-]
+    double m_ap_width_ratio;            // Cavity or curtain width / aperture width [-]
     double m_ap_curtain_depth_ratio;    // (Distance between aperture and particle curtain) / aperture height [-]
-    bool m_is_ap_at_bot;                // Is aperture positioned at the bottom of the cavity?  // TODO: Ask Bill if this option is in the optical model
-                                                                                                    // (Bill) The bottom of the aperture and curtain always align 
-    bool m_is_curtain_flat;             // [-]
-    double m_curtain_rad;               // Curtain radius of curvature (only used if m_is_curtain_flat = False) [-]
+
+    bool m_is_ap_at_bot;                // Is aperture positioned at the bottom of the cavity? (Hard-coded to true to match SolarPILOT)                                                                        
+    bool m_is_curtain_flat;             // [-]  (Hard-coded to false for now, curved curtain is not implemented yet)
+    double m_curtain_rad;               // Curtain radius of curvature (only used if m_is_curtain_flat = false) [-]
+    double m_initial_fall_height_fixed;         // Fixed initial fall height [m]
+    double m_initial_fall_height_fraction;      // Initial fall height of particle curtain before reaching top of cavity / cavity height [-]
 
 
     // Particle and curtain properties
@@ -140,9 +146,6 @@ protected:
     double m_dthdy;             // Rate of curtain thickness increase with respect to fall distance [-]
     double m_tauc_mult;         // User-provided multiplier to adjust curtain transmissivity [-]
     double m_phi0;              // Initial particle curtain volume fraction
-    double m_initial_fall_height_ratio;       // Initial fall height of particle curtain before reaching top of cavity / cavity height [-]
-    int m_hadv_model;           // Model used for advective loss: 0 = user-defined constant value, 1 = Sandia's correlation
-    double m_hadv_user;         // User-provided constant advective loss coefficient (Only used if m_hadv_model = 0)
 
     // Cavity wall properties
     double m_cav_emis;          // Cavity wall emissivity [-]
@@ -150,15 +153,24 @@ protected:
     double m_cav_kwall;         // Cavity wall thermal conductivity [-]
     double m_cav_hext;          // External loss coefficient [W/m2/K]   // TODO: Simplify twall, kwall, hext to an effective loss coefficient
 
+    // Particle transport thermal loss
+    // TODO: Currently hard-coded to zero, update from inputs for piping loss
+    double m_Q_dot_transport_loss_hot;   // Constant thermal loss from hot particle transport to environment [W]
+    double m_Q_dot_transport_loss_cold;   // Constant thermal loss from cold particle transport to environment [W]
+
+
     // Operating parameters
     double m_T_particle_hot_target; //[K], converted from C in constructor
     double m_csky_frac;         //[-]   
-    double m_hl_ffact;		    //[-] // TODO: Separate factors for advection and radiation?
 
-    // Flow control and discretization
+    // Curtain discretization
     int m_n_x;              // Particle curtain (and back wall) discretization in width direction
     int m_n_y;              // Particle curtain (and back wall) discretization in height direction
     int m_n_zone_control;   // Number of particle flow control "zones" (must result in an integer number of discretized width positions included in each flow control zone)
+
+    int m_n_x_rad;          // Number of curtain and back-wall x-element groups for the radiation model (only used if m_model_type == 2 and m_rad_model_type == 2)
+    int m_n_y_rad;          // Number of curtain and back-wall y-element groups for the radiation model (only used if m_model_type == 2 and m_rad_model_type == 2)
+
 
 
     //--- Hard-coded parameters
@@ -168,6 +180,9 @@ protected:
     bool m_include_back_wall_convection;    // Include convective heat transfer to back wall (assuming air velocity is the same as the local particle velocity)
     bool m_include_wall_axial_conduction;   // Include axial conduction in the back wall
 
+    bool m_invert_matrices;
+
+
     //--- Calculated parameters
     double m_curtain_height;    // Particle curtain height [m]
     double m_curtain_width;     // Particle curtain width [m]
@@ -175,8 +190,13 @@ protected:
     double m_ap_area;           // Aperture area [m2]
     double m_curtain_dist;      // Distance between aperture and curtain [m]
     double m_cav_front_area;    // Area of cavity wall in front of particle curtain [m2]
-    double m_curtain_elem_area;  // Area of each discretized curtain element [m2]
-    util::matrix_t<double> m_vf;  // View factor matrix
+    double m_curtain_area;          // Full particle curtain area [m]
+    double m_curtain_elem_area;     // Area of each discretized curtain element [m2]
+    double m_back_wall_elem_area;   // Area of each back wall element [m2]
+
+    util::matrix_t<int> m_nx_per_group;     // Number of width elements per radiation group
+    util::matrix_t<int> m_ny_per_group;     // Number of height elements per radiation group
+    util::matrix_t<double> m_vf;            // View factor matrix
 
 
     // State variables
@@ -189,17 +209,6 @@ protected:
     s_steady_state_soln m_mflow_soln_prev;  // Steady state solution using actual DNI from the last call to the model
     s_steady_state_soln m_mflow_soln_csky_prev;  // Steady state solution using clear-sky DNI from the last call to the model
 
-    // Model output arrays
-    // Member variables so don't waste time constructing each call?
-    //util::matrix_t<double> m_q_dot_inc;
-    //util::matrix_t<double> m_T_s;
-    //util::matrix_t<double> m_T_panel_out;
-    //util::matrix_t<double> m_T_panel_in;
-    //util::matrix_t<double> m_T_panel_ave;
-    //util::matrix_t<double> m_q_dot_conv;
-    //util::matrix_t<double> m_q_dot_rad;
-    //util::matrix_t<double> m_q_dot_loss;
-    //util::matrix_t<double> m_q_dot_abs;
 
 private:
 
@@ -236,16 +245,14 @@ protected:
     bool use_previous_solution(const s_steady_state_soln& soln, const s_steady_state_soln& soln_prev);
     util::matrix_t<double> calculate_flux_profiles(double flux_sum /*W/m2*/, double dni_scale /*-*/, double plant_defocus /*-*/,
         double od_control /*-*/, const util::matrix_t<double>* flux_map_input);
-    void calculate_steady_state_soln(s_steady_state_soln& soln, double tol, bool use_constant_piping_loss, int max_iter = 50);
+    void calculate_steady_state_soln(s_steady_state_soln& soln, double tol = 1.0e-4, bool init_from_existing = false, int max_iter = 50);
     void solve_for_mass_flow(s_steady_state_soln& soln);
     void solve_for_mass_flow_and_defocus(s_steady_state_soln& soln, double m_dot_htf_max, const util::matrix_t<double>* flux_map_input);
     void solve_for_defocus_given_flow(s_steady_state_soln& soln, const util::matrix_t<double>* flux_map_input);
 
-    void solve_mass_momentum(util::matrix_t<double>& mdot_per_elem, util::matrix_t<double>& phip, util::matrix_t<double>& vel, util::matrix_t<double>& th);
+    void solve_particle_flow(util::matrix_t<double>& mdot_per_elem, util::matrix_t<double>& phip, util::matrix_t<double>& vel, util::matrix_t<double>& th);
 
     void calculate_local_curtain_optical_properties(double th, double phip, double& rhoc, double& tauc);
-
-    void calculate_curtain_optical_properties(util::matrix_t<double>& phip, util::matrix_t<double>& th, util::matrix_t<double>& rhoc, util::matrix_t<double>& tauc);
 
     void calculate_advection_coeff_sandia(double vel, double Tprop, double wspd, double wdir, double Pamb, double& hadv, double& fwind);
 
@@ -255,18 +262,19 @@ protected:
 
     void calculate_view_factors();
 
-    util::matrix_t<double> get_reflectivity_vector(util::matrix_t<double>& rhoc);
+    util::matrix_t<double> get_reflectivity_vector(util::matrix_t<double>& rhoc_per_group);
 
-    void calculate_coeff_matrix(util::matrix_t<double>& rhoc, util::matrix_t<double>& tauc, util::matrix_t<double>& K, util::matrix_t<double>& Kinv);
+    void calculate_coeff_matrix(util::matrix_t<double>& rhoc, util::matrix_t<double>& tauc, Eigen::MatrixXd& K, Eigen::MatrixXd& Kinv);
 
-    void calculate_radiative_exchange(util::matrix_t<double>& Esource, util::matrix_t<double>& Kinv, util::matrix_t<double>& rhoc, util::matrix_t<double>& tauc,
-                                        util::matrix_t<double>& qnetc, util::matrix_t<double>& qnetw, double qnetwf, double qnetap);
+    void calculate_radiative_exchange(util::matrix_t<double>& Ecf, util::matrix_t<double>& Ecb, util::matrix_t<double>& Ebw, double Eap, double Efw,
+                                      Eigen::MatrixXd& K, Eigen::MatrixXd& Kinv,
+                                      util::matrix_t<double>& rhoc, util::matrix_t<double>& tauc,
+                                      util::matrix_t<double>& qnetc, util::matrix_t<double>& qnetw, double& qnetwf, double& qnetap);
+
 
     double calculate_passive_surface_T(double Tguess, double qnet_rad, double hconv, double Tconv, double Tamb, bool is_axial_conduction, double Tcond_prev, double Tcond_next);
 
     double calculate_mass_wtd_avg_exit(util::matrix_t<double>& m_flow_per_elem, util::matrix_t<double>& mat);
-
-    void invert(util::matrix_t<double>& A, util::matrix_t<double>& Ainv);
 
     double vf_parallel_rect(double x1, double y1, double e1, double n1, double dx, double dy, double de, double dn, double z);
 
@@ -276,29 +284,26 @@ protected:
 
     double sum_over_rows_and_cols(util::matrix_t<double>& mat, bool exclude_last_row);
 
+    util::matrix_t<double> matrix_addition(util::matrix_t<double>& m1, util::matrix_t<double>& m2);
+
 
 public:
 	// Class to save messages for up stream classes
 	C_csp_messages csp_messages;
 
 	// Methods
-    C_falling_particle_receiver(double h_tower /*m*/, double epsilon /*-*/,
+    C_falling_particle_receiver(double h_tower /*m*/,
         double T_htf_hot_des /*C*/, double T_htf_cold_des /*C*/,
         double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
         double rec_su_delay /*hr*/, double rec_qf_delay /*-*/,
         double m_dot_htf_max_frac /*-*/, double eta_pump /*-*/,
-        double od_tube /*mm*/, double th_tube /*mm*/,
         double piping_loss_coefficient /*Wt/m2-K*/, double pipe_length_add /*m*/, double pipe_length_mult /*-*/,
         int field_fl, util::matrix_t<double> field_fl_props,
-        int tube_mat_code /*-*/,
-        int night_recirc /*-*/,
-        int model_type /*-*/, double fixed_efficiency /*-*/,
-        double ap_height /*m*/, double ap_width /*m*/, double ap_height_ratio /*-*/, double ap_width_ratio /*-*/,
-        double ap_curtain_depth_ratio /*-*/, bool is_ap_at_bot /*-*/,
-        double particle_dp /*m*/, double particle_abs /*-*/, double curtain_emis /*-*/,
-        double dthdy /*-*/, int hadv_model /*-*/, double hadv_user  /*-*/,
+        int model_type /*-*/, double fixed_efficiency /*-*/, int rad_model_type /*-*/, int hadv_model_type /*-*/, double hadv_user  /*-*/,
+        double ap_height /*m*/, double ap_width /*m*/, double ap_height_ratio /*-*/, double ap_width_ratio /*-*/, double ap_curtain_depth_ratio /*-*/,
+        double particle_dp /*m*/, double particle_abs /*-*/, double curtain_emis /*-*/, double dthdy /*-*/,
         double cav_emis /*-*/, double cav_twall /*m*/, double cav_kwall /*m*/, double cav_hext /*W/m2/K*/,
-        double hl_ffact /*-*/, int n_x, int  n_y, int n_zone_control /*-*/,
+        int n_x, int  n_y, int n_x_rad, int n_y_rad,
         double T_hot_target /*C*/, double csky_frac /*-*/);
 
 	~C_falling_particle_receiver(){};

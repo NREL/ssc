@@ -37,41 +37,40 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Ambient.h"
 #include "definitions.h"
 
+#include "../splinter/QR"
 
-C_falling_particle_receiver::C_falling_particle_receiver(double h_tower /*m*/, double epsilon /*-*/,
+
+C_falling_particle_receiver::C_falling_particle_receiver(double h_tower /*m*/, 
     double T_htf_hot_des /*C*/, double T_htf_cold_des /*C*/,
     double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
     double rec_su_delay /*hr*/, double rec_qf_delay /*-*/,
     double m_dot_htf_max_frac /*-*/, double eta_pump /*-*/,
-    double od_tube /*mm*/, double th_tube /*mm*/,
     double piping_loss_coefficient /*Wt/m2-K*/, double pipe_length_add /*m*/, double pipe_length_mult /*-*/,
     int field_fl, util::matrix_t<double> field_fl_props,
-    int tube_mat_code /*-*/,
-    int night_recirc /*-*/,
-    int model_type /*-*/, double fixed_efficiency /*-*/,
-    double ap_height /*m*/, double ap_width /*m*/, double ap_height_ratio /*-*/, double ap_width_ratio /*-*/,
-    double ap_curtain_depth_ratio /*-*/, bool is_ap_at_bot /*-*/,
-    double particle_dp /*m*/, double particle_abs /*-*/, double curtain_emis /*-*/,
-    double dthdy /*-*/, int hadv_model /*-*/, double hadv_user  /*-*/,
+    int model_type /*-*/, double fixed_efficiency /*-*/, int rad_model_type /*-*/, int hadv_model_type /*-*/, double hadv_user  /*-*/,
+    double ap_height /*m*/, double ap_width /*m*/, double ap_height_ratio /*-*/, double ap_width_ratio /*-*/, double ap_curtain_depth_ratio /*-*/, 
+    double particle_dp /*m*/, double particle_abs /*-*/, double curtain_emis /*-*/, double dthdy /*-*/, 
     double cav_emis /*-*/, double cav_twall /*m*/, double cav_kwall /*m*/, double cav_hext /*W/m2/K*/,
-    double hl_ffact /*-*/, int n_x, int  n_y, int n_zone_control /*-*/,
-    double T_hot_target /*C*/, double csky_frac /*-*/) : C_pt_receiver(h_tower, epsilon,
+    int n_x, int n_y, int n_x_rad, int n_y_rad,
+    double T_hot_target /*C*/, double csky_frac /*-*/) : C_pt_receiver(h_tower, 0.0,
         T_htf_hot_des, T_htf_cold_des,
         f_rec_min, q_dot_rec_des,
         rec_su_delay, rec_qf_delay,
         m_dot_htf_max_frac, eta_pump,
-        od_tube, th_tube,
-        piping_loss_coefficient, pipe_length_add,
-        pipe_length_mult,
+        0.0, 0.0,
+        piping_loss_coefficient, pipe_length_add, pipe_length_mult,
         field_fl, field_fl_props,
-        tube_mat_code,
-        night_recirc)
+        2, 0)
 {
     // Parameters not shared upstream with C_pt_receiver
 
     // Model specs
     m_model_type = model_type;
     m_fixed_efficiency = fixed_efficiency;
+    m_rad_model_type = rad_model_type;
+    m_vf_rad_type_0 = 0.9;
+    m_hadv_model_type = hadv_model_type;
+    m_hadv_user = hadv_user;
 
     // Cavity and curtain geometry
     m_ap_height = ap_height;
@@ -79,9 +78,12 @@ C_falling_particle_receiver::C_falling_particle_receiver(double h_tower /*m*/, d
     m_ap_height_ratio = ap_height_ratio;
     m_ap_width_ratio = ap_width_ratio;
     m_ap_curtain_depth_ratio = ap_curtain_depth_ratio;
-    m_is_ap_at_bot = is_ap_at_bot;
-    m_is_curtain_flat = true;
-    m_curtain_rad = std::numeric_limits<double>::quiet_NaN();
+
+    m_is_ap_at_bot = true;          // Hard-coded to true to match SolarPILOT
+    m_is_curtain_flat = true;       // Curved curtain is not implemented yet
+    m_curtain_rad = std::numeric_limits<double>::quiet_NaN(); // Curved curtain is not implemented yet
+    m_initial_fall_height_fraction = 1. / 12.;   //Gonzalez et al.Solar Energy 213 (2021) 211–224(https://doi.org/10.1016/j.solener.2020.11.012)
+    m_initial_fall_height_fixed = 0.3;
 
 
     // Particle and curtain properties
@@ -91,9 +93,6 @@ C_falling_particle_receiver::C_falling_particle_receiver(double h_tower /*m*/, d
     m_dthdy = dthdy;
     m_tauc_mult = 1.0;
     m_phi0 = 0.6;
-    m_hadv_model = hadv_model;
-    m_hadv_user = hadv_user;
-
 
     // Cavity wall properties
     m_cav_emis = cav_emis;
@@ -101,24 +100,31 @@ C_falling_particle_receiver::C_falling_particle_receiver(double h_tower /*m*/, d
     m_cav_kwall = cav_kwall;
     m_cav_hext = cav_hext;
 
+    // Particle transport thermal loss
+    m_Q_dot_transport_loss_hot =  0.0;  // TODO: Set up inputs and populate from length and loss per m
+    m_Q_dot_transport_loss_cold =  0.0;
 
     // Operating parameters
     m_T_particle_hot_target = T_hot_target + 273.15;   //[K] convert from C
     m_csky_frac = csky_frac;  
-    m_hl_ffact = hl_ffact;
 
     // Model, flow control, and discretization
     m_n_x = n_x;
     m_n_y = n_y;
-    m_n_zone_control = 1;
+    m_n_zone_control = 1; // Multiple flow control zones are not implemented yet
+
+    m_n_x_rad = min(n_x_rad, m_n_x);  
+    m_n_y_rad = min(n_y_rad, m_n_y-1);
 
 
-    // Hard-coded (for now?) parameters
+    // Hard-coded parameters
     m_tol_od = 0.001;		    //[-] Tolerance for over-design iteration
     m_eta_therm_des_est = 0.9;  //[-] Estimated and used to calculate min incident flux
-    m_use_constant_piping_loss = true;
+    m_use_constant_piping_loss = true;  
     m_include_back_wall_convection = false;
     m_include_wall_axial_conduction = false;
+
+    m_invert_matrices = true;  // Invert coefficient matrix for radiative exchange?  Used multiple times during temperautre iterations - test case solution time was faster when the coefficient matrix was inverted up front
 
     // Calculated parameters
     m_curtain_height = std::numeric_limits<double>::quiet_NaN();
@@ -162,8 +168,8 @@ void C_falling_particle_receiver::init()
         throw(C_csp_exception("Flow control in more than one zone is not currently implemented", "Particle receiver initialization"));
     }
 
-    m_curtain_height = m_ap_height / m_ap_height_ratio;  
-    m_cav_width = m_ap_width / m_ap_width_ratio;
+    m_curtain_height = m_ap_height_ratio * m_ap_height;
+    m_cav_width = m_ap_width_ratio * m_ap_width;
     m_curtain_width = m_cav_width;
     if (!m_is_curtain_flat)
     {
@@ -175,7 +181,10 @@ void C_falling_particle_receiver::init()
         }
         throw(C_csp_exception("Curved particle curtain is not currently implemented", "Particle receiver initialization"));
     }
+    m_curtain_area = m_curtain_height * m_curtain_width;
     m_curtain_elem_area = (m_curtain_height / (m_n_y - 1)) * (m_curtain_width / m_n_x);   // Curtain element area [m2]
+    m_back_wall_elem_area = m_curtain_elem_area;                                          // Back wall element area [m2]
+
     m_curtain_dist = m_ap_curtain_depth_ratio * m_ap_height;
     m_cav_front_area = 2 * (m_curtain_height + m_cav_width) * m_curtain_dist + m_curtain_height * (m_cav_width - m_ap_width) + m_ap_width * (m_curtain_height - m_ap_height);  
     m_ap_area = m_ap_height * m_ap_width;
@@ -199,46 +208,27 @@ void C_falling_particle_receiver::init()
 
 
     // Calculate view factors
-    if (m_model_type == 3)
+    if (m_model_type == 3 && m_rad_model_type > 0)
+    {
+        // Set up radiation groups
+        int nybase = (int)((m_n_y - 1) / m_n_y_rad);
+        int nxbase = (int)(m_n_x / m_n_x_rad);
+        m_ny_per_group.resize_fill(m_n_y_rad, nybase);
+        m_nx_per_group.resize_fill(m_n_x_rad, nxbase);
+
+        int n;
+        n = (m_n_y - 1) - (nybase * m_n_y_rad);
+        for (int j = 0; j < n; j++)
+            m_ny_per_group.at(j) += 1;
+        n = (m_n_x) - (nxbase * m_n_x_rad);
+        for (int j = 0; j < n; j++)
+            m_nx_per_group.at(j) += 1;
+
+        // Calculate view factors
         calculate_view_factors();
+
+    }
     
-
-    // Initialize output arrays
-    /*
-    m_q_dot_inc.resize(m_n_panels);
-    m_q_dot_inc.fill(0.0);
-
-    m_T_s.resize(m_n_panels);
-    m_T_s.fill(0.0);
-
-    m_T_panel_out.resize(m_n_panels);
-    m_T_panel_out.fill(0.0);
-
-    m_T_panel_in.resize(m_n_panels);
-    m_T_panel_in.fill(0.0);
-
-    m_T_panel_ave.resize(m_n_panels);
-    m_T_panel_ave.fill(0.0);
-
-    m_q_dot_conv.resize(m_n_panels);
-    m_q_dot_conv.fill(0.0);
-
-    m_q_dot_rad.resize(m_n_panels);
-    m_q_dot_rad.fill(0.0);
-
-    m_q_dot_loss.resize(m_n_panels);
-    m_q_dot_loss.fill(0.0);
-
-    m_q_dot_abs.resize(m_n_panels);
-    m_q_dot_abs.fill(0.0);
-    */
-
-    /*
-    design_point_steady_state(m_eta_thermal_des_calc,
-        m_W_dot_rec_pump_des_calc,
-        m_W_dot_pumping_tower_share, m_W_dot_pumping_rec_share,
-        m_rec_pump_coef, m_vel_htf_des);
-    */
 
     m_ncall = -1;
     return;
@@ -270,8 +260,8 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
     double T_amb = weather.m_tdry + 273.15;	//[K] Dry bulb temperature, convert from C
     double I_bn = weather.m_beam;           //[W/m2]
     double v_wind_10 = weather.m_wspd;      //[m/s]
-    double v_wind = log((m_h_tower + m_curtain_height / 2) / 0.003) / log(10.0 / 0.003) * v_wind_10;  // Estimated wind velocity at receiver location
-    double wind_direc = weather.m_wdir;                // TODO: Check wind directions against Sandia's
+    //double v_wind = log((m_h_tower + m_curtain_height / 2) / 0.003) / log(10.0 / 0.003) * v_wind_10;  // Estimated wind velocity at receiver location
+    double wind_direc = weather.m_wdir;      // Wind direction [deg]
     double hour = time / 3600.0;			//[hr] Hour of the year
     double T_sky = CSP::skytemp(T_amb, T_dp, hour);     //[K]
 
@@ -288,12 +278,10 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
     //double T_particle_prop, cp_particle, q_dot_inc_pre_defocus;
     //T_particle_prop = cp_particle = q_dot_inc_pre_defocus = std::numeric_limits<double>::quiet_NaN();
 
-    double m_dot_tot, T_particle_hot, eta, T_htf_prop, cp_htf, W_lift;
-    m_dot_tot = T_particle_hot = eta = T_htf_prop = cp_htf = W_lift = std::numeric_limits<double>::quiet_NaN();
+    double m_dot_tot, T_particle_hot, T_particle_hot_rec, eta, T_htf_prop, cp_htf, W_lift;
+    m_dot_tot = T_particle_hot = T_particle_hot_rec = eta = T_htf_prop = cp_htf = W_lift = std::numeric_limits<double>::quiet_NaN();
     double Q_inc, Q_refl, Q_adv, Q_rad, Q_transport, Q_thermal, Q_inc_pre_defocus;
     Q_inc = Q_refl = Q_adv = Q_rad = Q_transport = Q_thermal = Q_inc_pre_defocus = std::numeric_limits<double>::quiet_NaN();
-    double q_thermal_steadystate, q_thermal_csky;
-    q_thermal_steadystate = q_thermal_csky = std::numeric_limits<double>::quiet_NaN();
 
 
     // Set current timestep stored values to NaN so we know that code solved for them
@@ -303,16 +291,16 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
 
     if (input_operation_mode < C_csp_collector_receiver::OFF || input_operation_mode > C_csp_collector_receiver::STEADY_STATE) {
         error_msg = util::format("Input operation mode must be either [0,1,2], but value is %d", input_operation_mode);
-        throw(C_csp_exception(error_msg, "MSPT receiver timestep performance call"));
+        throw(C_csp_exception(error_msg, "Falling particle receiver timestep performance call"));
     }
 
     // Check resolution of flux map input compared to resolution of the particle curtain discretization
     // TODO: Generalize to allow different resolution
     int n_flux_y = (int)flux_map_input->nrows();
     int n_flux_x = (int)flux_map_input->ncols();
-    if (n_flux_y != m_n_y || n_flux_x != m_n_x) {
+    if (n_flux_y + 1 != m_n_y || n_flux_x != m_n_x) {
         error_msg = "The falling particle receiver model flux map input must match the specified discretization resolution of the particle curtain";
-        throw(C_csp_exception(error_msg, "MSPT receiver timestep performance call"));
+        throw(C_csp_exception(error_msg, "Falling particle receiver timestep performance call"));
     }
 
 
@@ -385,14 +373,12 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
 
     // Get total incident flux before defocus is applied
     util::matrix_t<double> mt_q_dot_inc_pre_defocus = calculate_flux_profiles(flux_sum, 1.0, 1.0, 1.0, flux_map_input);  // W/m2
-    Q_inc_pre_defocus = 0.0;
-    for (int j = 0; j < m_n_y; j++) {
-        for (int i = 0; i < m_n_x; i++) {
-            Q_inc_pre_defocus += mt_q_dot_inc_pre_defocus.at(j,i) * m_curtain_elem_area;
-        }
-    }
+    Q_inc_pre_defocus = sum_over_rows_and_cols(mt_q_dot_inc_pre_defocus, true) * m_curtain_elem_area;
 
-    if (rec_is_off) {
+
+
+    if (rec_is_off)
+    {
         soln.q_dot_inc.resize_fill(m_n_y, m_n_x, 0.0);
     }
     else
@@ -447,7 +433,7 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
             soln.rec_is_off = soln_clearsky.rec_is_off;
             soln.od_control = soln_clearsky.od_control;
             soln.q_dot_inc = calculate_flux_profiles(flux_sum, 1.0, plant_defocus, soln_clearsky.od_control, flux_map_input);  // Absorbed flux profiles at actual DNI and clear-sky defocus
-            calculate_steady_state_soln(soln, 0.00025, m_use_constant_piping_loss);  // Solve energy balances at clear-sky mass flow rate and actual DNI conditions
+            calculate_steady_state_soln(soln, 0.00025, false);  // Solve energy balances at clear-sky mass flow rate and actual DNI conditions
         }
 
         else  // Receiver can operate and flow control based on a weighted average of clear-sky and actual DNI
@@ -466,7 +452,7 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
             {
                 soln.od_control = soln_clearsky.od_control;
                 soln.q_dot_inc = soln_actual.q_dot_inc;
-                calculate_steady_state_soln(soln, 0.00025, m_use_constant_piping_loss); // Solve energy balances at this mass flow rate and actual DNI conditions
+                calculate_steady_state_soln(soln, 0.00025, false); // Solve energy balances at this mass flow rate and actual DNI conditions
             }
             else
             {
@@ -484,14 +470,12 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
 
     m_dot_tot = soln.m_dot_tot;
     T_particle_hot = soln.T_particle_hot;
-    //T_salt_hot_rec = soln.T_salt_hot_rec;
+    T_particle_hot_rec = soln.T_particle_hot_rec;
     eta = soln.eta;
 
-    //u_coolant = soln.u_salt;
-    //f = soln.f;
+
     T_htf_prop = (T_particle_hot + T_particle_cold_in) / 2.0;
     cp_htf = field_htfProps.Cp(T_htf_prop) * 1000.0;
-    //rho_coolant = field_htfProps.dens(T_coolant_prop, 1.0);
 
     Q_inc = soln.Q_inc;
     Q_refl = soln.Q_refl;
@@ -507,16 +491,9 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
     }
 
 
-    q_thermal_steadystate = soln.Q_thermal;
-    q_thermal_csky = 0.0;
-    if (m_csky_frac > 0.0001)
-        q_thermal_csky = soln_clearsky.Q_thermal;  // Steady state thermal power with clear-sky DNI
 
-
-
-
-    double DELTAP, Pres_D, ratio_dP_tower_to_rec, W_dot_pump, q_thermal, q_startup;
-    DELTAP = Pres_D = ratio_dP_tower_to_rec = W_dot_pump = q_thermal = q_startup = std::numeric_limits<double>::quiet_NaN();
+    double DELTAP, Pres_D, ratio_dP_tower_to_rec, W_dot_pump, q_startup;
+    DELTAP = Pres_D = ratio_dP_tower_to_rec = W_dot_pump = q_startup = std::numeric_limits<double>::quiet_NaN();
 
     q_startup = 0.0;
 
@@ -568,17 +545,13 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
             m_mode = C_csp_collector_receiver::ON;
             q_startup = 0.0;
 
-            q_thermal = m_dot_tot * cp_htf * (T_particle_hot - T_particle_cold_in);
+            Q_thermal = m_dot_tot * cp_htf * (T_particle_hot - T_particle_cold_in);
 
             if (Q_inc < m_q_dot_inc_min)
             {
                 // If output here is less than specified allowed minimum, then need to shut off receiver
                 m_mode = C_csp_collector_receiver::OFF;
 
-                // Include here outputs that are ONLY set to zero if receiver completely off, and not attempting to start-up
-                //W_dot_pump = 0.0;
-                // Pressure drops
-                //DELTAP = 0.0; Pres_D = 0.0; u_coolant = 0.0; ratio_dP_tower_to_rec = 0.0;
             }
 
             break;
@@ -594,14 +567,14 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
         // Pressure drop calculations
         //calc_pump_performance(rho_coolant, m_dot_salt_tot, f, Pres_D, W_dot_pump, ratio_dP_tower_to_rec);
 
-        q_thermal = m_dot_tot * cp_htf * (T_particle_hot - T_particle_cold_in);
+        Q_thermal = m_dot_tot * cp_htf * (T_particle_hot - T_particle_cold_in);
 
         // After convergence, determine whether the mass flow rate falls below the lower limit
         if (Q_inc < m_q_dot_inc_min)
         {
             // GOTO 900
-            // Steady State always reports q_thermal (even when much less than min) because model is letting receiver begin startup with this energy
-            // Should be a way to communicate to controller that q_thermal is less than q_min without losing this functionality
+            // Steady State always reports Q_thermal (even when much less than min) because model is letting receiver begin startup with this energy
+            // Should be a way to communicate to controller that Q_thermal is less than q_min without losing this functionality
             if (m_mode != C_csp_collector_receiver::STEADY_STATE || m_mode_prev == C_csp_collector_receiver::ON || m_mode_prev == C_csp_collector_receiver::OFF_NO_SU_REQ)
                 rec_is_off = true;
         }
@@ -609,12 +582,10 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
     else
     {	// If receiver was off BEFORE startup deductions
         m_mode = C_csp_collector_receiver::OFF;
-
-        // Include here outputs that are ONLY set to zero if receiver completely off, and not attempting to start-up
-        //W_dot_pump = 0.0;
-        // Pressure drops
-        //DELTAP = 0.0; Pres_D = 0.0; u_coolant = 0.0, ratio_dP_tower_to_rec = 0.0;
     }
+
+    // Particle lift power
+    W_lift = m_dot_tot * (m_h_tower + m_curtain_height) * 9.8067 / m_eta_pump;
 
     if (rec_is_off)
     {
@@ -625,47 +596,48 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
         Q_rad = 0.0;
         Q_transport = 0.0;
         Q_thermal = 0.0;
+        W_lift = 0.0;
 
         // Set the receiver outlet temperature equal to the inlet design temperature
         T_particle_hot = m_T_htf_cold_des;
 
         Q_inc_pre_defocus = 0.0;
         Q_inc = 0.0;
-        q_thermal_csky = q_thermal_steadystate = 0.0;
 
         // Reset m_od_control (for reporting)
         od_control = 1.0;		//[-]
     }
 
-    // Particle lift power
-    W_lift = m_dot_tot * (m_h_tower + m_curtain_height) * 9.8067 / m_eta_pump;
 
     outputs.m_m_dot_salt_tot = m_dot_tot * 3600.0;		//[kg/hr] convert from kg/s
-    outputs.m_eta_therm = eta;						    //[-] RECEIVER thermal efficiency (includes radiation and convective losses. reflection losses are contained in receiver flux model)
-    outputs.m_W_dot_pump =  W_lift / 1.E6;				            //[MW] convert from W
+    outputs.m_eta_therm = eta;						    //[-] Receiver efficiency (includes curtain reflection, radiation and convective losses) 
+    outputs.m_W_dot_pump =  W_lift / 1.E6;				//[MW] convert from W
     outputs.m_q_conv_sum = Q_adv / 1.E6;				//[MW] convert from W
     outputs.m_q_rad_sum = Q_rad / 1.E6;					//[MW] convert from W
     outputs.m_q_dot_refl_loss = Q_refl / 1.E6;
     outputs.m_Q_thermal = Q_thermal / 1.E6;				//[MW] convert from W
     outputs.m_T_salt_hot = T_particle_hot - 273.15;		//[C] convert from K
-    outputs.m_component_defocus = od_control;				//[-]
+    outputs.m_component_defocus = od_control;			//[-]
     outputs.m_q_dot_rec_inc_pre_defocus = Q_inc_pre_defocus / 1.E6;    //[MWt]
     outputs.m_q_dot_rec_inc = Q_inc / 1.E6;			    //[MW] convert from W
-    outputs.m_q_startup = q_startup / 1.E6;					//[MW-hr] convert from W-hr
+    outputs.m_q_startup = q_startup / 1.E6;				//[MW-hr] convert from W-hr
+    outputs.m_T_salt_cold = T_particle_cold_in - 273.15;	//[C] convert from K
+    outputs.m_time_required_su = time_required_su * 3600.0;	//[s], convert from hr
+    if (Q_thermal > 0.0)
+        outputs.m_q_dot_piping_loss = Q_transport / 1.E6;	//[MWt]
+    else
+        outputs.m_q_dot_piping_loss = 0.0;		//[MWt]
+    
+
+    // Outputs in parent class, but not used or not relevant for falling particle receiver model
     outputs.m_dP_receiver = 0.0;	                    //[bar] receiver pressure drop, convert from Pa
     outputs.m_dP_total = 0.0;						    //[bar] total pressure drop, convert from MPa
     outputs.m_ratio_dP_tower_to_rec = 0.0;              //[-] ratio of total pressure drop that is caused by tower height
     outputs.m_vel_htf = 0.0;							//[m/s]
-    outputs.m_T_salt_cold = T_particle_cold_in - 273.15;		//[C] convert from K
-    outputs.m_time_required_su = time_required_su * 3600.0;	//[s], convert from hr in code
-    if (q_thermal > 0.0)
-        outputs.m_q_dot_piping_loss = Q_transport / 1.E6;	//[MWt]
-    else
-        outputs.m_q_dot_piping_loss = 0.0;		//[MWt]
     outputs.m_q_heattrace = 0.0;
 
-    outputs.m_Q_thermal_csky_ss = q_thermal_csky / 1.e6; //[MWt]
-    outputs.m_Q_thermal_ss = q_thermal_steadystate / 1.e6; //[MWt]
+    outputs.m_Q_thermal_csky_ss = 0.0; //[MWt]
+    outputs.m_Q_thermal_ss = 0.0; //[MWt]
 
     ms_outputs = outputs;
 }
@@ -851,6 +823,7 @@ bool C_falling_particle_receiver::use_previous_solution(const s_steady_state_sol
         soln.od_control == soln_prev.od_control &&
         soln.T_amb == soln_prev.T_amb &&
         soln.v_wind_10 == soln_prev.v_wind_10 &&
+        soln.wind_dir == soln.wind_dir &&
         soln.p_amb == soln_prev.p_amb &&
         soln.T_sky == soln_prev.T_sky &&
         soln.flux_sum == soln_prev.flux_sum)
@@ -867,36 +840,42 @@ bool C_falling_particle_receiver::use_previous_solution(const s_steady_state_sol
 util::matrix_t<double> C_falling_particle_receiver::calculate_flux_profiles(double flux_sum /*W/m2*/, double flux_scale /*-*/, double plant_defocus /*-*/,
     double od_control, const util::matrix_t<double>* flux_map_input)
 {
-    util::matrix_t<double> q_dot_inc, flux;
+    util::matrix_t<double> q_dot_inc;
     int n_flux_y = (int)flux_map_input->nrows();
     int n_flux_x = (int)flux_map_input->ncols();
-    flux.resize_fill(n_flux_y, n_flux_x, 0.0);
     q_dot_inc.resize_fill(m_n_y, m_n_x, 0.0);
 
     double total_defocus = plant_defocus * od_control;
 
     if (flux_sum > 1.0)
     {
-        for (int j = 0; j < n_flux_y; j++)
+        for (int i = 0; i < n_flux_x; i++)
         {
-            for (int i = 0; i < n_flux_x; i++)
+            for (int j = 0; j < n_flux_y; j++)
             {
-                flux.at(j, i) = (*flux_map_input)(j,i) * total_defocus * flux_scale; //[kW/m^2];
-                q_dot_inc.at(j, i) = flux.at(j, i) * 1000;  // Flux incident on curtain (assuming curtain discretization resolution and flux profile resolution match) [W/m^2]
+                q_dot_inc.at(j, i) = (*flux_map_input)(j, i) * total_defocus * flux_scale * 1000; // Flux incident on curtain (assuming curtain discretization resolution and flux profile resolution match)  [W/m^2];
+
             }
+
+            // Fill in interpolated value at last axial node in fall direction.  This doesn't count toward energy balance, value here is just to define reasonable wall temperature
+            int j = m_n_y - 1;
+            q_dot_inc.at(j, i) = q_dot_inc.at(j-1, i) + (q_dot_inc.at(j-1,i) - q_dot_inc.at(j-2, i));
+            
         }
     }
     else
     {
-        flux.fill(0.0);
+        q_dot_inc.fill(0.0);
     }
     return q_dot_inc;
 }
 
 // Calculate steady state temperature and heat loss profiles for a given mass flow and incident flux
-void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_soln& soln, double tol, bool use_constant_piping_loss, int max_iter)
+void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_soln& soln, double tol, bool init_from_existing, int max_iter)
 {
-   
+
+    double tolTp = 0.1;  // Particle temperature tolerance [K] for convergence of solution iterations
+
     double P_amb = soln.p_amb;
     double T_amb = soln.T_amb;
     double v_wind_10 = soln.v_wind_10;
@@ -908,22 +887,27 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
     double dy = m_curtain_height / (m_n_y - 1);
     double dx = m_curtain_width / m_n_x;
 
-    bool soln_exists = (soln.T_particle_hot == soln.T_particle_hot);  // Does a solution already exist?
+    double Q_inc, Q_refl, Q_rad, Q_adv, Q_cond, Q_thermal, Q_imbalance;
+    double Tp_out, T_particle_prop, T_cold_in_rec, cp, particle_density, err, hadv_with_wind;
 
-    double Q_inc, Q_refl, Q_rad, Q_adv, Q_transport, Q_thermal;
-    double Tp_out, T_particle_prop, cp, particle_density;
-
+    Q_refl = Q_rad = Q_adv = Q_cond = Q_thermal = Q_imbalance = 0.0;
+    Tp_out = hadv_with_wind = 0.0;
     Q_inc = sum_over_rows_and_cols(soln.q_dot_inc, true) * m_curtain_elem_area;  // Total solar power incident on curtain [W]
-    Q_refl = Q_rad = Q_adv = Q_transport = 0.0;
     T_particle_prop = (m_T_htf_hot_des + T_cold_in) / 2.0; 
     particle_density = field_htfProps.dens(T_particle_prop, 1.0);
-    cp = field_htfProps.Cp(T_particle_prop) * 1000.0;			        // Particle specific heat  [J/kg-K]
+    cp = field_htfProps.Cp(T_particle_prop) * 1000.0;			        // Particle specific heat  [J/kg-K] evaluated at average of current inlet temperature and design outlet temperature
+    T_cold_in_rec = T_cold_in - m_Q_dot_transport_loss_cold / cp / soln.m_dot_tot;  // Inlet temperature to receiver accounting from loss from cold particle transport
+
+
+    bool rec_is_off = false;
+    bool converged = false;
+    bool soln_exists = (soln.T_particle_hot == soln.T_particle_hot) && (soln.converged);  // Does a solution already exist from a previous iteration?
 
     if (m_model_type == 0) // Fixed user-defined receiver efficiency
     {
-        Q_thermal = m_fixed_efficiency * Q_inc;  // Thermal power to particles [W]
-        Tp_out = T_cold_in + Q_thermal / (soln.m_dot_tot * cp);
-
+        Q_thermal = m_fixed_efficiency * Q_inc;  // Thermal power to particles in receiver [W]
+        Tp_out = T_cold_in_rec + Q_thermal / (soln.m_dot_tot * cp);
+        converged = true;
     }
     else if (m_model_type == 1 || m_model_type == 2) // Receiver efficiency correlations from Sandia (https://www.osti.gov/biblio/1890267, page 43)
     {
@@ -959,69 +943,47 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
         eta = A + B*q + C*pow(q, 2) + D*q*v_wind*theta + E*pow(v_wind, 2)*theta;
         eta = fmax(eta, 0.0);
         Q_thermal = eta*Q_inc;
-        Tp_out = T_cold_in + Q_thermal / (soln.m_dot_tot * cp);
+        Tp_out = T_cold_in_rec + Q_thermal / (soln.m_dot_tot * cp);
+        converged = true;
     }
 
 
-    else if (m_model_type == 3)  // Detailed receiver model
+    else if (m_model_type == 3)        // Quasi-2D physics-based receiver model
     {
+
         //--- Solve mass and momentum equations for curtain velocity, thickness, void fraction
         util::matrix_t<double> mdot_per_elem(m_n_x);  // Mass flow (kg/s) per element
-        soln.m_dot_tot = 0.0;
         for (int i = 0; i < m_n_x; i++)
         {
             mdot_per_elem.at(i) = soln.m_dot_tot / m_n_x;  // TODO: Update to allow for multiple mass flow control zones
-            soln.m_dot_tot += mdot_per_elem.at(i);
         }
-        solve_mass_momentum(mdot_per_elem, soln.phip, soln.vel, soln.thc);
+        solve_particle_flow(mdot_per_elem, soln.phip, soln.vel, soln.thc);
 
         //--- Calculate curtain optical properties from solution for curtain void fraction and thickness
-        calculate_curtain_optical_properties(soln.phip, soln.thc, soln.rhoc, soln.tauc);
-
-
-        //--- Calculate coefficient matrix for radiative exchange
-        // TODO: exclude this calculation if the mass flow rates haven't changed?
-        calculate_coeff_matrix(soln.rhoc, soln.tauc, soln.K, soln.Kinv);
-
-
-
-        //-- Solve radiative exchange equation for solar energy (independent of temperature)
-        //   Radiative exchange is solved only for solar flux that's reflected/transmitted by the curtain on the first pass
-        int nelem = get_nelem();
-        int nyr = m_n_y- 1;
-        int nx = m_n_x;
-        double qnet_ap_sol, qnet_wf_sol;
-        util::matrix_t<double> Esol, qnetc_sol, qnetw_sol;
-        Esol.resize_fill(nelem, 0.0);
-        for (int i = 0; i < m_n_x; i++)
+        double tauc1, rhoc1;
+        soln.tauc.resize_fill(m_n_y, m_n_x, 0.0);
+        soln.rhoc.resize_fill(m_n_y, m_n_x, 0.0);
+        for (int j = 0; j < m_n_y; j++)
         {
-            for (int j = 0; j < m_n_y - 1; j++)
+            for (int i = 0; i < m_n_x; i++)
             {
-                Esol.at(1 + j * nx + i) = soln.rhoc.at(j, i) * soln.q_dot_inc.at(j, i);            // Energy "source" at front curtain surface
-                Esol.at(1 + nyr * nx + j * nx + i) = soln.tauc.at(j, i) * soln.q_dot_inc.at(j, i);    // Energy "source" at back curtain surface
+                calculate_local_curtain_optical_properties(soln.thc.at(j, i), soln.phip.at(j, i), rhoc1, tauc1);
+                soln.rhoc.at(j, i) = rhoc1;
+                soln.tauc.at(j, i) = tauc1;
             }
         }
-        calculate_radiative_exchange(Esol, soln.Kinv, soln.rhoc, soln.tauc, qnetc_sol, qnetw_sol, qnet_wf_sol, qnet_ap_sol);
-        for (int i = 0; i < m_n_x; i++)
-        {
-            for (int j = 0; j < m_n_y; j++)
-            {
-                qnetc_sol.at(j, i) += soln.q_dot_inc.at(j, i);  // Radiative exchange solution above was only for reflected/transmitted energy, add incoming solar here
-            }
-        }
-        Q_refl = qnet_ap_sol * m_ap_area;   // Solar reflection loss [W]
-
 
         //--- Initialize solutions for particle and wall temperatures
         double Twf, Twfnew;
         util::matrix_t<double> Tp, Tw, Tpnew, Twnew;
-        Tp.resize_fill(m_n_y, m_n_x, T_cold_in);        // Particle temperature [K]
-        Tpnew.resize_fill(m_n_y, m_n_x, T_cold_in);
-        Tw.resize_fill(m_n_y, m_n_x, T_cold_in);       // Back wall temperature [K]
-        Twnew.resize_fill(m_n_y, m_n_x, T_cold_in);
+        Tp.resize_fill(m_n_y, m_n_x, T_cold_in_rec);        // Particle temperature [K]
+        Tpnew.resize_fill(m_n_y, m_n_x, T_cold_in_rec);
+        Tw.resize_fill(m_n_y, m_n_x, T_cold_in_rec);       // Back wall temperature [K]
+        Twnew.resize_fill(m_n_y, m_n_x, T_cold_in_rec);
 
         //--- Set initial guess for particle and wall temperatures
-        if (soln_exists) // Use existing solution as the initial guess
+        double power_approx, Tout_approx, dT, qnet_approx, eta_est;
+        if (soln_exists && init_from_existing)
         {
             Tp = soln.T_p;
             Tw = soln.T_back_wall;
@@ -1029,18 +991,18 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
         }
         else
         {
-            double power_approx, Tout_approx, dT, qnet_approx;
-            double eta_est = 0.85;
-            cp = field_htfProps.Cp(T_particle_prop) * 1000.0;			        // Particle specific heat  [J/kg-K]
+            eta_est = 0.85;
+            if (soln_exists && soln.eta > 0.0)
+                eta_est = soln.eta;
             util::matrix_t<double> flux_sum_over_heights = sum_over_rows(soln.q_dot_inc, true);
             for (int i = 0; i < m_n_x; i++)
             {
-                power_approx = eta_est * flux_sum_over_heights.at(i) * m_curtain_elem_area;  // Approximate power to particles [W]
-                Tout_approx = T_cold_in + power_approx / cp / mdot_per_elem.at(i);  // Approximate particle exit temperature [K]
-                dT = (Tout_approx - T_cold_in) / (m_n_y - 1);
+                power_approx = eta_est * flux_sum_over_heights.at(i) * m_curtain_elem_area;     // Approximate power to particles [W]
+                Tout_approx = T_cold_in_rec + power_approx / cp / mdot_per_elem.at(i);  // Approximate particle exit temperature [K]
+                dT = (Tout_approx - T_cold_in_rec) / (m_n_y - 1);
                 for (int j = 0; j < m_n_y; j++)
                 {
-                    Tp.at(j, i) = soln.T_particle_cold_in + j * dT;
+                    Tp.at(j, i) = T_cold_in_rec + j * dT;
                     qnet_approx = m_curtain_emis * CSP::sigma * pow(Tp.at(j, i), 4) + m_cav_emis * soln.tauc.at(j, i) * soln.q_dot_inc.at(j, i); //Approximate net radiative heat transfer to wall (W/m2)
                     Tw.at(j, i) = pow(qnet_approx / (m_cav_emis * CSP::sigma), 0.25);
                 }
@@ -1049,27 +1011,99 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
         }
 
 
-        //-- Temperature solution iterations
-        double Q_inc, Q_refl, Q_rad, Q_adv, Q_transport, Q_thermal;
-        double Tpout, vel_out, Tfilm, hadv, fwind, qnet_ap, qnet_wf, hwconv, qadv, qtot, dh, cp;
-        util::matrix_t<double> EIR, qnetc, qnetw;
-        EIR.resize(nelem);
-        cp = field_htfProps.Cp(T_particle_prop) * 1000.0;		    // Particle specific heat  [J/kg-K]
+        //--- Calculate coefficient matrix for radiative exchange
+        // TODO: exclude this calculation if the mass flow rates haven't changed?
+        Eigen::MatrixXd K;
+        Eigen::MatrixXd Kinv;
+        if (m_rad_model_type == 1)
+        {
+            calculate_coeff_matrix(soln.rhoc, soln.tauc, K, Kinv);
+        }
+
+        //--- Initialize quantities needed in radiation models
+        double qnet_ap_sol, qnet_wf_sol, Eap, Ewf;
+        util::matrix_t<double> qnetc_sol, qnetw_sol, qnetc, qnetw, Ecf, Ecb, Ebw;
+        qnetc_sol.resize_fill(m_n_y, m_n_x, 0.0);
+        qnetw_sol.resize_fill(m_n_y, m_n_x, 0.0);
+        qnetc.resize_fill(m_n_y, m_n_x, 0.0);
+        qnetw.resize_fill(m_n_y, m_n_x, 0.0);
+        Ecf.resize_fill(m_n_y, m_n_x, 0.0);
+        Ecb.resize_fill(m_n_y, m_n_x, 0.0);
+        Ebw.resize_fill(m_n_y, m_n_x, 0.0);
+
+        double rhow = 1.0 - m_cav_emis;
+
+        //-- Solve radiative exchange equation for solar energy (this is independent of temperature)
+        if (m_rad_model_type == 0)
+        {
+            Q_refl = 0.0;
+            double jcback_sol, jw_sol, jcfront_sol;
+            for (int i = 0; i < m_n_x; i++)
+            {
+                for (int j = 0; j < m_n_y; j++)
+                {
+                    jcback_sol = soln.tauc.at(j, i) * soln.q_dot_inc.at(j, i) / (1 - soln.rhoc.at(j, i) * rhow);
+                    jw_sol = rhow * jcback_sol;
+                    jcfront_sol = m_vf_rad_type_0 * (soln.rhoc.at(j, i) * soln.q_dot_inc.at(j, i) + soln.tauc.at(j, i) * jw_sol);
+                    qnetc_sol.at(j, i) = (soln.q_dot_inc.at(j, i) - jcfront_sol) + (jw_sol - jcback_sol);
+                    qnetw_sol.at(j, i) = (1.0-rhow) * soln.tauc.at(j, i) * soln.q_dot_inc.at(j, i) / (1.0 - soln.rhoc.at(j, i) * rhow);
+                    if (j < m_n_y - 1)
+                        Q_refl += jcfront_sol * m_curtain_elem_area;
+                }
+            }
+        }
+        else if (m_rad_model_type == 1)
+        {
+            //-- Solve radiative exchange equation for solar energy (this is independent of temperature)
+            //   Here the energy "source" is solar flux reflected by the curtain on the first pass, and solar flux transmitted through the curtain and reflected by the back wall on the first pass
+            //   This assumes that solar flux transmitted through the curtain hits the back wall at the same discretized element
+            Ecf.fill(0.0);
+            Ecb.fill(0.0);
+            Ebw.fill(0.0);
+            for (int i = 0; i < m_n_x; i++)
+            {
+                for (int j = 0; j < m_n_y; j++)
+                {
+                    Ecf.at(j,i) = soln.rhoc.at(j, i) * soln.q_dot_inc.at(j, i);         // Energy "source" at front curtain surface = reflected solar energy
+                    Ebw.at(j,i) = rhow * soln.tauc.at(j, i) * soln.q_dot_inc.at(j, i);  // Energy "source" at back wall surface = transmitted and reflected solar energy
+                }
+            }
+            calculate_radiative_exchange(Ecf, Ecb, Ebw, 0.0, 0.0, K, Kinv, soln.rhoc, soln.tauc, qnetc_sol, qnetw_sol, qnet_wf_sol, qnet_ap_sol);  // Calculates net incoming radiative energy to each element (total incoming - total outgoing)
+
+            // Radiative exchange model provides the net incoming energy to each surface (net outgoing is -qnet). Now calculate the total net incoming solar energy
+            for (int i = 0; i < m_n_x; i++)
+            {
+                for (int j = 0; j < m_n_y; j++)
+                {
+                    qnetc_sol.at(j,i) += (1 - soln.tauc.at(j, i)) * soln.q_dot_inc.at(j, i);  
+                    qnetw_sol.at(j,i) += soln.tauc.at(j, i) * soln.q_dot_inc.at(j, i);
+                }
+            }
+            Q_refl = qnet_ap_sol * m_ap_area;   // Solar reflection loss [W]
+        }
+
+
+
+        //--- Temperature solution iterations
+        double vel_out, Tfilm, hadv, fwind, qnet_ap, qnet_wf, hwconv, qadv, qtot, dh, Rwall, Tcond_prev, Tcond_next;
+        double Tpdiff, Twdiff, Twfdiff;
+        Rwall = 1.0 / m_cav_hext + m_cav_twall / m_cav_kwall;  // Cavity wall thermal resistance
         vel_out = calculate_mass_wtd_avg_exit(mdot_per_elem, soln.vel);  // Mass-weighted average exit velocity
         for (int q = 0; q < max_iter; q++)
         {
-            Q_rad = Q_adv = Q_transport = Q_thermal = 0.0;
+            Q_rad = Q_adv = Q_cond = Q_thermal = 0.0;
+            Tpdiff = Twdiff = Twfdiff = 0.0;
 
             //-- Calculate advection loss coefficient
-            if (m_hadv_model == 0)
+            if (m_hadv_model_type == 0)
             {
                 hadv = m_hadv_user;
                 fwind = 1.0;
             }
-            else if (m_hadv_model == 1) // Use Sandia's correlations for advective loss
+            else if (m_hadv_model_type == 1) // Use Sandia's correlations for advective loss
             {
-                Tpout = calculate_mass_wtd_avg_exit(mdot_per_elem, Tp);
-                Tfilm = 0.5 * (0.5 * (Tpout + T_cold_in) + T_amb);
+                Tp_out = calculate_mass_wtd_avg_exit(mdot_per_elem, Tp);
+                Tfilm = 0.5 * (0.5 * (Tp_out + T_cold_in_rec) + T_amb);
                 calculate_advection_coeff_sandia(vel_out,  Tfilm, v_wind, wdir, P_amb, hadv, fwind);
                 hadv = fmax(hadv, 0.0);
             }
@@ -1078,36 +1112,60 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
                 hadv = 0.0;
                 fwind = 1.0;
             }
+            hadv_with_wind = hadv * fwind;
 
-            //-- Solve IR radiative exchange
-            EIR.at(0) = CSP::sigma * pow(T_sky, 4);                   // Back cavity wall
-            EIR.at(nelem - 1) = m_cav_emis * CSP::sigma * pow(Twf, 4);  // Front cavity wall
-            for (int i = 0; i < m_n_x; i++)
-            {
-                for (int j = 0; j < m_n_y - 1; j++)
-                {
-                    EIR.at(1 + j * nx + i) = m_curtain_emis * CSP::sigma * pow(Tp.at(j, i), 4);             // Front curtain surface
-                    EIR.at(1 + nx * nyr + j * nx + i) = m_curtain_emis * CSP::sigma * pow(Tp.at(j, i), 4);  // Back curtain surface
-                    EIR.at(1 + 2 * nx * nyr + j * nx + i) = m_cav_emis * CSP::sigma * pow(Tw.at(j, i), 4);    // Back wall surface
-                }
-            }
-            calculate_radiative_exchange(EIR, soln.Kinv, soln.rhoc, soln.tauc, qnetc, qnetw, qnet_wf, qnet_ap);
-            Q_rad = qnet_ap * m_ap_area;    // IR radiation loss [W]
 
-            //--- Combine solar and IR exchange
-            qnet_ap += qnet_ap_sol;
-            qnet_wf += qnet_wf_sol;
-            for (int i = 0; i < m_n_x; i++)
+            //-- Solve IR radiative exchange and calculate net incoming radiative energy to each curtain and wall element
+            if (m_rad_model_type == 0)
             {
-                for (int j = 0; j < m_n_y; j++)
+                double Ew, Ec, jcback_IR, jw_IR, jcfront_IR;
+                for (int i = 0; i < m_n_x; i++)
                 {
-                    qnetc.at(j, i) += qnetc_sol.at(j, i);
-                    qnetw.at(j, i) += qnetw_sol.at(j, i);
+                    for (int j = 0; j < m_n_y; j++)
+                    {
+                        Ew = m_cav_emis * CSP::sigma * pow(Tw.at(j, i), 4);
+                        Ec = m_curtain_emis * CSP::sigma * pow(Tp.at(j, i), 4);
+                        jcback_IR = (Ec + soln.rhoc.at(j, i) * Ew) / (1 - soln.rhoc.at(j, i) * rhow);
+                        jw_IR = Ew + rhow * jcback_IR;
+                        jcfront_IR = m_vf_rad_type_0 * (Ec + soln.tauc.at(j, i) * jw_IR);
+                        qnetc.at(j, i) = qnetc_sol.at(j, i) - jcfront_IR + (jw_IR - jcback_IR);
+                        qnetw.at(j, i) = qnetw_sol.at(j, i) + ((1 - rhow) * Ec - (1 - soln.rhoc.at(j, i)) * Ew) / (1.0 - soln.rhoc.at(j, i) * rhow);
+                        if (j < m_n_y - 1)
+                            Q_rad += jcfront_IR * m_curtain_elem_area;
+                    }
                 }
             }
 
+            else if (m_rad_model_type == 1)
+            {
+                Eap = CSP::sigma * pow(T_sky, 4);
+                Ewf = m_cav_emis * CSP::sigma * pow(Twf, 4);  // Front cavity wall
+                Ecf.fill(0.0);
+                Ecb.fill(0.0);
+                Ebw.fill(0.0);
+                for (int i = 0; i < m_n_x; i++)
+                {
+                    for (int j = 0; j < m_n_y; j++)
+                    {
+                        Ecf.at(j,i) = m_curtain_emis * CSP::sigma * pow(Tp.at(j, i), 4); // Front curtain surface
+                        Ecb.at(j, i) = Ecf.at(j, i);                                     // Back curtain surface
+                        Ebw.at(j,i) = m_cav_emis * CSP::sigma * pow(Tw.at(j, i), 4);     // Back wall surface
+                    }
+                }
+                calculate_radiative_exchange(Ecf, Ecb, Ebw, Eap, Ewf, K, Kinv, soln.rhoc, soln.tauc, qnetc, qnetw, qnet_wf, qnet_ap);    // Calculates net incoming radiative energy to each element (total incoming - total outgoing)
+                Q_rad = qnet_ap * m_ap_area;    // IR radiation loss [W]
 
-            //--- Calculate new wall and particle temperature solutions
+                //--- Combine solar and IR exchange
+                qnet_ap += qnet_ap_sol;
+                qnet_wf += qnet_wf_sol;
+                qnetc = matrix_addition(qnetc, qnetc_sol);
+                qnetw = matrix_addition(qnetw, qnetw_sol);
+
+            }
+
+
+
+            //--- Calculate new back wall and particle temperature solutions, Q_adv, Q_thermal, and Q_cond
             for (int i = 0; i < m_n_x; i++)
             {
                 for (int j = 0; j < m_n_y; j++)
@@ -1118,15 +1176,16 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
                     qadv = hadv * fwind * (Tp.at(j, i) - T_amb);
                     if (j < m_n_y - 1)
                     {
-                        qtot = qnetc.at(j, i) - qadv - hwconv * (Tp.at(j, i) - Tw.at(j, i));
-                        dh = qtot * (dy / (soln.phip.at(j + 1, i) * soln.thc.at(j + 1, i) + soln.vel.at(j + 1, i) * particle_density));
+                        qtot = qnetc.at(j, i) - qadv - hwconv * (Tp.at(j, i) - Tw.at(j, i));  // Net heat transfer rate into particles [W/m2]
+                        dh = qtot * (dy / (soln.phip.at(j + 1, i) * soln.thc.at(j + 1, i) * soln.vel.at(j + 1, i) * particle_density));
                         Tpnew.at(j + 1, i) = Tpnew.at(j, i) + dh / cp;
-                        Q_adv += qadv * m_curtain_elem_area;
-                        Q_thermal += dh * mdot_per_elem.at(i) * m_curtain_elem_area;
+                        Q_adv += qadv * m_curtain_elem_area;            // Advection loss [W] from this curtain element
+                        Q_thermal += dh * mdot_per_elem.at(i);          // Energy into particles [W] in this curtain elemtn
                     }
+                    Tpdiff = max(Tpdiff, fabs(Tpnew.at(j, i) - Tp.at(j, i)));
 
                     // Solve for back wall temperature at current node
-                    double Tcond_prev, Tcond_next;
+                    Tcond_prev = Tcond_next = 0.0;
                     if (m_include_wall_axial_conduction)
                     {
                         if (j == m_n_y - 1)
@@ -1138,41 +1197,75 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
                         Tcond_prev = (j > 0) ? Twnew.at(j - 1, i) : Tcond_next;
                     }
                     Twnew.at(j, i) = calculate_passive_surface_T(Tw.at(j, i), qnetw.at(j, i), hwconv, Tp.at(j, i), T_amb, m_include_wall_axial_conduction, Tcond_prev, Tcond_next);
-
+                    if (j < m_n_y - 1)
+                    {
+                        Q_cond += ((Tw.at(j, i) - T_amb) / Rwall) * m_back_wall_elem_area;   // Conduction loss through back wall element [W]
+                        Twdiff = max(Twdiff, fabs(Twnew.at(j, i) - Tw.at(j, i)));
+                    }
+                    
                 }
             }
-            Twfnew = calculate_passive_surface_T(Twf, qnet_wf, 0.0, 0.0, T_amb, false, 0.0, 0.0);
 
-            //--- Calculate losses
+            //--- Calculate new front wall temperature solution and conduction loss
+            Twfdiff = Twfnew = 0.0;
+            if (m_rad_model_type > 0)
+            {
+                Twfnew = calculate_passive_surface_T(Twf, qnet_wf, 0.0, 0.0, T_amb, false, 0.0, 0.0);
+                Q_cond += ((Twf - T_amb) / Rwall) * m_cav_front_area;
+                Twfdiff = fabs(Twfnew - Twf);
+            }
 
             //--- Check convergence and update temperature solution
+            Q_imbalance = Q_inc - Q_refl - Q_rad - Q_adv - Q_cond - Q_thermal;
+            err = Q_imbalance / Q_inc;  // 
+            if (Tpdiff < tolTp && fabs(err) < tol)
+            {
+                converged = true;
+                soln.T_p = Tpnew;
+                soln.T_back_wall = Twnew;
+                soln.T_front_wall = Twfnew;
+                break;
+            }
+
+            Tp = Tpnew;
+            Tw = Twnew;
+            Twf = Twfnew;
         }
+
+        if (!converged)
+            rec_is_off = true;  // Shut off receiver if temperature solution failed
+
+        Tp_out = calculate_mass_wtd_avg_exit(mdot_per_elem, Tp);  // Mass-weighted average particle exit temperature from receiver [K]
+    }
+
+    double Tp_out_after_transport = Tp_out - m_Q_dot_transport_loss_hot / cp / soln.m_dot_tot;  // Outlet temperature accounting from loss from hot particle transport
+
+
+    if (Tp_out <= T_cold_in)
+    {
+        soln.mode = C_csp_collector_receiver::OFF;
+        rec_is_off = true;
+        converged = false;
     }
 
 
-
-	if (soln.T_particle_hot < soln.T_particle_cold_in)
-		soln.mode = C_csp_collector_receiver::OFF;
-
-
-	// Save overall energy loss
+	// Save solution
     soln.Q_inc = Q_inc;
     soln.Q_thermal = Q_thermal;
 	soln.Q_refl = Q_refl;
 	soln.Q_rad = Q_rad;
 	soln.Q_adv = Q_adv;
-    soln.Q_transport = Q_transport;
-    soln.eta = soln.Q_inc>0 ? soln.Q_thermal / soln.Q_inc : 0.0;   
+    soln.Q_transport = m_Q_dot_transport_loss_cold + m_Q_dot_transport_loss_hot;
+    soln.eta = soln.Q_inc>0 ? soln.Q_thermal / soln.Q_inc : 0.0;
+    soln.eta_with_transport = soln.Q_inc > 0 ? (soln.Q_thermal - m_Q_dot_transport_loss_cold - m_Q_dot_transport_loss_hot) / soln.Q_inc : 0.0;
+    soln.hadv = hadv_with_wind;
+    soln.converged = converged;
+	soln.rec_is_off = rec_is_off;
 
-
-	soln.rec_is_off = false;
-	if (soln.mode == C_csp_collector_receiver::OFF)
-		soln.rec_is_off = true;
-
-	// Save final temperature profile solution
 	if (!soln.rec_is_off)
 	{
-        soln.T_particle_hot = Tp_out;
+        soln.T_particle_hot = Tp_out_after_transport;
+        soln.T_particle_hot_rec = Tp_out;
 	}
 
 	return;
@@ -1184,11 +1277,16 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
 {
 
 	bool soln_exists = (soln.m_dot_tot == soln.m_dot_tot);
-
     double T_particle_prop = (m_T_particle_hot_target + soln.T_particle_cold_in) / 2.0; // Temperature for particle property evaluation [K].  
-    double cp = field_htfProps.Cp(T_particle_prop) * 1000.0;   //[J/kg-K] 
+    double cp = field_htfProps.Cp(T_particle_prop) * 1000.0;   //[J/kg-K]
 
-	double m_dot_guess;
+
+    double err = -999.9;				//[-] Relative outlet temperature error
+    double tol = 1.0e-4;
+    int nmax = 50;
+
+    //--- Set initial guess for particle flow
+    double m_dot_guess, m_dot_guess_new;
 	if (soln_exists)  // Use existing solution as initial guess
 	{
 		m_dot_guess = soln.m_dot_tot;
@@ -1201,49 +1299,167 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
 	}
 
 
-	// Set solution tolerance
-	double T_hot_guess = 9999.9;		//[K] Initial guess value for error calculation
-	double err = -999.9;					//[-] Relative outlet temperature error
-	double tol = std::numeric_limits<double>::quiet_NaN();
-	tol = 0.00025;
-	int qq_max = 50;
-	int qq = 0;
 
-	bool converged = false;
+    //--- Solve for mass flow
+    //    Note: Outlet temperature is non-monotonic with respect to mass flow because the curtain transparency changes with mass flow 
+    //    The solution here relies on mass flow bounds that are derived assuming that there is only one maximum in the behavior of particle outlet temperature vs. mass flow rate
+    //    The efficiency (Q_thermal / Q_inc) is assumed to increase monotonically to with respect to mass flow and the upper bound on efficiency is used to calculate an upper bound on outlet temperature
+    //    Two mass flow solutions will exist that can reach the target outlet tempeature (for those cases where the target outlet temperature can be reached at all). The solution with higher mass flow is returned here. 
+
+    double lower_bound = 0.0;                   // Lower bound for particle mass flow rate (kg/s)
+    double upper_bound = 1e10;                  // Upper bound for particle mass flow rate  (kg/s)
+    double upper_bound_eta = 1.0;               // Upper bound for receiver efficiency (assumed to occur at upper bound for mass flow)
+    bool is_upper_bound = false;                // Has upper bound been defined?
+    bool is_lower_bound_above_Ttarget = false;  // Has a solution already been found with outlet T > target T?
+
+    double bound_tol = 0.0025;                  // Stopping tolerance based on distance between bounds (typically solution will terminate becuase of calculated maximum outlet T first)
+    double Tout_max = std::numeric_limits<double>::quiet_NaN();  // Current maximum possible outlet temperature [K] (based on upper bound for efficiency, lower bound for mass flow)
+
+    util::matrix_t<double> mflow_history, Tout_history, eta_history;
+    util::matrix_t<bool> converged_history;
+    mflow_history.resize_fill(nmax, 0.0);       // Mass flow iteration history
+    Tout_history.resize_fill(nmax, 0.0);        // Outlet temperature iteration history
+    eta_history.resize_fill(nmax, 0.0);         // Receiver efficiency iteration history
+    converged_history.resize_fill(nmax, false); // Steady state solution convergence history
+
+    int qq = -1;
+    bool converged = false;
+    bool init_from_existing = false;  // Use current solution for particle/wall temperatures as the initial guess for the next steady state solution
 	while (!converged)
 	{
 		qq++;
 
-		// if the problem fails to converge after 50 iterations, then the power is likely negligible and the zero set can be returned
-		if (qq > qq_max)
-		{
-			soln.mode = C_csp_collector_receiver::OFF;  // Set the startup mode
-			soln.rec_is_off = true;
-			break;
-		}
+        if (qq > 0 && soln.rec_is_off)  // SS solution was unsuccessful or resulted in an infeasible exit temperature ->start next iteration from the default intial guess
+            init_from_existing = false;
 
+        //-- Solve model at current mass flow guess
 		soln.m_dot_tot = m_dot_guess;
-		double tolT = tol;
-		calculate_steady_state_soln(soln, tolT, m_use_constant_piping_loss, 50);   // Solve steady state thermal model		
+		calculate_steady_state_soln(soln, tol, init_from_existing, 50);   // Solve steady state thermal model
 		err = (soln.T_particle_hot - m_T_particle_hot_target) / m_T_particle_hot_target;
-		
-		if (soln.rec_is_off)  // SS solution was unsuccessful or resulted in an infeasible exit temperature -> remove outlet T for solution to start next iteration from the default intial guess
-			soln.T_particle_hot = std::numeric_limits<double>::quiet_NaN();
+        mflow_history.at(qq) = soln.m_dot_tot;
+        Tout_history.at(qq) = soln.T_particle_hot;
+        eta_history.at(qq) = soln.eta_with_transport;
+        converged_history.at(qq) = soln.converged;
 
-		if (std::abs(err) > tol)
-		{
-			m_dot_guess = soln.Q_thermal / (cp * (m_T_particle_hot_target - soln.T_particle_cold_in));			//[kg/s]
-			if (m_dot_guess < 1.E-5)
-			{
-				soln.mode = C_csp_collector_receiver::OFF;
-				soln.rec_is_off = true;
-				break;
-			}
-		}
-		//else if (err > 0.0)  // Solution has converged but outlet T is above target.  CSP solver seems to perform better with slightly under-design temperature than with slightly over-design temperatures. 
-		//	m_dot_salt_guess *= (soln.T_salt_hot - soln.T_salt_cold_in) / ((1.0 - 0.5*tol) * m_T_salt_hot_target - soln.T_salt_cold_in);
-		else
-			converged = true;
+        if (qq > 0 && std::abs(soln.T_particle_hot - Tout_history.at(qq - 1)) < 50)  
+            init_from_existing = true;
+      
+
+        //--- Check mass flow convergence
+        if (std::abs(err) < tol)  // Solution outlet temperature is at the target
+        {
+            if (is_lower_bound_above_Ttarget)  // A different solution has already been found with a lower mass flow and an outlet T above the target
+            {
+                converged = true;
+                break;
+            }
+            else  // Current mass flow produces the target outlet T, but can't be sure that it's the higher of the two possible mass flow solutions
+            {
+                s_steady_state_soln soln_candidate = soln;  // Store the current solution as a possible candidate solution
+                soln.m_dot_tot = (1 - 0.015) * soln.m_dot_tot; // If this is the higher mass flow solution than a decrease in mass flow should increase outlet temperature
+                calculate_steady_state_soln(soln, tol, true, 50);
+                bool is_correct_soln = (soln.T_particle_hot > soln_candidate.T_particle_hot);
+                soln = soln_candidate;
+                if (is_correct_soln)
+                {
+                    converged = true;
+                    break;
+                }
+                else  // Decreasing mass flow decreased the outlet temperature, this is the lower of the two mass flow solutions -> Set lower bound and continue iterating
+                {
+                    lower_bound = fmax(lower_bound, soln.m_dot_tot);
+                    is_lower_bound_above_Ttarget = true;
+                    m_dot_guess = is_upper_bound ? 0.5 * (lower_bound + upper_bound) : 1.05 * m_dot_guess;
+                    continue;
+                }
+            }
+        }
+
+
+        //--- Update mass flow bounds
+        // If outlet temperature is above the target this is always a lower bound for mass flow 
+        if (soln.T_particle_hot > m_T_particle_hot_target) 
+        {
+            lower_bound = soln.m_dot_tot;
+            is_lower_bound_above_Ttarget = true;  
+        }
+
+        // If outlet temperature is below the target, compare current solution with previously stored solutions to identify bounds
+        else 
+        {
+            for (int i = 0; i < qq; i++)  
+            {
+                if (converged_history.at(i))
+                {
+                    // Any given point with exit temperature below the target is a lower bound if another point has been sampled with higher mass flow and a higher outlet T
+                    if (soln.m_dot_tot < mflow_history.at(i) && soln.T_particle_hot < Tout_history.at(i))
+                    {
+                        lower_bound = soln.m_dot_tot;
+                    }
+                    if (Tout_history.at(i) < m_T_particle_hot_target && mflow_history.at(i) < soln.m_dot_tot && Tout_history.at(i) < soln.T_particle_hot)
+                    {
+                        lower_bound = max(lower_bound, mflow_history.at(i));
+                    }
+
+                    // Any given point with exit temperature below the target is an upper bound if another point has been sampled with lower mass flow and higher outlet temperature 
+                    if (soln.m_dot_tot > mflow_history.at(i) && soln.T_particle_hot < Tout_history.at(i))
+                    {
+                        upper_bound = soln.m_dot_tot;
+                        upper_bound_eta = soln.eta;
+                        is_upper_bound = true;
+                    }
+                    if (Tout_history.at(i) < m_T_particle_hot_target && mflow_history.at(i) > soln.m_dot_tot && Tout_history.at(i) < soln.T_particle_hot)
+                    {
+                        upper_bound = min(upper_bound, mflow_history.at(i));
+                        upper_bound_eta = min(upper_bound_eta, eta_history.at(i));
+                        is_upper_bound = true;
+                    }    
+                }
+
+            }
+        }
+
+
+        //--- Next solution guess
+        m_dot_guess_new = (soln.Q_thermal - soln.Q_transport) / (cp * (m_T_particle_hot_target - soln.T_particle_cold_in));			//[kg/s]
+        if (is_upper_bound && (m_dot_guess_new < lower_bound || m_dot_guess_new > upper_bound))  // New guess is out of bounds and lower/upper bounds are both defined
+            m_dot_guess_new = 0.5 * (lower_bound + upper_bound);
+        else if (m_dot_guess_new < lower_bound)  // New guess is below lower bound with no defined upper bound
+            m_dot_guess_new = (m_dot_guess_new < m_dot_guess) ? max(1.25 * lower_bound, 0.75 * m_dot_guess) : 1.25 * m_dot_guess;
+        m_dot_guess = m_dot_guess_new;
+
+
+        //--- Stopping criteria
+
+        if (m_dot_guess < 1.E-5 || qq >= nmax)
+        {
+            soln.mode = C_csp_collector_receiver::OFF;
+            soln.rec_is_off = true;
+            break;
+        }
+
+        // Stop solution if outlet temperature was not achieved and mass flow bounds are within tolerance
+        if (is_upper_bound && (upper_bound - lower_bound) <= bound_tol * lower_bound)
+        {
+            soln.mode = C_csp_collector_receiver::OFF;
+            soln.rec_is_off = true;
+            break;
+        }
+
+        // Stop solution if the maximum possible particle outlet temperature is below the target
+        // This assumes that the efficiency (Q_thermal / Q_inc) increases monotonically with mass flow for fixed solar incidence and ambient conditions
+        if (lower_bound > 0.001)
+        {
+            Tout_max = soln.T_particle_cold_in + (upper_bound_eta * soln.Q_inc) / (cp * lower_bound);
+            if (Tout_max < m_T_particle_hot_target-0.01)
+            {
+                soln.mode = C_csp_collector_receiver::OFF;
+                soln.rec_is_off = true;
+                break;
+            }
+
+        }
+
 	}
 
 	return;
@@ -1296,7 +1512,7 @@ void C_falling_particle_receiver::solve_for_defocus_given_flow(s_steady_state_so
 { 
 	
 	double Tprev, od, odprev, odlow, odhigh;
-	double tolT = 0.00025;
+	double tol = 0.00025;
 	double urf = 0.8;
 
 	Tprev = odprev = odlow = std::numeric_limits<double>::quiet_NaN();
@@ -1314,11 +1530,11 @@ void C_falling_particle_receiver::solve_for_defocus_given_flow(s_steady_state_so
 		else
 			soln.q_dot_inc = soln.q_dot_inc * soln.od_control / odprev; // Calculate flux profiles (note flux is directly proportional to defocus control)
 		
-		calculate_steady_state_soln(soln, tolT, m_use_constant_piping_loss);     // Solve steady state thermal model 
+		calculate_steady_state_soln(soln, tol, false);     // Solve steady state thermal model 
 
 		if (soln.od_control > 0.9999 && soln.T_particle_hot < m_T_particle_hot_target)  // Impossible for solution to achieve temperature target
 			break;
-		else if ((std::abs(soln.T_particle_hot - m_T_particle_hot_target) / m_T_particle_hot_target) < tolT)
+		else if ((std::abs(soln.T_particle_hot - m_T_particle_hot_target) / m_T_particle_hot_target) < tol)
 			break;
 		else
 		{
@@ -1357,41 +1573,36 @@ void C_falling_particle_receiver::solve_for_defocus_given_flow(s_steady_state_so
 
 
 // Solve mass and momentum balances for particle velocity, curtain thickness, particle volume fraction
-// TODO: Generalize for non-uniform mass flow along the curtain width
-void C_falling_particle_receiver::solve_mass_momentum(util::matrix_t<double>& mdot_per_elem, util::matrix_t<double>& phip, util::matrix_t<double>& vel, util::matrix_t<double>& th)
+void C_falling_particle_receiver::solve_particle_flow(util::matrix_t<double>& mdot_per_elem, util::matrix_t<double>& phip, util::matrix_t<double>& vel, util::matrix_t<double>& th)
 {
-    int i, j, ny, nx;
-    ny = m_n_y;
-    nx = m_n_x;
-
+    // Mass balance: -d/dy (phip*th*rhop*vp) = 0
+    // Momentum equation: -d/dy (phip*th*rhop*vp^2) + (phip*th*rhop*g) = 0 
     double g = 9.81;
-    double dx = m_curtain_width / nx;
-    double dy = m_curtain_height / (ny - 1);
-    double initial_fall_height = m_initial_fall_height_ratio * m_curtain_height;
+    double dx = m_curtain_width / m_n_x;
+    double dy = m_curtain_height / (m_n_y - 1);
+    double initial_fall_height = m_initial_fall_height_fraction * m_curtain_height + m_initial_fall_height_fixed;
     double Tavg = 0.5 * (m_T_htf_cold_des + m_T_htf_hot_des);
     double rhop = field_htfProps.dens(Tavg, 1.0);
 
-
-    phip.resize_fill(ny, nx, 0.0);
-    vel.resize_fill(ny, nx, 0.0);
-    th.resize_fill(ny, nx, 0.0);
+    phip.resize_fill(m_n_y, m_n_x, 0.0);
+    vel.resize_fill(m_n_y, m_n_x, 0.0);
+    th.resize_fill(m_n_y, m_n_x, 0.0);
     
-
-    // Set mass flow per zone and initial condition at the top of the cavity
-    for (i = 0; i < nx; i++)
+    // Initial condition
+    for (size_t i = 0; i < m_n_x; i++)
     {
         phip.at(0, i) = m_phi0;
-        vel.at(0, i) = pow(2 * g * initial_fall_height, 0.5);   // Initial particle velocity (m/s) assuming no drag
-        th.at(0, i) = mdot_per_elem.at(i) / (phip.at(0, i) * vel.at(0, i) * dx * rhop);
+        vel.at(0, i) = pow(2 * g * initial_fall_height, 0.5);                           // Initial particle velocity (m/s) after initial fall height assuming no drag
+        th.at(0, i) = mdot_per_elem.at(i) / (phip.at(0, i) * vel.at(0, i) * rhop * dx); // Initial thickness to satisfy curtain mass flow at given initial curtain volume fraction and velocity
     }
 
-    for (j = 0; j < ny-1; j++)
+    for (size_t j = 1; j < m_n_y; j++)
     {
-        for (i = 0; i < nx; i++)
+        for (size_t i = 0; i < m_n_x; i++)
         {
-            th.at(j+1,i) = th.at(j,i) + m_dthdy * dy;
-            vel.at(j+1,i) = vel.at(j,i) + dy * 9.8 / vel.at(j,i);
-            phip.at(j+1,i) = (phip.at(j,i) * th.at(j,i) * vel.at(j,i)) / (th.at(j+1,i) * vel.at(j+1,i));
+            th.at(j,i) = th.at(j-1,i) + m_dthdy * dy;                   // Curtain thickness assuming a fixed rate of increase along fall dimension
+            vel.at(j,i) = vel.at(j-1,i) + dy * g / vel.at(j-1,i);         // From momentum equation: -(phip*th*rhop*vp) * (dvp/dy) + (phip*th*rhop*g) = 0
+            phip.at(j,i) = (phip.at(j-1,i) * th.at(j-1,i) * vel.at(j-1,i)) / (th.at(j,i) * vel.at(j,i)); // From mass balance
         }
     }
     return;
@@ -1416,34 +1627,13 @@ void C_falling_particle_receiver::calculate_local_curtain_optical_properties(dou
     double tcs = Nl*tc0*4*f*pow(Ps*phis, 2) / phis;
     double tcbf = pow(rhol1, 2) * tc0 * (pow(1-phis, 2*Nl) - Nl*pow(1-phis, 2) + Nl - 1) / pow(pow(phis, 2) - 2*phis, 2);
     tauc = tc0 + tcs + tcbf;  //Curtain transmittance
-    tauc *= m_tauc_mult;  // Optionally adjust by a user-provided multiplier for transmissivity (default value of multiplier = 1.0)
+
+    // Optionally adjust by a user-provided multiplier for transmissivity
+    tauc *= m_tauc_mult;
+    tauc = min(tauc, 1.0 - rhoc);  
+
     return;
 }
-
-
-
-// Solve mass and momentum balances for particle velocity, curtain thickness, particle volume fraction
-// TODO: Generalize for non-uniform mass flow along the curtain width
-void C_falling_particle_receiver::calculate_curtain_optical_properties(util::matrix_t<double>& phip, util::matrix_t<double>& th,
-                                                                       util::matrix_t<double>& rhoc, util::matrix_t<double>& tauc)
-{
-    int ny = m_n_y;
-    int nx = m_n_x;
-    double tauc1, rhoc1;
-    tauc.resize_fill(ny, nx, 0.0);
-    rhoc.resize_fill(ny, nx, 0.0);
-    for (int j = 0; j < ny; j++)
-    {
-        for (int i = 0; i < nx; i++)
-        {
-            calculate_local_curtain_optical_properties(th.at(j, i), phip.at(j, i), rhoc1, tauc1);
-            rhoc.at(j, i) = rhoc1;
-            tauc.at(j, i) = tauc1;
-        }
-    }
-    return;
-}
-
 
 
 // Advective loss coefficients from the best-fit correlations to Sandia's CFD model based on Gonzalez et al. Solar Energy 255 (2023) 301–313 (https://doi.org/10.1016/j.solener.2023.03.046)
@@ -1471,6 +1661,10 @@ void C_falling_particle_receiver::calculate_advection_coeff_sandia(double vel, d
     double phi_wind = exp(-pow((std::abs(wdir - F) - G) / H, 2));
     fwind = 1.0 + (D - E * m_ap_height) * wspd * phi_wind;
 
+    // Scale loss coefficient to account for differences in aperture and curtain area
+    // Loss coefficient from Gonzalez et al. assumes equal aperture area and curtain area and will overestimate convective losses if the loss coefficient is applied for cases where curtain area > aperture area
+    hadv *= m_ap_height / m_curtain_height; 
+
     return;
 }
 
@@ -1493,9 +1687,7 @@ double C_falling_particle_receiver::calculate_wall_convection_coeff(double vel, 
 
 int C_falling_particle_receiver::get_nelem()
 {
-    int ny = m_n_y - 1;  // Solution in y-direction is defined at node locations including inlet and outlet
-    int nx = m_n_x;
-    int nelem = 1 + 3 * nx * ny + 1;   // One element for the aperture, nx*ny elements on each side of the curtain and the back wall, one element for front wall
+    int nelem = 1 + 3 * m_n_x_rad * m_n_y_rad + 1;   // One element for the aperture, nx*ny elements on each side of the curtain and the back wall, one element for front wall
     return nelem;
 }
 
@@ -1504,14 +1696,11 @@ void C_falling_particle_receiver::calculate_view_factors()
 {
     int i, j, k, isym, ksym, ib, iw;
 
-    int ny = m_n_y - 1;  // Solution in y-direction is defined at node locations including inlet and outlet
-    int nx = m_n_x;
+    int ny = m_n_y_rad;  
+    int nx = m_n_x_rad;
     int nelem = get_nelem();
-    double dy = m_curtain_height / ny;
-    double dx = m_curtain_width / nx;
-    double ap_area = m_ap_height * m_ap_width;
-
-    m_vf.resize_fill(nelem, nelem, 0.0);  // View factor matrix. Curtain height/width elements are ordered as (y0,x0), (y0,x1)... (y0,xn), (y1,x0)...
+    double dy = m_curtain_height / (m_n_y-1);
+    double dx = m_curtain_width / m_n_x;
 
     double top_height;
     if (m_is_ap_at_bot)
@@ -1520,37 +1709,61 @@ void C_falling_particle_receiver::calculate_view_factors()
         top_height = 0.5 * (m_curtain_height - m_ap_height);
     double side_width = 0.5 * (m_cav_width - m_ap_width);
 
+    m_vf.resize_fill(nelem, nelem, 0.0);  // View factor matrix. Curtain height/width elements are ordered as (y0,x0), (y0,x1)... (y0,xn), (y1,x0)...
 
     // View factors from each curtain element to the aperture and front wall(note, this assumes the curtain is flat!)
     // TODO: Update for a curved curtain
-    int nxhalf;
-    if (nx % 2 == 0)
-        nxhalf = (int)(nx / 2);
-    else
-        nxhalf = (int)((nx + 1) / 2);
+    int nxsim = nx;
+    bool is_symmetric = (m_n_x % nx == 0);   // If the number of elements per group is the same for all width groups only need to calculate view factors for half of them
+    if (is_symmetric && nx>1)
+    {
+        if (nx % 2 == 0)
+            nxsim = (int)(nx / 2);
+        else
+            nxsim = (int)((nx + 1) / 2);
+    }
 
     double vf_ap_sum = 0.0;
     double vf_fw_sum = 0.0;
+    int y0, x0;
+    double dyg, dxg;
+    int ifw = nelem - 1;   // Index of front wall
+
+    y0 = 0;
     for (j = 0; j < ny; j++)
     {
-        for (k = 0; k < nxhalf; k++)
+        dyg = m_ny_per_group.at(j) * dy;     // y-extent of this group
+
+        x0 = 0;
+        for (k = 0; k < nxsim; k++)
         {
+            dxg = m_nx_per_group.at(k) * dx;     // x-extent of this group
+
             i = 1 + j * nx + k;  // Front curtain element index in flattened array
-            m_vf.at(i, 0) = vf_parallel_rect(k * dx, j * dy, side_width, top_height, dx, dy, m_ap_width, m_ap_height, m_curtain_dist);  // View factor from front curtain element to full aperture
-            m_vf.at(0, i) = m_vf.at(i, 0) * (dx * dy / ap_area);                            // View factor from aperture to front curtain element
-            m_vf.at(i, nelem - 1) = 1.0 - m_vf.at(i, 0);                                    // View factor from front curtain element to front wall. Each element can only see the aperture or the front wall 
-            m_vf.at(nelem - 1, i) = m_vf.at(i, nelem - 1) * (dx * dy / m_cav_front_area);  // View factor from front wall to front curtain element
+            m_vf.at(i, 0) = vf_parallel_rect(x0*dx, y0*dy, side_width, top_height, dxg, dyg, m_ap_width, m_ap_height, m_curtain_dist);  // View factor from front curtain element to full aperture
+            m_vf.at(0, i) = m_vf.at(i, 0) * (dxg * dyg / m_ap_area);                            // View factor from aperture to front curtain element
+            m_vf.at(i, ifw) = 1.0 - m_vf.at(i, 0);                                        // View factor from front curtain element to front wall. Each element can only see the aperture or the front wall 
+            m_vf.at(ifw, i) = m_vf.at(i, ifw) * (dxg * dyg / m_cav_front_area);     // View factor from front wall to front curtain element
+            vf_ap_sum += m_vf.at(0, i);             // Sum of view factors from aperture to front curtain
+            vf_fw_sum += m_vf.at(ifw, i);     // Sum of view factors from front wall to front curtain
 
-            ksym = nx - k - 1;
-            isym = 1 + j * nx + ksym;   // Symmetric curtain element
-            m_vf.at(isym, 0) = m_vf.at(i, 0);
-            m_vf.at(0, isym) = m_vf.at(0, i);
-            m_vf.at(isym, nelem - 1) = m_vf.at(i, nelem - 1);
-            m_vf.at(nelem - 1, isym) = m_vf.at(nelem - 1, i);
-
-            vf_ap_sum += m_vf.at(0, i) + m_vf.at(0, isym);                  // Sum of view factors from aperture to front curtain
-            vf_fw_sum += m_vf.at(nelem - 1, i) + m_vf.at(nelem - 1, isym);  // Sum of view factors from front wall to front curtain
+            if (is_symmetric && nx > 1)
+            {
+                ksym = nx - k - 1;
+                isym = 1 + j * nx + ksym;   // Symmetric curtain element
+                if (isym != i)
+                {
+                    m_vf.at(isym, 0) = m_vf.at(i, 0);
+                    m_vf.at(0, isym) = m_vf.at(0, i);
+                    m_vf.at(isym, ifw) = m_vf.at(i, ifw);
+                    m_vf.at(ifw, isym) = m_vf.at(ifw, i);
+                    vf_ap_sum += m_vf.at(0, isym);
+                    vf_fw_sum += m_vf.at(ifw, isym);
+                }
+            }
+            x0 += m_nx_per_group.at(k);
         }
+        y0 += m_ny_per_group.at(j);
     }
 
     // View factors from curtain back to back wall.  Currently assumes that curtain is close enough to the back wall that each curtain element can only see the back wall element immediately behind it.
@@ -1567,9 +1780,9 @@ void C_falling_particle_receiver::calculate_view_factors()
     }
 
     // View factors from aperture to front wall, and front wall to itself
-    m_vf.at(0, nelem - 1) = 1.0 - vf_ap_sum;
-    m_vf.at(nelem - 1, 0) = m_vf.at(0, nelem - 1) * (ap_area / m_cav_front_area);
-    m_vf.at(nelem - 1, nelem - 1) = 1.0 - vf_fw_sum - m_vf.at(nelem - 1, 0);
+    m_vf.at(0, ifw) = 1.0 - vf_ap_sum;
+    m_vf.at(ifw, 0) = m_vf.at(0, ifw) * (m_ap_area / m_cav_front_area);
+    m_vf.at(ifw, ifw) = 1.0 - vf_fw_sum - m_vf.at(ifw, 0);
 
     return;
 }
@@ -1606,22 +1819,30 @@ double C_falling_particle_receiver::vf_parallel_rect(double x1, double y1, doubl
 }
 
 // Set up array containing reflectivity of all surface elements
-util::matrix_t<double> C_falling_particle_receiver::get_reflectivity_vector(util::matrix_t<double>& rhoc)
+util::matrix_t<double> C_falling_particle_receiver::get_reflectivity_vector(util::matrix_t<double>& rhoc_per_group)
 {
-    int ny = m_n_y - 1;  // Soln in y-direction is defined at node locations including inlet and outlet
-    int nx = m_n_x;
+    int ny = m_n_y_rad; 
+    int nx = m_n_x_rad;
     int nelem = get_nelem();
     util::matrix_t<double> rho(nelem);
-    int x, y;
+    int x, y, i0;
     for (int i = 0; i < nelem; i++)
     {
         if (i == 0)
             rho.at(i) = 0.0;  // Aperture
-        else if (i < 1 + 2 * (nx * ny))  // Front or back curtain
+        else if (i < 1 + (nx * ny))  // Front of curtain
         {
-            x = (i - 1) % nx;           // Width position on curtain
-            y = (int)((i - 1) / nx);    // Height position on curtain
-            rho.at(i) = rhoc.at(y, x);
+            i0 = 1;
+            x = (i - i0) % nx;           // Width position on curtain
+            y = (int)((i - i0) / nx);    // Height position on curtain
+            rho.at(i) = rhoc_per_group.at(y, x);
+        }
+        else if (i < 1 + 2*(nx * ny))  // Back of curtain
+        {
+            i0 = 1 + (nx * ny);
+            x = (i - i0) % nx;
+            y = (int)((i - i0) / nx);
+            rho.at(i) = rhoc_per_group.at(y, x);
         }
         else            // Back cavity wall or front cavity wall
             rho.at(i) = 1.0 - m_cav_emis;
@@ -1629,122 +1850,214 @@ util::matrix_t<double> C_falling_particle_receiver::get_reflectivity_vector(util
     return rho;
 }
 
-void C_falling_particle_receiver::calculate_coeff_matrix(util::matrix_t<double>& rhoc, util::matrix_t<double>& tauc, util::matrix_t<double>& K, util::matrix_t<double>& Kinv)
+// Coefficient matrix for radiative exchange including all discretized elements
+void C_falling_particle_receiver::calculate_coeff_matrix(util::matrix_t<double>& rhoc, util::matrix_t<double>& tauc, Eigen::MatrixXd& K, Eigen::MatrixXd& Kinv)
 {
 
     // TODO: Generalize to include view factors between each curtain element and all back wall elements
     //       Simplify loops below if each curtain element can only see one back wall element (most of the elements in K are zero)
-    int i, i1, i2, x, y, iback, ifront;
-    int ny = m_n_y - 1;  // Solution in y-direction is defined at node locations including inlet and outlet
-    int nx = m_n_x;
+
+    int ny = m_n_y_rad;  
+    int nx = m_n_x_rad;
     int nelem = get_nelem();
-    K.resize_fill(nelem, nelem, 0.0);  // Curtain height/width elements are ordered as (y0,x0), (y0,x1)... (y0,xn), (y1,x0)...
- 
+
+    // Calculate average curtain properties per element groupings
+    util::matrix_t<double> rhoc_per_group, tauc_per_group;
+    rhoc_per_group.resize_fill(ny, nx, 0.0);
+    tauc_per_group.resize_fill(ny, nx, 0.0);
+    int j0, i0;
+    j0 = 0;
+    for (int j = 0; j < ny; j++)
+    {
+        i0 = 0;
+        for (int i = 0; i < nx; i++)
+        {
+            int npg = m_ny_per_group.at(j) * m_nx_per_group.at(i);
+            for (int j1 = 0; j1 < m_ny_per_group.at(j); j1++)
+            {
+                for (int i1 = 0; i1 < m_nx_per_group.at(i); i1++)
+                {
+                    rhoc_per_group.at(j, i) += rhoc.at(j0 + j1, i0 + i1) / npg;
+                    tauc_per_group.at(j, i) += tauc.at(j0 + j1, i0 + i1) / npg;
+                }
+            }
+            i0 += m_nx_per_group.at(i);
+        }
+        j0 += m_ny_per_group.at(j);
+    }
 
     // Create vector with reflectivity of all elements
     util::matrix_t<double> rho(nelem);
-    rho = get_reflectivity_vector(rhoc);
+    rho = get_reflectivity_vector(rhoc_per_group);
 
     //--- Calculate coefficient matrix
-    
-    for (i1 = 0; i1 < nelem; i1++)
+    int iback, ifront, x, y;
+    K.resize(nelem, nelem);  // Curtain height/width elements are ordered as (y0,x0), (y0,x1)... (y0,xn), (y1,x0)...
+    for (int i1 = 0; i1 < nelem; i1++)
     {
-        K.at(i1, i1) = 1.0;
-        for (i2 = 0; i2 < nelem; i2++)
+        for (int i2 = 0; i2 < nelem; i2++)
         {
-            K.at(i1, i2) -= rho.at(i1) * m_vf.at(i1, i2);
+            K(i1, i2) = (i2 == i1) ? 1.0 : 0.0;
+            K(i1, i2) -= rho.at(i1) * m_vf.at(i1, i2);
 
             // Add modifications accounting for transmissivity of curtain
             if (i1 >= 1 && i1 < 1 + (nx * ny))  // Element on front of curtain
             {
-                iback = i1 + nx * ny;       // Corresponding element on the back of the curtain
-                x = (i1 - 1) % nx;          // Width position on curtain
-                y = (int)((i1 - 1) / nx);     // Height position on curtain
-                K.at(i1, i2) -= tauc.at(y, x) * m_vf.at(iback, i2);
+                iback = i1 + (nx * ny);         // Corresponding element on the back of the curtain
+                x = (i1 - 1) % nx;              // Width position on curtain
+                y = (int)((i1 - 1) / nx);       // Height position on curtain
+                K(i1, i2) -= tauc_per_group.at(y, x) * m_vf.at(iback, i2);
             }
 
-            else if (i1 >= 1 + (nx * ny) && i1 < 1 + (nx * ny))  // Element on back of curtain
+            else if (i1 >= 1 + (nx * ny) && i1 < 1 + 2*(nx * ny))  // Element on back of curtain
             {
-                ifront = i1 - nx * ny;              // Corresponding element on the front of the curtain
+                ifront = i1 - (nx * ny);            // Corresponding element on the front of the curtain
                 x = (i1 - 1 - nx*ny) % nx;          // Width position on curtain
-                y = (int)((i1 - 1 - nx*ny) / nx);  // Height position on curtain
-                K.at(i1, i2) -= tauc.at(y, x) * m_vf.at(ifront, i2);
+                y = (int)((i1 - 1 - nx*ny) / nx);   // Height position on curtain
+                K(i1, i2) -= tauc_per_group.at(y, x) * m_vf.at(ifront, i2);
             }
         }
     }
 
-
     //--- Invert coefficient matrix
-    invert(K, Kinv);
+    if (m_invert_matrices)
+        Kinv = K.inverse();
 
     return;
 }
 
+
 // Solve radiative exchange equations and calculate net radiative energy incoming to each element
-void C_falling_particle_receiver::calculate_radiative_exchange(util::matrix_t<double>& Esource, util::matrix_t<double>& Kinv, util::matrix_t<double>& rhoc, util::matrix_t<double>& tauc,
-                                                                util::matrix_t<double>& qnetc, util::matrix_t<double>& qnetw, double qnetwf, double qnetap)
+void C_falling_particle_receiver::calculate_radiative_exchange(util::matrix_t<double>& Ecf, util::matrix_t<double>& Ecb, util::matrix_t<double>& Ebw, double Eap, double Efw,
+                                                               Eigen::MatrixXd& K, Eigen::MatrixXd& Kinv,
+                                                               util::matrix_t<double>& rhoc, util::matrix_t<double>& tauc,
+                                                               util::matrix_t<double>& qnetc, util::matrix_t<double>& qnetw, double& qnetwf, double& qnetap)
 {
     // Curtain height/width elements are ordered as (y0,x0), (y0,x1)... (y0,xn), (y1,x0)...
-    int ny = m_n_y - 1;  // Solution in y-direction is defined at node locations including inlet and outlet
-    int nx = m_n_x;
+    int ny = m_n_y_rad;  
+    int nx = m_n_x_rad;
     int nelem = get_nelem();
-    util::matrix_t<double> J, qin, qnet;
-    J.resize_fill(nelem, 0.0);      // Radiosity [W/m2]
-    qin.resize_fill(nelem, 0.0);    // Total incoming energy [W/m2]
-    qnet.resize_fill(nelem, 0.0);   // Net incoming energy
-    qnetc.resize_fill(m_n_y, nx, 0.0); // Net incoming energy to the curtain (both sides)
-    qnetw.resize_fill(m_n_y, nx, 0.0); // Net incoming energy to the back wall
+    Eigen::VectorXd Ee, Je;
+    Ee.resize(nelem);
+    Je.resize(nelem);
 
-
-    // Radiosity (total outgoing energy)
-    for (int i = 0; i < nelem; i++)
+    //--- Calculate average values per element groupings and set up vector of radiative energy source
+    int j0, i0;
+    double Ecf_per_group, Ecb_per_group, Ebw_per_group;
+    util::matrix_t<double> rhoc_per_group, tauc_per_group;
+    rhoc_per_group.resize_fill(ny, nx, 0.0);
+    tauc_per_group.resize_fill(ny, nx, 0.0);
+    j0 = 0;
+    for (int j = 0; j < ny; j++)      // Radiation groups in y-dimension
     {
-        for (int j = 0; j < nelem; j++)
+        i0 = 0;
+        for (int i = 0; i < nx; i++)  // Radiation groups in x-dimension
         {
-            J.at(i) += Kinv.at(i, j) * Esource.at(j);
+            // Calculate average per group
+            int npg = m_ny_per_group.at(j) * m_nx_per_group.at(i);
+            Ecf_per_group = Ecb_per_group = Ebw_per_group = 0.0;
+            for (int j1 = 0; j1 < m_ny_per_group.at(j); j1++)       // Discretized elements contained in this radiation group
+            {
+                for (int i1 = 0; i1 < m_nx_per_group.at(i); i1++)   // Discretized elements contained in this radiation group
+                {
+                    rhoc_per_group.at(j, i) += rhoc.at(j0 + j1, i0 + i1) / npg;
+                    tauc_per_group.at(j, i) += tauc.at(j0 + j1, i0 + i1) / npg;
+                    Ecf_per_group += Ecf.at(j0 + j1, i0 + i1) / npg;
+                    Ecb_per_group += Ecb.at(j0 + j1, i0 + i1) / npg;
+                    Ebw_per_group += Ebw.at(j0 + j1, i0 + i1) / npg;
+                }
+            }
+
+            // Put values in flattened array
+            Ee(1 + j*nx + i) = Ecf_per_group;
+            Ee(1 + ny*nx + j*nx + i) = Ecb_per_group;
+            Ee(1 + 2*ny*nx + j*nx + i) = Ebw_per_group;
+
+            i0 += m_nx_per_group.at(i);
+        }
+        j0 += m_ny_per_group.at(j);
+    }
+    Ee(0) = Eap;
+    Ee(nelem - 1) = Efw;
+
+
+    //--- Solve for radiosity (total outgoing energy)
+    if (!m_invert_matrices)
+        Je = K.colPivHouseholderQr().solve(Ee);  // TODO: try different methods?
+    else
+    {
+        for (int i = 0; i < nelem; i++)
+        {
+            Je(i) = 0.0;
+            for (int j = 0; j < nelem; j++)
+            {
+                Je(i) += Kinv(i, j) * Ee(j);
+            }
         }
     }
 
-    // Total incoming energy and net incoming energy
-    util::matrix_t<double> rho = get_reflectivity_vector(rhoc);
+
+    //-- Solve for total incoming energy and net incoming energy
+    util::matrix_t<double> rho = get_reflectivity_vector(rhoc_per_group);
+    util::matrix_t<double> qin, qnet;
+    qin.resize_fill(nelem, 0.0);            // Total incoming energy [W/m2]
+    qnet.resize_fill(nelem, 0.0);           // Net incoming energy
     int x, y;
     for (int i = 0; i < nelem; i++)
     {
         for (int j = 0; j < nelem; j++)
-        {
-            qin.at(i) += m_vf.at(i, j) * J.at(j);
-        }
-        qnet.at(i) = (1.0 - rho.at(i)) * qin.at(i) - Esource.at(i);
+            qin.at(i) += m_vf.at(i, j) * Je(j);
+        qnet.at(i) = (1.0 - rho.at(i)) * qin.at(i) - Ee(i);
 
         // Modification to net incoming energy for curtain elements
-        if (i > 0 && i < 1 + 2 * nx * ny)
+        if (i > 0 && i < 1 + 2*nx*ny)
         {
             int k = (i < 1 + nx * ny) ? 1 : 1 + nx * ny;
-            x = (i - k) % nx;          // Width position on curtain
-            y = (int)((i - k) / nx);  // Height position on curtain
-        qnet.at(i) -= tauc.at(y, x) * qin.at(i);
+            x = (i - k) % nx;           // Width position on curtain
+            y = (int)((i - k) / nx);    // Height position on curtain
+            qnet.at(i) -= tauc_per_group.at(y, x) * qin.at(i);
         }
     }
 
-    // Separate net incoming energy into separate outputs for curtain, back wall, front wall, aperture
-    qnetap = qnet.at(0);   // Net energy incoming to aperture
-    qnetwf += qnet.at(nelem - 1);   // Net energy incoming to front wall
-    for (int i = 0; i < nx; i++)
+    //-- Separate net incoming energy into separate outputs for curtain elements, back wall elements, front wall, aperture
+    //   qnet = (1-rho)*qin - E for any given element
+    //   If using radiation groups, assume (1-rho)*qin is the same for all elements in the group, and re-calculate qnet for the local element E instead of the group-average E
+    qnetc.resize_fill(m_n_y, m_n_x, 0.0);   // Net incoming energy to the curtain (both sides)
+    qnetw.resize_fill(m_n_y, m_n_x, 0.0);   // Net incoming energy to the back wall
+    qnetap = qnet.at(0);                    // Net energy incoming to aperture
+    qnetwf = qnet.at(nelem - 1);            // Net energy incoming to front wall
+    i0 = 0;
+    for (int i = 0; i < nx; i++)    // Radiation groups in x-dimension
     {
-        for (int j = 0; j < ny; j++)
+        j0 = 0;
+        for (int j = 0; j < ny; j++)    // Radiation groups in y-dimension
         {
-            int kf = 1 + j * nx + i;            // Element on front of curtain
+            int kf = 1 + j * nx + i;                // Element on front of curtain
             int kb = 1 + nx * ny + j * nx + i;      // Element on back of curtain
-            int kw = 1 + 2 * nx * ny + j * nx + i;    // Element on back wall
-            qnetc.at(j, i) = qnet.at(kf) + qnet.at(kb);
-            qnetw.at(j, i) = qnet.at(kw);
+            int kw = 1 + 2 * nx * ny + j * nx + i;  // Element on back wall
 
+            for (int i1 = 0; i1 < m_nx_per_group.at(i); i1++)           // Discretized x-elements contained in this radiation group
+            {
+                for (int j1 = 0; j1 < m_ny_per_group.at(j); j1++)       // Discretized y-elements contained in this radiation group
+                {
+                    qnetc.at(j0 + j1, i0 + i1) += qnet.at(kf) + Ee(kf) - Ecf.at(j0 + j1, i0 + i1);
+                    qnetc.at(j0 + j1, i0 + i1) += qnet.at(kb) + Ee(kb) - Ecb.at(j0 + j1, i0 + i1);
+                    qnetw.at(j0 + j1, i0 + i1) += qnet.at(kw) + Ee(kw) - Ebw.at(j0 + j1, i0 + i1);
+                }
+
+                // Assume last vertical node is equal to previous node (this node is not used in the energy balance, this value is just to define something reasonable to complete wall temperature arrays)
+                if (j == ny - 1)
+                {
+                    qnetc.at(m_n_y - 1, i0 + i1) += qnet.at(kf) + Ee(kf) - Ecf.at(m_n_y - 1, i0 + i1);
+                    qnetc.at(m_n_y - 1, i0 + i1) += qnet.at(kb) + Ee(kb) - Ecb.at(m_n_y - 1, i0 + i1);
+                    qnetw.at(m_n_y - 1, i0 + i1) += qnet.at(kw) + Ee(kw) - Ebw.at(m_n_y - 1, i0 + i1);
+                }
+
+            }
+            j0 += m_ny_per_group.at(j);
         }
-        // Assume last vertical node is equal to previous node (this nodes is not used in the energy balances, so this is just to have something reasonable to complete wall temperature arrays)
-        qnetc.at(m_n_y - 1, i) = qnetc.at(m_n_y - 2, i);
-        qnetw.at(m_n_y - 1, i) = qnetc.at(m_n_y - 2, i);
+        i0 += m_nx_per_group.at(i);
     }
-
 
     return;
 }
@@ -1767,9 +2080,10 @@ double C_falling_particle_receiver::calculate_passive_surface_T(double Tguess, d
 
     double Rwall, dy, num, den, Tlin, Tw, Tdiff, tol, urf;
     int niter = 10;  // Max number of iterations
-    tol = 0.1;   // Tolerance for wall temperature solution
+    tol = 0.1;      // Tolerance for wall temperature solution
     Rwall = 1.0 / m_cav_hext + m_cav_twall / m_cav_kwall;  // Cavity wall thermal resistance
-    dy = m_curtain_height / (m_n_y - 1); urf = 1.0;
+    dy = m_curtain_height / (m_n_y - 1);
+    urf = 1.0;
 
     Tlin = Tguess;
     for (int m = 0; m < niter; m++)
@@ -1782,7 +2096,7 @@ double C_falling_particle_receiver::calculate_passive_surface_T(double Tguess, d
             num += m_cav_kwall * (Tcond_next + Tcond_prev) / (pow(dy, 2));
         }
         Tw = num / den;
-        Tdiff = std::abs(Tw- Tlin);
+        Tdiff = std::abs(Tw - Tlin);
         if (Tdiff < tol)
             break;
         Tlin = (1.0 - urf) * Tlin + urf*Tw;
@@ -1804,49 +2118,6 @@ double C_falling_particle_receiver::calculate_mass_wtd_avg_exit(util::matrix_t<d
     }
     outlet /= mtot;
     return outlet;
-}
-
-
-
-
-// Matrix inversion (Gauss-Jordan)
-// TODO: Update this to use some pre-existing package?
-void C_falling_particle_receiver::invert(util::matrix_t<double>& A, util::matrix_t<double>& Ainv)
-{
-    size_t i, j, k, nelem;
-    double m;
-    nelem = A.nrows();
-    util::matrix_t<double> A1;
-    A.copy(A1);
-    Ainv.resize_fill(nelem, nelem, 0.0);
-    for (i = 0; i < nelem; i++)
-        Ainv.at(i, i) = 1.0;
-
-    for (i = 0; i < nelem; i++)
-    {
-        // Make diagonal entry in row i equal to 1.0
-        m = A.at(i, i);
-        for (j = 0; j < nelem; j++) 
-        {
-            A.at(i, j) = A.at(i, j) / m;
-            Ainv.at(i, j) = Ainv.at(i, j) / m;
-        }
-
-        // Use row i to eliminate entries in all other rows
-        for (k = 0; k < nelem; k++)
-        {
-            if (k != i)
-            {
-                m = A1.at(k, i);
-                for (j = 0; j < nelem; j++)
-                {
-                    A1.at(k, j) = A1.at(k, j) - m * A1.at(i, j);
-                    Ainv.at(k, j) = Ainv.at(k, j) - m * Ainv.at(i, j);
-                }
-            }
-        }
-    }
-    return;
 }
 
 util::matrix_t<double> C_falling_particle_receiver::sum_over_rows(util::matrix_t<double>& mat, bool exclude_last)
@@ -1898,3 +2169,22 @@ double C_falling_particle_receiver::sum_over_rows_and_cols(util::matrix_t<double
     return msum;
 }
 
+util::matrix_t<double> C_falling_particle_receiver::matrix_addition(util::matrix_t<double>& m1, util::matrix_t<double>& m2)
+{
+
+    size_t nrow = m1.nrows();
+    size_t ncol = m1.ncols();
+    if (m1.nrows() != nrow || m1.ncols() != ncol)
+        throw(C_csp_exception("Array dimensions don't match ", "Particle receiver initialization"));
+
+    util::matrix_t<double> m3;
+    m3.resize(nrow, ncol);
+    for (int i = 0; i < ncol; i++)
+    {
+        for (int j = 0; j < nrow; j++)
+        {
+           m3.at(j,i) = m1.at(j,i) + m2.at(j,i); 
+        }
+    }
+    return m3;
+}
