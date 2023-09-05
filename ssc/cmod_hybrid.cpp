@@ -207,6 +207,14 @@ public:
                     ssc_number_t total_land_area = compute_module_inputs->table.lookup("land_area")->num;
                     escal_or_annual(input, pOMLandLease, analysisPeriod, "om_land_lease", inflation_rate, total_land_area, false, input.as_double("om_land_lease_escal") * 0.01);
                 }
+                // optional fossil fuel costs
+                if (compute_module_inputs->table.lookup("om_fuel_cost")) {
+                    ssc_number_t* pOMFuelCost = ((var_table*)compute_module_outputs)->allocate("cf_om_fuel_cost", analysisPeriod + 1);
+                    ssc_number_t system_heat_rate = compute_module_inputs->table.lookup("system_heat_rate")->num;
+                    ssc_number_t year1_fuel_use = ((var_table*)compute_module_outputs)->as_double("annual_fuel_usage"); // kWht
+                    escal_or_annual(input, pOMFuelCost, analysisPeriod, "om_fuel_cost", inflation_rate, year1_fuel_use * system_heat_rate * 0.001, false, input.as_double("om_fuel_cost_escal") * 0.01);
+                }
+
                 // add calculations to compute module outputs - done above for regular compute module outputs - done above with allocate to compute_module_outputs
 
                 ssc_data_set_table(outputs, compute_module.c_str(), compute_module_outputs);
@@ -346,6 +354,12 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 escal_or_annual(input, pOMFixed, analysisPeriod, "om_fuelcell_fixed_cost", inflation_rate, 1.0, false, input.as_double("om_fixed_escal") * 0.01); // $
                 escal_or_annual(input, pOMProduction, analysisPeriod, "om_fuelcell_variable_cost", inflation_rate, 0.001, false, input.as_double("om_production_escal") * 0.01); // $/kW
                 escal_or_annual(input, pOMCapacity, analysisPeriod, "om_fuelcell_capacity_cost", inflation_rate, system_capacity, false, input.as_double("om_capacity_escal") * 0.01); // $
+
+                ssc_number_t* pOMFuelCost = ((var_table*)compute_module_outputs)->allocate("cf_om_fuel_cost", analysisPeriod + 1);
+                ssc_number_t system_heat_rate = compute_module_inputs->table.lookup("system_heat_rate")->num;
+                ssc_number_t year1_fuel_use = ((var_table*)compute_module_outputs)->as_double("annual_fuel_usage"); // kWht
+                escal_or_annual(input, pOMFuelCost, analysisPeriod, "om_fuel_cost", inflation_rate, year1_fuel_use* system_heat_rate * 0.001, false, input.as_double("om_fuel_cost_escal") * 0.01);
+
                 nameplate = system_capacity;
                 fuelcell_discharged = ((var_table*)compute_module_outputs)->as_vector_double("fuelcell_annual_energy_discharged");
                 if (fuelcell_discharged.size() == 2) { // ssc #992
@@ -565,11 +579,16 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 ssc_number_t* om_production = generator_outputs.as_array("cf_om_production", &count_gen);
                 ssc_number_t* om_fixed = generator_outputs.as_array("cf_om_fixed", &count_gen);
                 ssc_number_t* om_capacity = generator_outputs.as_array("cf_om_capacity", &count_gen);
+                ssc_number_t* om_fuel_cost = NULL;
+                if (generator_outputs.lookup("cf_om_fuel_cost"))
+                    om_fuel_cost = generator_outputs.as_array("cf_om_fuel_cost", &count_gen);
                 ssc_number_t* om_landlease = NULL;
                 if (generator_outputs.lookup("cf_om_land_lease"))
                     om_landlease = generator_outputs.as_array("cf_om_land_lease", &count_gen);
                 for (size_t y = 1; y <= analysisPeriod; y++) {
                     pHybridOMSum[y] += om_production[y] + om_fixed[y] + om_capacity[y];
+                    if (generator_outputs.lookup("cf_om_fuel_cost"))
+                        pHybridOMSum[y] += om_fuel_cost[y];
                     if (generator_outputs.lookup("cf_om_land_lease"))
                         pHybridOMSum[y] += om_landlease[y];
                 }
@@ -581,8 +600,9 @@ setmodules( ['pvwattsv8', 'fuelcell', 'battery', 'grid', 'utilityrate5', 'therma
                 ssc_number_t* om_fixed = fuelcell_outputs.as_array("cf_om_fixed", &count_fc);
                 ssc_number_t* om_capacity = fuelcell_outputs.as_array("cf_om_capacity", &count_fc);
                 ssc_number_t* om_replacement = fuelcell_outputs.as_array("cf_fuelcell_replacement_cost_schedule", &count_fc);// optional
+                ssc_number_t* om_fuel_cost = fuelcell_outputs.as_array("cf_om_fuel_cost", &count_fc);
                 for (size_t y = 1; y <= analysisPeriod; y++) {
-                    pHybridOMSum[y] += om_production[y] + om_fixed[y] + om_capacity[y] + om_replacement[y];
+                    pHybridOMSum[y] += om_production[y] + om_fixed[y] + om_capacity[y] + om_replacement[y] + om_fuel_cost[y];
                 }
             }
 
