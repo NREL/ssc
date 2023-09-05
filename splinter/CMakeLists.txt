@@ -4,7 +4,7 @@
 #
 #####################################################################################################################
 
-include_directories(. include src thirdparty/Eigen ../ssc)
+include_directories(. include src ../../or-tools/install/include/eigen3 ../ssc)
 
 set(SPLINTER_SRC
 	src/bspline.cpp

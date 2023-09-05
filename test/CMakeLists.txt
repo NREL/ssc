@@ -11,7 +11,7 @@ elseif (DEFINED ENV{GTEST})
 endif()
 
 include_directories(${GTDIR}/include ${GTDIR}/googletest/include ${GTDIR}/googletest/include/gtest . input_cases shared_test ssc_test tcs_test
-						../ssc ../tcs ../solarpilot ../shared ../splinter/include ../splinter/thirdparty/Eigen )
+						../ssc ../tcs ../solarpilot ../shared ../splinter/include )
 
 file(GLOB SSC_TESTS ssc_test/*.cpp)
 file(GLOB SSC_TESTS_HEADERS ssc_test/*.h)
@@ -87,11 +87,6 @@ else()
     target_link_libraries(Test optimized ${GTEST_LIB})
 endif()
 target_link_libraries(Test ssc splinter)
-
-find_package(re2 CONFIG REQUIRED)
-find_package(Eigen3 CONFIG REQUIRED)
-find_package(ortools CONFIG REQUIRED)
-target_link_libraries(Test ortools::ortools)
 
 if (UNIX)
     target_link_libraries(Test -ldl -lpthread)

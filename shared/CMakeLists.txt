@@ -5,7 +5,7 @@
 #####################################################################################################################
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-include_directories(. ../splinter/include ../splinter/thirdparty/Eigen ../)
+include_directories(. ../splinter/include ../)
 
 set(SHARED_SRC
         6par_gamma.h

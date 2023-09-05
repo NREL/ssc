@@ -40,14 +40,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_core.h"
 #include "csp_solver_pt_receiver.h"
 
-#include <Eigen/Core>
-#include <Eigen/LU>
-#include <Eigen/Cholesky>
-#include <Eigen/QR>
-#include <Eigen/SVD>
-#include <Eigen/Geometry>
-#include <Eigen/Eigenvalues>
+#include "../splinter/include/definitions.h"
 
+using namespace SPLINTER;
 
 
 class C_cavity_receiver : public C_pt_receiver

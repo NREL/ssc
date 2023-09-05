@@ -13,7 +13,7 @@
 
 #ifndef SPLINTER_API
 # ifdef _MSC_VER
-#  define SPLINTER_API __declspec(dllexport)
+#  define SPLINTER_API //__stdcall//__declspec(dllexport)
 # else
 #  define SPLINTER_API
 # endif
@@ -30,10 +30,30 @@
 # include <vector>
 #if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wignored-attributes"
+// #pragma GCC diagnostic ignored "-Wignored-attributes"
 #endif
-# include <Eigen/Dense>
-# include <Eigen/Sparse>
+#include "Eigen/Core"
+#include "Eigen/LU"
+#include "Eigen/Cholesky"
+#include "Eigen/QR"
+#include "Eigen/SVD"
+#include "Eigen/Geometry"
+#include "Eigen/Eigenvalues"
+//# include <Eigen/Sparse>
+
+#include "Eigen/SparseCore"
+#include "Eigen/OrderingMethods"
+#include "Eigen/SparseCholesky"
+#include "Eigen/SparseLU"
+#include "Eigen/SparseQR"
+#include "Eigen/IterativeLinearSolvers"
+
+
+#include <vector>
+#include <map>
+#include <cstdlib>
+#include <cstring>
+#include <algorithm>
 #if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
@@ -41,31 +61,31 @@
 namespace SPLINTER
 {
 
-// Eigen vectors
-typedef Eigen::VectorXd DenseVector;
-typedef Eigen::SparseVector<double> SparseVector;
+    // Eigen vectors
+    typedef Eigen::VectorXd DenseVector;
+    typedef Eigen::SparseVector<double> SparseVector;
 
-// Eigen matrices
-typedef Eigen::MatrixXd DenseMatrix;
-typedef Eigen::SparseMatrix<double> SparseMatrix; // declares a column-major sparse matrix type of double
+    // Eigen matrices
+    typedef Eigen::MatrixXd DenseMatrix;
+    typedef Eigen::SparseMatrix<double> SparseMatrix; // declares a column-major sparse matrix type of double
 
-class Exception : public std::exception
-{
-private:
-    std::string __what;
-
-public:
-
-    Exception(const std::string& what)
-        : __what(what)
+    class Exception : public std::exception
     {
-    }
+    private:
+        std::string __what;
 
-    const char* what() const throw()
-    {
-        return this->__what.c_str();
-    }
-};
+    public:
+
+        Exception(const std::string& what)
+            : __what(what)
+        {
+        }
+
+        const char* what() const throw()
+        {
+            return this->__what.c_str();
+        }
+    };
 
 } // namespace SPLINTER
 
