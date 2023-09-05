@@ -346,6 +346,7 @@ static var_info _cm_vtab_mspt_iph[] = {
 { SSC_OUTPUT,    SSC_NUMBER, "cav_radius",                         "Cavity radius",                                                                                                                            "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
 { SSC_OUTPUT,    SSC_NUMBER, "A_rec",                              "Receiver area - planar",                                                                                                                   "m2",           "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
 { SSC_OUTPUT,    SSC_NUMBER, "L_tower_piping_calc",                "Tower piping length",                                                                                                                      "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+{ SSC_OUTPUT,    SSC_NUMBER, "od_tube_calc",                       "Receiver tube outer diameter - out",                                                                                                       "mm",           "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
 
 // Receiver Performance
 { SSC_OUTPUT,    SSC_NUMBER, "q_dot_rec_des",                      "Receiver thermal output at design",                                                                                                       "MWt",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
@@ -575,7 +576,9 @@ static var_info _cm_vtab_mspt_iph[] = {
 
 // Annual single-value outputs
 { SSC_OUTPUT,    SSC_NUMBER, "annual_energy",                      "Annual Thermal Energy to Heat Sink w/ avail derate",                                  "kWt-hr",       "",                    "Post-process",          "sim_type=1",                "",              ""},
-                                                                                                                                                                                                 
+{ SSC_OUTPUT,    SSC_NUMBER, "annual_q_rec_htf",                   "Annual receiver power delivered to HTF",                                              "MWt-hr",       "",                    "Tower and Receiver",    "sim_type=1",                "",              ""},
+
+
 { SSC_OUTPUT,    SSC_NUMBER, "annual_electricity_consumption",     "Annual electricity consumption w/ avail derate",                                      "kWe-hr",       "",                    "Post-process",          "sim_type=1",                "",              ""},
 
 { SSC_OUTPUT,    SSC_NUMBER, "capacity_factor",                    "Capacity factor",                                                                     "%",            "",                    "Post-process",          "sim_type=1",                "",              ""},
@@ -585,8 +588,12 @@ static var_info _cm_vtab_mspt_iph[] = {
 
 { SSC_OUTPUT,    SSC_NUMBER, "annual_q_rec_inc",                   "Annual receiver incident thermal power after reflective losses",                                                                          "MWt-hr",       "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              ""},
 { SSC_OUTPUT,    SSC_NUMBER, "annual_q_rec_loss",                  "Annual receiver convective and radiative losses",                                                                                         "MWt-hr",       "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              ""},
+{ SSC_OUTPUT,    SSC_NUMBER, "annual_q_piping_loss",               "Annual tower piping losses",                                                                                                              "MWt-hr",       "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              "" },
+{ SSC_OUTPUT,    SSC_NUMBER, "annual_q_rec_startup",               "Annual receiver startup energy",                                                                                                          "MWt-hr",       "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              "" },
+{ SSC_OUTPUT,    SSC_NUMBER, "annual_E_tower_pump",                "Annual tower pumping power",                                                                                                              "MWe-hr",       "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              "" },
 { SSC_OUTPUT,    SSC_NUMBER, "annual_eta_rec_th",                  "Annual receiver thermal efficiency ignoring rec reflective loss",                                                                         "",             "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              ""},
 { SSC_OUTPUT,    SSC_NUMBER, "annual_eta_rec_th_incl_refl",        "Annual receiver thermal efficiency including reflective loss",                                                                            "",             "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              ""},
+{ SSC_OUTPUT,    SSC_NUMBER, "annual_q_defocus_est",               "Annual defocus loss estimate",                                                                                                            "MWt-hr",       "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              "" },
 
 { SSC_OUTPUT,    SSC_NUMBER, "sim_cpu_run_time",                   "Simulation duration clock time",                                                                                                         "s",             "",                                  "",                                         "sim_type=1",                                                       "",              ""},
 
@@ -1270,6 +1277,8 @@ public:
 
             int rec_night_recirc = 0;
             int rec_clearsky_model = as_integer("rec_clearsky_model");
+            bool is_calc_od_tube = false;
+            double W_dot_rec_target = std::numeric_limits<double>::quiet_NaN();
 
             if (rec_clearsky_model > 4)
                 throw exec_error("tcsmolten_salt", "Invalid specification for 'rec_clearsky_model'");
@@ -1292,7 +1301,8 @@ public:
                     rec_night_recirc,
                     as_integer("N_panels"), D_rec, rec_height,
                     as_integer("Flow_type"), as_integer("crossover_shift"), as_double("hl_ffact"),
-                    as_double("T_htf_hot_des"), as_double("rec_clearsky_fraction")
+                    as_double("T_htf_hot_des"), as_double("rec_clearsky_fraction"),
+                    is_calc_od_tube, W_dot_rec_target
                 ));   // steady-state receiver
 
                 receiver = std::move(ss_receiver);
@@ -1327,6 +1337,7 @@ public:
                     as_integer("N_panels"), D_rec, rec_height,
                     as_integer("Flow_type"), as_integer("crossover_shift"), as_double("hl_ffact"),
                     as_double("T_htf_hot_des"), as_double("rec_clearsky_fraction"),
+                    is_calc_od_tube, W_dot_rec_target,
                     as_boolean("is_rec_model_trans"), as_boolean("is_rec_startup_trans"),
                     as_double("rec_tm_mult"), as_double("u_riser"),
                     as_double("th_riser"), as_double("riser_tm_mult"),
@@ -1762,8 +1773,10 @@ public:
         assign("A_rec", A_rec);     //[m2]
 
         double L_tower_piping = std::numeric_limits<double>::quiet_NaN();
-        receiver->get_design_geometry(L_tower_piping);
+        double od_tube_calc = std::numeric_limits<double>::quiet_NaN();
+        receiver->get_design_geometry(L_tower_piping, od_tube_calc);
         assign("L_tower_piping_calc", L_tower_piping);      //[m]
+        assign("od_tube_calc", od_tube_calc * 1.E3); //[mm] convert from m
 
         double eta_rec_thermal_des;     //[-]
         double W_dot_rec_pump_des;      //[MWe]
@@ -2250,11 +2263,29 @@ public:
             }
         }
 
+        accumulate_annual_for_year("Q_thermal", "annual_q_rec_htf", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour); //[MWt-hr]
         accumulate_annual_for_year("q_dot_rec_inc", "annual_q_rec_inc", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);           //[MWt-hr]
         accumulate_annual_for_year("q_thermal_loss", "annual_q_rec_loss", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
+        accumulate_annual_for_year("q_piping_losses", "annual_q_piping_loss", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
+        accumulate_annual_for_year("q_startup", "annual_q_rec_startup", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
+        accumulate_annual_for_year("P_tower_pump", "annual_E_tower_pump", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
 
         assign("annual_eta_rec_th", (ssc_number_t)(1.0 - as_number("annual_q_rec_loss") / as_number("annual_q_rec_inc")));
         assign("annual_eta_rec_th_incl_refl", (ssc_number_t)(as_number("rec_absorptance") * as_number("annual_eta_rec_th")));
+
+        size_t count_df;
+        ssc_number_t* p_defocus = as_array("defocus", &count_df);
+        size_t count_q_rec_in;
+        ssc_number_t* p_q_rec_in = as_array("q_dot_rec_inc", &count_q_rec_in);
+
+        double q_defocus_sum = 0.0;
+        double i_defocus;
+        for (size_t i = 0; i < count_df; i++) {
+            i_defocus = min(1.0, max(0.0, p_defocus[i]));
+            q_defocus_sum += p_q_rec_in[i] * (1.0 - i_defocus);   //[MWt]
+        }
+        q_defocus_sum *= sim_setup.m_report_step / 3600.0;    //[MWt-hr]
+        assign("annual_q_defocus_est", q_defocus_sum);      //[MWt-hr]
 
         std::clock_t clock_end = std::clock();
         double sim_cpu_run_time = (clock_end - clock_start) / (double)CLOCKS_PER_SEC;		//[s]
