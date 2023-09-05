@@ -106,7 +106,7 @@ void C_sco2_phx_air_cooler::design_core()
 
 	if (ms_des_par.m_cycle_config == 2)
 	{
-        std::unique_ptr<C_PartialCooling_Cycle> c_pc_cycle = std::unique_ptr<C_PartialCooling_Cycle>(new C_PartialCooling_Cycle(
+        std::shared_ptr<C_PartialCooling_Cycle> c_pc_cycle = std::unique_ptr<C_PartialCooling_Cycle>(new C_PartialCooling_Cycle(
             turbo_gen_motor_config,
             eta_generator,
             T_mc_in,
@@ -128,7 +128,7 @@ void C_sco2_phx_air_cooler::design_core()
 	}
 	else
 	{
-        std::unique_ptr<C_RecompCycle> c_rc_cycle = std::unique_ptr<C_RecompCycle>(new C_RecompCycle(
+        std::shared_ptr<C_RecompCycle> c_rc_cycle = std::unique_ptr<C_RecompCycle>(new C_RecompCycle(
             turbo_gen_motor_config,
             eta_generator,
             T_mc_in,
@@ -151,7 +151,7 @@ void C_sco2_phx_air_cooler::design_core()
 
 	// Set min temp
 	m_T_mc_in_min = mpc_sco2_cycle->get_design_limits().m_T_mc_in_min;		//[K]
-	
+
 	if (ms_des_par.m_design_method == 1)
 	{
 		// Design the cycle to hit a specified efficiency
