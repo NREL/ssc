@@ -988,6 +988,9 @@ protected:
     int year, month, day, hour;
     double minute, delt;
 
+    //Enable subhourly clipping correction
+    bool enableSubhourlyClipping;
+
     // Subarray properties
     double tiltDegrees;				///< Surface tilt of subarray in degrees
     double surfaceAzimuthDegrees;	///< Surface azimuth of subarray in degrees
@@ -1052,7 +1055,7 @@ public:
         double dtHour, double tiltDegrees, double azimuthDegrees, double trackerRotationLimitDegrees, double stowAngleDegreesIn,
         double groundCoverageRatio, double slopeTilt, double slopeAzm, std::vector<double> monthlyTiltDegrees, std::vector<double> userSpecifiedAlbedo,
         poaDecompReq* poaAllIn,
-        bool useSpatialAlbedos = false, const util::matrix_t<double>* userSpecifiedSpatialAlbedos = nullptr);
+        bool useSpatialAlbedos = false, const util::matrix_t<double>* userSpecifiedSpatialAlbedos = nullptr, bool enableSubhourlyClipping = false);
 
     /// Construct the irrad class with an Irradiance_IO() object and Subarray_IO() object
     irrad();
@@ -1071,6 +1074,9 @@ public:
 
     // Set optional parameters for solarpos_spa calculation
     void set_optional(double elev = 0, double pres = 1013.25, double t_amb = 15);
+
+    //Set whether to use subhourly clipping model
+    void set_subhourly_clipping(bool enable = false);
 
     /// Set the sky model for the irradiance processor, using \link Irradiance_IO::SKYMODEL 
     void set_sky_model(int skymodel, double albedo, const std::vector<double> &albedoSpatial = std::vector<double>());

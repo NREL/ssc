@@ -651,7 +651,7 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_modeff",                     "Subarray 1 Module efficiency",                                         "%",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_celltemp",                   "Subarray 1 Cell temperature",                                          "C",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_celltempSS",                 "Subarray 1 Cell temperature (steady state)",                           "C",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dni_index",                 "Subarray 1 DNI Index",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dni_index",                 "Subarray 1 DNI Index",             "",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_beam_front_cs",                 "Subarray 1 beam clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_diffuse_front_cs",                 "Subarray 1 diffuse clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_ground_front_cs",                 "Subarray 1 ground reflected clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
@@ -794,7 +794,7 @@ static var_info _cm_vtab_pvsamv1[] = {
         //SEV: total dc snow loss time series (not a required output)
         { SSC_OUTPUT,        SSC_ARRAY,      "dc_snow_loss",                         "DC power loss due to snow",						 "kW",   "",   "Time Series (Array)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "dc_net",                               "Inverter DC input power",                                       "kW",   "",   "Time Series (Array)",       "*",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "dc_net_clearsky",                               "Inverter DC clearsky input power",                                       "kW",   "",   "Time Series (Array)",       "",                    "",                              "" },
+        //{ SSC_OUTPUT,        SSC_ARRAY,      "dc_net_clearsky",                               "Inverter DC clearsky input power",                                       "kW",   "",   "Time Series (Array)",       "",                    "",                              "" },
 
         // DC Daily losses
         { SSC_OUTPUT,        SSC_ARRAY,     "dc_lifetime_loss",                       "DC lifetime daily loss",                                     "kW", "",    "Time Series (DC Loss)",                 "",                     "",                   "" },
@@ -817,6 +817,7 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "ac_gross",                             "Inverter AC output power",                                       "kW",   "",   "Time Series (Array)",       "*",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "clipping_potential",                       "Clipping potential",                                       "",   "",   "Time Series (Inverter)",      "",                        "",                   "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subhourly_clipping_loss",                       "Subhourly clipping correction loss",                                       "kW",   "",   "Time Series (Inverter)",      "",                        "",                   "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subhourly_clipping_loss_factor",                       "Subhourly clipping correction loss factor",                                       "",   "",   "Time Series (Inverter)",      "",                        "",                   "" },
 
         // transformer model outputs
         { SSC_OUTPUT,        SSC_ARRAY,      "xfmr_nll_ts",                          "Transformer no load loss",                              "kW", "",    "Time Series (Transformer)", "", "", "" },
@@ -997,6 +998,7 @@ static var_info _cm_vtab_pvsamv1[] = {
             */
             { SSC_OUTPUT, SSC_NUMBER, "annual_ac_wiring_loss", "AC wiring loss", "kWh", "", "Annual (Year 1)", "", "", "" },
             { SSC_OUTPUT, SSC_NUMBER, "annual_subhourly_clipping_loss", "Subhourly clipping correction loss", "kWh", "", "Annual (Year 1)", "", "", "" },
+            { SSC_OUTPUT, SSC_NUMBER, "annual_subhourly_clipping_factor", "Subhourly clipping correction loss factor", "", "", "Annual (Year 1)", "", "", "" },
 
         { SSC_OUTPUT, SSC_NUMBER, "annual_transmission_loss", "Transmission loss", "kWh", "", "Annual (Year 1)", "", "", "" },
             
@@ -1508,7 +1510,7 @@ void cm_pvsamv1::exec()
                     Irradiance->dtHour, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, 0.0, Subarrays[nn]->groundCoverageRatio, Subarrays[nn]->slopeTilt, Subarrays[nn]->slopeAzm,
                     Subarrays[nn]->monthlyTiltDegrees, Irradiance->userSpecifiedMonthlyAlbedo,
                     Subarrays[nn]->poa.poaAll.get(),
-                    Irradiance->useSpatialAlbedos, &Irradiance->userSpecifiedMonthlySpatialAlbedos);
+                    Irradiance->useSpatialAlbedos, &Irradiance->userSpecifiedMonthlySpatialAlbedos, as_boolean("enable_subhourly_clipping"));
 
                 int code = irr.calc();
 
@@ -2541,6 +2543,7 @@ void cm_pvsamv1::exec()
 
     double annual_dc_loss_ond = 0, annual_ac_loss_ond = 0; // (TR)
     double annual_subhourly_clipping_loss = 0;
+    double annual_subhourly_clipping_factor = 0;
     /*
     if (as_boolean("enable_subhourly_clipping")) {
         for (size_t inrec = 0; inrec < nrec; inrec++) {
@@ -2623,6 +2626,7 @@ void cm_pvsamv1::exec()
 
             double acpwr_gross = 0, ac_wiringloss = 0, transmissionloss = 0;
             double ac_subhourlyclipping_loss = 0;
+            double ac_subhourlyclipping_factor = 0;
             cur_load = p_load_full[idx];
 
             //set DC voltages for use in AC power calculation
@@ -2700,7 +2704,7 @@ void cm_pvsamv1::exec()
                 //Calculate DNI clearness index (time step basis)
                 double dni_clearness_index = PVSystem->p_DNIIndex[0][idx];
                 //Calculate Clipping Potential ((P_dc,dryclean - P_ac,0) / P_ac,0) (time step basis)
-                //sharedInverter->calculateACPower(dcPower_kW_csky, dcVoltagePerMppt[0], Irradiance->weatherRecord.tdry, as_boolean("enable_subhourly_clipping")); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
+                sharedInverter->calculateACPower(dcPower_kW_csky, dcVoltagePerMppt[0], Irradiance->weatherRecord.tdry, as_boolean("enable_subhourly_clipping")); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
                 //double clip_pot = (dcPower_kW_csky - sharedInverter->powerAC_kW_clipping) / sharedInverter->powerAC_kW_clipping;
                 double clip_pot = (dcPower_kW_csky - paco ) / (paco);
                 
@@ -2737,6 +2741,8 @@ void cm_pvsamv1::exec()
                 //acpwr_gross *= (1 - sub_clipping_matrix.at(dni_row, clip_pot_col));
                 if (dcPower_kW_csky > 0.0) {
                     ac_subhourlyclipping_loss = sub_clipping_matrix.at(dni_row, clip_pot_col) * std::abs(acpwr_gross);
+                    //ac_subhourlyclipping_loss = sub_clipping_matrix.at(dni_row, clip_pot_col) * sharedInverter->powerAC_kW_clipping;
+                    ac_subhourlyclipping_factor = sub_clipping_matrix.at(dni_row, clip_pot_col);
                 }
                 else { //No inverter clipping at night time, skip checks?
                     ac_subhourlyclipping_loss = 0.0;
@@ -2758,6 +2764,7 @@ void cm_pvsamv1::exec()
 
                 annual_ac_wiring_loss += ac_wiringloss * ts_hour;
                 annual_subhourly_clipping_loss += ac_subhourlyclipping_loss;
+                annual_subhourly_clipping_factor += ac_subhourlyclipping_factor;
             }
 
             if (iyear == 0 || save_full_lifetime_variables == 1)
@@ -2769,6 +2776,7 @@ void cm_pvsamv1::exec()
                 PVSystem->p_inverterThermalLoss[idx] = (ssc_number_t)(sharedInverter->powerTempLoss_kW);
                 PVSystem->p_acWiringLoss[idx] = (ssc_number_t)(ac_wiringloss);
                 PVSystem->p_subhourlyClippingLoss[idx] = (ssc_number_t)(ac_subhourlyclipping_loss);
+                PVSystem->p_subhourlyClippingLossFactor[idx] = (ssc_number_t)(ac_subhourlyclipping_factor);
                 
                 if (offline) {
                     PVSystem->p_inverterNightTimeLoss[idx] = 0.0;
@@ -3198,6 +3206,7 @@ void cm_pvsamv1::exec()
 
         assign("annual_ac_wiring_loss", var_data((ssc_number_t)annual_ac_wiring_loss));
         assign("annual_subhourly_clipping_loss", var_data((ssc_number_t)annual_subhourly_clipping_loss));
+        assign("annual_subhourly_clipping_factor", var_data((ssc_number_t)annual_subhourly_clipping_factor));
 
         assign("annual_transmission_loss", var_data((ssc_number_t)annual_transmission_loss));
 
@@ -3343,14 +3352,14 @@ void cm_pvsamv1::exec()
         assign("annual_ac_battery_loss_percent", var_data((ssc_number_t)percent));
         sys_output -= annual_ac_battery_loss;
 
+        if (annual_ac_gross > 0) percent = 100.0 * annual_subhourly_clipping_loss / annual_ac_gross;
+        assign("annual_subhourly_clipping_loss_percent", var_data((ssc_number_t)percent));
+        sys_output -= annual_subhourly_clipping_loss;
+
         percent = 0.;
         if (annual_ac_gross > 0) percent = 100.0 * annual_ac_wiring_loss / annual_ac_gross;
         assign("annual_ac_wiring_loss_percent", var_data((ssc_number_t)percent));
         sys_output -= annual_ac_wiring_loss;
-
-        if (annual_ac_gross > 0) percent = 100.0 * annual_subhourly_clipping_loss / annual_ac_gross;
-        assign("annual_subhourly_clipping_loss_percent", var_data((ssc_number_t)percent));
-        sys_output -= annual_subhourly_clipping_loss;
 
         percent = 0.;
         if (annual_ac_gross > 0) percent = 100.0 * annual_transmission_loss / annual_ac_gross;

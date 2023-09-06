@@ -59,6 +59,7 @@ SharedInverter::SharedInverter(int inverterType, size_t numberOfInverters,
 
     powerDC_kW = 0.;
     powerAC_kW = 0.;
+    powerAC_kW_clipping = 0.;
     efficiencyAC = 96.;
     powerClipLoss_kW = 0.;
     powerConsumptionLoss_kW = 0.;
@@ -84,6 +85,7 @@ SharedInverter::SharedInverter(const SharedInverter& orig) {
 
     powerDC_kW = orig.powerDC_kW;
     powerAC_kW = orig.powerAC_kW;
+    powerAC_kW_clipping = orig.powerAC_kW_clipping;
     powerClipLoss_kW = orig.powerClipLoss_kW;
     powerConsumptionLoss_kW = orig.powerConsumptionLoss_kW;
     powerNightLoss_kW = orig.powerNightLoss_kW;
