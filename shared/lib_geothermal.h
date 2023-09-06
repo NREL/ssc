@@ -73,7 +73,7 @@ struct SGeothermal_Inputs
 		md_AdditionalPressure = 1.0;
         md_dtProdWell = md_dtProdWellChoice = 0.0;
         md_NumberOfWellsProdExp = md_NumberOfWellsInjDrilled = md_NumberOfWellsProdDrilled = md_FailedWells = md_StimSuccessRate = md_DrillSuccessRate = 0;
-        md_FailedInjFlowRatio = md_FailedProdFlowRatio = md_InjWellFriction = md_ProdWellFriction = 0;
+        md_FailedInjFlowRatio = md_FailedProdFlowRatio = md_InjWellFriction = md_ProdWellFriction = md_InjWellPressurePSI = md_InjectivityIndex = md_ExplorationWellsProd = 0;
     }
 
 	calculationBasis me_cb;									// { NO_CALCULATION_BASIS, POWER_SALES, NUMBER_OF_WELLS };
@@ -102,6 +102,7 @@ struct SGeothermal_Inputs
     double md_StimSuccessRate;
     double md_DrillSuccessRate;
     double md_InjWellFriction;
+    double md_InjWellPressurePSI;
     double md_ProdWellFriction;
 	double md_NumberOfWells;								// entered or calculated, depending on 'cb'
     double md_NumberofWellsInj;
@@ -116,10 +117,12 @@ struct SGeothermal_Inputs
 	double md_ExcessPressureBar;							// default 3.5 bar, [2B.Resource&Well Input].D205
 	double md_DiameterProductionWellInches;					// default 10 inches
     double md_ProductionWellType;                           // 0 open hole, 1 liner
+    double md_ProductionWellDiam;
 	double md_DiameterPumpCasingInches;						// default 9.925 inches
     double md_DiameterInjPumpCasingInches;
 	double md_DiameterInjectionWellInches;					// default 10 inches
     double md_InjectionWellType;                            // 0 open hole, 1 liner
+    double md_InjectionWellDiam;
 	double md_UserSpecifiedPumpWorkKW;
 	double md_PotentialResourceMW;							// MW, default = 200 MW, determines how many times reservoir can be replaced
 	double md_ResourceDepthM;								// meters, default 2000
@@ -130,6 +133,8 @@ struct SGeothermal_Inputs
 	double md_EGSSpecificHeatConstant;						// default 950 Joules per kg-C, [2B.Resource&Well Input].D241
 	double md_EGSRockDensity;								// default 2600 kg per cubic meter, [2B.Resource&Well Input].D242
 	double md_ReservoirDeltaPressure;						// default 0.35 psi-h per 1000lb, [2B.Resource&Well Input].D171
+    double md_InjectivityIndex;
+    double md_ExplorationWellsProd; 
 	double md_ReservoirWidthM;
 	double md_ReservoirHeightM;
 	double md_ReservoirPermeability;

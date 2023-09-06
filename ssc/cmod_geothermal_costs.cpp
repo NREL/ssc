@@ -95,6 +95,11 @@ private:
 	std::vector<double> turbine_ppi{ 0.882850242,0.896135266,0.917874396,0.934782609,0.960144928,0.969202899,0.980072464,1.000000000,1.013285024,1.018719807,1.017512077,1.050120773,1.106884058,1.245169082,1.350241546,1.340579710,1.359903382,1.349637681,1.376811594,1.411835749,1.399154589,1.403046162,1.346947738,1.327974034,1.408,1.452,1.491,1.000 }; //Turbine-Generator Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
 	std::vector<double> construction_ppi{ 0.790555556,0.816666667,0.842222222,0.872777778,0.909444444,0.933333333,0.957777778,1.000000000,1.039444444,1.067222222,1.088888889,1.129444444,1.170000000,1.221666667,1.277777778,1.320000000,1.357777778,1.361666667,1.374444444,1.426666667,1.475000000,1.528333333,1.594444444,1.653,1.676,1.708,1.753,1.000 };
     std::vector<double> drilling_ppi{ 0.319,0.353,0.441,0.474,0.408,0.425,0.540,0.471,0.471,0.517,0.808,1.180,1.121,1.142,1.015,1.000,1.113,1.207,1.344,1.403,1.152,0.960,0.989,1.016,1.030,0.959,0.977,1.000 };
+    std::vector<double> legal_services_ppi{ 0.884044412,0.907406542,0.926150373,0.942470679,0.956807105,0.967657025,0.985381166,1.000000000,1.014742613,1.077732637,1.155135271,1.222672817,1.304587248,1.382668341,1.403383400,1.411178107,1.455344223,1.509492085,1.533628545,1.638936512,1.656479161,1.653172080,1.679672296,1.741, 1.794,1.832,1.900,1.000 }; //Process Equipment Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
+    std::vector<double> og_support_ppi{ 0.884044412,0.907406542,0.926150373,0.942470679,0.956807105,0.967657025,0.985381166,1.000000000,1.014742613,1.077732637,1.155135271,1.222672817,1.304587248,1.382668341,1.403383400,1.411178107,1.455344223,1.509492085,1.533628545,1.638936512,1.656479161,1.653172080,1.679672296,1.741, 1.794,1.832,1.900,1.000 }; //Process Equipment Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
+    std::vector<double> labor_ppi{ 0.884044412,0.907406542,0.926150373,0.942470679,0.956807105,0.967657025,0.985381166,1.000000000,1.014742613,1.077732637,1.155135271,1.222672817,1.304587248,1.382668341,1.403383400,1.411178107,1.455344223,1.509492085,1.533628545,1.638936512,1.656479161,1.653172080,1.679672296,1.741, 1.794,1.832,1.900,1.000 }; //Process Equipment Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
+    std::vector<double> chemical_ppi{ 0.884044412,0.907406542,0.926150373,0.942470679,0.956807105,0.967657025,0.985381166,1.000000000,1.014742613,1.077732637,1.155135271,1.222672817,1.304587248,1.382668341,1.403383400,1.411178107,1.455344223,1.509492085,1.533628545,1.638936512,1.656479161,1.653172080,1.679672296,1.741, 1.794,1.832,1.900,1.000 }; //Process Equipment Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
+
     double user_adjust = 1; //User Adjustment (Constant)
 	double size_ratio;
 	//double scaling_factor ;	//for the GF HX
@@ -294,9 +299,34 @@ public:
 
         int ppi_base_year = as_integer("ppi_base_year");
 
-        //OM Cost calculations
-        double percent_drilling_cost_om = as_double("percent_drilling_cost_om");
-        double well_om = percent_drilling_cost_om * as_double("geotherm.cost.prod_inj_total");
+        int resource_type = as_integer("resource_type");
+
+        
+
+        //Exploration costs
+        double prod_well_cost = as_double("prod_well_cost"); //todo provide input
+        double num_expl_wells = as_double("num_expl_wells"); //todo provide input
+        double expl_cost_multiplier = as_double("expl_cost_multiplier"); //todo provide input
+        double total_drilling_cost_nodev = prod_well_cost * expl_cost_multiplier * num_expl_wells;
+
+        double expl_permitting_cost = 250000 * legal_services_ppi[ppi_base_year];
+
+        double num_wells_stimulated = as_double("num_wells_stimulated"); //todo provide input
+        double expl_stimulation_cost = num_wells_stimulated * 1250000 * drilling_ppi[ppi_base_year];
+
+        double percent_ind_cost = 0.04;
+        if (resource_type == 1) percent_ind_cost = 0.05;
+        double expl_indirect_cost = (prod_well_cost * num_expl_wells) * (1 / (1 - percent_ind_cost) - 1); //num_wells different here
+
+        double total_predrilling_expl_cost = (resource_type == 0) ? 300000 : 250000 * og_support_ppi[ppi_base_year];
+        double total_predrilling_permitting_cost = 60000 * legal_services_ppi[ppi_base_year];
+        double total_predrilling_cost = total_predrilling_expl_cost + total_predrilling_permitting_cost;
+
+        double lease_cost = as_double("lease_cost"); //todo add lease cost input
+        double total_leasing_cost = num_expl_wells * 2600 * lease_cost; //number of wells different here again (# of full sized expl wells drilled + totals wells drilled in drilling phase)
+        //2600 acres per well always
+
+        double total_expl_cost = total_drilling_cost_nodev + expl_permitting_cost + expl_stimulation_cost + expl_indirect_cost + total_predrilling_cost + total_leasing_cost;
 
 
 		if (conversion_type == 0) {
@@ -537,6 +567,46 @@ public:
 			assign("baseline_cost", var_data(static_cast<ssc_number_t>(baseline_cost)));
 
 		}
+
+        //OM Cost calculations
+        double unit_plant = as_double("gross_output");
+        double cooling_water_flow_rate = as_double("cooling_water_flow_rate"); //todo provide input
+        double cooling_water_cost = as_double("cooling_water_cost"); //todo provide input
+        double water_treatment_cost = (conversion_type == 0) ? 0 : cooling_water_flow_rate * cooling_water_cost;
+        double non_labor_om_cost = 0.018 * baseline_cost * unit_plant + water_treatment_cost;
+        //Plant OM
+        double total_operator_cost = 0.25 * pow(unit_plant, 0.525) * 8760 * 20 * labor_ppi[ppi_base_year] * 1.8;
+        double total_mechanic_cost = (conversion_type == 0) ? 0.15 : 0.13 * pow(unit_plant, 0.65) * 2000 * 24 * labor_ppi[ppi_base_year] * 1.8;
+        double total_electrician_cost = (conversion_type == 0) ? 0.15 : 0.13 * pow(unit_plant, 0.65) * 2000 * 24 * labor_ppi[ppi_base_year] * 1.8;
+        double total_general_maintenance_cost = (conversion_type == 0) ? 0.15 : 0.13 * pow(unit_plant, 0.65) * 2000 * 17.50 * labor_ppi[ppi_base_year] * 1.8;
+        double total_facility_manager_cost = 0.075 * pow(unit_plant, 0.65) * 2000 * 40 * labor_ppi[ppi_base_year] * 1.8;
+        double total_operations_manager_cost = 0.075 * pow(unit_plant, 0.65) * 2000 * 30 * labor_ppi[ppi_base_year] * 1.8;
+        double total_clerical_cost = 0.075 * pow(unit_plant, 0.65) * 2000 * 12 * labor_ppi[ppi_base_year] * 1.8;
+        double field_labor_om = total_operator_cost * 0.25;
+        double labor_om_cost = total_operator_cost + total_mechanic_cost + total_electrician_cost + total_general_maintenance_cost
+            + total_facility_manager_cost + total_operations_manager_cost + total_clerical_cost - field_labor_om;
+        double plant_om = non_labor_om_cost + labor_om_cost;
+
+        //Field OM
+        double percent_drilling_cost_om = as_double("percent_drilling_cost_om");
+        double well_om = percent_drilling_cost_om * as_double("geotherm.cost.prod_inj_total");
+        double surface_equip_om = 0.015 * as_double("field_gathering_system_cost"); //todo provide input
+        double GF_flowrate = as_double("GF_flowrate");
+        double chemical_cost = GF_flowrate * as_double("num_wells") * 3600 * 24 * 365 * 0.95 * (conversion_type == 0) ? 0 : 22.5 * chemical_ppi[ppi_base_year]; //todo provide input
+        double water_cost = 300;
+        double water_loss = as_double("water_loss"); //todo where does this come from
+        double makeup_water_cost = water_loss * water_cost;
+        double total_annual_pump_cost = 0; //todo define
+        double oil_downhole_pump_cost = 0; //todo define
+        double pump_om_cost = total_annual_pump_cost + oil_downhole_pump_cost;
+        double field_om = well_om + surface_equip_om + chemical_cost + makeup_water_cost + pump_om_cost + field_labor_om;
+
+        //Annual Tax and Insurance
+        double total_capital_cost = as_double("total_installed_cost"); //todo move OM to separate cmod, pass in total installed cost
+        double tax_insurance_rate = 0.0075;
+        double annual_tax_insurance_cost = total_capital_cost * tax_insurance_rate;
+
+
 	};
 
 };
