@@ -101,13 +101,17 @@ void C_HTRBypass_Cycle::design_core(int& error_code)
         opt_des_cycle.set_upper_bounds(ub);
         opt_des_cycle.set_initial_step(0.01);
         opt_des_cycle.set_xtol_rel(0.05);
+        opt_des_cycle.set_maxeval(50);
 
         // Set max objective function
         std::vector<double> x;
         x.push_back(0.1);
         opt_des_cycle.set_max_objective(nlopt_cb_opt_bypass_frac_des, this);		// Calls wrapper/callback that calls 'design_point_eta', which optimizes design point eta through repeated calls to 'design'
         double max_f = std::numeric_limits<double>::quiet_NaN();
+
+        
         nlopt::result   result_des_cycle = opt_des_cycle.optimize(x, max_f);
+        
 
         ms_des_par.m_bypass_frac = x[0];
         design_core_standard(error_code);
@@ -639,7 +643,15 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
         if (ms_des_par.m_is_des_air_cooler && std::isfinite(m_deltaP_cooler_frac) && std::isfinite(m_frac_fan_power)
             && std::isfinite(m_T_amb_des) && std::isfinite(m_elevation) && std::isfinite(m_eta_fan) && m_N_nodes_pass > 0)
         {
-            mc_air_cooler.design_hx(s_air_cooler_des_par_ind, s_air_cooler_des_par_dep, ms_des_par.m_des_tol);
+            try
+            {
+                mc_air_cooler.design_hx(s_air_cooler_des_par_ind, s_air_cooler_des_par_dep, ms_des_par.m_des_tol);
+            }
+            catch (...)
+            {
+                error_code = 35;
+                return;
+            }
         }
 
     }
@@ -1122,7 +1134,12 @@ void C_HTRBypass_Cycle::opt_design_core(int& error_code)
         // Set max objective function
         opt_des_cycle.set_max_objective(nlopt_cb_opt_htr_bypass_des, this);		// Calls wrapper/callback that calls 'design_point_eta', which optimizes design point eta through repeated calls to 'design'
         double max_f = std::numeric_limits<double>::quiet_NaN();
+
+
+        
         nlopt::result   result_des_cycle = opt_des_cycle.optimize(x, max_f);
+        
+
 
         // Check if forced stop
         int flag = opt_des_cycle.get_force_stop();
