@@ -105,7 +105,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, TestDailyBatteryStats)
     EXPECT_NEAR(batt_stats.avgCycles, 3, 0.1);
 }
 
-/// Test PVSAMv1 with all defaults and battery enabled with 3 automatic dispatch methods
+/// Test PVSAMv1 with all defaults and battery enabled with 4 automatic dispatch methods
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelIntegration)
 {
     pvsamv_nofinancial_default(data);
@@ -117,14 +117,14 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelIntegr
     pairs["analysis_period"] = 1;
     set_array(data, "load", load_profile_path, 8760); // Load is required for peak shaving controllers
 
-    ssc_number_t expectedEnergy[4] = { 8741, 8741, 8831, 8719 };
-    ssc_number_t expectedBatteryChargeEnergy[4] = { 1442, 1443, 258, 1398 };
-    ssc_number_t expectedBatteryDischargeEnergy[4] = { 1321, 1323, 233, 1282 };
+    ssc_number_t expectedEnergy[4] = { 8741, 8741, 8831, 8576 };
+    ssc_number_t expectedBatteryChargeEnergy[4] = { 1442, 1443, 258, 2973 };
+    ssc_number_t expectedBatteryDischargeEnergy[4] = { 1321, 1323, 233, 2715 };
 
-    ssc_number_t peakKwCharge[4] = { -2.91, -2.66, -2.25, -2.87 };
-    ssc_number_t peakKwDischarge[4] = { 1.39, 1.73, 0.97, 1.40 };
-    ssc_number_t peakCycles[4] = { 1, 1, 1, 1 };
-    ssc_number_t avgCycles[4] = { 1, 1, 0.4904, 1 };
+    ssc_number_t peakKwCharge[4] = { -2.91, -2.66, -2.25, -3.30 };
+    ssc_number_t peakKwDischarge[4] = { 1.39, 1.73, 0.97, 1.96 };
+    ssc_number_t peakCycles[4] = { 1, 1, 1, 3 };
+    ssc_number_t avgCycles[4] = { 1, 1, 0.4904, 1.0110 };
 
     // Test peak shaving look ahead, peak shaving look behind, and automated grid power target, and carbon-free energy. Others require additional input data
     for (int i = 0; i < 4; i++) {
@@ -343,7 +343,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACDCBatteryModelInte
     }
 }
 
-/// Test PVSAMv1 with all defaults and DC battery enabled with 3 automatic dispatch methods
+/// Test PVSAMv1 with all defaults and DC battery enabled with 4 automatic dispatch methods
 TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegration)
 {
     pvsamv_nofinancial_default(data);
@@ -356,16 +356,16 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegr
     set_array(data, "load", load_profile_path, 8760); // Load is required for peak shaving controllers
 
     ssc_number_t expectedEnergy[4] = { 8781, 8784, 8846, 8757 };
-    ssc_number_t expectedBatteryChargeEnergy[4] = { 1412.75, 1414.89, 253.2, 1328.4 };
-    ssc_number_t expectedBatteryDischargeEnergy[4] = { 1283.8, 1285.88, 226.3, 1247.2 };
+    ssc_number_t expectedBatteryChargeEnergy[4] = { 1412.75, 1414.89, 253.2, 2810.8 };
+    ssc_number_t expectedBatteryDischargeEnergy[4] = { 1283.8, 1285.88, 226.3, 2692.5 };
 
-    ssc_number_t peakKwCharge[4] = { -3.06, -2.91, -2.51, -3.06 };
-    ssc_number_t peakKwDischarge[4] = { 1.40, 1.74, 0.967, 1.41 };
-    ssc_number_t peakCycles[4] = { 1, 1, 1, 1 };
-    ssc_number_t avgCycles[4] = { 1.0, 1.0, 0.4794, 1.0 };
+    ssc_number_t peakKwCharge[4] = { -3.06, -2.91, -2.51, -3.32 };
+    ssc_number_t peakKwDischarge[4] = { 1.40, 1.74, 0.967, 1.97 };
+    ssc_number_t peakCycles[4] = { 1, 1, 1, 3 };
+    ssc_number_t avgCycles[4] = { 1.0, 1.0, 0.4794, 1.0110 };
 
-    ssc_number_t q_rel[4] = { 97.198, 97.204, 97.239, 97.206 };
-    ssc_number_t cyc_avg[4] = { 33.73, 33.80, 12.381, 33.66 };
+    ssc_number_t q_rel[4] = { 97.198, 97.204, 97.239, 93.334 };
+    ssc_number_t cyc_avg[4] = { 33.73, 33.80, 12.381, 72.29 };
 
     // Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
     for (int i = 0; i < 4; i++) {

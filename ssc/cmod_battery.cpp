@@ -709,7 +709,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 {
                     //for 24/7 carbon-free energy dispatch option, we're going to use the grid target power algorithm with an array of zeros
                     std::vector<double> target_power_temp(nyears* nrec, 0.0);
-                    batt_vars->target_power = target_power_temp;
+                    target_power = target_power_temp;
                 }
                 else if (batt_vars->batt_dispatch == dispatch_t::CUSTOM_DISPATCH)
                 {
