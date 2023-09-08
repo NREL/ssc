@@ -1060,6 +1060,7 @@ cm_pvsamv1::cm_pvsamv1()
     add_var_info(vtab_resilience_outputs);
     add_var_info(vtab_utility_rate_common); // Required by battery
     add_var_info(vtab_grid_curtailment); // Required by battery
+    add_var_info(vtab_hybrid_tech_om);
 }
 
 
