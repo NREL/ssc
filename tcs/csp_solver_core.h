@@ -839,6 +839,7 @@ public:
 			TWET,             //[C] Wet bulb temperature
 			RH,	              //[-] Relative humidity
 			WSPD,             //[m/s] Wind speed
+            WDIR,             //[deg] Wind direction
 			PRES,             //[mbar] Atmospheric pressure
 				// Controller and Storage
 			CR_DEFOCUS,       //[-] Field optical focus fraction
