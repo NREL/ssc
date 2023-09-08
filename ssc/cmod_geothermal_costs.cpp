@@ -304,6 +304,7 @@ public:
         
 
         //Exploration costs
+        /*
         double prod_well_cost = as_double("prod_well_cost"); //todo provide input
         double num_expl_wells = as_double("num_expl_wells"); //todo provide input
         double expl_cost_multiplier = as_double("expl_cost_multiplier"); //todo provide input
@@ -327,7 +328,7 @@ public:
         //2600 acres per well always
 
         double total_expl_cost = total_drilling_cost_nodev + expl_permitting_cost + expl_stimulation_cost + expl_indirect_cost + total_predrilling_cost + total_leasing_cost;
-
+        */
 
 		if (conversion_type == 0) {
 			//geo_inputs.me_ct = BINARY;
@@ -569,6 +570,7 @@ public:
 		}
 
         //OM Cost calculations
+        /*
         double unit_plant = as_double("gross_output");
         double cooling_water_flow_rate = as_double("cooling_water_flow_rate"); //todo provide input
         double cooling_water_cost = as_double("cooling_water_cost"); //todo provide input
@@ -605,7 +607,7 @@ public:
         double total_capital_cost = as_double("total_installed_cost"); //todo move OM to separate cmod, pass in total installed cost
         double tax_insurance_rate = 0.0075;
         double annual_tax_insurance_cost = total_capital_cost * tax_insurance_rate;
-
+        */
 
 	};
 

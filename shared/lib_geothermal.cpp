@@ -1411,7 +1411,7 @@ double CGeothermalAnalyzer::pressureInjectionWellBottomHolePSI() // [7B.Reservoi
 
 double CGeothermalAnalyzer::pressureWellHeadPSI()
 {
-	double tempF = physics::CelciusToFarenheit(GetTemperaturePlantDesignC());
+	double tempF = physics::CelciusToFarenheit(GetTemperaturePlantDesignC() - DT_prod_well(mo_geo_in.md_dtProdWellChoice));
 	double pressureSaturation = geothermal::oPC.evaluate(tempF); // valid above boiling, I guess.
 	//double pressureExcessPSI = geothermal::BarToPsi(geothermal::EXCESS_PRESSURE_BAR); // bar to psi
 	double pressureExcessPSI = geothermal::BarToPsi(mo_geo_in.md_ExcessPressureBar); // bar to psi
@@ -1482,6 +1482,7 @@ double CGeothermalAnalyzer::GetNumberOfWells(void)
         mp_geo_out->md_BrineEff = GetPlantBrineEffectiveness();
         mp_geo_out->md_PumpWorkWattHrPerLb = GetPumpWorkWattHrPerLb();
 		mp_geo_out->md_NumberOfWells = mo_geo_in.md_DesiredSalesCapacityKW / netCapacityPerWell;
+        if (mp_geo_out->md_NumberOfWells < 0) mp_geo_out->md_NumberOfWells = 0;
         mp_geo_out->md_NumberOfWellsProdExp = mp_geo_out->md_NumberOfWells - mo_geo_in.md_ExplorationWellsProd - mp_geo_out->md_FailedWells;
         mp_geo_out->md_NumberOfWellsProdDrilled = mp_geo_out->md_NumberOfWellsProdExp / (1 - (1 - mo_geo_in.md_StimSuccessRate) * (1 - mo_geo_in.md_DrillSuccessRate));
         double num_prod_wells_successful = mp_geo_out->md_NumberOfWellsProdDrilled * mo_geo_in.md_DrillSuccessRate;
@@ -1504,16 +1505,20 @@ double CGeothermalAnalyzer::GetNumberOfWells(void)
         //mp_geo_out->md_NumberOfWellsInj = (mo_geo_in.md_DesiredSalesCapacityKW / (netBrineEffectiveness / 1000)) * (mp_geo_out->md_FractionGFInjected) / flowPerWellInj;
         mp_geo_out->md_InjPump_hp = ( (mp_geo_out->md_NumberOfWellsInj * flowPerWellInj * GetInjectionPumpWorkft()) / (60 * 33000) ) / mo_geo_in.md_GFPumpEfficiency;
         if (mo_geo_in.me_rt == EGS) {
-            mp_geo_out->md_NumberOfWellsProdExp = mp_geo_out->md_NumberOfWells * mo_geo_in.md_DrillSuccessRate - 8;
+            mp_geo_out->md_NumberOfWellsProdExp = mp_geo_out->md_NumberOfWells - 8;
+            mp_geo_out->md_NumberOfWellsProdDrilled = mp_geo_out->md_NumberOfWellsProdExp / mo_geo_in.md_DrillSuccessRate;
             num_prod_wells_failed = mp_geo_out->md_NumberOfWellsProdExp / mo_geo_in.md_DrillSuccessRate * (1 - mo_geo_in.md_DrillSuccessRate);
             num_prod_wells_successful = mp_geo_out->md_NumberOfWellsProdExp;
             inj_flow = flowRatePerWell() * mp_geo_out->md_NumberOfWells * (1 + (1 / (1 - 0.05) - 1));
-            double successful_inj_wells_expl = inj_flow / (flowRatePerWell() * mo_geo_in.md_RatioInjectionToProduction) - 1;
+            double successful_inj_wells_expl = inj_flow / (flowPerWellInj) - 1;
+            mp_geo_out->md_NumberOfWellsInj = successful_inj_wells_expl;
             mp_geo_out->md_NumberOfWellsInjDrilled = successful_inj_wells_expl / (mo_geo_in.md_DrillSuccessRate * mo_geo_in.md_StimSuccessRate);
             num_inj_wells_failed = mp_geo_out->md_NumberOfWellsInjDrilled * mo_geo_in.md_DrillSuccessRate;
             double inj_wells_stim = successful_inj_wells_expl / mo_geo_in.md_StimSuccessRate;
             double failed_stim_wells = inj_wells_stim - successful_inj_wells_expl;
         }
+
+        if (mp_geo_out->md_NumberOfWellsInj < 0) mp_geo_out->md_NumberOfWellsInj = 0;
 	}
 
 	return mp_geo_out->md_NumberOfWells;
@@ -1746,7 +1751,8 @@ void CGeothermalAnalyzer::calculateFlashPressures(void)
 	if (FlashCount() == 1)
 	{
 		//mp_geo_out->md_PressureHPFlashPSI = pressureSingle() + geothermal::DELTA_PRESSURE_HP_FLASH_PSI;
-        mp_geo_out->md_PressureHPFlashPSI = pressureSingleFlash() + geothermal::DELTA_PRESSURE_HP_FLASH_PSI;
+        //mp_geo_out->md_PressureHPFlashPSI = pressureSingleFlash() + geothermal::DELTA_PRESSURE_HP_FLASH_PSI;
+        mp_geo_out->md_PressureHPFlashPSI = pressureSingleFlash();
 		return;
 	}
 
@@ -1754,11 +1760,12 @@ void CGeothermalAnalyzer::calculateFlashPressures(void)
 	// high pressure flash
 //i think this might be using the wrong temperature - resource instead of plant design - for EGS
 	//mp_geo_out->md_PressureHPFlashPSI = pressureDualHigh() + geothermal::DELTA_PRESSURE_HP_FLASH_PSI;
-    mp_geo_out->md_PressureHPFlashPSI = pressureDualFlashTempHigh() + geothermal::DELTA_PRESSURE_HP_FLASH_PSI;
-
+    //mp_geo_out->md_PressureHPFlashPSI = pressureDualFlashTempHigh() + geothermal::DELTA_PRESSURE_HP_FLASH_PSI;
+    mp_geo_out->md_PressureHPFlashPSI = pressureDualFlashTempHigh();
 	// low pressure flash
 	//mp_geo_out->md_PressureLPFlashPSI = pressureDualLow() + geothermal::DELTA_PRESSURE_LP_FLASH_PSI;
-    mp_geo_out->md_PressureLPFlashPSI = pressureDualFlashTempLow() + geothermal::DELTA_PRESSURE_LP_FLASH_PSI;
+    //mp_geo_out->md_PressureLPFlashPSI = pressureDualFlashTempLow() + geothermal::DELTA_PRESSURE_LP_FLASH_PSI;
+    mp_geo_out->md_PressureLPFlashPSI = pressureDualFlashTempLow();
 	mp_geo_out->mb_FlashPressuresCalculated = true;
 }
 
