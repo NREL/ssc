@@ -106,7 +106,7 @@ public:
     void Calculate_Energy_Balance(double T_1_in, double m_dot, double T_amb, double T_sky, double v_6, double P_6, double q_i,
         int hv /* HCE variant [0..3] */, int sca_num, bool single_point, double time, util::matrix_t<double> ColOptEff,
         //outputs
-        double& q_heatloss, double& q_12conv, double& q_34tot, double& c_1ave, double& rho_1ave, std::vector<double>& v_reguess_args);
+        double& q_heatloss, double& q_12conv, double& q_34tot, double& c_1ave, double& rho_1ave, std::vector<double>& v_reguess_args, double& q_3reflect);
 
 };
 
@@ -256,11 +256,13 @@ private:
     std::vector<double> m_q_abs_SCAtot;	                // [W] Heat absorption into HTF in each SCA, weighted variants
     std::vector<double> m_q_loss_SCAtot;                // [W] Total heat losses from each SCA, weighted variants
     std::vector<double> m_q_1abs_tot;	                // [W/m] Thermal losses from each SCA, weighted variants
-                                                           
+    std::vector<double> m_q_reflect_tot;                // [W] Reflective Losses on each SCA, weighted variants 09.08.2023 tmb
+
     std::vector<double> m_q_loss;		                // [W/m] Total thermal losses per length in each SCA, one variant
     std::vector<double> m_q_abs;		                // [W/m] Total heat absorption per length into HTF in each SCA, one variant
     std::vector<double> m_q_1abs;		                // [W/m] Total *thermal* losses per length in each SCA, one variant
-                                                           
+    std::vector<double> m_q_reflect;                    //[W/m] Total receiver reflected energy due to absorber absorptance 08.29.2023 tmb
+
     double m_Q_field_losses_total_subts;	            // [MJ] SYSTEM scas + xover + hot_HR + cold_HR
     double m_c_htf_ave_ts_ave_temp;			            // [J/kg-K] integrated-averaged cp over T_htf_cold_in, m_T_sys_h_t_in
 
@@ -290,6 +292,7 @@ private:
                                                            
     double m_q_dot_sca_loss_summed_subts;	            // [MWt] SYSTEM SCA heat loss
     double m_q_dot_sca_abs_summed_subts;	            // [MWt] SYSTEM SCA absorbed thermal power (into HTF stream & material)
+    double m_q_dot_sca_refl_summed_subts;               // [MWt] SYSTEM SCA reflected heat loss (due to absorber absorptance) 09.08.2023 tmb
     double m_q_dot_xover_loss_summed_subts;	            // [MWt] SYSTEM Cross-over/connecting piping heat loss
     double m_q_dot_HR_cold_loss_subts;		            // [MWt] SYSTEM Cold header heat loss
     double m_q_dot_HR_hot_loss_subts;		            // [MWt] SYSTEM Hot header heat loss
@@ -308,6 +311,7 @@ private:
                                                            
     double m_q_dot_sca_loss_summed_fullts;	            // [MWt] SYSTEM SCA heat loss
     double m_q_dot_sca_abs_summed_fullts;	            // [MWt] SYSTEM SCA absorbed thermal power (into HTF stream & material)
+    double m_q_dot_sca_refl_summed_fullts;              // [MWt] SYSTEM SCA reflected heat loss (due to absorber absorptance) 09.08.2023 tmb
     double m_q_dot_xover_loss_summed_fullts;            // [MWt] SYSTEM Cross-over/connecting piping heat loss
     double m_q_dot_HR_cold_loss_fullts;		            // [MWt] SYSTEM Cold header heat loss
     double m_q_dot_HR_hot_loss_fullts;		            // [MWt] SYSTEM Hot header heat loss

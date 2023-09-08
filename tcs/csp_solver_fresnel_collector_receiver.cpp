@@ -310,7 +310,8 @@ void C_csp_fresnel_collector_receiver::set_output_value()
     mc_reported_outputs.value(E_Q_DOT_INC_SF_TOT, m_q_dot_inc_sf_tot);			//[MWt]
     //mc_reported_outputs.value(E_Q_DOT_INC_SF_COSTH, m_dni_costh * m_Ap_tot / 1.E6);	//[MWt]
 
-    mc_reported_outputs.value(E_Q_DOT_REC_INC, m_q_dot_sca_abs_summed_fullts + m_q_dot_sca_loss_summed_fullts);	//[MWt]
+    mc_reported_outputs.value(E_Q_DOT_REC_INC, m_q_dot_sca_abs_summed_fullts + m_q_dot_sca_loss_summed_fullts
+        + m_q_dot_sca_refl_summed_fullts);	//[MWt] 09.08.2023 tmb: add reflective losses (due to absorber absorptance) to receiver incident power
     mc_reported_outputs.value(E_Q_DOT_REC_THERMAL_LOSS, m_q_dot_sca_loss_summed_fullts);			//[MWt]
     mc_reported_outputs.value(E_Q_DOT_REC_ABS, m_q_dot_sca_abs_summed_fullts);						//[MWt]
 
@@ -486,6 +487,7 @@ C_csp_fresnel_collector_receiver::E_loop_energy_balance_exit C_csp_fresnel_colle
         m_q_abs_SCAtot.assign(m_q_abs_SCAtot.size(), 0.0);
         m_q_loss_SCAtot.assign(m_q_loss_SCAtot.size(), 0.0);
         m_q_1abs_tot.assign(m_q_1abs_tot.size(), 0.0);
+        m_q_reflect_tot.assign(m_q_reflect_tot.size(), 0.0);
         m_E_avail.assign(m_E_avail.size(), 0.0);
         m_E_accum.assign(m_E_accum.size(), 0.0);
         m_E_int_loop.assign(m_E_int_loop.size(), 0.0);
@@ -543,7 +545,7 @@ C_csp_fresnel_collector_receiver::E_loop_energy_balance_exit C_csp_fresnel_colle
                     m_evac_receiver->Calculate_Energy_Balance(m_T_htf_in_t_int[i], m_dot_htf_loop, T_db, T_sky,
                         weather.m_wspd, weather.m_pres * 100.0, m_q_SCA[i], j, i, false, sim_info.ms_ts.m_time / 3600.0, m_ColOptEff,
                         //outputs
-                        m_q_loss[j], m_q_abs[j], m_q_1abs[j], c_htf_j, rho_htf_j, mv_HCEguessargs);
+                        m_q_loss[j], m_q_abs[j], m_q_1abs[j], c_htf_j, rho_htf_j, mv_HCEguessargs, m_q_reflect[j]);
 
                     // Check for NaN
                     if (m_q_abs[j] != m_q_abs[j])
@@ -555,6 +557,8 @@ C_csp_fresnel_collector_receiver::E_loop_energy_balance_exit C_csp_fresnel_colle
                     m_q_abs_SCAtot[i] += m_q_abs[j] * m_L_mod * m_HCE_FieldFrac[j];	//[W] Heat absorbed by HTF, weighted, for SCA
                     m_q_loss_SCAtot[i] += m_q_loss[j] * m_L_mod * m_HCE_FieldFrac[j];
                     m_q_1abs_tot[i] += m_q_1abs[j] * m_HCE_FieldFrac[j];  //losses in W/m from the absorber surface
+                    m_q_reflect_tot[i] += m_q_reflect[j] * m_L_mod * m_HCE_FieldFrac[j]; //[W] Total reflective loss
+
                     c_htf_i += c_htf_j * m_HCE_FieldFrac[j];
                     rho_htf_i += rho_htf_j * m_HCE_FieldFrac[j];
 
@@ -788,6 +792,7 @@ C_csp_fresnel_collector_receiver::E_loop_energy_balance_exit C_csp_fresnel_colle
             // Loop metrics
         m_q_dot_sca_loss_summed_subts = 0.0;	//[MWt]
         m_q_dot_sca_abs_summed_subts = 0.0;		//[MWt]
+        m_q_dot_sca_refl_summed_subts = 0.0;    //[MWt]
         m_q_dot_xover_loss_summed_subts = 0.0;	//[MWt]
         m_E_dot_sca_summed_subts = 0.0;			//[MWt]
         m_E_dot_xover_summed_subts = 0.0;		//[MWt]
@@ -801,12 +806,14 @@ C_csp_fresnel_collector_receiver::E_loop_energy_balance_exit C_csp_fresnel_colle
             }
             m_q_dot_sca_loss_summed_subts += m_q_loss_SCAtot[i];			//[W] -> convert to MWT and multiply by nLoops below
             m_q_dot_sca_abs_summed_subts += m_q_abs_SCAtot[i];				//[W] -> convert to MWT and multiply by nLoops below
+            m_q_dot_sca_refl_summed_subts += m_q_reflect_tot[i];            //[W] -> convert to MWT and multiply by nLoops below
             m_E_dot_sca_summed_subts += E_sca[i];							//[MJ] -> convert to MWt and multiply by nLoops below
         }
         m_q_dot_xover_loss_summed_subts *= 1.E-6 * m_nLoops;				//[MWt] 
         m_E_dot_xover_summed_subts *= (m_nLoops / sim_info.ms_ts.m_step);	//[MWt]
         m_q_dot_sca_loss_summed_subts *= 1.E-6 * m_nLoops;					//[MWt]
         m_q_dot_sca_abs_summed_subts *= 1.E-6 * m_nLoops;					//[MWt]
+        m_q_dot_sca_refl_summed_subts *= 1.E-6 * m_nLoops;                  //[MWt]
         m_E_dot_sca_summed_subts *= (m_nLoops / sim_info.ms_ts.m_step);		//[MWt]
 
         // Header-runner metrics
@@ -1539,6 +1546,7 @@ C_csp_fresnel_collector_receiver::C_csp_fresnel_collector_receiver()
 
     m_q_dot_sca_loss_summed_subts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
     m_q_dot_sca_abs_summed_subts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
+    m_q_dot_sca_refl_summed_subts = std::numeric_limits<double>::quiet_NaN();   //[MWt]
     m_q_dot_xover_loss_summed_subts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
     m_q_dot_HR_cold_loss_subts = std::numeric_limits<double>::quiet_NaN();		//[MWt]
     m_q_dot_HR_hot_loss_subts = std::numeric_limits<double>::quiet_NaN();		//[MWt]
@@ -1558,6 +1566,7 @@ C_csp_fresnel_collector_receiver::C_csp_fresnel_collector_receiver()
 
     m_q_dot_sca_loss_summed_fullts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
     m_q_dot_sca_abs_summed_fullts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
+    m_q_dot_sca_refl_summed_fullts = std::numeric_limits<double>::quiet_NaN();  //[MWt]
     m_q_dot_xover_loss_summed_fullts = std::numeric_limits<double>::quiet_NaN();	//[MWt]
     m_q_dot_HR_cold_loss_fullts = std::numeric_limits<double>::quiet_NaN();		//[MWt]
     m_q_dot_HR_hot_loss_fullts = std::numeric_limits<double>::quiet_NaN();		//[MWt]
@@ -1772,6 +1781,8 @@ void C_csp_fresnel_collector_receiver::init(const C_csp_collector_receiver::S_cs
         m_q_SCA.resize(m_nMod);
         m_q_1abs_tot.resize(m_nMod);
         m_q_1abs.resize(m_nRecVar);
+        m_q_reflect_tot.resize(m_nMod);
+        m_q_reflect.resize(m_nRecVar);
         m_ColOptEff.resize(m_nMod);
 
         // Trough
@@ -2410,7 +2421,8 @@ void C_csp_fresnel_collector_receiver::off(const C_csp_weatherreader::S_outputs&
     m_T_sys_c_t_int_fullts = m_T_htf_c_rec_in_t_int_fullts =
         m_T_htf_h_rec_out_t_int_fullts = m_T_sys_h_t_int_fullts = 0.0;	//[K]
 
-    m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_abs_summed_fullts = m_q_dot_xover_loss_summed_fullts =
+    m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_abs_summed_fullts =
+        m_q_dot_sca_loss_summed_fullts = m_q_dot_xover_loss_summed_fullts =
         m_q_dot_HR_cold_loss_fullts = m_q_dot_HR_hot_loss_fullts =
         m_E_dot_sca_summed_fullts = m_E_dot_xover_summed_fullts =
         m_E_dot_HR_cold_fullts = m_E_dot_HR_hot_fullts =
@@ -2450,6 +2462,7 @@ void C_csp_fresnel_collector_receiver::off(const C_csp_weatherreader::S_outputs&
         // Add subtimestep calcs
         m_q_dot_sca_loss_summed_fullts += m_q_dot_sca_loss_summed_subts;		//[MWt]
         m_q_dot_sca_abs_summed_fullts += m_q_dot_sca_abs_summed_subts;			//[MWt]
+        m_q_dot_sca_refl_summed_fullts += m_q_dot_sca_refl_summed_subts;        //[MWt]
         m_q_dot_xover_loss_summed_fullts += m_q_dot_xover_loss_summed_subts;	//[MWt]
         m_q_dot_HR_cold_loss_fullts += m_q_dot_HR_cold_loss_subts;				//[MWt]
         m_q_dot_HR_hot_loss_fullts += m_q_dot_HR_hot_loss_subts;				//[MWt]
@@ -2471,6 +2484,7 @@ void C_csp_fresnel_collector_receiver::off(const C_csp_weatherreader::S_outputs&
 
     m_q_dot_sca_loss_summed_fullts /= nd_steps_recirc;			//[MWt]
     m_q_dot_sca_abs_summed_fullts /= nd_steps_recirc;			//[MWt]
+    m_q_dot_sca_refl_summed_fullts /= nd_steps_recirc;          //[MWt]
     m_q_dot_xover_loss_summed_fullts /= nd_steps_recirc;		//[MWt]
     m_q_dot_HR_cold_loss_fullts /= nd_steps_recirc;				//[MWt]
     m_q_dot_HR_hot_loss_fullts /= nd_steps_recirc;				//[MWt]
@@ -2558,7 +2572,8 @@ void C_csp_fresnel_collector_receiver::startup(const C_csp_weatherreader::S_outp
         m_T_htf_h_rec_out_t_int_fullts = m_T_sys_h_t_int_fullts = 0.0;	//[K]
 
     // Zero full timestep outputs
-    m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_abs_summed_fullts = m_q_dot_xover_loss_summed_fullts =
+    m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_abs_summed_fullts =
+        m_q_dot_sca_refl_summed_fullts = m_q_dot_xover_loss_summed_fullts =
         m_q_dot_HR_cold_loss_fullts = m_q_dot_HR_hot_loss_fullts =
         m_E_dot_sca_summed_fullts = m_E_dot_xover_summed_fullts =
         m_E_dot_HR_cold_fullts = m_E_dot_HR_hot_fullts =
@@ -2602,6 +2617,7 @@ void C_csp_fresnel_collector_receiver::startup(const C_csp_weatherreader::S_outp
         // Add subtimestep calcs
         m_q_dot_sca_loss_summed_fullts += m_q_dot_sca_loss_summed_subts * sim_info_temp.ms_ts.m_step;		//[MWt]
         m_q_dot_sca_abs_summed_fullts += m_q_dot_sca_abs_summed_subts * sim_info_temp.ms_ts.m_step;			//[MWt]
+        m_q_dot_sca_refl_summed_fullts += m_q_dot_sca_refl_summed_subts * sim_info_temp.ms_ts.m_step;       //[MWt]
         m_q_dot_xover_loss_summed_fullts += m_q_dot_xover_loss_summed_subts * sim_info_temp.ms_ts.m_step;	//[MWt]
         m_q_dot_HR_cold_loss_fullts += m_q_dot_HR_cold_loss_subts * sim_info_temp.ms_ts.m_step;				//[MWt]
         m_q_dot_HR_hot_loss_fullts += m_q_dot_HR_hot_loss_subts * sim_info_temp.ms_ts.m_step;				//[MWt]
@@ -2640,11 +2656,12 @@ void C_csp_fresnel_collector_receiver::startup(const C_csp_weatherreader::S_outp
 
         m_q_dot_sca_loss_summed_fullts /= time_required_su;			//[MWt]
         m_q_dot_sca_abs_summed_fullts /= time_required_su;			//[MWt]
+        m_q_dot_sca_refl_summed_fullts /= time_required_su;         //[MWt]
         m_q_dot_xover_loss_summed_fullts /= time_required_su;		//[MWt]
-        m_q_dot_HR_cold_loss_fullts /= time_required_su;				//[MWt]
+        m_q_dot_HR_cold_loss_fullts /= time_required_su;			//[MWt]
         m_q_dot_HR_hot_loss_fullts /= time_required_su;				//[MWt]
         m_E_dot_sca_summed_fullts /= time_required_su;				//[MWt]
-        m_E_dot_xover_summed_fullts /= time_required_su;				//[MWt]
+        m_E_dot_xover_summed_fullts /= time_required_su;			//[MWt]
         m_E_dot_HR_cold_fullts /= time_required_su;					//[MWt]
         m_E_dot_HR_hot_fullts /= time_required_su;					//[MWt]
         m_q_dot_htf_to_sink_fullts /= time_required_su;				//[MWt]
@@ -2848,6 +2865,7 @@ void C_csp_fresnel_collector_receiver::on(const C_csp_weatherreader::S_outputs& 
 
         m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_loss_summed_subts;		//[MWt]
         m_q_dot_sca_abs_summed_fullts = m_q_dot_sca_abs_summed_subts;		//[MWt]
+        m_q_dot_sca_refl_summed_fullts = m_q_dot_sca_refl_summed_subts;     //[MWt]
         m_q_dot_xover_loss_summed_fullts = m_q_dot_xover_loss_summed_subts;	//[MWt]
         m_q_dot_HR_cold_loss_fullts = m_q_dot_HR_cold_loss_subts;			//[MWt]
         m_q_dot_HR_hot_loss_fullts = m_q_dot_HR_hot_loss_subts;				//[MWt]
@@ -2901,7 +2919,8 @@ void C_csp_fresnel_collector_receiver::on(const C_csp_weatherreader::S_outputs& 
         m_T_htf_h_rec_out_t_int_fullts = 0.0;	//[K]
         m_T_sys_h_t_int_fullts = 0.0;			//[K]
 
-        m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_abs_summed_fullts = m_q_dot_xover_loss_summed_fullts =
+        m_q_dot_sca_loss_summed_fullts = m_q_dot_sca_abs_summed_fullts =
+            m_q_dot_sca_loss_summed_fullts = m_q_dot_xover_loss_summed_fullts =
             m_q_dot_HR_cold_loss_fullts = m_q_dot_HR_hot_loss_fullts =
             m_E_dot_sca_summed_fullts = m_E_dot_xover_summed_fullts =
             m_E_dot_HR_cold_fullts = m_E_dot_HR_hot_fullts =
@@ -3596,10 +3615,11 @@ EvacReceiverModel::EvacReceiverModel(vector<double> D_abs_in, vector<double> D_a
 /// <param name="c_1ave">Specific heat of the HTF across the receiver</param>
 /// <param name="rho_1ave">Density of the HTF across the receiver</param>
 /// <param name="v_reguess_args"></param>
+/// <param name="q_3reflect">Absorber reflective losses</param>
 void EvacReceiverModel::Calculate_Energy_Balance(double T_1_in, double m_dot, double T_amb, double T_sky, double v_6, double P_6, double q_i,
     int hv /* HCE variant [0..3] */, int sca_num, bool single_point, double time, util::matrix_t<double> ColOptEff,
     //outputs
-    double& q_heatloss, double& q_12conv, double& q_34tot, double& c_1ave, double& rho_1ave, std::vector<double>& v_reguess_args)
+    double& q_heatloss, double& q_12conv, double& q_34tot, double& c_1ave, double& rho_1ave, std::vector<double>& v_reguess_args, double& q_3reflect)
 {
 
     //---Variable declarations------
@@ -3713,7 +3733,9 @@ lab_keep_guess:
 
         q_3SolAbs = q_i * colopteff_tot * m_Tau_envelope[hv] * m_alpha_abs[hv];  //[W/m]  
         //We must account for the radiation absorbed as it passes through the envelope
-        q_5solabs = q_i * colopteff_tot * m_alpha_env[hv];   //[W/m]  
+        q_5solabs = q_i * colopteff_tot * m_alpha_env[hv];   //[W/m]
+
+        q_3reflect = q_i * colopteff_tot * m_Tau_envelope[hv] * (1.0 - m_alpha_abs[hv]); // [W/m]
     }
     else {
         //Calculate the absorbed energy 
@@ -3721,6 +3743,8 @@ lab_keep_guess:
         //No envelope
         q_5solabs = 0.0;                            //[W/m]
 
+
+        q_3reflect = q_i * colopteff_tot * (1.0 - m_alpha_abs[hv]); // [W/m]
     }
 
     is_e_table = false;
