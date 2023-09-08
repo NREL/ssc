@@ -120,7 +120,6 @@ C_falling_particle_receiver::C_falling_particle_receiver(double h_tower /*m*/,
     // Hard-coded parameters
     m_tol_od = 0.001;		    //[-] Tolerance for over-design iteration
     m_eta_therm_des_est = 0.9;  //[-] Estimated and used to calculate min incident flux
-    m_use_constant_piping_loss = true;  
     m_include_back_wall_convection = false;
     m_include_wall_axial_conduction = false;
 
@@ -133,13 +132,19 @@ C_falling_particle_receiver::C_falling_particle_receiver(double h_tower /*m*/,
     m_ap_area = std::numeric_limits<double>::quiet_NaN();
     m_curtain_dist = std::numeric_limits<double>::quiet_NaN();
     m_cav_front_area = std::numeric_limits<double>::quiet_NaN();
+    m_curtain_area = std::numeric_limits<double>::quiet_NaN();
     m_curtain_elem_area = std::numeric_limits<double>::quiet_NaN();
+    m_back_wall_elem_area = std::numeric_limits<double>::quiet_NaN();
 
     // State variables
     m_E_su_prev = std::numeric_limits<double>::quiet_NaN();
     m_t_su_prev = std::numeric_limits<double>::quiet_NaN();
     m_E_su = std::numeric_limits<double>::quiet_NaN();
 	m_t_su = std::numeric_limits<double>::quiet_NaN();
+
+    // Stored solutions
+    m_n_max_stored_solns = 10;
+
 
 	m_ncall = -1;
 
@@ -228,7 +233,11 @@ void C_falling_particle_receiver::init()
         calculate_view_factors();
 
     }
-    
+
+    m_stored_soln_idx = 0;
+    m_stored_soln_idx_csky = 0;
+    m_soln_cache.resize(m_n_max_stored_solns);
+    m_soln_cache_csky.resize(m_n_max_stored_solns);
 
     m_ncall = -1;
     return;
@@ -260,7 +269,6 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
     double T_amb = weather.m_tdry + 273.15;	//[K] Dry bulb temperature, convert from C
     double I_bn = weather.m_beam;           //[W/m2]
     double v_wind_10 = weather.m_wspd;      //[m/s]
-    //double v_wind = log((m_h_tower + m_curtain_height / 2) / 0.003) / log(10.0 / 0.003) * v_wind_10;  // Estimated wind velocity at receiver location
     double wind_direc = weather.m_wdir;      // Wind direction [deg]
     double hour = time / 3600.0;			//[hr] Hour of the year
     double T_sky = CSP::skytemp(T_amb, T_dp, hour);     //[K]
@@ -274,9 +282,6 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
     bool rec_is_off = false;
     double od_control = std::numeric_limits<double>::quiet_NaN();
     s_steady_state_soln soln;
-
-    //double T_particle_prop, cp_particle, q_dot_inc_pre_defocus;
-    //T_particle_prop = cp_particle = q_dot_inc_pre_defocus = std::numeric_limits<double>::quiet_NaN();
 
     double m_dot_tot, T_particle_hot, T_particle_hot_rec, eta, T_htf_prop, cp_htf, W_lift;
     m_dot_tot = T_particle_hot = T_particle_hot_rec = eta = T_htf_prop = cp_htf = W_lift = std::numeric_limits<double>::quiet_NaN();
@@ -328,8 +333,6 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
         rec_is_off = true;
     }
 
-    //T_particle_prop = (m_T_htf_hot_des + T_particle_cold_in) / 2.0;		// Temperature for particle property evaluation [K].  TODO: allow variable properties?
-    //cp_particle = field_htfProps.Cp(T_particle_prop) * 1000.0;			// Particle specific heat  [J/kg-K] 
 
     //if (field_eff < m_eta_field_iter_prev && m_od_control < 1.0)
     //{	// In a prior call-iteration this timestep, the component control was set < 1.0
@@ -365,7 +368,6 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
     soln.clearsky_to_input_dni = clearsky_to_input_dni;     // clearsky_adj / I_bn;   //[-]
     soln.T_particle_cold_in = T_particle_cold_in;   //[K]	
     soln.od_control = od_control;           //[-] Initial component defocus control (may be adjusted during the solution)
-    soln.mode = input_operation_mode;
     soln.rec_is_off = rec_is_off;
 
     if ((std::isnan(clearsky_to_input_dni) || clearsky_to_input_dni < 0.9999) && m_csky_frac > 0.0001)
@@ -383,19 +385,24 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
     }
     else
     {
+        int prev_soln_id = -1;
+
         //--- Solve for mass flow at actual and/or clear-sky DNI extremes
         if (m_csky_frac <= 0.9999 || clearsky_to_input_dni < 1.0001) // Solve for mass flow at actual DNI?
         {
             soln_actual = soln;  // Sets initial solution properties (inlet T, initial defocus control, etc.)
-            //soln_actual.dni = I_bn;
             soln_actual.dni_applied_to_measured = 1.0;
 
-            if (use_previous_solution(soln_actual, m_mflow_soln_prev))  // Same conditions were solved in the previous call to this method
-                soln_actual = m_mflow_soln_prev;
+            prev_soln_id = use_previous_solution(soln_actual, m_soln_cache);  // Check if these conditions are identical to any of the stored solutions
+            if (prev_soln_id >= 0)
+                soln_actual = m_soln_cache.at(prev_soln_id);
             else
+            {
                 solve_for_mass_flow_and_defocus(soln_actual, m_m_dot_htf_max, flux_map_input);
-
-            m_mflow_soln_prev = soln_actual;
+                m_soln_cache.at(m_stored_soln_idx) = soln_actual;
+                m_stored_soln_idx = m_stored_soln_idx < (m_n_max_stored_solns - 1) ? m_stored_soln_idx + 1 : 0;
+            }
+            
         }
 
         if (m_csky_frac >= 0.0001) // Solve for mass flow at clear-sky DNI?
@@ -405,20 +412,23 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
             else
             {
                 soln_clearsky = soln;
-                //soln_clearsky.dni = clearsky_adj;
-                soln_clearsky.dni_applied_to_measured = soln.clearsky_to_input_dni;     // clearsky_adj / soln.dni;    //[-]
+                soln_clearsky.dni_applied_to_measured = soln.clearsky_to_input_dni; 
 
-                if (use_previous_solution(soln_clearsky, m_mflow_soln_csky_prev))  // Same conditions were solved in the previous call to this method
-                    soln_clearsky = m_mflow_soln_csky_prev;
+                prev_soln_id = use_previous_solution(soln_clearsky, m_soln_cache_csky);  // Check if these conditions are identical to any of the stored solutions
+                if (prev_soln_id >= 0)
+                    soln_clearsky = m_soln_cache_csky.at(prev_soln_id);
                 else
+                {
                     solve_for_mass_flow_and_defocus(soln_clearsky, m_m_dot_htf_max, flux_map_input);
+                    m_soln_cache_csky.at(m_stored_soln_idx_csky) = soln_clearsky;
+                    m_stored_soln_idx_csky = m_stored_soln_idx_csky < (m_n_max_stored_solns - 1) ? m_stored_soln_idx_csky + 1 : 0;
+                }
 
-                m_mflow_soln_csky_prev = soln_clearsky;
             }
         }
 
         //--- Set mass flow and calculate final solution
-        if (clearsky_to_input_dni < 1.0001 || m_csky_frac < 0.0001)  // Flow control based on actual DNI
+        if (clearsky_to_input_dni < 1.0001 || m_csky_frac < 0.0001)  // Flow control is based only on actual DNI -> use steady state solution as is
             soln = soln_actual;
 
         else if (soln_clearsky.rec_is_off)    // Receiver can't operate at this time point 
@@ -427,7 +437,7 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
             soln.q_dot_inc = soln_clearsky.q_dot_inc;
         }
 
-        else if (m_csky_frac > 0.9999)   // Flow control based only on clear-sky DNI
+        else if (m_csky_frac > 0.9999)   // Receiver can operate and flow control based only on clear-sky DNI -> use clear-sky flow rate and solve steady state solution with actual DNI
         {
             soln.m_dot_tot = soln_clearsky.m_dot_tot;
             soln.rec_is_off = soln_clearsky.rec_is_off;
@@ -436,7 +446,7 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
             calculate_steady_state_soln(soln, 0.00025, false);  // Solve energy balances at clear-sky mass flow rate and actual DNI conditions
         }
 
-        else  // Receiver can operate and flow control based on a weighted average of clear-sky and actual DNI
+        else  // Receiver can operate, and mass flow control is based on a weighted average of clear-sky and actual DNI
         {
 
             if (soln_actual.rec_is_off)  // Receiver is off in actual DNI solution -> Set mass flow to the minimum value
@@ -446,7 +456,7 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
             }
 
             soln.rec_is_off = false;
-            soln.m_dot_tot = (1.0 - m_csky_frac) * soln_actual.m_dot_tot + m_csky_frac * soln_clearsky.m_dot_tot;  // weighted average of clear-sky and actual DNI
+            soln.m_dot_tot = (1.0 - m_csky_frac) * soln_actual.m_dot_tot + m_csky_frac * soln_clearsky.m_dot_tot;  // weighted average of clear-sky and actual DNI mass flow rates
 
             if (soln_clearsky.od_control >= 0.9999)  // No defocus in either clear-sky or actual DNI solutions
             {
@@ -464,8 +474,9 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
     }
 
     // Set variables for use in the rest of the solution
+
     rec_is_off = soln.rec_is_off;
-    m_mode = soln.mode;
+    m_mode = soln.rec_is_off ? C_csp_collector_receiver::OFF : input_operation_mode;
     od_control = soln.od_control;
 
     m_dot_tot = soln.m_dot_tot;
@@ -564,8 +575,6 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
 
         }	// End switch() on input_operation_mode
 
-        // Pressure drop calculations
-        //calc_pump_performance(rho_coolant, m_dot_salt_tot, f, Pres_D, W_dot_pump, ratio_dP_tower_to_rec);
 
         Q_thermal = m_dot_tot * cp_htf * (T_particle_hot - T_particle_cold_in);
 
@@ -812,26 +821,31 @@ void C_falling_particle_receiver::converged()
 }
 
 
-bool C_falling_particle_receiver::use_previous_solution(const s_steady_state_soln& soln, const s_steady_state_soln& soln_prev)
+int C_falling_particle_receiver::use_previous_solution(const s_steady_state_soln& soln, const std::vector<s_steady_state_soln>& stored_solns)
 {
-    // Are these conditions identical to those used in the last solution?
-    if (!soln_prev.rec_is_off &&
-        //soln.dni == soln_prev.dni &&
-        soln.dni_applied_to_measured == soln_prev.dni_applied_to_measured &&
-        soln.T_particle_cold_in == soln_prev.T_particle_cold_in &&
-        soln.plant_defocus == soln_prev.plant_defocus &&
-        soln.od_control == soln_prev.od_control &&
-        soln.T_amb == soln_prev.T_amb &&
-        soln.v_wind_10 == soln_prev.v_wind_10 &&
-        soln.wind_dir == soln.wind_dir &&
-        soln.p_amb == soln_prev.p_amb &&
-        soln.T_sky == soln_prev.T_sky &&
-        soln.flux_sum == soln_prev.flux_sum)
+    int soln_id = -1;
+
+    // Are these conditions identical to those used in any of the stored solutions?
+    for (int i = 0; i < m_n_max_stored_solns; i++)
     {
-        return true;
+        if (!stored_solns.at(i).rec_is_off &&
+            soln.dni_applied_to_measured == stored_solns.at(i).dni_applied_to_measured &&
+            soln.T_particle_cold_in == stored_solns.at(i).T_particle_cold_in &&
+            soln.plant_defocus == stored_solns.at(i).plant_defocus &&
+            soln.od_control == stored_solns.at(i).od_control &&
+            soln.T_amb == stored_solns.at(i).T_amb &&
+            soln.v_wind_10 == stored_solns.at(i).v_wind_10 &&
+            soln.wind_dir == stored_solns.at(i).wind_dir &&
+            soln.p_amb == stored_solns.at(i).p_amb &&
+            soln.flux_sum == stored_solns.at(i).flux_sum)
+        {
+            soln_id = i;
+            break;
+        }
     }
-    else
-        return false;
+
+    return soln_id;
+
 }
 
 
@@ -1243,7 +1257,6 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
 
     if (Tp_out <= T_cold_in)
     {
-        soln.mode = C_csp_collector_receiver::OFF;
         rec_is_off = true;
         converged = false;
     }
@@ -1405,7 +1418,7 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
                     if (soln.m_dot_tot > mflow_history.at(i) && soln.T_particle_hot < Tout_history.at(i))
                     {
                         upper_bound = soln.m_dot_tot;
-                        upper_bound_eta = soln.eta;
+                        upper_bound_eta = soln.eta_with_transport;
                         is_upper_bound = true;
                     }
                     if (Tout_history.at(i) < m_T_particle_hot_target && mflow_history.at(i) > soln.m_dot_tot && Tout_history.at(i) < soln.T_particle_hot)
@@ -1433,7 +1446,6 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
 
         if (m_dot_guess < 1.E-5 || qq >= nmax)
         {
-            soln.mode = C_csp_collector_receiver::OFF;
             soln.rec_is_off = true;
             break;
         }
@@ -1441,7 +1453,6 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
         // Stop solution if outlet temperature was not achieved and mass flow bounds are within tolerance
         if (is_upper_bound && (upper_bound - lower_bound) <= bound_tol * lower_bound)
         {
-            soln.mode = C_csp_collector_receiver::OFF;
             soln.rec_is_off = true;
             break;
         }
@@ -1453,7 +1464,6 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
             Tout_max = soln.T_particle_cold_in + (upper_bound_eta * soln.Q_inc) / (cp * lower_bound);
             if (Tout_max < m_T_particle_hot_target-0.01)
             {
-                soln.mode = C_csp_collector_receiver::OFF;
                 soln.rec_is_off = true;
                 break;
             }

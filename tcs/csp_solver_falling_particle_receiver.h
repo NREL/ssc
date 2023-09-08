@@ -155,18 +155,18 @@ protected:
 
     // Particle transport thermal loss
     // TODO: Currently hard-coded to zero, update from inputs for piping loss
-    double m_Q_dot_transport_loss_hot;   // Constant thermal loss from hot particle transport to environment [W]
-    double m_Q_dot_transport_loss_cold;   // Constant thermal loss from cold particle transport to environment [W]
+    double m_Q_dot_transport_loss_hot;      // Constant thermal loss from hot particle transport to environment [W]
+    double m_Q_dot_transport_loss_cold;     // Constant thermal loss from cold particle transport to environment [W]
 
 
     // Operating parameters
-    double m_T_particle_hot_target; //[K], converted from C in constructor
-    double m_csky_frac;         //[-]   
+    double m_T_particle_hot_target; // Target particle outlet temperature [K], converted from C in constructor
+    double m_csky_frac;             // Weighting fraction on clear-sky DNI for receiver flow control[-]   
 
     // Curtain discretization
     int m_n_x;              // Particle curtain (and back wall) discretization in width direction
     int m_n_y;              // Particle curtain (and back wall) discretization in height direction
-    int m_n_zone_control;   // Number of particle flow control "zones" (must result in an integer number of discretized width positions included in each flow control zone)
+    int m_n_zone_control;   // Number of particle flow control "zones" (not implemented yet, hard-coded to 1)
 
     int m_n_x_rad;          // Number of curtain and back-wall x-element groups for the radiation model (only used if m_model_type == 2 and m_rad_model_type == 2)
     int m_n_y_rad;          // Number of curtain and back-wall y-element groups for the radiation model (only used if m_model_type == 2 and m_rad_model_type == 2)
@@ -176,7 +176,6 @@ protected:
     //--- Hard-coded parameters
     double m_tol_od;            //[-]
     double m_eta_therm_des_est; //[-]
-    bool m_use_constant_piping_loss;
     bool m_include_back_wall_convection;    // Include convective heat transfer to back wall (assuming air velocity is the same as the local particle velocity)
     bool m_include_wall_axial_conduction;   // Include axial conduction in the back wall
 
@@ -206,8 +205,12 @@ protected:
     double m_t_su_prev;         //[hr] startup time requirement
 
     // Stored solutions
-    s_steady_state_soln m_mflow_soln_prev;  // Steady state solution using actual DNI from the last call to the model
-    s_steady_state_soln m_mflow_soln_csky_prev;  // Steady state solution using clear-sky DNI from the last call to the model
+    int m_n_max_stored_solns;
+    int m_stored_soln_idx;
+    std::vector<s_steady_state_soln> m_soln_cache;
+
+    int m_stored_soln_idx_csky;
+    std::vector<s_steady_state_soln> m_soln_cache_csky;
 
 
 private:
@@ -242,7 +245,7 @@ protected:
         double& W_dot_rec_pump__tower_only /*MWe*/, double& W_dot_rec_pump__rec_only /*MWe*/,
         double& rec_pump_coef /*MWe/MWt*/, double& vel_htf_des /*m/s*/);
 
-    bool use_previous_solution(const s_steady_state_soln& soln, const s_steady_state_soln& soln_prev);
+    int use_previous_solution(const s_steady_state_soln& soln, const std::vector<s_steady_state_soln>& stored_solns);
     util::matrix_t<double> calculate_flux_profiles(double flux_sum /*W/m2*/, double dni_scale /*-*/, double plant_defocus /*-*/,
         double od_control /*-*/, const util::matrix_t<double>* flux_map_input);
     void calculate_steady_state_soln(s_steady_state_soln& soln, double tol = 1.0e-4, bool init_from_existing = false, int max_iter = 50);

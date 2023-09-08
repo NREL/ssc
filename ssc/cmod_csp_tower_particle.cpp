@@ -1061,10 +1061,7 @@ public:
 
         double A_rec = std::numeric_limits<double>::quiet_NaN();        
 
-        //bool is_rec_model_trans = as_boolean("is_rec_model_trans");
         bool is_rec_model_clearsky = as_double("rec_clearsky_fraction") > 0.0;
-
-        int rec_night_recirc = 0;
         int rec_clearsky_model = as_integer("rec_clearsky_model");
 
         if (rec_clearsky_model > 4)
@@ -1078,7 +1075,6 @@ public:
         double ap_curtain_depth_ratio = as_double("max_curtain_depth") / rec_height;
         int n_x = n_flux_x;
         int n_y = n_flux_y + 1;
-
         double user_efficiency = as_integer("rec_model_type") == 0 ? as_double("rec_eta_fixed") : 0.0;
         double user_hadv = as_integer("rec_adv_model_type") == 0 ? as_double("rec_hadv_fixed") : 0.0;
 
