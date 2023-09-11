@@ -118,12 +118,6 @@ public:
     
     enum
     {
-        //E_THETA_AVE,			//[deg]
-        //E_COSTH_AVE,			//[-]
-        //E_IAM_AVE,				//[-]
-        //E_ROWSHADOW_AVE,		//[-]
-        //E_ENDLOSS_AVE,			//[-]
-        //E_DNI_COSTH,			//[W/m2]
         E_EQUIV_OPT_ETA_TOT,	//[-]
         E_DEFOCUS,				//[-]
 
@@ -321,29 +315,7 @@ private:
     double m_E_dot_HR_hot_fullts;			            // [MWt] SYSTEM hot header internal energy change
     double m_q_dot_htf_to_sink_fullts;		            // [MWt] SYSTEM thermal power to sink (or artificially added to system in recirculation...)
     double m_q_dot_freeze_protection;		            // [MWt] SYSTEM thermal freeze protection
-    
 
-    
-
-    
-
-    // // TCS Temperature Tracking
-    //     // Temperatures from the most recent converged() operation
-    //double m_TCS_T_sys_c_converged;					//[K] Temperature (bulk) of cold runners & headers in previous timestep
-    //std::vector<double> m_TCS_T_htf_ave_converged;	//[K] Average HTF temperature in each SCA
-    //double m_TCS_T_sys_h_converged;					//[K] Temperature (bulk) of hot runners & headers in previous timestep		
-    //// Temperatures from the most recent timestep (in the event that a method solves multiple, shorter timesteps)
-    //double m_TCS_T_sys_c_last;					//[K] Temperature (bulk) of cold runners & headers in previous timestep
-    //std::vector<double> m_TCS_T_htf_ave_last;	//[K] Average HTF temperature in each SCA
-    //double m_TCS_T_sys_h_last;					//[K] Temperature (bulk) of hot runners & headers in previous timestep		
-    //// Latest temperatures solved during present call to this class
-    //double m_TCS_T_sys_c;					//[K] Temperature (bulk) of cold runners & headers
-    //std::vector<double> m_TCS_T_htf_in;		//[K] Inlet HTF temperature to each SCA
-    //std::vector<double> m_TCS_T_htf_ave;	//[K] Average HTF temperature in each SCA
-    //std::vector<double> m_TCS_T_htf_out;	//[K] Outlet HTF temperature to each SCA
-    //double m_TCS_T_sys_h;					//[K] Solar field HTF outlet temperature
-    //// *********************************************
-    //// *********************************************
 
     // Private Methods
 private:
