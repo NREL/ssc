@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_sandia.h"
 #include "lib_pvinv.h"
 #include "lib_ondinv.h"
+#include "lib_util.h"
 #include <vector>
 
 /**
@@ -87,6 +88,8 @@ public:
 
     /// Return the nameplate AC capacity
     double getACNameplateCapacitykW();
+
+    util::matrix_t<double> SubhourlyClippingMatrix();
 
     enum { SANDIA_INVERTER, DATASHEET_INVERTER, PARTLOAD_INVERTER, COEFFICIENT_GENERATOR, OND_INVERTER, NONE };
 
