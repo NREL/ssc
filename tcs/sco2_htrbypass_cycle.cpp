@@ -663,10 +663,14 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
 
         if (ms_des_par.m_des_objective_type == 2)
         {
-            double phx_deltaT = m_temp_last[TURB_IN] - m_temp_last[HTR_HP_OUT];
-            double under_min_deltaT = std::max(0.0, ms_des_par.m_min_phx_deltaT - phx_deltaT);
-            double eta_deltaT_scale = std::exp(-under_min_deltaT);
-            m_objective_metric_last = m_eta_thermal_calc_last * eta_deltaT_scale;
+            double target_bp_out = m_T_HTF_BP_outlet_target;
+            double calc_bp_out = m_T_HTF_BP_outlet_calc;
+
+            double temp_err = std::abs(calc_bp_out - target_bp_out);
+            double temp_span = m_T_HTF_PHX_inlet - m_T_HTF_BP_outlet_target;
+            double percent_err = temp_err / temp_span;
+
+            m_objective_metric_last = m_eta_thermal_calc_last - percent_err;
         }
         else
         {
@@ -1209,16 +1213,7 @@ void C_HTRBypass_Cycle::auto_opt_design_core(int& error_code)
 
     // map 'auto_opt_des_par_in' to 'ms_auto_opt_des_par'
 
-    // Bypass Fraction
-    if (ms_auto_opt_des_par.m_is_bypass_ok <= 0)
-    {
-        ms_opt_des_par.m_fixed_bypass_frac = true;
-        ms_opt_des_par.m_bypass_frac_guess = std::abs(ms_auto_opt_des_par.m_is_bypass_ok);
-    }
-    else
-    {
-        ms_opt_des_par.m_fixed_bypass_frac = false;
-    }
+    
     
     
         // LTR thermal design
@@ -1275,46 +1270,54 @@ void C_HTRBypass_Cycle::auto_opt_design_core(int& error_code)
         }
     }
 
-    // NO longer check if recompression fraction makes cycle simple
-    if (true)
+    // Complete 'ms_opt_des_par' for recompression cycle
+    ms_opt_des_par.m_P_mc_out_guess = best_P_high;      //[kPa]
+    ms_opt_des_par.m_fixed_P_mc_out = true;
+
+    if (ms_opt_des_par.m_fixed_PR_HP_to_LP)
     {
-        // Complete 'ms_opt_des_par' for recompression cycle
-        ms_opt_des_par.m_P_mc_out_guess = best_P_high;      //[kPa]
-        ms_opt_des_par.m_fixed_P_mc_out = true;
+        ms_opt_des_par.m_PR_HP_to_LP_guess = ms_auto_opt_des_par.m_PR_HP_to_LP_guess;	//[-]
+    }
+    else
+    {
+        ms_opt_des_par.m_PR_HP_to_LP_guess = PR_mc_guess;		//[-]
+    }
 
-        if (ms_opt_des_par.m_fixed_PR_HP_to_LP)
+    // Is recompression fraction fixed or optimized?
+    if (ms_auto_opt_des_par.m_is_recomp_ok <= 0.0)
+    {   // fixed
+        ms_opt_des_par.m_recomp_frac_guess = std::abs(ms_auto_opt_des_par.m_is_recomp_ok);
+        ms_opt_des_par.m_fixed_recomp_frac = true;
+    }
+    else
+    {   // optimized
+        ms_opt_des_par.m_recomp_frac_guess = 0.3;
+        ms_opt_des_par.m_fixed_recomp_frac = false;
+    }
+
+    ms_opt_des_par.m_LT_frac_guess = 0.5;
+    ms_opt_des_par.m_fixed_LT_frac = false;
+
+    if (ms_opt_des_par.m_LTR_target_code != NS_HX_counterflow_eqs::OPTIMIZE_UA || ms_opt_des_par.m_HTR_target_code != NS_HX_counterflow_eqs::OPTIMIZE_UA)
+    {
+        ms_opt_des_par.m_fixed_LT_frac = true;
+    }
+
+    // Default case with Bypass either set or optimized WITHIN Optimization
+    if (ms_auto_opt_des_par.m_des_objective_type != 2)
+    {
+        // Bypass Fraction
+        if (ms_auto_opt_des_par.m_is_bypass_ok <= 0)
         {
-            ms_opt_des_par.m_PR_HP_to_LP_guess = ms_auto_opt_des_par.m_PR_HP_to_LP_guess;	//[-]
+            ms_opt_des_par.m_fixed_bypass_frac = true;
+            ms_opt_des_par.m_bypass_frac_guess = std::abs(ms_auto_opt_des_par.m_is_bypass_ok);
         }
         else
         {
-            ms_opt_des_par.m_PR_HP_to_LP_guess = PR_mc_guess;		//[-]
-        }
-
-        // Is recompression fraction fixed or optimized?
-        if (ms_auto_opt_des_par.m_is_recomp_ok <= 0.0)
-        {   // fixed
-            ms_opt_des_par.m_recomp_frac_guess = std::abs(ms_auto_opt_des_par.m_is_recomp_ok);
-            ms_opt_des_par.m_fixed_recomp_frac = true;
-        }
-        else
-        {   // optimized
-            ms_opt_des_par.m_recomp_frac_guess = 0.3;
-            ms_opt_des_par.m_fixed_recomp_frac = false;
-        }
-
-        ms_opt_des_par.m_LT_frac_guess = 0.5;
-        ms_opt_des_par.m_fixed_LT_frac = false;
-
-        if (ms_opt_des_par.m_LTR_target_code != NS_HX_counterflow_eqs::OPTIMIZE_UA || ms_opt_des_par.m_HTR_target_code != NS_HX_counterflow_eqs::OPTIMIZE_UA)
-        {
-            ms_opt_des_par.m_fixed_LT_frac = true;
+            ms_opt_des_par.m_fixed_bypass_frac = false;
         }
 
         int rc_error_code = 0;
-
-        
-
 
         opt_design_core(rc_error_code);
 
@@ -1324,6 +1327,51 @@ void C_HTRBypass_Cycle::auto_opt_design_core(int& error_code)
             m_objective_metric_auto_opt = m_objective_metric_opt;
         }
     }
+
+    // Add option for des_objective_type == 2 (optimize bypass fraction OUTSIDE other optimization (rather than INSIDE)
+    else // (m_des_objective_type == 2)
+    {
+        // Bypass Fraction
+        ms_opt_des_par.m_fixed_bypass_frac = true;
+
+        // Hard coded Bypass Fraction, but other variables optimize to hit the correct temperature
+        if (ms_auto_opt_des_par.m_is_bypass_ok <= 0)
+        {
+            ms_opt_des_par.m_bypass_frac_guess = std::abs(ms_auto_opt_des_par.m_is_bypass_ok);
+
+            int rc_error_code = 0;
+
+            opt_design_core(rc_error_code);
+
+            if (rc_error_code == 0 && m_objective_metric_opt > m_objective_metric_auto_opt)
+            {
+                ms_des_par_auto_opt = ms_des_par_optimal;
+                m_objective_metric_auto_opt = m_objective_metric_opt;
+            }
+        }
+
+        // Optimize Bypass Fraction outside other variables
+        else
+        {
+            ms_opt_des_par.m_bypass_frac_guess = std::abs(ms_auto_opt_des_par.m_is_bypass_ok);
+
+            int rc_error_code = 0;
+
+            opt_design_core(rc_error_code);
+
+            if (rc_error_code == 0 && m_objective_metric_opt > m_objective_metric_auto_opt)
+            {
+                ms_des_par_auto_opt = ms_des_par_optimal;
+                m_objective_metric_auto_opt = m_objective_metric_opt;
+            }
+        }
+
+
+
+    }
+
+    
+
 
 
     ms_des_par = ms_des_par_auto_opt;
@@ -1624,7 +1672,6 @@ double C_HTRBypass_Cycle::design_cycle_return_objective_metric(const std::vector
     design_core(error_code);
 
 
-
     // Set Objective
     double objective_metric = -10000000000.0;
     if (error_code == 0)
@@ -1633,7 +1680,7 @@ double C_HTRBypass_Cycle::design_cycle_return_objective_metric(const std::vector
 
         // If fixed bypass fraction, no penalty function
         double penalty = 0;
-        if (ms_opt_des_par.m_fixed_bypass_frac == false)
+        if (ms_opt_des_par.m_fixed_bypass_frac == false || ms_opt_des_par.m_des_objective_type == 2)
         {
             double target_bp_out = m_T_HTF_BP_outlet_target;
             double calc_bp_out = m_T_HTF_BP_outlet_calc;
