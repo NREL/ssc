@@ -678,12 +678,8 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO* 
     }
 
     numberOfInverters = cm->as_integer("inverter_count");
-    if (cm->is_assigned("num_inverter_subhourly_clipping")) {
-        numberOfInvertersClipping = cm->as_integer("num_inverter_subhourly_clipping");
-    }
-    else {
-        numberOfInvertersClipping = 1;
-    }
+    numberOfInvertersClipping = cm->as_integer("num_inverter_subhourly_clipping");
+
     ratedACOutput = Inverter->ratedACOutput * numberOfInverters;
     acDerate = 1 - cm->as_double("acwiring_loss") / 100;
     acLossPercent = (1 - acDerate) * 100;
