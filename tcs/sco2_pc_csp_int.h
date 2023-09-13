@@ -359,7 +359,7 @@ public:
 
 private:
 
-    std::unique_ptr<C_sco2_cycle_core> mpc_sco2_cycle;
+    std::shared_ptr<C_sco2_cycle_core> mpc_sco2_cycle;
 
 	C_HX_co2_to_htf mc_phx;
 

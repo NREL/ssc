@@ -1244,6 +1244,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 
 		throw exec_error("sco2_csp_system", csp_exception.m_error_message);
 	}
+
 	// If all calls were successful, log to SSC any messages from sco2_recomp_csp
 	while (c_sco2_cycle.mc_messages.get_message(&out_type, &out_msg))
 	{
