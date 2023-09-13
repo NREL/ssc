@@ -75,6 +75,7 @@ protected:
         double Q_refl;			    // Total solar reflection loss (W)
         double Q_rad;			    // Total radiation loss (W)
         double Q_adv;			    // Total advection loss (W)
+        double Q_cond;              // Total conduction loss (W)
         double Q_transport;         // Total thermal loss from particle transport (W)
         double Q_thermal;           // Total thermal power delivered to the particles (including losses from particle transport) (W)
         double eta;                 // Receiver efficiency (energy to particles / solar energy incident on curtain)
@@ -196,6 +197,7 @@ protected:
     util::matrix_t<int> m_nx_per_group;     // Number of width elements per radiation group
     util::matrix_t<int> m_ny_per_group;     // Number of height elements per radiation group
     util::matrix_t<double> m_vf;            // View factor matrix
+    double m_vf_curtain_ap_avg;             // Average view factor between curtain and aperture
 
 
     // State variables
