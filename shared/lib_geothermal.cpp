@@ -1488,13 +1488,18 @@ double CGeothermalAnalyzer::GetNumberOfWells(void)
         double num_prod_wells_successful = mp_geo_out->md_NumberOfWellsProdDrilled * mo_geo_in.md_DrillSuccessRate;
         double num_prod_wells_failed = mp_geo_out->md_NumberOfWellsProdDrilled * (1 - mo_geo_in.md_DrillSuccessRate);
         double inj_flow = flowRatePerWell() * mp_geo_out->md_NumberOfWells;
+        if (mo_geo_in.me_ct == FLASH) inj_flow -= inj_flow * (waterLoss() / 1000.0);
         double failed_prod_wells_inj = mp_geo_out->md_NumberOfWellsProdDrilled - num_prod_wells_successful;
         double friction = 25.0; //psi
+        double pressure_well_head = 0;
+        if (mo_geo_in.me_ct == FLASH && FlashCount() == 1) pressure_well_head = mp_geo_out->md_PressureHPFlashPSI;
+        else if (mo_geo_in.me_ct == FLASH && FlashCount() == 2) pressure_well_head = mp_geo_out->md_PressureLPFlashPSI;
+        else pressure_well_head = pressureWellHeadPSI() - mo_geo_in.md_PressureChangeAcrossSurfaceEquipmentPSI;
         double prod_failed_inj_rate = (mo_geo_in.md_FailedProdFlowRatio * 1000 / mo_geo_in.md_ReservoirDeltaPressure) *
-            (mo_geo_in.md_InjWellPressurePSI + geothermal::MetersToFeet(GetResourceDepthM()) * InjectionDensity() / 144.0 + (pressureWellHeadPSI() - mo_geo_in.md_PressureChangeAcrossSurfaceEquipmentPSI) -
+            (mo_geo_in.md_InjWellPressurePSI + geothermal::MetersToFeet(GetResourceDepthM()) * InjectionDensity() / 144.0 + (pressure_well_head) -
             mo_geo_in.md_ProdWellFriction * pow(mo_geo_in.md_FailedProdFlowRatio, 2) - pressureHydrostaticPSI());
         double inj_failed_inj_rate = (mo_geo_in.md_FailedProdFlowRatio * 1000 / mo_geo_in.md_ReservoirDeltaPressure) *
-            (mo_geo_in.md_InjWellPressurePSI + geothermal::MetersToFeet(GetResourceDepthM()) * InjectionDensity() / 144.0 + (pressureWellHeadPSI() - mo_geo_in.md_PressureChangeAcrossSurfaceEquipmentPSI) -
+            (mo_geo_in.md_InjWellPressurePSI + geothermal::MetersToFeet(GetResourceDepthM()) * InjectionDensity() / 144.0 + (pressure_well_head) -
             mo_geo_in.md_InjWellFriction * pow(mo_geo_in.md_FailedProdFlowRatio, 2) - pressureHydrostaticPSI());
         double inj_rate_failed_prod_wells = MIN(prod_failed_inj_rate, flowRatePerWell()); //Injectivity of failed production well?
         double inj_rate_failed_inj_wells = MIN(inj_failed_inj_rate, flowRatePerWell());
@@ -1751,8 +1756,8 @@ void CGeothermalAnalyzer::calculateFlashPressures(void)
 	if (FlashCount() == 1)
 	{
 		//mp_geo_out->md_PressureHPFlashPSI = pressureSingle() + geothermal::DELTA_PRESSURE_HP_FLASH_PSI;
-        //mp_geo_out->md_PressureHPFlashPSI = pressureSingleFlash() + geothermal::DELTA_PRESSURE_HP_FLASH_PSI;
-        mp_geo_out->md_PressureHPFlashPSI = pressureSingleFlash();
+        mp_geo_out->md_PressureHPFlashPSI = pressureSingleFlash() + geothermal::DELTA_PRESSURE_HP_FLASH_PSI;
+        //mp_geo_out->md_PressureHPFlashPSI = pressureSingleFlash();
 		return;
 	}
 
@@ -1760,12 +1765,12 @@ void CGeothermalAnalyzer::calculateFlashPressures(void)
 	// high pressure flash
 //i think this might be using the wrong temperature - resource instead of plant design - for EGS
 	//mp_geo_out->md_PressureHPFlashPSI = pressureDualHigh() + geothermal::DELTA_PRESSURE_HP_FLASH_PSI;
-    //mp_geo_out->md_PressureHPFlashPSI = pressureDualFlashTempHigh() + geothermal::DELTA_PRESSURE_HP_FLASH_PSI;
-    mp_geo_out->md_PressureHPFlashPSI = pressureDualFlashTempHigh();
+    mp_geo_out->md_PressureHPFlashPSI = pressureDualFlashTempHigh() + geothermal::DELTA_PRESSURE_HP_FLASH_PSI;
+    //mp_geo_out->md_PressureHPFlashPSI = pressureDualFlashTempHigh();
 	// low pressure flash
 	//mp_geo_out->md_PressureLPFlashPSI = pressureDualLow() + geothermal::DELTA_PRESSURE_LP_FLASH_PSI;
-    //mp_geo_out->md_PressureLPFlashPSI = pressureDualFlashTempLow() + geothermal::DELTA_PRESSURE_LP_FLASH_PSI;
-    mp_geo_out->md_PressureLPFlashPSI = pressureDualFlashTempLow();
+    mp_geo_out->md_PressureLPFlashPSI = pressureDualFlashTempLow() + geothermal::DELTA_PRESSURE_LP_FLASH_PSI;
+    //mp_geo_out->md_PressureLPFlashPSI = pressureDualFlashTempLow();
 	mp_geo_out->mb_FlashPressuresCalculated = true;
 }
 
