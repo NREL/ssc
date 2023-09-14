@@ -678,12 +678,11 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO* 
     }
 
     numberOfInverters = cm->as_integer("inverter_count");
-    if (cm->is_assigned("num_inverter_subhourly_clipping")) {
-        numberOfInvertersClipping = cm->as_integer("num_inverter_subhourly_clipping");
-    }
-    else {
-        numberOfInvertersClipping = 1;
-    }
+    
+    dcNameplate = cm->as_double("system_capacity");
+    //numberOfInvertersClipping = cm->as_integer("num_inverter_subhourly_clipping");
+    numberOfInvertersClipping = dcNameplate / (Inverter->ratedACOutput / 1000);
+    
 
     ratedACOutput = Inverter->ratedACOutput * numberOfInverters;
     acDerate = 1 - cm->as_double("acwiring_loss") / 100;

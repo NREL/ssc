@@ -584,7 +584,6 @@ static var_info _cm_vtab_pvsamv1[] = {
         // PV subhourly clipping inputs
         { SSC_INPUT, SSC_NUMBER,   "enable_subhourly_clipping",                              "Enable subhourly clipping",                        "0/1",    "",                                                                                                                                                                                      "PV Losses",                                      "?=0",                                "INTEGER,MIN=0,MAX=1", "" },
         { SSC_INPUT, SSC_MATRIX,   "subhourly_clipping_matrix",                   "PV Subhourly clipping correction matrix",             "",    "",                     "PV Losses",                      "",                    "",                               "" },
-        { SSC_INPUT, SSC_NUMBER,   "num_inverter_subhourly_clipping",                       "Number of inverters for DCAC ratio of 1",                                 "",       "",                                                                                                                                                                                      "System Design",                                         "",                                  "INTEGER,POSITIVE",    "" },
 
 
     // outputs
@@ -651,10 +650,9 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_modeff",                     "Subarray 1 Module efficiency",                                         "%",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_celltemp",                   "Subarray 1 Cell temperature",                                          "C",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_celltempSS",                 "Subarray 1 Cell temperature (steady state)",                           "C",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dni_index",                 "Subarray 1 DNI Index",             "",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_beam_front_cs",                 "Subarray 1 beam clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_diffuse_front_cs",                 "Subarray 1 diffuse clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_ground_front_cs",                 "Subarray 1 ground reflected clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_beam_front_cs",                 "Subarray 1 beam POA clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_diffuse_front_cs",                 "Subarray 1 diffuse POA clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_ground_front_cs",                 "Subarray 1 ground reflected POA clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
 
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_voltage",                 "Subarray 1 Operating DC voltage",                                         "V",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_gross",                   "Subarray 1 DC power gross",                                             "kW",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
@@ -693,10 +691,9 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_dc_gross",                 "Subarray 2 DC power gross",                                         "kW",      "", "Time Series (Subarray 2)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_voc",                        "Subarray 2 Open circuit DC voltage",                                      "V",      "", "Time Series (Subarray 2)",       "",                     "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_isc",                        "Subarray 2 String short circuit DC current",                                     "A",      "", "Time Series (Subarray 2)",       "",                     "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_dni_index",                 "Subarray 2 DNI Index",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_beam_front_cs",                 "Subarray 2 beam clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_diffuse_front_cs",                 "Subarray 2 diffuse clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_ground_front_cs",                 "Subarray 2 ground reflected clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_beam_front_cs",                 "Subarray 2 beam POA clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_diffuse_front_cs",                 "Subarray 2 diffuse POA clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_ground_front_cs",                 "Subarray 2 ground reflected POA clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
 
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_surf_tilt",                  "Subarray 3 Surface tilt",                                              "degrees",    "", "Time Series (Subarray 3)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_surf_azi",                   "Subarray 3 Surface azimuth",                                           "degrees",    "", "Time Series (Subarray 3)",       "",                    "",                              "" },
@@ -730,10 +727,9 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_dc_gross",                 "Subarray 3 DC power gross",                                         "kW",      "", "Time Series (Subarray 3)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_voc",                        "Subarray 3 Open circuit DC voltage",                                      "V",      "", "Time Series (Subarray 3)",       "",                     "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_isc",                        "Subarray 3 String short circuit DC current",                                     "A",      "", "Time Series (Subarray 3)",       "",                     "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_dni_index",                 "Subarray 3 DNI Index",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_beam_front_cs",                 "Subarray 3 beam clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_diffuse_front_cs",                 "Subarray 3 diffuse clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_ground_front_cs",                 "Subarray 3 ground reflected clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_beam_front_cs",                 "Subarray 3 beam POA clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_diffuse_front_cs",                 "Subarray 3 diffuse POA clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_ground_front_cs",                 "Subarray 3 ground reflected POA clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
 
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_surf_tilt",                  "Subarray 4 Surface tilt",                                              "degrees",    "", "Time Series (Subarray 4)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_surf_azi",                   "Subarray 4 Surface azimuth",                                           "degrees",    "", "Time Series (Subarray 4)",       "",                    "",                              "" },
@@ -767,10 +763,9 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_dc_gross",                 "Subarray 4 DC power gross",                                         "kW",      "", "Time Series (Subarray 4)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_voc",                        "Subarray 4 Open circuit DC voltage",                                      "V",      "", "Time Series (Subarray 4)",       "",                     "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_isc",                        "Subarray 4 String short circuit DC current",                                     "A",      "", "Time Series (Subarray 4)",       "",                     "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_dni_index",                 "Subarray 4 DNI Index",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_beam_front_cs",                 "Subarray 4 beam clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_diffuse_front_cs",                 "Subarray 4 diffuse clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_ground_front_cs",                 "Subarray 4 ground reflected clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_beam_front_cs",                 "Subarray 4 beam POA clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_diffuse_front_cs",                 "Subarray 4 diffuse POA clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_ground_front_cs",                 "Subarray 4 ground reflected POA clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
 
     /* aggregate array level outputs */
         { SSC_OUTPUT,        SSC_ARRAY,      "poa_nom",                              "Array POA front-side total radiation nominal",                    "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
@@ -794,7 +789,6 @@ static var_info _cm_vtab_pvsamv1[] = {
         //SEV: total dc snow loss time series (not a required output)
         { SSC_OUTPUT,        SSC_ARRAY,      "dc_snow_loss",                         "DC power loss due to snow",						 "kW",   "",   "Time Series (Array)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "dc_net",                               "Inverter DC input power",                                       "kW",   "",   "Time Series (Array)",       "*",                    "",                              "" },
-        //{ SSC_OUTPUT,        SSC_ARRAY,      "dc_net_clearsky",                               "Inverter DC clearsky input power",                                       "kW",   "",   "Time Series (Array)",       "",                    "",                              "" },
 
         // DC Daily losses
         { SSC_OUTPUT,        SSC_ARRAY,     "dc_lifetime_loss",                       "DC lifetime daily loss",                                     "kW", "",    "Time Series (DC Loss)",                 "",                     "",                   "" },
@@ -817,7 +811,6 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "ac_gross",                             "Inverter AC output power",                                       "kW",   "",   "Time Series (Array)",       "*",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "clipping_potential",                       "Clipping potential",                                       "",   "",   "Time Series (Inverter)",      "",                        "",                   "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subhourly_clipping_loss",                       "Subhourly clipping correction loss",                                       "kW",   "",   "Time Series (Inverter)",      "",                        "",                   "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subhourly_clipping_loss_factor",                       "Subhourly clipping correction loss factor",                                       "",   "",   "Time Series (Inverter)",      "",                        "",                   "" },
 
         // transformer model outputs
         { SSC_OUTPUT,        SSC_ARRAY,      "xfmr_nll_ts",                          "Transformer no load loss",                              "kW", "",    "Time Series (Transformer)", "", "", "" },
@@ -998,7 +991,6 @@ static var_info _cm_vtab_pvsamv1[] = {
             */
             { SSC_OUTPUT, SSC_NUMBER, "annual_ac_wiring_loss", "AC wiring loss", "kWh", "", "Annual (Year 1)", "", "", "" },
             { SSC_OUTPUT, SSC_NUMBER, "annual_subhourly_clipping_loss", "Subhourly clipping correction loss", "kWh", "", "Annual (Year 1)", "", "", "" },
-            { SSC_OUTPUT, SSC_NUMBER, "annual_subhourly_clipping_factor", "Subhourly clipping correction loss factor", "", "", "Annual (Year 1)", "", "", "" },
 
         { SSC_OUTPUT, SSC_NUMBER, "annual_transmission_loss", "Transmission loss", "kWh", "", "Annual (Year 1)", "", "", "" },
             
@@ -2543,7 +2535,6 @@ void cm_pvsamv1::exec()
 
     double annual_dc_loss_ond = 0, annual_ac_loss_ond = 0; // (TR)
     double annual_subhourly_clipping_loss = 0;
-    double annual_subhourly_clipping_factor = 0;
     double nominal_annual_clipping_output = 0;
     util::matrix_t<double> sub_clipping_matrix(21, 21);
     if (as_boolean("enable_subhourly_clipping")) {
@@ -2636,7 +2627,6 @@ void cm_pvsamv1::exec()
 
             double acpwr_gross = 0, ac_wiringloss = 0, transmissionloss = 0;
             double ac_subhourlyclipping_loss = 0;
-            double ac_subhourlyclipping_factor = 0;
             cur_load = p_load_full[idx];
 
             //set DC voltages for use in AC power calculation
@@ -2752,7 +2742,6 @@ void cm_pvsamv1::exec()
                 if (dcPower_kW_csky > 0.0) {
                     ac_subhourlyclipping_loss = sub_clipping_matrix.at(dni_row, clip_pot_col) * nominal_annual_clipping_output;
                     //ac_subhourlyclipping_loss = sub_clipping_matrix.at(dni_row, clip_pot_col) * sharedInverter->powerAC_kW_clipping;
-                    ac_subhourlyclipping_factor = sub_clipping_matrix.at(dni_row, clip_pot_col);
                 }
                 else { //No inverter clipping at night time, skip checks?
                     ac_subhourlyclipping_loss = 0.0;
@@ -2774,7 +2763,6 @@ void cm_pvsamv1::exec()
 
                 annual_ac_wiring_loss += ac_wiringloss * ts_hour;
                 annual_subhourly_clipping_loss += ac_subhourlyclipping_loss;
-                annual_subhourly_clipping_factor += ac_subhourlyclipping_factor;
             }
 
             if (iyear == 0 || save_full_lifetime_variables == 1)
@@ -2786,7 +2774,6 @@ void cm_pvsamv1::exec()
                 PVSystem->p_inverterThermalLoss[idx] = (ssc_number_t)(sharedInverter->powerTempLoss_kW);
                 PVSystem->p_acWiringLoss[idx] = (ssc_number_t)(ac_wiringloss);
                 PVSystem->p_subhourlyClippingLoss[idx] = (ssc_number_t)(ac_subhourlyclipping_loss);
-                PVSystem->p_subhourlyClippingLossFactor[idx] = (ssc_number_t)(ac_subhourlyclipping_factor);
                 
                 if (offline) {
                     PVSystem->p_inverterNightTimeLoss[idx] = 0.0;
@@ -3216,7 +3203,6 @@ void cm_pvsamv1::exec()
 
         assign("annual_ac_wiring_loss", var_data((ssc_number_t)annual_ac_wiring_loss));
         assign("annual_subhourly_clipping_loss", var_data((ssc_number_t)annual_subhourly_clipping_loss));
-        assign("annual_subhourly_clipping_factor", var_data((ssc_number_t)annual_subhourly_clipping_factor));
 
         assign("annual_transmission_loss", var_data((ssc_number_t)annual_transmission_loss));
 
@@ -3697,31 +3683,5 @@ void cm_pvsamv1::inverter_size_check()
             100 * maxACOutput / ratedACOutput, ratedACOutput),
             SSC_WARNING);
 }
-
-const double Subhourly_Clipping_Matrix[21][21] =
-{
-    {0, -2, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4},
-    {-0.001, 1.65e-08, 2.17e-08, 2.48e-08, 3.09e-08, 4.49e-08, 6.7e-08, 1.06e-07, 1.74e-07, 2.67e-07, 3.97e-07, 5.71e-07, 8.09e-07, 1.11e-06, 1.55e-06, 2.03e-06, 2.38e-06, 2.84e-06, 2.85e-06, 4.86e-06, 3.12e-08},
-    {0.05, 6.14e-08, 1.07e-07, 1.39e-07, 2.05e-07, 3.72e-07, 7.5e-07, 1.49e-06, 2.57e-06, 4.02e-06, 5.87e-06, 8.09e-06, 1.06e-05, 1.33e-05, 1.64e-05, 1.91e-05, 2.15e-05, 2.45e-05, 2.65e-05, 2.75e-05, 0},
-    {0.1, 7.63e-08, 1.45e-07, 1.89e-07, 2.84e-07, 5.77e-07, 1.28e-06, 2.72e-06, 4.89e-06, 7.72e-06, 1.12e-05, 1.5e-05, 1.9e-05, 2.28e-05, 2.66e-05, 2.96e-05, 3.04e-05, 3.09e-05, 3e-05, 2.9e-05, 0},
-    {0.15, 8.58e-08, 1.67e-07, 2.16e-07, 3.22e-07, 6.78e-07, 1.67e-06, 3.81e-06, 7.09e-06, 1.12e-05, 1.59e-05, 2.1e-05, 2.54e-05, 2.92e-05, 3.24e-05, 3.44e-05, 3.31e-05, 3.36e-05, 3.13e-05, 7.77e-05, 0},
-    {0.2, 9.56e-08, 1.76e-07, 2.34e-07, 3.51e-07, 7.77e-07, 2.05e-06, 4.87e-06, 9.19e-06, 1.48e-05, 2.07e-05, 2.68e-05, 3.13e-05, 3.43e-05, 3.62e-05, 3.67e-05, 3.39e-05, 2.86e-05, 1.8e-05, 1.22e-05, 0},
-    {0.25, 8.82e-08, 1.83e-07, 2.52e-07, 3.9e-07, 7.96e-07, 2.18e-06, 5.35e-06, 1.06e-05, 1.71e-05, 2.41e-05, 3.01e-05, 3.42e-05, 3.66e-05, 3.76e-05, 3.66e-05, 3.36e-05, 2.87e-05, 3.02e-05, 2.5e-06, 0},
-    {0.3, 8.79e-08, 1.77e-07, 2.35e-07, 3.56e-07, 7.78e-07, 2.28e-06, 6.03e-06, 1.22e-05, 1.98e-05, 2.69e-05, 3.25e-05, 3.56e-05, 3.64e-05, 3.59e-05, 3.33e-05, 2.89e-05, 2.49e-05, 1.66e-05, 7.82e-06, 0},
-    {0.35, 8.77e-08, 1.74e-07, 2.35e-07, 3.6e-07, 7.71e-07, 2.3e-06, 6.38e-06, 1.35e-05, 2.19e-05, 2.94e-05, 3.38e-05, 3.54e-05, 3.49e-05, 3.3e-05, 2.96e-05, 2.48e-05, 2e-05, 1.24e-05, 5.89e-06, 0},
-    {0.4, 7.67e-08, 1.5e-07, 2.04e-07, 3.19e-07, 6.85e-07, 2.3e-06, 6.85e-06, 1.46e-05, 2.35e-05, 3e-05, 3.31e-05, 3.29e-05, 3.07e-05, 2.81e-05, 2.49e-05, 2.13e-05, 1.66e-05, 1.55e-05, 8.9e-06, 0},
-    {0.45, 6.85e-08, 1.26e-07, 1.74e-07, 2.54e-07, 5.75e-07, 2.05e-06, 6.49e-06, 1.43e-05, 2.28e-05, 2.81e-05, 2.93e-05, 2.77e-05, 2.47e-05, 2.22e-05, 1.95e-05, 1.72e-05, 1.48e-05, 1.13e-05, 9.97e-06, 0},
-    {0.5, 6e-08, 1.07e-07, 1.46e-07, 2.14e-07, 4.76e-07, 1.87e-06, 6.42e-06, 1.44e-05, 2.19e-05, 2.5e-05, 2.44e-05, 2.15e-05, 1.85e-05, 1.67e-05, 1.51e-05, 1.23e-05, 1.08e-05, 6.83e-06, 3.94e-06, 0},
-    {0.55, 5.45e-08, 8.43e-08, 1.1e-07, 1.62e-07, 3.57e-07, 1.44e-06, 5.31e-06, 1.24e-05, 1.8e-05, 1.92e-05, 1.74e-05, 1.45e-05, 1.24e-05, 1.11e-05, 1.02e-05, 9.23e-06, 8.33e-06, 7.41e-06, 1.03e-05, 0},
-    {0.6, 5.04e-08, 6.61e-08, 7.87e-08, 1.04e-07, 2.43e-07, 1.08e-06, 4.34e-06, 1e-05, 1.35e-05, 1.28e-05, 1.05e-05, 8.57e-06, 7.34e-06, 6.72e-06, 6.32e-06, 5.98e-06, 5.48e-06, 5.91e-06, 7.29e-06, 1.29e-05},
-    {0.65, 4.65e-08, 5.31e-08, 5.61e-08, 6.96e-08, 1.64e-07, 7.59e-07, 3.32e-06, 7.41e-06, 9e-06, 7.31e-06, 5.61e-06, 4.63e-06, 4.02e-06, 3.77e-06, 3.62e-06, 3.75e-06, 4.05e-06, 4.68e-06, 1.28e-06, 0},
-    {0.7, 4.32e-08, 4.14e-08, 3.93e-08, 4.27e-08, 8.67e-08, 4.76e-07, 2.34e-06, 5.12e-06, 4.83e-06, 3.1e-06, 2.29e-06, 1.92e-06, 1.7e-06, 1.6e-06, 1.51e-06, 1.76e-06, 1.86e-06, 2.76e-06, 2.81e-06, 1.47e-05},
-    {0.75, 3.67e-08, 2.98e-08, 2.64e-08, 2.72e-08, 5.66e-08, 3.51e-07, 1.83e-06, 3.31e-06, 1.93e-06, 9.42e-07, 6.97e-07, 6.06e-07, 5.35e-07, 5.02e-07, 4.92e-07, 5.28e-07, 6.97e-07, 1.11e-06, 1.85e-06, 0},
-    {0.8, 2.4e-08, 1.66e-08, 1.46e-08, 1.32e-08, 2.8e-08, 2.74e-07, 1.42e-06, 1.67e-06, 5.05e-07, 1.83e-07, 1.31e-07, 1.1e-07, 9.81e-08, 9.13e-08, 9.04e-08, 8.69e-08, 9.37e-08, 3.13e-08, -6.82e-21, 0},
-    {0.85, 1.02e-08, 4.91e-09, 5.46e-09, 6.62e-09, 1.35e-08, 2.19e-07, 8.5e-07, 4.94e-07, 7e-08, 1.92e-08, 1.37e-08, 1.12e-08, 1e-08, 8.96e-09, 9.5e-09, 8.62e-09, 1.65e-08, 3.26e-08, 1.5e-07, 0},
-    {0.9, 9.96e-10, 3.15e-09, 2.89e-09, 3.44e-09, 3.53e-09, 1.49e-07, 4.09e-07, 9.15e-08, 1.53e-09, -2.09e-20, -6.38e-21, -4.12e-21, -1.64e-20, -1.97e-20, -1.74e-20, -1.63e-20, -6.11e-21, -1.17e-20, 0, 0},
-    {0.95, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-
-};
 
 DEFINE_MODULE_ENTRY(pvsamv1, "Photovoltaic performance model, SAM component models V.1", 1)

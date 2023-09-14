@@ -1048,7 +1048,6 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, SubhourlyClippingCorrectionModel)
 
     //Run with default matrix stored in ssc
     pairs["enable_subhourly_clipping"] = 1;
-    pairs["num_inverter_subhourly_clipping"] = 1;
     int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
     EXPECT_FALSE(pvsam_errors);
     //check answers for subhourly clipping annual loss
