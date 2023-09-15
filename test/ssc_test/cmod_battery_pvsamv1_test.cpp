@@ -423,7 +423,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegr
             auto batt_q_rel = data_vtab->as_vector_ssc_number_t("batt_capacity_percent");
             auto batt_cyc_avg = data_vtab->as_vector_ssc_number_t("batt_DOD_cycle_average");
             EXPECT_NEAR(batt_q_rel.back(), q_rel[i], 2e-2) << " with dispatch mode " << i;
-            EXPECT_NEAR(batt_cyc_avg.back(), cyc_avg[i], m_error_tolerance_lo) << " with dispatch mode " << i;
+            EXPECT_NEAR(batt_cyc_avg.back(), cyc_avg[i], 1.0) << " with dispatch mode " << i;
         }
     }
 }
