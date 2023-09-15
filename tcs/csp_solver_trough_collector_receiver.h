@@ -146,10 +146,12 @@ private:
 	std::vector<double> m_q_abs_SCAtot;	//[W] Heat absorption into HTF in each SCA, weighted variants
 	std::vector<double> m_q_loss_SCAtot;//[W] Total heat losses from each SCA, weighted variants
 	std::vector<double> m_q_1abs_tot;	//[W/m] Thermal losses from each SCA, weighted variants
+    std::vector<double> m_q_reflect_tot;//[W] Reflective Losses on each SCA, weighted variants 08.29.2023 tmb
 
 	std::vector<double> m_q_loss;		//[W/m] Total thermal losses per length in each SCA, one variant
 	std::vector<double> m_q_abs;		//[W/m] Total heat absorption per length into HTF in each SCA, one variant
 	std::vector<double> m_q_1abs;		//[W/m] Total *thermal* losses per length in each SCA, one variant
+    std::vector<double> m_q_reflect;    //[W/m] Total receiver reflected energy due to absorber absorptance 08.29.2023 tmb
 	std::vector<double> m_q_i;			//[W/m] DNI * A_aper / L_sca
 		// This value (m_q_SCA) is passed to the Evacuated Tube model, where the other optical losses are applied
 	std::vector<double> m_q_SCA;		//[W/m] Total incident irradiation on the receiver (q"*A_aper/L_sca*cos(theta)*all_defocus)
@@ -256,6 +258,7 @@ private:
 	
 	double m_q_dot_sca_loss_summed_subts;	//[MWt] SYSTEM SCA heat loss
 	double m_q_dot_sca_abs_summed_subts;	//[MWt] SYSTEM SCA absorbed thermal power (into HTF stream & material)
+    double m_q_dot_sca_refl_summed_subts;   //[MWt] SYSTEM SCA reflected heat loss (due to absorber absorptance) 08.29.2023 tmb
 	double m_q_dot_xover_loss_summed_subts;	//[MWt] SYSTEM Cross-over/connecting piping heat loss
 	double m_q_dot_HR_cold_loss_subts;		//[MWt] SYSTEM Cold header heat loss
 	double m_q_dot_HR_hot_loss_subts;		//[MWt] SYSTEM Hot header heat loss
@@ -274,6 +277,7 @@ private:
 
 	double m_q_dot_sca_loss_summed_fullts;	//[MWt] SYSTEM SCA heat loss
 	double m_q_dot_sca_abs_summed_fullts;	//[MWt] SYSTEM SCA absorbed thermal power (into HTF stream & material)
+    double m_q_dot_sca_refl_summed_fullts;  //[MWt] SYSTEM SCA reflected heat loss (due to absorber absorptance) 08.29.2023 tmb
 	double m_q_dot_xover_loss_summed_fullts;//[MWt] SYSTEM Cross-over/connecting piping heat loss
 	double m_q_dot_HR_cold_loss_fullts;		//[MWt] SYSTEM Cold header heat loss
 	double m_q_dot_HR_hot_loss_fullts;		//[MWt] SYSTEM Hot header heat loss
@@ -680,7 +684,7 @@ public:
 	void EvacReceiver(double T_1_in, double m_dot, double T_amb, double m_T_sky, double v_6, double P_6, double m_q_i,
 		int hn /*HCE number [0..3] */, int hv /* HCE variant [0..3] */, int ct /*Collector type*/, int sca_num, bool single_point, int ncall, double time,
 		//outputs
-		double &q_heatloss, double &q_12conv, double &q_34tot, double &c_1ave, double &rho_1ave);
+		double &q_heatloss, double &q_12conv, double &q_34tot, double &c_1ave, double &rho_1ave, double &q_3reflect);
 	double fT_2(double q_12conv, double T_1, double T_2g, double m_v_1, int hn, int hv);
 	void FQ_34CONV(double T_3, double T_4, double P_6, double v_6, double T_6, int hn, int hv, double &q_34conv, double &h_34);
 	void FQ_56CONV(double T_5, double T_6, double P_6, double v_6, int hn, int hv, double &q_56conv, double &h_6);
