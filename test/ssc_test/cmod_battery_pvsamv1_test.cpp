@@ -126,7 +126,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelIntegr
     ssc_number_t peakCycles[4] = { 1, 1, 1, 3 };
     ssc_number_t avgCycles[4] = { 1, 1, 0.4904, 1.0110 };
 
-    // Test peak shaving look ahead, peak shaving look behind, and automated grid power target, and carbon-free energy. Others require additional input data
+    // Test peak shaving look ahead, peak shaving look behind, and automated grid power target, and self-consumption. Others require additional input data
     for (int i = 0; i < 4; i++) {
         switch (i) {
             case 0:
@@ -148,7 +148,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelIntegr
                 pairs["batt_dispatch_load_forecast_choice"] = 0;
                 break;
             case 3:
-                // Carbon-free energy dispatch, which is set internally to grid power targets with a constant target of zero
+                // Self-consumption dispatch, which is set internally to grid power targets with a constant target of zero
                 pairs["batt_dispatch_choice"] = 5;
                 pairs["batt_dispatch_wf_forecast_choice"] = 0;
                 pairs["batt_dispatch_load_forecast_choice"] = 0;
@@ -389,7 +389,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegr
             pairs["batt_dispatch_load_forecast_choice"] = 0;
             break;
         case 3:
-            // Input grid power targets
+            // Self-consumption
             pairs["batt_dispatch_choice"] = 5;
             pairs["batt_dispatch_wf_forecast_choice"] = 0;
             pairs["batt_dispatch_load_forecast_choice"] = 0;
