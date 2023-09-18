@@ -101,7 +101,7 @@ struct PTES_CHP_Dispatch_Data {
     double q_pb0;                           // [MWt] Thermal power consumption in the cycle entering the initial time step
     double e_pb_start0;                     // [-] Power block start energy consumed before initial time step 
 
-    min_up_down_params min_up_down_params;      // Parameters required for minimum up- and down-time contraints
+    min_up_down_params min_up_down_p;      // Parameters required for minimum up- and down-time contraints
 
     // Heat pump parameters
     double e_hp_startup;                    // [MWht] Required energy expended to start the heat pump
@@ -189,7 +189,7 @@ struct PTES_CHP_Dispatch_Data {
 
     void clear()
     {
-        min_up_down_params.clear();
+        min_up_down_p.clear();
         eta_amb.clear();
         heat_sell_price.clear();
         purchase_price.clear();
@@ -199,7 +199,7 @@ struct PTES_CHP_Dispatch_Data {
 
     void resize(int nt)
     {
-        min_up_down_params.resize(nt);
+        min_up_down_p.resize(nt);
         eta_amb.resize(nt, 0.);
         heat_sell_price.resize(nt, 0.);
         purchase_price.resize(nt, 0.);
