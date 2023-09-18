@@ -190,6 +190,17 @@ TEST_F(IrradTest, atmos_refractionTest_spa_lib_irradproc) {
     EXPECT_NEAR((double)sun_results[2], elevation_angle, e) << "elevation angle for lat " << latitude << " long " << longitude << " failed\n";
 }
 
+TEST_F(IrradTest, ineichenTest) {
+
+    double clearskyIrradiance[3];
+    double apparent_zenith = 60;
+    double elevation = 0;
+    ineichen(clearskyIrradiance, apparent_zenith, 1.5, 1.0, elevation, 1364.0, false);
+    EXPECT_NEAR(clearskyIrradiance[0], 558.590191, e) << "clearsky GHI";
+    EXPECT_NEAR(clearskyIrradiance[1], 1087.118774, e) << "clearsky DNI";
+    EXPECT_NEAR(clearskyIrradiance[2], 15.030804, e) << "clearsky GHI";
+}
+
 
 TEST_F(DayCaseIrradProc, solarposTest_lib_irradproc) {
     double sun[9];
