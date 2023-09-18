@@ -30,46 +30,13 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#if defined( _WINDOWS) && defined(_DEBUG)
-#define _CRTDBG_MAP_ALLOC
-#include <stdlib.h>
-#include <crtdbg.h>
-#endif
-
-#include <stdlib.h>
-#include <iostream>
-#include <gtest/gtest.h>
-
-// in order to get MS V2017 update 2 to build without a bunch of C4996 "std::tr1:warning..."
-#define _SILENCE_TR1_NAMESPACE_DEPRECIATION_WARNING
-
-GTEST_API_ int main(int argc, char **argv) {
-
-#if defined( _WINDOWS) && defined(_DEBUG)
-    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-#endif
-
-    printf("Running main() from gtest_main.cc\n");
-    testing::InitGoogleTest(&argc, argv);
-
-    //    filter to include
-    //    ::testing::GTEST_FLAG(filter) = "CmodPVWatts*:CMPvwatts*";
-    //::testing::GTEST_FLAG(filter) = "CMBatteryStatefulIntegration_cmod_battery_stateful.ssc_1023";
-
-   //    ::testing::GTEST_FLAG(filter) = "CmodHybridTest*";
 
 
-    //    filter to exclude
-    //    ::testing::GTEST_FLAG(filter) = "-PVSmoothing_lib_battery_dispatch*";
+#ifndef SYSTEM_ADVISOR_MODEL_CMOD_HYBRIDS_TEST_H
+#define SYSTEM_ADVISOR_MODEL_CMOD_HYBRIDS_TEST_H
 
-    // run multiple test
-    //    ::testing::GTEST_FLAG(filter) = "CMPvwattsv8Integration_cmod_pvwattsv8.DefaultNoFinancialModel_cmod_pvwattsv8:CMPvwattsv8Integration_cmod_pvwattsv8.NonAnnual";
+#include "cmod_json_comparison_test.h"
 
-    int status = RUN_ALL_TESTS();
+class CmodHybridStepsTest : public JSONComparisonTest {};
 
-    //    sleep(10); //used for single test instruments leak detector on macOS
-
-    if (!status)
-        printf("Tests Pass!\n");
-    return status;
-}
+#endif //SYSTEM_ADVISOR_MODEL_CMOD_HYBRIDS_TEST_H

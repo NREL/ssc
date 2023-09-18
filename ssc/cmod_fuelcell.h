@@ -75,8 +75,8 @@ public:
 		canDischarge(cm.as_vector_bool("dispatch_manual_fuelcelldischarge")),
 		discharge_percent(cm.as_vector_double("dispatch_manual_percent_fc_discharge")),
 		discharge_units(cm.as_vector_unsigned_long("dispatch_manual_units_fc_discharge")),
-		scheduleWeekday(cm.as_matrix_unsigned_long("dispatch_manual_sched")),
-		scheduleWeekend(cm.as_matrix_unsigned_long("dispatch_manual_sched_weekend"))
+		scheduleWeekday(cm.as_matrix_unsigned_long("dispatch_manual_fuelcell_sched")),
+		scheduleWeekend(cm.as_matrix_unsigned_long("dispatch_manual_fuelcell_sched_weekend"))
 	{
 		numberOfYears = 1;
 		if (systemUseLifetimeOutput) {

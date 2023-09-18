@@ -226,6 +226,8 @@ cm_windpower::cm_windpower(){
 	add_var_info(vtab_technology_outputs);
 	// wind PRUF
 	add_var_info(vtab_p50p90);
+    add_var_info(vtab_hybrid_tech_om);
+
 }
 
 // wind PRUF loss framework. Can replace numerical loss percentages by calculated losses in future model

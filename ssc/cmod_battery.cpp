@@ -2213,6 +2213,8 @@ public:
         add_var_info(vtab_resilience_outputs);
         add_var_info(vtab_utility_rate_common);
         add_var_info(vtab_grid_curtailment);
+        add_var_info(vtab_hybrid_tech_om);
+
     }
 
     void exec() override
@@ -2428,6 +2430,8 @@ public:
             float percent_complete = 0.0;
             float percent = 0.0;
             size_t nStatusUpdates = 50;
+            // assume that anyone using this module is chaining with two techs
+            float techs = 1;
 
             if (is_assigned("percent_complete")) {
                 percent_complete = as_float("percent_complete");
@@ -2441,8 +2445,6 @@ public:
                     // status bar
                     if (hour % (8760 / nStatusUpdates) == 0)
                     {
-                        // assume that anyone using this module is chaining with two techs
-                        float techs = 3;
                         percent = percent_complete + 100.0f * ((float)lifetime_idx + 1) / ((float)n_rec_lifetime) / techs;
                         if (!update("", percent, (float)hour)) {
                             throw exec_error("battery", "Simulation canceled at hour " + util::to_string(hour + 1.0) + ".");
