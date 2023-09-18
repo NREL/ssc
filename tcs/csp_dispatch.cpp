@@ -267,9 +267,11 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
             double q_inc = Asf * opt_eff * dni * 1.e-6; //MW
 
             //get thermal efficiency
-            double therm_eff = pointers.col_rec->calculate_thermal_efficiency_approx(pointers.m_weather.ms_outputs, q_inc);
+            double therm_eff = pointers.col_rec->calculate_thermal_efficiency_approx(pointers.m_weather.ms_outputs, q_inc, simloc);
             therm_eff *= params.sf_effadj;
             therm_eff_ave += therm_eff * ave_weight;
+
+            //C_csp_fresnel_collector_receiver x;
 
             //store the predicted field energy output
             // use the cold tank temperature as a surrogate for the loop inlet temperature, as it

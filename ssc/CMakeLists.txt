@@ -39,6 +39,8 @@ set(SSC_SRC
 		cmod_financial_eqns.cpp
 		cmod_financial_eqns.h
 		cmod_fossilgen.cpp
+        cmod_fresnel_physical.cpp
+        cmod_fresnel_physical_iph.cpp
 		cmod_fuelcell.cpp
 		cmod_fuelcell.h
 		cmod_generic_system-builder.cpp
@@ -70,6 +72,7 @@ set(SSC_SRC
 		cmod_mhk_tidal.cpp
 		cmod_mhk_wave.cpp
 		cmod_mspt_sf_and_rec_isolated.cpp
+        cmod_mspt_iph.cpp
 		cmod_poacalib.cpp
         cmod_ptes_design_point.cpp
 		cmod_pv6parmod.cpp
