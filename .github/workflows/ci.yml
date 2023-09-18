@@ -31,6 +31,7 @@ jobs:
       run: |
           sudo apt update
           sudo apt install -y build-essential cmake lsb-release
+          cd $GITHUB_WORKSPACE
           wget -q https://github.com/google/or-tools/releases/download/v9.7/or-tools_amd64_ubuntu-22.04_cpp_v9.7.2996.tar.gz
           tar -xvf or-tools_amd64_ubuntu-22.04_cpp_v9.7.2996.tar.gz
           ORTOOLSDIR=$GITHUB_WORKSPACE/or-tools_amd64_ubuntu-22.04_cpp_v9.7.2996
@@ -105,6 +106,7 @@ jobs:
     
     - name: download OR-Tools
       run: |
+          cd $GITHUB_WORKSPACE
           wget -q https://github.com/google/or-tools/releases/download/v9.7/
           tar -xvf or-tools_x86_64_macOS-13.5_cpp_v9.7.2996.tar.gz
           ORTOOLSDIR=$GITHUB_WORKSPACE/or-tools_x86_64_macOS-13.5_cpp_v9.7.2996
