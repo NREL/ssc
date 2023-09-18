@@ -26,16 +26,15 @@ jobs:
         echo "GTEST=$GTEST" >> $GITHUB_ENV
         SSCDIR=$GITHUB_WORKSPACE/ssc
         echo "SSCDIR=$SSCDIR" >> $GITHUB_ENV
-        ORTOOLSDIR=$GITHUB_WORKSPACE/googletest
-        echo "ORTOOLSDIR=$ORTOOLSDIR" >> $GITHUB_ENV
     
     - name: download OR-Tools
       run: |
-          mkdir ORTOOLSDIR && cd ORTOOLSDIR
           sudo apt update
           sudo apt install -y build-essential cmake lsb-release
           wget -q https://github.com/google/or-tools/releases/download/v9.7/or-tools_amd64_ubuntu-22.04_cpp_v9.7.2996.tar.gz
-          tar -xvf or-tools_amd64_ubuntu-22.04_cpp_v9.7.2996.tar.gz        
+          tar -xvf or-tools_amd64_ubuntu-22.04_cpp_v9.7.2996.tar.gz
+          ORTOOLSDIR=$GITHUB_WORKSPACE/or-tools_amd64_ubuntu-22.04_cpp_v9.7.2996
+          echo "ORTOOLSDIR=$ORTOOLSDIR" >> $GITHUB_ENV
 
     - name: Clone Gtest
       uses: actions/checkout@v2
@@ -103,6 +102,13 @@ jobs:
         SSCDIR=$GITHUB_WORKSPACE/ssc
         echo "SSCDIR=$SSCDIR" >> $GITHUB_ENV
     
+    - name: download OR-Tools
+      run: |
+          wget -q https://github.com/google/or-tools/releases/download/v9.7/
+          tar -xvf or-tools_x86_64_macOS-13.5_cpp_v9.7.2996.tar.gz
+          ORTOOLSDIR=$GITHUB_WORKSPACE/or-tools_x86_64_macOS-13.5_cpp_v9.7.2996
+          echo "ORTOOLSDIR=$ORTOOLSDIR" >> $GITHUB_ENV
+
     - name: Clone Gtest
       uses: actions/checkout@v2
       with:
@@ -128,7 +134,7 @@ jobs:
       run: |
         mkdir ${SSCDIR}/build
         cd ${SSCDIR}/build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DSAM_SKIP_TOOLS=1 -DSAMAPI_EXPORT=0 
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DSAM_SKIP_TOOLS=1 -DSAMAPI_EXPORT=0 -DCMAKE_INSTALL_PREFIX=${ORTOOLSDIR}
 
     - name: Build
       # Build your program with the given configuration
