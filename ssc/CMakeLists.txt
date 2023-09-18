@@ -50,6 +50,8 @@ set(SSC_SRC
 		cmod_grid.h
 		cmod_hcpv.cpp
 		cmod_host_developer.cpp
+		cmod_hybrid.cpp
+		cmod_hybrid_steps.cpp
 		cmod_iec61853par.cpp
 		cmod_inv_cec_cg.cpp
 		cmod_iph_to_lcoefcr.cpp
