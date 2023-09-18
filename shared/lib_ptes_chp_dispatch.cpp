@@ -71,13 +71,13 @@ void PTES_CHP_Dispatch_Data::setDefaultAssumptions(PtesDesign design) {
     e_pb_start0 = 0.0;
 
     // minimum up and down time parameters
-    min_up_down_params.down_time_min = 2.0;
-    min_up_down_params.up_time_min = 2.0;
-    min_up_down_params.down_time0 = 10.0;     // Enable cycle to start up in period 1
-    min_up_down_params.up_time0 = 0.0;
-    min_up_down_params.time_elapsed.clear();
+    min_up_down_p.down_time_min = 2.0;
+    min_up_down_p.up_time_min = 2.0;
+    min_up_down_p.down_time0 = 10.0;     // Enable cycle to start up in period 1
+    min_up_down_p.up_time0 = 0.0;
+    min_up_down_p.time_elapsed.clear();
     for (int t = 0; t < n_periods; t++) {
-        min_up_down_params.time_elapsed.push_back(delta * (t + 1));
+        min_up_down_p.time_elapsed.push_back(delta * (t + 1));
     }
 
     // Heat pump parameters
@@ -233,7 +233,7 @@ void ptes_chp_dispatch::createConstraints() {
     // sum{tp in Tau : 0 <= deltaE[t] - deltaE[tp] < Yu} ycgb[tp] <= y[t] forall t in Tau : deltaE[t] > (Yu-Yu0)*y0
     // sum{tp in Tau : 0 <= deltaE[t] - deltaE[tp] < Yd} ycge[tp] <= 1 - y[t] forall t in Tau : deltaE[t] > (Yd-Yd0)*(1-y0)
     // y_c[t] = y0 forall t in Tau : deltaE[t] <= max{ (Yu - Yu0) * y0 , (Yd - Yd0) * (1 - y0) }
-    create_min_up_down_constraints(bin_vars.y_c, bin_vars.y_cgb, bin_vars.y_cge, params.is_pb_operating0, params.min_up_down_params, "");
+    create_min_up_down_constraints(bin_vars.y_c, bin_vars.y_cgb, bin_vars.y_cge, params.is_pb_operating0, params.min_up_down_p, "");
 
     /*==== Thermal Energy Storage ====*/
     // Storage energy balance
@@ -387,9 +387,9 @@ double ptes_chp_dispatch::rollingHorizonoptimize(int opt_horizon, int roll_horiz
     // for loop to set up model, solve, and save results
     double n_solves = (int)std::ceil(params.n_periods / roll_horizon);
 
-    params.min_up_down_params.time_elapsed.clear();
+    params.min_up_down_p.time_elapsed.clear();
     for (int t = 0; t < opt_horizon; t++) {
-        params.min_up_down_params.time_elapsed.push_back(params.delta * (t + 1));
+        params.min_up_down_p.time_elapsed.push_back(params.delta * (t + 1));
     }
 
     std::clock_t c_start = std::clock();
@@ -455,9 +455,9 @@ void ptes_chp_dispatch::updateInitialConditions(int init_t) {
     params.q_pb0 = params.is_pb_operating0 ? vars.q_c[init_t]->solution_value() : 0.0;
     params.e_pb_start0 = params.is_pb_starting0 ? vars.u_csu[init_t]->solution_value() : 0.0; 
     // Up time and down time
-    params.min_up_down_params.time_elapsed.clear();
+    params.min_up_down_p.time_elapsed.clear();
     for (int t = 0; t < params.n_periods; t++) {
-        params.min_up_down_params.time_elapsed.push_back(params.delta * (t + 1));
+        params.min_up_down_p.time_elapsed.push_back(params.delta * (t + 1));
     }
     double init_up_time = 0.0;
     double init_down_time = 0.0;
@@ -477,8 +477,8 @@ void ptes_chp_dispatch::updateInitialConditions(int init_t) {
             else break;
         }
     }
-    params.min_up_down_params.up_time0 = init_up_time;
-    params.min_up_down_params.down_time0 = init_down_time;
+    params.min_up_down_p.up_time0 = init_up_time;
+    params.min_up_down_p.down_time0 = init_down_time;
     // Heat pump
     params.is_hp_starting0 = bin_vars.y_hsu[init_t]->solution_value() ? true : false;
     params.is_hp_operating0 = bin_vars.y_h[init_t]->solution_value() ? true : false;
