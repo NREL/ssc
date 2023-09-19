@@ -49,7 +49,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 SSCEXPORT int ssc_version()
 {
-	return 282;
+	return 281;
 }
 
 SSCEXPORT const char *ssc_build_info()
@@ -160,8 +160,10 @@ extern module_entry_info
 	cm_entry_wave_file_reader,
 	cm_entry_grid,
 	cm_entry_battery_stateful,
-    cm_entry_csp_subcomponent
-	;
+    cm_entry_csp_subcomponent,
+    cm_entry_hybrid_steps,
+    cm_entry_hybrid
+    ;
 
 /* official module table */
 static module_entry_info *module_table[] = {
@@ -261,7 +263,9 @@ static module_entry_info *module_table[] = {
 	&cm_entry_grid,
 	&cm_entry_battery_stateful,
     &cm_entry_csp_subcomponent,
-	0 };
+    &cm_entry_hybrid_steps,
+    &cm_entry_hybrid,
+0 };
 
 SSCEXPORT ssc_module_t ssc_module_create( const char *name )
 {
@@ -1283,6 +1287,19 @@ SSCEXPORT void ssc_module_extproc_output( ssc_handler_t p_handler, const char *o
 	handler_interface *hi = static_cast<handler_interface*>( p_handler );
 	if (hi)	hi->on_stdout( output_line );
 }
+
+SSCEXPORT ssc_bool_t ssc_module_add_var_info(ssc_module_t p_mod, ssc_info_t v)
+{
+    compute_module* cm = static_cast<compute_module*>(p_mod);
+    if (!p_mod) return 0;
+
+    var_info* vi = static_cast<var_info*>(v);
+    if (!vi) return 0;
+    cm->add_var_info(vi);
+
+    return 1;
+}
+
 
 SSCEXPORT const char *ssc_module_log( ssc_module_t p_mod, int index, int *item_type, float *time )
 {
