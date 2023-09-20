@@ -290,6 +290,10 @@ var_info vtab_battery_outputs[] = {
     { SSC_OUTPUT,        SSC_NUMBER,      "batt_pvs_energy_to_grid_percent",           "PV smoothing energy to grid percent (loss due to curtail and battery loss)",                               "%",      "",                       "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_NUMBER,      "batt_pvs_energy_to_grid_percent_sam",       "PV smoothing energy to grid percent actual (loss due to curtail and battery loss)",                               "%",      "",                       "Battery",       "",                           "",                              "" },
 
+    // Self-consumption
+    { SSC_OUTPUT,        SSC_NUMBER,      "num_ts_load_met_by_system",                  "Number of timesteps the electric load met by system (year 1)",     "",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "percent_ts_load_met_by_system",              "Percent of timesteps the electric load met by system (year 1)",     "",      "",                       "Battery",       "",                           "",                              "" },
+
     // validation outputs at ramp interval - use for debugging and remove for release
 /*
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_outpower_vec",                          "PV smoothing outpower at ramp interval",                                "kW",      "",                       "Battery",       "",                           "",                              "" },
@@ -917,6 +921,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     outCritLoadUnmet = 0;
     outUnmetLosses = 0;
     outAverageCycleEfficiency = 0;
+    outTimestepsLoadMetBySystem = 0;
     outSystemChargePercent = 0;
     outAnnualSystemChargeEnergy = 0;
     outAnnualGridChargeEnergy = 0;
@@ -997,6 +1002,10 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
         {
             outGridPowerTarget = vt.allocate("grid_power_target", nrec * nyears);
             outBattPowerTarget = vt.allocate("batt_power_target", nrec * nyears);
+        }
+        if (batt_vars->batt_dispatch == dispatch_t::SELF_CONSUMPTION)
+        {
+
         }
     }
     else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
@@ -2093,6 +2102,13 @@ void battstor::calculate_monthly_and_annual_outputs(compute_module& cm)
         cm.accumulate_monthly_for_year("system_to_load", "monthly_system_to_load", _dt_hour, step_per_hour);
         cm.accumulate_monthly_for_year("batt_to_load", "monthly_batt_to_load", _dt_hour, step_per_hour);
         cm.accumulate_monthly_for_year("grid_to_load", "monthly_grid_to_load", _dt_hour, step_per_hour);
+
+        if (batt_vars->batt_dispatch == dispatch_t::SELF_CONSUMPTION)
+        {
+            cm.assign("num_ts_load_met_by_system", (ssc_number_t)outTimestepsLoadMetBySystem);
+            ssc_number_t TimestepsMetPercent = (outTimestepsLoadMetBySystem / step_per_year) * 100.0;
+            cm.assign("percent_ts_load_met_by_system", (ssc_number_t)TimestepsMetPercent);
+        }
     }
     else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
     {

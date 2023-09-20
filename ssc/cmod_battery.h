@@ -454,6 +454,7 @@ struct battstor
 	double outAverageCycleEfficiency;
 	double outAverageRoundtripEfficiency;
 	double outSystemChargePercent;
+    int outTimestepsLoadMetBySystem;
 };
 
 #endif
