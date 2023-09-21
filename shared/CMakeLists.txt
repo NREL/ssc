@@ -147,6 +147,13 @@ set( DEPENDENCIES
 
 find_package(re2 CONFIG REQUIRED)
 find_package(Eigen3 CONFIG REQUIRED)
+
+add_library(XPRESS::XPRESS UNKNOWN IMPORTED)
+set_target_properties(XPRESS::XPRESS PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES "${XPRESS_ROOT}\\include"
+      IMPORTED_LOCATION "${XPRESS_ROOT}\\lib\\xprs.lib")
+target_link_libraries(shared XPRESS::XPRESS)
+
 find_package(ortools CONFIG REQUIRED)
 target_link_libraries(shared ortools::ortools)
 
