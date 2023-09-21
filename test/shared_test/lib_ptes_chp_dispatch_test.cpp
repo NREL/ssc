@@ -46,7 +46,7 @@ using namespace operations_research;
 char input_data_path[512];
 int data1 = sprintf(input_data_path, "%s/test/input_cases/ortools/", std::getenv("SSCDIR"));
 
-TEST(libORToolsTest, test)
+TEST(lib_ptes_chp_dispatch_test, test)
 {
 	bool build_for_server = false;
     bool run_rolling_horizon_cases = false;

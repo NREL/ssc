@@ -53,7 +53,7 @@ GTEST_API_ int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
 
     //    filter to include
-    //    ::testing::GTEST_FLAG(filter) = "libORToolsTest*";
+    //    ::testing::GTEST_FLAG(filter) = "lib_ptes_chp_dispatch_test*";
 
     
     //    filter to exclude

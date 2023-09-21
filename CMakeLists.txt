@@ -16,7 +16,7 @@ option(SAM_SKIP_TESTS "Skips building tests" OFF)
 
 option(SAMAPI_EXPORT "Export of ssc binaries to the SAM_api directory; for Unix, compile ssc libraries for SAM_api" ON)
 
-option(SKIP_ORTOOLS "Skips building OR-Tools" OFF)
+option(USE_XPRESS "Adds support for the XPRESS Solver" OFF)
 
 include(CMakeDependentOption)
 
