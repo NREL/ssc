@@ -81,10 +81,6 @@ set(SSC_SRC
 		cmod_pvsamv1_eqns.cpp
 		cmod_pvsamv1_eqns.h
 		cmod_pvsandiainv.cpp
-		cmod_pvwattsv0.cpp
-		cmod_pvwattsv1.cpp
-		cmod_pvwattsv1_1ts.cpp
-		cmod_pvwattsv1_poa.cpp
 		cmod_pvwattsv5.cpp
 		cmod_pvwattsv7.cpp
 		cmod_pvwattsv8.cpp
