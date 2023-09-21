@@ -311,6 +311,15 @@ bool compute_module::verify(const std::string &phase, int check_var_type) {
                     ret =  false;
                 }
             }
+            else { // SAM issue 1184 - if variable present check constraints even if not required - can check type. too.
+                if (var_data* dat = lookup(vi->name)) {
+                    std::string fail_text;
+                    if (!check_constraints(vi->name, fail_text)) {
+                        log(fail_text, SSC_ERROR);
+                        ret = false;
+                    }
+                }
+            }
         }
     }
 
