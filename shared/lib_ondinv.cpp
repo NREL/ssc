@@ -277,7 +277,7 @@ void ond_inverter::initializeManual()
 				xSamples[0] = ondspl_X[k];
 				samples.add_sample(xSamples, ondspl_Y[k]);
 			}
-			m_bspline3[j] = std::make_unique<BSpline>(bspline_interpolator(samples, 3));
+			m_bspline3.push_back(std::make_unique<BSpline>(bspline_interpolator(samples, 3)));
 
 		}
 		ondIsInitialized = true;
