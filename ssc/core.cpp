@@ -315,7 +315,7 @@ bool compute_module::verify(const std::string &phase, int check_var_type) {
                 if (var_data* dat = lookup(vi->name)) {
                     std::string fail_text;
                     if (!check_constraints(vi->name, fail_text)) {
-                        log(fail_text, SSC_ERROR);
+                        log(std::string(vi->name) + ":" + fail_text, SSC_ERROR);
                         ret = false;
                     }
                 }
