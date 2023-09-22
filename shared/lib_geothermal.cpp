@@ -886,6 +886,7 @@ double CGeothermalAnalyzer::GetProductionPumpWorkft(void)
     mu_correction = 1 + (4.02401e-18 * pow(physics::CelciusToFarenheit(T_star), 5.736882)) * (P_ratio - 1);
     flow_cubic = flow_lbh / (3600 * rho_sat * rho_correction);
     vel_well = flow_cubic / A;
+    double vel_well_flash = vel_well;
     Re_well = vel_well * D_well_ft * rho_sat * rho_correction / (viscosity * mu_correction);
     friction_factor_smooth = pow(0.79 * log(Re_well) - 1.64, -2);
     //Serghide
@@ -904,6 +905,12 @@ double CGeothermalAnalyzer::GetProductionPumpWorkft(void)
     //Flashing in well bore
     double Pres_avail_before_flashing = P_upper_bottom_interval - P_sat;
     double head_avail = ((Pres_avail_before_flashing * 144) / (rho_sat*rho_correction)) / (1 + friction_head_loss);
+    if (mo_geo_in.me_ct == FLASH) {
+        friction_head_psid2 = friction_head_loss * rho_sat / 144.0 * head_avail;
+    }
+    else {
+        friction_head_psid2 = friction_head_loss * rho_sat / 144.0 * P_available_head;
+    }
     double depth_to_liner = (L_int) * physics::FT_PER_METER;
     double pump_setting = depth_to_liner - P_available_head;
     flow = mo_geo_in.md_ProductionFlowRateKgPerS; //kg/s
@@ -938,6 +945,23 @@ double CGeothermalAnalyzer::GetProductionPumpWorkft(void)
     friction_head_loss = (f / D_well_ft) * pow(vel_well, 2) / (2 * 32.174);
     friction_head_loss_ft = friction_head_loss * pump_setting;
     double friction_head_psid3 = friction_head_loss_ft * rho_sat * rho_correction / 144;
+    double depth_to_flashing = depth_to_liner - head_avail;
+    double density_change_a = (33.623 * exp(-0.035468 * (GetResourceTemperatureC() - DT_prod_well(mo_geo_in.md_dtProdWellChoice))));
+    double density_change_b = 0.42512 * exp(0.002486 * (GetResourceTemperatureC() - DT_prod_well(mo_geo_in.md_dtProdWellChoice)));
+    double density_change_c = 1.0;
+    double eff_density_change = density_change_a * pow(depth_to_flashing, density_change_b) + density_change_c;
+    double est_wellhead_pressure = P_sat - (depth_to_flashing * rho_sat / (eff_density_change * 144.0));
+    double vel_eff = vel_well_flash * eff_density_change;
+    double friction_head_loss_eff = friction_head_loss * pow(vel_eff / vel_well_flash, 2);
+    double friction_head_loss_eff_ft = friction_head_loss_eff * depth_to_flashing;
+    if (mo_geo_in.me_ct == FLASH) {
+        friction_head_psid3 = friction_head_loss_eff_ft * rho_sat / (eff_density_change * 144.0);
+    }
+    /*
+    else {
+        friction_head_loss_ft = friction_head_loss * pump_setting;
+        friction_head_psid3 = friction_head_loss_ft * rho_sat * rho_correction / 144;
+    }*/
     mo_geo_in.md_ProdWellFriction = friction_head_psid1 + friction_head_psid2 + friction_head_psid3;
     double pump_lift = pump_setting + friction_head_loss_ft;
     double ideal_pumping_power = flow * pump_lift * 1 / physics::FT_PER_METER; //ft-lb/h
