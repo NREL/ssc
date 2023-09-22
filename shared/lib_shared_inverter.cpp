@@ -39,14 +39,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_util.h"
 
 SharedInverter::SharedInverter(int inverterType, size_t numberOfInverters,
-    sandia_inverter_t* sandiaInverter, partload_inverter_t* partloadInverter, ond_inverter* ondInverter)
+    sandia_inverter_t* sandiaInverter, partload_inverter_t* partloadInverter, ond_inverter* ondInverter, size_t numberOfInvertersClipping)
 {
     m_inverterType = inverterType;
     m_numInverters = numberOfInverters;
+    m_numInvertersClipping = numberOfInvertersClipping;
     m_sandiaInverter = sandiaInverter;
     m_partloadInverter = partloadInverter;
     m_ondInverter = ondInverter;
     m_tempEnabled = false;
+    m_subhourlyClippingEnabled = false;
 
     if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
         m_nameplateAC_kW = m_numInverters * m_sandiaInverter->Paco * util::watt_to_kilowatt;
@@ -57,6 +59,7 @@ SharedInverter::SharedInverter(int inverterType, size_t numberOfInverters,
 
     powerDC_kW = 0.;
     powerAC_kW = 0.;
+    powerAC_kW_clipping = 0.;
     efficiencyAC = 96.;
     powerClipLoss_kW = 0.;
     powerConsumptionLoss_kW = 0.;
@@ -78,8 +81,11 @@ SharedInverter::SharedInverter(const SharedInverter& orig) {
     m_ondInverter = orig.m_ondInverter;
     efficiencyAC = orig.efficiencyAC;
 
+    m_subhourlyClippingEnabled = orig.m_subhourlyClippingEnabled;
+
     powerDC_kW = orig.powerDC_kW;
     powerAC_kW = orig.powerAC_kW;
+    powerAC_kW_clipping = orig.powerAC_kW_clipping;
     powerClipLoss_kW = orig.powerClipLoss_kW;
     powerConsumptionLoss_kW = orig.powerConsumptionLoss_kW;
     powerNightLoss_kW = orig.powerNightLoss_kW;
@@ -244,6 +250,7 @@ double SharedInverter::getInverterDCMaxPower(double p_dc_rated)
 void SharedInverter::calculateACPower(const double powerDC_kW_in, const double DCStringVoltage, double tempC)
 {
     double P_par, P_lr;
+    double P_par_clipping, P_lr_clipping;
     bool negativePower = powerDC_kW_in < 0 ? true : false;
 
 
@@ -253,6 +260,7 @@ void SharedInverter::calculateACPower(const double powerDC_kW_in, const double D
     // Power quantities go in and come out in units of W
     double powerDC_Watts = powerDC_kW_in * util::kilowatt_to_watt;
     double powerAC_Watts = 0.0;
+    double powerAC_Watts_clipping = 0.0;
     Tdry_C = tempC;
     StringV = DCStringVoltage;
     double tempLoss = 0.0;
@@ -260,7 +268,11 @@ void SharedInverter::calculateACPower(const double powerDC_kW_in, const double D
     if (m_tempEnabled) {
         calculateTempDerate(DCStringVoltage, tempC, powerDC_Watts, power_ratio, tempLoss);
     }
+    /*
+    if (m_numInvertersClipping > 0) {
+        m_sandiaInverter->acpower(std::abs(powerDC_Watts) / m_numInvertersClipping, DCStringVoltage, &powerAC_Watts_clipping, &P_par_clipping, &P_lr_clipping, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW);
 
+    }*/
 
     if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
         m_sandiaInverter->acpower(std::abs(powerDC_Watts) / m_numInverters, DCStringVoltage, &powerAC_Watts, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW);
@@ -275,7 +287,11 @@ void SharedInverter::calculateACPower(const double powerDC_kW_in, const double D
         efficiencyAC = NONE_INVERTER_EFF;
         powerAC_Watts = powerDC_Watts * efficiencyAC;
     }
-
+    /*
+    if (m_subhourlyClippingEnabled == 1) {
+        powerAC_kW_clipping = powerAC_Watts * m_numInverters * util::watt_to_kilowatt;
+        return;
+    }*/
 
     // Convert units to kW- no need to scale to system size because passed in as power to total number of inverters
     powerDC_kW = powerDC_Watts * util::watt_to_kilowatt;
@@ -284,6 +300,56 @@ void SharedInverter::calculateACPower(const double powerDC_kW_in, const double D
     // In event shared inverter is charging a battery only, need to re-convert to negative power
     if (negativePower) {
         powerAC_kW = -1.0 * std::abs(powerAC_kW);
+    }
+}
+
+void SharedInverter::calculateACPower(const double powerDC_kW_in, const double DCStringVoltage, double tempC, bool clippingEnabled)
+{
+    double P_par, P_lr;
+    double P_par_clipping, P_lr_clipping;
+    double efficiencyAC_clipping, powerClipLoss_kW_clipping, powerConsumptionLoss_kW_clipping, powerNightLoss_kW_clipping = 0;
+    bool negativePower = powerDC_kW_in < 0 ? true : false;
+
+
+    dcWiringLoss_ond_kW = 0.0;
+    acWiringLoss_ond_kW = 0.0;
+
+    // Power quantities go in and come out in units of W
+    double powerDC_Watts = powerDC_kW_in * util::kilowatt_to_watt;
+    double powerAC_Watts = 0.0;
+    double powerAC_Watts_clipping = 0.0;
+    Tdry_C = tempC;
+    StringV = DCStringVoltage;
+    double tempLoss = 0.0;
+    double power_ratio = 1.0;
+    if (m_tempEnabled) {
+        calculateTempDerate(DCStringVoltage, tempC, powerDC_Watts, power_ratio, tempLoss);
+    }
+
+    if (clippingEnabled) {
+        m_sandiaInverter->acpower(std::abs(powerDC_Watts) / m_numInvertersClipping, DCStringVoltage, &powerAC_Watts_clipping, &P_par_clipping, &P_lr_clipping, &efficiencyAC_clipping, &powerClipLoss_kW_clipping, &powerConsumptionLoss_kW_clipping, &powerNightLoss_kW_clipping);
+
+    }
+    /*
+    if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
+        m_sandiaInverter->acpower(std::abs(powerDC_Watts) / m_numInverters, DCStringVoltage, &powerAC_Watts, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW);
+    else if (m_inverterType == PARTLOAD_INVERTER)
+        m_partloadInverter->acpower(std::abs(powerDC_Watts) / m_numInverters, &powerAC_Watts, &P_lr, &P_par, &efficiencyAC, &powerClipLoss_kW, &powerNightLoss_kW);
+    else if (m_inverterType == OND_INVERTER)
+        m_ondInverter->acpower(std::abs(powerDC_Watts) / m_numInverters, DCStringVoltage, tempC, &powerAC_Watts, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW, &dcWiringLoss_ond_kW, &acWiringLoss_ond_kW);
+    else if (m_inverterType == NONE) {
+        powerClipLoss_kW = 0.;
+        powerConsumptionLoss_kW = 0.;
+        powerNightLoss_kW = 0.;
+        efficiencyAC = NONE_INVERTER_EFF;
+        powerAC_Watts = powerDC_Watts * efficiencyAC;
+    }
+    */
+
+    if (clippingEnabled) {
+        m_subhourlyClippingEnabled = true;
+        powerAC_kW_clipping = powerAC_Watts_clipping * m_numInvertersClipping * util::watt_to_kilowatt;
+        return;
     }
 }
 
@@ -410,4 +476,42 @@ double SharedInverter::getMaxPowerEfficiency()
 double SharedInverter::getACNameplateCapacitykW()
 {
     return m_nameplateAC_kW;
+}
+
+util::matrix_t<double> SharedInverter::SubhourlyClippingMatrix()
+{
+    const double Subhourly_Clipping_Matrix[21][21] =
+    {
+        {0, -2, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4},
+        {-0.001, 1.65e-08, 2.17e-08, 2.48e-08, 3.09e-08, 4.49e-08, 6.7e-08, 1.06e-07, 1.74e-07, 2.67e-07, 3.97e-07, 5.71e-07, 8.09e-07, 1.11e-06, 1.55e-06, 2.03e-06, 2.38e-06, 2.84e-06, 2.85e-06, 4.86e-06, 3.12e-08},
+        {0.05, 6.14e-08, 1.07e-07, 1.39e-07, 2.05e-07, 3.72e-07, 7.5e-07, 1.49e-06, 2.57e-06, 4.02e-06, 5.87e-06, 8.09e-06, 1.06e-05, 1.33e-05, 1.64e-05, 1.91e-05, 2.15e-05, 2.45e-05, 2.65e-05, 2.75e-05, 0},
+        {0.1, 7.63e-08, 1.45e-07, 1.89e-07, 2.84e-07, 5.77e-07, 1.28e-06, 2.72e-06, 4.89e-06, 7.72e-06, 1.12e-05, 1.5e-05, 1.9e-05, 2.28e-05, 2.66e-05, 2.96e-05, 3.04e-05, 3.09e-05, 3e-05, 2.9e-05, 0},
+        {0.15, 8.58e-08, 1.67e-07, 2.16e-07, 3.22e-07, 6.78e-07, 1.67e-06, 3.81e-06, 7.09e-06, 1.12e-05, 1.59e-05, 2.1e-05, 2.54e-05, 2.92e-05, 3.24e-05, 3.44e-05, 3.31e-05, 3.36e-05, 3.13e-05, 7.77e-05, 0},
+        {0.2, 9.56e-08, 1.76e-07, 2.34e-07, 3.51e-07, 7.77e-07, 2.05e-06, 4.87e-06, 9.19e-06, 1.48e-05, 2.07e-05, 2.68e-05, 3.13e-05, 3.43e-05, 3.62e-05, 3.67e-05, 3.39e-05, 2.86e-05, 1.8e-05, 1.22e-05, 0},
+        {0.25, 8.82e-08, 1.83e-07, 2.52e-07, 3.9e-07, 7.96e-07, 2.18e-06, 5.35e-06, 1.06e-05, 1.71e-05, 2.41e-05, 3.01e-05, 3.42e-05, 3.66e-05, 3.76e-05, 3.66e-05, 3.36e-05, 2.87e-05, 3.02e-05, 2.5e-06, 0},
+        {0.3, 8.79e-08, 1.77e-07, 2.35e-07, 3.56e-07, 7.78e-07, 2.28e-06, 6.03e-06, 1.22e-05, 1.98e-05, 2.69e-05, 3.25e-05, 3.56e-05, 3.64e-05, 3.59e-05, 3.33e-05, 2.89e-05, 2.49e-05, 1.66e-05, 7.82e-06, 0},
+        {0.35, 8.77e-08, 1.74e-07, 2.35e-07, 3.6e-07, 7.71e-07, 2.3e-06, 6.38e-06, 1.35e-05, 2.19e-05, 2.94e-05, 3.38e-05, 3.54e-05, 3.49e-05, 3.3e-05, 2.96e-05, 2.48e-05, 2e-05, 1.24e-05, 5.89e-06, 0},
+        {0.4, 7.67e-08, 1.5e-07, 2.04e-07, 3.19e-07, 6.85e-07, 2.3e-06, 6.85e-06, 1.46e-05, 2.35e-05, 3e-05, 3.31e-05, 3.29e-05, 3.07e-05, 2.81e-05, 2.49e-05, 2.13e-05, 1.66e-05, 1.55e-05, 8.9e-06, 0},
+        {0.45, 6.85e-08, 1.26e-07, 1.74e-07, 2.54e-07, 5.75e-07, 2.05e-06, 6.49e-06, 1.43e-05, 2.28e-05, 2.81e-05, 2.93e-05, 2.77e-05, 2.47e-05, 2.22e-05, 1.95e-05, 1.72e-05, 1.48e-05, 1.13e-05, 9.97e-06, 0},
+        {0.5, 6e-08, 1.07e-07, 1.46e-07, 2.14e-07, 4.76e-07, 1.87e-06, 6.42e-06, 1.44e-05, 2.19e-05, 2.5e-05, 2.44e-05, 2.15e-05, 1.85e-05, 1.67e-05, 1.51e-05, 1.23e-05, 1.08e-05, 6.83e-06, 3.94e-06, 0},
+        {0.55, 5.45e-08, 8.43e-08, 1.1e-07, 1.62e-07, 3.57e-07, 1.44e-06, 5.31e-06, 1.24e-05, 1.8e-05, 1.92e-05, 1.74e-05, 1.45e-05, 1.24e-05, 1.11e-05, 1.02e-05, 9.23e-06, 8.33e-06, 7.41e-06, 1.03e-05, 0},
+        {0.6, 5.04e-08, 6.61e-08, 7.87e-08, 1.04e-07, 2.43e-07, 1.08e-06, 4.34e-06, 1e-05, 1.35e-05, 1.28e-05, 1.05e-05, 8.57e-06, 7.34e-06, 6.72e-06, 6.32e-06, 5.98e-06, 5.48e-06, 5.91e-06, 7.29e-06, 1.29e-05},
+        {0.65, 4.65e-08, 5.31e-08, 5.61e-08, 6.96e-08, 1.64e-07, 7.59e-07, 3.32e-06, 7.41e-06, 9e-06, 7.31e-06, 5.61e-06, 4.63e-06, 4.02e-06, 3.77e-06, 3.62e-06, 3.75e-06, 4.05e-06, 4.68e-06, 1.28e-06, 0},
+        {0.7, 4.32e-08, 4.14e-08, 3.93e-08, 4.27e-08, 8.67e-08, 4.76e-07, 2.34e-06, 5.12e-06, 4.83e-06, 3.1e-06, 2.29e-06, 1.92e-06, 1.7e-06, 1.6e-06, 1.51e-06, 1.76e-06, 1.86e-06, 2.76e-06, 2.81e-06, 1.47e-05},
+        {0.75, 3.67e-08, 2.98e-08, 2.64e-08, 2.72e-08, 5.66e-08, 3.51e-07, 1.83e-06, 3.31e-06, 1.93e-06, 9.42e-07, 6.97e-07, 6.06e-07, 5.35e-07, 5.02e-07, 4.92e-07, 5.28e-07, 6.97e-07, 1.11e-06, 1.85e-06, 0},
+        {0.8, 2.4e-08, 1.66e-08, 1.46e-08, 1.32e-08, 2.8e-08, 2.74e-07, 1.42e-06, 1.67e-06, 5.05e-07, 1.83e-07, 1.31e-07, 1.1e-07, 9.81e-08, 9.13e-08, 9.04e-08, 8.69e-08, 9.37e-08, 3.13e-08, -6.82e-21, 0},
+        {0.85, 1.02e-08, 4.91e-09, 5.46e-09, 6.62e-09, 1.35e-08, 2.19e-07, 8.5e-07, 4.94e-07, 7e-08, 1.92e-08, 1.37e-08, 1.12e-08, 1e-08, 8.96e-09, 9.5e-09, 8.62e-09, 1.65e-08, 3.26e-08, 1.5e-07, 0},
+        {0.9, 9.96e-10, 3.15e-09, 2.89e-09, 3.44e-09, 3.53e-09, 1.49e-07, 4.09e-07, 9.15e-08, 1.53e-09, -2.09e-20, -6.38e-21, -4.12e-21, -1.64e-20, -1.97e-20, -1.74e-20, -1.63e-20, -6.11e-21, -1.17e-20, 0, 0},
+        {0.95, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+
+    };
+    util::matrix_t<double> sub_clipping_matrix(21, 21);
+    for (int i = 0; i < 21; i++) {
+        for (int j = 0; j < 21; j++) {
+            sub_clipping_matrix.at(i, j) = Subhourly_Clipping_Matrix[i][j];
+        }
+    }
+
+    return sub_clipping_matrix;
+
 }

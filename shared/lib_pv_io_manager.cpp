@@ -678,6 +678,12 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO* 
     }
 
     numberOfInverters = cm->as_integer("inverter_count");
+    
+    dcNameplate = cm->as_double("system_capacity");
+    //numberOfInvertersClipping = cm->as_integer("num_inverter_subhourly_clipping");
+    numberOfInvertersClipping = dcNameplate / (Inverter->ratedACOutput / 1000);
+    
+
     ratedACOutput = Inverter->ratedACOutput * numberOfInverters;
     acDerate = 1 - cm->as_double("acwiring_loss") / 100;
     acLossPercent = (1 - acDerate) * 100;
@@ -689,7 +695,7 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO* 
     enableSnowModel = cm->as_boolean("en_snow_model");
 
     // The shared inverter of the PV array and a tightly-coupled DC connected battery
-    std::unique_ptr<SharedInverter> tmpSharedInverter(new SharedInverter(Inverter->inverterType, numberOfInverters, &Inverter->sandiaInverter, &Inverter->partloadInverter, &Inverter->ondInverter));
+    std::unique_ptr<SharedInverter> tmpSharedInverter(new SharedInverter(Inverter->inverterType, numberOfInverters, &Inverter->sandiaInverter, &Inverter->partloadInverter, &Inverter->ondInverter, numberOfInvertersClipping));
     m_sharedInverter = std::move(tmpSharedInverter);
 
     // Register shared inverter with inverter_IO
@@ -859,6 +865,10 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
             p_derateSelfShading.push_back(cm->allocate(prefix + "ss_derate", numberOfWeatherFileRecords));
             p_derateSelfShadingDiffuse.push_back(cm->allocate(prefix + "ss_diffuse_derate", numberOfWeatherFileRecords));
             p_derateSelfShadingReflected.push_back(cm->allocate(prefix + "ss_reflected_derate", numberOfWeatherFileRecords));
+            p_DNIIndex.push_back(cm->allocate(prefix + "dni_index", numberOfWeatherFileRecords));
+            p_poaBeamFrontCS.push_back(cm->allocate(prefix + "poa_beam_front_cs", numberOfWeatherFileRecords));
+            p_poaDiffuseFrontCS.push_back(cm->allocate(prefix + "poa_diffuse_front_cs", numberOfWeatherFileRecords));
+            p_poaGroundFrontCS.push_back(cm->allocate(prefix + "poa_ground_front_cs", numberOfWeatherFileRecords));
 
             if (enableSnowModel) {
                 p_snowLoss.push_back(cm->allocate(prefix + "snow_loss", numberOfWeatherFileRecords));
@@ -921,12 +931,17 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 
     p_inverterACOutputPreLoss = cm->allocate("ac_gross", numberOfWeatherFileRecords);
     p_acWiringLoss = cm->allocate("ac_wiring_loss", numberOfWeatherFileRecords);
+    p_ClippingPotential = cm->allocate("clipping_potential", numberOfWeatherFileRecords);
     p_transmissionLoss = cm->allocate("ac_transmission_loss", numberOfWeatherFileRecords);
     p_acPerfAdjLoss = cm->allocate("ac_perf_adj_loss", numberOfWeatherFileRecords);
     p_acLifetimeLoss = cm->allocate("ac_lifetime_loss", numberOfWeatherFileRecords);
     p_dcLifetimeLoss = cm->allocate("dc_lifetime_loss", numberOfWeatherFileRecords);
     p_systemDCPower = cm->allocate("dc_net", numberOfLifetimeRecords);
     p_systemACPower = cm->allocate("gen", numberOfLifetimeRecords);
+
+    p_systemDCPowerCS = cm->allocate("dc_net_clearsky", numberOfLifetimeRecords);
+    p_subhourlyClippingLoss = cm->allocate("subhourly_clipping_loss", numberOfLifetimeRecords);
+    p_subhourlyClippingLossFactor = cm->allocate("subhourly_clipping_loss_factor", numberOfLifetimeRecords);
 
     if (Simulation->useLifetimeOutput)
     {
