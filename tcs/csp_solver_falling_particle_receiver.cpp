@@ -1056,11 +1056,11 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
                         qabs_approx = (1.0 - soln.rhoc.at(j, i) - soln.tauc.at(j, i) + rhow * soln.tauc.at(j, i) + rhow * (1.0 - vf_to_ap) * soln.rhoc.at(j, i)) * soln.q_dot_inc.at(j, i); // Approximate solar energy absorbed by the particle curtain (W/m2)
                         qnet_approx = qabs_approx - hadv * fwind * (Tp.at(j, i) - soln.T_amb) - m_curtain_emis * CSP::sigma * pow(Tp.at(j, i), 4);  //Approximate net heat transfer rate using curtain temperature at prior element
                         dh_approx = qnet_approx * (dy / (soln.phip.at(j + 1, i) * soln.thc.at(j + 1, i) * soln.vel.at(j + 1, i) * particle_density));
-                        Tp.at(j + 1, i) = Tp.at(j, i) + dh_approx / cp;
+                        Tp.at(j + 1, i) = max(T_cold_in_rec, Tp.at(j, i) + dh_approx / cp);
                     }
 
                     qnet_approx = (1.0 - rhow)*(1.0 + rhow*soln.rhoc.at(j,i)) * (m_curtain_emis * CSP::sigma * pow(Tp.at(j, i), 4) + soln.tauc.at(j, i) * soln.q_dot_inc.at(j, i));     // Approximate radiative heat transfer incoming to the back wall (W/m2)
-                    Tw.at(j, i) = pow(qnet_approx / (m_cav_emis * CSP::sigma), 0.25);
+                    Tw.at(j, i) = max(T_cold_in_rec, pow(qnet_approx / (m_cav_emis * CSP::sigma), 0.25));
 
                     flux_avg += soln.q_dot_inc.at(j, i) / (m_n_x*m_n_y);
                     rhoc_avg += soln.rhoc.at(j, i) / (m_n_x * m_n_y);
@@ -1068,7 +1068,7 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
                 }
             }
             qnet_approx = (1.0 - vf_to_ap) * m_cav_emis * (rhoc_avg * flux_avg + Ec_avg);
-            Twf = max(T_cold_in, pow(qnet_approx / (m_cav_emis * CSP::sigma), 0.25));  // Initial guess for front wall temperature
+            Twf = max(T_cold_in_rec, pow(qnet_approx / (m_cav_emis * CSP::sigma), 0.25));  // Initial guess for front wall temperature
         }
 
 
@@ -1288,6 +1288,14 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
             Tp = Tpnew;
             Tw = Twnew;
             Twf = Twfnew;
+
+            // Stop iterations for very low outlet temperature, or if the solution in the previous iteration failed 
+            if (Q_thermal != Q_thermal)
+                break;
+
+            Tp_out = calculate_mass_wtd_avg_exit(mdot_per_elem, Tp);  // Mass-weighted average particle exit temperature from receiver [K]
+            if (Tp_out < 0.0)
+                break;
         }
 
         if (!converged)
@@ -1299,10 +1307,9 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
     double Tp_out_after_transport = Tp_out - m_Q_dot_transport_loss_hot / cp / soln.m_dot_tot;  // Outlet temperature accounting from loss from hot particle transport
 
 
-    if (Tp_out <= T_cold_in)
+    if (Tp_out <= T_cold_in || Q_thermal != Q_thermal)
     {
         rec_is_off = true;
-        converged = false;
     }
 
 
@@ -1320,11 +1327,8 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
     soln.converged = converged;
 	soln.rec_is_off = rec_is_off;
 
-	if (!soln.rec_is_off)
-	{
-        soln.T_particle_hot = Tp_out_after_transport;
-        soln.T_particle_hot_rec = Tp_out;
-	}
+    soln.T_particle_hot = Tp_out_after_transport;
+    soln.T_particle_hot_rec = Tp_out;
 
 	return;
 
@@ -1441,7 +1445,7 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
         }
 
         // If outlet temperature is below the target, compare current solution with previously stored solutions to identify bounds
-        else 
+        else if (soln.converged)
         {
             for (int i = 0; i < qq; i++)  
             {
@@ -1488,6 +1492,12 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
         //--- Stopping criteria
 
         if (m_dot_guess < 1.E-5 || qq >= nmax)
+        {
+            soln.rec_is_off = true;
+            break;
+        }
+
+        if (soln.Q_thermal < 0.0 || soln.Q_thermal != soln.Q_thermal)
         {
             soln.rec_is_off = true;
             break;
