@@ -291,8 +291,8 @@ var_info vtab_battery_outputs[] = {
     { SSC_OUTPUT,        SSC_NUMBER,      "batt_pvs_energy_to_grid_percent_sam",       "PV smoothing energy to grid percent actual (loss due to curtail and battery loss)",                               "%",      "",                       "Battery",       "",                           "",                              "" },
 
     // Self-consumption
-    { SSC_OUTPUT,        SSC_NUMBER,      "num_ts_load_met_by_system",                  "Number of timesteps the electric load met by system (year 1)",     "",      "",                       "Battery",       "",                           "",                              "" },
-    { SSC_OUTPUT,        SSC_NUMBER,      "percent_ts_load_met_by_system",              "Percent of timesteps the electric load met by system (year 1)",     "",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "num_ts_load_met_by_system",                  "Number of timesteps electric load met by system (year 1)",     "",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "percent_ts_load_met_by_system",              "Percent of timesteps electric load met by system (year 1)",     "",      "",                       "Battery",       "",                           "",                              "" },
 
     // validation outputs at ramp interval - use for debugging and remove for release
 /*
@@ -1911,6 +1911,12 @@ void battstor::outputs_topology_dependent()
         outSystemToLoad[index] = (ssc_number_t)(dispatch_model->power_pv_to_load());
         outBatteryToLoad[index] = (ssc_number_t)(dispatch_model->power_battery_to_load());
         outGridToLoad[index] = (ssc_number_t)(dispatch_model->power_grid_to_load());
+
+        if (batt_vars->batt_dispatch == dispatch_t::SELF_CONSUMPTION)
+        {
+            if (outGridToLoad[index] > 0.0)
+                    outTimestepsLoadMetBySystem++;
+        }
 
         if (batt_vars->batt_dispatch != dispatch_t::MANUAL)
         {
