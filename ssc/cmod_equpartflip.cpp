@@ -2292,7 +2292,7 @@ public:
 		depr_fedbas_total = depr_fedbas_macrs_5 + depr_fedbas_macrs_15 + depr_fedbas_sl_5 + depr_fedbas_sl_15 + depr_fedbas_sl_20 + depr_fedbas_sl_39 + depr_fedbas_custom;
 
 		purchase_of_property = -cost_installed + cf.at(CF_reserve_om, 0) + cf.at(CF_reserve_receivables, 0);
-		issuance_of_equity = cost_installed - (ibi_total + cbi_total);
+        issuance_of_equity = cost_installed;// -(ibi_total + cbi_total);
 
 		equity_tax_investor = tax_investor_equity_frac * issuance_of_equity;
 
@@ -2318,7 +2318,7 @@ public:
 			if (i==0) cf.at(CF_project_investing_activities,i) += purchase_of_property;
 
 			cf.at(CF_project_financing_activities,i) = 0;
-			if (i==0) cf.at(CF_project_financing_activities,i) += issuance_of_equity + ibi_total + cbi_total;
+            if (i == 0) cf.at(CF_project_financing_activities, i) += issuance_of_equity;// +ibi_total + cbi_total;
 
 			cf.at(CF_pretax_cashflow,i) = cf.at(CF_project_operating_activities,i) + cf.at(CF_project_investing_activities,i) + cf.at(CF_project_financing_activities,i);
 

@@ -2739,7 +2739,7 @@ public:
 			if (i==0) cf.at(CF_project_investing_activities,i) += purchase_of_property;
 
 			cf.at(CF_project_financing_activities,i) = -cf.at(CF_debt_payment_principal,i);
-			if (i==0) cf.at(CF_project_financing_activities,i) += issuance_of_equity + size_of_debt + ibi_total + cbi_total;
+            if (i == 0) cf.at(CF_project_financing_activities, i) += issuance_of_equity + size_of_debt;
 
 			cf.at(CF_pretax_cashflow,i) = cf.at(CF_project_operating_activities,i) + cf.at(CF_project_investing_activities,i) + cf.at(CF_project_financing_activities,i);
 

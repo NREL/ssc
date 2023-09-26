@@ -165,7 +165,7 @@ public:
 	public:
 		log_item() { }
 		log_item(int t, std::string s, float f=-1.0)
-			: type(t), text(move(s)), time(f) {  }
+        : type(t), text(std::move(s)), time(f) {  }
 
 		int type;
 
@@ -203,6 +203,9 @@ public:
 	*/
 	virtual bool on_extproc_output( const std::string & ) { return false; }
 
+    void add_var_info(var_info vi[]);
+
+
 protected:
 
     std::string name;
@@ -217,7 +220,6 @@ protected:
 	virtual void exec( ) = 0;
 
 	/* can be called in constructors to build up the variable table references */
-	void add_var_info( var_info vi[] );
 	void build_info_map();
 	bool has_info_map() { return m_infomap!=NULL; }
 
