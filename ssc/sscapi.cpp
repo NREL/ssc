@@ -49,7 +49,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 SSCEXPORT int ssc_version()
 {
-	return 281;
+	return 283;
 }
 
 SSCEXPORT const char *ssc_build_info()
@@ -117,8 +117,11 @@ extern module_entry_info
 	cm_entry_iph_to_lcoefcr,
 	cm_entry_tcsgeneric_solar,
 	cm_entry_tcsmolten_salt,
+    cm_entry_mspt_iph,
     cm_entry_mspt_sf_and_rec_isolated,
     cm_entry_ptes_design_point,
+    cm_entry_fresnel_physical,
+    cm_entry_fresnel_physical_iph,
 	cm_entry_tcslinear_fresnel,
 	cm_entry_linear_fresnel_dsg_iph,
 	cm_entry_tcsmslf,
@@ -151,6 +154,7 @@ extern module_entry_info
 	cm_entry_battwatts,
 	cm_entry_fuelcell,
    	cm_entry_lcoefcr,
+    cm_entry_lcoefcr_design,
 	cm_entry_pv_get_shade_loss_mpp,
 	cm_entry_inv_cec_cg,
 	cm_entry_thermalrate,
@@ -219,7 +223,10 @@ static module_entry_info *module_table[] = {
 	&cm_entry_iph_to_lcoefcr,
 	&cm_entry_tcsgeneric_solar,
 	&cm_entry_tcsmolten_salt,
+    &cm_entry_mspt_iph,
     &cm_entry_mspt_sf_and_rec_isolated,
+    &cm_entry_fresnel_physical,
+    &cm_entry_fresnel_physical_iph,
     &cm_entry_ptes_design_point,
 	&cm_entry_tcslinear_fresnel,
 	&cm_entry_linear_fresnel_dsg_iph,
@@ -253,6 +260,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_battwatts,
 	&cm_entry_fuelcell,
 	&cm_entry_lcoefcr,
+    &cm_entry_lcoefcr_design,
 	&cm_entry_pv_get_shade_loss_mpp,
 	&cm_entry_inv_cec_cg,
 	&cm_entry_thermalrate,
