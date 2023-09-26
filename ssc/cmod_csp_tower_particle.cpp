@@ -405,7 +405,8 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "rec_height_calc",                    "Receiver height - out",                                                                                                                    "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "rec_width_calc",                     "Receiver width - out",                                                                                                                     "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "h_tower_calc",                       "Tower height - out",                                                                                                                       "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
-    { SSC_OUTPUT,    SSC_NUMBER, "A_rec",                              "Receiver area - planar",                                                                                                                   "m2",           "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "A_rec",                              "Receiver aperture area",                                                                                                                   "m2",           "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "A_rec_curtain",                      "Receiver particle curtain area",                                                                                                           "m2",           "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "L_tower_piping_calc",                "Tower piping length",                                                                                                                      "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
 
         // Receiver Performance
@@ -1061,7 +1062,8 @@ public:
         //      Receiver model
         // *********************************************************
 
-        double A_rec = std::numeric_limits<double>::quiet_NaN();        
+        double A_rec_curtain = std::numeric_limits<double>::quiet_NaN();
+        double A_rec_aperture = std::numeric_limits<double>::quiet_NaN();
 
         bool is_rec_model_clearsky = as_double("rec_clearsky_fraction") > 0.0;
         int rec_clearsky_model = as_integer("rec_clearsky_model");
@@ -1072,8 +1074,11 @@ public:
             throw exec_error("csp_tower_particle", "'rec_clearsky_model' must be specified when 'rec_clearsky_fraction' > 0.0.");
 
         double ap_height = rec_height;  
-        double ap_width = rec_width;    
-        A_rec = ap_height * ap_width;
+        double ap_width = rec_width;
+        double curtain_height = ap_height * as_double("norm_curtain_height");
+        double curtain_width = ap_width * as_double("norm_curtain_width");   // TODO: Update curtain width when curved curtains are allowed
+        A_rec_curtain = curtain_height * curtain_width;  // This receiver area is used to define the flux distribution.  Particle receiver model assumes that the flux distribution is defined based on the curtain area.
+        A_rec_aperture = ap_height * ap_width;          // The aperture area should be used in cost calculations
         double ap_curtain_depth_ratio = as_double("max_curtain_depth") / rec_height;
         int n_x = n_flux_x;
         int n_y = n_flux_y + 1;
@@ -1111,7 +1116,7 @@ public:
         // *******************************
         // Construct heliostat field class after receiver
         //    so it can use the active receiver area
-        C_pt_sf_perf_interp heliostatfield(A_rec);
+        C_pt_sf_perf_interp heliostatfield(A_rec_curtain);
 
         heliostatfield.ms_params.m_p_start = as_double("p_start");      //[kWe-hr] Heliostat startup energy
         heliostatfield.ms_params.m_p_track = as_double("p_track");      //[kWe] Heliostat tracking power
@@ -1675,7 +1680,8 @@ public:
         assign("rec_height_calc", (ssc_number_t)rec_height);        //[m]
         assign("rec_width_calc", (ssc_number_t)rec_width);          //[m]
         assign("rec_aspect", (ssc_number_t)rec_height/rec_width);   //[-]
-        assign("A_rec", A_rec);     //[m2]
+        assign("A_rec", A_rec_aperture);     //[m2]
+        assign("A_rec_curtain", A_rec_curtain);     //[m2]
 
         double L_tower_piping = std::numeric_limits<double>::quiet_NaN();
         receiver->get_design_geometry(L_tower_piping);
@@ -1875,7 +1881,7 @@ public:
             tower_fixed_cost,
             tower_cost_scaling_exp,
 
-            A_rec,
+            A_rec_aperture,
             rec_ref_cost,
             A_rec_ref,
             rec_cost_scaling_exp,
@@ -2111,7 +2117,7 @@ public:
 
         // [W/m2 * m2] * [1 kW/ 1000 W] / [m2 per flux node] == [kW/m2]
         double flux_scaling_mult = as_double("dni_des")*heliostatfield.ms_params.m_A_sf / 1000.0 /
-            (A_rec / double(rec_n_flux_x * rec_n_flux_y));
+            (A_rec_curtain / double(rec_n_flux_x * rec_n_flux_y));
 
         ssc_number_t azi_angle, zen_angle;
         for (size_t i = 0; i < n_rows_eta_map; i++) { // for each solar position

@@ -1347,6 +1347,8 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
     double tol = 1.0e-4;
     int nmax = 50;
 
+    bool allow_Tmax_stopping = true;   // Allow mass flow iteration loop to stop based on estimated upper bound of particle outlet temperature (assumes efficiency increases monotonically with mass flow)
+
     //--- Set initial guess for particle flow
     double m_dot_guess, m_dot_guess_new;
 	if (soln_exists)  // Use existing solution as initial guess
@@ -1512,7 +1514,7 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
 
         // Stop solution if the maximum possible particle outlet temperature is below the target
         // This assumes that the efficiency (Q_thermal / Q_inc) increases monotonically with mass flow for fixed solar incidence and ambient conditions
-        if (lower_bound > 0.001)
+        if (allow_Tmax_stopping && lower_bound > 0.001)
         {
             Tout_max = soln.T_particle_cold_in + (upper_bound_eta * soln.Q_inc) / (cp * lower_bound);
             if (Tout_max < m_T_particle_hot_target-0.01)
