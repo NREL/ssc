@@ -1706,7 +1706,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
     cost_equip_sum += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_cost_equipment;		//[M$]
     cost_bare_erected_sum += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_cost_bare_erected;		//[M$]
 			// High-temp
-	if (is_rc)
+	if (is_rc || s_sco2_des_par.m_cycle_config == 3) // Cycle may still have HTR if it is htr bypass cycle
 	{
 		recup_total_UA_assigned += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_UA_allocated*1.E-3;	//[MW/K] convert from kW/K
         recup_total_UA_calculated += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_UA_calc_at_eff_max*1.E-3;	//[MW/K] convert from kW/K

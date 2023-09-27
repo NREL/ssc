@@ -217,6 +217,9 @@ private:
     double m_objective_metric_auto_opt;
     S_design_parameters ms_des_par_auto_opt;
 
+    S_design_parameters ms_des_par_full_auto_opt;
+    double m_objective_metric_full_auto_opt = 0;
+
     // NEW Internal Variables
     double m_w_t;                       // kJ/kg
     double m_w_mc;                      // kJ/kg
@@ -348,6 +351,8 @@ public:
     // Called by 'nlopt_callback_opt_des_1', so needs to be public
     double design_bypass_frac_return_objective_metric(const std::vector<double>& x);
 
+    double design_bypass_frac_free_var_return_objective_metric(const std::vector<double>& x);
+
     class C_mono_htr_bypass_LTR_des : public C_monotonic_equation
     {
     private:
@@ -446,6 +451,8 @@ public:
 double nlopt_cb_opt_htr_bypass_des(const std::vector<double>& x, std::vector<double>& grad, void* data);
 
 double nlopt_cb_opt_bypass_frac_des(const std::vector<double>& x, std::vector<double>& grad, void* data);
+
+double nlopt_cb_opt_bypass_frac_free_var(const std::vector<double>& x, std::vector<double>& grad, void* data);
 
 
 double sigmoid(const double val);

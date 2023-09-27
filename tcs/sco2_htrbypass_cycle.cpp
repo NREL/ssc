@@ -42,37 +42,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 void C_HTRBypass_Cycle::design_core(int& error_code)
 {
-    //// DEBUG sco2 flex
-    //if (false)
-    //{
-    //    m_cp_HTF = 1.5375;
-    // 
-    //        // LTR (sco2 flex)
-    //        double Q_dot_LTR_LP_paper;
-    //        double Q_dot_LTR_HP_paper;
-    //        {
-    //            double T1_C = 198.72;
-    //            double T2_C = 76.01;
-    //            double T3_C = 65.91;
-    //            double T4_C = 188.72;
-    //            double P1_C = 8.380;
-    //            double P2_C = 8.338;
-    //            double P3_C = 25;
-    //            double P4_C = 24.995;
-    //            double mdot_lp = 1041.54;
-    //            double mdot_hp = 677.31;
-    //            int prop_error_code = CO2_TP(T1_C + 273.15, P1_C * 1e3, &co2_props);
-    //            double h1 = co2_props.enth;
-    //            CO2_TP(T2_C + 273.15, P2_C * 1e3, &co2_props);
-    //            double h2 = co2_props.enth;
-    //            Q_dot_LTR_LP_paper = mdot_lp * (h2 - h1);
-    //            CO2_TP(T3_C + 273.15, P3_C * 1e3, &co2_props);
-    //            double h3 = co2_props.enth;
-    //            CO2_TP(T4_C + 273.15, P4_C * 1e3, &co2_props);
-    //            double h4 = co2_props.enth;
-    //            Q_dot_LTR_HP_paper = mdot_hp * (h4 - h3);
-    //            double pu = 0;
-    //        }
 
     // Check if HTF parameters were set
     if (is_htf_set == false)
@@ -100,7 +69,7 @@ void C_HTRBypass_Cycle::design_core(int& error_code)
         opt_des_cycle.set_lower_bounds(lb);
         opt_des_cycle.set_upper_bounds(ub);
         opt_des_cycle.set_initial_step(0.01);
-        opt_des_cycle.set_xtol_rel(0.05);
+        opt_des_cycle.set_xtol_rel(0.1);
         opt_des_cycle.set_maxeval(50);
 
         // Set max objective function
@@ -640,7 +609,7 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
         s_air_cooler_des_par_ind.m_eta_fan = m_eta_fan;          //[-]
         s_air_cooler_des_par_ind.m_N_nodes_pass = m_N_nodes_pass;    //[-]
 
-        if (ms_des_par.m_is_des_air_cooler && std::isfinite(m_deltaP_cooler_frac) && std::isfinite(m_frac_fan_power)
+        /*if (ms_des_par.m_is_des_air_cooler && std::isfinite(m_deltaP_cooler_frac) && std::isfinite(m_frac_fan_power)
             && std::isfinite(m_T_amb_des) && std::isfinite(m_elevation) && std::isfinite(m_eta_fan) && m_N_nodes_pass > 0)
         {
             try
@@ -652,7 +621,7 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
                 error_code = 35;
                 return;
             }
-        }
+        }*/
 
     }
 
@@ -1107,21 +1076,6 @@ void C_HTRBypass_Cycle::opt_design_core(int& error_code)
         index++;
     }
 
-    // DEBUG
-    if (false)
-    {
-        std::vector<double> recomp_vec = { 0.8 };
-        for (double re : recomp_vec)
-        {
-            ms_des_par.m_P_mc_out = ms_opt_des_par.m_P_mc_out_guess;
-            ms_des_par.m_P_mc_in = ms_des_par.m_P_mc_out / ms_opt_des_par.m_PR_HP_to_LP_guess;
-            ms_des_par.m_recomp_frac = re;
-            design_core(error_code);
-        }
-    }
-
-
-
     error_code = 0;
     if (index > 0)
     {
@@ -1343,39 +1297,51 @@ void C_HTRBypass_Cycle::auto_opt_design_core(int& error_code)
 
             opt_design_core(rc_error_code);
 
-            if (rc_error_code == 0 && m_objective_metric_opt > m_objective_metric_auto_opt)
-            {
-                ms_des_par_auto_opt = ms_des_par_optimal;
-                m_objective_metric_auto_opt = m_objective_metric_opt;
-            }
+            
+            ms_des_par_auto_opt = ms_des_par_optimal;
+            m_objective_metric_auto_opt = m_objective_metric_opt;
+            
         }
 
         // Optimize Bypass Fraction outside other variables
         else
         {
-            ms_opt_des_par.m_bypass_frac_guess = std::abs(ms_auto_opt_des_par.m_is_bypass_ok);
 
-            int rc_error_code = 0;
+            m_objective_metric_bypass_frac_opt = -10000000;
 
-            opt_design_core(rc_error_code);
+            // Set up instance of nlopt class and set optimization parameters
+            nlopt::opt		opt_des_cycle(nlopt::GN_DIRECT, 1);
 
-            if (rc_error_code == 0 && m_objective_metric_opt > m_objective_metric_auto_opt)
-            {
-                ms_des_par_auto_opt = ms_des_par_optimal;
-                m_objective_metric_auto_opt = m_objective_metric_opt;
-            }
+            std::vector<double> lb = { 0 };
+            std::vector<double> ub = { 0.99 };
+
+            opt_des_cycle.set_lower_bounds(lb);
+            opt_des_cycle.set_upper_bounds(ub);
+            opt_des_cycle.set_initial_step(0.1);
+            opt_des_cycle.set_xtol_rel(0.1);
+            opt_des_cycle.set_maxeval(50);
+
+            // Set max objective function
+            std::vector<double> x;
+            x.push_back(0.1);
+            opt_des_cycle.set_max_objective(nlopt_cb_opt_bypass_frac_free_var, this);		// Calls wrapper/callback that calls 'design_point_eta', which optimizes design point eta through repeated calls to 'design'
+            double max_f = std::numeric_limits<double>::quiet_NaN();
+
+
+            nlopt::result   result_des_cycle = opt_des_cycle.optimize(x, max_f);
+
+
+            ms_des_par = ms_des_par_full_auto_opt;
+            ms_des_par_auto_opt = ms_des_par_full_auto_opt;
+            design_core_standard(error_code);
+
+            ms_opt_des_par.m_bypass_frac_guess = ms_des_par_auto_opt.m_bypass_frac;
+            //std::string s = make_result_csv_string();
         }
-
-
-
     }
 
-    
-
-
-
     ms_des_par = ms_des_par_auto_opt;
-
+    
     int optimal_design_error_code = 0;
     design_core(optimal_design_error_code);
 
@@ -1583,7 +1549,7 @@ int C_HTRBypass_Cycle::auto_opt_design(S_auto_opt_design_parameters& auto_opt_de
 }
 
 
-
+// Optimize UA ratio, recompression fraction, pressure ratio
 double C_HTRBypass_Cycle::design_cycle_return_objective_metric(const std::vector<double>& x)
 {
     // 'x' is array of inputs either being adjusted by optimizer or set constant
@@ -1704,7 +1670,7 @@ double C_HTRBypass_Cycle::design_cycle_return_objective_metric(const std::vector
     return objective_metric;
 }
 
-// X is single bypass fraction value
+// Optimize bypass fraction (only)
 double C_HTRBypass_Cycle::design_bypass_frac_return_objective_metric(const std::vector<double>& x)
 {
     ms_des_par.m_bypass_frac = x[0];
@@ -1737,6 +1703,56 @@ double C_HTRBypass_Cycle::design_bypass_frac_return_objective_metric(const std::
         {
             ms_des_par_bp_frac_optimal = ms_des_par;
             m_objective_metric_bypass_frac_opt = objective_metric;
+        }
+    }
+
+    return objective_metric;
+}
+
+// Optimize bypass fraction and internally, the other free variables
+double C_HTRBypass_Cycle::design_bypass_frac_free_var_return_objective_metric(const std::vector<double>& x)
+{
+    ms_opt_des_par.m_bypass_frac_guess = x[0];
+
+    int error_code = 0;
+
+    opt_design_core(error_code);
+
+    // Returns ms_des_par_optimal as optimal parameters
+
+    ms_des_par = ms_des_par_optimal;
+    design_core_standard(error_code);
+
+    double objective_metric = -10000000000.0;
+    if (error_code == 0)
+    {
+        // Set Objective
+        double objective_metric = -10000000000.0;
+        if (error_code == 0)
+        {
+            double eff = m_eta_thermal_calc_last;
+
+            // If fixed bypass fraction, no penalty function
+            double penalty = 0;
+            if (ms_opt_des_par.m_fixed_bypass_frac == false || ms_opt_des_par.m_des_objective_type == 2)
+            {
+                double target_bp_out = m_T_HTF_BP_outlet_target;
+                double calc_bp_out = m_T_HTF_BP_outlet_calc;
+
+                double temp_err = std::abs(calc_bp_out - target_bp_out);
+                double temp_span = m_T_HTF_PHX_inlet - m_T_HTF_BP_outlet_target;
+                double percent_err = temp_err / temp_span;
+
+                penalty = 10.0 * (sigmoid(percent_err) - 0.5);
+            }
+
+            objective_metric = eff - penalty;
+
+            if (objective_metric > m_objective_metric_full_auto_opt)
+            {
+                ms_des_par_full_auto_opt = ms_des_par;
+                m_objective_metric_full_auto_opt = objective_metric;
+            }
         }
     }
 
@@ -1820,6 +1836,14 @@ double nlopt_cb_opt_bypass_frac_des(const std::vector<double>& x, std::vector<do
         return 0.0;
 }
 
+double nlopt_cb_opt_bypass_frac_free_var(const std::vector<double>& x, std::vector<double>& grad, void* data)
+{
+    C_HTRBypass_Cycle* frame = static_cast<C_HTRBypass_Cycle*>(data);
+    if (frame != NULL)
+        return frame->design_bypass_frac_free_var_return_objective_metric(x);
+    else
+        return 0.0;
+}
 
 double sigmoid(const double val)
 {
