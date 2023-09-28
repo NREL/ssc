@@ -483,11 +483,8 @@ void BatteryPowerFlow::calculateACConnected()
             P_fuelcell_to_grid_ac = 0;
         }
 
+        // Priliminary batt to grid for DC losses
         P_batt_to_grid_ac = P_battery_ac - P_system_loss_ac - P_batt_to_load_ac - P_batt_to_pv_inverter;
-        if (m_BatteryPower->isOutageStep && P_batt_to_grid_ac > tolerance) {
-            m_BatteryPower->powerBatteryDC = (P_battery_ac - P_batt_to_grid_ac) / m_BatteryPower->singlePointEfficiencyDCToAC;
-            return calculateACConnected();
-        }
 
         P_fuelcell_to_grid_ac = P_fuelcell_ac - P_fuelcell_to_load_ac;
         P_batt_to_system_loss = P_system_loss_ac;
@@ -503,6 +500,20 @@ void BatteryPowerFlow::calculateACConnected()
     // Compute total system output and grid power flow
     P_gen_ac = P_pv_ac + P_fuelcell_ac + P_inverter_draw_ac + P_battery_ac - P_system_loss_ac;
 
+    // Final batt to grid for outage accounting
+    if (P_battery_ac > 0)
+    {
+        double P_required_for_load = P_batt_to_load_ac;
+        if (ac_loss_percent_post_battery < 1) { // Account for possible divide by zero
+            P_required_for_load /= (1 - ac_loss_percent_post_battery);
+        }
+        P_batt_to_grid_ac = P_battery_ac * (1 - ac_loss_percent_post_battery) - P_system_loss_ac - P_required_for_load - P_batt_to_pv_inverter;
+        if (m_BatteryPower->isOutageStep && P_batt_to_grid_ac > tolerance) {
+            m_BatteryPower->powerBatteryDC = (P_battery_ac - P_batt_to_grid_ac) / m_BatteryPower->singlePointEfficiencyDCToAC;
+            return calculateACConnected();
+        }
+    }
+
     // Apply AC losses to powerflow - note that these are applied to gen later
     P_pv_to_batt_ac *= (1 - ac_loss_percent_post_battery);
     P_pv_to_load_ac *= (1 - ac_loss_percent_post_battery);
@@ -511,7 +522,6 @@ void BatteryPowerFlow::calculateACConnected()
     P_grid_to_batt_ac *= (1 - ac_loss_percent_post_battery);
     P_grid_to_load_ac *= (1 - ac_loss_percent_post_battery);
     P_batt_to_load_ac *= (1 - ac_loss_percent_post_battery);
-    P_batt_to_grid_ac *= (1 - ac_loss_percent_post_battery);
     P_fuelcell_to_batt_ac *= (1 - ac_loss_percent_post_battery);
     P_fuelcell_to_load_ac *= (1 - ac_loss_percent_post_battery);
     P_fuelcell_to_grid_ac *= (1 - ac_loss_percent_post_battery);
