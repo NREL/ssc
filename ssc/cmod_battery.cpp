@@ -290,9 +290,11 @@ var_info vtab_battery_outputs[] = {
     { SSC_OUTPUT,        SSC_NUMBER,      "batt_pvs_energy_to_grid_percent",           "PV smoothing energy to grid percent (loss due to curtail and battery loss)",                               "%",      "",                       "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_NUMBER,      "batt_pvs_energy_to_grid_percent_sam",       "PV smoothing energy to grid percent actual (loss due to curtail and battery loss)",                               "%",      "",                       "Battery",       "",                           "",                              "" },
 
-    // Self-consumption
-    { SSC_OUTPUT,        SSC_NUMBER,      "num_ts_load_met_by_system",                  "Number of timesteps electric load met by system (year 1)",     "",      "",                       "Battery",       "",                           "",                              "" },
-    { SSC_OUTPUT,        SSC_NUMBER,      "percent_ts_load_met_by_system",              "Percent of timesteps electric load met by system (year 1)",     "",      "",                       "Battery",       "",                           "",                              "" },
+    // Self-consumption outputs
+    { SSC_OUTPUT,        SSC_NUMBER,      "num_ts_load_met_by_system_yr1",                  "Number of timesteps electric load met by system (year 1)",     "",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "percent_ts_load_met_by_system_yr1",              "Percent of timesteps electric load met by system (year 1)",     "",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "num_ts_load_met_by_system_lifetime",             "Number of timesteps electric load met by system (lifetime)",     "",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "percent_ts_load_met_by_system_lifetime",         "Percent of timesteps electric load met by system (lifetime)",     "",      "",                       "Battery",       "",                           "",                              "" },
 
     // validation outputs at ramp interval - use for debugging and remove for release
 /*
@@ -921,7 +923,6 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     outCritLoadUnmet = 0;
     outUnmetLosses = 0;
     outAverageCycleEfficiency = 0;
-    outTimestepsLoadMetBySystem = 0;
     outSystemChargePercent = 0;
     outAnnualSystemChargeEnergy = 0;
     outAnnualGridChargeEnergy = 0;
@@ -1002,10 +1003,6 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
         {
             outGridPowerTarget = vt.allocate("grid_power_target", nrec * nyears);
             outBattPowerTarget = vt.allocate("batt_power_target", nrec * nyears);
-        }
-        if (batt_vars->batt_dispatch == dispatch_t::SELF_CONSUMPTION)
-        {
-
         }
     }
     else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
@@ -1912,12 +1909,6 @@ void battstor::outputs_topology_dependent()
         outBatteryToLoad[index] = (ssc_number_t)(dispatch_model->power_battery_to_load());
         outGridToLoad[index] = (ssc_number_t)(dispatch_model->power_grid_to_load());
 
-        if (batt_vars->batt_dispatch == dispatch_t::SELF_CONSUMPTION)
-        {
-            if (outGridToLoad[index] > 0.0)
-                    outTimestepsLoadMetBySystem++;
-        }
-
         if (batt_vars->batt_dispatch != dispatch_t::MANUAL)
         {
             outGridPowerTarget[index] = (ssc_number_t)(dispatch_model->power_grid_target());
@@ -2111,10 +2102,25 @@ void battstor::calculate_monthly_and_annual_outputs(compute_module& cm)
 
         if (batt_vars->batt_dispatch == dispatch_t::SELF_CONSUMPTION)
         {
-            cm.assign("num_ts_load_met_by_system", (ssc_number_t)outTimestepsLoadMetBySystem);
-            ssc_number_t TimestepsMetPercent = (outTimestepsLoadMetBySystem / step_per_year) * 100.0;
-            cm.assign("percent_ts_load_met_by_system", (ssc_number_t)TimestepsMetPercent);
-        }
+            //calculate all outputs for number of timesteps the load is met by the system, using grid_to_load == 0 as a qualification
+            //better to parse the grid_to_load timeseries once here for all outputs, than to create a new timeseries variable for whether load is met by system
+            outTimestepsLoadMetBySystemYear1 = 0.0;
+            outTimestepsLoadMetBySystemLifetime = 0.0;
+            for (size_t i = 0; i < total_steps; i++)
+            {
+                if (outGridToLoad[i] == 0.0)
+                {
+                    outTimestepsLoadMetBySystemLifetime++;
+                    if (i < step_per_year) outTimestepsLoadMetBySystemYear1++;
+                }
+            }
+            cm.assign("num_ts_load_met_by_system_yr1", outTimestepsLoadMetBySystemYear1);
+            cm.assign("num_ts_load_met_by_system_lifetime", outTimestepsLoadMetBySystemLifetime);
+            outPercentTimestepsLoadMetBySystemYear1 = (outTimestepsLoadMetBySystemYear1 / step_per_year) * 100.0;
+            cm.assign("percent_ts_load_met_by_system_yr1", (ssc_number_t)outPercentTimestepsLoadMetBySystemYear1);
+            outPercentTimestepsLoadMetBySystemLifetime = (outTimestepsLoadMetBySystemLifetime / total_steps) * 100.0;
+            cm.assign("percent_ts_load_met_by_system_lifetime", (ssc_number_t)outPercentTimestepsLoadMetBySystemLifetime);
+         }
     }
     else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
     {
