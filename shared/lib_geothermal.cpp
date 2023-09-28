@@ -875,7 +875,7 @@ double CGeothermalAnalyzer::GetProductionPumpWorkft(void)
     L_int = 0.8 * mo_geo_in.md_ResourceDepthM; //Length interval (m), how is this calculated?
     surf_rough_casing = 0.00015; //different for open hole vs. slotted liner
     //dT_dL = (mo_geo_in.md_dtProdWell * 1.8) / (physics::FT_PER_METER * mo_geo_in.md_ResourceDepthM);
-    T_star = T_star - dT_dL * (0.5 * L_int);
+    //T_star = T_star - dT_dL * (0.5 * L_int);
     P_sat = geothermal::oPC.evaluate(T_star * 1.8 + 32);
     rho_sat = 1 / geothermal::oSVC.evaluate(T_star * 1.8 + 32);
     viscosity = 407.22 * pow((T_star * 1.8 + 32), -1.194) / 3600;
@@ -1806,7 +1806,8 @@ double CGeothermalAnalyzer::qCondenser(void) {
 } // D99
 double CGeothermalAnalyzer::cwFlow(void) {
 	mp_geo_out->cwflow = qCondenser() / geothermal::DELTA_TEMPERATURE_CWF;
-	return qCondenser() / geothermal::DELTA_TEMPERATURE_CWF;
+	//return qCondenser() / geothermal::DELTA_TEMPERATURE_CWF;
+    return qRejectedTower() / geothermal::DELTA_TEMPERATURE_CWF;
 } // D115
 double CGeothermalAnalyzer::overAllHEx() //I107
 {
@@ -1901,7 +1902,7 @@ double CGeothermalAnalyzer::injCoeffC(void) { return -6.7041142 * log(geothermal
 double CGeothermalAnalyzer::injCoeffD(void) { return -0.0325112 * pow(geothermal::DELTA_TEMPERATURE_CWF, 2) + (6.831236 * geothermal::DELTA_TEMPERATURE_CWF) - 64.6250943; }	// U95
 
 double CGeothermalAnalyzer::evaporativeWaterLoss(void) { return ((injCoeffA() * pow(TemperatureWetBulbF(), 3)) + (injCoeffB() * pow(TemperatureWetBulbF(), 2)) + (injCoeffC() * TemperatureWetBulbF()) + injCoeffD()) * qRejectedTower() / 1000000; } // D129 - lb/hr (evaporative water loss)
-double CGeothermalAnalyzer::drift(void) { return 0.0005 * cwFlow(); }																												// D130
+double CGeothermalAnalyzer::drift(void) { return 0.001 * cwFlow(); }																												// D130
 double CGeothermalAnalyzer::blowDown(void) { return evaporativeWaterLoss() / (geothermal::INJECTION_PUMPING_CYCLES - 1) - drift(); }																	// D132
 double CGeothermalAnalyzer::waterLoss(void) { return evaporativeWaterLoss() + drift(); }																				// D133
 double CGeothermalAnalyzer::steamCondensate(void) { return (turbine1Steam() + turbine2Steam()) - waterLoss(); }																		// D135
