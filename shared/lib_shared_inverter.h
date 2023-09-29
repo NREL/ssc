@@ -73,6 +73,7 @@ public:
     void calculateACPower(const double powerDC_kW, const double DCStringVoltage, double tempC);
 
     void calculateACPower(const double powerDC_kW, const double DCStringVoltage, double tempC, bool clippingEnabled);
+    void calculateACPower(const double powerDC_kW, const double powerDC_kW_in_max, const double powerDC_kW_in_min, const double DCStringVoltage, double tempC);
 
     /// Given the combined PV plus battery DC power (kW), voltage and ambient T, compute the AC power (kW) for a single inverter with multiple MPPT inputs
     void calculateACPower(const std::vector<double> powerDC_kW, const std::vector<double> DCStringVoltage, double tempC);

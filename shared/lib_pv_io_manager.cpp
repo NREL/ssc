@@ -943,6 +943,8 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
     p_subhourlyClippingLoss = cm->allocate("subhourly_clipping_loss", numberOfLifetimeRecords);
     p_subhourlyClippingLossFactor = cm->allocate("subhourly_clipping_loss_factor", numberOfLifetimeRecords);
 
+    p_DistributionClippingLoss = cm->allocate("distribution_clipping_loss", numberOfLifetimeRecords);
+
     if (Simulation->useLifetimeOutput)
     {
         p_dcDegradationFactor = cm->allocate("dc_degrade_factor", numberOfYears);

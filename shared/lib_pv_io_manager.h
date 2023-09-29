@@ -422,6 +422,8 @@ struct PVSystem_IO
     ssc_number_t *p_subhourlyClippingLoss;
     ssc_number_t* p_subhourlyClippingLossFactor;
     ssc_number_t* p_ClippingPotential;
+
+    ssc_number_t* p_DistributionClippingLoss;
 };
 
 /**

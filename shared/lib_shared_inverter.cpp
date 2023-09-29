@@ -353,6 +353,54 @@ void SharedInverter::calculateACPower(const double powerDC_kW_in, const double D
     }
 }
 
+void SharedInverter::calculateACPower(const double powerDC_kW_in, const double powerDC_kW_in_max, const double powerDC_kW_in_min, const double DCStringVoltage, double tempC)
+{
+    double P_par, P_lr;
+    double P_par_clipping, P_lr_clipping;
+    double efficiencyAC_clipping, powerClipLoss_kW_clipping, powerConsumptionLoss_kW_clipping, powerNightLoss_kW_clipping = 0;
+    bool negativePower = powerDC_kW_in < 0 ? true : false;
+
+
+    dcWiringLoss_ond_kW = 0.0;
+    acWiringLoss_ond_kW = 0.0;
+
+    // Power quantities go in and come out in units of W
+    double powerDC_Watts = powerDC_kW_in * util::kilowatt_to_watt;
+    double powerAC_Watts = 0.0;
+    double powerAC_Watts_clipping = 0.0;
+    Tdry_C = tempC;
+    StringV = DCStringVoltage;
+    double tempLoss = 0.0;
+    double power_ratio = 1.0;
+    if (m_tempEnabled) {
+        calculateTempDerate(DCStringVoltage, tempC, powerDC_Watts, power_ratio, tempLoss);
+    }
+
+        m_sandiaInverter->acpower(std::abs(powerDC_Watts) / m_numInvertersClipping, DCStringVoltage, &powerAC_Watts_clipping, &P_par_clipping, &P_lr_clipping, &efficiencyAC_clipping, &powerClipLoss_kW_clipping, &powerConsumptionLoss_kW_clipping, &powerNightLoss_kW_clipping);
+
+    
+    if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
+        m_sandiaInverter->acpower(std::abs(powerDC_Watts) / m_numInverters, DCStringVoltage, &powerAC_Watts, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW);
+    else if (m_inverterType == PARTLOAD_INVERTER)
+        m_partloadInverter->acpower(std::abs(powerDC_Watts) / m_numInverters, &powerAC_Watts, &P_lr, &P_par, &efficiencyAC, &powerClipLoss_kW, &powerNightLoss_kW);
+    else if (m_inverterType == OND_INVERTER)
+        m_ondInverter->acpower(std::abs(powerDC_Watts) / m_numInverters, DCStringVoltage, tempC, &powerAC_Watts, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW, &dcWiringLoss_ond_kW, &acWiringLoss_ond_kW);
+    else if (m_inverterType == NONE) {
+        powerClipLoss_kW = 0.;
+        powerConsumptionLoss_kW = 0.;
+        powerNightLoss_kW = 0.;
+        efficiencyAC = NONE_INVERTER_EFF;
+        powerAC_Watts = powerDC_Watts * efficiencyAC;
+    }
+    
+
+    
+    m_subhourlyClippingEnabled = true;
+    powerAC_kW_clipping = powerAC_Watts_clipping * m_numInvertersClipping * util::watt_to_kilowatt;
+    return;
+    
+}
+
 /* This function takes input inverter DC power (kW) per MPPT input for a SINGLE multi-mppt inverter, DC voltage (V) per input, and ambient temperature (deg C), and calculates output for the total number of inverters in the system */
 void SharedInverter::calculateACPower(const std::vector<double> powerDC_kW_in, const std::vector<double> DCStringVoltage, double tempC)
 {
