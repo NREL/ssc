@@ -891,7 +891,7 @@ public:
         int csp_financial_model = as_integer("csp_financial_model");
 
         if (sim_type == 1) {
-            if (csp_financial_model == 8 || csp_financial_model == 7) {        // No Financial Model or LCOH
+            if (csp_financial_model == 8 || csp_financial_model == 7 || csp_financial_model == 1) {        // No Financial Model or LCOH; Single Owner in progress 9/2023
                 if (is_dispatch) {
                     throw exec_error("fresnel_physical_iph", "Can't select dispatch optimization if No Financial model");
                 }
@@ -900,10 +900,14 @@ public:
                     tou_params->mc_pricing.mc_weekdays.resize_fill(12, 24, 1.);
                     tou_params->mc_pricing.mc_weekends.resize_fill(12, 24, 1.);
                     tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, -1.0);
+
+                    if (csp_financial_model == 1) {
+                        log("The MSLF IPH model does not control dispatch with respect to input pricing signals");
+                    }
                 }
             }
             else {
-                throw exec_error("fresnel_physical_iph", "csp_financial_model must 8");
+                throw exec_error("fresnel_physical_iph", "csp_financial_model must 1, 7, or 8");
             }
 
             
