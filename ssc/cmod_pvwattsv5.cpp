@@ -700,7 +700,7 @@ public:
         else {
             elev = as_double("elevation");
             if (elev < 0 || elev > 5100) {
-                throw exec_error("poacalib", "The elevation input is outside of the expected range. Please make sure that the units are in meters");
+                throw exec_error("pvwattsv5_1ts", "The elevation input is outside of the expected range. Please make sure that the units are in meters");
             }
         }
         if (!is_assigned("pressure")) {
@@ -709,7 +709,7 @@ public:
         else {
             pres = as_double("pressure");
             if (pres > 2000 || pres < 500) {
-                throw exec_error("poacalib", "The atmospheric pressure input is outside of the expected range. Please make sure that the units are in millibars");
+                throw exec_error("pvwattsv5_1ts", "The atmospheric pressure input is outside of the expected range. Please make sure that the units are in millibars");
             }
         }
 
