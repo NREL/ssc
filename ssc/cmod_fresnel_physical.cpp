@@ -303,6 +303,12 @@ static var_info _cm_vtab_fresnel_physical[] = {
     // OUTPUTS
         // Design Point Outputs
 
+    // System capacity required by downstream financial model
+    { SSC_OUTPUT,    SSC_NUMBER, "system_capacity",                    "System capacity",                                                           "kWe",          "",                                  "System Design",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "cp_system_nameplate",                 "System capacity for capacity payments",                                    "MWe",          "",                                  "System Design",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "cp_battery_nameplate",                "Battery nameplate",                                                        "MWe",          "",                                  "System Design",                             "*",                                                                "",              "" },
+
+
         // System Design
     { SSC_OUTPUT,       SSC_NUMBER,     "solar_mult",                       "Actual solar multiple",                                                "",          "",         "System Design Calc",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "total_Ap",                         "Actual field aperture",                                                "m2",          "",         "System Design Calc",                       "*",                                                                "",              "" },
@@ -1347,9 +1353,9 @@ public:
         }
 
         // Design point is complete, assign technology design outputs
-        double Q_tes;
-        double total_land_area;
-        double nameplate_des;
+        double Q_tes = std::numeric_limits<double>::quiet_NaN();
+        double total_land_area = std::numeric_limits<double>::quiet_NaN();
+        double nameplate = std::numeric_limits<double>::quiet_NaN();
         {
             // System Design Calcs
             double eta_ref = as_double("eta_ref");                          //[-]
@@ -1521,17 +1527,21 @@ public:
             csp_solver.get_design_parameters(W_dot_bop_design, W_dot_fixed_parasitic_design);
 
             double gross_net_conversion_des = as_number("gross_net_conversion_factor");
-            nameplate_des = W_dot_cycle_des * gross_net_conversion_des;
+            nameplate = W_dot_cycle_des * gross_net_conversion_des;
 
             // Assign
             {
-                assign("nameplate", nameplate_des);
+                assign("nameplate", nameplate);
                 assign("W_dot_bop_design", W_dot_bop_design);
                 assign("W_dot_fixed", W_dot_fixed_parasitic_design);
 
                 assign("solar_mult", c_fresnel.m_solar_mult);
                 assign("nLoops", c_fresnel.m_nLoops);
                 assign("total_Ap", c_fresnel.m_Ap_tot);
+
+                assign("system_capacity", nameplate*1.E3);     //[kWe]
+                assign("cp_system_nameplate", nameplate); //[MWe]
+                assign("cp_battery_nameplate", 0.0);             //[MWe]
             }
 
             // System Control
@@ -1589,7 +1599,7 @@ public:
 
             // Calculate Costs
             N_mspt::calculate_mslf_costs(site_improvements_area, site_improvements_spec_cost, solar_field_area, solar_field_spec_cost, htf_system_area, htf_system_spec_cost, Q_tes, storage_spec_cost, fossil_backup_mwe,
-                fossil_spec_cost, power_plant_mwe, power_plant_spec_cost, bop_mwe, bop_spec_cost, contingency_percent, total_land_area, nameplate_des, epc_cost_per_acre, epc_cost_percent_direct, epc_cost_per_watt,
+                fossil_spec_cost, power_plant_mwe, power_plant_spec_cost, bop_mwe, bop_spec_cost, contingency_percent, total_land_area, nameplate, epc_cost_per_acre, epc_cost_percent_direct, epc_cost_per_watt,
                 epc_cost_fixed, plm_cost_per_acre, plm_cost_percent_direct, plm_cost_per_watt, plm_cost_fixed, sales_tax_rate, sales_tax_percent,
 
                 power_plant_cost_out, ts_cost_out, site_improvements_cost_out, bop_cost_out, solar_field_cost_out, htf_system_cost_out, fossil_backup_cost_out, contingency_cost_out,
@@ -1858,8 +1868,6 @@ public:
         assign("conversion_factor", convfactor);
 
         double kWh_per_kW = 0.0;
-        double system_capacity = as_double("P_ref") * as_double("gross_net_conversion_factor") * 1.E3;       //[kWe]
-        double nameplate = system_capacity;     //[kWe]
         if (nameplate > 0.0)
             kWh_per_kW = ae / nameplate;
 
