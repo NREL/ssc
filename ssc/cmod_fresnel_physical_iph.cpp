@@ -262,6 +262,12 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
     // OUTPUTS
         // Design Point Outputs
 
+    // System capacity required by downstream financial model
+    { SSC_OUTPUT,    SSC_NUMBER, "system_capacity",                    "System capacity",                                                           "kWt",          "",                                  "System Design",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "cp_system_nameplate",                 "System capacity for capacity payments",                                    "MWt",          "",                                  "System Design",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "cp_battery_nameplate",                "Battery nameplate",                                                        "MWt",          "",                                  "System Design",                             "*",                                                                "",              "" },
+
+
         // System Design
     { SSC_OUTPUT,       SSC_NUMBER,     "solar_mult",                       "Actual solar multiple",                                                "",          "",         "System Design Calc",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "total_Ap",                         "Actual field aperture",                                                "m2",          "",         "System Design Calc",                       "*",                                                                "",              "" },
@@ -1011,8 +1017,8 @@ public:
         }
 
         // Design point is complete, assign technology design outputs
-        double total_land_area;
-        double nameplate_des;
+        double total_land_area = std::numeric_limits<double>::quiet_NaN();
+        double nameplate = std::numeric_limits<double>::quiet_NaN();
         {
             // System Design Calcs
             //double eta_ref = as_double("eta_ref");                          //[-]
@@ -1184,17 +1190,21 @@ public:
             double W_dot_bop_design, W_dot_fixed_parasitic_design;    //[MWe]
             csp_solver.get_design_parameters(W_dot_bop_design, W_dot_fixed_parasitic_design);
 
-            nameplate_des = q_dot_pc_des * 1.E3;    // [kWt]
+            nameplate = q_dot_pc_des * 1.E3;    // [kWt]
 
             // Assign
             {
-                assign("nameplate", nameplate_des * 1.E-3); // [MWt]
+                assign("nameplate", nameplate * 1.E-3); // [MWt]
                 assign("W_dot_bop_design", W_dot_bop_design);
                 assign("W_dot_fixed", W_dot_fixed_parasitic_design);
 
                 assign("solar_mult", c_fresnel.m_solar_mult);
                 assign("nLoops", c_fresnel.m_nLoops);
                 assign("total_Ap", c_fresnel.m_Ap_tot);
+
+                assign("system_capacity", nameplate * 1.E3);    //[kWt]
+                assign("cp_system_nameplate", nameplate);       //[MWt]
+                assign("cp_battery_nameplate", 0.0);            //[MWt]
             }
 
             // System Control
@@ -1252,7 +1262,7 @@ public:
 
             // Calculate Costs
             N_mspt::calculate_mslf_costs(site_improvements_area, site_improvements_spec_cost, solar_field_area, solar_field_spec_cost, htf_system_area, htf_system_spec_cost, Q_tes, storage_spec_cost,0,0,
-                heat_sink_mwt, heat_sink_spec_cost, bop_mwt, bop_spec_cost, contingency_percent, total_land_area, nameplate_des, epc_cost_per_acre, epc_cost_percent_direct, epc_cost_per_watt,
+                heat_sink_mwt, heat_sink_spec_cost, bop_mwt, bop_spec_cost, contingency_percent, total_land_area, nameplate, epc_cost_per_acre, epc_cost_percent_direct, epc_cost_per_watt,
                 epc_cost_fixed, plm_cost_per_acre, plm_cost_percent_direct, plm_cost_per_watt, plm_cost_fixed, sales_tax_rate, sales_tax_percent,
 
                 heat_sink_cost_out, ts_cost_out, site_improvements_cost_out, bop_cost_out, solar_field_cost_out, htf_system_cost_out, dummy, contingency_cost_out,
@@ -1394,7 +1404,6 @@ public:
 
 
         ssc_number_t ae = as_number("annual_energy");			//[kWt-hr]
-        double nameplate = q_dot_pc_des * 1.E3;                 //[kWt]
         double kWh_per_kW = ae / nameplate;
         assign("capacity_factor", (ssc_number_t)(kWh_per_kW / 8760. * 100.));
         assign("kwh_per_kw", (ssc_number_t)kWh_per_kW);
