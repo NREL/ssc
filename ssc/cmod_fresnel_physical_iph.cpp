@@ -1231,7 +1231,7 @@ public:
             double W_dot_bop_design, W_dot_fixed_parasitic_design;    //[MWe]
             csp_solver.get_design_parameters(W_dot_bop_design, W_dot_fixed_parasitic_design);
 
-            nameplate = q_dot_pc_des * 1.E3;    // [kWt]
+            nameplate = q_dot_pc_des;    // [MWt]
 
             // Assign
             {
@@ -1510,7 +1510,7 @@ public:
 
 
         ssc_number_t ae = as_number("annual_energy");			//[kWt-hr]
-        double kWh_per_kW = ae / nameplate;
+        double kWh_per_kW = ae / (nameplate*1.E3);              // convert nameplate to kW
         assign("capacity_factor", (ssc_number_t)(kWh_per_kW / 8760. * 100.));
         assign("kwh_per_kw", (ssc_number_t)kWh_per_kW);
 

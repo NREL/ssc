@@ -1566,7 +1566,7 @@ public:
             csp_solver.get_design_parameters(W_dot_bop_design, W_dot_fixed_parasitic_design);
 
             double gross_net_conversion_des = as_number("gross_net_conversion_factor");
-            nameplate = W_dot_cycle_des * gross_net_conversion_des;
+            nameplate = W_dot_cycle_des * gross_net_conversion_des;     //[MWe]
 
             // Assign
             {
@@ -1974,7 +1974,7 @@ public:
 
         double kWh_per_kW = 0.0;
         if (nameplate > 0.0)
-            kWh_per_kW = ae / nameplate;
+            kWh_per_kW = ae / (nameplate*1.E3);     // convert nameplate to kW
 
         assign("capacity_factor", (ssc_number_t)(kWh_per_kW / ((double)n_steps_fixed / (double)steps_per_hour) * 100.));
         assign("kwh_per_kw", (ssc_number_t)kWh_per_kW);
