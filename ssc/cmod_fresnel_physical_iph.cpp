@@ -907,7 +907,7 @@ public:
                 }
             }
             else {
-                throw exec_error("fresnel_physical_iph", "csp_financial_model must 1, 7, or 8");
+                throw exec_error("fresnel_physical_iph", "csp_financial_model must be 1, 7, or 8");
             }
 
             
