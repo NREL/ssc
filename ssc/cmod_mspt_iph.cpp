@@ -250,6 +250,37 @@ static var_info _cm_vtab_mspt_iph[] = {
 { SSC_INPUT,     SSC_NUMBER, "q_rec_standby",                      "Receiver standby energy consumption",                                                                                                     "kWt",          "",                                  "System Control",                           "?=9e99",                                                           "",              "SIMULATION_PARAMETER"},
 { SSC_INPUT,     SSC_NUMBER, "q_rec_heattrace",                    "Receiver heat trace energy consumption during startup",                                                                                   "kWe-hr",       "",                                  "System Control",                           "?=0.0",                                                            "",              "SIMULATION_PARAMETER"},
 
+// System Control
+    // Required if dispatch
+{ SSC_INPUT,     SSC_NUMBER, "disp_rsu_cost_rel",                  "Receiver startup cost",                                                                                                                   "$/MWt/start",  "",                                  "System Control",                           "",                                                                 "",              "" },
+{ SSC_INPUT,     SSC_NUMBER, "disp_horizon",                       "Time horizon for dispatch optimization",                                                                                                  "hour",         "",                                  "System Control",                           "is_dispatch=1",                                                    "",              "" },
+{ SSC_INPUT,     SSC_NUMBER, "disp_frequency",                     "Frequency for dispatch optimization calculations",                                                                                        "hour",         "",                                  "System Control",                           "is_dispatch=1",                                                    "",              "" },
+{ SSC_INPUT,     SSC_NUMBER, "disp_max_iter",                      "Max number of dispatch optimization iterations",                                                                                          "",             "",                                  "System Control",                           "is_dispatch=1",                                                    "",              "" },
+{ SSC_INPUT,     SSC_NUMBER, "disp_timeout",                       "Max dispatch optimization solve duration",                                                                                                "s",            "",                                  "System Control",                           "is_dispatch=1",                                                    "",              "" },
+{ SSC_INPUT,     SSC_NUMBER, "disp_mip_gap",                       "Dispatch optimization solution tolerance",                                                                                                "",             "",                                  "System Control",                           "is_dispatch=1",                                                    "",              "" },
+{ SSC_INPUT,     SSC_NUMBER, "disp_time_weighting",                "Dispatch optimization future time discounting factor",                                                                                    "",             "",                                  "System Control",                           "is_dispatch=1",                                                    "",              "" },
+    // Optional for custom scripting
+{ SSC_INPUT,     SSC_NUMBER, "disp_steps_per_hour",                "Time steps per hour for dispatch optimization calculations",                                                                              "",             "",                                  "System Control",                           "?=1",                                                              "",              "SIMULATION_PARAMETER" },
+{ SSC_INPUT,     SSC_NUMBER, "disp_spec_presolve",                 "Dispatch optimization presolve heuristic",                                                                                                "",             "",                                  "System Control",                           "?=-1",                                                             "",              "SIMULATION_PARAMETER" },
+{ SSC_INPUT,     SSC_NUMBER, "disp_spec_bb",                       "Dispatch optimization B&B heuristic",                                                                                                     "",             "",                                  "System Control",                           "?=-1",                                                             "",              "SIMULATION_PARAMETER" },
+{ SSC_INPUT,     SSC_NUMBER, "disp_spec_scaling",                  "Dispatch optimization scaling heuristic",                                                                                                 "",             "",                                  "System Control",                           "?=-1",                                                             "",              "SIMULATION_PARAMETER" },
+{ SSC_INPUT,     SSC_NUMBER, "disp_reporting",                     "Dispatch optimization reporting level",                                                                                                   "",             "",                                  "System Control",                           "?=-1",                                                             "",              "SIMULATION_PARAMETER" },
+{ SSC_INPUT,     SSC_NUMBER, "is_write_ampl_dat",                  "Write AMPL data files for dispatch run",                                                                                                  "",             "",                                  "System Control",                           "?=0",                                                              "",              "SIMULATION_PARAMETER" },
+{ SSC_INPUT,     SSC_NUMBER, "is_ampl_engine",                     "Run dispatch optimization with external AMPL engine",                                                                                     "",             "",                                  "System Control",                           "?=0",                                                              "",              "SIMULATION_PARAMETER" },
+{ SSC_INPUT,     SSC_STRING, "ampl_data_dir",                      "AMPL data file directory",                                                                                                                "",             "",                                  "System Control",                           "?=''",                                                             "",              "SIMULATION_PARAMETER" },
+{ SSC_INPUT,     SSC_STRING, "ampl_exec_call",                     "System command to run AMPL code",                                                                                                         "",             "",                                  "System Control",                           "?='ampl sdk_solution.run'",                                        "",              "SIMULATION_PARAMETER" },
+{ SSC_INPUT,     SSC_NUMBER, "disp_inventory_incentive",           "Dispatch storage terminal inventory incentive multiplier",                                                                                "",             "",                                  "System Control",                           "?=0.0",                                                            "",              "SIMULATION_PARAMETER" },
+
+
+// Pricing schedules (copied from electricity - eventually need to resolve electricity vs. heat)
+{ SSC_INPUT,     SSC_NUMBER, "ppa_multiplier_model",               "PPA multiplier model 0: dispatch factors dispatch_factorX, 1: hourly multipliers dispatch_factors_ts",                                    "0/1",          "0=diurnal,1=timestep",              "Time of Delivery Factors",                 "?=0", /*need a default so this var works in required_if*/          "INTEGER,MIN=0", "SIMULATION_PARAMETER" },
+{ SSC_INPUT,     SSC_NUMBER, "ppa_soln_mode",                      "PPA solution mode (0=Specify IRR target, 1=Specify PPA price)",                                                                           "",             "",                                  "Financial Solution Mode",                  "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",   "SIMULATION_PARAMETER" },
+{ SSC_INPUT,     SSC_ARRAY,  "dispatch_factors_ts",                "Dispatch payment factor array",                                                                                                           "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=1&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",   "SIMULATION_PARAMETER" },
+{ SSC_INPUT,     SSC_MATRIX, "dispatch_sched_weekday",             "PPA pricing weekday schedule, 12x24",                                                                                                     "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",   "SIMULATION_PARAMETER" },
+{ SSC_INPUT,     SSC_MATRIX, "dispatch_sched_weekend",             "PPA pricing weekend schedule, 12x24",                                                                                                     "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",   "SIMULATION_PARAMETER" },
+{ SSC_INPUT,     SSC_ARRAY,  "dispatch_tod_factors",               "TOD factors for periods 1 through 9",                                                                                                     "",             "",                                  "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",   "SIMULATION_PARAMETER" },
+{ SSC_INPUT,     SSC_ARRAY,  "ppa_price_input",			           "PPA prices - yearly",			                                                                                                          "$/kWh",	      "",	                               "Revenue",			                       "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",   "SIMULATION_PARAMETER" },
+
 // Costs
 { SSC_INPUT,     SSC_NUMBER, "tower_fixed_cost",                   "Tower fixed cost",                                                                                                                        "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
 { SSC_INPUT,     SSC_NUMBER, "tower_exp",                          "Tower cost scaling exponent",                                                                                                             "",             "",                                  "System Costs",                             "*",                                                                "",              "" },
@@ -657,7 +688,7 @@ public:
         weather_reader.m_azimuth = 0.0;
         // Initialize to get weather file info
         weather_reader.init();
-        if (weather_reader.has_error()) throw exec_error("tcsmolten_salt", weather_reader.get_error());
+        if (weather_reader.has_error()) throw exec_error("mspt_iph", weather_reader.get_error());
 
         // Get info from the weather reader initialization
         double site_elevation = weather_reader.ms_solved_params.m_elev;     //[m]
@@ -730,7 +761,7 @@ public:
                 assign("n_flux_x", 2);  // n_flux_x represents *per panel* the number subsurfaces in x direction 
             }
             else {
-                throw exec_error("tcsmolten_salt", "receiver_type must be 1 (external) or 0 (cavity)");
+                throw exec_error("mspt_iph", "receiver_type must be 1 (external) or 0 (cavity)");
             }
 
             if ((field_model_type == 0 || field_model_type == 1) && sim_type == 1) // Auto-design. Generate a new system (is_optimize = true) or field layout
@@ -1281,9 +1312,9 @@ public:
             double W_dot_rec_target = std::numeric_limits<double>::quiet_NaN();
 
             if (rec_clearsky_model > 4)
-                throw exec_error("tcsmolten_salt", "Invalid specification for 'rec_clearsky_model'");
+                throw exec_error("mspt_iph", "Invalid specification for 'rec_clearsky_model'");
             if (rec_clearsky_model == -1 && as_double("rec_clearsky_fraction") >= 0.0001)
-                throw exec_error("tcsmolten_salt", "'rec_clearsky_model' must be specified when 'rec_clearsky_fraction' > 0.0.");
+                throw exec_error("mspt_iph", "'rec_clearsky_model' must be specified when 'rec_clearsky_fraction' > 0.0.");
 
             if (!as_boolean("is_rec_model_trans") && !as_boolean("is_rec_startup_trans")) {
                 //std::unique_ptr<C_mspt_receiver_222> ss_receiver = std::make_unique<C_mspt_receiver_222>();   // new to C++14
@@ -1313,7 +1344,7 @@ public:
 
                 //trans_receiver->m_is_startup_from_solved_profile = as_boolean("is_rec_startup_from_T_soln");
                 if (as_boolean("is_rec_startup_trans") && as_boolean("is_rec_startup_from_T_soln"))
-                    throw exec_error("tcsmolten_salt", "Receiver startup from solved temperature profiles is only available when receiver transient startup model is enabled");
+                    throw exec_error("mspt_iph", "Receiver startup from solved temperature profiles is only available when receiver transient startup model is enabled");
 
                 //trans_receiver->m_is_enforce_min_startup = as_boolean("is_rec_enforce_min_startup");
                 if (as_boolean("is_rec_startup_trans") && !as_boolean("is_rec_startup_from_T_soln") && !is_enforce_min_startup)
@@ -1388,7 +1419,7 @@ public:
             size_t n_csky = 0;
             ssc_number_t* csky = as_array("rec_clearsky_dni", &n_csky);
             if (n_csky != n_steps_full)
-                throw exec_error("tcsmolten_salt", "Invalid clear-sky DNI data. Array must have " + util::to_string((int)n_steps_full) + " rows.");
+                throw exec_error("mspt_iph", "Invalid clear-sky DNI data. Array must have " + util::to_string((int)n_steps_full) + " rows.");
 
             clearsky_data.resize(n_steps_full);
             for (size_t i = 0; i < n_steps_full; i++)
@@ -1399,7 +1430,7 @@ public:
         //Load the solar field adjustment factors
         adjustment_factors sf_haf(this, "sf_adjust");
         if (!sf_haf.setup((int)n_steps_full))
-            throw exec_error("tcsmolten_salt", "failed to setup sf adjustment factors: " + sf_haf.error());
+            throw exec_error("mspt_iph", "failed to setup sf adjustment factors: " + sf_haf.error());
         //allocate array to pass to tcs
         heliostatfield.ms_params.m_sf_adjust.resize(sf_haf.size());
         for (int i = 0; i < sf_haf.size(); i++)
@@ -1473,7 +1504,7 @@ public:
 
             if (!is_dispatch && sim_type == 1) {
                 if (!as_boolean("allow_heater_no_dispatch_opt")) {
-                    throw exec_error("tcsmolten_salt", "When the molten salt power tower case has an electric HTF charger, dispatch optimization must be selected");
+                    throw exec_error("mspt_iph", "When the molten salt power tower case has an electric HTF charger, dispatch optimization must be selected");
                 }
             }
 
@@ -1574,9 +1605,9 @@ public:
 
         double ppa_price_year1 = std::numeric_limits<double>::quiet_NaN();
         if (sim_type == 1) {
-            if (csp_financial_model == 8 || csp_financial_model == 7 || csp_financial_model == 1) {        // No Financial Model or LCOH
+            if (csp_financial_model == 8 || csp_financial_model == 7) {        // No Financial Model or LCOH
                 if (is_dispatch) {
-                    throw exec_error("tcsmolten_salt", "Can't select dispatch optimization if No Financial model");
+                    throw exec_error("mspt_iph", "Can't select dispatch optimization if No Financial model");
                 }
                 else { // if no dispatch optimization, don't need an input pricing schedule
                     // If electricity pricing data is not available, then dispatch to a uniform schedule
@@ -1587,6 +1618,82 @@ public:
 
                 if (csp_financial_model == 1) {
                     log("The MSLF IPH model does not control dispatch with respect to input pricing signals");
+                }
+            }
+            else if (csp_financial_model == 1) {   // Single owner
+
+                // Get first year base ppa price
+                bool is_ppa_price_input_assigned = is_assigned("ppa_price_input");
+                if (is_dispatch && !is_ppa_price_input_assigned) {
+                    throw exec_error("mspt_iph", "\n\nYou selected dispatch optimization which requires that the array input ppa_price_input is defined\n");
+                }
+
+                if (is_ppa_price_input_assigned) {
+                    size_t count_ppa_price_input;
+                    ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
+                    ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
+                }
+                else {
+                    ppa_price_year1 = 1.0;      //[-] don't need ppa multiplier if not optimizing
+                }
+
+                int ppa_soln_mode = as_integer("ppa_soln_mode");    // PPA solution mode (0=Specify IRR target, 1=Specify PPA price)
+                if (ppa_soln_mode == 0 && is_dispatch) {
+                    throw exec_error("mspt_iph", "\n\nYou selected dispatch optimization and the Specify IRR Target financial solution mode, "
+                        "but dispatch optimization requires known absolute electricity prices. Dispatch optimization requires "
+                        "the Specify PPA Price financial solution mode. You can continue using dispatch optimization and iteratively "
+                        "solve for the PPA that results in a target IRR by running a SAM Parametric analysis or script.\n");
+                }
+
+                // Time-of-Delivery multipliers by time step:
+                int ppa_mult_model = as_integer("ppa_multiplier_model");
+                if (ppa_mult_model == 1)        // use dispatch_ts input
+                {
+                    tou_params->mc_pricing.mv_is_diurnal = false;
+
+                    if (is_assigned("dispatch_factors_ts") || is_dispatch) {
+                        size_t nmultipliers;
+                        ssc_number_t* multipliers = as_array("dispatch_factors_ts", &nmultipliers);
+                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(nmultipliers, 0.0);
+                        for (size_t ii = 0; ii < nmultipliers; ii++)
+                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][ii] = multipliers[ii];
+                    }
+                    else { // if no dispatch optimization, don't need an input pricing schedule
+                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
+                    }
+                }
+                else if (ppa_mult_model == 0) // standard diurnal input
+                {
+                    tou_params->mc_pricing.mv_is_diurnal = true;
+
+                    // Most likely use case is to use schedules and TOD. So assume if at least one is provided, then user intended to use this approach
+                    // the 'else' option applies non-feasible electricity prices, so we want to guard against selecting that it appears users
+                    // are trying to use the schedules. 
+                    bool is_one_assigned = is_assigned("dispatch_sched_weekday") || is_assigned("dispatch_sched_weekend") || is_assigned("dispatch_tod_factors");
+
+                    if (is_one_assigned || is_dispatch) {
+
+                        tou_params->mc_pricing.mc_weekdays = as_matrix("dispatch_sched_weekday");
+                        if (tou_params->mc_pricing.mc_weekdays.ncells() == 1) { tou_params->mc_pricing.mc_weekdays.resize_fill(12, 24, 1.); };
+                        tou_params->mc_pricing.mc_weekends = as_matrix("dispatch_sched_weekend");
+                        if (tou_params->mc_pricing.mc_weekends.ncells() == 1) { tou_params->mc_pricing.mc_weekends.resize_fill(12, 24, 1.); };
+
+                        auto dispatch_tod_factors = as_vector_double("dispatch_tod_factors");
+                        if (dispatch_tod_factors.size() != 9)
+                            throw exec_error("mspt_iph", util::format("\n\nDispatch TOD factors has %d periods instead of the expected 9.\n", (int)dispatch_tod_factors.size()));
+
+                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, 0.0);
+
+                        for (size_t i = 0; i < 9; i++)
+                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][i] = dispatch_tod_factors[i];
+
+                    }
+                    else {
+                        // If electricity pricing data is not available, then dispatch to a uniform schedule
+                        tou_params->mc_pricing.mc_weekdays.resize_fill(12, 24, 1.);
+                        tou_params->mc_pricing.mc_weekends.resize_fill(12, 24, 1.);
+                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, -1.0);
+                    }
                 }
             }
             else {
@@ -1613,7 +1720,30 @@ public:
         // *****************************************************
         // System dispatch
         csp_dispatch_opt dispatch;
-        dispatch.solver_params.dispatch_optimize = false;
+
+        if (is_dispatch) {
+
+            double heater_startup_cost = 0.0;
+
+            dispatch.solver_params.set_user_inputs(is_dispatch, as_integer("disp_steps_per_hour"), as_integer("disp_frequency"), as_integer("disp_horizon"),
+                as_integer("disp_max_iter"), as_double("disp_mip_gap"), as_double("disp_timeout"),
+                as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_spec_scaling"), as_integer("disp_reporting"),
+                as_boolean("is_write_ampl_dat"), as_boolean("is_ampl_engine"), as_string("ampl_data_dir"), as_string("ampl_exec_call"));
+
+            bool can_cycle_use_standby = false;
+            double disp_csu_cost_calc = 0.0;
+            double disp_pen_ramping = 0.0;
+            double q_rec_standby = 9e99;
+            double q_rec_heattrace = 0.;
+
+            double disp_rsu_cost_calc = as_double("disp_rsu_cost_rel") * q_dot_rec_des;   //[$/start]
+            dispatch.params.set_user_params(can_cycle_use_standby, as_double("disp_time_weighting"),
+                disp_rsu_cost_calc, heater_startup_cost, disp_csu_cost_calc, disp_pen_ramping,
+                as_double("disp_inventory_incentive"), q_rec_standby, q_rec_heattrace, ppa_price_year1);
+        }
+        else {
+            dispatch.solver_params.dispatch_optimize = false;
+        }
 
         // Instantiate Solver       
         C_csp_solver csp_solver(weather_reader,
@@ -1628,7 +1758,6 @@ public:
             ssc_cmod_update,
             (void*)(this));
 
-
         // Set solver reporting outputs
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TIME_FINAL, allocate("time_hr", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::ERR_M_DOT, allocate("m_dot_balance", n_steps_fixed), n_steps_fixed);
@@ -1637,7 +1766,6 @@ public:
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::OP_MODE_1, allocate("op_mode_1", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::OP_MODE_2, allocate("op_mode_2", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::OP_MODE_3, allocate("op_mode_3", n_steps_fixed), n_steps_fixed);
-
 
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TOU_PERIOD, allocate("tou_value", n_steps_fixed), n_steps_fixed);
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PRICING_MULT, allocate("pricing_mult", n_steps_fixed), n_steps_fixed);
@@ -1723,7 +1851,7 @@ public:
                 log(out_msg, out_type);
             }
 
-            throw exec_error("tcsmolten_salt", csp_exception.m_error_message);
+            throw exec_error("mspt_iph", csp_exception.m_error_message);
         }
 
         // If no exception, then report messages
@@ -2171,7 +2299,7 @@ public:
                 log(out_msg);
             }
 
-            throw exec_error("tcsmolten_salt", csp_exception.m_error_message);
+            throw exec_error("mspt_iph", csp_exception.m_error_message);
         }
 
         // If no exception, then report messages
@@ -2186,7 +2314,7 @@ public:
         // 'adjustment_factors' class stores factors in hourly array, so need to index as such
         adjustment_factors haf(this, "adjust");
         if (!haf.setup(count))
-            throw exec_error("tcsmolten_salt", "failed to setup adjustment factors: " + haf.error());
+            throw exec_error("mspt_iph", "failed to setup adjustment factors: " + haf.error());
 
         ssc_number_t* p_gen = allocate("gen", count);
         ssc_number_t* p_W_dot_parasitic_tot = as_array("W_dot_parasitic_tot", &count);
