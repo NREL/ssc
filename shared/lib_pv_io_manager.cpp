@@ -941,7 +941,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 
     p_systemDCPowerCS = cm->allocate("dc_net_clearsky", numberOfLifetimeRecords);
     p_subhourlyClippingLoss = cm->allocate("subhourly_clipping_loss", numberOfLifetimeRecords);
-    p_subhourlyClippingLossFactor = cm->allocate("subhourly_clipping_loss_factor", numberOfLifetimeRecords);
+    //p_subhourlyClippingLossFactor = cm->allocate("subhourly_clipping_loss_factor", numberOfLifetimeRecords);
 
     p_DistributionClippingLoss = cm->allocate("distribution_clipping_loss", numberOfLifetimeRecords);
 

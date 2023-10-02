@@ -1508,7 +1508,7 @@ void cm_pvsamv1::exec()
                     Irradiance->dtHour, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, 0.0, Subarrays[nn]->groundCoverageRatio, Subarrays[nn]->slopeTilt, Subarrays[nn]->slopeAzm,
                     Subarrays[nn]->monthlyTiltDegrees, Irradiance->userSpecifiedMonthlyAlbedo,
                     Subarrays[nn]->poa.poaAll.get(),
-                    Irradiance->useSpatialAlbedos, &Irradiance->userSpecifiedMonthlySpatialAlbedos, as_boolean("enable_subhourly_clipping"));
+                    Irradiance->useSpatialAlbedos, &Irradiance->userSpecifiedMonthlySpatialAlbedos, (as_boolean("enable_subhourly_clipping") || as_boolean("enable_subinterval_distribution")));
 
                 int code = irr.calc();
 
@@ -2553,11 +2553,11 @@ void cm_pvsamv1::exec()
         }
         for (size_t inrec = 0; inrec < nrec; inrec++) {
             idx = inrec;
-            double dcPower_kW_csky = PVSystem->p_systemDCPowerCS[idx];
+            double dcPower_kWcsky = PVSystem->p_systemDCPowerCS[idx];
             //Calculate DNI clearness index (time step basis)
             double dni_clearness_index = PVSystem->p_DNIIndex[0][idx];
             //Calculate Clipping Potential ((P_dc,dryclean - P_ac,0) / P_ac,0) (time step basis)
-            sharedInverter->calculateACPower(dcPower_kW_csky, dcVoltagePerMppt[0], Irradiance->weatherRecord.tdry, as_boolean("enable_subhourly_clipping")); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
+            sharedInverter->calculateACPower(dcPower_kWcsky, dcVoltagePerMppt[0], Irradiance->weatherRecord.tdry, as_boolean("enable_subhourly_clipping")); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
             nominal_annual_clipping_output += sharedInverter->powerAC_kW_clipping;
             /*
             double clip_pot = (dcPower_kW_csky - sharedInverter->powerAC_kW_clipping) / sharedInverter->powerAC_kW_clipping;
@@ -2619,9 +2619,7 @@ void cm_pvsamv1::exec()
             double dcPower_kW = PVSystem->p_systemDCPower[idx];
 
             double dcPower_kW_csky = PVSystem->p_systemDCPowerCS[idx];
-            double dcPower_kW_max = dcPower_kW_csky;
-            double dcPower_kW_min = dcPower_kW_max * 0.045 / 1.5; //AM?
-            double dcPower_kW_avg = dcPower_kW;
+
             // Battery replacement
             if (en_batt && (batt_topology == ChargeController::DC_CONNECTED))
             {
@@ -2657,43 +2655,51 @@ void cm_pvsamv1::exec()
                 }
             }
 
-            if (as_boolean("enable_subinterval_distribution")) {
-                if (dcPower_kW > 0) {
+            if (as_integer("enable_subinterval_distribution")==1) {
+                if (dcPower_kW > 0.0) {
                     double dcPower_kW_max = dcPower_kW_csky;
+                    log(util::format("dcPower max is %lg", dcPower_kW_max), SSC_NOTICE);
                     double dcPower_kW_min = dcPower_kW_max * 0.045 / 1.5; //AM?
+                    log(util::format("dcPower min is %lg", dcPower_kW_min), SSC_NOTICE);
                     double dcPower_kW_avg = dcPower_kW;
                     double CF = (dcPower_kW_avg - dcPower_kW_min) / (dcPower_kW_max - dcPower_kW_min);
                     double n = CF / (1 - CF);
-                    int inverter_count = as_integer("inverter_count");
+                    log(util::format("n is %lg", n), SSC_NOTICE);
+                    //int inverter_count = as_integer("inverter_count");
+                    int inverter_count = 99;
                     //sharedInverter->calculateACPower(dcPower_kW_csky, dcVoltagePerMppt[0], Irradiance->weatherRecord.tdry, as_boolean("enable_subhourly_clipping"));
-                    double inv_dc_max = sharedInverter->getInverterDCMaxPower(0.0) / 1000.0 * inverter_count;
+                    double inv_dc_max = sharedInverter->getInverterDCMaxPower(nameplate_kw) / 1000.0 * inverter_count;
+                    //log(util::format("Inverter DC Max is %lg kW", inv_dc_max), SSC_NOTICE);
                     double T = 1.0;
-                    double log_test = 1 - (inv_dc_max - dcPower_kW_min) / (dcPower_kW_max - dcPower_kW_min);
-                    double t_lm = 0.0;
-                    if (log_test > 0.0) {
-                        t_lm = T * exp(std::log(1 - (inv_dc_max - dcPower_kW_min) / (dcPower_kW_max - dcPower_kW_min)) / n); //fraction of hours
+                    double log_test = 1.0 - (inv_dc_max - dcPower_kW_min) / (dcPower_kW_max - dcPower_kW_min);
+                    log(util::format("log_test is %lg", log_test), SSC_NOTICE);
+                    ssc_number_t t_lm = 0.0;
+                    if (log_test > 0.0 && n > 0.0) {
+                        t_lm = T * std::exp(std::log(1.0 - (inv_dc_max - dcPower_kW_min) / (dcPower_kW_max - dcPower_kW_min)) / n); //fraction of hours
                     }
+                    log(util::format("t_lm is %lg", t_lm), SSC_NOTICE);
                     double E_clipped = dcPower_kW_max * t_lm - ((dcPower_kW_max - dcPower_kW_min) * pow(t_lm, n + 1) / ((n + 1) * pow(T, n))) - inv_dc_max * t_lm;
+                    log(util::format("E_clipped is %lg kW", E_clipped), SSC_NOTICE);
                     double E_remaining = (inv_dc_max - dcPower_kW_max) * T + ((dcPower_kW_max - dcPower_kW_min) * pow(T, n + 1) / ((n + 1) * pow(T, n))) - (inv_dc_max - dcPower_kW_max) * t_lm -
                         ((dcPower_kW_max - dcPower_kW_min) * pow(t_lm, n + 1) / ((n + 1) * pow(T, n)));
                     double subinterval_clipping_loss = E_clipped;
-                    if (E_clipped > 0) {
+                    if (E_clipped > 0.0) {
                         for (size_t m = 0; m < PVSystem->Inverter->nMpptInputs; m++)
                         {
                             dcPowerNetPerMppt_kW[m] -= E_clipped * dcPowerNetPerMppt_kW[m] / dcPower_kW;
                         }
                         dcPower_kW -= E_clipped;
-                        PVSystem->p_DistributionClippingLoss[idx] = E_clipped;
+                        PVSystem->p_DistributionClippingLoss[idx] = (ssc_number_t)E_clipped;
                         if (iyear == 0) {
                             annual_distribution_clipping_loss += E_clipped;
                         }
                     }
                     else {
-                        PVSystem->p_DistributionClippingLoss[idx] = 0.0;
+                        PVSystem->p_DistributionClippingLoss[idx] = (ssc_number_t)1;
                     }
                 }
                 else {
-                    PVSystem->p_DistributionClippingLoss[idx] = 0.0;
+                    PVSystem->p_DistributionClippingLoss[idx] = (ssc_number_t)2;
                 }
 
             }
