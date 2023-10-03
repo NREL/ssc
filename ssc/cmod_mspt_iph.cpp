@@ -1733,13 +1733,11 @@ public:
             bool can_cycle_use_standby = false;
             double disp_csu_cost_calc = 0.0;
             double disp_pen_ramping = 0.0;
-            double q_rec_standby = 9e99;
-            double q_rec_heattrace = 0.;
 
             double disp_rsu_cost_calc = as_double("disp_rsu_cost_rel") * q_dot_rec_des;   //[$/start]
             dispatch.params.set_user_params(can_cycle_use_standby, as_double("disp_time_weighting"),
                 disp_rsu_cost_calc, heater_startup_cost, disp_csu_cost_calc, disp_pen_ramping,
-                as_double("disp_inventory_incentive"), q_rec_standby, q_rec_heattrace, ppa_price_year1);
+                as_double("disp_inventory_incentive"), as_double("q_rec_standby"), as_double("q_rec_heattrace"), ppa_price_year1);
         }
         else {
             dispatch.solver_params.dispatch_optimize = false;
