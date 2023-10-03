@@ -174,6 +174,7 @@ private:
 	
 	double m_costh;				//[-] Cosine of the incidence angle between sun and trough aperture
 	double m_dni_costh;			//[W/m2] DNI x cos(theta) product
+    double m_dni;               //[W/m2]
 	double m_W_dot_sca_tracking;	//[MWe] SCA tracking power
 	// Collector-receiver equivalent(weighted over variants AND all SCAs) optical efficiency
 		// m_ColOptEff * m_Shadowing * m_Dirt_HCE * m_alpha_abs * m_tau_envelope
@@ -545,7 +546,7 @@ public:
 
 	virtual double calculate_optical_efficiency(const C_csp_weatherreader::S_outputs &weather, const C_csp_solver_sim_info &sim);
 
-	virtual double calculate_thermal_efficiency_approx(const C_csp_weatherreader::S_outputs &weather, double q_incident /*MW*/);
+	virtual double calculate_thermal_efficiency_approx(const C_csp_weatherreader::S_outputs &weather, double q_incident /*MW*/, const C_csp_solver_sim_info& sim);
 
 	virtual double get_collector_area();
 

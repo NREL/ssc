@@ -39,6 +39,8 @@ set(SSC_SRC
 		cmod_financial_eqns.cpp
 		cmod_financial_eqns.h
 		cmod_fossilgen.cpp
+        cmod_fresnel_physical.cpp
+        cmod_fresnel_physical_iph.cpp
 		cmod_fuelcell.cpp
 		cmod_fuelcell.h
 		cmod_generic_system-builder.cpp
@@ -70,7 +72,7 @@ set(SSC_SRC
 		cmod_mhk_tidal.cpp
 		cmod_mhk_wave.cpp
 		cmod_mspt_sf_and_rec_isolated.cpp
-		cmod_poacalib.cpp
+        cmod_mspt_iph.cpp
         cmod_ptes_design_point.cpp
 		cmod_pv6parmod.cpp
 		cmod_pv_get_shade_loss_mpp.cpp
@@ -79,10 +81,6 @@ set(SSC_SRC
 		cmod_pvsamv1_eqns.cpp
 		cmod_pvsamv1_eqns.h
 		cmod_pvsandiainv.cpp
-		cmod_pvwattsv0.cpp
-		cmod_pvwattsv1.cpp
-		cmod_pvwattsv1_1ts.cpp
-		cmod_pvwattsv1_poa.cpp
 		cmod_pvwattsv5.cpp
 		cmod_pvwattsv7.cpp
 		cmod_pvwattsv8.cpp

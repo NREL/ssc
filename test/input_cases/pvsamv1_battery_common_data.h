@@ -151,8 +151,8 @@ void pvsamv1_pv_defaults(ssc_data_t& data) {
 	ssc_data_set_number(data, "subarray1_nmody", 2);
 	ssc_data_set_number(data, "subarray1_backtrack", 0);
 	ssc_data_set_number(data, "subarray2_enable", 0);
-	ssc_data_set_number(data, "subarray2_modules_per_string", 0);
-	ssc_data_set_number(data, "subarray2_nstrings", 0);
+	ssc_data_set_number(data, "subarray2_modules_per_string", 1);
+	ssc_data_set_number(data, "subarray2_nstrings", 1);
 	ssc_data_set_number(data, "subarray2_mppt_input", 1);
 	ssc_data_set_number(data, "subarray2_tilt", 20);
 	ssc_data_set_number(data, "subarray2_tilt_eq_lat", 0);
@@ -170,8 +170,8 @@ void pvsamv1_pv_defaults(ssc_data_t& data) {
 	ssc_data_set_number(data, "subarray2_nmody", 2);
 	ssc_data_set_number(data, "subarray2_backtrack", 0);
 	ssc_data_set_number(data, "subarray3_enable", 0);
-	ssc_data_set_number(data, "subarray3_modules_per_string", 0);
-	ssc_data_set_number(data, "subarray3_nstrings", 0);
+	ssc_data_set_number(data, "subarray3_modules_per_string", 1);
+	ssc_data_set_number(data, "subarray3_nstrings", 1);
 	ssc_data_set_number(data, "subarray3_mppt_input", 1);
 	ssc_data_set_number(data, "subarray3_tilt", 20);
 	ssc_data_set_number(data, "subarray3_tilt_eq_lat", 0);
@@ -189,8 +189,8 @@ void pvsamv1_pv_defaults(ssc_data_t& data) {
 	ssc_data_set_number(data, "subarray3_nmody", 2);
 	ssc_data_set_number(data, "subarray3_backtrack", 0);
 	ssc_data_set_number(data, "subarray4_enable", 0);
-	ssc_data_set_number(data, "subarray4_modules_per_string", 0);
-	ssc_data_set_number(data, "subarray4_nstrings", 0);
+	ssc_data_set_number(data, "subarray4_modules_per_string", 1);
+	ssc_data_set_number(data, "subarray4_nstrings", 1);
 	ssc_data_set_number(data, "subarray4_mppt_input", 1);
 	ssc_data_set_number(data, "subarray4_tilt", 20);
 	ssc_data_set_number(data, "subarray4_tilt_eq_lat", 0);
@@ -926,8 +926,8 @@ void commercial_multiarray_default(ssc_data_t& data) {
 	ssc_data_set_number(data, "subarray2_nmody", 2);
 	ssc_data_set_number(data, "subarray2_backtrack", 0);
 	ssc_data_set_number(data, "subarray3_enable", 0);
-	ssc_data_set_number(data, "subarray3_modules_per_string", 0);
-	ssc_data_set_number(data, "subarray3_nstrings", 0);
+	ssc_data_set_number(data, "subarray3_modules_per_string", 1);
+	ssc_data_set_number(data, "subarray3_nstrings", 1);
 	ssc_data_set_number(data, "subarray3_mppt_input", 1);
 	ssc_data_set_number(data, "subarray3_tilt", 20);
 	ssc_data_set_number(data, "subarray3_tilt_eq_lat", 0);
@@ -945,8 +945,8 @@ void commercial_multiarray_default(ssc_data_t& data) {
 	ssc_data_set_number(data, "subarray3_nmody", 2);
 	ssc_data_set_number(data, "subarray3_backtrack", 0);
 	ssc_data_set_number(data, "subarray4_enable", 0);
-	ssc_data_set_number(data, "subarray4_modules_per_string", 0);
-	ssc_data_set_number(data, "subarray4_nstrings", 0);
+	ssc_data_set_number(data, "subarray4_modules_per_string", 1);
+	ssc_data_set_number(data, "subarray4_nstrings", 1);
 	ssc_data_set_number(data, "subarray4_mppt_input", 1);
 	ssc_data_set_number(data, "subarray4_tilt", 20);
 	ssc_data_set_number(data, "subarray4_tilt_eq_lat", 0);
