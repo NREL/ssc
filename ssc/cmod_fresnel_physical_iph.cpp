@@ -591,8 +591,9 @@ public:
 
     void exec()
     {
-        FILE* fp = fopen("fresnel_iph_cmod_to_lk.lk", "w");
-        write_cmod_to_lk_script(fp, m_vartab);
+        // Uncomment following 2 lines to write cmod inputs to LK script
+        //FILE* fp = fopen("fresnel_iph_cmod_to_lk.lk", "w");
+        //write_cmod_to_lk_script(fp, m_vartab);
 
         // Common Parameters
         bool is_dispatch = as_boolean("is_dispatch");
