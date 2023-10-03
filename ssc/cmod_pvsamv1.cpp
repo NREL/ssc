@@ -1130,10 +1130,25 @@ void cm_pvsamv1::exec()
             throw exec_error("pvsamv1", "The measured temperature array must be the size of nrecords per year");
     }
 
+    std::vector<ssc_number_t> user_tilt_angles; user_tilt_angles.reserve(nrec);
+    size_t user_tilt_angles_size;
+    int use_user_tilt_angles = (as_integer("use_user_tilt_angles") == 1 && is_assigned("user_tilt_angles_array"));
+    if (as_integer("use_user_tilt_angles") == 1 && is_assigned("user_tilt_angles_array")) {
+        user_tilt_angles = as_vector_ssc_number_t("user_tilt_angles_array");
+        user_tilt_angles_size = user_tilt_angles.size();
+        if (user_tilt_angles_size != nrec)
+            throw exec_error("pvsamv1", "The measured temperature array must be the size of nrecords per year");
+    }
+
     //overwrite tilt with latitude if flag is set- can't do this in PVIOManager because need latitude from weather file
     //also check here for tilt > 0 for tracking systems, since this is a very uncommon configuration but an easy mistake to make
     for (size_t nn = 0; nn < num_subarrays; nn++)
     {
+        if (as_integer("use_user_tilt_angles") == 1 && is_assigned("user_tilt_angles_array")) {
+            Subarrays[nn]->trackMode = irrad::FIXED_TILT;
+            Subarrays[nn]->tiltDegrees = 0; //reset to 0 to then be replaced in loop?
+            Subarrays[nn]->backtrackingEnabled = false; //account for backtracking in user-specified angles [deg]
+        }
         if (Subarrays[nn]->tiltEqualLatitude)
             Subarrays[nn]->tiltDegrees = std::abs(Irradiance->weatherHeader.lat);
         if (Subarrays[nn]->trackMode == irrad::SINGLE_AXIS && Subarrays[nn]->tiltDegrees > 0 && !Subarrays[nn]->Module->isBifacial)
@@ -1496,6 +1511,11 @@ void cm_pvsamv1::exec()
                 if (!Subarrays[nn]->enable
                     || Subarrays[nn]->nStrings < 1)
                     continue; // skip disabled subarrays
+
+                if (as_integer("use_user_tilt_angles") == 1 && is_assigned("user_tilt_angles_array")) {
+                    Subarrays[nn]->tiltDegrees = user_tilt_angles[inrec];
+                    
+                }
 
                 irrad irr(Irradiance->weatherRecord, Irradiance->weatherHeader,
                     Irradiance->skyModel, Irradiance->radiationMode, Subarrays[nn]->trackMode,
