@@ -51,6 +51,7 @@ C_falling_particle_receiver::C_falling_particle_receiver(double h_tower /*m*/,
     double ap_height /*m*/, double ap_width /*m*/, double ap_height_ratio /*-*/, double ap_width_ratio /*-*/, double ap_curtain_depth_ratio /*-*/, 
     double particle_dp /*m*/, double particle_abs /*-*/, double curtain_emis /*-*/, double dthdy /*-*/, 
     double cav_emis /*-*/, double cav_twall /*m*/, double cav_kwall /*m*/, double cav_hext /*W/m2/K*/,
+    double tauc_mult /*-*/, double hadv_mult /*-*/,
     int n_x, int n_y, int n_x_rad, int n_y_rad,
     double T_hot_target /*C*/, double csky_frac /*-*/) : C_pt_receiver(h_tower, 0.0,
         T_htf_hot_des, T_htf_cold_des,
@@ -71,6 +72,7 @@ C_falling_particle_receiver::C_falling_particle_receiver(double h_tower /*m*/,
     m_vf_rad_type_0 = 0.9;
     m_hadv_model_type = hadv_model_type;
     m_hadv_user = hadv_user;
+    m_hadv_mult = hadv_mult;
 
     // Cavity and curtain geometry
     m_ap_height = ap_height;
@@ -91,7 +93,7 @@ C_falling_particle_receiver::C_falling_particle_receiver(double h_tower /*m*/,
     m_particle_abs = particle_abs;
     m_curtain_emis = curtain_emis;
     m_dthdy = dthdy;
-    m_tauc_mult = 1.0;
+    m_tauc_mult = tauc_mult;
     m_phi0 = 0.6;
 
     // Cavity wall properties
@@ -1037,12 +1039,14 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
                 Tfilm = 0.5 * (0.5 * (m_T_htf_hot_des + T_cold_in_rec) + T_amb);
                 calculate_advection_coeff_sandia(vel_out, Tfilm, v_wind, wdir, P_amb, hadv, fwind);
                 hadv = fmax(hadv, 0.0);
+                hadv *= m_hadv_mult;
             }
             else  // TODO: Need an error here... eventually expand to include a lookup table
             {
                 hadv = 0.0;
                 fwind = 1.0;
             }
+            hadv_with_wind = hadv * fwind;
 
             rhoc_avg = flux_avg = Ec_avg = 0.0;
             vf_to_ap = m_rad_model_type == 1 ? m_vf_curtain_ap_avg : m_vf_rad_type_0;
@@ -1054,7 +1058,7 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
                     if (j < m_n_y - 1)
                     {
                         qabs_approx = (1.0 - soln.rhoc.at(j, i) - soln.tauc.at(j, i) + rhow * soln.tauc.at(j, i) + rhow * (1.0 - vf_to_ap) * soln.rhoc.at(j, i)) * soln.q_dot_inc.at(j, i); // Approximate solar energy absorbed by the particle curtain (W/m2)
-                        qnet_approx = qabs_approx - hadv * fwind * (Tp.at(j, i) - soln.T_amb) - m_curtain_emis * CSP::sigma * pow(Tp.at(j, i), 4);  //Approximate net heat transfer rate using curtain temperature at prior element
+                        qnet_approx = qabs_approx - hadv_with_wind * (Tp.at(j, i) - soln.T_amb) - m_curtain_emis * CSP::sigma * pow(Tp.at(j, i), 4);  //Approximate net heat transfer rate using curtain temperature at prior element
                         dh_approx = qnet_approx * (dy / (soln.phip.at(j + 1, i) * soln.thc.at(j + 1, i) * soln.vel.at(j + 1, i) * particle_density));
                         Tp.at(j + 1, i) = max(T_cold_in_rec, Tp.at(j, i) + dh_approx / cp);
                     }
@@ -1164,6 +1168,7 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
                 Tfilm = 0.5 * (0.5 * (Tp_out + T_cold_in_rec) + T_amb);
                 calculate_advection_coeff_sandia(vel_out,  Tfilm, v_wind, wdir, P_amb, hadv, fwind);
                 hadv = fmax(hadv, 0.0);
+                hadv *= m_hadv_mult;
             }
             else  // TODO: Need an error here... eventually expand to include a lookup table
             {
@@ -1231,7 +1236,7 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
                     hwconv = m_include_back_wall_convection ? calculate_wall_convection_coeff(soln.vel.at(j, i), (j + 0.5) * dy, 0.5 * (Tw.at(j, i) + Tp.at(j, i)), P_amb) : 0.0;
 
                     // Solve for particle temperature at next vertical node
-                    qadv = hadv * fwind * (Tp.at(j, i) - T_amb);
+                    qadv = hadv_with_wind* (Tp.at(j, i) - T_amb);
                     if (j < m_n_y - 1)
                     {
                         qtot = qnetc.at(j, i) - qadv - hwconv * (Tp.at(j, i) - Tw.at(j, i));  // Net heat transfer rate into particles [W/m2]
@@ -1695,7 +1700,7 @@ void C_falling_particle_receiver::calculate_local_curtain_optical_properties(dou
 
     // Optionally adjust by a user-provided multiplier for transmissivity
     tauc *= m_tauc_mult;
-    tauc = min(tauc, 1.0 - rhoc);  
+    tauc = min(tauc, 1.0 - rhoc);
 
     return;
 }

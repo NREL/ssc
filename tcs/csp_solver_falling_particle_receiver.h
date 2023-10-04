@@ -124,7 +124,7 @@ protected:
 
     int m_hadv_model_type;      // Model used for advective loss (only used if m_model_type ==3): 0 = user-defined constant value, 1 = Sandia's correlation
     double m_hadv_user;         // User-provided constant advective loss coefficient (Only used if m_model_type >=3 and m_hadv_model = 0)
-
+    double m_hadv_mult;         // User-provided multipler to adjust advective loss coefficient. Only used if m_hdav_model_type == 1
 
     // Cavity and curtain geometry
     double m_ap_height;                 // Aperture height [m]
@@ -145,7 +145,7 @@ protected:
     double m_particle_abs;      // Particle solar absorptivity [-]
     double m_curtain_emis;      // Curtain emissivity [-]
     double m_dthdy;             // Rate of curtain thickness increase with respect to fall distance [-]
-    double m_tauc_mult;         // User-provided multiplier to adjust curtain transmissivity [-]
+    double m_tauc_mult;         // User-provided multiplier to adjust curtain transmissivity relative to values calculated from simple model [-]
     double m_phi0;              // Initial particle curtain volume fraction
 
     // Cavity wall properties
@@ -308,6 +308,7 @@ public:
         double ap_height /*m*/, double ap_width /*m*/, double ap_height_ratio /*-*/, double ap_width_ratio /*-*/, double ap_curtain_depth_ratio /*-*/,
         double particle_dp /*m*/, double particle_abs /*-*/, double curtain_emis /*-*/, double dthdy /*-*/,
         double cav_emis /*-*/, double cav_twall /*m*/, double cav_kwall /*m*/, double cav_hext /*W/m2/K*/,
+        double tauc_mult /*-*/, double hadv_mult /*-*/,
         int n_x, int  n_y, int n_x_rad, int n_y_rad,
         double T_hot_target /*C*/, double csky_frac /*-*/);
 

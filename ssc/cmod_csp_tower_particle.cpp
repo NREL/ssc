@@ -197,6 +197,9 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_INPUT,     SSC_NUMBER, "cav_twall",                          "Cavity wall thickness",                                                                                                                   "m",            "",                                  "Tower and Receiver",                       "?=0.05",                                                           "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "cav_kwall",                          "Cavity wall thermal conductivity",                                                                                                        "W/m/K",        "",                                  "Tower and Receiver",                       "?=0.2",                                                            "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "cav_hext",                           "Cavity wall external convective loss coefficient",                                                                                        "W/m2/K",       "",                                  "Tower and Receiver",                       "?=10.0",                                                           "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "rec_tauc_mult",                  "User-provided multiplier for calculated curtain transmissivity",                                                                          "",             "",                                  "Tower and Receiver",                       "?=1.0",                                                            "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "rec_hadv_mult",                  "User-provided multiplier for calculated advective loss coefficient",                                                                      "",             "",                                  "Tower and Receiver",                       "?=1.0",                                                            "",              "" },
+
 
 
 
@@ -1102,6 +1105,7 @@ public:
             ap_height, ap_width, as_double("norm_curtain_height"), as_double("norm_curtain_width"), ap_curtain_depth_ratio,
             as_double("particle_dp"), as_double("particle_abs"), as_double("curtain_emis"), as_double("curtain_dthdy"),
             as_double("cav_abs"), as_double("cav_twall"), as_double("cav_kwall"), as_double("cav_hext"),
+            as_double("rec_tauc_mult"), as_double("rec_hadv_mult"),
             n_x, n_y, as_integer("rec_rad_nx"), as_integer("rec_rad_ny"),
             as_double("T_htf_hot_des"), as_double("rec_clearsky_fraction")
         ));   // steady-state receiver
