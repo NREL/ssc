@@ -125,7 +125,7 @@ void pvyield_no_financial_meteo(ssc_data_t& data)
     ssc_data_set_number(data, "subarray1_nmody", 1);
     ssc_data_set_number(data, "subarray1_backtrack", 0);
     ssc_data_set_number(data, "subarray2_enable", 0);
-    ssc_data_set_number(data, "subarray2_nstrings", 0);
+    ssc_data_set_number(data, "subarray2_nstrings", 1);
     ssc_data_set_number(data, "subarray2_tilt", 20);
     ssc_data_set_number(data, "subarray2_tilt_eq_lat", 0);
     ssc_data_set_number(data, "subarray2_azimuth", 180);
@@ -144,7 +144,7 @@ void pvyield_no_financial_meteo(ssc_data_t& data)
     ssc_data_set_number(data, "subarray2_nmody", 2);
     ssc_data_set_number(data, "subarray2_backtrack", 0);
     ssc_data_set_number(data, "subarray3_enable", 0);
-    ssc_data_set_number(data, "subarray3_nstrings", 0);
+    ssc_data_set_number(data, "subarray3_nstrings", 1);
     ssc_data_set_number(data, "subarray3_tilt", 20);
     ssc_data_set_number(data, "subarray3_tilt_eq_lat", 0);
     ssc_data_set_number(data, "subarray3_azimuth", 180);
@@ -163,7 +163,7 @@ void pvyield_no_financial_meteo(ssc_data_t& data)
     ssc_data_set_number(data, "subarray3_nmody", 2);
     ssc_data_set_number(data, "subarray3_backtrack", 0);
     ssc_data_set_number(data, "subarray4_enable", 0);
-    ssc_data_set_number(data, "subarray4_nstrings", 0);
+    ssc_data_set_number(data, "subarray4_nstrings", 1);
     ssc_data_set_number(data, "subarray4_tilt", 20);
     ssc_data_set_number(data, "subarray4_tilt_eq_lat", 0);
     ssc_data_set_number(data, "subarray4_azimuth", 180);
@@ -573,7 +573,7 @@ void pvyield_bifacial_case(ssc_data_t& data)
     ssc_data_set_number(data, "subarray1_nmody", 2);
     ssc_data_set_number(data, "subarray1_backtrack", 1);
     ssc_data_set_number(data, "subarray2_enable", 0);
-    ssc_data_set_number(data, "subarray2_nstrings", 0);
+    ssc_data_set_number(data, "subarray2_nstrings", 1);
     ssc_data_set_number(data, "subarray2_tilt", 20);
     ssc_data_set_number(data, "subarray2_tilt_eq_lat", 0);
     ssc_data_set_number(data, "subarray2_azimuth", 180);
@@ -590,7 +590,7 @@ void pvyield_bifacial_case(ssc_data_t& data)
     ssc_data_set_number(data, "subarray2_nmody", 2);
     ssc_data_set_number(data, "subarray2_backtrack", 0);
     ssc_data_set_number(data, "subarray3_enable", 0);
-    ssc_data_set_number(data, "subarray3_nstrings", 0);
+    ssc_data_set_number(data, "subarray3_nstrings", 1);
     ssc_data_set_number(data, "subarray3_tilt", 20);
     ssc_data_set_number(data, "subarray3_tilt_eq_lat", 0);
     ssc_data_set_number(data, "subarray3_azimuth", 180);
@@ -607,7 +607,7 @@ void pvyield_bifacial_case(ssc_data_t& data)
     ssc_data_set_number(data, "subarray3_nmody", 2);
     ssc_data_set_number(data, "subarray3_backtrack", 0);
     ssc_data_set_number(data, "subarray4_enable", 0);
-    ssc_data_set_number(data, "subarray4_nstrings", 0);
+    ssc_data_set_number(data, "subarray4_nstrings", 1);
     ssc_data_set_number(data, "subarray4_tilt", 20);
     ssc_data_set_number(data, "subarray4_tilt_eq_lat", 0);
     ssc_data_set_number(data, "subarray4_azimuth", 180);
@@ -1010,7 +1010,7 @@ void pvyield_user_support_80603_meteo(ssc_data_t& data)
     ssc_data_set_number(data, "subarray1_nmody", 1);
     ssc_data_set_number(data, "subarray1_backtrack", 0);
     ssc_data_set_number(data, "subarray2_enable", 0);
-    ssc_data_set_number(data, "subarray2_nstrings", 0);
+    ssc_data_set_number(data, "subarray2_nstrings", 1);
     ssc_data_set_number(data, "subarray2_tilt", 20);
     ssc_data_set_number(data, "subarray2_tilt_eq_lat", 0);
     ssc_data_set_number(data, "subarray2_azimuth", 180);
@@ -1027,7 +1027,7 @@ void pvyield_user_support_80603_meteo(ssc_data_t& data)
     ssc_data_set_number(data, "subarray2_nmody", 2);
     ssc_data_set_number(data, "subarray2_backtrack", 0);
     ssc_data_set_number(data, "subarray3_enable", 0);
-    ssc_data_set_number(data, "subarray3_nstrings", 0);
+    ssc_data_set_number(data, "subarray3_nstrings", 1);
     ssc_data_set_number(data, "subarray3_tilt", 20);
     ssc_data_set_number(data, "subarray3_tilt_eq_lat", 0);
     ssc_data_set_number(data, "subarray3_azimuth", 180);
@@ -1044,7 +1044,7 @@ void pvyield_user_support_80603_meteo(ssc_data_t& data)
     ssc_data_set_number(data, "subarray3_nmody", 2);
     ssc_data_set_number(data, "subarray3_backtrack", 0);
     ssc_data_set_number(data, "subarray4_enable", 0);
-    ssc_data_set_number(data, "subarray4_nstrings", 0);
+    ssc_data_set_number(data, "subarray4_nstrings", 1);
     ssc_data_set_number(data, "subarray4_tilt", 20);
     ssc_data_set_number(data, "subarray4_tilt_eq_lat", 0);
     ssc_data_set_number(data, "subarray4_azimuth", 180);
@@ -1449,7 +1449,7 @@ void pvyield_user_support_80603_AZ(ssc_data_t& data)
     ssc_data_set_number(data, "subarray1_nmody", 1);
     ssc_data_set_number(data, "subarray1_backtrack", 0);
     ssc_data_set_number(data, "subarray2_enable", 0);
-    ssc_data_set_number(data, "subarray2_nstrings", 0);
+    ssc_data_set_number(data, "subarray2_nstrings", 1);
     ssc_data_set_number(data, "subarray2_tilt", 20);
     ssc_data_set_number(data, "subarray2_tilt_eq_lat", 0);
     ssc_data_set_number(data, "subarray2_azimuth", 180);
@@ -1466,7 +1466,7 @@ void pvyield_user_support_80603_AZ(ssc_data_t& data)
     ssc_data_set_number(data, "subarray2_nmody", 2);
     ssc_data_set_number(data, "subarray2_backtrack", 0);
     ssc_data_set_number(data, "subarray3_enable", 0);
-    ssc_data_set_number(data, "subarray3_nstrings", 0);
+    ssc_data_set_number(data, "subarray3_nstrings", 1);
     ssc_data_set_number(data, "subarray3_tilt", 20);
     ssc_data_set_number(data, "subarray3_tilt_eq_lat", 0);
     ssc_data_set_number(data, "subarray3_azimuth", 180);
@@ -1483,7 +1483,7 @@ void pvyield_user_support_80603_AZ(ssc_data_t& data)
     ssc_data_set_number(data, "subarray3_nmody", 2);
     ssc_data_set_number(data, "subarray3_backtrack", 0);
     ssc_data_set_number(data, "subarray4_enable", 0);
-    ssc_data_set_number(data, "subarray4_nstrings", 0);
+    ssc_data_set_number(data, "subarray4_nstrings", 1);
     ssc_data_set_number(data, "subarray4_tilt", 20);
     ssc_data_set_number(data, "subarray4_tilt_eq_lat", 0);
     ssc_data_set_number(data, "subarray4_azimuth", 180);
@@ -1889,7 +1889,7 @@ void pvsamMPPT_nofinancial_default(ssc_data_t& data)
     ssc_data_set_number(data, "subarray1_nmody", 2);
     ssc_data_set_number(data, "subarray1_backtrack", 0);
     ssc_data_set_number(data, "subarray2_enable", 0);
-    ssc_data_set_number(data, "subarray2_nstrings", 0);
+    ssc_data_set_number(data, "subarray2_nstrings", 1);
     ssc_data_set_number(data, "subarray2_tilt", 20);
     ssc_data_set_number(data, "subarray2_tilt_eq_lat", 0);
     ssc_data_set_number(data, "subarray2_azimuth", 180);
@@ -1906,7 +1906,7 @@ void pvsamMPPT_nofinancial_default(ssc_data_t& data)
     ssc_data_set_number(data, "subarray2_nmody", 2);
     ssc_data_set_number(data, "subarray2_backtrack", 0);
     ssc_data_set_number(data, "subarray3_enable", 0);
-    ssc_data_set_number(data, "subarray3_nstrings", 0);
+    ssc_data_set_number(data, "subarray3_nstrings", 1);
     ssc_data_set_number(data, "subarray3_tilt", 20);
     ssc_data_set_number(data, "subarray3_tilt_eq_lat", 0);
     ssc_data_set_number(data, "subarray3_azimuth", 180);
@@ -1923,7 +1923,7 @@ void pvsamMPPT_nofinancial_default(ssc_data_t& data)
     ssc_data_set_number(data, "subarray3_nmody", 2);
     ssc_data_set_number(data, "subarray3_backtrack", 0);
     ssc_data_set_number(data, "subarray4_enable", 0);
-    ssc_data_set_number(data, "subarray4_nstrings", 0);
+    ssc_data_set_number(data, "subarray4_nstrings", 1);
     ssc_data_set_number(data, "subarray4_tilt", 20);
     ssc_data_set_number(data, "subarray4_tilt_eq_lat", 0);
     ssc_data_set_number(data, "subarray4_azimuth", 180);
