@@ -55,7 +55,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma warning (disable : 4388)
 
 static var_info _cm_vtab_trough_physical[] = {
+
+    
+
+
     /* VARTYPE          DATATYPE         NAME                         LABEL                                                                               UNITS           META              GROUP             REQUIRED_IF                CONSTRAINTS         UI_HINTS*/
+
+    { SSC_INPUT,        SSC_NUMBER,      "sim_type",                  "1 (default): timeseries, 2: design only",                                          "",             "",               "System Control", "?=1",                    "",                       "SIMULATION_PARAMETER"},
+
     // Weather Reader
     { SSC_INPUT,        SSC_STRING,      "file_name",                 "Local weather file with path",                                                     "none",         "",               "weather",        "?",                       "LOCAL_FILE",            "" },
     { SSC_INPUT,        SSC_TABLE,       "solar_resource_data",       "Weather resource data in memory",                                                  "",             "",               "weather",        "?",                       "",                      "" },
@@ -527,7 +534,9 @@ public:
 
     void exec( )
     {   
+        // Common Parameters
         bool is_dispatch = as_boolean("is_dispatch");
+        int sim_type = as_number("sim_type");
 
         // *****************************************************
         // Check deprecated variables
@@ -601,37 +610,43 @@ public:
         // ********************************
         // ********************************
         C_csp_weatherreader weather_reader;
-        if (is_assigned("file_name")) {
-            weather_reader.m_weather_data_provider = make_shared<weatherfile>(as_string("file_name"));
-            if (weather_reader.m_weather_data_provider->has_message()) log(weather_reader.m_weather_data_provider->message(), SSC_WARNING);
-        }
-        if (is_assigned("solar_resource_data")) {
-            weather_reader.m_weather_data_provider = make_shared<weatherdata>(lookup("solar_resource_data"));
-            if (weather_reader.m_weather_data_provider->has_message()) log(weather_reader.m_weather_data_provider->message(), SSC_WARNING);
-        }
-
-        weather_reader.m_filename = as_string("file_name");
-        weather_reader.m_trackmode = 0;
-        weather_reader.m_tilt = 0.0;
-        weather_reader.m_azimuth = 0.0;
-        // Initialize to get weather file info
-        weather_reader.init();
-        if (weather_reader.has_error()) throw exec_error("trough_physical", weather_reader.get_error());
-
-        // Set up ssc output arrays
-        // Set steps per hour
-        double nhourssim = 8760.0;                                  //[hr] Number of hours to simulate
         C_csp_solver::S_sim_setup sim_setup;
-        sim_setup.m_sim_time_start = 0.0;                           //[s] starting first hour of year
-        sim_setup.m_sim_time_end = nhourssim*3600.;                 //[s] full year simulation
+        int n_steps_fixed;
+        int steps_per_hour;
+        {
+            if (is_assigned("file_name")) {
+                weather_reader.m_weather_data_provider = make_shared<weatherfile>(as_string("file_name"));
+                if (weather_reader.m_weather_data_provider->has_message()) log(weather_reader.m_weather_data_provider->message(), SSC_WARNING);
+            }
+            if (is_assigned("solar_resource_data")) {
+                weather_reader.m_weather_data_provider = make_shared<weatherdata>(lookup("solar_resource_data"));
+                if (weather_reader.m_weather_data_provider->has_message()) log(weather_reader.m_weather_data_provider->message(), SSC_WARNING);
+            }
 
-        int steps_per_hour = 1;                                     //[-]
+            weather_reader.m_filename = as_string("file_name");
+            weather_reader.m_trackmode = 0;
+            weather_reader.m_tilt = 0.0;
+            weather_reader.m_azimuth = 0.0;
+            // Initialize to get weather file info
+            weather_reader.init();
+            if (weather_reader.has_error()) throw exec_error("trough_physical", weather_reader.get_error());
 
-        int n_wf_records = (int)weather_reader.m_weather_data_provider->nrecords();
-        steps_per_hour = n_wf_records / 8760;                       //[-]
+            // Set up ssc output arrays
+            // Set steps per hour
+            double nhourssim = 8760.0;                                  //[hr] Number of hours to simulate
+            
+            sim_setup.m_sim_time_start = 0.0;                           //[s] starting first hour of year
+            sim_setup.m_sim_time_end = nhourssim * 3600.;                 //[s] full year simulation
 
-        int n_steps_fixed = steps_per_hour*8760;                    //[-]
-        sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;  //[s]
+            steps_per_hour = 1;                                     //[-]
+
+            int n_wf_records = (int)weather_reader.m_weather_data_provider->nrecords();
+            steps_per_hour = n_wf_records / 8760;                       //[-]
+
+            n_steps_fixed = steps_per_hour * 8760;                    //[-]
+            sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;  //[s]
+        }
+        
 
         // ********************************
         // ********************************
@@ -639,262 +654,264 @@ public:
         // ********************************
         // ********************************
         C_csp_trough_collector_receiver c_trough;
-
-        c_trough.m_nSCA = as_integer("nSCA");                       //[-] Number of SCA's in a loop
-        c_trough.m_nHCEt = as_integer("nHCEt");                     //[-] Number of HCE types
-        c_trough.m_nColt = as_integer("nColt");                     //[-] Number of collector types
-        c_trough.m_nHCEVar = as_integer("nHCEVar");                 //[-] Number of HCE variants per t
-        c_trough.m_nLoops = as_integer("nLoops");                   //[-] Number of loops in the field
-        c_trough.m_FieldConfig = as_integer("FieldConfig");         //[-] Number of subfield headers
-        c_trough.m_L_power_block_piping = as_double("L_power_block_piping");                           //[m] Length of piping (full mass flow) through power block (if applicable)
-        c_trough.m_include_fixed_power_block_runner = as_boolean("include_fixed_power_block_runner");  //[-] Should model consider piping through power block?
-        c_trough.m_eta_pump = as_double("eta_pump");                //[-] HTF pump efficiency
-        c_trough.m_Fluid = as_integer("Fluid");                     //[-] Field HTF fluid number
-        //c_trough.m_fthrok = as_integer("fthrok");                 //[-] Flag to allow partial defocusing of the collectors
-        c_trough.m_fthrctrl = 2;                                    //[-] Defocusing strategy; hardcode = 2 for now
-        c_trough.m_accept_loc = as_integer("accept_loc");           //[-] In acceptance testing mode - temperature sensor location (1=hx,2=loop)
-        c_trough.m_HDR_rough = as_double("HDR_rough");              //[-] Header pipe relative roughness
-        c_trough.m_theta_stow = as_double("theta_stow");            //[deg] stow angle
-        c_trough.m_theta_dep = as_double("theta_dep");              //[deg] deploy angle
-        c_trough.m_Row_Distance = as_double("Row_Distance");        //[m] Spacing between rows (centerline to centerline)
-        
-        double T_loop_in_des = as_double("T_loop_in_des");          //[C] Design loop inlet temperature, converted to K in init
-        c_trough.m_T_loop_in_des = T_loop_in_des;                   //[C] Design loop inlet temperature, converted to K in init
-        double T_loop_out_des = as_double("T_loop_out");            //[C] Target loop outlet temperature, converted to K in init
-        c_trough.m_T_loop_out_des = T_loop_out_des;                 //[C] Target loop outlet temperature, converted to K in init
-        double T_startup_min = T_loop_in_des;
-        if (T_loop_out_des > 600.0)
         {
-            T_startup_min = T_loop_out_des - 70.0;
-        }
-        double T_startup = max(T_startup_min, 0.67*T_loop_in_des + 0.33*T_loop_out_des); //[C]
-        c_trough.m_T_startup = T_startup;                           //[C] The required temperature (converted to K in init) of the system before the power block can be switched on
+            c_trough.m_nSCA = as_integer("nSCA");                       //[-] Number of SCA's in a loop
+            c_trough.m_nHCEt = as_integer("nHCEt");                     //[-] Number of HCE types
+            c_trough.m_nColt = as_integer("nColt");                     //[-] Number of collector types
+            c_trough.m_nHCEVar = as_integer("nHCEVar");                 //[-] Number of HCE variants per t
+            c_trough.m_nLoops = as_integer("nLoops");                   //[-] Number of loops in the field
+            c_trough.m_FieldConfig = as_integer("FieldConfig");         //[-] Number of subfield headers
+            c_trough.m_L_power_block_piping = as_double("L_power_block_piping");                           //[m] Length of piping (full mass flow) through power block (if applicable)
+            c_trough.m_include_fixed_power_block_runner = as_boolean("include_fixed_power_block_runner");  //[-] Should model consider piping through power block?
+            c_trough.m_eta_pump = as_double("eta_pump");                //[-] HTF pump efficiency
+            c_trough.m_Fluid = as_integer("Fluid");                     //[-] Field HTF fluid number
+            //c_trough.m_fthrok = as_integer("fthrok");                 //[-] Flag to allow partial defocusing of the collectors
+            c_trough.m_fthrctrl = 2;                                    //[-] Defocusing strategy; hardcode = 2 for now
+            c_trough.m_accept_loc = as_integer("accept_loc");           //[-] In acceptance testing mode - temperature sensor location (1=hx,2=loop)
+            c_trough.m_HDR_rough = as_double("HDR_rough");              //[-] Header pipe relative roughness
+            c_trough.m_theta_stow = as_double("theta_stow");            //[deg] stow angle
+            c_trough.m_theta_dep = as_double("theta_dep");              //[deg] deploy angle
+            c_trough.m_Row_Distance = as_double("Row_Distance");        //[m] Spacing between rows (centerline to centerline)
 
-        c_trough.m_m_dot_htfmin = as_double("m_dot_htfmin");        //[kg/s] Minimum loop HTF flow rate
-        c_trough.m_m_dot_htfmax = as_double("m_dot_htfmax");        //[kg/s] Maximum loop HTF flow rate
-        c_trough.m_field_fl_props = as_matrix("field_fl_props");    //[-] User-defined field HTF properties
-        c_trough.m_T_fp = as_double("T_fp");                        //[C] Freeze protection temperature (heat trace activation temperature), convert to K in init
-        c_trough.m_I_bn_des = as_double("I_bn_des");                //[W/m^2] Solar irradiation at design
-        c_trough.m_V_hdr_cold_max = as_double("V_hdr_cold_max");    //[m/s] Maximum HTF velocity in the cold header at design
-        c_trough.m_V_hdr_cold_min = as_double("V_hdr_cold_min");    //[m/s] Minimum HTF velocity in the cold header at design
-        c_trough.m_V_hdr_hot_max = as_double("V_hdr_hot_max");      //[m/s] Maximum HTF velocity in the hot header at design
-        c_trough.m_V_hdr_hot_min = as_double("V_hdr_hot_min");      //[m/s] Minimum HTF velocity in the hot header at design
-        c_trough.m_Pipe_hl_coef = as_double("Pipe_hl_coef");        //[W/m2-K] Loss coefficient from the header, runner pipe, and non-HCE piping
-        c_trough.m_SCA_drives_elec = as_double("SCA_drives_elec");  //[W/SCA] Tracking power, in Watts per SCA drive
-        c_trough.m_ColTilt = as_double("tilt");                     //[deg] Collector tilt angle (0 is horizontal, 90deg is vertical)
-        c_trough.m_ColAz = as_double("azimuth");                    //[deg] Collector azimuth angle
-        c_trough.m_wind_stow_speed = as_double("wind_stow_speed");  //[m/s] Wind speed at and above which the collectors will be stowed
-        c_trough.m_accept_mode = as_integer("accept_mode");         //[-] Acceptance testing mode? (1=yes, 0=no)
-        c_trough.m_accept_init = as_boolean("accept_init");         //[-] In acceptance testing mode - require steady-state startup
-        c_trough.m_solar_mult = as_double("solar_mult");            //[-] Solar Multiple (set during verify() using cmod_csp_trough_eqns.cpp)
-        c_trough.m_mc_bal_hot_per_MW = as_double("mc_bal_hot");     //[kWht/K-MWt] The heat capacity of the balance of plant on the hot side
-        c_trough.m_mc_bal_cold_per_MW = as_double("mc_bal_cold");   //[kWht/K-MWt] The heat capacity of the balance of plant on the cold side
-        c_trough.m_mc_bal_sca = as_double("mc_bal_sca");            //[Wht/K-m] Non-HTF heat capacity associated with each SCA - per meter basis
-        
-        //[m] The collector aperture width (Total structural area.. used for shadowing)
-        size_t nval_W_aperture = 0;
-        ssc_number_t *W_aperture = as_array("W_aperture", &nval_W_aperture);
-        c_trough.m_W_aperture.resize(nval_W_aperture);
-        for (size_t i = 0; i < nval_W_aperture; i++)
-            c_trough.m_W_aperture[i] = (double)W_aperture[i];
-        
-        //[m^2] Reflective aperture area of the collector
-        size_t nval_A_aperture = 0;
-        ssc_number_t *A_aperture = as_array("A_aperture", &nval_A_aperture);
-        c_trough.m_A_aperture.resize(nval_A_aperture);
-        for (size_t i = 0; i < nval_A_aperture; i++)
-            c_trough.m_A_aperture[i] = (double)A_aperture[i];
-
-        //[-] Tracking error derate
-        size_t nval_TrackingError = 0;
-        ssc_number_t *TrackingError = as_array("TrackingError", &nval_TrackingError);
-        c_trough.m_TrackingError.resize(nval_TrackingError);
-        for (size_t i = 0; i < nval_TrackingError; i++)
-            c_trough.m_TrackingError[i] = (double)TrackingError[i];
-        
-        //[-] Geometry effects derate
-        size_t nval_GeomEffects = 0;
-        ssc_number_t *GeomEffects = as_array("GeomEffects", &nval_GeomEffects);
-        c_trough.m_GeomEffects.resize(nval_GeomEffects);
-        for (size_t i = 0; i < nval_GeomEffects; i++)
-            c_trough.m_GeomEffects[i] = (double)GeomEffects[i];
-
-        //[-] Clean mirror reflectivity
-        size_t nval_Rho_mirror_clean = 0;
-        ssc_number_t *Rho_mirror_clean = as_array("Rho_mirror_clean", &nval_Rho_mirror_clean);
-        c_trough.m_Rho_mirror_clean.resize(nval_Rho_mirror_clean);
-        for (size_t i = 0; i < nval_Rho_mirror_clean; i++)
-            c_trough.m_Rho_mirror_clean[i] = (double)Rho_mirror_clean[i];
-        
-        //[-] Dirt on mirror derate
-        size_t nval_Dirt_mirror = 0;
-        ssc_number_t *Dirt_mirror = as_array("Dirt_mirror", &nval_Dirt_mirror);
-        c_trough.m_Dirt_mirror.resize(nval_Dirt_mirror);
-        for (size_t i = 0; i < nval_Dirt_mirror; i++)
-            c_trough.m_Dirt_mirror[i] = (double)Dirt_mirror[i];
-        
-        //[-] General optical error derate
-        size_t nval_Error = 0;
-        ssc_number_t *Error = as_array("Error", &nval_Error);
-        c_trough.m_Error.resize(nval_Error);
-        for (size_t i = 0; i < nval_Error; i++)
-            c_trough.m_Error[i] = (double)Error[i];
-        
-        //[m] The average focal length of the collector 
-        size_t nval_Ave_Focal_Length = 0;
-        ssc_number_t *Ave_Focal_Length = as_array("Ave_Focal_Length", &nval_Ave_Focal_Length);
-        c_trough.m_Ave_Focal_Length.resize(nval_Ave_Focal_Length);
-        for (size_t i = 0; i < nval_Ave_Focal_Length; i++)
-            c_trough.m_Ave_Focal_Length[i] = (double)Ave_Focal_Length[i];
-        
-        //[m] The length of the SCA 
-        size_t nval_L_SCA = 0;
-        ssc_number_t *L_SCA = as_array("L_SCA", &nval_L_SCA);
-        c_trough.m_L_SCA.resize(nval_L_SCA);
-        for (size_t i = 0; i < nval_L_SCA; i++)
-            c_trough.m_L_SCA[i] = (double)L_SCA[i];
-
-        //[m] The length of a single mirror/HCE unit
-        size_t nval_L_aperture = 0;
-        ssc_number_t *L_aperture = as_array("L_aperture", &nval_L_aperture);
-        c_trough.m_L_aperture.resize(nval_L_aperture);
-        for (size_t i = 0; i < nval_L_aperture; i++)
-            c_trough.m_L_aperture[i] = (double)L_aperture[i];
-        
-        //[-] The number of individual collector sections in an SCA
-        size_t nval_ColperSCA = 0;
-        ssc_number_t *ColperSCA = as_array("ColperSCA", &nval_ColperSCA);
-        c_trough.m_ColperSCA.resize(nval_ColperSCA);
-        for (size_t i = 0; i < nval_ColperSCA; i++)
-            c_trough.m_ColperSCA[i] = (double)ColperSCA[i];
-
-        //[m] Piping distance between SCA's in the field
-        size_t nval_Distance_SCA = 0;
-        ssc_number_t *Distance_SCA = as_array("Distance_SCA", &nval_Distance_SCA);
-        c_trough.m_Distance_SCA.resize(nval_Distance_SCA);
-        for (size_t i = 0; i < nval_Distance_SCA; i++)
-            c_trough.m_Distance_SCA[i] = (double)Distance_SCA[i];
-
-        c_trough.m_IAM_matrix = as_matrix("IAM_matrix");                //[-] IAM coefficients, matrix for 4 collectors
-                                                                        
-        // Why are these matrices - can't they be arrays?               
-        c_trough.m_HCE_FieldFrac = as_matrix("HCE_FieldFrac");          //[-] Fraction of the field occupied by this HCE type
-        c_trough.m_D_2 = as_matrix("D_2");                              //[m] Inner absorber tube diameter
-        c_trough.m_D_3 = as_matrix("D_3");                              //[m] Outer absorber tube diameter
-        c_trough.m_D_4 = as_matrix("D_4");                              //[m] Inner glass envelope diameter
-        c_trough.m_D_5 = as_matrix("D_5");                              //[m] Outer glass envelope diameter
-        c_trough.m_D_p = as_matrix("D_p");                              //[m] Diameter of the absorber flow plug (optional)
-        c_trough.m_Flow_type = as_matrix("Flow_type");                  //[-] Flow type through the absorber
-        c_trough.m_Rough = as_matrix("Rough");                          //[-] Relative roughness of the internal HCE surface
-        c_trough.m_alpha_env = as_matrix("alpha_env");                  //[-] Envelope absorptance
-        // **********************************************************
-        
-        // Emittance vs. temperature profile for each receiver type and variation
-        c_trough.m_epsilon_3_11 = as_matrix_transpose("epsilon_3_11");  //[-] Absorber emittance for receiver type 1 variation 1
-        c_trough.m_epsilon_3_12 = as_matrix_transpose("epsilon_3_12");  //[-] Absorber emittance for receiver type 1 variation 2
-        c_trough.m_epsilon_3_13 = as_matrix_transpose("epsilon_3_13");  //[-] Absorber emittance for receiver type 1 variation 3
-        c_trough.m_epsilon_3_14 = as_matrix_transpose("epsilon_3_14");  //[-] Absorber emittance for receiver type 1 variation 4
-        c_trough.m_epsilon_3_21 = as_matrix_transpose("epsilon_3_21");  //[-] Absorber emittance for receiver type 2 variation 1
-        c_trough.m_epsilon_3_22 = as_matrix_transpose("epsilon_3_22");  //[-] Absorber emittance for receiver type 2 variation 2
-        c_trough.m_epsilon_3_23 = as_matrix_transpose("epsilon_3_23");  //[-] Absorber emittance for receiver type 2 variation 3
-        c_trough.m_epsilon_3_24 = as_matrix_transpose("epsilon_3_24");  //[-] Absorber emittance for receiver type 2 variation 4
-        c_trough.m_epsilon_3_31 = as_matrix_transpose("epsilon_3_31");  //[-] Absorber emittance for receiver type 3 variation 1
-        c_trough.m_epsilon_3_32 = as_matrix_transpose("epsilon_3_32");  //[-] Absorber emittance for receiver type 3 variation 2
-        c_trough.m_epsilon_3_33 = as_matrix_transpose("epsilon_3_33");  //[-] Absorber emittance for receiver type 3 variation 3
-        c_trough.m_epsilon_3_34 = as_matrix_transpose("epsilon_3_34");  //[-] Absorber emittance for receiver type 3 variation 4
-        c_trough.m_epsilon_3_41 = as_matrix_transpose("epsilon_3_41");  //[-] Absorber emittance for receiver type 4 variation 1
-        c_trough.m_epsilon_3_42 = as_matrix_transpose("epsilon_3_42");  //[-] Absorber emittance for receiver type 4 variation 2
-        c_trough.m_epsilon_3_43 = as_matrix_transpose("epsilon_3_43");  //[-] Absorber emittance for receiver type 4 variation 3
-        c_trough.m_epsilon_3_44 = as_matrix_transpose("epsilon_3_44");  //[-] Absorber emittance for receiver type 4 variation 4
-
-        c_trough.m_alpha_abs = as_matrix("alpha_abs");                  //[-] Absorber absorptance
-        c_trough.m_Tau_envelope = as_matrix("Tau_envelope");            //[-] Envelope transmittance
-        c_trough.m_EPSILON_4 = as_matrix("EPSILON_4");                  //[-] Inner glass envelope emissivities
-        c_trough.m_EPSILON_5 = as_matrix("EPSILON_5");                  //[-] Outer glass envelope emissivities
-        
-        //c_trough.m_GlazingIntact = (as_matrix("GlazingIntactIn") > 0);  //[-] Glazing intact (broken glass) flag {1=true, else=false}
-        util::matrix_t<double> glazing_intact_double = as_matrix("GlazingIntactIn"); //[-] Is the glazing intact?
-        int n_gl_row = (int)glazing_intact_double.nrows();
-        int n_gl_col = (int)glazing_intact_double.ncols();
-        c_trough.m_GlazingIntact.resize(n_gl_row, n_gl_col);
-        for (int i = 0; i < n_gl_row; i++)
-        {
-            for (int j = 0; j < n_gl_col; j++)
+            double T_loop_in_des = as_double("T_loop_in_des");          //[C] Design loop inlet temperature, converted to K in init
+            c_trough.m_T_loop_in_des = T_loop_in_des;                   //[C] Design loop inlet temperature, converted to K in init
+            double T_loop_out_des = as_double("T_loop_out");            //[C] Target loop outlet temperature, converted to K in init
+            c_trough.m_T_loop_out_des = T_loop_out_des;                 //[C] Target loop outlet temperature, converted to K in init
+            double T_startup_min = T_loop_in_des;
+            if (T_loop_out_des > 600.0)
             {
-                c_trough.m_GlazingIntact(i, j) = (glazing_intact_double(i, j) > 0);
+                T_startup_min = T_loop_out_des - 70.0;
             }
+            double T_startup = max(T_startup_min, 0.67 * T_loop_in_des + 0.33 * T_loop_out_des); //[C]
+            c_trough.m_T_startup = T_startup;                           //[C] The required temperature (converted to K in init) of the system before the power block can be switched on
+
+            c_trough.m_m_dot_htfmin = as_double("m_dot_htfmin");        //[kg/s] Minimum loop HTF flow rate
+            c_trough.m_m_dot_htfmax = as_double("m_dot_htfmax");        //[kg/s] Maximum loop HTF flow rate
+            c_trough.m_field_fl_props = as_matrix("field_fl_props");    //[-] User-defined field HTF properties
+            c_trough.m_T_fp = as_double("T_fp");                        //[C] Freeze protection temperature (heat trace activation temperature), convert to K in init
+            c_trough.m_I_bn_des = as_double("I_bn_des");                //[W/m^2] Solar irradiation at design
+            c_trough.m_V_hdr_cold_max = as_double("V_hdr_cold_max");    //[m/s] Maximum HTF velocity in the cold header at design
+            c_trough.m_V_hdr_cold_min = as_double("V_hdr_cold_min");    //[m/s] Minimum HTF velocity in the cold header at design
+            c_trough.m_V_hdr_hot_max = as_double("V_hdr_hot_max");      //[m/s] Maximum HTF velocity in the hot header at design
+            c_trough.m_V_hdr_hot_min = as_double("V_hdr_hot_min");      //[m/s] Minimum HTF velocity in the hot header at design
+            c_trough.m_Pipe_hl_coef = as_double("Pipe_hl_coef");        //[W/m2-K] Loss coefficient from the header, runner pipe, and non-HCE piping
+            c_trough.m_SCA_drives_elec = as_double("SCA_drives_elec");  //[W/SCA] Tracking power, in Watts per SCA drive
+            c_trough.m_ColTilt = as_double("tilt");                     //[deg] Collector tilt angle (0 is horizontal, 90deg is vertical)
+            c_trough.m_ColAz = as_double("azimuth");                    //[deg] Collector azimuth angle
+            c_trough.m_wind_stow_speed = as_double("wind_stow_speed");  //[m/s] Wind speed at and above which the collectors will be stowed
+            c_trough.m_accept_mode = as_integer("accept_mode");         //[-] Acceptance testing mode? (1=yes, 0=no)
+            c_trough.m_accept_init = as_boolean("accept_init");         //[-] In acceptance testing mode - require steady-state startup
+            c_trough.m_solar_mult = as_double("solar_mult");            //[-] Solar Multiple (set during verify() using cmod_csp_trough_eqns.cpp)
+            c_trough.m_mc_bal_hot_per_MW = as_double("mc_bal_hot");     //[kWht/K-MWt] The heat capacity of the balance of plant on the hot side
+            c_trough.m_mc_bal_cold_per_MW = as_double("mc_bal_cold");   //[kWht/K-MWt] The heat capacity of the balance of plant on the cold side
+            c_trough.m_mc_bal_sca = as_double("mc_bal_sca");            //[Wht/K-m] Non-HTF heat capacity associated with each SCA - per meter basis
+
+            //[m] The collector aperture width (Total structural area.. used for shadowing)
+            size_t nval_W_aperture = 0;
+            ssc_number_t* W_aperture = as_array("W_aperture", &nval_W_aperture);
+            c_trough.m_W_aperture.resize(nval_W_aperture);
+            for (size_t i = 0; i < nval_W_aperture; i++)
+                c_trough.m_W_aperture[i] = (double)W_aperture[i];
+
+            //[m^2] Reflective aperture area of the collector
+            size_t nval_A_aperture = 0;
+            ssc_number_t* A_aperture = as_array("A_aperture", &nval_A_aperture);
+            c_trough.m_A_aperture.resize(nval_A_aperture);
+            for (size_t i = 0; i < nval_A_aperture; i++)
+                c_trough.m_A_aperture[i] = (double)A_aperture[i];
+
+            //[-] Tracking error derate
+            size_t nval_TrackingError = 0;
+            ssc_number_t* TrackingError = as_array("TrackingError", &nval_TrackingError);
+            c_trough.m_TrackingError.resize(nval_TrackingError);
+            for (size_t i = 0; i < nval_TrackingError; i++)
+                c_trough.m_TrackingError[i] = (double)TrackingError[i];
+
+            //[-] Geometry effects derate
+            size_t nval_GeomEffects = 0;
+            ssc_number_t* GeomEffects = as_array("GeomEffects", &nval_GeomEffects);
+            c_trough.m_GeomEffects.resize(nval_GeomEffects);
+            for (size_t i = 0; i < nval_GeomEffects; i++)
+                c_trough.m_GeomEffects[i] = (double)GeomEffects[i];
+
+            //[-] Clean mirror reflectivity
+            size_t nval_Rho_mirror_clean = 0;
+            ssc_number_t* Rho_mirror_clean = as_array("Rho_mirror_clean", &nval_Rho_mirror_clean);
+            c_trough.m_Rho_mirror_clean.resize(nval_Rho_mirror_clean);
+            for (size_t i = 0; i < nval_Rho_mirror_clean; i++)
+                c_trough.m_Rho_mirror_clean[i] = (double)Rho_mirror_clean[i];
+
+            //[-] Dirt on mirror derate
+            size_t nval_Dirt_mirror = 0;
+            ssc_number_t* Dirt_mirror = as_array("Dirt_mirror", &nval_Dirt_mirror);
+            c_trough.m_Dirt_mirror.resize(nval_Dirt_mirror);
+            for (size_t i = 0; i < nval_Dirt_mirror; i++)
+                c_trough.m_Dirt_mirror[i] = (double)Dirt_mirror[i];
+
+            //[-] General optical error derate
+            size_t nval_Error = 0;
+            ssc_number_t* Error = as_array("Error", &nval_Error);
+            c_trough.m_Error.resize(nval_Error);
+            for (size_t i = 0; i < nval_Error; i++)
+                c_trough.m_Error[i] = (double)Error[i];
+
+            //[m] The average focal length of the collector 
+            size_t nval_Ave_Focal_Length = 0;
+            ssc_number_t* Ave_Focal_Length = as_array("Ave_Focal_Length", &nval_Ave_Focal_Length);
+            c_trough.m_Ave_Focal_Length.resize(nval_Ave_Focal_Length);
+            for (size_t i = 0; i < nval_Ave_Focal_Length; i++)
+                c_trough.m_Ave_Focal_Length[i] = (double)Ave_Focal_Length[i];
+
+            //[m] The length of the SCA 
+            size_t nval_L_SCA = 0;
+            ssc_number_t* L_SCA = as_array("L_SCA", &nval_L_SCA);
+            c_trough.m_L_SCA.resize(nval_L_SCA);
+            for (size_t i = 0; i < nval_L_SCA; i++)
+                c_trough.m_L_SCA[i] = (double)L_SCA[i];
+
+            //[m] The length of a single mirror/HCE unit
+            size_t nval_L_aperture = 0;
+            ssc_number_t* L_aperture = as_array("L_aperture", &nval_L_aperture);
+            c_trough.m_L_aperture.resize(nval_L_aperture);
+            for (size_t i = 0; i < nval_L_aperture; i++)
+                c_trough.m_L_aperture[i] = (double)L_aperture[i];
+
+            //[-] The number of individual collector sections in an SCA
+            size_t nval_ColperSCA = 0;
+            ssc_number_t* ColperSCA = as_array("ColperSCA", &nval_ColperSCA);
+            c_trough.m_ColperSCA.resize(nval_ColperSCA);
+            for (size_t i = 0; i < nval_ColperSCA; i++)
+                c_trough.m_ColperSCA[i] = (double)ColperSCA[i];
+
+            //[m] Piping distance between SCA's in the field
+            size_t nval_Distance_SCA = 0;
+            ssc_number_t* Distance_SCA = as_array("Distance_SCA", &nval_Distance_SCA);
+            c_trough.m_Distance_SCA.resize(nval_Distance_SCA);
+            for (size_t i = 0; i < nval_Distance_SCA; i++)
+                c_trough.m_Distance_SCA[i] = (double)Distance_SCA[i];
+
+            c_trough.m_IAM_matrix = as_matrix("IAM_matrix");                //[-] IAM coefficients, matrix for 4 collectors
+
+            // Why are these matrices - can't they be arrays?               
+            c_trough.m_HCE_FieldFrac = as_matrix("HCE_FieldFrac");          //[-] Fraction of the field occupied by this HCE type
+            c_trough.m_D_2 = as_matrix("D_2");                              //[m] Inner absorber tube diameter
+            c_trough.m_D_3 = as_matrix("D_3");                              //[m] Outer absorber tube diameter
+            c_trough.m_D_4 = as_matrix("D_4");                              //[m] Inner glass envelope diameter
+            c_trough.m_D_5 = as_matrix("D_5");                              //[m] Outer glass envelope diameter
+            c_trough.m_D_p = as_matrix("D_p");                              //[m] Diameter of the absorber flow plug (optional)
+            c_trough.m_Flow_type = as_matrix("Flow_type");                  //[-] Flow type through the absorber
+            c_trough.m_Rough = as_matrix("Rough");                          //[-] Relative roughness of the internal HCE surface
+            c_trough.m_alpha_env = as_matrix("alpha_env");                  //[-] Envelope absorptance
+            // **********************************************************
+
+            // Emittance vs. temperature profile for each receiver type and variation
+            c_trough.m_epsilon_3_11 = as_matrix_transpose("epsilon_3_11");  //[-] Absorber emittance for receiver type 1 variation 1
+            c_trough.m_epsilon_3_12 = as_matrix_transpose("epsilon_3_12");  //[-] Absorber emittance for receiver type 1 variation 2
+            c_trough.m_epsilon_3_13 = as_matrix_transpose("epsilon_3_13");  //[-] Absorber emittance for receiver type 1 variation 3
+            c_trough.m_epsilon_3_14 = as_matrix_transpose("epsilon_3_14");  //[-] Absorber emittance for receiver type 1 variation 4
+            c_trough.m_epsilon_3_21 = as_matrix_transpose("epsilon_3_21");  //[-] Absorber emittance for receiver type 2 variation 1
+            c_trough.m_epsilon_3_22 = as_matrix_transpose("epsilon_3_22");  //[-] Absorber emittance for receiver type 2 variation 2
+            c_trough.m_epsilon_3_23 = as_matrix_transpose("epsilon_3_23");  //[-] Absorber emittance for receiver type 2 variation 3
+            c_trough.m_epsilon_3_24 = as_matrix_transpose("epsilon_3_24");  //[-] Absorber emittance for receiver type 2 variation 4
+            c_trough.m_epsilon_3_31 = as_matrix_transpose("epsilon_3_31");  //[-] Absorber emittance for receiver type 3 variation 1
+            c_trough.m_epsilon_3_32 = as_matrix_transpose("epsilon_3_32");  //[-] Absorber emittance for receiver type 3 variation 2
+            c_trough.m_epsilon_3_33 = as_matrix_transpose("epsilon_3_33");  //[-] Absorber emittance for receiver type 3 variation 3
+            c_trough.m_epsilon_3_34 = as_matrix_transpose("epsilon_3_34");  //[-] Absorber emittance for receiver type 3 variation 4
+            c_trough.m_epsilon_3_41 = as_matrix_transpose("epsilon_3_41");  //[-] Absorber emittance for receiver type 4 variation 1
+            c_trough.m_epsilon_3_42 = as_matrix_transpose("epsilon_3_42");  //[-] Absorber emittance for receiver type 4 variation 2
+            c_trough.m_epsilon_3_43 = as_matrix_transpose("epsilon_3_43");  //[-] Absorber emittance for receiver type 4 variation 3
+            c_trough.m_epsilon_3_44 = as_matrix_transpose("epsilon_3_44");  //[-] Absorber emittance for receiver type 4 variation 4
+
+            c_trough.m_alpha_abs = as_matrix("alpha_abs");                  //[-] Absorber absorptance
+            c_trough.m_Tau_envelope = as_matrix("Tau_envelope");            //[-] Envelope transmittance
+            c_trough.m_EPSILON_4 = as_matrix("EPSILON_4");                  //[-] Inner glass envelope emissivities
+            c_trough.m_EPSILON_5 = as_matrix("EPSILON_5");                  //[-] Outer glass envelope emissivities
+
+            //c_trough.m_GlazingIntact = (as_matrix("GlazingIntactIn") > 0);  //[-] Glazing intact (broken glass) flag {1=true, else=false}
+            util::matrix_t<double> glazing_intact_double = as_matrix("GlazingIntactIn"); //[-] Is the glazing intact?
+            int n_gl_row = (int)glazing_intact_double.nrows();
+            int n_gl_col = (int)glazing_intact_double.ncols();
+            c_trough.m_GlazingIntact.resize(n_gl_row, n_gl_col);
+            for (int i = 0; i < n_gl_row; i++)
+            {
+                for (int j = 0; j < n_gl_col; j++)
+                {
+                    c_trough.m_GlazingIntact(i, j) = (glazing_intact_double(i, j) > 0);
+                }
+            }
+
+            c_trough.m_P_a = as_matrix("P_a");                              //[torr] Annulus gas pressure
+            c_trough.m_AnnulusGas = as_matrix("AnnulusGas");                //[-] Annulus gas type (1=air, 26=Ar, 27=H2)
+            c_trough.m_AbsorberMaterial = as_matrix("AbsorberMaterial");    //[-] Absorber material type
+            c_trough.m_Shadowing = as_matrix("Shadowing");                  //[-] Receiver bellows shadowing loss factor
+            c_trough.m_Dirt_HCE = as_matrix("Dirt_HCE");                    //[-] Loss due to dirt on the receiver envelope
+            c_trough.m_Design_loss = as_matrix("Design_loss");              //[-] Receiver heat loss at design
+
+            // Calculated during verify() using cmod_csp_trough_eqns.cpp:
+            c_trough.m_SCAInfoArray = as_matrix("scainfoarray");            //[-] Receiver (,1) and collector (,2) type for each assembly in loop
+            size_t SCADefocusArraySize = -1;
+            ssc_number_t* SCADefocusArray = as_array("scadefocusarray", &SCADefocusArraySize);      //[-] Collector defocus order
+            std::copy(SCADefocusArray, SCADefocusArray + SCADefocusArraySize, back_inserter(c_trough.m_SCADefocusArray));    // convert matrix_t and set to vector
+
+            c_trough.m_rec_su_delay = as_double("rec_su_delay");            //[hr] Fixed startup delay time for the receiver
+            c_trough.m_rec_qf_delay = as_double("rec_qf_delay");            //[-] Energy-based receiver startup delay (fraction of rated thermal power)
+            c_trough.m_p_start = as_double("p_start");                      //[kWe-hr] Collector startup energy, per SCA
+            c_trough.m_calc_design_pipe_vals = as_boolean("calc_design_pipe_vals"); //[-] Should the HTF state be calculated at design conditions
+            c_trough.m_L_rnr_pb = as_double("L_rnr_pb");                      //[m] Length of hot or cold runner pipe around the power block
+            c_trough.m_N_max_hdr_diams = as_double("N_max_hdr_diams");        //[-] Maximum number of allowed diameters in each of the hot and cold headers
+            c_trough.m_L_rnr_per_xpan = as_double("L_rnr_per_xpan");          //[m] Threshold length of straight runner pipe without an expansion loop
+            c_trough.m_L_xpan_hdr = as_double("L_xpan_hdr");                  //[m] Combined length in meters of the two perpendicular segments of a header expansion loop
+            c_trough.m_L_xpan_rnr = as_double("L_xpan_rnr");                  //[m] Combined length in meters of the two perpendicular segments of a runner expansion loop
+            c_trough.m_Min_rnr_xpans = as_double("Min_rnr_xpans");            //[-] Minimum number of expansion loops per single-diameter runner section
+            c_trough.m_northsouth_field_sep = as_double("northsouth_field_sep"); //[m] Shortest north/south distance between SCAs in different subfields
+            c_trough.m_N_hdr_per_xpan = as_double("N_hdr_per_xpan");          //[-] Number of collector loops per header expansion loops. 1 = expansion loop between every collector loop
+            c_trough.m_offset_xpan_hdr = as_double("offset_xpan_hdr");        //[-] Location of first header expansion loop. 1 = after first collector loop
+            c_trough.m_K_cpnt = as_matrix("K_cpnt");                          //[-] Minor loss coefficients of the components in each loop interconnect
+            c_trough.m_D_cpnt = as_matrix("D_cpnt");                          //[m] Inner diameters of the components in each loop interconnect
+            c_trough.m_L_cpnt = as_matrix("L_cpnt");                          //[m] Lengths of the components in each loop interconnect
+            c_trough.m_Type_cpnt = as_matrix("Type_cpnt");                    //[-] Type of component in each loop interconnect [0=fitting | 1=pipe | 2=flex_hose]
+            c_trough.m_custom_sf_pipe_sizes = as_boolean("custom_sf_pipe_sizes"); //[-] Should the field pipe diameters, wall thickness and lengths be imported instead of calculated
+            c_trough.m_sf_rnr_diams = as_matrix("sf_rnr_diams");              //[m] Imported runner diameters, used if custom_sf_pipe_sizes is true
+            c_trough.m_sf_rnr_wallthicks = as_matrix("sf_rnr_wallthicks");    //[m] Imported runner wall thicknesses, used if custom_sf_pipe_sizes is true
+            c_trough.m_sf_rnr_lengths = as_matrix("sf_rnr_lengths");          //[m] Imported runner lengths, used if custom_sf_pipe_sizes is true
+            c_trough.m_sf_hdr_diams = as_matrix("sf_hdr_diams");              //[m] Imported header diameters, used if custom_sf_pipe_sizes is true
+            c_trough.m_sf_hdr_wallthicks = as_matrix("sf_hdr_wallthicks");    //[m] Imported header wall thicknesses, used if custom_sf_pipe_sizes is true
+            c_trough.m_sf_hdr_lengths = as_matrix("sf_hdr_lengths");          //[m] Imported header lengths, used if custom_sf_pipe_sizes is true
+
+            // Allocate trough outputs
+            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_THETA_AVE, allocate("Theta_ave", n_steps_fixed), n_steps_fixed);
+            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_COSTH_AVE, allocate("CosTh_ave", n_steps_fixed), n_steps_fixed);
+            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_IAM_AVE, allocate("IAM_ave", n_steps_fixed), n_steps_fixed);
+            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_ROWSHADOW_AVE, allocate("RowShadow_ave", n_steps_fixed), n_steps_fixed);
+            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_ENDLOSS_AVE, allocate("EndLoss_ave", n_steps_fixed), n_steps_fixed);
+            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_DNI_COSTH, allocate("dni_costh", n_steps_fixed), n_steps_fixed);
+            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_EQUIV_OPT_ETA_TOT, allocate("EqOpteff", n_steps_fixed), n_steps_fixed);
+            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_DEFOCUS, allocate("SCAs_def", n_steps_fixed), n_steps_fixed);
+
+            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_INC_SF_TOT, allocate("q_inc_sf_tot", n_steps_fixed), n_steps_fixed);
+            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_INC_SF_COSTH, allocate("qinc_costh", n_steps_fixed), n_steps_fixed);
+            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_REC_INC, allocate("q_dot_rec_inc", n_steps_fixed), n_steps_fixed);
+            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_REC_THERMAL_LOSS, allocate("q_dot_rec_thermal_loss", n_steps_fixed), n_steps_fixed);
+            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_REC_ABS, allocate("q_dot_rec_abs", n_steps_fixed), n_steps_fixed);
+            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_PIPING_LOSS, allocate("q_dot_piping_loss", n_steps_fixed), n_steps_fixed);
+            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_E_DOT_INTERNAL_ENERGY, allocate("e_dot_field_int_energy", n_steps_fixed), n_steps_fixed);
+            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_HTF_OUT, allocate("q_dot_htf_sf_out", n_steps_fixed), n_steps_fixed);
+            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_FREEZE_PROT, allocate("q_dot_freeze_prot", n_steps_fixed), n_steps_fixed);
+
+            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_M_DOT_LOOP, allocate("m_dot_loop", n_steps_fixed), n_steps_fixed);
+            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_IS_RECIRCULATING, allocate("recirculating", n_steps_fixed), n_steps_fixed);
+            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_M_DOT_FIELD_RECIRC, allocate("m_dot_field_recirc", n_steps_fixed), n_steps_fixed);
+            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_M_DOT_FIELD_DELIVERED, allocate("m_dot_field_delivered", n_steps_fixed), n_steps_fixed);
+            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_FIELD_COLD_IN, allocate("T_field_cold_in", n_steps_fixed), n_steps_fixed);
+            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_REC_COLD_IN, allocate("T_rec_cold_in", n_steps_fixed), n_steps_fixed);
+            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_REC_HOT_OUT, allocate("T_rec_hot_out", n_steps_fixed), n_steps_fixed);
+            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_FIELD_HOT_OUT, allocate("T_field_hot_out", n_steps_fixed), n_steps_fixed);
+            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_PRESSURE_DROP, allocate("deltaP_field", n_steps_fixed), n_steps_fixed);          //[bar]
+
+            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_W_DOT_SCA_TRACK, allocate("W_dot_sca_track", n_steps_fixed), n_steps_fixed);     //[MWe]
+            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_W_DOT_PUMP, allocate("W_dot_field_pump", n_steps_fixed), n_steps_fixed);         //[MWe]
         }
-
-        c_trough.m_P_a = as_matrix("P_a");                              //[torr] Annulus gas pressure
-        c_trough.m_AnnulusGas = as_matrix("AnnulusGas");                //[-] Annulus gas type (1=air, 26=Ar, 27=H2)
-        c_trough.m_AbsorberMaterial = as_matrix("AbsorberMaterial");    //[-] Absorber material type
-        c_trough.m_Shadowing = as_matrix("Shadowing");                  //[-] Receiver bellows shadowing loss factor
-        c_trough.m_Dirt_HCE = as_matrix("Dirt_HCE");                    //[-] Loss due to dirt on the receiver envelope
-        c_trough.m_Design_loss = as_matrix("Design_loss");              //[-] Receiver heat loss at design
-
-        // Calculated during verify() using cmod_csp_trough_eqns.cpp:
-        c_trough.m_SCAInfoArray = as_matrix("scainfoarray");            //[-] Receiver (,1) and collector (,2) type for each assembly in loop
-        size_t SCADefocusArraySize = -1;
-        ssc_number_t* SCADefocusArray = as_array("scadefocusarray", &SCADefocusArraySize);      //[-] Collector defocus order
-        std::copy(SCADefocusArray, SCADefocusArray + SCADefocusArraySize, back_inserter(c_trough.m_SCADefocusArray));    // convert matrix_t and set to vector
-
-        c_trough.m_rec_su_delay = as_double("rec_su_delay");            //[hr] Fixed startup delay time for the receiver
-        c_trough.m_rec_qf_delay = as_double("rec_qf_delay");            //[-] Energy-based receiver startup delay (fraction of rated thermal power)
-        c_trough.m_p_start = as_double("p_start");                      //[kWe-hr] Collector startup energy, per SCA
-        c_trough.m_calc_design_pipe_vals = as_boolean("calc_design_pipe_vals"); //[-] Should the HTF state be calculated at design conditions
-        c_trough.m_L_rnr_pb = as_double("L_rnr_pb");                      //[m] Length of hot or cold runner pipe around the power block
-        c_trough.m_N_max_hdr_diams = as_double("N_max_hdr_diams");        //[-] Maximum number of allowed diameters in each of the hot and cold headers
-        c_trough.m_L_rnr_per_xpan = as_double("L_rnr_per_xpan");          //[m] Threshold length of straight runner pipe without an expansion loop
-        c_trough.m_L_xpan_hdr = as_double("L_xpan_hdr");                  //[m] Combined length in meters of the two perpendicular segments of a header expansion loop
-        c_trough.m_L_xpan_rnr = as_double("L_xpan_rnr");                  //[m] Combined length in meters of the two perpendicular segments of a runner expansion loop
-        c_trough.m_Min_rnr_xpans = as_double("Min_rnr_xpans");            //[-] Minimum number of expansion loops per single-diameter runner section
-        c_trough.m_northsouth_field_sep = as_double("northsouth_field_sep"); //[m] Shortest north/south distance between SCAs in different subfields
-        c_trough.m_N_hdr_per_xpan = as_double("N_hdr_per_xpan");          //[-] Number of collector loops per header expansion loops. 1 = expansion loop between every collector loop
-        c_trough.m_offset_xpan_hdr = as_double("offset_xpan_hdr");        //[-] Location of first header expansion loop. 1 = after first collector loop
-        c_trough.m_K_cpnt = as_matrix("K_cpnt");                          //[-] Minor loss coefficients of the components in each loop interconnect
-        c_trough.m_D_cpnt = as_matrix("D_cpnt");                          //[m] Inner diameters of the components in each loop interconnect
-        c_trough.m_L_cpnt = as_matrix("L_cpnt");                          //[m] Lengths of the components in each loop interconnect
-        c_trough.m_Type_cpnt = as_matrix("Type_cpnt");                    //[-] Type of component in each loop interconnect [0=fitting | 1=pipe | 2=flex_hose]
-        c_trough.m_custom_sf_pipe_sizes = as_boolean("custom_sf_pipe_sizes"); //[-] Should the field pipe diameters, wall thickness and lengths be imported instead of calculated
-        c_trough.m_sf_rnr_diams = as_matrix("sf_rnr_diams");              //[m] Imported runner diameters, used if custom_sf_pipe_sizes is true
-        c_trough.m_sf_rnr_wallthicks = as_matrix("sf_rnr_wallthicks");    //[m] Imported runner wall thicknesses, used if custom_sf_pipe_sizes is true
-        c_trough.m_sf_rnr_lengths = as_matrix("sf_rnr_lengths");          //[m] Imported runner lengths, used if custom_sf_pipe_sizes is true
-        c_trough.m_sf_hdr_diams = as_matrix("sf_hdr_diams");              //[m] Imported header diameters, used if custom_sf_pipe_sizes is true
-        c_trough.m_sf_hdr_wallthicks = as_matrix("sf_hdr_wallthicks");    //[m] Imported header wall thicknesses, used if custom_sf_pipe_sizes is true
-        c_trough.m_sf_hdr_lengths = as_matrix("sf_hdr_lengths");          //[m] Imported header lengths, used if custom_sf_pipe_sizes is true
-
-        // Allocate trough outputs
-        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_THETA_AVE, allocate("Theta_ave", n_steps_fixed), n_steps_fixed);
-        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_COSTH_AVE, allocate("CosTh_ave", n_steps_fixed), n_steps_fixed);
-        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_IAM_AVE, allocate("IAM_ave", n_steps_fixed), n_steps_fixed);      
-        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_ROWSHADOW_AVE, allocate("RowShadow_ave", n_steps_fixed), n_steps_fixed);
-        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_ENDLOSS_AVE, allocate("EndLoss_ave", n_steps_fixed), n_steps_fixed);  
-        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_DNI_COSTH, allocate("dni_costh", n_steps_fixed), n_steps_fixed);    
-        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_EQUIV_OPT_ETA_TOT, allocate("EqOpteff", n_steps_fixed), n_steps_fixed);
-        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_DEFOCUS, allocate("SCAs_def", n_steps_fixed), n_steps_fixed);
         
-        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_INC_SF_TOT, allocate("q_inc_sf_tot", n_steps_fixed), n_steps_fixed);
-        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_INC_SF_COSTH, allocate("qinc_costh", n_steps_fixed), n_steps_fixed);  
-        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_REC_INC, allocate("q_dot_rec_inc", n_steps_fixed), n_steps_fixed);
-        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_REC_THERMAL_LOSS, allocate("q_dot_rec_thermal_loss", n_steps_fixed), n_steps_fixed);
-        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_REC_ABS, allocate("q_dot_rec_abs", n_steps_fixed), n_steps_fixed);
-        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_PIPING_LOSS, allocate("q_dot_piping_loss", n_steps_fixed), n_steps_fixed);
-        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_E_DOT_INTERNAL_ENERGY, allocate("e_dot_field_int_energy", n_steps_fixed), n_steps_fixed);
-        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_HTF_OUT, allocate("q_dot_htf_sf_out", n_steps_fixed), n_steps_fixed);
-        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_FREEZE_PROT, allocate("q_dot_freeze_prot", n_steps_fixed), n_steps_fixed);
-
-        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_M_DOT_LOOP, allocate("m_dot_loop", n_steps_fixed), n_steps_fixed);
-        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_IS_RECIRCULATING, allocate("recirculating", n_steps_fixed), n_steps_fixed);
-        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_M_DOT_FIELD_RECIRC, allocate("m_dot_field_recirc", n_steps_fixed), n_steps_fixed);
-        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_M_DOT_FIELD_DELIVERED, allocate("m_dot_field_delivered", n_steps_fixed), n_steps_fixed);
-        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_FIELD_COLD_IN, allocate("T_field_cold_in", n_steps_fixed), n_steps_fixed);
-        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_REC_COLD_IN, allocate("T_rec_cold_in", n_steps_fixed), n_steps_fixed);
-        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_REC_HOT_OUT, allocate("T_rec_hot_out", n_steps_fixed), n_steps_fixed);
-        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_FIELD_HOT_OUT, allocate("T_field_hot_out", n_steps_fixed), n_steps_fixed);
-        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_PRESSURE_DROP, allocate("deltaP_field", n_steps_fixed), n_steps_fixed);          //[bar]
-
-        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_W_DOT_SCA_TRACK, allocate("W_dot_sca_track", n_steps_fixed), n_steps_fixed);     //[MWe]
-        c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_W_DOT_PUMP, allocate("W_dot_field_pump", n_steps_fixed), n_steps_fixed);         //[MWe]
 
         // ********************************
         // ********************************
@@ -904,91 +921,92 @@ public:
         C_csp_power_cycle * p_csp_power_cycle;
         // Steam Rankine and User Defined power cycle classes
         C_pc_Rankine_indirect_224 rankine_pc;
-
-
-        int pb_tech_type = as_integer("pc_config");
-        if ( !(pb_tech_type == 0 || pb_tech_type == 1) )  // 0 = Rankine, 1 = UDPC
         {
-            throw exec_error("trough_physical", "unsupported power cycle");
-        }
-        else
-        {
-            C_pc_Rankine_indirect_224::S_params *pc = &rankine_pc.ms_params;
-            pc->m_P_ref = as_double("P_ref");
-            pc->m_eta_ref = as_double("eta_ref");
-            pc->m_T_htf_hot_ref = as_double("T_loop_out");
-            pc->m_T_htf_cold_ref = as_double("T_loop_in_des");
-            pc->m_cycle_max_frac = as_double("cycle_max_frac");
-            pc->m_cycle_cutoff_frac = as_double("cycle_cutoff_frac");
-            pc->m_q_sby_frac = as_double("q_sby_frac");
-            pc->m_startup_time = as_double("startup_time");
-            pc->m_startup_frac = as_double("startup_frac");
-            pc->m_htf_pump_coef = as_double("pb_pump_coef");
-            pc->m_pc_fl = as_integer("Fluid");                            // power cycle HTF is same as receiver HTF
-            pc->m_pc_fl_props = as_matrix("field_fl_props");
-            pc->DP_SGS = as_double("DP_SGS");
-
-            if (pb_tech_type == 0)
+            int pb_tech_type = as_integer("pc_config");
+            if (!(pb_tech_type == 0 || pb_tech_type == 1))  // 0 = Rankine, 1 = UDPC
             {
-                pc->m_dT_cw_ref = as_double("dT_cw_ref");
-                pc->m_T_amb_des = as_double("T_amb_des");
-                //pc->m_P_boil = as_double("P_boil");
-                pc->m_P_boil_des = 100.0;       //[bar]
-                pc->m_CT = as_integer("CT");                    // cooling tech type: 1=evaporative, 2=air, 3=hybrid    
-                pc->m_tech_type = as_integer("tech_type");      // turbine inlet pressure: 1: Fixed, 3: Sliding
-                if (pc->m_tech_type == 1) { pc->m_tech_type = 2; }; // changing fixed pressure for the tower to fixed pressure for the trough
-                if (pc->m_tech_type == 3) { pc->m_tech_type = 8; }; // changing sliding pressure for the tower to sliding pressure for the trough
-                if (!(pc->m_tech_type == 2 || pc->m_tech_type == 5 || pc->m_tech_type == 6 || pc->m_tech_type == 8))
+                throw exec_error("trough_physical", "unsupported power cycle");
+            }
+            else
+            {
+                C_pc_Rankine_indirect_224::S_params* pc = &rankine_pc.ms_params;
+                pc->m_P_ref = as_double("P_ref");
+                pc->m_eta_ref = as_double("eta_ref");
+                pc->m_T_htf_hot_ref = as_double("T_loop_out");
+                pc->m_T_htf_cold_ref = as_double("T_loop_in_des");
+                pc->m_cycle_max_frac = as_double("cycle_max_frac");
+                pc->m_cycle_cutoff_frac = as_double("cycle_cutoff_frac");
+                pc->m_q_sby_frac = as_double("q_sby_frac");
+                pc->m_startup_time = as_double("startup_time");
+                pc->m_startup_frac = as_double("startup_frac");
+                pc->m_htf_pump_coef = as_double("pb_pump_coef");
+                pc->m_pc_fl = as_integer("Fluid");                            // power cycle HTF is same as receiver HTF
+                pc->m_pc_fl_props = as_matrix("field_fl_props");
+                pc->DP_SGS = as_double("DP_SGS");
+
+                if (pb_tech_type == 0)
                 {
-                    std::string tech_msg = util::format("tech_type must be either 2 (fixed pressure) or 8 (sliding). Input was %d."
-                        " Simulation proceeded with fixed pressure", pc->m_tech_type);
-                    pc->m_tech_type = 2;
+                    pc->m_dT_cw_ref = as_double("dT_cw_ref");
+                    pc->m_T_amb_des = as_double("T_amb_des");
+                    //pc->m_P_boil = as_double("P_boil");
+                    pc->m_P_boil_des = 100.0;       //[bar]
+                    pc->m_CT = as_integer("CT");                    // cooling tech type: 1=evaporative, 2=air, 3=hybrid    
+                    pc->m_tech_type = as_integer("tech_type");      // turbine inlet pressure: 1: Fixed, 3: Sliding
+                    if (pc->m_tech_type == 1) { pc->m_tech_type = 2; }; // changing fixed pressure for the tower to fixed pressure for the trough
+                    if (pc->m_tech_type == 3) { pc->m_tech_type = 8; }; // changing sliding pressure for the tower to sliding pressure for the trough
+                    if (!(pc->m_tech_type == 2 || pc->m_tech_type == 5 || pc->m_tech_type == 6 || pc->m_tech_type == 8))
+                    {
+                        std::string tech_msg = util::format("tech_type must be either 2 (fixed pressure) or 8 (sliding). Input was %d."
+                            " Simulation proceeded with fixed pressure", pc->m_tech_type);
+                        pc->m_tech_type = 2;
+                    }
+                    pc->m_T_approach = as_double("T_approach");
+                    pc->m_T_ITD_des = as_double("T_ITD_des");
+                    pc->m_P_cond_ratio = as_double("P_cond_ratio");
+                    pc->m_pb_bd_frac = as_double("pb_bd_frac");
+                    pc->m_P_cond_min = as_double("P_cond_min");
+                    pc->m_n_pl_inc = as_integer("n_pl_inc");
+
+                    size_t n_F_wc = 0;
+                    ssc_number_t* p_F_wc = as_array("F_wc", &n_F_wc);
+                    pc->m_F_wc.resize(n_F_wc, 0.0);
+                    for (size_t i = 0; i < n_F_wc; i++)
+                        pc->m_F_wc[i] = (double)p_F_wc[i];
+
+                    pc->m_is_user_defined_pc = false;
+                    pc->m_W_dot_cooling_des = std::numeric_limits<double>::quiet_NaN();
                 }
-                pc->m_T_approach = as_double("T_approach");
-                pc->m_T_ITD_des = as_double("T_ITD_des");
-                pc->m_P_cond_ratio = as_double("P_cond_ratio");
-                pc->m_pb_bd_frac = as_double("pb_bd_frac");
-                pc->m_P_cond_min = as_double("P_cond_min");
-                pc->m_n_pl_inc = as_integer("n_pl_inc");
+                else if (pb_tech_type == 1)
+                {
+                    pc->m_is_user_defined_pc = true;
 
-                size_t n_F_wc = 0;
-                ssc_number_t *p_F_wc = as_array("F_wc", &n_F_wc);
-                pc->m_F_wc.resize(n_F_wc, 0.0);
-                for (size_t i = 0; i < n_F_wc; i++)
-                    pc->m_F_wc[i] = (double)p_F_wc[i];
+                    // User-Defined Cycle Parameters
+                    pc->m_W_dot_cooling_des = as_double("ud_f_W_dot_cool_des") / 100.0 * as_double("P_ref");  //[MWe]
+                    pc->m_m_dot_water_des = as_double("ud_m_dot_water_cool_des");       //[kg/s]
 
-                pc->m_is_user_defined_pc = false;
-                pc->m_W_dot_cooling_des = std::numeric_limits<double>::quiet_NaN();
-            }
-            else if (pb_tech_type == 1)
-            {
-                pc->m_is_user_defined_pc = true;
+                    // User-Defined Cycle Off-Design Tables 
+                    pc->mc_combined_ind = as_matrix("ud_ind_od");
+                }
 
-                // User-Defined Cycle Parameters
-                pc->m_W_dot_cooling_des = as_double("ud_f_W_dot_cool_des") / 100.0*as_double("P_ref");  //[MWe]
-                pc->m_m_dot_water_des = as_double("ud_m_dot_water_cool_des");       //[kg/s]
+                // Set pointer to parent class
+                p_csp_power_cycle = &rankine_pc;
 
-                // User-Defined Cycle Off-Design Tables 
-                pc->mc_combined_ind = as_matrix("ud_ind_od");
-            }
-
-            // Set pointer to parent class
-            p_csp_power_cycle = &rankine_pc;
-
-            // Set power cycle outputs common to all power cycle technologies
-            p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_Q_DOT_HTF, allocate("q_pb", n_steps_fixed), n_steps_fixed);
-            p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_M_DOT_HTF, allocate("m_dot_pc", n_steps_fixed), n_steps_fixed);
-            p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_Q_DOT_STARTUP, allocate("q_dot_pc_startup", n_steps_fixed), n_steps_fixed);
-            p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_W_DOT, allocate("P_cycle", n_steps_fixed), n_steps_fixed);
-            p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_HTF_IN, allocate("T_pc_in", n_steps_fixed), n_steps_fixed);
-            p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_HTF_OUT, allocate("T_pc_out", n_steps_fixed), n_steps_fixed);
-            p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_M_DOT_WATER, allocate("m_dot_water_pc", n_steps_fixed), n_steps_fixed);
-            p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_W_DOT_HTF_PUMP, allocate("cycle_htf_pump_power", n_steps_fixed), n_steps_fixed);
-            p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_W_DOT_COOLER, allocate("P_cooling_tower_tot", n_steps_fixed), n_steps_fixed);
+                // Set power cycle outputs common to all power cycle technologies
+                p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_Q_DOT_HTF, allocate("q_pb", n_steps_fixed), n_steps_fixed);
+                p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_M_DOT_HTF, allocate("m_dot_pc", n_steps_fixed), n_steps_fixed);
+                p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_Q_DOT_STARTUP, allocate("q_dot_pc_startup", n_steps_fixed), n_steps_fixed);
+                p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_W_DOT, allocate("P_cycle", n_steps_fixed), n_steps_fixed);
+                p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_HTF_IN, allocate("T_pc_in", n_steps_fixed), n_steps_fixed);
+                p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_HTF_OUT, allocate("T_pc_out", n_steps_fixed), n_steps_fixed);
+                p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_M_DOT_WATER, allocate("m_dot_water_pc", n_steps_fixed), n_steps_fixed);
+                p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_W_DOT_HTF_PUMP, allocate("cycle_htf_pump_power", n_steps_fixed), n_steps_fixed);
+                p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_W_DOT_COOLER, allocate("P_cooling_tower_tot", n_steps_fixed), n_steps_fixed);
 
                 // Dependent reported variable
-            p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_ETA_THERMAL, allocate("eta", n_steps_fixed), n_steps_fixed);
+                p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_ETA_THERMAL, allocate("eta", n_steps_fixed), n_steps_fixed);
+            }
         }
+        
 
 
         // ********************************
@@ -996,63 +1014,67 @@ public:
         // TES
         // ********************************
         // ********************************
-        util::matrix_t<double> tes_lengths;
-        if (is_assigned("tes_lengths")) {
-            tes_lengths = as_matrix("tes_lengths");               //[m]
-        }
-        if (!is_assigned("tes_lengths") || tes_lengths.ncells() < 11) {
-            double vals1[11] = { 0., 90., 100., 120., 0., 30., 90., 80., 80., 120., 80. };
-            tes_lengths.assign(vals1, 11);
-        }
-        C_csp_two_tank_tes storage(
-            c_trough.m_Fluid,
-            c_trough.m_field_fl_props,
-            as_integer("store_fluid"),
-            as_matrix("store_fl_props"),
-            as_double("P_ref") / as_double("eta_ref"),
-            as_double("solar_mult"),
-            as_double("P_ref") / as_double("eta_ref") * as_double("tshours"),
-            as_double("h_tank"),
-            as_double("u_tank"),
-            as_integer("tank_pairs"),
-            as_double("hot_tank_Thtr"),
-            as_double("hot_tank_max_heat"),
-            as_double("cold_tank_Thtr"),
-            as_double("cold_tank_max_heat"),
-            as_double("dt_hot"),
-            T_loop_in_des,
-            T_loop_out_des,
-            T_loop_out_des,
-            T_loop_in_des,
-            as_double("h_tank_min"),
-            as_double("init_hot_htf_percent"),
-            as_double("pb_pump_coef"),
-            as_boolean("tanks_in_parallel"),
-            as_double("V_tes_des"),
-            as_boolean("calc_design_pipe_vals"),
-            as_double("tes_pump_coef"),
-            as_double("eta_pump"),
-            as_boolean("has_hot_tank_bypass"),
-            as_double("T_tank_hot_inlet_min"),
-            as_boolean("custom_tes_p_loss"),
-            as_boolean("custom_tes_pipe_sizes"),
-            as_matrix("k_tes_loss_coeffs"),
-            as_matrix("tes_diams"),
-            as_matrix("tes_wallthicks"),
-            tes_lengths,
-            as_double("HDR_rough"),
-            as_double("DP_SGS")
-        );
+        C_csp_two_tank_tes storage;
+        {
+            util::matrix_t<double> tes_lengths;
+            if (is_assigned("tes_lengths")) {
+                tes_lengths = as_matrix("tes_lengths");               //[m]
+            }
+            if (!is_assigned("tes_lengths") || tes_lengths.ncells() < 11) {
+                double vals1[11] = { 0., 90., 100., 120., 0., 30., 90., 80., 80., 120., 80. };
+                tes_lengths.assign(vals1, 11);
+            }
+            storage = C_csp_two_tank_tes(
+                c_trough.m_Fluid,
+                c_trough.m_field_fl_props,
+                as_integer("store_fluid"),
+                as_matrix("store_fl_props"),
+                as_double("P_ref") / as_double("eta_ref"),
+                as_double("solar_mult"),
+                as_double("P_ref") / as_double("eta_ref") * as_double("tshours"),
+                as_double("h_tank"),
+                as_double("u_tank"),
+                as_integer("tank_pairs"),
+                as_double("hot_tank_Thtr"),
+                as_double("hot_tank_max_heat"),
+                as_double("cold_tank_Thtr"),
+                as_double("cold_tank_max_heat"),
+                as_double("dt_hot"),
+                as_double("T_loop_in_des"),
+                as_double("T_loop_out"),
+                as_double("T_loop_out"),
+                as_double("T_loop_in_des"),
+                as_double("h_tank_min"),
+                as_double("init_hot_htf_percent"),
+                as_double("pb_pump_coef"),
+                as_boolean("tanks_in_parallel"),
+                as_double("V_tes_des"),
+                as_boolean("calc_design_pipe_vals"),
+                as_double("tes_pump_coef"),
+                as_double("eta_pump"),
+                as_boolean("has_hot_tank_bypass"),
+                as_double("T_tank_hot_inlet_min"),
+                as_boolean("custom_tes_p_loss"),
+                as_boolean("custom_tes_pipe_sizes"),
+                as_matrix("k_tes_loss_coeffs"),
+                as_matrix("tes_diams"),
+                as_matrix("tes_wallthicks"),
+                tes_lengths,
+                as_double("HDR_rough"),
+                as_double("DP_SGS")
+            );
 
-        // Set storage outputs
-        storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_Q_DOT_LOSS, allocate("tank_losses", n_steps_fixed), n_steps_fixed);
-        storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HEATER, allocate("q_tes_heater", n_steps_fixed), n_steps_fixed);
-        storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_TES_T_HOT, allocate("T_tes_hot", n_steps_fixed), n_steps_fixed);
-        storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_TES_T_COLD, allocate("T_tes_cold", n_steps_fixed), n_steps_fixed);
-        storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_M_DOT_TANK_TO_TANK, allocate("m_dot_cold_tank_to_hot_tank", n_steps_fixed), n_steps_fixed);
-        storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_COLD_TANK, allocate("mass_tes_cold", n_steps_fixed), n_steps_fixed);
-        storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_HOT_TANK, allocate("mass_tes_hot", n_steps_fixed), n_steps_fixed);
-        storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HTF_PUMP, allocate("tes_htf_pump_power", n_steps_fixed), n_steps_fixed);
+            // Set storage outputs
+            storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_Q_DOT_LOSS, allocate("tank_losses", n_steps_fixed), n_steps_fixed);
+            storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HEATER, allocate("q_tes_heater", n_steps_fixed), n_steps_fixed);
+            storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_TES_T_HOT, allocate("T_tes_hot", n_steps_fixed), n_steps_fixed);
+            storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_TES_T_COLD, allocate("T_tes_cold", n_steps_fixed), n_steps_fixed);
+            storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_M_DOT_TANK_TO_TANK, allocate("m_dot_cold_tank_to_hot_tank", n_steps_fixed), n_steps_fixed);
+            storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_COLD_TANK, allocate("mass_tes_cold", n_steps_fixed), n_steps_fixed);
+            storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_HOT_TANK, allocate("mass_tes_hot", n_steps_fixed), n_steps_fixed);
+            storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HTF_PUMP, allocate("tes_htf_pump_power", n_steps_fixed), n_steps_fixed);
+        }
+        
 
 
         // ********************************
@@ -1062,200 +1084,209 @@ public:
         // ********************************
         C_csp_tou_block_schedules tou;
         C_csp_tou_block_schedules::S_params *tou_params = &tou.ms_params;
-        tou_params->mc_csp_ops.mc_weekdays         = as_matrix("weekday_schedule");
-        tou_params->mc_csp_ops.mc_weekends         = as_matrix("weekend_schedule");
-        if (tou_params->mc_pricing.mc_weekdays.ncells() == 1) {
-            // Resize default value from var table to proper dimensions
-            tou_params->mc_pricing.mc_weekdays = util::matrix_t<double>(12, 24, 1.0);
-        }
-        if (tou_params->mc_pricing.mc_weekends.ncells() == 1) {
-            // Resize default value from var table to proper dimensions
-            tou_params->mc_pricing.mc_weekends = util::matrix_t<double>(12, 24, 1.0);
-        }
-
-        tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = as_boolean("is_tod_pc_target_also_pc_max");
-        tou.mc_dispatch_params.m_is_block_dispatch    = !as_boolean("is_dispatch");      //mw
-        tou.mc_dispatch_params.m_use_rule_1           = true;
-        tou.mc_dispatch_params.m_standby_off_buffer   = 2.0;
-        tou.mc_dispatch_params.m_use_rule_2           = false;
-        tou.mc_dispatch_params.m_q_dot_rec_des_mult   = -1.23;
-        tou.mc_dispatch_params.m_f_q_dot_pc_overwrite = -1.23;
-
-        size_t n_f_turbine = 0;
-        ssc_number_t *p_f_turbine = as_array("f_turb_tou_periods", &n_f_turbine);
-        tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(n_f_turbine, 0.0);
-        //tou_params->mv_t_frac.resize(n_f_turbine, 0.0);
-        for (size_t i = 0; i < n_f_turbine; i++)
-            tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC][i] = (double)p_f_turbine[i];
-
-        // Load fraction by time step:
-        bool is_load_fraction_by_timestep = is_assigned("timestep_load_fractions");
-        tou_params->mc_csp_ops.mv_is_diurnal = !(is_load_fraction_by_timestep);
-        if (is_load_fraction_by_timestep) {
-            size_t N_load_fractions;
-            ssc_number_t* load_fractions = as_array("timestep_load_fractions", &N_load_fractions);
-            std::copy(load_fractions, load_fractions + N_load_fractions, std::back_inserter(tou_params->mc_csp_ops.timestep_load_fractions));
-        }
-
-        int csp_financial_model = as_integer("csp_financial_model");
-
         double ppa_price_year1 = std::numeric_limits<double>::quiet_NaN();
-        if (csp_financial_model > 0 && csp_financial_model < 5) {   // Single Owner financial models
-
-            // Get first year base ppa price
-            bool is_ppa_price_input_assigned = is_assigned("ppa_price_input");
-            if (is_dispatch && !is_ppa_price_input_assigned) {
-                throw exec_error("trough_physical", "\n\nYou selected dispatch optimization which requires that the array input ppa_price_input is defined\n");
+        {
+            tou_params->mc_csp_ops.mc_weekdays = as_matrix("weekday_schedule");
+            tou_params->mc_csp_ops.mc_weekends = as_matrix("weekend_schedule");
+            if (tou_params->mc_pricing.mc_weekdays.ncells() == 1) {
+                // Resize default value from var table to proper dimensions
+                tou_params->mc_pricing.mc_weekdays = util::matrix_t<double>(12, 24, 1.0);
+            }
+            if (tou_params->mc_pricing.mc_weekends.ncells() == 1) {
+                // Resize default value from var table to proper dimensions
+                tou_params->mc_pricing.mc_weekends = util::matrix_t<double>(12, 24, 1.0);
             }
 
-            if (is_ppa_price_input_assigned) {
-                size_t count_ppa_price_input;
-                ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
-                ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
-            }
-            else {
-                ppa_price_year1 = 1.0;      //[-] don't need ppa multiplier if not optimizing
+            tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = as_boolean("is_tod_pc_target_also_pc_max");
+            tou.mc_dispatch_params.m_is_block_dispatch = !as_boolean("is_dispatch");      //mw
+            tou.mc_dispatch_params.m_use_rule_1 = true;
+            tou.mc_dispatch_params.m_standby_off_buffer = 2.0;
+            tou.mc_dispatch_params.m_use_rule_2 = false;
+            tou.mc_dispatch_params.m_q_dot_rec_des_mult = -1.23;
+            tou.mc_dispatch_params.m_f_q_dot_pc_overwrite = -1.23;
+
+            size_t n_f_turbine = 0;
+            ssc_number_t* p_f_turbine = as_array("f_turb_tou_periods", &n_f_turbine);
+            tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(n_f_turbine, 0.0);
+            //tou_params->mv_t_frac.resize(n_f_turbine, 0.0);
+            for (size_t i = 0; i < n_f_turbine; i++)
+                tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC][i] = (double)p_f_turbine[i];
+
+            // Load fraction by time step:
+            bool is_load_fraction_by_timestep = is_assigned("timestep_load_fractions");
+            tou_params->mc_csp_ops.mv_is_diurnal = !(is_load_fraction_by_timestep);
+            if (is_load_fraction_by_timestep) {
+                size_t N_load_fractions;
+                ssc_number_t* load_fractions = as_array("timestep_load_fractions", &N_load_fractions);
+                std::copy(load_fractions, load_fractions + N_load_fractions, std::back_inserter(tou_params->mc_csp_ops.timestep_load_fractions));
             }
 
-            int ppa_soln_mode = as_integer("ppa_soln_mode");    // PPA solution mode (0=Specify IRR target, 1=Specify PPA price)
-            if (ppa_soln_mode == 0 && is_dispatch) {
-                throw exec_error("trough_physical", "\n\nYou selected dispatch optimization and the Specify IRR Target financial solution mode, "
-                    "but dispatch optimization requires known absolute electricity prices. Dispatch optimization requires "
-                    "the Specify PPA Price financial solution mode. You can continue using dispatch optimization and iteratively "
-                    "solve for the PPA that results in a target IRR by running a SAM Parametric analysis or script.\n");
-            }
+            int csp_financial_model = as_integer("csp_financial_model");
 
-            int en_electricity_rates = as_integer("en_electricity_rates");  // 0 = Use PPA, 1 = Use Retail
-            if (en_electricity_rates == 1 && is_dispatch) {
-                throw exec_error("trough_physical", "\n\nYou selected dispatch optimization and the option to Use Retail Electricity Rates on the Electricity Purchases page, "
-                    "but the dispatch optimization model currently does not accept separate buy and sell prices. Please use the Use PPA or Market Prices option "
-                    "on the Electricity Purchases page.\n");
-            }
+            
+            if (csp_financial_model > 0 && csp_financial_model < 5) {   // Single Owner financial models
 
-            // Time-of-Delivery factors by time step:
-            int ppa_mult_model = as_integer("ppa_multiplier_model");
-            if (ppa_mult_model == 1)    // use dispatch_ts input
-            {
-                tou_params->mc_pricing.mv_is_diurnal = false;
+                // Get first year base ppa price
+                bool is_ppa_price_input_assigned = is_assigned("ppa_price_input");
+                if (is_dispatch && !is_ppa_price_input_assigned) {
+                    throw exec_error("trough_physical", "\n\nYou selected dispatch optimization which requires that the array input ppa_price_input is defined\n");
+                }
 
-                if (is_assigned("dispatch_factors_ts") || is_dispatch) {
-                    size_t nmultipliers;
-                    ssc_number_t* multipliers = as_array("dispatch_factors_ts", &nmultipliers);
-                    tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(nmultipliers, 0.0);
-                    for (size_t ii = 0; ii < nmultipliers; ii++)
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][ii] = multipliers[ii];
+                if (is_ppa_price_input_assigned) {
+                    size_t count_ppa_price_input;
+                    ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
+                    ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
                 }
                 else {
+                    ppa_price_year1 = 1.0;      //[-] don't need ppa multiplier if not optimizing
+                }
+
+                int ppa_soln_mode = as_integer("ppa_soln_mode");    // PPA solution mode (0=Specify IRR target, 1=Specify PPA price)
+                if (ppa_soln_mode == 0 && is_dispatch) {
+                    throw exec_error("trough_physical", "\n\nYou selected dispatch optimization and the Specify IRR Target financial solution mode, "
+                        "but dispatch optimization requires known absolute electricity prices. Dispatch optimization requires "
+                        "the Specify PPA Price financial solution mode. You can continue using dispatch optimization and iteratively "
+                        "solve for the PPA that results in a target IRR by running a SAM Parametric analysis or script.\n");
+                }
+
+                int en_electricity_rates = as_integer("en_electricity_rates");  // 0 = Use PPA, 1 = Use Retail
+                if (en_electricity_rates == 1 && is_dispatch) {
+                    throw exec_error("trough_physical", "\n\nYou selected dispatch optimization and the option to Use Retail Electricity Rates on the Electricity Purchases page, "
+                        "but the dispatch optimization model currently does not accept separate buy and sell prices. Please use the Use PPA or Market Prices option "
+                        "on the Electricity Purchases page.\n");
+                }
+
+                // Time-of-Delivery factors by time step:
+                int ppa_mult_model = as_integer("ppa_multiplier_model");
+                if (ppa_mult_model == 1)    // use dispatch_ts input
+                {
+                    tou_params->mc_pricing.mv_is_diurnal = false;
+
+                    if (is_assigned("dispatch_factors_ts") || is_dispatch) {
+                        size_t nmultipliers;
+                        ssc_number_t* multipliers = as_array("dispatch_factors_ts", &nmultipliers);
+                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(nmultipliers, 0.0);
+                        for (size_t ii = 0; ii < nmultipliers; ii++)
+                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][ii] = multipliers[ii];
+                    }
+                    else {
+                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
+                    }
+                }
+                else if (ppa_mult_model == 0) // standard diuranal input
+                {
+                    tou_params->mc_pricing.mv_is_diurnal = true;
+
+                    // Most likely use case is to use schedules and TOD. So assume if at least one is provided, then user intended to use this approach
+                        // the 'else' option applies non-feasible electricity prices, so we want to guard against selecting that it appears users
+                        // are trying to use the schedules. 
+                    bool is_one_assigned = is_assigned("dispatch_sched_weekday") || is_assigned("dispatch_sched_weekend") || is_assigned("dispatch_tod_factors");
+
+                    if (is_one_assigned || is_dispatch) {
+
+                        tou_params->mc_pricing.mc_weekdays = as_matrix("dispatch_sched_weekday");
+                        tou_params->mc_pricing.mc_weekends = as_matrix("dispatch_sched_weekend");
+
+                        auto dispatch_tod_factors = as_vector_double("dispatch_tod_factors");
+                        if (dispatch_tod_factors.size() != 9)
+                            throw exec_error("trough_physical", util::format("\n\nDispatch TOD factors has %d periods instead of the expected 9.\n", (int)dispatch_tod_factors.size()));
+
+                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, 0.0);
+                        for (size_t i = 0; i < 9; i++)
+                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][i] = dispatch_tod_factors[i];
+
+                    }
+                    else {
+                        tou_params->mc_pricing.mc_weekdays.resize_fill(12, 24, 1.);
+                        tou_params->mc_pricing.mc_weekends.resize_fill(12, 24, 1.);
+                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, -1.0);
+                    }
+                }
+            }
+            else if (csp_financial_model == 5) {    // Commercial
+                if (is_dispatch) {
+                    throw exec_error("trough_physical", "\nDispatch optimization current not enabled for the Commercial financial model\n");
+                    // need to add pricing lookup for Commercial financial model
+                }
+                else {
+                    tou_params->mc_pricing.mv_is_diurnal = false;
+
                     tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
                 }
             }
-            else if (ppa_mult_model == 0) // standard diuranal input
-            {
-                tou_params->mc_pricing.mv_is_diurnal = true;
+            else if (csp_financial_model == 6) {     // use 'mp_energy_market_revenue' -> from Merchant Plant model
 
-                // Most likely use case is to use schedules and TOD. So assume if at least one is provided, then user intended to use this approach
-                    // the 'else' option applies non-feasible electricity prices, so we want to guard against selecting that it appears users
-                    // are trying to use the schedules. 
-                bool is_one_assigned = is_assigned("dispatch_sched_weekday") || is_assigned("dispatch_sched_weekend") || is_assigned("dispatch_tod_factors");
-
-                if (is_one_assigned || is_dispatch) {
-
-                    tou_params->mc_pricing.mc_weekdays = as_matrix("dispatch_sched_weekday");
-                    tou_params->mc_pricing.mc_weekends = as_matrix("dispatch_sched_weekend");
-
-                    auto dispatch_tod_factors = as_vector_double("dispatch_tod_factors");
-                    if (dispatch_tod_factors.size() != 9)
-                        throw exec_error("trough_physical", util::format("\n\nDispatch TOD factors has %d periods instead of the expected 9.\n", (int)dispatch_tod_factors.size()));
-
-                    tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, 0.0);
-                    for (size_t i = 0; i < 9; i++)
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][i] = dispatch_tod_factors[i];
-
-                }
-                else {
-                    tou_params->mc_pricing.mc_weekdays.resize_fill(12, 24, 1.);
-                    tou_params->mc_pricing.mc_weekends.resize_fill(12, 24, 1.);
-                    tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, -1.0);
-                }
-            }
-        }
-        else if (csp_financial_model == 5) {    // Commercial
-            if (is_dispatch) {
-                throw exec_error("trough_physical", "\nDispatch optimization current not enabled for the Commercial financial model\n");
-                // need to add pricing lookup for Commercial financial model
-            }
-            else {
                 tou_params->mc_pricing.mv_is_diurnal = false;
 
-                tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
-            }
-        }
-        else if (csp_financial_model == 6) {     // use 'mp_energy_market_revenue' -> from Merchant Plant model
+                if (is_dispatch) {
+                    util::matrix_t<double> mp_energy_market_revenue = as_matrix("mp_energy_market_revenue"); // col 0 = cleared capacity, col 1 = $/MWh
+                    size_t n_rows = mp_energy_market_revenue.nrows();
+                    if (n_rows < n_steps_fixed) {
+                        string ppa_msg = util::format("mp_energy_market_revenue input has %d rows but there are %d number of timesteps", n_rows, n_steps_fixed);
+                        throw exec_error("trough_physical", ppa_msg);
+                    }
 
-            tou_params->mc_pricing.mv_is_diurnal = false;
-
-            if (is_dispatch) {
-                util::matrix_t<double> mp_energy_market_revenue = as_matrix("mp_energy_market_revenue"); // col 0 = cleared capacity, col 1 = $/MWh
-                size_t n_rows = mp_energy_market_revenue.nrows();
-                if (n_rows < n_steps_fixed) {
-                    string ppa_msg = util::format("mp_energy_market_revenue input has %d rows but there are %d number of timesteps", n_rows, n_steps_fixed);
-                    throw exec_error("trough_physical", ppa_msg);
+                    double conv_dolmwh_to_centkwh = 0.1;
+                    tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, 0.0);
+                    for (size_t ii = 0; ii < n_steps_fixed; ii++) {
+                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][ii] = mp_energy_market_revenue(ii, 1) * conv_dolmwh_to_centkwh; //[cents/kWh]
+                    }
                 }
-
-                double conv_dolmwh_to_centkwh = 0.1;
-                tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, 0.0);
-                for (size_t ii = 0; ii < n_steps_fixed; ii++) {
-                    tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][ii] = mp_energy_market_revenue(ii, 1) * conv_dolmwh_to_centkwh; //[cents/kWh]
+                else { // if no dispatch optimization, don't need an input pricing schedule
+                    tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
                 }
             }
-            else { // if no dispatch optimization, don't need an input pricing schedule
-                tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
+            else if (csp_financial_model == 7 || csp_financial_model == 8) {    // LCOE (7) and None (8)
+
+                tou_params->mc_pricing.mv_is_diurnal = false;
+
+                // No hourly electricity pricing in these financial models
+                // However, may still want to solve with dispatch optimization to avoid rapid startup/shutdown, so set to uniform schedule
+                tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, 1.0);
+            }
+            else {
+                throw exec_error("trough_physical", "csp_financial_model must be 1-8");
             }
         }
-        else if (csp_financial_model == 7 || csp_financial_model == 8) {    // LCOE (7) and None (8)
-
-            tou_params->mc_pricing.mv_is_diurnal = false;
-
-            // No hourly electricity pricing in these financial models
-            // However, may still want to solve with dispatch optimization to avoid rapid startup/shutdown, so set to uniform schedule
-            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, 1.0);
-        }
-        else {
-            throw exec_error("trough_physical", "csp_financial_model must be 1-8");
-        }
+        
         
         // System parameters
         C_csp_solver::S_csp_system_params system;
-        system.m_pb_fixed_par = as_double("pb_fixed_par");
-        size_t nval_bop_array = 0;
-        ssc_number_t *bop_array = as_array("bop_array", &nval_bop_array);
-        if (nval_bop_array != 5) throw exec_error("trough_physical", "Should be 5 elements in bop_array, has " + util::to_string((int)nval_bop_array) + ".");
-        system.m_bop_par      = bop_array[0];    //as_double("bop_par");
-        system.m_bop_par_f    = bop_array[1];    //as_double("bop_par_f");
-        system.m_bop_par_0    = bop_array[2];    //as_double("bop_par_0");
-        system.m_bop_par_1    = bop_array[3];    //as_double("bop_par_1");
-        system.m_bop_par_2    = bop_array[4];    //as_double("bop_par_2");
+        {
+            system.m_pb_fixed_par = as_double("pb_fixed_par");
+            size_t nval_bop_array = 0;
+            ssc_number_t* bop_array = as_array("bop_array", &nval_bop_array);
+            if (nval_bop_array != 5) throw exec_error("trough_physical", "Should be 5 elements in bop_array, has " + util::to_string((int)nval_bop_array) + ".");
+            system.m_bop_par = bop_array[0];    //as_double("bop_par");
+            system.m_bop_par_f = bop_array[1];    //as_double("bop_par_f");
+            system.m_bop_par_0 = bop_array[2];    //as_double("bop_par_0");
+            system.m_bop_par_1 = bop_array[3];    //as_double("bop_par_1");
+            system.m_bop_par_2 = bop_array[4];    //as_double("bop_par_2");
+        }
+        
 
         // *****************************************************
         // System dispatch
         csp_dispatch_opt dispatch;
+        {
+            if (as_boolean("is_dispatch")) {
 
-        if (as_boolean("is_dispatch")) {
+                dispatch.solver_params.set_user_inputs(as_boolean("is_dispatch"), as_integer("disp_steps_per_hour"), as_integer("disp_frequency"), as_integer("disp_horizon"),
+                    as_integer("disp_max_iter"), as_double("disp_mip_gap"), as_double("disp_timeout"),
+                    as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_spec_scaling"), as_integer("disp_reporting"),
+                    as_boolean("is_write_ampl_dat"), as_boolean("is_ampl_engine"), as_string("ampl_data_dir"), as_string("ampl_exec_call"));
 
-            dispatch.solver_params.set_user_inputs(as_boolean("is_dispatch"), as_integer("disp_steps_per_hour"), as_integer("disp_frequency"), as_integer("disp_horizon"),
-                as_integer("disp_max_iter"), as_double("disp_mip_gap"), as_double("disp_timeout"),
-                as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_spec_scaling"), as_integer("disp_reporting"),
-                as_boolean("is_write_ampl_dat"), as_boolean("is_ampl_engine"), as_string("ampl_data_dir"), as_string("ampl_exec_call"));
-
-            double disp_csu_cost_calc = as_double("disp_csu_cost_rel")*W_dot_cycle_des; //[$/start]
-            double disp_rsu_cost_calc = as_double("disp_rsu_cost_rel")*q_dot_rec_des;   //[$/start]
-            dispatch.params.set_user_params(as_boolean("can_cycle_use_standby"), as_double("disp_time_weighting"),
-                disp_rsu_cost_calc, 0.0, disp_csu_cost_calc, as_double("disp_pen_ramping"),
-                as_double("disp_inventory_incentive"), as_double("q_rec_standby"), as_double("q_rec_heattrace"), ppa_price_year1);
+                double disp_csu_cost_calc = as_double("disp_csu_cost_rel") * W_dot_cycle_des; //[$/start]
+                double disp_rsu_cost_calc = as_double("disp_rsu_cost_rel") * q_dot_rec_des;   //[$/start]
+                dispatch.params.set_user_params(as_boolean("can_cycle_use_standby"), as_double("disp_time_weighting"),
+                    disp_rsu_cost_calc, 0.0, disp_csu_cost_calc, as_double("disp_pen_ramping"),
+                    as_double("disp_inventory_incentive"), as_double("q_rec_standby"), as_double("q_rec_heattrace"), ppa_price_year1);
+            }
+            else {
+                dispatch.solver_params.dispatch_optimize = false;
+            }
         }
-        else {
-            dispatch.solver_params.dispatch_optimize = false;
-        }
+        
 
         // Instantiate Solver
         C_csp_solver csp_solver(weather_reader, 
@@ -1271,81 +1302,84 @@ public:
                                 (void*)(this));
 
         // Set solver reporting outputs
-        // Simulation Kernel
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TIME_FINAL, allocate("time_hr", n_steps_fixed), n_steps_fixed);
-        // Weather reader
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::MONTH, allocate("month", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::HOUR_DAY, allocate("hour_day", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SOLAZ, allocate("solazi", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SOLZEN, allocate("solzen", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::BEAM, allocate("beam", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TDRY, allocate("tdry", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TWET, allocate("twet", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::RH, allocate("RH", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::WSPD, allocate("wspd", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PRES, allocate("pres", n_steps_fixed), n_steps_fixed);
+        {
+            // Simulation Kernel
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TIME_FINAL, allocate("time_hr", n_steps_fixed), n_steps_fixed);
+            // Weather reader
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::MONTH, allocate("month", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::HOUR_DAY, allocate("hour_day", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SOLAZ, allocate("solazi", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SOLZEN, allocate("solzen", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::BEAM, allocate("beam", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TDRY, allocate("tdry", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TWET, allocate("twet", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::RH, allocate("RH", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::WSPD, allocate("wspd", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PRES, allocate("pres", n_steps_fixed), n_steps_fixed);
 
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CR_DEFOCUS, allocate("defocus", n_steps_fixed), n_steps_fixed);
-        // TES
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_Q_DOT_DC, allocate("q_dc_tes", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_Q_DOT_CH, allocate("q_ch_tes", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_E_CH_STATE, allocate("e_ch_tes", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::M_DOT_CR_TO_TES_HOT, allocate("m_dot_cr_to_tes_hot", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::M_DOT_TES_HOT_OUT, allocate("m_dot_tes_hot_out", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::M_DOT_PC_TO_TES_COLD, allocate("m_dot_pc_to_tes_cold", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::M_DOT_TES_COLD_OUT, allocate("m_dot_tes_cold_out", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::M_DOT_FIELD_TO_CYCLE, allocate("m_dot_field_to_cycle", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::M_DOT_CYCLE_TO_FIELD, allocate("m_dot_cycle_to_field", n_steps_fixed), n_steps_fixed);
-        // System
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SYS_W_DOT_FIXED, allocate("P_fixed", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SYS_W_DOT_BOP, allocate("P_plant_balance_tot", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::W_DOT_NET, allocate("P_out_net", n_steps_fixed), n_steps_fixed);
-        // Controller
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::OP_MODE_1, allocate("op_mode_1", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::OP_MODE_2, allocate("op_mode_2", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::OP_MODE_3, allocate("op_mode_3", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::ERR_M_DOT, allocate("m_dot_balance", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::ERR_Q_DOT, allocate("q_balance", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CR_DEFOCUS, allocate("defocus", n_steps_fixed), n_steps_fixed);
+            // TES
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_Q_DOT_DC, allocate("q_dc_tes", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_Q_DOT_CH, allocate("q_ch_tes", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TES_E_CH_STATE, allocate("e_ch_tes", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::M_DOT_CR_TO_TES_HOT, allocate("m_dot_cr_to_tes_hot", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::M_DOT_TES_HOT_OUT, allocate("m_dot_tes_hot_out", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::M_DOT_PC_TO_TES_COLD, allocate("m_dot_pc_to_tes_cold", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::M_DOT_TES_COLD_OUT, allocate("m_dot_tes_cold_out", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::M_DOT_FIELD_TO_CYCLE, allocate("m_dot_field_to_cycle", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::M_DOT_CYCLE_TO_FIELD, allocate("m_dot_cycle_to_field", n_steps_fixed), n_steps_fixed);
+            // System
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SYS_W_DOT_FIXED, allocate("P_fixed", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SYS_W_DOT_BOP, allocate("P_plant_balance_tot", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::W_DOT_NET, allocate("P_out_net", n_steps_fixed), n_steps_fixed);
+            // Controller
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::OP_MODE_1, allocate("op_mode_1", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::OP_MODE_2, allocate("op_mode_2", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::OP_MODE_3, allocate("op_mode_3", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::ERR_M_DOT, allocate("m_dot_balance", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::ERR_Q_DOT, allocate("q_balance", n_steps_fixed), n_steps_fixed);
 
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::N_OP_MODES, allocate("n_op_modes", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TOU_PERIOD, allocate("tou_value", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PRICING_MULT, allocate("pricing_mult", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_Q_DOT_SB, allocate("q_dot_pc_sb", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_Q_DOT_MIN, allocate("q_dot_pc_min", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_Q_DOT_TARGET, allocate("q_dot_pc_target", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_Q_DOT_MAX, allocate("q_dot_pc_max", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::N_OP_MODES, allocate("n_op_modes", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TOU_PERIOD, allocate("tou_value", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PRICING_MULT, allocate("pricing_mult", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_Q_DOT_SB, allocate("q_dot_pc_sb", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_Q_DOT_MIN, allocate("q_dot_pc_min", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_Q_DOT_TARGET, allocate("q_dot_pc_target", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_Q_DOT_MAX, allocate("q_dot_pc_max", n_steps_fixed), n_steps_fixed);
 
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CTRL_IS_REC_SU, allocate("is_rec_su_allowed", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CTRL_IS_PC_SU, allocate("is_pc_su_allowed", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CTRL_IS_PC_SB, allocate("is_pc_sb_allowed", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::EST_Q_DOT_CR_SU, allocate("q_dot_est_cr_su", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::EST_Q_DOT_CR_ON, allocate("q_dot_est_cr_on", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::EST_Q_DOT_DC, allocate("q_dot_est_tes_dc", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::EST_Q_DOT_CH, allocate("q_dot_est_tes_ch", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CTRL_IS_REC_SU, allocate("is_rec_su_allowed", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CTRL_IS_PC_SU, allocate("is_pc_su_allowed", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CTRL_IS_PC_SB, allocate("is_pc_sb_allowed", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::EST_Q_DOT_CR_SU, allocate("q_dot_est_cr_su", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::EST_Q_DOT_CR_ON, allocate("q_dot_est_cr_on", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::EST_Q_DOT_DC, allocate("q_dot_est_tes_dc", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::EST_Q_DOT_CH, allocate("q_dot_est_tes_ch", n_steps_fixed), n_steps_fixed);
 
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_A, allocate("operating_modes_a", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_B, allocate("operating_modes_b", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_C, allocate("operating_modes_c", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_A, allocate("operating_modes_a", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_B, allocate("operating_modes_b", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_C, allocate("operating_modes_c", n_steps_fixed), n_steps_fixed);
 
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_REL_MIP_GAP, allocate("disp_rel_mip_gap", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_STATE, allocate("disp_solve_state", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SUBOPT_FLAG, allocate("disp_subopt_flag", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_ITER, allocate("disp_solve_iter", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_OBJ, allocate("disp_objective", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_OBJ_RELAX, allocate("disp_obj_relax", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_QSF_EXPECT, allocate("disp_qsf_expected", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_QSFPROD_EXPECT, allocate("disp_qsfprod_expected", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_QSFSU_EXPECT, allocate("disp_qsfsu_expected", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_TES_EXPECT, allocate("disp_tes_expected", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_PCEFF_EXPECT, allocate("disp_pceff_expected", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SFEFF_EXPECT, allocate("disp_thermeff_expected", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_QPBSU_EXPECT, allocate("disp_qpbsu_expected", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_WPB_EXPECT, allocate("disp_wpb_expected", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_REV_EXPECT, allocate("disp_rev_expected", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_PRES_NCONSTR, allocate("disp_presolve_nconstr", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_PRES_NVAR, allocate("disp_presolve_nvar", n_steps_fixed), n_steps_fixed);
-        csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_TIME, allocate("disp_solve_time", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_REL_MIP_GAP, allocate("disp_rel_mip_gap", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_STATE, allocate("disp_solve_state", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SUBOPT_FLAG, allocate("disp_subopt_flag", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_ITER, allocate("disp_solve_iter", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_OBJ, allocate("disp_objective", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_OBJ_RELAX, allocate("disp_obj_relax", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_QSF_EXPECT, allocate("disp_qsf_expected", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_QSFPROD_EXPECT, allocate("disp_qsfprod_expected", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_QSFSU_EXPECT, allocate("disp_qsfsu_expected", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_TES_EXPECT, allocate("disp_tes_expected", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_PCEFF_EXPECT, allocate("disp_pceff_expected", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SFEFF_EXPECT, allocate("disp_thermeff_expected", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_QPBSU_EXPECT, allocate("disp_qpbsu_expected", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_WPB_EXPECT, allocate("disp_wpb_expected", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_REV_EXPECT, allocate("disp_rev_expected", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_PRES_NCONSTR, allocate("disp_presolve_nconstr", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_PRES_NVAR, allocate("disp_presolve_nvar", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::DISPATCH_SOLVE_TIME, allocate("disp_solve_time", n_steps_fixed), n_steps_fixed);
 
+        }
+        
 
         update("Initialize physical trough model...", 0.0);
 
@@ -1397,6 +1431,19 @@ public:
         }
 
         update("Begin timeseries simulation...", 0.0);
+
+        // ********************************
+        // ********************************
+        // Report Design Point Calculations to UI
+        // ********************************
+        // ********************************
+        {
+
+        }
+
+        // Return if only called for design point
+        if (sim_type != 1)
+            return;
 
         std::clock_t clock_start = std::clock();
 
