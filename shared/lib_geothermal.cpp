@@ -734,8 +734,16 @@ double CGeothermalAnalyzer::GetInjectionPumpWorkft(void)
     double flow_lbh = flow * 2.20462 * 3600;
     //Upper interval
     double D_well = 0;
-    if (mo_geo_in.md_InjectionWellDiam == 0) D_well = 12.5; //inches (larger diameter)
-    else D_well = 8.75; //inches (smaller diameter)
+    if (mo_geo_in.md_InjectionWellDiam == 0) {
+        D_well = 12.5; //inches (larger diameter)
+        mo_geo_in.md_DiameterInjPumpCasingInches = 12.25;
+        mo_geo_in.md_DiameterInjectionWellInches = 12.5;
+    }
+    else {
+        D_well = 8.75; //inches (smaller diameter)
+        mo_geo_in.md_DiameterInjPumpCasingInches = 8.5;
+        mo_geo_in.md_DiameterInjectionWellInches = 8.75;
+    }
     //double D_well = mo_geo_in.md_DiameterInjPumpCasingInches;
     double D_well_ft = D_well / 12;
     double A = 3.1415 * pow(D_well_ft, 2) / 4;
@@ -829,8 +837,16 @@ double CGeothermalAnalyzer::GetProductionPumpWorkft(void)
     double flow_lbh = flow * 2.20462 * 3600;
     //Upper interval
     double D_well = 0;
-    if (mo_geo_in.md_ProductionWellDiam == 0) D_well = 12.25; //inches (larger diameter)
-    else D_well = 8.50; //inches (smaller diameter)
+    if (mo_geo_in.md_ProductionWellDiam == 0) {
+        D_well = 12.25; //inches (larger diameter)
+        mo_geo_in.md_DiameterPumpCasingInches = 12.25;
+        mo_geo_in.md_DiameterProductionWellInches = 12.5;
+    }
+    else {
+        D_well = 8.50; //inches (smaller diameter)
+        mo_geo_in.md_DiameterPumpCasingInches = 8.5;
+        mo_geo_in.md_DiameterProductionWellInches = 8.75;
+    }
     //double D_well = mo_geo_in.md_DiameterPumpCasingInches - 2 * 0.4;
     double D_well_ft = D_well / 12;
     double A = 3.1415 * pow(D_well_ft, 2) / 4;
