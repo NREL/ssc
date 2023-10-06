@@ -2545,7 +2545,7 @@ void cm_pvsamv1::exec()
             //Calculate DNI clearness index (time step basis)
             double dni_clearness_index = PVSystem->p_DNIIndex[0][idx];
             //Calculate Clipping Potential ((P_dc,dryclean - P_ac,0) / P_ac,0) (time step basis)
-            sharedInverter->calculateACPower(dcPower_kW_csky, dcVoltagePerMppt[0], Irradiance->weatherRecord.tdry, as_boolean("enable_subhourly_clipping")); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
+            sharedInverter->calculateACPower(dcPower_kW_csky, PVSystem->p_mpptVoltage[0][idx], Irradiance->weatherRecord.tdry, as_boolean("enable_subhourly_clipping")); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
             nominal_annual_clipping_output += sharedInverter->powerAC_kW_clipping;
             /*
             double clip_pot = (dcPower_kW_csky - sharedInverter->powerAC_kW_clipping) / sharedInverter->powerAC_kW_clipping;
