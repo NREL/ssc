@@ -113,6 +113,10 @@ var_info vtab_oandm[] = {
 { SSC_INPUT,        SSC_NUMBER,      "annual_fuel_usage",            "Fuel usage (yr 1)",                 "kWht",    "",                  "System Costs",            "?=0",                     "MIN=0",                                         "" },
 { SSC_INPUT,        SSC_ARRAY,       "annual_fuel_usage_lifetime",   "Fuel usage (lifetime)",             "kWht",    "",                  "System Costs",            "",                     "",                                         "" },
 
+{ SSC_INPUT,        SSC_ARRAY,		 "om_elec_price_for_heat_techs",       "Electricity price for purchases in heat model",                "$/kWh",   "", "System Costs",  "?=0.0",           "",                                         "" },
+{ SSC_INPUT,        SSC_NUMBER,      "om_elec_price_for_heat_techs_escal", "Escalation for electricity price for purchases in heat model", "%/year",  "", "System Costs",  "?=0.0",           "",                                         "" },
+
+
 // replacements
 { SSC_INPUT,SSC_ARRAY   , "om_batt_replacement_cost"                 , "Replacement cost 1"                                             , "$/kWh"                                  , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
 { SSC_INPUT,SSC_ARRAY   , "om_fuelcell_replacement_cost"                 , "Replacement cost 2"                                             , "$/kW"                                   , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
