@@ -829,6 +829,12 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 	{
 		m_T_htf_out_t_end_converged[i] = m_T_htf_out_t_end_last[i] = T_field_ini;	//[K]
 	}
+
+    // Calculate Design Point Outputs
+    double T_avg = 0.5 * (m_T_loop_in_des + m_T_loop_out_des);
+    m_field_htf_cp_avg_des = m_htfProps.Cp(T_avg + 273.15);         //[kJ/kg-K]
+
+
 	// *********************************************
 
 	if (m_accept_init)
@@ -4211,6 +4217,185 @@ double C_csp_trough_collector_receiver::get_collector_area()
 
 // ------------------------------------------ supplemental methods -----------------------------------------------------------
 
+bool C_csp_trough_collector_receiver::design_solar_mult()
+{
+    if (m_is_solar_mult_designed == true)
+        return false;
+
+    // Calculate nLoops, depending on designing for solar mult or total field aperture.
+
+    // Single Loop Aperture
+    m_single_loop_aperture_des = 0;
+    {
+        int nsca = static_cast<int>(m_trough_loop_control.at(0));
+
+        int sca_t = -1;
+        for (int i = 0; i < nsca; i++)
+        {
+            sca_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
+            m_single_loop_aperture_des += + m_A_aperture[sca_t];
+        }
+    }
+
+    // Min_inner_diameter
+    m_min_inner_diameter_des = 0;
+    {
+        m_min_inner_diameter_des = m_D_2[0];
+        int hce_t = -1;
+        for (int i = 0; i < static_cast<int>(m_trough_loop_control.at(0)); i++)
+        {
+            hce_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(i * 3 + 2)), 1), 4) - 1;
+            if (m_D_2[hce_t] < m_min_inner_diameter_des) {
+                m_min_inner_diameter_des = m_D_2[hce_t];
+            }
+        }
+    }
+
+    // HCE design heat loss
+    m_HCE_heat_loss_des = std::vector<double>();
+    {
+        size_t n = m_HCE_FieldFrac.nrows();
+
+        for (size_t i = 0; i < n; i++) {
+            m_HCE_heat_loss_des.push_back(m_HCE_FieldFrac.at(i, 0) * m_Design_loss.at(i, 0)
+                + m_HCE_FieldFrac.at(i, 1) * m_Design_loss.at(i, 1)
+                + m_HCE_FieldFrac.at(i, 2) * m_Design_loss.at(i, 2)
+                + m_HCE_FieldFrac.at(i, 3) * m_Design_loss.at(i, 3));
+        }
+    }
+
+    // HCE *loop* design heat loss
+    m_HCE_heat_loss_loop_des = 0;
+    {
+        int ncol = static_cast<int>(m_trough_loop_control.at(0));
+        double total_len = 0.;
+
+        for (int i = 0; i < ncol; i++)
+        {
+            int sca_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
+            int hce_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(2 + i * 3)), 1), 4) - 1;
+            total_len = total_len + m_L_SCA[sca_t];
+            m_HCE_heat_loss_loop_des = m_HCE_heat_loss_loop_des + m_L_SCA[sca_t]
+                * (1 - (m_HCE_heat_loss_des[hce_t] / (m_I_bn_des * m_A_aperture[sca_t] / m_L_SCA[sca_t])));
+        }
+
+        if (total_len != 0.0) {
+            m_HCE_heat_loss_loop_des = m_HCE_heat_loss_loop_des / total_len;
+        }
+        else {
+            m_HCE_heat_loss_loop_des = -777.7;
+        }
+    }
+
+    // SCA Design Optical Efficiency 
+    m_csp_dtr_sca_calc_sca_effs = util::matrix_t<double>(m_TrackingError.size());
+    {
+        size_t n = m_TrackingError.size();
+        
+        for (size_t i = 0; i < n; i++) {
+            m_csp_dtr_sca_calc_sca_effs.at(i) = m_TrackingError.at(i) * m_GeomEffects.at(i) *
+                m_Rho_mirror_clean.at(i) * m_Dirt_mirror.at(i) * m_Error.at(i);
+        }
+    }
+
+    // HCE Design Optical Efficiency
+    m_csp_dtr_hce_optical_effs = util::matrix_t<double>(m_HCE_FieldFrac.nrows());
+    {
+        size_t n = m_HCE_FieldFrac.nrows();
+
+        m_csp_dtr_hce_optical_effs.fill(std::numeric_limits<double>::quiet_NaN());
+        for (size_t i = 0; i < n; i++) {
+            m_csp_dtr_hce_optical_effs.at(i) =
+                m_HCE_FieldFrac.at(i, 0)
+                * m_Shadowing.at(i, 0)
+                * m_Dirt_HCE.at(i, 0)
+                * m_alpha_abs.at(i, 0)
+                * m_Tau_envelope.at(i, 0)
+                + m_HCE_FieldFrac.at(i, 1)
+                * m_Shadowing.at(i, 1)
+                * m_Dirt_HCE.at(i, 1)
+                * m_alpha_abs.at(i, 1)
+                * m_Tau_envelope.at(i, 1)
+                + m_HCE_FieldFrac.at(i, 2)
+                * m_Shadowing.at(i, 2)
+                * m_Dirt_HCE.at(i, 2)
+                * m_alpha_abs.at(i, 2)
+                * m_Tau_envelope.at(i, 2)
+                + m_HCE_FieldFrac.at(i, 3)
+                * m_Shadowing.at(i, 3)
+                * m_Dirt_HCE.at(i, 3)
+                * m_alpha_abs.at(i, 3)
+                * m_Tau_envelope.at(i, 3);
+        }
+    }
+
+    // Loop Optical Efficiency
+    m_loop_optical_efficiency_des = 0;
+    {
+        int ncol = static_cast<int>(m_trough_loop_control.at(0));
+
+        if (m_trough_loop_control.ncells() != (size_t)ncol * 3 + 1) {
+            return -888.8;
+        }
+
+        double total_len = 0.;
+        double weighted_sca_eff = 0.0;
+        for (int i = 0; i < ncol; i++)
+        {
+            int sca_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
+            total_len = total_len + m_L_SCA[sca_t];
+            weighted_sca_eff = weighted_sca_eff + m_L_SCA[sca_t] * m_csp_dtr_sca_calc_sca_effs[sca_t];
+        }
+
+        if (total_len != 0.0) {
+            weighted_sca_eff = weighted_sca_eff / total_len;
+        }
+        else {
+            weighted_sca_eff = -777.7;
+        }
+
+        total_len = 0;
+        double weighted_hce_eff = 0.0;
+        for (int i = 0; i < ncol; i++)
+        {
+            int hce_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(2 + i * 3)), 1), 4) - 1;
+            int sca_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
+            total_len = total_len + m_L_SCA[sca_t];
+            weighted_hce_eff = weighted_hce_eff + m_L_SCA[sca_t] * m_csp_dtr_hce_optical_effs[hce_t];
+        }
+
+        if (total_len != 0.0) {
+            weighted_hce_eff = weighted_hce_eff / total_len;
+        }
+        else {
+            weighted_hce_eff = -777.7;
+        }
+
+        m_loop_optical_efficiency_des = weighted_hce_eff * weighted_sca_eff;
+    }
+
+    // SCAInfoArray
+    m_SCAInfoArray = util::matrix_t<double>(static_cast<int>(m_trough_loop_control.at(0)), 2);
+    {
+        int assemblies = static_cast<int>(m_trough_loop_control.at(0));
+        
+        for (int i = 0; i < assemblies; i++) {
+            m_SCAInfoArray.at(i, 1) = static_cast<int>(m_trough_loop_control.at(1 + 3 * i));
+            m_SCAInfoArray.at(i, 0) = static_cast<int>(m_trough_loop_control.at(2 + 3 * i));
+        }
+    }
+
+    // SCADefocusArray
+    m_SCADefocusArray = vector<int>();
+    {
+        int assemblies = static_cast<int>(m_trough_loop_control.at(0));
+        m_SCADefocusArray.resize(assemblies);
+        for (int i = 0; i < assemblies; i++) {
+            m_SCADefocusArray[i] = static_cast<int>(m_trough_loop_control.at(3 + 3 * i));
+        }
+    }
+
+}
 
 /*
 This subroutine contains the trough detailed plant model.  The collector field is modeled

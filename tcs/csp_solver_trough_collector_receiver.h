@@ -90,9 +90,6 @@ public:
 	C_csp_reported_outputs mc_reported_outputs;
 
 private:
-
-	// Member classes
-	HTFProperties m_htfProps, m_airProps;
 	
 	// Hardcoded constants
 	double m_d2r, m_r2d, m_mtoinch;
@@ -320,6 +317,9 @@ public:
 	// Class to save messages for up stream classes
 	// C_csp_messages mc_csp_messages;
 
+    // Member classes
+    HTFProperties m_htfProps, m_airProps;
+
 	//parameters and inputs
 	int m_nSCA;				//[-] Number of SCA's in a loop
 	int m_nHCEt;			//[-] Number of HCE types
@@ -335,8 +335,6 @@ public:
 	double m_theta_dep;		//[deg] deploy angle
 	double m_Row_Distance;	//[m] Spacing between rows (centerline to centerline)
 	double m_T_startup;		//[C] The required temperature (converted to K in init) of the system before the power block can be switched on
-	double m_m_dot_htfmin;	//[kg/s] Minimum loop HTF flow rate
-	double m_m_dot_htfmax;	//[kg/s] Maximum loop HTF flow rate
 	double m_T_loop_in_des;	//[C] Design loop inlet temperature, converted to K in init
 	double m_T_loop_out_des;//[C] Target loop outlet temperature, converted to K in init
 	int m_Fluid;			//[-] Field HTF fluid number
@@ -380,37 +378,37 @@ public:
 	std::vector<double> m_ColperSCA;	//[-] The number of individual collector sections in an SCA
 	std::vector<double> m_Distance_SCA; //[m] Piping distance between SCA's in the field
 	
-	std::vector<int> m_SCADefocusArray; //[-] Order in which the SCA's should be defocused
+	
 
 	util::matrix_t<double> m_field_fl_props;	//[-] User-defined field HTF properties
 
-	util::matrix_t<double> m_HCE_FieldFrac,  //[-] Fraction of the field occupied by this HCE type
-	m_D_2, 									 //[m] Inner absorber tube diameter
-	m_D_3, 									 //[m] Outer absorber tube diameter
-	m_D_4, 									 //[m] Inner glass envelope diameter
-	m_D_5, 									 //[m] Outer glass envelope diameter
-	m_D_p, 									 //[m] Diameter of the absorber flow plug (optional)
-	m_Flow_type, 							 //[-] Flow type through the absorber
-	m_Rough, 								 //[m] Roughness of the internal surface
-	m_alpha_env, 							 //[-] Envelope absorptance
+    util::matrix_t<double> m_HCE_FieldFrac,  //[-] Fraction of the field occupied by this HCE type
+    m_D_2, 									 //[m] Inner absorber tube diameter
+    m_D_3, 									 //[m] Outer absorber tube diameter
+    m_D_4, 									 //[m] Inner glass envelope diameter
+    m_D_5, 									 //[m] Outer glass envelope diameter
+    m_D_p, 									 //[m] Diameter of the absorber flow plug (optional)
+    m_Flow_type, 							 //[-] Flow type through the absorber
+    m_Rough, 								 //[m] Roughness of the internal surface
+    m_alpha_env, 							 //[-] Envelope absorptance
+
+    //[-] Emittance vs. temperature profile for each receiver type and variation
+    m_epsilon_3_11, m_epsilon_3_12, m_epsilon_3_13, m_epsilon_3_14,
+    m_epsilon_3_21, m_epsilon_3_22, m_epsilon_3_23, m_epsilon_3_24,
+    m_epsilon_3_31, m_epsilon_3_32, m_epsilon_3_33, m_epsilon_3_34,
+    m_epsilon_3_41, m_epsilon_3_42, m_epsilon_3_43, m_epsilon_3_44,
+
+    m_alpha_abs,             //[-] Absorber absorptance
+    m_Tau_envelope, 		 //[-] Envelope transmittance
+    m_EPSILON_4, 			 //[-] Inner glass envelope emissivities
+    m_EPSILON_5,			 //[-] Outer glass envelope emissivities
+    m_P_a, 					 //[torr] Annulus gas pressure				 
+    m_AnnulusGas, 			 //[-] Annulus gas type (1=air, 26=Ar, 27=H2)
+    m_AbsorberMaterial, 	 //[-] Absorber material type
+    m_Shadowing, 			 //[-] Receiver bellows shadowing loss factor
+    m_Dirt_HCE, 			 //[-] Loss due to dirt on the receiver envelope
+    m_Design_loss; 			 //[-] Receiver heat loss at design
 	
-	//[-] Emittance vs. temperature profile for each receiver type and variation
-	m_epsilon_3_11, m_epsilon_3_12,	m_epsilon_3_13, m_epsilon_3_14, 
-	m_epsilon_3_21, m_epsilon_3_22, m_epsilon_3_23, m_epsilon_3_24, 
-	m_epsilon_3_31, m_epsilon_3_32, m_epsilon_3_33,	m_epsilon_3_34,
-	m_epsilon_3_41, m_epsilon_3_42, m_epsilon_3_43, m_epsilon_3_44, 
-	
-	m_alpha_abs,             //[-] Absorber absorptance
-	m_Tau_envelope, 		 //[-] Envelope transmittance
-	m_EPSILON_4, 			 //[-] Inner glass envelope emissivities
-	m_EPSILON_5,			 //[-] Outer glass envelope emissivities
-	m_P_a, 					 //[torr] Annulus gas pressure				 
-	m_AnnulusGas, 			 //[-] Annulus gas type (1=air, 26=Ar, 27=H2)
-	m_AbsorberMaterial, 	 //[-] Absorber material type
-	m_Shadowing, 			 //[-] Receiver bellows shadowing loss factor
-	m_Dirt_HCE, 			 //[-] Loss due to dirt on the receiver envelope
-	m_Design_loss, 			 //[-] Receiver heat loss at design
-	m_SCAInfoArray;          //[-] Receiver (,1) and collector (,2) type for each assembly in loop
     
     double m_rec_su_delay;   //[hr] Fixed startup delay time for the receiver
     double m_rec_qf_delay;   //[-] Energy-based receiver startup delay (fraction of rated thermal power)
@@ -477,6 +475,24 @@ public:
     std::vector<double> m_P_loop;                 //[Pa]   Gauge pessure in loop sections
 
     vector<interconnect> m_interconnects;
+
+    // Design Point Inputs
+    bool m_is_solar_mult_designed = false;          // Flag for whether solar multiple has been calculated
+    util::matrix_t<double> m_trough_loop_control;
+
+    // Design Point Outputs
+    double m_field_htf_cp_avg_des;                  //[kJ/kg-K] Field average htf cp value at design
+    double m_single_loop_aperture_des;              //[m2] Aperture of single loop
+    double m_min_inner_diameter_des;                //[m] Min inner diameter
+    std::vector<double> m_HCE_heat_loss_des;        //[W/m]
+    double m_HCE_heat_loss_loop_des;                //[W/m]
+    util::matrix_t<double> m_csp_dtr_sca_calc_sca_effs; // SCA optical efficiencies at design
+    util::matrix_t<double> m_csp_dtr_hce_optical_effs;  // HCE optical efficiencies at design
+    double m_loop_optical_efficiency_des;           // Loop total optical effiency at design
+    util::matrix_t<double> m_SCAInfoArray;          //[-] Receiver (,1) and collector (,2) type for each assembly in loop
+    std::vector<int> m_SCADefocusArray;             //[-] Order in which the SCA's should be defocused
+    double m_m_dot_htfmin;	                        //[kg/s] Minimum loop HTF flow rate
+    double m_m_dot_htfmax;	                        //[kg/s] Maximum loop HTF flow rate
 
 	// **************************************************************************
 	// **************************************************************************
@@ -551,6 +567,8 @@ public:
 	virtual double get_collector_area();
 
 	// ------------------------------------------ supplemental methods -----------------------------------------------------------
+    bool design_solar_mult();
+
 	class E_piping_config
 	{
 		public:

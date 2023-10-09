@@ -56,7 +56,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static var_info _cm_vtab_trough_physical[] = {
 
-    
+
 
 
     /* VARTYPE          DATATYPE         NAME                         LABEL                                                                               UNITS           META              GROUP             REQUIRED_IF                CONSTRAINTS         UI_HINTS*/
@@ -107,7 +107,7 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "mc_bal_cold",               "Heat capacity of the balance of plant on the cold side",                           "kWht/K-MWt",   "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "mc_bal_sca",                "Non-HTF heat capacity associated with each SCA - per meter basis",                 "Wht/K-m",      "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "W_aperture",                "The collector aperture width (Total structural area used for shadowing)",          "m",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "A_aperture",                "Reflective aperture area of the collector",                                        "m2",           "",               "solar_field",    "*",                       "",                      "" },                                                                                                                                                         
+    { SSC_INPUT,        SSC_ARRAY,       "A_aperture",                "Reflective aperture area of the collector",                                        "m2",           "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "TrackingError",             "User-defined tracking error derate",                                               "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "GeomEffects",               "User-defined geometry effects derate",                                             "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "Rho_mirror_clean",          "User-defined clean mirror reflectivity",                                           "none",         "",               "solar_field",    "*",                       "",                      "" },
@@ -184,7 +184,7 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "P_cond_min",                "Minimum condenser pressure",                                                       "inHg",         "",               "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "n_pl_inc",                  "Number of part-load increments for the heat rejection system",                     "none",         "",               "powerblock",     "pc_config=0",             "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "F_wc",                      "Fraction indicating wet cooling use for hybrid system",                            "none",         "constant=[0,0,0,0,0,0,0,0,0]",     "powerblock", "pc_config=0", "",                    "" },
-    
+
     // UDPC parameters
     { SSC_INPUT,        SSC_NUMBER,      "ud_f_W_dot_cool_des",       "Percent of user-defined power cycle design gross output consumed by cooling",      "%",            "",               "powerblock",     "pc_config=1",             "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "ud_m_dot_water_cool_des",   "Mass flow rate of water required at user-defined power cycle design point",        "kg/s",         "",               "powerblock",     "pc_config=1",             "",                      "" },
@@ -200,14 +200,14 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "hot_tank_Thtr",             "Minimum allowable hot tank HTF temp",                                              "C",            "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "hot_tank_max_heat",         "Rated heater capacity for hot tank heating",                                       "MWe",          "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "cold_tank_Thtr",            "Minimum allowable cold tank HTF temp",                                             "C",            "",               "TES",            "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "cold_tank_max_heat",        "Rated heater capacity for cold tank heating",                                      "MWe",          "",               "TES",            "*",                       "",                      "" },         
+    { SSC_INPUT,        SSC_NUMBER,      "cold_tank_max_heat",        "Rated heater capacity for cold tank heating",                                      "MWe",          "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "dt_hot",                    "Hot side HX approach temp",                                                        "C",            "",               "TES",            "*",                       "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "dt_cold",                   "Cold side HX approach temp",                                                       "C",            "",               "TES",            "*",                      "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "T_tank_hot_ini",            "Initial hot tank fluid tmeperature",                                               "C",            "",               "TES",            "*",                      "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "T_tank_cold_ini",           "Initial cold tank fluid tmeperature",                                              "C",            "",               "TES",            "*",                      "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "h_tank_min",                "Minimum allowable HTF height in storage tank",                                     "m",            "",               "TES",            "*",                       "",                      "" }, 
+    { SSC_INPUT,        SSC_NUMBER,      "h_tank_min",                "Minimum allowable HTF height in storage tank",                                     "m",            "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "init_hot_htf_percent",      "Initial fraction of avail. vol that is hot",                                       "%",            "",               "TES",            "*",                       "",                      "" },
-    
+
     // TOU
     { SSC_INPUT,        SSC_MATRIX,      "weekday_schedule",          "12x24 CSP operation Time-of-Use Weekday schedule",                                 "-",            "",               "tou",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "weekend_schedule",          "12x24 CSP operation Time-of-Use Weekend schedule",                                 "-",            "",               "tou",            "*",                       "",                      "" },
@@ -330,8 +330,13 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,       SSC_NUMBER,     "q_dot_cycle_des",            "Cycle thermal power at design",                                                    "MWt",          "",               "Power Cycle",    "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "nameplate",                  "Nameplate capacity",                                                               "MWe",          "",               "System Design Calc",           "*",         "",                      "" },
 
-
-
+    // Solar Field
+    { SSC_OUTPUT,       SSC_NUMBER,     "field_htf_min_temp",               "Minimum field htf temp",                                               "C",            "",         "Power Cycle",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "field_htf_max_temp",               "Maximum field htf temp",                                               "C",            "",         "Power Cycle",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "field_htf_cp_avg_des",             "Field average htf cp at design",                                       "kJ/kgK",       "",         "Solar Field",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "single_loop_aperture_des",         "Single loop aperture",                                                 "m2",           "",         "Solar Field",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "min_inner_diameter",               "Minimum absorber inner diameter in loop",                              "m",            "",         "Solar Field",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "csp_dtr_hce_design_heat_losses"      "Heat loss at design"                                                   "W/m",          "",         "Solar Field",                    "*",                                                                "",              "" },
 
 
     // Simulation Kernel
@@ -663,261 +668,275 @@ public:
         // ********************************
         C_csp_trough_collector_receiver c_trough;
         {
-            c_trough.m_nSCA = as_integer("nSCA");                       //[-] Number of SCA's in a loop
-            c_trough.m_nHCEt = as_integer("nHCEt");                     //[-] Number of HCE types
-            c_trough.m_nColt = as_integer("nColt");                     //[-] Number of collector types
-            c_trough.m_nHCEVar = as_integer("nHCEVar");                 //[-] Number of HCE variants per t
-            c_trough.m_nLoops = as_integer("nLoops");                   //[-] Number of loops in the field
-            c_trough.m_FieldConfig = as_integer("FieldConfig");         //[-] Number of subfield headers
-            c_trough.m_L_power_block_piping = as_double("L_power_block_piping");                           //[m] Length of piping (full mass flow) through power block (if applicable)
-            c_trough.m_include_fixed_power_block_runner = as_boolean("include_fixed_power_block_runner");  //[-] Should model consider piping through power block?
-            c_trough.m_eta_pump = as_double("eta_pump");                //[-] HTF pump efficiency
-            c_trough.m_Fluid = as_integer("Fluid");                     //[-] Field HTF fluid number
-            //c_trough.m_fthrok = as_integer("fthrok");                 //[-] Flag to allow partial defocusing of the collectors
-            c_trough.m_fthrctrl = 2;                                    //[-] Defocusing strategy; hardcode = 2 for now
-            c_trough.m_accept_loc = as_integer("accept_loc");           //[-] In acceptance testing mode - temperature sensor location (1=hx,2=loop)
-            c_trough.m_HDR_rough = as_double("HDR_rough");              //[-] Header pipe relative roughness
-            c_trough.m_theta_stow = as_double("theta_stow");            //[deg] stow angle
-            c_trough.m_theta_dep = as_double("theta_dep");              //[deg] deploy angle
-            c_trough.m_Row_Distance = as_double("Row_Distance");        //[m] Spacing between rows (centerline to centerline)
-
-            double T_loop_in_des = as_double("T_loop_in_des");          //[C] Design loop inlet temperature, converted to K in init
-            c_trough.m_T_loop_in_des = T_loop_in_des;                   //[C] Design loop inlet temperature, converted to K in init
-            double T_loop_out_des = as_double("T_loop_out");            //[C] Target loop outlet temperature, converted to K in init
-            c_trough.m_T_loop_out_des = T_loop_out_des;                 //[C] Target loop outlet temperature, converted to K in init
-            double T_startup_min = T_loop_in_des;
-            if (T_loop_out_des > 600.0)
+            // Collect Inputs
             {
-                T_startup_min = T_loop_out_des - 70.0;
-            }
-            double T_startup = max(T_startup_min, 0.67 * T_loop_in_des + 0.33 * T_loop_out_des); //[C]
-            c_trough.m_T_startup = T_startup;                           //[C] The required temperature (converted to K in init) of the system before the power block can be switched on
+                c_trough.m_nSCA = as_integer("nSCA");                       //[-] Number of SCA's in a loop
+                c_trough.m_nHCEt = as_integer("nHCEt");                     //[-] Number of HCE types
+                c_trough.m_nColt = as_integer("nColt");                     //[-] Number of collector types
+                c_trough.m_nHCEVar = as_integer("nHCEVar");                 //[-] Number of HCE variants per t
+                c_trough.m_nLoops = as_integer("nLoops");                   //[-] Number of loops in the field
+                c_trough.m_FieldConfig = as_integer("FieldConfig");         //[-] Number of subfield headers
+                c_trough.m_L_power_block_piping = as_double("L_power_block_piping");                           //[m] Length of piping (full mass flow) through power block (if applicable)
+                c_trough.m_include_fixed_power_block_runner = as_boolean("include_fixed_power_block_runner");  //[-] Should model consider piping through power block?
+                c_trough.m_eta_pump = as_double("eta_pump");                //[-] HTF pump efficiency
+                c_trough.m_Fluid = as_integer("Fluid");                     //[-] Field HTF fluid number
+                //c_trough.m_fthrok = as_integer("fthrok");                 //[-] Flag to allow partial defocusing of the collectors
+                c_trough.m_fthrctrl = 2;                                    //[-] Defocusing strategy; hardcode = 2 for now
+                c_trough.m_accept_loc = as_integer("accept_loc");           //[-] In acceptance testing mode - temperature sensor location (1=hx,2=loop)
+                c_trough.m_HDR_rough = as_double("HDR_rough");              //[-] Header pipe relative roughness
+                c_trough.m_theta_stow = as_double("theta_stow");            //[deg] stow angle
+                c_trough.m_theta_dep = as_double("theta_dep");              //[deg] deploy angle
+                c_trough.m_Row_Distance = as_double("Row_Distance");        //[m] Spacing between rows (centerline to centerline)
 
-            c_trough.m_m_dot_htfmin = as_double("m_dot_htfmin");        //[kg/s] Minimum loop HTF flow rate
-            c_trough.m_m_dot_htfmax = as_double("m_dot_htfmax");        //[kg/s] Maximum loop HTF flow rate
-            c_trough.m_field_fl_props = as_matrix("field_fl_props");    //[-] User-defined field HTF properties
-            c_trough.m_T_fp = as_double("T_fp");                        //[C] Freeze protection temperature (heat trace activation temperature), convert to K in init
-            c_trough.m_I_bn_des = as_double("I_bn_des");                //[W/m^2] Solar irradiation at design
-            c_trough.m_V_hdr_cold_max = as_double("V_hdr_cold_max");    //[m/s] Maximum HTF velocity in the cold header at design
-            c_trough.m_V_hdr_cold_min = as_double("V_hdr_cold_min");    //[m/s] Minimum HTF velocity in the cold header at design
-            c_trough.m_V_hdr_hot_max = as_double("V_hdr_hot_max");      //[m/s] Maximum HTF velocity in the hot header at design
-            c_trough.m_V_hdr_hot_min = as_double("V_hdr_hot_min");      //[m/s] Minimum HTF velocity in the hot header at design
-            c_trough.m_Pipe_hl_coef = as_double("Pipe_hl_coef");        //[W/m2-K] Loss coefficient from the header, runner pipe, and non-HCE piping
-            c_trough.m_SCA_drives_elec = as_double("SCA_drives_elec");  //[W/SCA] Tracking power, in Watts per SCA drive
-            c_trough.m_ColTilt = as_double("tilt");                     //[deg] Collector tilt angle (0 is horizontal, 90deg is vertical)
-            c_trough.m_ColAz = as_double("azimuth");                    //[deg] Collector azimuth angle
-            c_trough.m_wind_stow_speed = as_double("wind_stow_speed");  //[m/s] Wind speed at and above which the collectors will be stowed
-            c_trough.m_accept_mode = as_integer("accept_mode");         //[-] Acceptance testing mode? (1=yes, 0=no)
-            c_trough.m_accept_init = as_boolean("accept_init");         //[-] In acceptance testing mode - require steady-state startup
-            c_trough.m_solar_mult = as_double("solar_mult");            //[-] Solar Multiple (set during verify() using cmod_csp_trough_eqns.cpp)
-            c_trough.m_mc_bal_hot_per_MW = as_double("mc_bal_hot");     //[kWht/K-MWt] The heat capacity of the balance of plant on the hot side
-            c_trough.m_mc_bal_cold_per_MW = as_double("mc_bal_cold");   //[kWht/K-MWt] The heat capacity of the balance of plant on the cold side
-            c_trough.m_mc_bal_sca = as_double("mc_bal_sca");            //[Wht/K-m] Non-HTF heat capacity associated with each SCA - per meter basis
-
-            //[m] The collector aperture width (Total structural area.. used for shadowing)
-            size_t nval_W_aperture = 0;
-            ssc_number_t* W_aperture = as_array("W_aperture", &nval_W_aperture);
-            c_trough.m_W_aperture.resize(nval_W_aperture);
-            for (size_t i = 0; i < nval_W_aperture; i++)
-                c_trough.m_W_aperture[i] = (double)W_aperture[i];
-
-            //[m^2] Reflective aperture area of the collector
-            size_t nval_A_aperture = 0;
-            ssc_number_t* A_aperture = as_array("A_aperture", &nval_A_aperture);
-            c_trough.m_A_aperture.resize(nval_A_aperture);
-            for (size_t i = 0; i < nval_A_aperture; i++)
-                c_trough.m_A_aperture[i] = (double)A_aperture[i];
-
-            //[-] Tracking error derate
-            size_t nval_TrackingError = 0;
-            ssc_number_t* TrackingError = as_array("TrackingError", &nval_TrackingError);
-            c_trough.m_TrackingError.resize(nval_TrackingError);
-            for (size_t i = 0; i < nval_TrackingError; i++)
-                c_trough.m_TrackingError[i] = (double)TrackingError[i];
-
-            //[-] Geometry effects derate
-            size_t nval_GeomEffects = 0;
-            ssc_number_t* GeomEffects = as_array("GeomEffects", &nval_GeomEffects);
-            c_trough.m_GeomEffects.resize(nval_GeomEffects);
-            for (size_t i = 0; i < nval_GeomEffects; i++)
-                c_trough.m_GeomEffects[i] = (double)GeomEffects[i];
-
-            //[-] Clean mirror reflectivity
-            size_t nval_Rho_mirror_clean = 0;
-            ssc_number_t* Rho_mirror_clean = as_array("Rho_mirror_clean", &nval_Rho_mirror_clean);
-            c_trough.m_Rho_mirror_clean.resize(nval_Rho_mirror_clean);
-            for (size_t i = 0; i < nval_Rho_mirror_clean; i++)
-                c_trough.m_Rho_mirror_clean[i] = (double)Rho_mirror_clean[i];
-
-            //[-] Dirt on mirror derate
-            size_t nval_Dirt_mirror = 0;
-            ssc_number_t* Dirt_mirror = as_array("Dirt_mirror", &nval_Dirt_mirror);
-            c_trough.m_Dirt_mirror.resize(nval_Dirt_mirror);
-            for (size_t i = 0; i < nval_Dirt_mirror; i++)
-                c_trough.m_Dirt_mirror[i] = (double)Dirt_mirror[i];
-
-            //[-] General optical error derate
-            size_t nval_Error = 0;
-            ssc_number_t* Error = as_array("Error", &nval_Error);
-            c_trough.m_Error.resize(nval_Error);
-            for (size_t i = 0; i < nval_Error; i++)
-                c_trough.m_Error[i] = (double)Error[i];
-
-            //[m] The average focal length of the collector 
-            size_t nval_Ave_Focal_Length = 0;
-            ssc_number_t* Ave_Focal_Length = as_array("Ave_Focal_Length", &nval_Ave_Focal_Length);
-            c_trough.m_Ave_Focal_Length.resize(nval_Ave_Focal_Length);
-            for (size_t i = 0; i < nval_Ave_Focal_Length; i++)
-                c_trough.m_Ave_Focal_Length[i] = (double)Ave_Focal_Length[i];
-
-            //[m] The length of the SCA 
-            size_t nval_L_SCA = 0;
-            ssc_number_t* L_SCA = as_array("L_SCA", &nval_L_SCA);
-            c_trough.m_L_SCA.resize(nval_L_SCA);
-            for (size_t i = 0; i < nval_L_SCA; i++)
-                c_trough.m_L_SCA[i] = (double)L_SCA[i];
-
-            //[m] The length of a single mirror/HCE unit
-            size_t nval_L_aperture = 0;
-            ssc_number_t* L_aperture = as_array("L_aperture", &nval_L_aperture);
-            c_trough.m_L_aperture.resize(nval_L_aperture);
-            for (size_t i = 0; i < nval_L_aperture; i++)
-                c_trough.m_L_aperture[i] = (double)L_aperture[i];
-
-            //[-] The number of individual collector sections in an SCA
-            size_t nval_ColperSCA = 0;
-            ssc_number_t* ColperSCA = as_array("ColperSCA", &nval_ColperSCA);
-            c_trough.m_ColperSCA.resize(nval_ColperSCA);
-            for (size_t i = 0; i < nval_ColperSCA; i++)
-                c_trough.m_ColperSCA[i] = (double)ColperSCA[i];
-
-            //[m] Piping distance between SCA's in the field
-            size_t nval_Distance_SCA = 0;
-            ssc_number_t* Distance_SCA = as_array("Distance_SCA", &nval_Distance_SCA);
-            c_trough.m_Distance_SCA.resize(nval_Distance_SCA);
-            for (size_t i = 0; i < nval_Distance_SCA; i++)
-                c_trough.m_Distance_SCA[i] = (double)Distance_SCA[i];
-
-            c_trough.m_IAM_matrix = as_matrix("IAM_matrix");                //[-] IAM coefficients, matrix for 4 collectors
-
-            // Why are these matrices - can't they be arrays?               
-            c_trough.m_HCE_FieldFrac = as_matrix("HCE_FieldFrac");          //[-] Fraction of the field occupied by this HCE type
-            c_trough.m_D_2 = as_matrix("D_2");                              //[m] Inner absorber tube diameter
-            c_trough.m_D_3 = as_matrix("D_3");                              //[m] Outer absorber tube diameter
-            c_trough.m_D_4 = as_matrix("D_4");                              //[m] Inner glass envelope diameter
-            c_trough.m_D_5 = as_matrix("D_5");                              //[m] Outer glass envelope diameter
-            c_trough.m_D_p = as_matrix("D_p");                              //[m] Diameter of the absorber flow plug (optional)
-            c_trough.m_Flow_type = as_matrix("Flow_type");                  //[-] Flow type through the absorber
-            c_trough.m_Rough = as_matrix("Rough");                          //[-] Relative roughness of the internal HCE surface
-            c_trough.m_alpha_env = as_matrix("alpha_env");                  //[-] Envelope absorptance
-            // **********************************************************
-
-            // Emittance vs. temperature profile for each receiver type and variation
-            c_trough.m_epsilon_3_11 = as_matrix_transpose("epsilon_3_11");  //[-] Absorber emittance for receiver type 1 variation 1
-            c_trough.m_epsilon_3_12 = as_matrix_transpose("epsilon_3_12");  //[-] Absorber emittance for receiver type 1 variation 2
-            c_trough.m_epsilon_3_13 = as_matrix_transpose("epsilon_3_13");  //[-] Absorber emittance for receiver type 1 variation 3
-            c_trough.m_epsilon_3_14 = as_matrix_transpose("epsilon_3_14");  //[-] Absorber emittance for receiver type 1 variation 4
-            c_trough.m_epsilon_3_21 = as_matrix_transpose("epsilon_3_21");  //[-] Absorber emittance for receiver type 2 variation 1
-            c_trough.m_epsilon_3_22 = as_matrix_transpose("epsilon_3_22");  //[-] Absorber emittance for receiver type 2 variation 2
-            c_trough.m_epsilon_3_23 = as_matrix_transpose("epsilon_3_23");  //[-] Absorber emittance for receiver type 2 variation 3
-            c_trough.m_epsilon_3_24 = as_matrix_transpose("epsilon_3_24");  //[-] Absorber emittance for receiver type 2 variation 4
-            c_trough.m_epsilon_3_31 = as_matrix_transpose("epsilon_3_31");  //[-] Absorber emittance for receiver type 3 variation 1
-            c_trough.m_epsilon_3_32 = as_matrix_transpose("epsilon_3_32");  //[-] Absorber emittance for receiver type 3 variation 2
-            c_trough.m_epsilon_3_33 = as_matrix_transpose("epsilon_3_33");  //[-] Absorber emittance for receiver type 3 variation 3
-            c_trough.m_epsilon_3_34 = as_matrix_transpose("epsilon_3_34");  //[-] Absorber emittance for receiver type 3 variation 4
-            c_trough.m_epsilon_3_41 = as_matrix_transpose("epsilon_3_41");  //[-] Absorber emittance for receiver type 4 variation 1
-            c_trough.m_epsilon_3_42 = as_matrix_transpose("epsilon_3_42");  //[-] Absorber emittance for receiver type 4 variation 2
-            c_trough.m_epsilon_3_43 = as_matrix_transpose("epsilon_3_43");  //[-] Absorber emittance for receiver type 4 variation 3
-            c_trough.m_epsilon_3_44 = as_matrix_transpose("epsilon_3_44");  //[-] Absorber emittance for receiver type 4 variation 4
-
-            c_trough.m_alpha_abs = as_matrix("alpha_abs");                  //[-] Absorber absorptance
-            c_trough.m_Tau_envelope = as_matrix("Tau_envelope");            //[-] Envelope transmittance
-            c_trough.m_EPSILON_4 = as_matrix("EPSILON_4");                  //[-] Inner glass envelope emissivities
-            c_trough.m_EPSILON_5 = as_matrix("EPSILON_5");                  //[-] Outer glass envelope emissivities
-
-            //c_trough.m_GlazingIntact = (as_matrix("GlazingIntactIn") > 0);  //[-] Glazing intact (broken glass) flag {1=true, else=false}
-            util::matrix_t<double> glazing_intact_double = as_matrix("GlazingIntactIn"); //[-] Is the glazing intact?
-            int n_gl_row = (int)glazing_intact_double.nrows();
-            int n_gl_col = (int)glazing_intact_double.ncols();
-            c_trough.m_GlazingIntact.resize(n_gl_row, n_gl_col);
-            for (int i = 0; i < n_gl_row; i++)
-            {
-                for (int j = 0; j < n_gl_col; j++)
+                double T_loop_in_des = as_double("T_loop_in_des");          //[C] Design loop inlet temperature, converted to K in init
+                c_trough.m_T_loop_in_des = T_loop_in_des;                   //[C] Design loop inlet temperature, converted to K in init
+                double T_loop_out_des = as_double("T_loop_out");            //[C] Target loop outlet temperature, converted to K in init
+                c_trough.m_T_loop_out_des = T_loop_out_des;                 //[C] Target loop outlet temperature, converted to K in init
+                double T_startup_min = T_loop_in_des;
+                if (T_loop_out_des > 600.0)
                 {
-                    c_trough.m_GlazingIntact(i, j) = (glazing_intact_double(i, j) > 0);
+                    T_startup_min = T_loop_out_des - 70.0;
                 }
+                double T_startup = max(T_startup_min, 0.67 * T_loop_in_des + 0.33 * T_loop_out_des); //[C]
+                c_trough.m_T_startup = T_startup;                           //[C] The required temperature (converted to K in init) of the system before the power block can be switched on
+
+                c_trough.m_m_dot_htfmin = as_double("m_dot_htfmin");        //[kg/s] Minimum loop HTF flow rate
+                c_trough.m_m_dot_htfmax = as_double("m_dot_htfmax");        //[kg/s] Maximum loop HTF flow rate
+                c_trough.m_field_fl_props = as_matrix("field_fl_props");    //[-] User-defined field HTF properties
+                c_trough.m_T_fp = as_double("T_fp");                        //[C] Freeze protection temperature (heat trace activation temperature), convert to K in init
+                c_trough.m_I_bn_des = as_double("I_bn_des");                //[W/m^2] Solar irradiation at design
+                c_trough.m_V_hdr_cold_max = as_double("V_hdr_cold_max");    //[m/s] Maximum HTF velocity in the cold header at design
+                c_trough.m_V_hdr_cold_min = as_double("V_hdr_cold_min");    //[m/s] Minimum HTF velocity in the cold header at design
+                c_trough.m_V_hdr_hot_max = as_double("V_hdr_hot_max");      //[m/s] Maximum HTF velocity in the hot header at design
+                c_trough.m_V_hdr_hot_min = as_double("V_hdr_hot_min");      //[m/s] Minimum HTF velocity in the hot header at design
+                c_trough.m_Pipe_hl_coef = as_double("Pipe_hl_coef");        //[W/m2-K] Loss coefficient from the header, runner pipe, and non-HCE piping
+                c_trough.m_SCA_drives_elec = as_double("SCA_drives_elec");  //[W/SCA] Tracking power, in Watts per SCA drive
+                c_trough.m_ColTilt = as_double("tilt");                     //[deg] Collector tilt angle (0 is horizontal, 90deg is vertical)
+                c_trough.m_ColAz = as_double("azimuth");                    //[deg] Collector azimuth angle
+                c_trough.m_wind_stow_speed = as_double("wind_stow_speed");  //[m/s] Wind speed at and above which the collectors will be stowed
+                c_trough.m_accept_mode = as_integer("accept_mode");         //[-] Acceptance testing mode? (1=yes, 0=no)
+                c_trough.m_accept_init = as_boolean("accept_init");         //[-] In acceptance testing mode - require steady-state startup
+                c_trough.m_solar_mult = as_double("solar_mult");            //[-] Solar Multiple (set during verify() using cmod_csp_trough_eqns.cpp)
+                c_trough.m_mc_bal_hot_per_MW = as_double("mc_bal_hot");     //[kWht/K-MWt] The heat capacity of the balance of plant on the hot side
+                c_trough.m_mc_bal_cold_per_MW = as_double("mc_bal_cold");   //[kWht/K-MWt] The heat capacity of the balance of plant on the cold side
+                c_trough.m_mc_bal_sca = as_double("mc_bal_sca");            //[Wht/K-m] Non-HTF heat capacity associated with each SCA - per meter basis
+
+                //[m] The collector aperture width (Total structural area.. used for shadowing)
+                size_t nval_W_aperture = 0;
+                ssc_number_t* W_aperture = as_array("W_aperture", &nval_W_aperture);
+                c_trough.m_W_aperture.resize(nval_W_aperture);
+                for (size_t i = 0; i < nval_W_aperture; i++)
+                    c_trough.m_W_aperture[i] = (double)W_aperture[i];
+
+                //[m^2] Reflective aperture area of the collector
+                size_t nval_A_aperture = 0;
+                ssc_number_t* A_aperture = as_array("A_aperture", &nval_A_aperture);
+                c_trough.m_A_aperture.resize(nval_A_aperture);
+                for (size_t i = 0; i < nval_A_aperture; i++)
+                    c_trough.m_A_aperture[i] = (double)A_aperture[i];
+
+                //[-] Tracking error derate
+                size_t nval_TrackingError = 0;
+                ssc_number_t* TrackingError = as_array("TrackingError", &nval_TrackingError);
+                c_trough.m_TrackingError.resize(nval_TrackingError);
+                for (size_t i = 0; i < nval_TrackingError; i++)
+                    c_trough.m_TrackingError[i] = (double)TrackingError[i];
+
+                //[-] Geometry effects derate
+                size_t nval_GeomEffects = 0;
+                ssc_number_t* GeomEffects = as_array("GeomEffects", &nval_GeomEffects);
+                c_trough.m_GeomEffects.resize(nval_GeomEffects);
+                for (size_t i = 0; i < nval_GeomEffects; i++)
+                    c_trough.m_GeomEffects[i] = (double)GeomEffects[i];
+
+                //[-] Clean mirror reflectivity
+                size_t nval_Rho_mirror_clean = 0;
+                ssc_number_t* Rho_mirror_clean = as_array("Rho_mirror_clean", &nval_Rho_mirror_clean);
+                c_trough.m_Rho_mirror_clean.resize(nval_Rho_mirror_clean);
+                for (size_t i = 0; i < nval_Rho_mirror_clean; i++)
+                    c_trough.m_Rho_mirror_clean[i] = (double)Rho_mirror_clean[i];
+
+                //[-] Dirt on mirror derate
+                size_t nval_Dirt_mirror = 0;
+                ssc_number_t* Dirt_mirror = as_array("Dirt_mirror", &nval_Dirt_mirror);
+                c_trough.m_Dirt_mirror.resize(nval_Dirt_mirror);
+                for (size_t i = 0; i < nval_Dirt_mirror; i++)
+                    c_trough.m_Dirt_mirror[i] = (double)Dirt_mirror[i];
+
+                //[-] General optical error derate
+                size_t nval_Error = 0;
+                ssc_number_t* Error = as_array("Error", &nval_Error);
+                c_trough.m_Error.resize(nval_Error);
+                for (size_t i = 0; i < nval_Error; i++)
+                    c_trough.m_Error[i] = (double)Error[i];
+
+                //[m] The average focal length of the collector 
+                size_t nval_Ave_Focal_Length = 0;
+                ssc_number_t* Ave_Focal_Length = as_array("Ave_Focal_Length", &nval_Ave_Focal_Length);
+                c_trough.m_Ave_Focal_Length.resize(nval_Ave_Focal_Length);
+                for (size_t i = 0; i < nval_Ave_Focal_Length; i++)
+                    c_trough.m_Ave_Focal_Length[i] = (double)Ave_Focal_Length[i];
+
+                //[m] The length of the SCA 
+                size_t nval_L_SCA = 0;
+                ssc_number_t* L_SCA = as_array("L_SCA", &nval_L_SCA);
+                c_trough.m_L_SCA.resize(nval_L_SCA);
+                for (size_t i = 0; i < nval_L_SCA; i++)
+                    c_trough.m_L_SCA[i] = (double)L_SCA[i];
+
+                //[m] The length of a single mirror/HCE unit
+                size_t nval_L_aperture = 0;
+                ssc_number_t* L_aperture = as_array("L_aperture", &nval_L_aperture);
+                c_trough.m_L_aperture.resize(nval_L_aperture);
+                for (size_t i = 0; i < nval_L_aperture; i++)
+                    c_trough.m_L_aperture[i] = (double)L_aperture[i];
+
+                //[-] The number of individual collector sections in an SCA
+                size_t nval_ColperSCA = 0;
+                ssc_number_t* ColperSCA = as_array("ColperSCA", &nval_ColperSCA);
+                c_trough.m_ColperSCA.resize(nval_ColperSCA);
+                for (size_t i = 0; i < nval_ColperSCA; i++)
+                    c_trough.m_ColperSCA[i] = (double)ColperSCA[i];
+
+                //[m] Piping distance between SCA's in the field
+                size_t nval_Distance_SCA = 0;
+                ssc_number_t* Distance_SCA = as_array("Distance_SCA", &nval_Distance_SCA);
+                c_trough.m_Distance_SCA.resize(nval_Distance_SCA);
+                for (size_t i = 0; i < nval_Distance_SCA; i++)
+                    c_trough.m_Distance_SCA[i] = (double)Distance_SCA[i];
+
+                c_trough.m_IAM_matrix = as_matrix("IAM_matrix");                //[-] IAM coefficients, matrix for 4 collectors
+
+                // Why are these matrices - can't they be arrays?               
+                c_trough.m_HCE_FieldFrac = as_matrix("HCE_FieldFrac");          //[-] Fraction of the field occupied by this HCE type
+                c_trough.m_D_2 = as_matrix("D_2");                              //[m] Inner absorber tube diameter
+                c_trough.m_D_3 = as_matrix("D_3");                              //[m] Outer absorber tube diameter
+                c_trough.m_D_4 = as_matrix("D_4");                              //[m] Inner glass envelope diameter
+                c_trough.m_D_5 = as_matrix("D_5");                              //[m] Outer glass envelope diameter
+                c_trough.m_D_p = as_matrix("D_p");                              //[m] Diameter of the absorber flow plug (optional)
+                c_trough.m_Flow_type = as_matrix("Flow_type");                  //[-] Flow type through the absorber
+                c_trough.m_Rough = as_matrix("Rough");                          //[-] Relative roughness of the internal HCE surface
+                c_trough.m_alpha_env = as_matrix("alpha_env");                  //[-] Envelope absorptance
+                // **********************************************************
+
+                // Emittance vs. temperature profile for each receiver type and variation
+                c_trough.m_epsilon_3_11 = as_matrix_transpose("epsilon_3_11");  //[-] Absorber emittance for receiver type 1 variation 1
+                c_trough.m_epsilon_3_12 = as_matrix_transpose("epsilon_3_12");  //[-] Absorber emittance for receiver type 1 variation 2
+                c_trough.m_epsilon_3_13 = as_matrix_transpose("epsilon_3_13");  //[-] Absorber emittance for receiver type 1 variation 3
+                c_trough.m_epsilon_3_14 = as_matrix_transpose("epsilon_3_14");  //[-] Absorber emittance for receiver type 1 variation 4
+                c_trough.m_epsilon_3_21 = as_matrix_transpose("epsilon_3_21");  //[-] Absorber emittance for receiver type 2 variation 1
+                c_trough.m_epsilon_3_22 = as_matrix_transpose("epsilon_3_22");  //[-] Absorber emittance for receiver type 2 variation 2
+                c_trough.m_epsilon_3_23 = as_matrix_transpose("epsilon_3_23");  //[-] Absorber emittance for receiver type 2 variation 3
+                c_trough.m_epsilon_3_24 = as_matrix_transpose("epsilon_3_24");  //[-] Absorber emittance for receiver type 2 variation 4
+                c_trough.m_epsilon_3_31 = as_matrix_transpose("epsilon_3_31");  //[-] Absorber emittance for receiver type 3 variation 1
+                c_trough.m_epsilon_3_32 = as_matrix_transpose("epsilon_3_32");  //[-] Absorber emittance for receiver type 3 variation 2
+                c_trough.m_epsilon_3_33 = as_matrix_transpose("epsilon_3_33");  //[-] Absorber emittance for receiver type 3 variation 3
+                c_trough.m_epsilon_3_34 = as_matrix_transpose("epsilon_3_34");  //[-] Absorber emittance for receiver type 3 variation 4
+                c_trough.m_epsilon_3_41 = as_matrix_transpose("epsilon_3_41");  //[-] Absorber emittance for receiver type 4 variation 1
+                c_trough.m_epsilon_3_42 = as_matrix_transpose("epsilon_3_42");  //[-] Absorber emittance for receiver type 4 variation 2
+                c_trough.m_epsilon_3_43 = as_matrix_transpose("epsilon_3_43");  //[-] Absorber emittance for receiver type 4 variation 3
+                c_trough.m_epsilon_3_44 = as_matrix_transpose("epsilon_3_44");  //[-] Absorber emittance for receiver type 4 variation 4
+
+                c_trough.m_alpha_abs = as_matrix("alpha_abs");                  //[-] Absorber absorptance
+                c_trough.m_Tau_envelope = as_matrix("Tau_envelope");            //[-] Envelope transmittance
+                c_trough.m_EPSILON_4 = as_matrix("EPSILON_4");                  //[-] Inner glass envelope emissivities
+                c_trough.m_EPSILON_5 = as_matrix("EPSILON_5");                  //[-] Outer glass envelope emissivities
+
+                //c_trough.m_GlazingIntact = (as_matrix("GlazingIntactIn") > 0);  //[-] Glazing intact (broken glass) flag {1=true, else=false}
+                util::matrix_t<double> glazing_intact_double = as_matrix("GlazingIntactIn"); //[-] Is the glazing intact?
+                int n_gl_row = (int)glazing_intact_double.nrows();
+                int n_gl_col = (int)glazing_intact_double.ncols();
+                c_trough.m_GlazingIntact.resize(n_gl_row, n_gl_col);
+                for (int i = 0; i < n_gl_row; i++)
+                {
+                    for (int j = 0; j < n_gl_col; j++)
+                    {
+                        c_trough.m_GlazingIntact(i, j) = (glazing_intact_double(i, j) > 0);
+                    }
+                }
+
+                c_trough.m_P_a = as_matrix("P_a");                              //[torr] Annulus gas pressure
+                c_trough.m_AnnulusGas = as_matrix("AnnulusGas");                //[-] Annulus gas type (1=air, 26=Ar, 27=H2)
+                c_trough.m_AbsorberMaterial = as_matrix("AbsorberMaterial");    //[-] Absorber material type
+                c_trough.m_Shadowing = as_matrix("Shadowing");                  //[-] Receiver bellows shadowing loss factor
+                c_trough.m_Dirt_HCE = as_matrix("Dirt_HCE");                    //[-] Loss due to dirt on the receiver envelope
+                c_trough.m_Design_loss = as_matrix("Design_loss");              //[-] Receiver heat loss at design
+
+                // Calculated during verify() using cmod_csp_trough_eqns.cpp:
+                //c_trough.m_SCAInfoArray = as_matrix("scainfoarray");            //[-] Receiver (,1) and collector (,2) type for each assembly in loop
+                size_t SCADefocusArraySize = -1;
+                ssc_number_t* SCADefocusArray = as_array("scadefocusarray", &SCADefocusArraySize);      //[-] Collector defocus order
+                std::copy(SCADefocusArray, SCADefocusArray + SCADefocusArraySize, back_inserter(c_trough.m_SCADefocusArray));    // convert matrix_t and set to vector
+
+                c_trough.m_rec_su_delay = as_double("rec_su_delay");            //[hr] Fixed startup delay time for the receiver
+                c_trough.m_rec_qf_delay = as_double("rec_qf_delay");            //[-] Energy-based receiver startup delay (fraction of rated thermal power)
+                c_trough.m_p_start = as_double("p_start");                      //[kWe-hr] Collector startup energy, per SCA
+                c_trough.m_calc_design_pipe_vals = as_boolean("calc_design_pipe_vals"); //[-] Should the HTF state be calculated at design conditions
+                c_trough.m_L_rnr_pb = as_double("L_rnr_pb");                      //[m] Length of hot or cold runner pipe around the power block
+                c_trough.m_N_max_hdr_diams = as_double("N_max_hdr_diams");        //[-] Maximum number of allowed diameters in each of the hot and cold headers
+                c_trough.m_L_rnr_per_xpan = as_double("L_rnr_per_xpan");          //[m] Threshold length of straight runner pipe without an expansion loop
+                c_trough.m_L_xpan_hdr = as_double("L_xpan_hdr");                  //[m] Combined length in meters of the two perpendicular segments of a header expansion loop
+                c_trough.m_L_xpan_rnr = as_double("L_xpan_rnr");                  //[m] Combined length in meters of the two perpendicular segments of a runner expansion loop
+                c_trough.m_Min_rnr_xpans = as_double("Min_rnr_xpans");            //[-] Minimum number of expansion loops per single-diameter runner section
+                c_trough.m_northsouth_field_sep = as_double("northsouth_field_sep"); //[m] Shortest north/south distance between SCAs in different subfields
+                c_trough.m_N_hdr_per_xpan = as_double("N_hdr_per_xpan");          //[-] Number of collector loops per header expansion loops. 1 = expansion loop between every collector loop
+                c_trough.m_offset_xpan_hdr = as_double("offset_xpan_hdr");        //[-] Location of first header expansion loop. 1 = after first collector loop
+                c_trough.m_K_cpnt = as_matrix("K_cpnt");                          //[-] Minor loss coefficients of the components in each loop interconnect
+                c_trough.m_D_cpnt = as_matrix("D_cpnt");                          //[m] Inner diameters of the components in each loop interconnect
+                c_trough.m_L_cpnt = as_matrix("L_cpnt");                          //[m] Lengths of the components in each loop interconnect
+                c_trough.m_Type_cpnt = as_matrix("Type_cpnt");                    //[-] Type of component in each loop interconnect [0=fitting | 1=pipe | 2=flex_hose]
+                c_trough.m_custom_sf_pipe_sizes = as_boolean("custom_sf_pipe_sizes"); //[-] Should the field pipe diameters, wall thickness and lengths be imported instead of calculated
+                c_trough.m_sf_rnr_diams = as_matrix("sf_rnr_diams");              //[m] Imported runner diameters, used if custom_sf_pipe_sizes is true
+                c_trough.m_sf_rnr_wallthicks = as_matrix("sf_rnr_wallthicks");    //[m] Imported runner wall thicknesses, used if custom_sf_pipe_sizes is true
+                c_trough.m_sf_rnr_lengths = as_matrix("sf_rnr_lengths");          //[m] Imported runner lengths, used if custom_sf_pipe_sizes is true
+                c_trough.m_sf_hdr_diams = as_matrix("sf_hdr_diams");              //[m] Imported header diameters, used if custom_sf_pipe_sizes is true
+                c_trough.m_sf_hdr_wallthicks = as_matrix("sf_hdr_wallthicks");    //[m] Imported header wall thicknesses, used if custom_sf_pipe_sizes is true
+                c_trough.m_sf_hdr_lengths = as_matrix("sf_hdr_lengths");          //[m] Imported header lengths, used if custom_sf_pipe_sizes is true
+
+
+                // ADDED Trough Inputs (TMB 10/06/2023) for design point calculations
+                std::vector<double> trough_loop_vec = as_vector_double("trough_loop_control");
+                c_trough.m_trough_loop_control.assign(&trough_loop_vec[0], trough_loop_vec.size());
             }
 
-            c_trough.m_P_a = as_matrix("P_a");                              //[torr] Annulus gas pressure
-            c_trough.m_AnnulusGas = as_matrix("AnnulusGas");                //[-] Annulus gas type (1=air, 26=Ar, 27=H2)
-            c_trough.m_AbsorberMaterial = as_matrix("AbsorberMaterial");    //[-] Absorber material type
-            c_trough.m_Shadowing = as_matrix("Shadowing");                  //[-] Receiver bellows shadowing loss factor
-            c_trough.m_Dirt_HCE = as_matrix("Dirt_HCE");                    //[-] Loss due to dirt on the receiver envelope
-            c_trough.m_Design_loss = as_matrix("Design_loss");              //[-] Receiver heat loss at design
-
-            // Calculated during verify() using cmod_csp_trough_eqns.cpp:
-            c_trough.m_SCAInfoArray = as_matrix("scainfoarray");            //[-] Receiver (,1) and collector (,2) type for each assembly in loop
-            size_t SCADefocusArraySize = -1;
-            ssc_number_t* SCADefocusArray = as_array("scadefocusarray", &SCADefocusArraySize);      //[-] Collector defocus order
-            std::copy(SCADefocusArray, SCADefocusArray + SCADefocusArraySize, back_inserter(c_trough.m_SCADefocusArray));    // convert matrix_t and set to vector
-
-            c_trough.m_rec_su_delay = as_double("rec_su_delay");            //[hr] Fixed startup delay time for the receiver
-            c_trough.m_rec_qf_delay = as_double("rec_qf_delay");            //[-] Energy-based receiver startup delay (fraction of rated thermal power)
-            c_trough.m_p_start = as_double("p_start");                      //[kWe-hr] Collector startup energy, per SCA
-            c_trough.m_calc_design_pipe_vals = as_boolean("calc_design_pipe_vals"); //[-] Should the HTF state be calculated at design conditions
-            c_trough.m_L_rnr_pb = as_double("L_rnr_pb");                      //[m] Length of hot or cold runner pipe around the power block
-            c_trough.m_N_max_hdr_diams = as_double("N_max_hdr_diams");        //[-] Maximum number of allowed diameters in each of the hot and cold headers
-            c_trough.m_L_rnr_per_xpan = as_double("L_rnr_per_xpan");          //[m] Threshold length of straight runner pipe without an expansion loop
-            c_trough.m_L_xpan_hdr = as_double("L_xpan_hdr");                  //[m] Combined length in meters of the two perpendicular segments of a header expansion loop
-            c_trough.m_L_xpan_rnr = as_double("L_xpan_rnr");                  //[m] Combined length in meters of the two perpendicular segments of a runner expansion loop
-            c_trough.m_Min_rnr_xpans = as_double("Min_rnr_xpans");            //[-] Minimum number of expansion loops per single-diameter runner section
-            c_trough.m_northsouth_field_sep = as_double("northsouth_field_sep"); //[m] Shortest north/south distance between SCAs in different subfields
-            c_trough.m_N_hdr_per_xpan = as_double("N_hdr_per_xpan");          //[-] Number of collector loops per header expansion loops. 1 = expansion loop between every collector loop
-            c_trough.m_offset_xpan_hdr = as_double("offset_xpan_hdr");        //[-] Location of first header expansion loop. 1 = after first collector loop
-            c_trough.m_K_cpnt = as_matrix("K_cpnt");                          //[-] Minor loss coefficients of the components in each loop interconnect
-            c_trough.m_D_cpnt = as_matrix("D_cpnt");                          //[m] Inner diameters of the components in each loop interconnect
-            c_trough.m_L_cpnt = as_matrix("L_cpnt");                          //[m] Lengths of the components in each loop interconnect
-            c_trough.m_Type_cpnt = as_matrix("Type_cpnt");                    //[-] Type of component in each loop interconnect [0=fitting | 1=pipe | 2=flex_hose]
-            c_trough.m_custom_sf_pipe_sizes = as_boolean("custom_sf_pipe_sizes"); //[-] Should the field pipe diameters, wall thickness and lengths be imported instead of calculated
-            c_trough.m_sf_rnr_diams = as_matrix("sf_rnr_diams");              //[m] Imported runner diameters, used if custom_sf_pipe_sizes is true
-            c_trough.m_sf_rnr_wallthicks = as_matrix("sf_rnr_wallthicks");    //[m] Imported runner wall thicknesses, used if custom_sf_pipe_sizes is true
-            c_trough.m_sf_rnr_lengths = as_matrix("sf_rnr_lengths");          //[m] Imported runner lengths, used if custom_sf_pipe_sizes is true
-            c_trough.m_sf_hdr_diams = as_matrix("sf_hdr_diams");              //[m] Imported header diameters, used if custom_sf_pipe_sizes is true
-            c_trough.m_sf_hdr_wallthicks = as_matrix("sf_hdr_wallthicks");    //[m] Imported header wall thicknesses, used if custom_sf_pipe_sizes is true
-            c_trough.m_sf_hdr_lengths = as_matrix("sf_hdr_lengths");          //[m] Imported header lengths, used if custom_sf_pipe_sizes is true
+            // Calculate solar multiple (needed for other component constructors)
+            c_trough.design_solar_mult();
 
             // Allocate trough outputs
-            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_THETA_AVE, allocate("Theta_ave", n_steps_fixed), n_steps_fixed);
-            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_COSTH_AVE, allocate("CosTh_ave", n_steps_fixed), n_steps_fixed);
-            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_IAM_AVE, allocate("IAM_ave", n_steps_fixed), n_steps_fixed);
-            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_ROWSHADOW_AVE, allocate("RowShadow_ave", n_steps_fixed), n_steps_fixed);
-            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_ENDLOSS_AVE, allocate("EndLoss_ave", n_steps_fixed), n_steps_fixed);
-            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_DNI_COSTH, allocate("dni_costh", n_steps_fixed), n_steps_fixed);
-            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_EQUIV_OPT_ETA_TOT, allocate("EqOpteff", n_steps_fixed), n_steps_fixed);
-            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_DEFOCUS, allocate("SCAs_def", n_steps_fixed), n_steps_fixed);
+            {
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_THETA_AVE, allocate("Theta_ave", n_steps_fixed), n_steps_fixed);
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_COSTH_AVE, allocate("CosTh_ave", n_steps_fixed), n_steps_fixed);
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_IAM_AVE, allocate("IAM_ave", n_steps_fixed), n_steps_fixed);
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_ROWSHADOW_AVE, allocate("RowShadow_ave", n_steps_fixed), n_steps_fixed);
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_ENDLOSS_AVE, allocate("EndLoss_ave", n_steps_fixed), n_steps_fixed);
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_DNI_COSTH, allocate("dni_costh", n_steps_fixed), n_steps_fixed);
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_EQUIV_OPT_ETA_TOT, allocate("EqOpteff", n_steps_fixed), n_steps_fixed);
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_DEFOCUS, allocate("SCAs_def", n_steps_fixed), n_steps_fixed);
 
-            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_INC_SF_TOT, allocate("q_inc_sf_tot", n_steps_fixed), n_steps_fixed);
-            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_INC_SF_COSTH, allocate("qinc_costh", n_steps_fixed), n_steps_fixed);
-            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_REC_INC, allocate("q_dot_rec_inc", n_steps_fixed), n_steps_fixed);
-            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_REC_THERMAL_LOSS, allocate("q_dot_rec_thermal_loss", n_steps_fixed), n_steps_fixed);
-            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_REC_ABS, allocate("q_dot_rec_abs", n_steps_fixed), n_steps_fixed);
-            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_PIPING_LOSS, allocate("q_dot_piping_loss", n_steps_fixed), n_steps_fixed);
-            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_E_DOT_INTERNAL_ENERGY, allocate("e_dot_field_int_energy", n_steps_fixed), n_steps_fixed);
-            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_HTF_OUT, allocate("q_dot_htf_sf_out", n_steps_fixed), n_steps_fixed);
-            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_FREEZE_PROT, allocate("q_dot_freeze_prot", n_steps_fixed), n_steps_fixed);
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_INC_SF_TOT, allocate("q_inc_sf_tot", n_steps_fixed), n_steps_fixed);
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_INC_SF_COSTH, allocate("qinc_costh", n_steps_fixed), n_steps_fixed);
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_REC_INC, allocate("q_dot_rec_inc", n_steps_fixed), n_steps_fixed);
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_REC_THERMAL_LOSS, allocate("q_dot_rec_thermal_loss", n_steps_fixed), n_steps_fixed);
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_REC_ABS, allocate("q_dot_rec_abs", n_steps_fixed), n_steps_fixed);
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_PIPING_LOSS, allocate("q_dot_piping_loss", n_steps_fixed), n_steps_fixed);
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_E_DOT_INTERNAL_ENERGY, allocate("e_dot_field_int_energy", n_steps_fixed), n_steps_fixed);
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_HTF_OUT, allocate("q_dot_htf_sf_out", n_steps_fixed), n_steps_fixed);
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_Q_DOT_FREEZE_PROT, allocate("q_dot_freeze_prot", n_steps_fixed), n_steps_fixed);
 
-            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_M_DOT_LOOP, allocate("m_dot_loop", n_steps_fixed), n_steps_fixed);
-            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_IS_RECIRCULATING, allocate("recirculating", n_steps_fixed), n_steps_fixed);
-            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_M_DOT_FIELD_RECIRC, allocate("m_dot_field_recirc", n_steps_fixed), n_steps_fixed);
-            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_M_DOT_FIELD_DELIVERED, allocate("m_dot_field_delivered", n_steps_fixed), n_steps_fixed);
-            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_FIELD_COLD_IN, allocate("T_field_cold_in", n_steps_fixed), n_steps_fixed);
-            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_REC_COLD_IN, allocate("T_rec_cold_in", n_steps_fixed), n_steps_fixed);
-            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_REC_HOT_OUT, allocate("T_rec_hot_out", n_steps_fixed), n_steps_fixed);
-            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_FIELD_HOT_OUT, allocate("T_field_hot_out", n_steps_fixed), n_steps_fixed);
-            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_PRESSURE_DROP, allocate("deltaP_field", n_steps_fixed), n_steps_fixed);          //[bar]
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_M_DOT_LOOP, allocate("m_dot_loop", n_steps_fixed), n_steps_fixed);
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_IS_RECIRCULATING, allocate("recirculating", n_steps_fixed), n_steps_fixed);
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_M_DOT_FIELD_RECIRC, allocate("m_dot_field_recirc", n_steps_fixed), n_steps_fixed);
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_M_DOT_FIELD_DELIVERED, allocate("m_dot_field_delivered", n_steps_fixed), n_steps_fixed);
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_FIELD_COLD_IN, allocate("T_field_cold_in", n_steps_fixed), n_steps_fixed);
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_REC_COLD_IN, allocate("T_rec_cold_in", n_steps_fixed), n_steps_fixed);
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_REC_HOT_OUT, allocate("T_rec_hot_out", n_steps_fixed), n_steps_fixed);
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_FIELD_HOT_OUT, allocate("T_field_hot_out", n_steps_fixed), n_steps_fixed);
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_PRESSURE_DROP, allocate("deltaP_field", n_steps_fixed), n_steps_fixed);          //[bar]
 
-            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_W_DOT_SCA_TRACK, allocate("W_dot_sca_track", n_steps_fixed), n_steps_fixed);     //[MWe]
-            c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_W_DOT_PUMP, allocate("W_dot_field_pump", n_steps_fixed), n_steps_fixed);         //[MWe]
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_W_DOT_SCA_TRACK, allocate("W_dot_sca_track", n_steps_fixed), n_steps_fixed);     //[MWe]
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_W_DOT_PUMP, allocate("W_dot_field_pump", n_steps_fixed), n_steps_fixed);         //[MWe]
+            }
+            
         }
         
 
@@ -1475,6 +1494,26 @@ public:
 
                 assign("q_dot_cycle_des", q_dot_cycle_des);
                 assign("nameplate", nameplate_des);
+            }
+
+            // Solar Field
+            {
+                double field_htf_min_temp = c_trough.m_htfProps.min_temp() - 273.15;    // [C]
+                double field_htf_max_temp = c_trough.m_htfProps.max_temp() - 273.15;    // [C]
+                double field_htf_cp_avg_des = c_trough.m_field_htf_cp_avg_des;          // [kJ/kg-K]
+                double single_loop_aperture_des = c_trough.m_single_loop_aperture_des;  // [m2]
+                double min_inner_diameter_des = c_trough.m_min_inner_diameter_des;      // [m]
+                std::vector<double> csp_dtr_hce_design_heat_losses = c_trough.m_HCE_heat_loss_des;     // [W/m]
+
+                assign("field_htf_min_temp", field_htf_min_temp);
+                assign("field_htf_max_temp", field_htf_max_temp);
+                assign("field_htf_cp_avg_des", field_htf_cp_avg_des);
+                assign("single_loop_aperture_des", single_loop_aperture_des);
+                assign("min_inner_diameter_des", min_inner_diameter_des);
+                ssc_number_t* hce_design = allocate("csp_dtr_hce_design_heat_losses", csp_dtr_hce_design_heat_losses.size());
+                for (int i = 0; i < csp_dtr_hce_design_heat_losses.size(); i++)
+                    hce_design[i] = csp_dtr_hce_design_heat_losses[i];
+                
             }
         }
 
