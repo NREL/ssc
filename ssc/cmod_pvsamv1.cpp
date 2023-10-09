@@ -1331,6 +1331,7 @@ void cm_pvsamv1::exec()
     *********************************************************************************************** */
     std::vector<double> dcPowerNetPerMppt_kW; //Vector of Net DC power in kW for each MPPT input on the system for THIS TIMESTEP ONLY
     std::vector<double> dcPowerNetPerSubarray; //Net DC power in W for each subarray for THIS TIMESTEP ONLY
+    std::vector<double> dcPowerNetPerSubarrayCS;
     std::vector<double> dcVoltagePerMppt; //Voltage in V at each MPPT input on the system for THIS TIMESTEP ONLY
     std::vector<std::vector<double>> dcStringVoltage; // Voltage of string for each subarray
     double dcPowerNetTotalSystem = 0; //Net DC power in W for the entire system (sum of all subarrays)
@@ -1400,6 +1401,7 @@ void cm_pvsamv1::exec()
     }
     for (size_t nn = 0; nn < PVSystem->numberOfSubarrays; nn++) {
         dcPowerNetPerSubarray.push_back(0);
+        dcPowerNetPerSubarrayCS.push_back(0);
         std::vector<double> tmp;
         dcStringVoltage.push_back(tmp);
     }
@@ -2326,6 +2328,7 @@ void cm_pvsamv1::exec()
 
                 // self-shading derate (by default it is 1.0 if disbled)
                 Subarrays[nn]->Module->dcPowerW *= Subarrays[nn]->poa.nonlinearDCShadingDerate;
+                Subarrays[nn]->Module->dcPowerWCS *= Subarrays[nn]->poa.nonlinearDCShadingDerate;
                 if (iyear == 0 || save_full_lifetime_variables == 1) mpptVoltageClipping[nn] *= Subarrays[nn]->poa.nonlinearDCShadingDerate;
 
                 // Sara 1/25/16 - shading database derate applied to dc only
@@ -2357,9 +2360,11 @@ void cm_pvsamv1::exec()
                         PVSystem->p_snowCoverage[nn][idx] = (ssc_number_t)(Subarrays[nn]->snowModel.coverage);
                         if (iyear == 0) annual_snow_loss += (ssc_number_t)(util::watt_to_kilowatt * Subarrays[nn]->dcPowerSubarray * smLoss);
                         Subarrays[nn]->dcPowerSubarray *= (1 - smLoss);
+                        Subarrays[nn]->dcPowerSubarrayCS *= (1 - smLoss);
                     }
 
                     Subarrays[nn]->Module->dcPowerW *= (1 - smLoss);
+                    Subarrays[nn]->Module->dcPowerWCS *= (1 - smLoss);
                     if (iyear == 0 || save_full_lifetime_variables == 1) mpptVoltageClipping[nn] *= (1 - smLoss);
                 }
 
@@ -2388,14 +2393,18 @@ void cm_pvsamv1::exec()
 
                 // apply pre-inverter power derate
                 dcPowerNetPerSubarray[nn] = Subarrays[nn]->dcPowerSubarray * (1 - Subarrays[nn]->dcLossTotalPercent);
+                dcPowerNetPerSubarrayCS[nn] = Subarrays[nn]->dcPowerSubarrayCS * (1 - Subarrays[nn]->dcLossTotalPercent);
 
                 //module degradation and lifetime DC losses apply to all subarrays
-                if (save_full_lifetime_variables == 1)
+                if (save_full_lifetime_variables == 1) {
                     dcPowerNetPerSubarray[nn] *= PVSystem->dcDegradationFactor[iyear];
+                    dcPowerNetPerSubarrayCS[nn] *= PVSystem->dcDegradationFactor[iyear];
+                }
 
                 //dc adjustment factors apply to all subarrays
                 if (iyear == 0) annual_dc_adjust_loss += dcPowerNetPerSubarray[nn] * (1 - dc_haf(iyear * nrec + inrec)) * util::watt_to_kilowatt * ts_hour; //only keep track of this loss for year 0, convert from power W to energy kWh
                 dcPowerNetPerSubarray[nn] *= dc_haf(iyear * nrec + inrec);
+                dcPowerNetPerSubarrayCS[nn] *= dc_haf(iyear * nrec + inrec);
 
                 //lifetime daily DC losses apply to all subarrays and should be applied last. Only applied if they are enabled.
                 if (PVSystem->enableDCLifetimeLosses)
@@ -2408,13 +2417,14 @@ void cm_pvsamv1::exec()
                     }
                     if (iyear == 0) annual_dc_lifetime_loss += dc_lifetime_loss;
                     dcPowerNetPerSubarray[nn] *= (100 - PVSystem->dcLifetimeLosses[dc_loss_index]) / 100;
+                    dcPowerNetPerSubarrayCS[nn] *= (100 - PVSystem->dcLifetimeLosses[dc_loss_index]) / 100;
                 }
 
                 //assign net DC power output
                 PVSystem->p_systemDCPower[idx] += (ssc_number_t)(dcPowerNetPerSubarray[nn] * util::watt_to_kilowatt);
 
                 //Clearsky DC Power
-                PVSystem->p_systemDCPowerCS[idx] += (ssc_number_t)(Subarrays[nn]->dcPowerSubarrayCS * util::watt_to_kilowatt);
+                PVSystem->p_systemDCPowerCS[idx] += (ssc_number_t)(dcPowerNetPerSubarrayCS[nn] * util::watt_to_kilowatt);
 
                 //add this subarray's net DC power to the appropriate MPPT input and to the total system DC power
                 PVSystem->p_dcPowerNetPerMppt[Subarrays[nn]->mpptInput - 1][idx] += (ssc_number_t)(dcPowerNetPerSubarray[nn]); //need to subtract 1 from mppt input number because those are 1-indexed
@@ -2541,12 +2551,12 @@ void cm_pvsamv1::exec()
         }
         for (size_t inrec = 0; inrec < nrec; inrec++) {
             idx = inrec;
-            double dcPower_kW_csky = PVSystem->p_systemDCPowerCS[idx];
+            double dcPower_kW_nominal = PVSystem->p_systemDCPower[idx];
             //Calculate DNI clearness index (time step basis)
-            double dni_clearness_index = PVSystem->p_DNIIndex[0][idx];
+            //double dni_clearness_index = PVSystem->p_DNIIndex[0][idx];
             //Calculate Clipping Potential ((P_dc,dryclean - P_ac,0) / P_ac,0) (time step basis)
-            sharedInverter->calculateACPower(dcPower_kW_csky, PVSystem->p_mpptVoltage[0][idx], Irradiance->weatherRecord.tdry, as_boolean("enable_subhourly_clipping")); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
-            nominal_annual_clipping_output += sharedInverter->powerAC_kW_clipping;
+            sharedInverter->calculateACPower(dcPower_kW_nominal, PVSystem->p_mpptVoltage[0][idx], Irradiance->weatherRecord.tdry, as_boolean("enable_subhourly_clipping")); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
+            nominal_annual_clipping_output += sharedInverter->powerAC_kW_clipping; //AC nominal output
             /*
             double clip_pot = (dcPower_kW_csky - sharedInverter->powerAC_kW_clipping) / sharedInverter->powerAC_kW_clipping;
             //Lookup matrix for percentage effect based on DNI index, Clipping potential                                                                                                        //Lookup bias error in matrix (unitless) [CP, DNI]
@@ -2699,7 +2709,7 @@ void cm_pvsamv1::exec()
                 //Calculate DNI clearness index (time step basis)
                 double dni_clearness_index = PVSystem->p_DNIIndex[0][idx];
                 //Calculate Clipping Potential ((P_dc,dryclean - P_ac,0) / P_ac,0) (time step basis)
-                sharedInverter->calculateACPower(dcPower_kW_csky, dcVoltagePerMppt[0], Irradiance->weatherRecord.tdry, as_boolean("enable_subhourly_clipping")); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
+                //sharedInverter->calculateACPower(dcPower_kW_csky, dcVoltagePerMppt[0], Irradiance->weatherRecord.tdry, as_boolean("enable_subhourly_clipping")); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
                 //double clip_pot = (dcPower_kW_csky - sharedInverter->powerAC_kW_clipping) / sharedInverter->powerAC_kW_clipping;
                 double clip_pot = (dcPower_kW_csky - paco ) / (paco);
                 

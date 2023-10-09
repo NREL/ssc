@@ -343,7 +343,7 @@ void SharedInverter::calculateACPower(const double powerDC_kW_in, const double D
         powerConsumptionLoss_kW = 0.;
         powerNightLoss_kW = 0.;
         efficiencyAC = NONE_INVERTER_EFF;
-        powerAC_Watts = powerDC_Watts * efficiencyAC;
+        powerAC_Watts_clipping = powerDC_Watts * efficiencyAC;
     }
     
 
