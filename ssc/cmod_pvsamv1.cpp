@@ -2653,6 +2653,8 @@ void cm_pvsamv1::exec()
                 if (dcPower_kW > 0.0) {
                     double dcPower_kW_max = dcPower_kW_csky;
                     log(util::format("dcPower max is %lg", dcPower_kW_max), SSC_NOTICE);
+                    double AM = 1.0 / asin(Irradiance->p_sunAltitudeAngle[idx] * M_PI / 180);
+                    if (AM > 38.0) AM = 38.0;
                     double dcPower_kW_min = dcPower_kW_max * 0.045 / 1.5; //AM?
                     log(util::format("dcPower min is %lg", dcPower_kW_min), SSC_NOTICE);
                     double dcPower_kW_avg = dcPower_kW;
