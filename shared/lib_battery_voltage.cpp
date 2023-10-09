@@ -190,8 +190,8 @@ double voltage_table_t::calculate_voltage(double DOD, double I) {
         row++;
     }
     //
-    if (DOD < tolerance) {
-        I = 0.0; // At full, current must go to zero
+    if (DOD < tolerance || DOD > 100. - tolerance) {
+        I = 0.0; // At full or empty, current must go to zero
     }
 
     return fmax(slopes[row] * DOD + intercepts[row], 0) - I * params->resistance;
