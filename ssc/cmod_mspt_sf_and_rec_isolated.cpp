@@ -169,6 +169,8 @@ public:
             is__clearsky_to_measured_dni_od__required = true;
         }
 
+        bool is_calc_od_tube = false;
+        double W_dot_rec_target = std::numeric_limits<double>::quiet_NaN();
         int n_panels = as_integer("N_panels");
 
         // Transient model
@@ -211,6 +213,7 @@ public:
                 n_panels, D_rec, H_rec,
                 as_integer("Flow_type"), as_integer("crossover_shift"), as_double("hl_ffact"),
                 as_double("T_htf_hot_des"), rec_clearsky_fraction,
+                is_calc_od_tube, W_dot_rec_target,
                 is_rec_model_trans, is_rec_startup_trans,
                 as_double("rec_tm_mult"), as_double("u_riser"),
                 as_double("th_riser"), as_double("riser_tm_mult"),
@@ -241,7 +244,8 @@ public:
                 rec_night_recirc,
                 n_panels, D_rec, H_rec,
                 as_integer("Flow_type"), as_integer("crossover_shift"), as_double("hl_ffact"),
-                as_double("T_htf_hot_des"), rec_clearsky_fraction
+                as_double("T_htf_hot_des"), rec_clearsky_fraction,
+                is_calc_od_tube, W_dot_rec_target
                 ));   // steady-state receiver
 
             cr_receiver = ss_receiver; // std::copy(ss_receiver);

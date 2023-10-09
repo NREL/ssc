@@ -794,6 +794,14 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
 
     m_is_hx = is_hx_calc;
 
+    // Added by TB 2023-03-03
+    // Need to check if tes_pump_coef is defined for storage with hx
+    if (m_is_hx)
+    {
+        if(std::isnan(this->m_tes_pump_coef))
+            throw(C_csp_exception("TES Pump Coef not provided for system with different field and storage fluids.", "Two Tank TES Initialization"));
+    }
+
     /*
 	if( m_is_hx != is_hx_calc )
 	{
@@ -1757,6 +1765,30 @@ double /*MWe*/ C_csp_two_tank_tes::pumping_power(double m_dot_sf /*kg/s*/, doubl
 
     return htf_pump_power;
 }
+
+
+double C_csp_two_tank_tes::get_min_storage_htf_temp()
+{
+    return mc_store_htfProps.min_temp();
+}
+
+double C_csp_two_tank_tes::get_max_storage_htf_temp()
+{
+    return mc_store_htfProps.max_temp();
+}
+
+double C_csp_two_tank_tes::get_storage_htf_density()
+{
+    double avg_temp = (m_T_cold_des + m_T_hot_des) / 2.0;
+    return mc_store_htfProps.dens(avg_temp, 0);
+}
+
+double C_csp_two_tank_tes::get_storage_htf_cp()
+{
+    double avg_temp = (m_T_cold_des + m_T_hot_des) / 2.0;
+    return mc_store_htfProps.Cp(avg_temp);
+}
+
 
 void two_tank_tes_sizing(HTFProperties &tes_htf_props, double Q_tes_des /*MWt-hr*/, double T_tes_hot /*K*/,
 	double T_tes_cold /*K*/, double h_min /*m*/, double h_tank /*m*/, int tank_pairs /*-*/, double u_tank /*W/m^2-K*/,

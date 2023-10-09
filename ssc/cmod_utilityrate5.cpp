@@ -59,7 +59,7 @@ static var_info vtab_utility_rate5[] = {
 	{ SSC_OUTPUT, SSC_ARRAY, "bill_load", "Bill load (year 1)", "kWh", "", "Load", "*", "", "" },
 
     { SSC_INPUT, SSC_NUMBER, "inflation_rate", "Inflation rate", "%", "", "Lifetime", "*", "MIN=-99", "" },
-	{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "%", "", "System Output", "*", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "%", "", "System Output", "system_use_lifetime_output=0", "", "" },
 	{ SSC_INPUT, SSC_ARRAY, "load_escalation", "Annual load escalation", "%/year", "", "Load", "?=0", "", "" },
 
 	// outputs

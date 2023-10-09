@@ -1692,6 +1692,38 @@ perez(double, double dn, double df, double alb, double inc, double tilt, double 
     }
 }
 
+void ineichen(double clearsky_results[3], double apparent_zenith, double absolute_airmass, double linke_turbidity = 1.0, double altitude = 0.0, double dni_extra = 1364.0, bool perez_enhancement = false) {
+    double cos_zenith = Max(cosd(apparent_zenith), 0);
+    double tl = linke_turbidity;
+
+    double fh1 = exp(-altitude / 8000.0);
+    double fh2 = exp(-altitude / 1250.0);
+    double cg1 = 5.09e-5 * altitude + 0.868;
+    double cg2 = 3.92e-5 * altitude + 0.0387;
+
+    double ghi = exp(-cg2 * absolute_airmass * (fh1 + fh2 * (tl - 1)));
+    if (perez_enhancement) ghi *= exp(0.01 * pow(absolute_airmass, 1.8));
+
+    ghi = cg1 * dni_extra * cos_zenith * tl / tl * Max(ghi, 0);
+
+    double b = 0.664 + 0.163 / fh1;
+
+    double bnci = b * exp(-0.09 * absolute_airmass * (tl - 1));
+    bnci = dni_extra * Max(bnci, 0);
+
+    double bnci_2 = ((1 - (0.1 - 0.2 * exp(-tl)) / (0.1 + 0.882 / fh1)) / cos_zenith);
+    bnci_2 = ghi * Min(Max(bnci_2, 0), 1e20);
+
+    double dni = Min(bnci, bnci_2);
+
+    double dhi = ghi - dni * cos_zenith;
+    clearsky_results[0] = ghi;
+    clearsky_results[1] = dni;
+    clearsky_results[2] = dhi;
+    return;
+}
+
+
 void irrad::setup() {
     year = month = day = hour = -999;
     minute = delt = latitudeDegrees = longitudeDegrees = timezone = -999;
@@ -1719,6 +1751,7 @@ void irrad::setup() {
     poaRearDirectDiffuse = 0.;
     poaRearRowReflections = 0.;
     poaRearSelfShaded = 0.;
+
 }
 
 irrad::irrad() {
@@ -1733,7 +1766,7 @@ irrad::irrad(weather_record wf, weather_header hdr,
              double groundCoverageRatioIn, double slopeTiltIn, double slopeAzmIn, std::vector<double> monthlyTiltDegrees,
              std::vector<double> userSpecifiedAlbedo,
              poaDecompReq *poaAllIn,
-             bool useSpatialAlbedos, const util::matrix_t<double>* userSpecifiedSpatialAlbedos) :
+             bool useSpatialAlbedos, const util::matrix_t<double>* userSpecifiedSpatialAlbedos, bool enableSubhourlyClipping) :
         skyModel(skyModelIn), radiationMode(radiationModeIn), trackingMode(trackModeIn),
         enableBacktrack(backtrackingEnabled), forceToStow(forceToStowIn),
         delt(dtHour), tiltDegrees(tiltDegreesIn), surfaceAzimuthDegrees(azimuthDegreesIn),
@@ -1759,6 +1792,8 @@ irrad::irrad(weather_record wf, weather_header hdr,
     set_location(hdr.lat, hdr.lon, hdr.tz);
     set_optional(hdr.elev, wf.pres, wf.tdry);
     set_sky_model(skyModel, albedo, albedoSpatial);
+
+    set_subhourly_clipping(enableSubhourlyClipping);
 
     if (radiationMode == irrad::DN_DF) set_beam_diffuse(wf.dn, wf.df);
     else if (radiationMode == irrad::DN_GH) set_global_beam(wf.gh, wf.dn);
@@ -1852,6 +1887,17 @@ void irrad::get_poa(double *beam, double *skydiff, double *gnddiff,
     if (horizon != 0) *horizon = diffuseIrradianceFront[2];
 }
 
+void irrad::get_poa_clearsky(double* beam, double* skydiff, double* gnddiff,
+    double* isotrop, double* circum, double* horizon) {
+    if (beam != 0) *beam = planeOfArrayIrradianceFrontCS[0];
+    if (skydiff != 0) *skydiff = planeOfArrayIrradianceFrontCS[1];
+    if (gnddiff != 0) *gnddiff = planeOfArrayIrradianceFrontCS[2];
+    if (isotrop != 0) *isotrop = diffuseIrradianceFrontCS[0];
+    if (circum != 0) *circum = diffuseIrradianceFrontCS[1];
+    if (horizon != 0) *horizon = diffuseIrradianceFrontCS[2];
+}
+
+
 double irrad::get_poa_rear() {
     return planeOfArrayIrradianceRearAverage;
 }
@@ -1935,6 +1981,11 @@ void irrad::set_optional(double elev, double pres, double t_amb) //defaults of 0
         this->pressure = pres;
     if (!std::isnan(tamb))
         this->tamb = t_amb;
+}
+
+void irrad::set_subhourly_clipping(bool enable)
+{
+    if (enable) this->enableSubhourlyClipping = true;
 }
 
 void irrad::set_sky_model(int sm, double alb, const std::vector<double> &albSpatial) {
@@ -2107,9 +2158,17 @@ int irrad::calc() {
         timeStepSunPosition[2] = 0;
     }
 
+    //clearsky
+    if (enableSubhourlyClipping) {
+        ineichen(clearskyIrradiance, RTOD * sunAnglesRadians[1], 1.5, 1.0, elevation);
+    }
+
 
     planeOfArrayIrradianceFront[0] = planeOfArrayIrradianceFront[1] = planeOfArrayIrradianceFront[2] = 0;
+    planeOfArrayIrradianceFrontCS[0] = planeOfArrayIrradianceFrontCS[1] = planeOfArrayIrradianceFrontCS[2] = 0;
     diffuseIrradianceFront[0] = diffuseIrradianceFront[1] = diffuseIrradianceFront[2] = 0;
+    diffuseIrradianceFrontCS[0] = diffuseIrradianceFrontCS[1] = diffuseIrradianceFrontCS[2] = 0;
+
     surfaceAnglesRadians[0] = surfaceAnglesRadians[1] = surfaceAnglesRadians[2] = surfaceAnglesRadians[3] = surfaceAnglesRadians[4] = 0;
 
     // do irradiance calculations if sun is up
@@ -2174,13 +2233,39 @@ int irrad::calc() {
                           diffuseIrradianceFront);
                     break;
             }
+
+            if (enableSubhourlyClipping) {
+                switch (skyModel) {
+                    case 0:
+                        isotropic(hextra, clearskyIrradiance[1], clearskyIrradiance[2], albedo,
+                            surfaceAnglesRadians[0], surfaceAnglesRadians[1], sunAnglesRadians[1],
+                            planeOfArrayIrradianceFrontCS, diffuseIrradianceFrontCS);
+                        break;
+                    case 1:
+                        hdkr(hextra, clearskyIrradiance[1], clearskyIrradiance[2], albedo, surfaceAnglesRadians[0],
+                            surfaceAnglesRadians[1], sunAnglesRadians[1], planeOfArrayIrradianceFrontCS,
+                            diffuseIrradianceFrontCS);
+                        break;
+                    default:
+                        perez(hextra, clearskyIrradiance[1], clearskyIrradiance[2], albedo, surfaceAnglesRadians[0],
+                            surfaceAnglesRadians[1], sunAnglesRadians[1], planeOfArrayIrradianceFrontCS,
+                            diffuseIrradianceFrontCS);
+                        break;
+                }
+            }
         }
         else { // Sev 2015/09/11 - perform a POA decomp.
             int errorcode = poaDecomp(weatherFilePOA, surfaceAnglesRadians, sunAnglesRadians, albedo, poaAll,
                                       directNormal, diffuseHorizontal, globalHorizontal, planeOfArrayIrradianceFront,
                                       diffuseIrradianceFront);
+            if (enableSubhourlyClipping) {
+                int errorcode_cs = poaDecomp(weatherFilePOA, surfaceAnglesRadians, sunAnglesRadians, albedo, poaAll,
+                    clearskyIrradiance[1], clearskyIrradiance[2], clearskyIrradiance[0], planeOfArrayIrradianceFrontCS,
+                    diffuseIrradianceFrontCS);
+            }
             calculatedDirectNormal = directNormal;
             calculatedDiffuseHorizontal = diffuseHorizontal;
+            
             return errorcode; //this will return 0 if successful, otherwise 40, 41, or 42 if calculated decomposed dni, dhi, or ghi are negative
         }
     }
