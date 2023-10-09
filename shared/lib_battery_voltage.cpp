@@ -189,6 +189,10 @@ double voltage_table_t::calculate_voltage(double DOD, double I) {
     while (row < params->voltage_table.size() && DOD > params->voltage_table[row][0]) {
         row++;
     }
+    //
+    if (DOD < tolerance) {
+        I = 0.0; // At full, current must go to zero
+    }
 
     return fmax(slopes[row] * DOD + intercepts[row], 0) - I * params->resistance;
 }
@@ -291,7 +295,7 @@ double voltage_table_t::calculate_current_for_target_w(double P_watts, double q,
         auto DOD_upper = params->voltage_table[upper][0];
         auto DOD_lower = params->voltage_table[lower][0];
         if (DOD_new <= DOD_upper && DOD_new >= DOD_lower) {
-            current = (q - (100. - DOD_new) * qmax / 100);
+            current = qmax * ((1. - DOD / 100.) - (1. - DOD_new / 100.)) / params->dt_hr;
             double P = current * (a * DOD_new + b - current / params->num_strings * params->resistance);
             if (std::abs(P) > std::abs(P_best)) {
                 P_best = P;
