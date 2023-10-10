@@ -489,7 +489,7 @@ void BatteryPowerFlow::calculateACConnected()
             P_fuelcell_to_grid_ac = 0;
         }
 
-        // Priliminary batt to grid for DC losses
+        // Preliminary batt to grid for DC losses
         P_batt_to_grid_ac = P_battery_ac - P_system_loss_ac - P_batt_to_load_ac - P_batt_to_pv_inverter;
 
         P_fuelcell_to_grid_ac = P_fuelcell_ac - P_fuelcell_to_load_ac;
