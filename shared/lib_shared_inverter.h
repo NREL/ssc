@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_sandia.h"
 #include "lib_pvinv.h"
 #include "lib_ondinv.h"
+#include "lib_util.h"
 #include <vector>
 
 /**
@@ -53,7 +54,7 @@ public:
 
     /// Construct a shared inverter by registering the previously constructed inverter
     SharedInverter(int inverterType, size_t numberOfInverters,
-        sandia_inverter_t* sandiaInverter, partload_inverter_t* partloadInverter, ond_inverter* ondInverter);
+        sandia_inverter_t* sandiaInverter, partload_inverter_t* partloadInverter, ond_inverter* ondInverter, size_t numberOfInvertersClipping = 0);
 
     SharedInverter(const SharedInverter& orig);
 
@@ -71,6 +72,8 @@ public:
     /// Given the combined PV plus battery DC power (kW), voltage and ambient T, compute the AC power (kW) for a single inverter with one MPPT input
     void calculateACPower(const double powerDC_kW, const double DCStringVoltage, double tempC);
 
+    void calculateACPower(const double powerDC_kW, const double DCStringVoltage, double tempC, bool clippingEnabled);
+
     /// Given the combined PV plus battery DC power (kW), voltage and ambient T, compute the AC power (kW) for a single inverter with multiple MPPT inputs
     void calculateACPower(const std::vector<double> powerDC_kW, const std::vector<double> DCStringVoltage, double tempC);
 
@@ -86,6 +89,8 @@ public:
     /// Return the nameplate AC capacity
     double getACNameplateCapacitykW();
 
+    util::matrix_t<double> SubhourlyClippingMatrix();
+
     enum { SANDIA_INVERTER, DATASHEET_INVERTER, PARTLOAD_INVERTER, COEFFICIENT_GENERATOR, OND_INVERTER, NONE };
 
     const constexpr static double NONE_INVERTER_EFF = 0.96;
@@ -96,6 +101,7 @@ public:
     // calculated values for the current timestep
     double powerDC_kW;
     double powerAC_kW;
+    double powerAC_kW_clipping;
     double efficiencyAC;        // 0-100
     double powerClipLoss_kW;
     double powerConsumptionLoss_kW;
@@ -109,10 +115,12 @@ protected:
 
     int m_inverterType;  ///< The inverter type
     size_t m_numInverters;  ///< The number of inverters in the system
+    size_t m_numInvertersClipping;
     double m_nameplateAC_kW; ///< The total nameplate AC capacity for all inverters in kW
 
     /// Temperate Derating: each curve contains DC voltage and pairs of start-derate temp [C] and slope [efficiency% lost per C]
     bool m_tempEnabled;
+    bool m_subhourlyClippingEnabled;
     std::vector<std::vector<double>> m_thermalDerateCurves;		/// ordered by DC V	
     /// Given a temp, find which slope to apply
     void findPointOnCurve(size_t idx, double T, double& startT, double& slope);

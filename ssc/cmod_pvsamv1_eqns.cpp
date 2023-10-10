@@ -32,60 +32,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "cmod_pvsamv1_eqns.h"
+#include "cmod_battery_eqns.h"
 #include "cmod_utilityrate5_eqns.h"
 
 #include "vartab.h"
-
-void map_input(var_table* vt, const std::string& sam_name, var_table* reopt_table, const std::string& reopt_name,
-               bool sum = false, bool to_ratio = false){
-    double sam_input;
-    vt_get_number(vt, sam_name, &sam_input);
-    if (var_data* vd = reopt_table->lookup(reopt_name)){
-        if (sum){
-            if (to_ratio)
-                sam_input /= 100.;
-            vd->num = vd->num + sam_input;
-        }
-        else
-            vt->assign("warning", var_data(reopt_name + " variable already exists in 'reopt_table'."));
-    }
-    else{
-        if (to_ratio)
-            reopt_table->assign(reopt_name, sam_input/100.);
-        else
-            reopt_table->assign(reopt_name, sam_input);
-    }
-}
-
-void map_optional_input(var_table* vt, const std::string& sam_name, var_table* reopt_table, const std::string& reopt_name,
-        double def_val, bool to_ratio = false){
-    double sam_input;
-    try{
-        vt_get_number(vt, sam_name, &sam_input);
-        if (to_ratio) sam_input /= 100.;
-    }
-    catch (std::runtime_error&) {
-        sam_input = def_val;
-    }
-    if (reopt_table->lookup(reopt_name)){
-        vt->assign("warning", var_data(reopt_name + " variable already exists in 'reopt_table'."));
-        return;
-    }
-    reopt_table->assign(reopt_name, sam_input);
-}
 
 SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
     auto vt = static_cast<var_table*>(data);
     if (!vt){
         return false;
     }
-    std::string log;
-    auto reopt_params = var_data();
-    reopt_params.type = SSC_TABLE;
+    var_table reopt_site, reopt_pv;
+
+    bool result = Reopt_size_standalone_battery_params(data);
+
+    auto reopt_params = *(vt->lookup("reopt_scenario"));
+    std::string log = vt->as_string("log");
     var_table* reopt_table = &reopt_params.table;
-    var_table reopt_scenario, reopt_site, reopt_electric, reopt_utility, reopt_load, reopt_fin, reopt_pv, reopt_batt,
-            reopt_wind;
-    reopt_wind.assign("max_kw", 0);
+    var_table reopt_scenario = reopt_table->lookup("Scenario")->table;
+    reopt_site = reopt_scenario.lookup("Site")->table;
 
     // site lat and lon
     map_input(vt, "lat", &reopt_site, "latitude");
@@ -146,7 +111,6 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
         vt_get_number(vt, inv_eff_names[inv_model], &eff);
         eff /= 100.;
         reopt_pv.assign("inv_eff", eff);
-        reopt_batt.assign("inverter_efficiency_pct", eff);
 
         // calculate the dc ac ratio
         std::vector<std::string> inv_power_names = {"inv_snl_paco", "inv_ds_paco", "inv_pd_paco", "inv_cec_cg_paco"};
@@ -156,7 +120,6 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
     }
 	else{
         map_input(vt, "inv_eff", &reopt_pv, "inv_eff", false, true);
-        map_input(vt, "inv_eff", &reopt_batt, "inverter_efficiency_pct", false, true);
         map_input(vt, "dc_ac_ratio", &reopt_pv, "dc_ac_ratio");
     }
 
@@ -164,9 +127,14 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
     if (vt->is_assigned("gen")) {
         std::vector<double> gen;
         vt_get_array_vec(vt, "gen", gen);
-        int analysis_period;
-        vt_get_int(vt, "analysis_period", &analysis_period);
-        size_t year_one_values = gen.size() / analysis_period;
+        bool lifetime_mode;
+        vt_get_bool(vt, "system_use_lifetime_output", &lifetime_mode);
+        size_t year_one_values = gen.size();
+        if (lifetime_mode) {
+            int analysis_period;
+            vt_get_int(vt, "analysis_period", &analysis_period);
+            year_one_values /= analysis_period;
+        }
         std::vector<double> kwac_per_kwdc(year_one_values);
         for (size_t i = 0; i < year_one_values; i++) {
             kwac_per_kwdc[i] = gen[i] / system_cap;
@@ -219,129 +187,19 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
     vd = vt->lookup("depr_bonus_fed");
     if (vd){
         reopt_pv.assign("macrs_bonus_pct", vd->num[0]/100.);
-        reopt_batt.assign("macrs_bonus_pct", vd->num[0]/100.);
     }
     vd = vt->lookup("depr_bonus_fed_macrs_5");
     if (vd && vd->num[0] == 1){
         reopt_pv.assign("macrs_option_years", 5);
-        reopt_batt.assign("macrs_option_years", 5);
     }
 
-    vd = vt->lookup("battery_per_kW");
-    if (vd)
-        reopt_batt.assign("installed_cost_us_dollars_per_kw", vd->num[0]);
-    vd = vt->lookup("battery_per_kWh");
-    if (vd)
-        reopt_batt.assign("installed_cost_us_dollars_per_kwh", vd->num[0]);
 
-    vd = vt->lookup("batt_dc_ac_efficiency");
-    vd2 = vt->lookup("batt_ac_dc_efficiency");
-    if (vd && vd2){
-        // ReOpt's internal_efficient_pct = SAM's (batt_dc_ac_efficiency + batt_ac_dc_efficiency)/2
-        reopt_batt.assign("internal_efficiency_pct", (vd->num[0] + vd2->num[0])/200.);
-    }
-    else if (vd && !vd2){
-        reopt_batt.assign("internal_efficiency_pct", vd->num[0]/100.);
-    }
-    else if (!vd && vd2){
-        reopt_batt.assign("internal_efficiency_pct", vd2->num[0]/100.);
-    }
-
-    vd = vt->lookup("batt_initial_SOC");
-    vd2 = vt->lookup("batt_minimum_SOC");
-    if (vd && vd2){
-        reopt_batt.assign("soc_init_pct", vd->num[0]/100.);
-        reopt_batt.assign("soc_min_pct", vd2->num[0]/100.);
-    }
-    else {
-        reopt_batt.assign("soc_init_pct", 0.5);
-        reopt_batt.assign("soc_min_pct", 0.15);
-    }
-
-    // battery replacement only enabled for pvsam, use REopt defaults otherwise
-    if ((vd = vt->lookup("om_batt_replacement_cost")))
-        reopt_batt.assign("replace_cost_us_dollars_per_kwh", vd->num[0]);
-
-    // ReOpt's battery replacement single year versus SAM's array schedule
-    std::vector<double> vec;
-    if ((vd = vt->lookup("batt_replacement_schedule"))){
-        vec = vd->arr_vector();
-        if (vec.size() > 1)
-            log += "Warning: only first value of 'batt_replacement_schedule' array is used for the ReOpt input 'battery_replacement_year'.\n";
-        reopt_batt.assign("battery_replacement_year", vec[0]);
-    }
-
-    //
-    // convert required utilityrate5 inputs
-    //
-    ElectricityRates_format_as_URDBv7(vt);
-    auto urdb_data = vt->lookup("urdb_data");
-    reopt_utility = urdb_data->table;
-
-    //
-    // convert financial inputs and set variables not modeled by SAM to 0
-    //
-    map_input(vt, "analysis_period", &reopt_fin, "analysis_years");
-    map_input(vt, "rate_escalation", &reopt_fin, "escalation_pct", false, true);
-    map_optional_input(vt, "value_of_lost_load", &reopt_fin, "value_of_lost_load_us_dollars_per_kwh", 0);
-    reopt_fin.assign("microgrid_upgrade_cost_pct", 0);
-
-    vd = vt->lookup("federal_tax_rate");
-    vd2 = vt->lookup("state_tax_rate");
-    if (vd && vd2){
-        reopt_fin.assign("offtaker_tax_pct", vd->num[0]/100. + vd2->num[0]/100.);
-    }
-
-    vt_get_number(vt, "inflation_rate", &val1);
-    vd = vt->lookup("real_discount_rate");
-    if (vd) val2 = vd->num;
-    else val2 = 6.4;
-    reopt_fin.assign("offtaker_discount_pct", (1 + val1/100.)*(1 + val2/100.) - 1);
-
-    vd = vt->lookup("om_fixed_escal");
-    vd2 = vt->lookup("om_production_escal");
-    if (vd && !vd2){
-        reopt_pv.assign("om_cost_escalation_pct", vd->num[0] / system_cap);
-    }
-    else if (!vd && vd2) {
-        reopt_pv.assign("om_cost_escalation_pct", vd2->num[0]);
-    }
-    else if (vd && vd2){
-        reopt_pv.assign("om_cost_escalation_pct", (vd->num[0] / system_cap) + vd2->num[0]);
-    }
-
-    // convert load profile inputs, which are not net loads
-    vt_get_array_vec(vt, "load", vec);
-    size_t sim_len = vec.size();
-    if (sim_len != 8760 && sim_len != 8760 * 2 && sim_len != 8760 * 4){
-        vt->assign("error", var_data("Load profile must be hourly, 30 min or 15 min data for a single year."));
-        return false;
-    }
-    reopt_load.assign("loads_kw", var_data(&vec[0], sim_len));
-    reopt_load.assign("loads_kw_is_net", false);
-
-    vd = vt->lookup("crit_load");
-    if (vd) {
-        vt_get_array_vec(vt, "crit_load", vec);
-        if (vec.size() != sim_len) {
-            vt->assign("error", var_data("Critical load profile's length must be same as for load."));
-            return false;
-        }
-        reopt_load.assign("critical_loads_kw", var_data(&vec[0], vec.size()));
-    }
 
     // assign the reopt parameter table and log messages
-    reopt_electric.assign_match_case("urdb_response", reopt_utility);
-    reopt_site.assign_match_case("ElectricTariff", reopt_electric);
-    reopt_site.assign_match_case("LoadProfile", reopt_load);
-    reopt_site.assign_match_case("Financial", reopt_fin);
-    reopt_site.assign_match_case("Storage", reopt_batt);
-    reopt_site.assign_match_case("Wind", reopt_wind);
     reopt_site.assign_match_case("PV", reopt_pv);
     reopt_scenario.assign_match_case("Site", reopt_site);
-    reopt_scenario.assign_match_case("time_steps_per_hour", var_data((int)(sim_len / 8760)));
     reopt_table->assign_match_case("Scenario", reopt_scenario);
     vt->assign_match_case("reopt_scenario", reopt_params);
     vt->assign_match_case("log", log);
-    return true;
+    return result;
 }

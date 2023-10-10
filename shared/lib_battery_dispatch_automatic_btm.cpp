@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_shared_inverter.h"
 
 #include <math.h>
+#include <memory>
 
 dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
 	battery_t * Battery,
@@ -69,7 +70,8 @@ dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
     bool chargeOnlySystemExceedLoad,
     bool dischargeOnlyLoadExceedSystem,
     bool behindTheMeterDischargeToGrid,
-    double SOC_min_outage
+    double SOC_min_outage,
+    int load_forecast_mode
 	) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
 		t_min, dispatch_mode, weather_forecast_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge,
         battReplacementCostPerkWh, battCycleCostChoice, battCycleCost, battOMCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem,
@@ -79,6 +81,8 @@ dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
 	_P_target_current = -1e16;
 	_P_target_use.reserve(_num_steps);
 	_P_battery_use.reserve(_num_steps);
+
+    _load_forecast_mode = load_forecast_mode;
 
 	grid.reserve(_num_steps);
 	sorted_grid.reserve(_num_steps);
@@ -263,6 +267,20 @@ void dispatch_automatic_behind_the_meter_t::initialize(size_t hour_of_year, size
 	m_batteryPower->powerBatteryTarget = 0;
     _day_index = 0;
 
+    // Give all algorithms real data for the current step (overwrite forecast if needed)
+    if (_load_forecast_mode != LOAD_LOOK_AHEAD) {
+        _P_load_ac[lifetimeIndex] = m_batteryPower->powerLoad;
+    }
+    // Lookahead forecasts may better account for losses than the code below, so don't run this if lookahead
+    if (_weather_forecast_mode != WF_LOOK_AHEAD) {
+        if (m_batteryPower->connectionMode == AC_CONNECTED) {
+            _P_pv_ac[lifetimeIndex] = m_batteryPower->powerSystem;
+        }
+        else {
+            _P_pv_ac[lifetimeIndex] = m_batteryPower->powerSystem * m_batteryPower->sharedInverter->efficiencyAC;
+        }
+    }
+
 	// clean up vectors
     size_t lifetimeMax = _P_pv_ac.size();
 	for (size_t ii = 0; ii != _num_steps && lifetimeIndex < lifetimeMax; ii++)
@@ -273,6 +291,7 @@ void dispatch_automatic_behind_the_meter_t::initialize(size_t hour_of_year, size
 		_P_battery_use.push_back(0.);
         lifetimeIndex++;
 	}
+
 }
 bool dispatch_automatic_behind_the_meter_t::check_new_month(size_t hour_of_year, size_t step)
 {
@@ -319,6 +338,7 @@ void dispatch_automatic_behind_the_meter_t::sort_grid(size_t idx, FILE *p, const
 
 	// compute grid net from pv and load (no battery)
 	size_t count = 0;
+
 	for (size_t hour = 0; hour != 24 && idx < _P_load_ac.size(); hour++)
 	{
 		for (size_t step = 0; step != _steps_per_hour; step++)

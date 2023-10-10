@@ -47,6 +47,17 @@ TEST_F(CMSingleOwner, ResidentialDefault_cmod_swh) {
 }
 
 
+TEST_F(CmodSingleOwnerTest, ssc_1047) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/FinancialModels/singleowner/Default_SO_10_IBI_PVWatts_Single_Owner_cmod_singleowner.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/FinancialModels/singleowner/Default_SO_10_IBI_PVWatts_Single_Owner_cmod_singleowner_outputs.json";
+    std::vector<std::string> compare_number_variables = { "ppa", "project_return_aftertax_npv", "lcoe_real", "lppa_nom" };
+    std::vector<std::string> compare_array_variables = { "cf_project_return_aftertax", "cf_annual_costs" };
+
+    Test("singleowner", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
+
 
 TEST_F(CmodSingleOwnerTest, Biopower) {
     std::string file_inputs = SSCDIR;

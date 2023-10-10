@@ -516,26 +516,53 @@ var_info_invalid
 };
 
 var_info vtab_adjustment_factors[] = {
-{ SSC_INPUT,SSC_NUMBER  , "adjust:constant"                      , "Constant loss adjustment"                                       , "%"                                      , ""                                      , "Adjustment Factors"   , "*"              , "MAX=100"               , ""},
-{ SSC_INPUT,SSC_ARRAY   , "adjust:hourly"                        , "Hourly Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
-{ SSC_INPUT,SSC_ARRAY   , "adjust:timeindex"                        , "Lifetime Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
-{ SSC_INPUT,SSC_MATRIX  , "adjust:periods"                       , "Period-based Adjustment Factors"                                , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "?"              , "COLS=3"                , ""},
+{ SSC_INPUT,SSC_NUMBER  , "adjust_constant"                      , "Constant loss adjustment"                                       , "%",
+"'adjust' and 'constant' separated by _ instead of : after SAM 2022.12.21",                                      "Adjustment Factors"   , "*"              , "MAX=100"               , ""},
+{ SSC_INPUT, SSC_NUMBER,     "adjust_en_timeindex"        , "Enable lifetime adjustment factors",     "0/1",
+"'adjust' and 'en_timeindex' separated by _ instead of : after SAM 2022.12.21",                      "Adjustment Factors",      "?=0",                       "BOOLEAN",                                         "" },
+{ SSC_INPUT, SSC_NUMBER,     "adjust_en_periods"        , "Enable period-based adjustment factors",     "0/1",
+"'adjust' and 'en_periods' separated by _ instead of : after SAM 2022.12.21",                      "Adjustment Factors",      "?=0",                       "BOOLEAN",                                         "" },
+/* removed from UI but still used in scripts
+    { SSC_INPUT, SSC_NUMBER,     "adjust_en_hourly"        , "Enable hourly-based adjustment factors",     "0/1",
+"'adjust' and 'en_hourly' separated by _ instead of : after SAM 2022.12.21",                      "Adjustment Factors",      "?=0",                       "BOOLEAN",                                         "" },
+{ SSC_INPUT,SSC_ARRAY   , "adjust_hourly"                        , "Hourly adjustment factors"                                      , "%",
+"'adjust' and 'timeindex' separated by _ instead of : after SAM 2022.12.21"                                      , "Adjustment Factors"   , "adjust_en_hourly=1"              , "LENGTH=8760"           , ""},
+*/
+{ SSC_INPUT,SSC_ARRAY   , "adjust_timeindex"                        , "Lifetime adjustment factors"                                      , "%",
+"'adjust' and 'timeindex' separated by _ instead of : after SAM 2022.12.21"                                      , "Adjustment Factors"   , "adjust_en_timeindex=1"              , ""           , ""},
+{ SSC_INPUT,SSC_MATRIX  , "adjust_periods"                       , "Period-based adjustment factors"                                , "%",
+"Syntax: n x 3 matrix [ start, end, loss ]; Version upgrade: 'adjust' and 'periods' separated by _ instead of : after SAM 2022.12.21"     , "Adjustment Factors"   , "adjust_en_periods=1"              , "COLS=3"                , ""},
 var_info_invalid };
 
 var_info vtab_dc_adjustment_factors[] = {
-{ SSC_INPUT,SSC_NUMBER  , "dc_adjust:constant"                   , "DC Constant loss adjustment"                                    , "%"                                      , ""                                      , "Adjustment Factors"   , "*"               , "MAX=100"               , ""},
-{ SSC_INPUT,SSC_ARRAY   , "dc_adjust:hourly"                     , "DC Hourly Adjustment Factors"                                   , "%"                                      , ""                                      , "Adjustment Factors"   , "?"               , "LENGTH=8760"           , ""},
-{ SSC_INPUT,SSC_ARRAY   , "dc_adjust:timeindex"                        , "DC Lifetime Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
-{ SSC_INPUT,SSC_MATRIX  , "dc_adjust:periods"                    , "DC Period-based Adjustment Factors"                             , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "?"               , "COLS=3"                , ""},
+{ SSC_INPUT,SSC_NUMBER  , "dc_adjust_constant"                   , "DC Constant loss adjustment"                                    , "%",
+"'dc_adjust' and 'constant' separated by _ instead of : after SAM 2022.12.21"                                      , "Adjustment Factors"   , "*"               , "MAX=100"               , ""},
+{ SSC_INPUT, SSC_NUMBER,     "dc_adjust_en_timeindex"        , "Enable lifetime adjustment factors",     "0/1",      "",                      "Adjustment Factors",      "?=0",                       "BOOLEAN",                                         "" },
+{ SSC_INPUT, SSC_NUMBER,     "dc_adjust_en_periods"        , "Enable period-based adjustment factors",     "0/1",      "",                      "Adjustment Factors",      "?=0",                       "BOOLEAN",                                         "" },
+/* removed from UI but still used in scripts
+{ SSC_INPUT, SSC_NUMBER,     "dc_adjust_en_hourly"        , "Enable hourly-based adjustment factors",     "0/1",
+"'dc_adjust' and 'en_hourly' separated by _ instead of : after SAM 2022.12.21",                      "Adjustment Factors",      "?=0",                       "BOOLEAN",                                         "" },
+{ SSC_INPUT,SSC_ARRAY   , "dc_adjust_hourly"                        , "DC Hourly adjustment factors"                                      , "%",
+"'dc_adjust' and 'timeindex' separated by _ instead of : after SAM 2022.12.21"                                      , "Adjustment Factors"   , "dc_adjust_en_hourly=1"              , "LENGTH=8760"           , ""},
+*/
+{ SSC_INPUT,SSC_ARRAY   , "dc_adjust_timeindex"                        , "DC Lifetime Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "dc_adjust_en_timeindex=1"              , ""           , ""},
+{ SSC_INPUT,SSC_MATRIX  , "dc_adjust_periods"                    , "DC Period-based Adjustment Factors"                             , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "dc_adjust_en_periods=1"               , "COLS=3"                , ""},
 var_info_invalid };
 
 var_info vtab_sf_adjustment_factors[] = {
-{ SSC_INPUT,SSC_NUMBER  , "sf_adjust:constant"                   , "SF Constant loss adjustment"                                    , "%"                                      , ""                                      , "Adjustment Factors"   , "*"              , "MAX=100"               , ""},
-{ SSC_INPUT,SSC_ARRAY   , "sf_adjust:hourly"                     , "SF Hourly Adjustment Factors"                                   , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
-{ SSC_INPUT,SSC_ARRAY   , "sf_adjust:timeindex"                        , "SF Lifetime Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
-{ SSC_INPUT,SSC_MATRIX  , "sf_adjust:periods"                    , "SF Period-based Adjustment Factors"                             , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "?"              , "COLS=3"                , ""},
+{ SSC_INPUT,SSC_NUMBER  , "sf_adjust_constant"                   , "SF Constant loss adjustment"                                    , "%",
+"'sf_adjust' and 'constant' separated by _ instead of : after SAM 2022.12.21"                                      , "Adjustment Factors"   , "*"              , "MAX=100"               , ""},
+{ SSC_INPUT, SSC_NUMBER,     "sf_adjust_en_timeindex"        , "Enable lifetime adjustment factors",     "0/1",      "",                      "Adjustment Factors",      "?=0",                       "BOOLEAN",                                         "" },
+{ SSC_INPUT, SSC_NUMBER,     "sf_adjust_en_periods"        , "Enable period-based adjustment factors",     "0/1",      "",                      "Adjustment Factors",      "?=0",                       "BOOLEAN",                                         "" },
+/* removed from UI but still used in scripts
+{ SSC_INPUT, SSC_NUMBER,     "sf_adjust_en_hourly"        , "Enable hourly-based adjustment factors",     "0/1",
+"'adjust' and 'en_hourly' separated by _ instead of : after SAM 2022.12.21",                      "Adjustment Factors",      "?=0",                       "BOOLEAN",                                         "" },
+{ SSC_INPUT,SSC_ARRAY   , "sf_adjust_hourly"                        , "SF Hourly adjustment factors"                                      , "%",
+"'adjust' and 'timeindex' separated by _ instead of : after SAM 2022.12.21"                                      , "Adjustment Factors"   , "sf_adjust_en_hourly=1"              , "LENGTH=8760"           , ""},
+*/
+{ SSC_INPUT,SSC_ARRAY   , "sf_adjust_timeindex"                        , "SF Lifetime Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "sf_adjust_en_timeindex=1"              , ""           , ""},
+{ SSC_INPUT,SSC_MATRIX  , "sf_adjust_periods"                    , "SF Period-based Adjustment Factors"                             , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "sf_adjust_en_periods=1"              , "COLS=3"                , ""},
 var_info_invalid };
-
 
 var_info vtab_financial_capacity_payments[] = {
 
@@ -571,7 +598,7 @@ ssc_number_t* gen_heatmap(compute_module* cm, double step_per_hour) {
     if (!cm)
         return 0;
     size_t count = (size_t)(8760 * step_per_hour);
-    size_t imonth = 0;
+ //   size_t imonth = 0;
     size_t iday = 0;
     size_t hour;
     size_t count_gen;
@@ -912,9 +939,9 @@ var_info vtab_resilience_outputs[] = {
 { SSC_OUTPUT, SSC_NUMBER , "resilience_hrs_max" , "Hours of autonomy during grid outage maximum"                     , "hr"  , ""                                                         , "Resilience" , ""  , "MIN=0"        , ""},
 { SSC_OUTPUT, SSC_NUMBER , "resilience_hrs_avg" , "Hours of autonomy during grid outage average"                     , "hr"  , ""                                                         , "Resilience" , ""  , "MIN=0"        , ""},
 { SSC_OUTPUT, SSC_ARRAY  , "outage_durations"   , "Hours of autonomy during grid outage hour list from min to max"   , "hr"  , "Hours from resilience_hrs_min to resilience_hrs_max"      , "Resilience" , ""  , ""             , ""},
-{ SSC_OUTPUT, SSC_ARRAY  , "pdf_of_surviving"   , "Hours of autonomy during grid outage probabilities"               , ""    , "Hours from resilience_hrs_min to resilience_hrs_max"      , "Resilience" , ""  , "MIN=0,MAX=1"  , ""},
-{ SSC_OUTPUT, SSC_ARRAY  , "cdf_of_surviving"   , "Hours of autonomy during grid outage cumulative probabilities"    , ""    , "Prob surviving at least x hrs; hrs from min to max"       , "Resilience" , ""  , "MIN=0,MAX=1"  , ""},
-{ SSC_OUTPUT, SSC_ARRAY  , "survival_function"  , "Hours of autonomy during grid outage survival function"           , ""    , "Prob surviving greater than x hours; hrs from min to max" , "Resilience" , ""  , "MIN=0,MAX=1"  , ""},
+{ SSC_OUTPUT, SSC_ARRAY  , "pdf_of_surviving"   , "Hours of autonomy during grid outage probabilities"               , ""    , "Hours from resilience_hrs_min to resilience_hrs_max"      , "Resilience" , ""  , ""  , ""},
+{ SSC_OUTPUT, SSC_ARRAY  , "cdf_of_surviving"   , "Hours of autonomy during grid outage cumulative probabilities"    , ""    , "Prob surviving at least x hrs; hrs from min to max"       , "Resilience" , ""  , ""  , ""},
+{ SSC_OUTPUT, SSC_ARRAY  , "survival_function"  , "Hours of autonomy during grid outage survival function"           , ""    , "Prob surviving greater than x hours; hrs from min to max" , "Resilience" , ""  , ""  , ""},
 { SSC_OUTPUT, SSC_NUMBER , "avg_critical_load"  , "Hours of autonomy during grid outage critical load met"           , "kWh" , ""                                                         , "Resilience" , ""  , "MIN=0"        , ""},
         var_info_invalid
 };
@@ -935,6 +962,32 @@ void calculate_resilience_outputs(compute_module *cm, std::unique_ptr<resilience
 	cm->assign("survival_function", resilience->get_survival_function());
 	cm->assign("avg_critical_load", resilience->get_avg_crit_load_kwh());
 }
+
+// for o and m cost outputs calculated in cmod_hybrid
+var_info vtab_hybrid_tech_om[] = {
+    /*   VARTYPE           DATATYPE         NAME                           LABEL                UNITS     META                      GROUP           REQUIRED_IF      CONSTRAINTS     UI_HINTS*/
+//    { SSC_INPUT,  SSC_NUMBER,     "is_hybrid",              "hybrid configuration",      "0/1", "0=singletech,1=hybrid",    "HybridTech",       "?=0",      "",             "" },
+    { SSC_OUTPUT,   SSC_ARRAY,      "cf_om_production",                     "production O&M costs",      "$",   "",             "HybridTech",       "",         "",             "" },
+    { SSC_OUTPUT,   SSC_ARRAY,      "cf_om_capacity",                       "capacity O&M costs",        "$",   "",             "HybridTech",       "",         "",             "" },
+    { SSC_OUTPUT,   SSC_ARRAY,      "cf_om_fixed",                          "fixed O&M costs",           "$",   "",             "HybridTech",       "",         "",             "" },
+    { SSC_OUTPUT,   SSC_ARRAY,      "cf_om_land_lease",                     "land lease O&M costs",      "$",   "",             "HybridTech",       "",         "",             "" },
+    { SSC_OUTPUT,   SSC_ARRAY,      "cf_om_fuel_cost",                      "fossil fuel O&M costs",     "$",   "",             "HybridTech",       "",         "",             "" },
+    { SSC_OUTPUT,   SSC_ARRAY,      "cf_battery_replacement_cost_schedule", "replacement O&M costs",     "$",   "",             "HybridTech",       "",         "",             "" },
+    { SSC_OUTPUT,   SSC_ARRAY,      "cf_fuelcell_replacement_cost_schedule", "replacement O&M costs",    "$",   "",             "HybridTech",       "",         "",             "" },
+    { SSC_OUTPUT,   SSC_ARRAY,      "cf_energy_net",                        "annual energy",             "kWh", "",             "HybridTech",       "",         "",             "" },
+var_info_invalid };
+
+// for o and m cost outputs calculated in cmod_hybrid and added to operating expenses
+var_info vtab_hybrid_fin_om[] = {
+    /*   VARTYPE           DATATYPE         NAME                           LABEL                UNITS     META                      GROUP           REQUIRED_IF      CONSTRAINTS     UI_HINTS*/
+    { SSC_INPUT,          SSC_NUMBER,     "is_hybrid",              "hybrid configuration",      "0/1", "0=singletech,1=hybrid",    "HybridFin",       "?=0",      "",             "" },
+    { SSC_INPUT,          SSC_ARRAY,      "cf_hybrid_om_sum",       "Hybrid O&M costs",          "$",   "",                         "HybridFin",       "",         "",             "" },
+    { SSC_INOUT,          SSC_ARRAY,      "monthly_energy",         "Monthly energy",            "kWh", "",                         "Monthly",         "",         "LENGTH = 12",  "" },
+
+var_info_invalid };
+
+
+
 
 var_info vtab_utility_rate_common[] = {
 /*   VARTYPE           DATATYPE         NAME                        LABEL                                    UNITS      META                     GROUP                      REQUIRED_IF         CONSTRAINTS               UI_HINTS	*/
@@ -1009,32 +1062,32 @@ adjustment_factors::adjustment_factors( compute_module *cm, const std::string &p
 //adjustment factors changed from derates to percentages jmf 1/9/15
 bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set to 8760 in this declaration function in common.h
 {
-	ssc_number_t f = m_cm->as_number( m_prefix + ":constant" );
-	f = 1.0 - f / 100.0; //convert from percentage to factor
+    ssc_number_t f = m_cm->as_number(m_prefix + "_constant");
+    f = 1.0 - f / 100.0; //convert from percentage to factor
 	m_factors.resize( nsteps * analysis_period, f);
 
-	if ( m_cm->is_assigned(m_prefix + ":hourly") )
-	{
-		size_t n;
-		ssc_number_t *p = m_cm->as_array( m_prefix + ":hourly", &n );
-		if ( p != 0 && n == 8760 )
-		{
-			for( int i=0;i<8760;i++ )
-				m_factors[i] *= (1.0 - p[i]/100.0); //convert from percentages to factors
-		}
-        else {
-            m_error = util::format("Hourly loss factor array length %d does not equal length of weather file %d", (int)n, nsteps);
+    if (m_cm->is_assigned(m_prefix + "_en_hourly")) {
+        if (m_cm->as_boolean(m_prefix + "_en_hourly")) {
+            size_t n;
+            ssc_number_t* p = m_cm->as_array(m_prefix + "_hourly", &n);
+            if (p != 0 && n == 8760)
+            {
+                for (int i = 0; i < 8760; i++)
+                    m_factors[i] *= (1.0 - p[i] / 100.0); //convert from percentages to factors
+            }
+            else {
+                m_error = util::format("Hourly loss factor array length %d does not equal length of weather file %d", (int)n, nsteps);
+            }
         }
-	}
-
-    if (m_cm->is_assigned(m_prefix + ":timeindex"))
+    }
+    if (m_cm->as_boolean(m_prefix +  "_en_timeindex"))
     {
         size_t n;
         int steps_per_hour = nsteps / 8760;
         int month = 0;
         int day = 0;
         int week = 0;
-        ssc_number_t* p = m_cm->as_array(m_prefix + ":timeindex", &n);
+        ssc_number_t* p = m_cm->as_array(m_prefix + "_timeindex", &n);
         if (p != 0) {
             if (n == 1) {
                 for (int a = 0; a < analysis_period; a++) {
@@ -1042,7 +1095,7 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
                         m_factors[nsteps * a + i] *= (1.0 - p[0]/100.0); //input as factors not percentage
                 }
             }
-            else if (n == nsteps * analysis_period) { //Hourly or subhourly
+            else if (n == (size_t)(nsteps * analysis_period)) { //Hourly or subhourly
                 for (int a = 0; a < analysis_period; a++) {
                     for (int i = 0; i < nsteps; i++)
                         m_factors[nsteps * a + i] *= (1.0 - p[a*nsteps + i]/100.0); //convert from percentages to factors
@@ -1060,7 +1113,7 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
             else if (n % 365 == 0) { //Daily
                 for (int a = 0; a < analysis_period; a++) {
                     for (int i = 0; i < nsteps; i++) {
-                        day = util::day_of(int(i / steps_per_hour));
+                        day = util::day_of_year(int(i / steps_per_hour));
                         m_factors[nsteps*a + i] *= (1.0 - p[a * 365 + day]/100.0); //input as factors not percentage
                     }
 
@@ -1075,7 +1128,7 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
 
                 }
             }
-            else if (n == analysis_period) { //Annual
+            else if (n == (size_t)analysis_period) { //Annual
                 for (int a = 0; a < analysis_period; a++) {
                     for (int i = 0; i < nsteps; i++)
                         m_factors[nsteps * a + i] *= (1.0 - p[a]/100.0); //input as factors not percentage
@@ -1086,11 +1139,10 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
             }
         }
     }
-
-	if ( m_cm->is_assigned(m_prefix + ":periods") )
-	{
+    if (m_cm->as_boolean(m_prefix + "_en_periods"))
+    {
 		size_t nr, nc;
-		ssc_number_t *mat = m_cm->as_matrix(m_prefix + ":periods", &nr, &nc);
+        ssc_number_t* mat = m_cm->as_matrix(m_prefix + "_periods", &nr, &nc);
         double ts_mult = nsteps / 8760.0;
 		if ( mat != 0 && nc == 3 )
 		{
@@ -1125,80 +1177,26 @@ ssc_number_t adjustment_factors::operator()( size_t time )
 	else return 0.0;
 }
 
-sf_adjustment_factors::sf_adjustment_factors(compute_module *cm)
-: m_cm(cm)
+size_t adjustment_factors::size()
 {
+    return m_factors.size();
 }
 
-bool sf_adjustment_factors::setup(int nsteps)
-{
-	ssc_number_t f = m_cm->as_number("sf_adjust:constant");
-	f = 1.0 - f / 100.0; //convert from percentage to factor
-	m_factors.resize(nsteps, f);
-
-	if (m_cm->is_assigned("sf_adjust:hourly"))
-	{
-		size_t n;
-		ssc_number_t *p = m_cm->as_array("sf_adjust:hourly", &n);
-		if (p != 0 && n == (size_t)nsteps)
-		{
-			for (int i = 0; i < nsteps; i++)
-				m_factors[i] *= (1.0 - p[i] / 100.0); //convert from percentages to factors
-		}
-		if (n!=(size_t)nsteps)
-			m_error = util::format("array length (%d) must match number of yearly simulation time steps (%d).", n, nsteps);
-	}
-
-	if (m_cm->is_assigned("sf_adjust:periods"))
-	{
-		size_t nr, nc;
-		ssc_number_t *mat = m_cm->as_matrix("sf_adjust:periods", &nr, &nc);
-		if (mat != 0 && nc == 3)
-		{
-			for (size_t r = 0; r<nr; r++)
-			{
-				int start = (int)mat[nc*r];
-				int end = (int)mat[nc*r + 1];
-				float factor = (float)mat[nc*r + 2];
-
-				if (start < 0 || start >= nsteps || end < start)
-				{
-					m_error = util::format("period %d is invalid ( start: %d, end %d )", (int)r, start, end);
-					continue;
-				}
-
-				if (end >= nsteps) end = nsteps-1;
-
-				for (int i = start; i <= end; i++)
-					m_factors[i] *= (1 - factor / 100); //convert from percentages to factors
-			}
-		}
-	}
-
-	return m_error.length() == 0;
-}
-
-ssc_number_t sf_adjustment_factors::operator()(size_t time)
-{
-	if (time < m_factors.size()) return m_factors[time];
-	else return 0.0;
-}
-
-int sf_adjustment_factors::size()
-{
-    return (int)m_factors.size();
-}
 
 shading_factor_calculator::shading_factor_calculator()
 {
+    m_steps_per_hour = 1;
+    m_string_option = -1;
+    m_enTimestep = false;
 	m_enAzAlt = false;
 	m_enMxH = false;
+    m_enTimestep = false;
 	m_diffFactor = 1.0;
 	m_beam_shade_factor = 1.0;
 	m_dc_shade_factor = 1.0;
+    m_string_option = -1;
+    m_steps_per_hour = 1;
 }
-
-
 
 bool shading_factor_calculator::setup( compute_module *cm, const std::string &prefix )
 {
@@ -1212,149 +1210,148 @@ bool shading_factor_calculator::setup( compute_module *cm, const std::string &pr
 
 
 	m_steps_per_hour = 1;
+    size_t nrecs = 8760;
+    m_beamFactors.resize_fill(nrecs, 1, 1.0);
 
-	if (cm->is_assigned(prefix + "shading:string_option"))
-			m_string_option = cm->as_integer(prefix + "shading:string_option");
+    if (cm->is_assigned(prefix + "shading_en_string_option") && cm->as_boolean(prefix + "shading_en_string_option"))
+        m_string_option = cm->as_integer(prefix + "shading_string_option");
 
-	// initialize to 8760x1 for mxh and change based on shading:timestep
-	size_t nrecs = 8760;
-	m_beamFactors.resize_fill(nrecs, 1, 1.0);
+    m_enTimestep = false;
+    if (cm->is_assigned(prefix + "shading_en_timestep") && cm->as_boolean(prefix + "shading_en_timestep"))
+    {
+        size_t nrows, ncols;
+        ssc_number_t* mat = cm->as_matrix(prefix + "shading_timestep", &nrows, &ncols);
 
-	m_enTimestep = false;
-	if (cm->is_assigned(prefix + "shading:timestep"))
-	{
-		size_t nrows, ncols;
-		ssc_number_t *mat = cm->as_matrix(prefix + "shading:timestep", &nrows, &ncols);
-		if (nrows % 8760 == 0)
-		{
-			nrecs = nrows;
-			m_beamFactors.resize_fill(nrows, ncols, 1.0);
-			if (m_string_option == 0) // use percent shaded to lookup in database
-			{
-				for (size_t r = 0; r < nrows; r++)
-					for (size_t c = 0; c < ncols; c++)
-						m_beamFactors.at(r, c) = mat[r*ncols + c]; //entered in % shaded
-			}
-			else if (m_string_option == 1) // use average of all strings in column zero
-			{
-				for (size_t r = 0; r < nrows; r++)
-				{
-					double sum_percent_shaded = 0;
-					for (size_t c = 0; c < ncols; c++)
-					{
-						sum_percent_shaded += mat[r*ncols + c];//entered in % shaded
-					}
-					sum_percent_shaded /= ncols;
-					//cm->log(util::format("hour %d avg percent beam factor %lg",
-					//	r, sum_percent_shaded),
-					//	SSC_WARNING);
-					m_beamFactors.at(r, 0) = 1.0 - sum_percent_shaded / 100;
-				}
-			}
-			else if (m_string_option == 2) // use max of all strings in column zero
-			{
-				for (size_t r = 0; r < nrows; r++)
-				{
-					double max_percent_shaded = 0;
-					for (size_t c = 0; c < ncols; c++)
-					{
-						if (mat[r*ncols + c]>max_percent_shaded)
-							max_percent_shaded = mat[r*ncols + c];//entered in % shaded
-					}
-					//cm->log(util::format("hour %d max percent beam factor %lg",
-					//	r, max_percent_shaded),
-					//	SSC_WARNING);
+        if (nrows % 8760 == 0)
+        {
+            nrecs = nrows;
+            m_beamFactors.resize_fill(nrows, ncols, 1.0);
+            if (m_string_option == 0) // use percent shaded to lookup in database
+            {
+                for (size_t r = 0; r < nrows; r++)
+                    for (size_t c = 0; c < ncols; c++)
+                        m_beamFactors.at(r, c) = mat[r * ncols + c]; //entered in % shaded
+            }
+            else if (m_string_option == 1) // use average of all strings in column zero
+            {
+                for (size_t r = 0; r < nrows; r++)
+                {
+                    double sum_percent_shaded = 0;
+                    for (size_t c = 0; c < ncols; c++)
+                    {
+                        sum_percent_shaded += mat[r * ncols + c];//entered in % shaded
+                    }
+                    sum_percent_shaded /= ncols;
+                    //cm->log(util::format("hour %d avg percent beam factor %lg",
+                    //	r, sum_percent_shaded),
+                    //	SSC_WARNING);
+                    m_beamFactors.at(r, 0) = 1.0 - sum_percent_shaded / 100;
+                }
+            }
+            else if (m_string_option == 2) // use max of all strings in column zero
+            {
+                for (size_t r = 0; r < nrows; r++)
+                {
+                    double max_percent_shaded = 0;
+                    for (size_t c = 0; c < ncols; c++)
+                    {
+                        if (mat[r * ncols + c] > max_percent_shaded)
+                            max_percent_shaded = mat[r * ncols + c];//entered in % shaded
+                    }
+                    //cm->log(util::format("hour %d max percent beam factor %lg",
+                    //	r, max_percent_shaded),
+                    //	SSC_WARNING);
 
-					m_beamFactors.at(r, 0) = 1.0 - max_percent_shaded / 100;
-				}
-			}
-			else if (m_string_option == 3) // use min of all strings in column zero
-			{
-				for (size_t r = 0; r < nrows; r++)
-				{
-					double min_percent_shaded = 100;
-					for (size_t c = 0; c < ncols; c++)
-					{
-						if (mat[r*ncols + c]<min_percent_shaded)
-							min_percent_shaded = mat[r*ncols + c];//entered in % shaded
-					}
-					//cm->log(util::format("hour %d min percent beam factor %lg",
-					//	r, min_percent_shaded),
-					//	SSC_WARNING);
-					m_beamFactors.at(r, 0) = 1.0 - min_percent_shaded / 100;
-				}
-			}
-			else // use unshaded factors to apply to beam ( column zero only is used)
-			{
-				for (size_t r = 0; r < nrows; r++)
-					for (size_t c = 0; c < ncols; c++)
-						m_beamFactors.at(r, c) = 1 - mat[r*ncols + c] / 100; //all other entries must be converted from % to factor unshaded for beam
-			}
-			m_steps_per_hour = (int)nrows / 8760;
-			m_enTimestep = true;
-		}
-		else
-		{
-			ok = false;
-			m_errors.push_back("hourly shading beam losses must be multiple of 8760 values");
-		}
-	}
+                    m_beamFactors.at(r, 0) = 1.0 - max_percent_shaded / 100;
+                }
+            }
+            else if (m_string_option == 3) // use min of all strings in column zero
+            {
+                for (size_t r = 0; r < nrows; r++)
+                {
+                    double min_percent_shaded = 100;
+                    for (size_t c = 0; c < ncols; c++)
+                    {
+                        if (mat[r * ncols + c] < min_percent_shaded)
+                            min_percent_shaded = mat[r * ncols + c];//entered in % shaded
+                    }
+                    //cm->log(util::format("hour %d min percent beam factor %lg",
+                    //	r, min_percent_shaded),
+                    //	SSC_WARNING);
+                    m_beamFactors.at(r, 0) = 1.0 - min_percent_shaded / 100;
+                }
+            }
+            else // use unshaded factors to apply to beam ( column zero only is used)
+            {
+                for (size_t r = 0; r < nrows; r++)
+                    for (size_t c = 0; c < ncols; c++)
+                        m_beamFactors.at(r, c) = 1 - mat[r * ncols + c] / 100; //all other entries must be converted from % to factor unshaded for beam
+            }
+            m_steps_per_hour = (int)nrows / 8760;
+            m_enTimestep = true;
+        }
+        else
+        {
+            ok = false;
+            m_errors.push_back("hourly shading beam losses must be multiple of 8760 values");
+        }
+    }
 
- // initialize other shading inputs
-	m_enMxH = false;
-	if (cm->is_assigned(prefix + "shading:mxh"))
-	{
-		m_mxhFactors.resize_fill(nrecs, 1, 1.0);
-		size_t nrows, ncols;
-		ssc_number_t *mat = cm->as_matrix(prefix + "shading:mxh", &nrows, &ncols);
-		if (nrows != 12 || ncols != 24)
-		{
-			ok = false;
-			m_errors.push_back("month x hour shading losses must have 12 rows and 24 columns");
-		}
-		else
-		{
-			int c = 0;
-			for (int m = 0; m < 12; m++)
-				for (size_t d = 0; d < util::nday[m]; d++)
-					for (int h = 0; h < 24; h++)
-						for (int jj = 0; jj < m_steps_per_hour; jj++)
-							m_mxhFactors.at(c++, 0) = 1 - mat[m*ncols + h] / 100;
+    // initialize other shading inputs
+    m_enMxH = false;
+    if (cm->is_assigned(prefix + "shading_en_mxh") && cm->as_boolean(prefix + "shading_en_mxh"))
+    {
+        m_mxhFactors.resize_fill(nrecs, 1, 1.0);
+        size_t nrows, ncols;
+        ssc_number_t* mat = cm->as_matrix(prefix + "shading_mxh", &nrows, &ncols);
+        if (nrows != 12 || ncols != 24)
+        {
+            ok = false;
+            m_errors.push_back("month x hour shading losses must have 12 rows and 24 columns");
+        }
+        else
+        {
+            int c = 0;
+            for (int m = 0; m < 12; m++)
+                for (size_t d = 0; d < util::nday[m]; d++)
+                    for (int h = 0; h < 24; h++)
+                        for (int jj = 0; jj < m_steps_per_hour; jj++)
+                            m_mxhFactors.at(c++, 0) = 1 - mat[m * ncols + h] / 100;
 
-		}
-		m_enMxH = true;
-	}
+        }
+        m_enMxH = true;
+    }
 
-	m_enAzAlt = false;
-	if (cm->is_assigned(prefix + "shading:azal"))
-	{
-		size_t nrows, ncols;
-		ssc_number_t *mat = cm->as_matrix(prefix + "shading:azal", &nrows, &ncols);
-		if (nrows < 3 || ncols < 3)
-		{
-			ok = false;
-			m_errors.push_back("azimuth x altitude shading losses must have at least 3 rows and 3 columns");
-		}
+    m_enAzAlt = false;
+    if (cm->is_assigned(prefix + "shading_en_azal") && cm->as_boolean(prefix + "shading_en_azal"))
+    {
+        size_t nrows, ncols;
+        ssc_number_t* mat = cm->as_matrix(prefix + "shading_azal", &nrows, &ncols);
+        if (nrows < 3 || ncols < 3)
+        {
+            ok = false;
+            m_errors.push_back("azimuth x altitude shading losses must have at least 3 rows and 3 columns");
+        }
 
-		m_azaltvals.resize_fill(nrows, ncols, 1.0);
-		for (size_t r = 0; r < nrows; r++)
-		{
-			for (size_t c = 0; c < ncols; c++)
-			{
-				if (r == 0 || c == 0)
-					m_azaltvals.at(r, c) = mat[r*ncols + c]; //first row and column contain azimuth by altitude values
-				else
-					m_azaltvals.at(r, c) = 1 - mat[r*ncols + c] / 100; //all other entries must be converted from % to factor
-			}
-		}
-		m_enAzAlt = true;
-	}
+        m_azaltvals.resize_fill(nrows, ncols, 1.0);
+        for (size_t r = 0; r < nrows; r++)
+        {
+            for (size_t c = 0; c < ncols; c++)
+            {
+                if (r == 0 || c == 0)
+                    m_azaltvals.at(r, c) = mat[r * ncols + c]; //first row and column contain azimuth by altitude values
+                else
+                    m_azaltvals.at(r, c) = 1 - mat[r * ncols + c] / 100; //all other entries must be converted from % to factor
+            }
+        }
+        m_enAzAlt = true;
+    }
 
 
-	if (cm->is_assigned(prefix + "shading:diff"))
-		m_diffFactor = 1 - cm->as_double(prefix + "shading:diff") / 100;
+    if (cm->is_assigned(prefix + "shading_en_diff") && cm->as_boolean(prefix + "shading_en_diff"))
+        m_diffFactor = 1 - cm->as_double(prefix + "shading_diff") / 100;
 
-	return ok;
+    return ok;
 }
 
 std::string shading_factor_calculator::get_error(size_t i)
@@ -1868,15 +1865,17 @@ std::vector<double> scalefactors::get_factors(const char* name)
 
 void prepend_to_output(compute_module* cm, std::string var_name, size_t count, ssc_number_t value) {
     size_t orig_count = 0;
-    ssc_number_t* arr = cm->as_array(var_name, &orig_count);
-    arr = cm->resize_array(var_name, count);
-    if (count > orig_count) {
-        size_t diff = count - orig_count;
-        for (int i = orig_count - 1; i >= 0; i--) {
-            arr[i + diff] = arr[i];
-        }
-        for (int i = 0; i < diff; i++) {
-            arr[i] = value;
+    if (cm->is_assigned(var_name)) {
+        ssc_number_t* arr = cm->as_array(var_name, &orig_count);
+        arr = cm->resize_array(var_name, count);
+        if (count > orig_count) {
+            size_t diff = count - orig_count;
+            for (int i = (int)orig_count - 1; i >= 0; i--) {
+                arr[i + diff] = arr[i];
+            }
+            for (int i = 0; i < (int)diff; i++) {
+                arr[i] = value;
+            }
         }
     }
 }

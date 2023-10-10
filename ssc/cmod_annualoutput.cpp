@@ -49,17 +49,13 @@ static var_info _cm_vtab_annualoutput[] = {
 	{ SSC_INPUT,        SSC_ARRAY,      "energy_degradation",		   "Annual energy degradation",	            "%",      "",                                       "AnnualOutput",      "*",						"",                              "" },
 	{ SSC_INPUT,        SSC_MATRIX,     "energy_curtailment",		   "First year energy curtailment",	         "",      "(0..1)",                                 "AnnualOutput",      "*",						"",                              "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "system_use_lifetime_output",  "Lifetime hourly system outputs",        "0/1",    "0=hourly first year,1=hourly lifetime",  "AnnualOutput",      "*",						"INTEGER,MIN=0",                 "" },
-//	{ SSC_INPUT,        SSC_ARRAY,		"energy_net",	       "Hourly energy produced by the system",  "kW",     "",                                       "AnnualOutput",      "*",						"",                              "" },
-	{ SSC_INPUT,        SSC_ARRAY,		"system_hourly_energy",	       "Hourly energy produced by the system",  "kW",     "",                                       "AnnualOutput",      "*",						"",                              "" },
+    { SSC_INPUT,        SSC_ARRAY,		"system_hourly_energy",	       "Hourly energy produced by the system",  "kW",     "",                                       "AnnualOutput",      "*",						"",                              "" },
 
 
 /* output */
-//	{ SSC_OUTPUT,        SSC_ARRAY,     "annual_e_net_delivered",               "Annual energy",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,     "annual_energy",               "Annual energy",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
-//	{ SSC_OUTPUT,        SSC_ARRAY,     "monthly_e_net_delivered",               "Monthly energy",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,     "monthly_energy",               "Monthly energy",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
-//	{ SSC_OUTPUT,        SSC_ARRAY,     "hourly_e_net_delivered",               "Hourly energy",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,     "hourly_energy",               "Hourly energy",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
+    { SSC_OUTPUT,        SSC_ARRAY,     "annual_energy",               "Annual energy",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
+    { SSC_OUTPUT,        SSC_ARRAY,     "monthly_energy",               "Monthly energy gross",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
+    { SSC_OUTPUT,        SSC_ARRAY,     "hourly_energy",               "Hourly energy",                            "kWh",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,     "annual_availability",               "Annual availability",                            "",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,     "annual_degradation",               "Annual degradation",                            "",     "",                                      "AnnualOutput",      "*",                      "",                               "" },
 

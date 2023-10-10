@@ -243,45 +243,27 @@ enum {
 	CF_TOD9Revenue,
 
 	CF_revenue_monthly_firstyear_TOD1,
-	CF_energy_net_monthly_firstyear_TOD1,
+	cf_energy_sales_monthly_firstyear_TOD1,
 	CF_revenue_monthly_firstyear_TOD2,
-	CF_energy_net_monthly_firstyear_TOD2,
+	cf_energy_sales_monthly_firstyear_TOD2,
 	CF_revenue_monthly_firstyear_TOD3,
-	CF_energy_net_monthly_firstyear_TOD3,
+	cf_energy_sales_monthly_firstyear_TOD3,
 	CF_revenue_monthly_firstyear_TOD4,
-	CF_energy_net_monthly_firstyear_TOD4,
+	cf_energy_sales_monthly_firstyear_TOD4,
 	CF_revenue_monthly_firstyear_TOD5,
-	CF_energy_net_monthly_firstyear_TOD5,
+	cf_energy_sales_monthly_firstyear_TOD5,
 	CF_revenue_monthly_firstyear_TOD6,
-	CF_energy_net_monthly_firstyear_TOD6,
+	cf_energy_sales_monthly_firstyear_TOD6,
 	CF_revenue_monthly_firstyear_TOD7,
-	CF_energy_net_monthly_firstyear_TOD7,
+	cf_energy_sales_monthly_firstyear_TOD7,
 	CF_revenue_monthly_firstyear_TOD8,
-	CF_energy_net_monthly_firstyear_TOD8,
+	cf_energy_sales_monthly_firstyear_TOD8,
 	CF_revenue_monthly_firstyear_TOD9,
-	CF_energy_net_monthly_firstyear_TOD9,
+	cf_energy_sales_monthly_firstyear_TOD9,
 
 	CF_max_dispatch
 };
 
-
-
-//var_info vtab_dispatch_periods[] = {
-	/*   VARTYPE           DATATYPE         NAME                               LABEL                                       UNITS     META                                     GROUP                 REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-
-	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor1", "Dispatch period 1 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
-	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor2", "Dispatch period 2 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
-	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor3", "Dispatch period 3 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
-	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor4", "Dispatch period 4 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
-	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor5", "Dispatch period 5 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
-	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor6", "Dispatch period 6 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
-	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor7", "Dispatch period 7 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
-	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor8", "Dispatch period 8 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
-	//{ SSC_INPUT, SSC_NUMBER, "dispatch_factor9", "Dispatch period 9 value", "", "", "Dispatch values", "*", "POSITIVE", "" },
-//	{ SSC_INPUT, SSC_MATRIX, "dispatch_sched_weekday", "Diurnal weekday dispatch periods", "1..9", "12 x 24 matrix", "Dispatch values", "*", "", "" },
-//	{ SSC_INPUT, SSC_MATRIX, "dispatch_sched_weekend", "Diurnal weekend dispatch periods", "1..9", "12 x 24 matrix", "Dispatch values", "*", "", "" },
-
-//	var_info_invalid };
 
 
 dispatch_calculations::dispatch_calculations(compute_module *cm, std::vector<double>& degradation, std::vector<double>& hourly_energy)
@@ -327,18 +309,18 @@ bool dispatch_calculations::compute_outputs_ts(std::vector<double>& ppa)
 
 	// outputs
 	// dispatch energy
-	save_cf(m_cm, m_cf, CF_TODJanEnergy, m_nyears, "cf_energy_net_jan");
-	save_cf(m_cm, m_cf, CF_TODFebEnergy, m_nyears, "cf_energy_net_feb");
-	save_cf(m_cm, m_cf, CF_TODMarEnergy, m_nyears, "cf_energy_net_mar");
-	save_cf(m_cm, m_cf, CF_TODAprEnergy, m_nyears, "cf_energy_net_apr");
-	save_cf(m_cm, m_cf, CF_TODMayEnergy, m_nyears, "cf_energy_net_may");
-	save_cf(m_cm, m_cf, CF_TODJunEnergy, m_nyears, "cf_energy_net_jun");
-	save_cf(m_cm, m_cf, CF_TODJulEnergy, m_nyears, "cf_energy_net_jul");
-	save_cf(m_cm, m_cf, CF_TODAugEnergy, m_nyears, "cf_energy_net_aug");
-	save_cf(m_cm, m_cf, CF_TODSepEnergy, m_nyears, "cf_energy_net_sep");
-	save_cf(m_cm, m_cf, CF_TODOctEnergy, m_nyears, "cf_energy_net_oct");
-	save_cf(m_cm, m_cf, CF_TODNovEnergy, m_nyears, "cf_energy_net_nov");
-	save_cf(m_cm, m_cf, CF_TODDecEnergy, m_nyears, "cf_energy_net_dec");
+	save_cf(m_cm, m_cf, CF_TODJanEnergy, m_nyears, "cf_energy_sales_jan");
+	save_cf(m_cm, m_cf, CF_TODFebEnergy, m_nyears, "cf_energy_sales_feb");
+	save_cf(m_cm, m_cf, CF_TODMarEnergy, m_nyears, "cf_energy_sales_mar");
+	save_cf(m_cm, m_cf, CF_TODAprEnergy, m_nyears, "cf_energy_sales_apr");
+	save_cf(m_cm, m_cf, CF_TODMayEnergy, m_nyears, "cf_energy_sales_may");
+	save_cf(m_cm, m_cf, CF_TODJunEnergy, m_nyears, "cf_energy_sales_jun");
+	save_cf(m_cm, m_cf, CF_TODJulEnergy, m_nyears, "cf_energy_sales_jul");
+	save_cf(m_cm, m_cf, CF_TODAugEnergy, m_nyears, "cf_energy_sales_aug");
+	save_cf(m_cm, m_cf, CF_TODSepEnergy, m_nyears, "cf_energy_sales_sep");
+	save_cf(m_cm, m_cf, CF_TODOctEnergy, m_nyears, "cf_energy_sales_oct");
+	save_cf(m_cm, m_cf, CF_TODNovEnergy, m_nyears, "cf_energy_sales_nov");
+	save_cf(m_cm, m_cf, CF_TODDecEnergy, m_nyears, "cf_energy_sales_dec");
 
 	for (int y = 0; y <= m_nyears; y++)
 	{
@@ -385,15 +367,16 @@ bool dispatch_calculations::compute_outputs( std::vector<double>& ppa)
 	}
 
 	size_t i;
-	double dispatch_factor1 = m_cm->as_double("dispatch_factor1");
-	double dispatch_factor2 = m_cm->as_double("dispatch_factor2");
-	double dispatch_factor3 = m_cm->as_double("dispatch_factor3");
-	double dispatch_factor4 = m_cm->as_double("dispatch_factor4");
-	double dispatch_factor5 = m_cm->as_double("dispatch_factor5");
-	double dispatch_factor6 = m_cm->as_double("dispatch_factor6");
-	double dispatch_factor7 = m_cm->as_double("dispatch_factor7");
-	double dispatch_factor8 = m_cm->as_double("dispatch_factor8");
-	double dispatch_factor9 = m_cm->as_double("dispatch_factor9");
+
+    double dispatch_factor1 = m_dispatch_tod_factors[0];
+	double dispatch_factor2 = m_dispatch_tod_factors[1];
+	double dispatch_factor3 = m_dispatch_tod_factors[2];
+	double dispatch_factor4 = m_dispatch_tod_factors[3];
+	double dispatch_factor5 = m_dispatch_tod_factors[4];
+	double dispatch_factor6 = m_dispatch_tod_factors[5];
+	double dispatch_factor7 = m_dispatch_tod_factors[6];
+	double dispatch_factor8 = m_dispatch_tod_factors[7];
+	double dispatch_factor9 = m_dispatch_tod_factors[8];
 
 	if (m_cm->as_integer("system_use_lifetime_output"))
 		process_lifetime_dispatch_output();
@@ -403,28 +386,28 @@ bool dispatch_calculations::compute_outputs( std::vector<double>& ppa)
 
 // outputs
 	// dispatch energy
-	save_cf( m_cm, m_cf,  CF_TODJanEnergy, m_nyears, "cf_energy_net_jan");
-	save_cf( m_cm, m_cf,  CF_TODFebEnergy, m_nyears, "cf_energy_net_feb");
-	save_cf( m_cm, m_cf,  CF_TODMarEnergy, m_nyears, "cf_energy_net_mar");
-	save_cf( m_cm, m_cf,  CF_TODAprEnergy, m_nyears, "cf_energy_net_apr");
-	save_cf( m_cm, m_cf,  CF_TODMayEnergy, m_nyears, "cf_energy_net_may");
-	save_cf( m_cm, m_cf,  CF_TODJunEnergy, m_nyears, "cf_energy_net_jun");
-	save_cf( m_cm, m_cf,  CF_TODJulEnergy, m_nyears, "cf_energy_net_jul");
-	save_cf( m_cm, m_cf,  CF_TODAugEnergy, m_nyears, "cf_energy_net_aug");
-	save_cf( m_cm, m_cf,  CF_TODSepEnergy, m_nyears, "cf_energy_net_sep");
-	save_cf( m_cm, m_cf,  CF_TODOctEnergy, m_nyears, "cf_energy_net_oct");
-	save_cf( m_cm, m_cf,  CF_TODNovEnergy, m_nyears, "cf_energy_net_nov");
-	save_cf( m_cm, m_cf,  CF_TODDecEnergy, m_nyears, "cf_energy_net_dec");
+	save_cf( m_cm, m_cf,  CF_TODJanEnergy, m_nyears, "cf_energy_sales_jan");
+	save_cf( m_cm, m_cf,  CF_TODFebEnergy, m_nyears, "cf_energy_sales_feb");
+	save_cf( m_cm, m_cf,  CF_TODMarEnergy, m_nyears, "cf_energy_sales_mar");
+	save_cf( m_cm, m_cf,  CF_TODAprEnergy, m_nyears, "cf_energy_sales_apr");
+	save_cf( m_cm, m_cf,  CF_TODMayEnergy, m_nyears, "cf_energy_sales_may");
+	save_cf( m_cm, m_cf,  CF_TODJunEnergy, m_nyears, "cf_energy_sales_jun");
+	save_cf( m_cm, m_cf,  CF_TODJulEnergy, m_nyears, "cf_energy_sales_jul");
+	save_cf( m_cm, m_cf,  CF_TODAugEnergy, m_nyears, "cf_energy_sales_aug");
+	save_cf( m_cm, m_cf,  CF_TODSepEnergy, m_nyears, "cf_energy_sales_sep");
+	save_cf( m_cm, m_cf,  CF_TODOctEnergy, m_nyears, "cf_energy_sales_oct");
+	save_cf( m_cm, m_cf,  CF_TODNovEnergy, m_nyears, "cf_energy_sales_nov");
+	save_cf( m_cm, m_cf,  CF_TODDecEnergy, m_nyears, "cf_energy_sales_dec");
 
-	save_cf( m_cm, m_cf,  CF_TOD1Energy, m_nyears, "cf_energy_net_dispatch1");
-	save_cf( m_cm, m_cf,  CF_TOD2Energy, m_nyears, "cf_energy_net_dispatch2");
-	save_cf( m_cm, m_cf,  CF_TOD3Energy, m_nyears, "cf_energy_net_dispatch3");
-	save_cf( m_cm, m_cf,  CF_TOD4Energy, m_nyears, "cf_energy_net_dispatch4");
-	save_cf( m_cm, m_cf,  CF_TOD5Energy, m_nyears, "cf_energy_net_dispatch5");
-	save_cf( m_cm, m_cf,  CF_TOD6Energy, m_nyears, "cf_energy_net_dispatch6");
-	save_cf( m_cm, m_cf,  CF_TOD7Energy, m_nyears, "cf_energy_net_dispatch7");
-	save_cf( m_cm, m_cf,  CF_TOD8Energy, m_nyears, "cf_energy_net_dispatch8");
-	save_cf( m_cm, m_cf,  CF_TOD9Energy, m_nyears, "cf_energy_net_dispatch9");
+	save_cf( m_cm, m_cf,  CF_TOD1Energy, m_nyears, "cf_energy_sales_dispatch1");
+	save_cf( m_cm, m_cf,  CF_TOD2Energy, m_nyears, "cf_energy_sales_dispatch2");
+	save_cf( m_cm, m_cf,  CF_TOD3Energy, m_nyears, "cf_energy_sales_dispatch3");
+	save_cf( m_cm, m_cf,  CF_TOD4Energy, m_nyears, "cf_energy_sales_dispatch4");
+	save_cf( m_cm, m_cf,  CF_TOD5Energy, m_nyears, "cf_energy_sales_dispatch5");
+	save_cf( m_cm, m_cf,  CF_TOD6Energy, m_nyears, "cf_energy_sales_dispatch6");
+	save_cf( m_cm, m_cf,  CF_TOD7Energy, m_nyears, "cf_energy_sales_dispatch7");
+	save_cf( m_cm, m_cf,  CF_TOD8Energy, m_nyears, "cf_energy_sales_dispatch8");
+	save_cf( m_cm, m_cf,  CF_TOD9Energy, m_nyears, "cf_energy_sales_dispatch9");
 
 	// dispatch revenue cents/kWh ppa input in cents per kWh - revenue in dollars
 	for (i = 0; i <= (size_t)m_nyears; i++)
@@ -644,21 +627,21 @@ bool dispatch_calculations::compute_outputs( std::vector<double>& ppa)
 	m_cf.at(CF_revenue_monthly_firstyear, 10) = m_cf.at(CF_TODNovRevenue, 1);
 	m_cf.at(CF_revenue_monthly_firstyear, 11) = m_cf.at(CF_TODDecRevenue, 1);
 
-	m_cf.at(CF_energy_net_monthly_firstyear, 0) = m_cf.at(CF_TODJanEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear, 1) = m_cf.at(CF_TODFebEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear, 2) = m_cf.at(CF_TODMarEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear, 3) = m_cf.at(CF_TODAprEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear, 4) = m_cf.at(CF_TODMayEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear, 5) = m_cf.at(CF_TODJunEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear, 6) = m_cf.at(CF_TODJulEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear, 7) = m_cf.at(CF_TODAugEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear, 8) = m_cf.at(CF_TODSepEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear, 9) = m_cf.at(CF_TODOctEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear, 10) = m_cf.at(CF_TODNovEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear, 11) = m_cf.at(CF_TODDecEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear, 0) = m_cf.at(CF_TODJanEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear, 1) = m_cf.at(CF_TODFebEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear, 2) = m_cf.at(CF_TODMarEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear, 3) = m_cf.at(CF_TODAprEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear, 4) = m_cf.at(CF_TODMayEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear, 5) = m_cf.at(CF_TODJunEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear, 6) = m_cf.at(CF_TODJulEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear, 7) = m_cf.at(CF_TODAugEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear, 8) = m_cf.at(CF_TODSepEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear, 9) = m_cf.at(CF_TODOctEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear, 10) = m_cf.at(CF_TODNovEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear, 11) = m_cf.at(CF_TODDecEnergy, 1);
 
 	save_cf( m_cm, m_cf,  CF_revenue_monthly_firstyear, 11, "cf_revenue_monthly_firstyear");
-	save_cf( m_cm, m_cf,  CF_energy_net_monthly_firstyear, 11, "cf_energy_net_monthly_firstyear");
+	save_cf( m_cm, m_cf,  cf_energy_sales_monthly_firstyear, 11, "cf_energy_sales_monthly_firstyear");
 	*/
 
 
@@ -687,21 +670,21 @@ bool dispatch_calculations::compute_outputs( std::vector<double>& ppa)
 	m_cf.at(CF_revenue_monthly_firstyear_TOD1, 11) = ppa[1] / 100.0 *
 		dispatch_factor1 * m_cf.at(CF_TOD1DecEnergy, 1);
 
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD1, 0) = m_cf.at(CF_TOD1JanEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD1, 1) = m_cf.at(CF_TOD1FebEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD1, 2) = m_cf.at(CF_TOD1MarEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD1, 3) = m_cf.at(CF_TOD1AprEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD1, 4) = m_cf.at(CF_TOD1MayEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD1, 5) = m_cf.at(CF_TOD1JunEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD1, 6) = m_cf.at(CF_TOD1JulEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD1, 7) = m_cf.at(CF_TOD1AugEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD1, 8) = m_cf.at(CF_TOD1SepEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD1, 9) = m_cf.at(CF_TOD1OctEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD1, 10) = m_cf.at(CF_TOD1NovEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD1, 11) = m_cf.at(CF_TOD1DecEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD1, 0) = m_cf.at(CF_TOD1JanEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD1, 1) = m_cf.at(CF_TOD1FebEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD1, 2) = m_cf.at(CF_TOD1MarEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD1, 3) = m_cf.at(CF_TOD1AprEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD1, 4) = m_cf.at(CF_TOD1MayEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD1, 5) = m_cf.at(CF_TOD1JunEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD1, 6) = m_cf.at(CF_TOD1JulEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD1, 7) = m_cf.at(CF_TOD1AugEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD1, 8) = m_cf.at(CF_TOD1SepEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD1, 9) = m_cf.at(CF_TOD1OctEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD1, 10) = m_cf.at(CF_TOD1NovEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD1, 11) = m_cf.at(CF_TOD1DecEnergy, 1);
 
 	save_cf( m_cm, m_cf,  CF_revenue_monthly_firstyear_TOD1, 11, "cf_revenue_monthly_firstyear_TOD1");
-	save_cf( m_cm, m_cf,  CF_energy_net_monthly_firstyear_TOD1, 11, "cf_energy_net_monthly_firstyear_TOD1");
+	save_cf( m_cm, m_cf,  cf_energy_sales_monthly_firstyear_TOD1, 11, "cf_energy_sales_monthly_firstyear_TOD1");
 
 
 	m_cf.at(CF_revenue_monthly_firstyear_TOD2, 0) = ppa[1] / 100.0 *
@@ -729,21 +712,21 @@ bool dispatch_calculations::compute_outputs( std::vector<double>& ppa)
 	m_cf.at(CF_revenue_monthly_firstyear_TOD2, 11) = ppa[1] / 100.0 *
 		dispatch_factor2 * m_cf.at(CF_TOD2DecEnergy, 1);
 
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD2, 0) = m_cf.at(CF_TOD2JanEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD2, 1) = m_cf.at(CF_TOD2FebEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD2, 2) = m_cf.at(CF_TOD2MarEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD2, 3) = m_cf.at(CF_TOD2AprEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD2, 4) = m_cf.at(CF_TOD2MayEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD2, 5) = m_cf.at(CF_TOD2JunEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD2, 6) = m_cf.at(CF_TOD2JulEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD2, 7) = m_cf.at(CF_TOD2AugEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD2, 8) = m_cf.at(CF_TOD2SepEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD2, 9) = m_cf.at(CF_TOD2OctEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD2, 10) = m_cf.at(CF_TOD2NovEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD2, 11) = m_cf.at(CF_TOD2DecEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD2, 0) = m_cf.at(CF_TOD2JanEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD2, 1) = m_cf.at(CF_TOD2FebEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD2, 2) = m_cf.at(CF_TOD2MarEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD2, 3) = m_cf.at(CF_TOD2AprEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD2, 4) = m_cf.at(CF_TOD2MayEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD2, 5) = m_cf.at(CF_TOD2JunEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD2, 6) = m_cf.at(CF_TOD2JulEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD2, 7) = m_cf.at(CF_TOD2AugEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD2, 8) = m_cf.at(CF_TOD2SepEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD2, 9) = m_cf.at(CF_TOD2OctEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD2, 10) = m_cf.at(CF_TOD2NovEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD2, 11) = m_cf.at(CF_TOD2DecEnergy, 1);
 
 	save_cf( m_cm, m_cf,  CF_revenue_monthly_firstyear_TOD2, 11, "cf_revenue_monthly_firstyear_TOD2");
-	save_cf( m_cm, m_cf,  CF_energy_net_monthly_firstyear_TOD2, 11, "cf_energy_net_monthly_firstyear_TOD2");
+	save_cf( m_cm, m_cf,  cf_energy_sales_monthly_firstyear_TOD2, 11, "cf_energy_sales_monthly_firstyear_TOD2");
 
 
 	m_cf.at(CF_revenue_monthly_firstyear_TOD3, 0) = ppa[1] / 100.0 *
@@ -771,21 +754,21 @@ bool dispatch_calculations::compute_outputs( std::vector<double>& ppa)
 	m_cf.at(CF_revenue_monthly_firstyear_TOD3, 11) = ppa[1] / 100.0 *
 		dispatch_factor3 * m_cf.at(CF_TOD3DecEnergy, 1);
 
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD3, 0) = m_cf.at(CF_TOD3JanEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD3, 1) = m_cf.at(CF_TOD3FebEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD3, 2) = m_cf.at(CF_TOD3MarEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD3, 3) = m_cf.at(CF_TOD3AprEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD3, 4) = m_cf.at(CF_TOD3MayEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD3, 5) = m_cf.at(CF_TOD3JunEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD3, 6) = m_cf.at(CF_TOD3JulEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD3, 7) = m_cf.at(CF_TOD3AugEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD3, 8) = m_cf.at(CF_TOD3SepEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD3, 9) = m_cf.at(CF_TOD3OctEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD3, 10) = m_cf.at(CF_TOD3NovEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD3, 11) = m_cf.at(CF_TOD3DecEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD3, 0) = m_cf.at(CF_TOD3JanEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD3, 1) = m_cf.at(CF_TOD3FebEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD3, 2) = m_cf.at(CF_TOD3MarEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD3, 3) = m_cf.at(CF_TOD3AprEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD3, 4) = m_cf.at(CF_TOD3MayEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD3, 5) = m_cf.at(CF_TOD3JunEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD3, 6) = m_cf.at(CF_TOD3JulEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD3, 7) = m_cf.at(CF_TOD3AugEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD3, 8) = m_cf.at(CF_TOD3SepEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD3, 9) = m_cf.at(CF_TOD3OctEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD3, 10) = m_cf.at(CF_TOD3NovEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD3, 11) = m_cf.at(CF_TOD3DecEnergy, 1);
 
 	save_cf( m_cm, m_cf,  CF_revenue_monthly_firstyear_TOD3, 11, "cf_revenue_monthly_firstyear_TOD3");
-	save_cf( m_cm, m_cf,  CF_energy_net_monthly_firstyear_TOD3, 11, "cf_energy_net_monthly_firstyear_TOD3");
+	save_cf( m_cm, m_cf,  cf_energy_sales_monthly_firstyear_TOD3, 11, "cf_energy_sales_monthly_firstyear_TOD3");
 
 
 	m_cf.at(CF_revenue_monthly_firstyear_TOD4, 0) = ppa[1] / 100.0 *
@@ -813,21 +796,21 @@ bool dispatch_calculations::compute_outputs( std::vector<double>& ppa)
 	m_cf.at(CF_revenue_monthly_firstyear_TOD4, 11) = ppa[1] / 100.0 *
 		dispatch_factor4 * m_cf.at(CF_TOD4DecEnergy, 1);
 
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD4, 0) = m_cf.at(CF_TOD4JanEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD4, 1) = m_cf.at(CF_TOD4FebEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD4, 2) = m_cf.at(CF_TOD4MarEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD4, 3) = m_cf.at(CF_TOD4AprEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD4, 4) = m_cf.at(CF_TOD4MayEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD4, 5) = m_cf.at(CF_TOD4JunEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD4, 6) = m_cf.at(CF_TOD4JulEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD4, 7) = m_cf.at(CF_TOD4AugEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD4, 8) = m_cf.at(CF_TOD4SepEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD4, 9) = m_cf.at(CF_TOD4OctEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD4, 10) = m_cf.at(CF_TOD4NovEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD4, 11) = m_cf.at(CF_TOD4DecEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD4, 0) = m_cf.at(CF_TOD4JanEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD4, 1) = m_cf.at(CF_TOD4FebEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD4, 2) = m_cf.at(CF_TOD4MarEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD4, 3) = m_cf.at(CF_TOD4AprEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD4, 4) = m_cf.at(CF_TOD4MayEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD4, 5) = m_cf.at(CF_TOD4JunEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD4, 6) = m_cf.at(CF_TOD4JulEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD4, 7) = m_cf.at(CF_TOD4AugEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD4, 8) = m_cf.at(CF_TOD4SepEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD4, 9) = m_cf.at(CF_TOD4OctEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD4, 10) = m_cf.at(CF_TOD4NovEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD4, 11) = m_cf.at(CF_TOD4DecEnergy, 1);
 
 	save_cf( m_cm, m_cf,  CF_revenue_monthly_firstyear_TOD4, 11, "cf_revenue_monthly_firstyear_TOD4");
-	save_cf( m_cm, m_cf,  CF_energy_net_monthly_firstyear_TOD4, 11, "cf_energy_net_monthly_firstyear_TOD4");
+	save_cf( m_cm, m_cf,  cf_energy_sales_monthly_firstyear_TOD4, 11, "cf_energy_sales_monthly_firstyear_TOD4");
 
 
 	m_cf.at(CF_revenue_monthly_firstyear_TOD5, 0) = ppa[1] / 100.0 *
@@ -855,21 +838,21 @@ bool dispatch_calculations::compute_outputs( std::vector<double>& ppa)
 	m_cf.at(CF_revenue_monthly_firstyear_TOD5, 11) = ppa[1] / 100.0 *
 		dispatch_factor5 * m_cf.at(CF_TOD5DecEnergy, 1);
 
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD5, 0) = m_cf.at(CF_TOD5JanEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD5, 1) = m_cf.at(CF_TOD5FebEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD5, 2) = m_cf.at(CF_TOD5MarEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD5, 3) = m_cf.at(CF_TOD5AprEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD5, 4) = m_cf.at(CF_TOD5MayEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD5, 5) = m_cf.at(CF_TOD5JunEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD5, 6) = m_cf.at(CF_TOD5JulEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD5, 7) = m_cf.at(CF_TOD5AugEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD5, 8) = m_cf.at(CF_TOD5SepEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD5, 9) = m_cf.at(CF_TOD5OctEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD5, 10) = m_cf.at(CF_TOD5NovEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD5, 11) = m_cf.at(CF_TOD5DecEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD5, 0) = m_cf.at(CF_TOD5JanEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD5, 1) = m_cf.at(CF_TOD5FebEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD5, 2) = m_cf.at(CF_TOD5MarEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD5, 3) = m_cf.at(CF_TOD5AprEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD5, 4) = m_cf.at(CF_TOD5MayEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD5, 5) = m_cf.at(CF_TOD5JunEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD5, 6) = m_cf.at(CF_TOD5JulEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD5, 7) = m_cf.at(CF_TOD5AugEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD5, 8) = m_cf.at(CF_TOD5SepEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD5, 9) = m_cf.at(CF_TOD5OctEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD5, 10) = m_cf.at(CF_TOD5NovEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD5, 11) = m_cf.at(CF_TOD5DecEnergy, 1);
 
 	save_cf( m_cm, m_cf,  CF_revenue_monthly_firstyear_TOD5, 11, "cf_revenue_monthly_firstyear_TOD5");
-	save_cf( m_cm, m_cf,  CF_energy_net_monthly_firstyear_TOD5, 11, "cf_energy_net_monthly_firstyear_TOD5");
+	save_cf( m_cm, m_cf,  cf_energy_sales_monthly_firstyear_TOD5, 11, "cf_energy_sales_monthly_firstyear_TOD5");
 
 
 	m_cf.at(CF_revenue_monthly_firstyear_TOD6, 0) = ppa[1] / 100.0 *
@@ -897,21 +880,21 @@ bool dispatch_calculations::compute_outputs( std::vector<double>& ppa)
 	m_cf.at(CF_revenue_monthly_firstyear_TOD6, 11) = ppa[1] / 100.0 *
 		dispatch_factor6 * m_cf.at(CF_TOD6DecEnergy, 1);
 
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD6, 0) = m_cf.at(CF_TOD6JanEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD6, 1) = m_cf.at(CF_TOD6FebEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD6, 2) = m_cf.at(CF_TOD6MarEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD6, 3) = m_cf.at(CF_TOD6AprEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD6, 4) = m_cf.at(CF_TOD6MayEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD6, 5) = m_cf.at(CF_TOD6JunEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD6, 6) = m_cf.at(CF_TOD6JulEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD6, 7) = m_cf.at(CF_TOD6AugEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD6, 8) = m_cf.at(CF_TOD6SepEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD6, 9) = m_cf.at(CF_TOD6OctEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD6, 10) = m_cf.at(CF_TOD6NovEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD6, 11) = m_cf.at(CF_TOD6DecEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD6, 0) = m_cf.at(CF_TOD6JanEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD6, 1) = m_cf.at(CF_TOD6FebEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD6, 2) = m_cf.at(CF_TOD6MarEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD6, 3) = m_cf.at(CF_TOD6AprEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD6, 4) = m_cf.at(CF_TOD6MayEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD6, 5) = m_cf.at(CF_TOD6JunEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD6, 6) = m_cf.at(CF_TOD6JulEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD6, 7) = m_cf.at(CF_TOD6AugEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD6, 8) = m_cf.at(CF_TOD6SepEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD6, 9) = m_cf.at(CF_TOD6OctEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD6, 10) = m_cf.at(CF_TOD6NovEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD6, 11) = m_cf.at(CF_TOD6DecEnergy, 1);
 
 	save_cf( m_cm, m_cf,  CF_revenue_monthly_firstyear_TOD6, 11, "cf_revenue_monthly_firstyear_TOD6");
-	save_cf( m_cm, m_cf,  CF_energy_net_monthly_firstyear_TOD6, 11, "cf_energy_net_monthly_firstyear_TOD6");
+	save_cf( m_cm, m_cf,  cf_energy_sales_monthly_firstyear_TOD6, 11, "cf_energy_sales_monthly_firstyear_TOD6");
 
 
 	m_cf.at(CF_revenue_monthly_firstyear_TOD7, 0) = ppa[1] / 100.0 *
@@ -939,21 +922,21 @@ bool dispatch_calculations::compute_outputs( std::vector<double>& ppa)
 	m_cf.at(CF_revenue_monthly_firstyear_TOD7, 11) = ppa[1] / 100.0 *
 		dispatch_factor7 * m_cf.at(CF_TOD7DecEnergy, 1);
 
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD7, 0) = m_cf.at(CF_TOD7JanEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD7, 1) = m_cf.at(CF_TOD7FebEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD7, 2) = m_cf.at(CF_TOD7MarEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD7, 3) = m_cf.at(CF_TOD7AprEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD7, 4) = m_cf.at(CF_TOD7MayEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD7, 5) = m_cf.at(CF_TOD7JunEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD7, 6) = m_cf.at(CF_TOD7JulEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD7, 7) = m_cf.at(CF_TOD7AugEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD7, 8) = m_cf.at(CF_TOD7SepEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD7, 9) = m_cf.at(CF_TOD7OctEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD7, 10) = m_cf.at(CF_TOD7NovEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD7, 11) = m_cf.at(CF_TOD7DecEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD7, 0) = m_cf.at(CF_TOD7JanEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD7, 1) = m_cf.at(CF_TOD7FebEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD7, 2) = m_cf.at(CF_TOD7MarEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD7, 3) = m_cf.at(CF_TOD7AprEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD7, 4) = m_cf.at(CF_TOD7MayEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD7, 5) = m_cf.at(CF_TOD7JunEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD7, 6) = m_cf.at(CF_TOD7JulEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD7, 7) = m_cf.at(CF_TOD7AugEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD7, 8) = m_cf.at(CF_TOD7SepEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD7, 9) = m_cf.at(CF_TOD7OctEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD7, 10) = m_cf.at(CF_TOD7NovEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD7, 11) = m_cf.at(CF_TOD7DecEnergy, 1);
 
 	save_cf( m_cm, m_cf,  CF_revenue_monthly_firstyear_TOD7, 11, "cf_revenue_monthly_firstyear_TOD7");
-	save_cf( m_cm, m_cf,  CF_energy_net_monthly_firstyear_TOD7, 11, "cf_energy_net_monthly_firstyear_TOD7");
+	save_cf( m_cm, m_cf,  cf_energy_sales_monthly_firstyear_TOD7, 11, "cf_energy_sales_monthly_firstyear_TOD7");
 
 
 	m_cf.at(CF_revenue_monthly_firstyear_TOD8, 0) = ppa[1] / 100.0 *
@@ -981,21 +964,21 @@ bool dispatch_calculations::compute_outputs( std::vector<double>& ppa)
 	m_cf.at(CF_revenue_monthly_firstyear_TOD8, 11) = ppa[1] / 100.0 *
 		dispatch_factor8 * m_cf.at(CF_TOD8DecEnergy, 1);
 
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD8, 0) = m_cf.at(CF_TOD8JanEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD8, 1) = m_cf.at(CF_TOD8FebEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD8, 2) = m_cf.at(CF_TOD8MarEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD8, 3) = m_cf.at(CF_TOD8AprEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD8, 4) = m_cf.at(CF_TOD8MayEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD8, 5) = m_cf.at(CF_TOD8JunEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD8, 6) = m_cf.at(CF_TOD8JulEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD8, 7) = m_cf.at(CF_TOD8AugEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD8, 8) = m_cf.at(CF_TOD8SepEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD8, 9) = m_cf.at(CF_TOD8OctEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD8, 10) = m_cf.at(CF_TOD8NovEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD8, 11) = m_cf.at(CF_TOD8DecEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD8, 0) = m_cf.at(CF_TOD8JanEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD8, 1) = m_cf.at(CF_TOD8FebEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD8, 2) = m_cf.at(CF_TOD8MarEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD8, 3) = m_cf.at(CF_TOD8AprEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD8, 4) = m_cf.at(CF_TOD8MayEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD8, 5) = m_cf.at(CF_TOD8JunEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD8, 6) = m_cf.at(CF_TOD8JulEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD8, 7) = m_cf.at(CF_TOD8AugEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD8, 8) = m_cf.at(CF_TOD8SepEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD8, 9) = m_cf.at(CF_TOD8OctEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD8, 10) = m_cf.at(CF_TOD8NovEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD8, 11) = m_cf.at(CF_TOD8DecEnergy, 1);
 
 	save_cf( m_cm, m_cf,  CF_revenue_monthly_firstyear_TOD8, 11, "cf_revenue_monthly_firstyear_TOD8");
-	save_cf( m_cm, m_cf,  CF_energy_net_monthly_firstyear_TOD8, 11, "cf_energy_net_monthly_firstyear_TOD8");
+	save_cf( m_cm, m_cf,  cf_energy_sales_monthly_firstyear_TOD8, 11, "cf_energy_sales_monthly_firstyear_TOD8");
 
 
 	m_cf.at(CF_revenue_monthly_firstyear_TOD9, 0) = ppa[1] / 100.0 *
@@ -1023,21 +1006,21 @@ bool dispatch_calculations::compute_outputs( std::vector<double>& ppa)
 	m_cf.at(CF_revenue_monthly_firstyear_TOD9, 11) = ppa[1] / 100.0 *
 		dispatch_factor9 * m_cf.at(CF_TOD9DecEnergy, 1);
 
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD9, 0) = m_cf.at(CF_TOD9JanEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD9, 1) = m_cf.at(CF_TOD9FebEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD9, 2) = m_cf.at(CF_TOD9MarEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD9, 3) = m_cf.at(CF_TOD9AprEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD9, 4) = m_cf.at(CF_TOD9MayEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD9, 5) = m_cf.at(CF_TOD9JunEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD9, 6) = m_cf.at(CF_TOD9JulEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD9, 7) = m_cf.at(CF_TOD9AugEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD9, 8) = m_cf.at(CF_TOD9SepEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD9, 9) = m_cf.at(CF_TOD9OctEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD9, 10) = m_cf.at(CF_TOD9NovEnergy, 1);
-	m_cf.at(CF_energy_net_monthly_firstyear_TOD9, 11) = m_cf.at(CF_TOD9DecEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD9, 0) = m_cf.at(CF_TOD9JanEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD9, 1) = m_cf.at(CF_TOD9FebEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD9, 2) = m_cf.at(CF_TOD9MarEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD9, 3) = m_cf.at(CF_TOD9AprEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD9, 4) = m_cf.at(CF_TOD9MayEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD9, 5) = m_cf.at(CF_TOD9JunEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD9, 6) = m_cf.at(CF_TOD9JulEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD9, 7) = m_cf.at(CF_TOD9AugEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD9, 8) = m_cf.at(CF_TOD9SepEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD9, 9) = m_cf.at(CF_TOD9OctEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD9, 10) = m_cf.at(CF_TOD9NovEnergy, 1);
+	m_cf.at(cf_energy_sales_monthly_firstyear_TOD9, 11) = m_cf.at(CF_TOD9DecEnergy, 1);
 
 	save_cf( m_cm, m_cf,  CF_revenue_monthly_firstyear_TOD9, 11, "cf_revenue_monthly_firstyear_TOD9");
-	save_cf( m_cm, m_cf,  CF_energy_net_monthly_firstyear_TOD9, 11, "cf_energy_net_monthly_firstyear_TOD9");
+	save_cf( m_cm, m_cf,  cf_energy_sales_monthly_firstyear_TOD9, 11, "cf_energy_sales_monthly_firstyear_TOD9");
 
 
 	m_cm->assign("firstyear_revenue_dispatch1", var_data((ssc_number_t)m_cf.at(CF_TOD1Revenue, 1)));
@@ -1148,40 +1131,40 @@ double dispatch_calculations::tod_energy_value(int period, int year)
 	switch (period)
 	{
 	case 1:
-		energy_value = m_cf.at(CF_TOD1Energy, year)
-			* m_cm->as_double("dispatch_factor1");
+        energy_value = m_cf.at(CF_TOD1Energy, year)
+            * m_dispatch_tod_factors[0];// m_cm->as_double("dispatch_factor1");
 		break;
 	case 2:
 		energy_value = m_cf.at(CF_TOD2Energy, year)
-			* m_cm->as_double("dispatch_factor2");
+			* m_dispatch_tod_factors[1];//m_cm->as_double("dispatch_factor2");
 		break;
 	case 3:
 		energy_value = m_cf.at(CF_TOD3Energy, year)
-			* m_cm->as_double("dispatch_factor3");
+			* m_dispatch_tod_factors[2];//m_cm->as_double("dispatch_factor3");
 		break;
 	case 4:
 		energy_value = m_cf.at(CF_TOD4Energy, year)
-			* m_cm->as_double("dispatch_factor4");
+			* m_dispatch_tod_factors[3];//m_cm->as_double("dispatch_factor4");
 		break;
 	case 5:
 		energy_value = m_cf.at(CF_TOD5Energy, year)
-			* m_cm->as_double("dispatch_factor5");
+			* m_dispatch_tod_factors[4];//m_cm->as_double("dispatch_factor5");
 		break;
 	case 6:
 		energy_value = m_cf.at(CF_TOD6Energy, year)
-			* m_cm->as_double("dispatch_factor6");
+			* m_dispatch_tod_factors[5];//m_cm->as_double("dispatch_factor6");
 		break;
 	case 7:
 		energy_value = m_cf.at(CF_TOD7Energy, year)
-			* m_cm->as_double("dispatch_factor7");
+			* m_dispatch_tod_factors[6];//m_cm->as_double("dispatch_factor7");
 		break;
 	case 8:
 		energy_value = m_cf.at(CF_TOD8Energy, year)
-			* m_cm->as_double("dispatch_factor8");
+			* m_dispatch_tod_factors[7];//m_cm->as_double("dispatch_factor8");
 		break;
 	case 9:
 		energy_value = m_cf.at(CF_TOD9Energy, year)
-			* m_cm->as_double("dispatch_factor9");
+			* m_dispatch_tod_factors[8];//m_cm->as_double("dispatch_factor9");
 		break;
 	}
 	return energy_value;
@@ -1221,44 +1204,24 @@ bool dispatch_calculations::setup()
 		throw general_error(m_error);
 	}
 
-	m_periods.resize(8760, 1);
+    m_dispatch_tod_factors = m_cm->as_vector_double("dispatch_tod_factors");
+    if (m_dispatch_tod_factors.size() != 9)
+        return false;
+
+    m_periods.resize(8760, 1);
 	ssc_number_t *ppa_multipliers = m_cm->allocate("ppa_multipliers", 8760);
 
 	for (int i = 0; i < 8760; i++)
 	{
 		m_periods[i] = tod[i];
 
-		switch (tod[i])
-		{
-		case 1:
-			ppa_multipliers[i] = m_cm->as_number("dispatch_factor1");
-			break;
-		case 2:
-			ppa_multipliers[i] = m_cm->as_number("dispatch_factor2");
-			break;
-		case 3:
-			ppa_multipliers[i] = m_cm->as_number("dispatch_factor3");
-			break;
-		case 4:
-			ppa_multipliers[i] = m_cm->as_number("dispatch_factor4");
-			break;
-		case 5:
-			ppa_multipliers[i] = m_cm->as_number("dispatch_factor5");
-			break;
-		case 6:
-			ppa_multipliers[i] = m_cm->as_number("dispatch_factor6");
-			break;
-		case 7:
-			ppa_multipliers[i] = m_cm->as_number("dispatch_factor7");
-			break;
-		case 8:
-			ppa_multipliers[i] = m_cm->as_number("dispatch_factor8");
-			break;
-		case 9:
-			ppa_multipliers[i] = m_cm->as_number("dispatch_factor9");
-			break;
-		}
-	}
+        if ((tod[i] < 1) || (tod[i] > 9)) {
+            m_error = util::format("invalid tod period %d for hour %d", tod[i], i);
+            throw general_error(m_error);
+        }
+
+        ppa_multipliers[i] = m_dispatch_tod_factors[tod[i] - 1];
+ 	}
 
 	return m_error.length() == 0;
 }
@@ -3337,6 +3300,17 @@ void check_financial_metrics::check_debt_percentage(compute_module* cm, ssc_numb
 }
 
 
+
+var_info vtab_tod_dispatch_periods[] = {
+    // TOD factors
+        { SSC_INPUT, SSC_NUMBER, "ppa_multiplier_model", "PPA multiplier model", "0/1", "0=diurnal,1=timestep", "Revenue", "?=0", "INTEGER,MIN=0", "" },
+        { SSC_INPUT, SSC_ARRAY, "dispatch_factors_ts", "Dispatch payment factor array", "", "", "Revenue", "ppa_multiplier_model=1", "", "" },
+
+        { SSC_OUTPUT, SSC_ARRAY, "ppa_multipliers", "TOD factors", "", "", "Revenue", "*", "", "" },
+        { SSC_INPUT,        SSC_ARRAY,      "dispatch_tod_factors",                   "TOD factors for periods 1 through 9",                           "",   "",                          "Revenue",             "ppa_multiplier_model=0",						   "",                 "" },
+        { SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekday",                 "Diurnal weekday TOD periods",                                   "1..9", "12 x 24 matrix",    "Revenue", "ppa_multiplier_model=0", "", "" },
+        { SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekend",                 "Diurnal weekend TOD periods",                                   "1..9", "12 x 24 matrix",    "Revenue", "ppa_multiplier_model=0", "", "" },
+        var_info_invalid };
 
 
 

@@ -274,6 +274,7 @@ bool compute_module::evaluate() {
 }
 
 bool compute_module::verify(const std::string &phase, int check_var_type) {
+    bool ret = true;
     std::vector<var_info *>::iterator it;
     for (it = m_varlist.begin(); it != m_varlist.end(); ++it) {
         var_info *vi = *it;
@@ -286,7 +287,7 @@ bool compute_module::verify(const std::string &phase, int check_var_type) {
                 if (!dat) {
                     log(phase + ": variable '" + std::string(vi->name) + "' (" + std::string(vi->label) +
                         ") required but not assigned");
-                    return false;
+                    ret = false;
                 } else if (dat->type != vi->data_type) {
                     // ssc issue 906 - required only inputs!
                     if ((vi->data_type == SSC_ARRAY) && (dat->type == SSC_NUMBER)) {
@@ -297,21 +298,32 @@ bool compute_module::verify(const std::string &phase, int check_var_type) {
                     else { 
                         log(phase + ": variable '" + std::string(vi->name) + "' (" + var_data::type_name(dat->type) +
                             ") of wrong type, " + var_data::type_name(vi->data_type) + " required.");
-                        return false;
+                        ret = false;
                     }
                 }
+                if (!ret)
+                    log(vi->meta);
 
                 // now check constraints on it
                 std::string fail_text;
                 if (!check_constraints(vi->name, fail_text)) {
                     log(fail_text, SSC_ERROR);
-                    return false;
+                    ret =  false;
+                }
+            }
+            else { // SAM issue 1184 - if variable present check constraints even if not required - can check type. too.
+                if (var_data* dat = lookup(vi->name)) {
+                    std::string fail_text;
+                    if (!check_constraints(vi->name, fail_text)) {
+                        log(std::string(vi->name) + ":" + fail_text, SSC_ERROR);
+                        ret = false;
+                    }
                 }
             }
         }
     }
 
-    return true;
+    return ret;
 }
 
 void compute_module::add_var_info(var_info vi[]) {

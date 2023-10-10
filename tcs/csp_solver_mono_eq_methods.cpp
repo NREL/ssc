@@ -89,18 +89,26 @@ int C_csp_solver::solve_operating_mode(C_csp_collector_receiver::E_csp_cr_modes 
             C_monotonic_eq_solver::S_xy_pair xy2;
             double m_dot_bal2 = std::numeric_limits<double>::quiet_NaN();
             double x1 = xy1.x;
+            size_t iter_count = 0;
             do
             {
-                xy2.x = x1 * (1.0 / (1.0 + m_dot_bal));
+                xy2.x = x1 * (1.0 / (1.0 + std::max(0.02,m_dot_bal)));
 
                 m_dot_bal_code = c_mdot_solver.test_member_function(xy2.x, &m_dot_bal2);
-                if (m_dot_bal_code != 0)
+                if (std::abs(m_dot_bal2 - m_dot_bal) >= 0.02) {
+                    break;
+                }
+
+                iter_count++;
+                // 23-04-18 tn: If defocus is < 10% get out
+                //              If changing defocus isn't changing mass balance, get out (e.g. trough at its minimum flow rate)
+                if (m_dot_bal_code != 0 || xy2.x < 0.1 || (iter_count > 2 && m_dot_bal2 == m_dot_bal) )
                 {
                     reset_time(t_ts_initial);
                     return -2;
                 }
                 x1 = xy2.x;
-            } while (std::abs(m_dot_bal2 - m_dot_bal) < 0.02);
+            } while (true);
 
             xy2.y = m_dot_bal2;
 

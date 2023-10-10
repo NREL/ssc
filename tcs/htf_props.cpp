@@ -91,6 +91,7 @@ bool HTFProperties::SetUserDefinedFluid( const util::matrix_t<double> &table )
 	// Set class member data
 	m_userTable = table;	
 	m_fluid = User_defined;
+    m_integration_points = 100;
 
 	// Specific which columns are used as the independent variable; these must be monotonically increasing
 	int ind_var_index[2] = {0, 6};	
@@ -119,8 +120,15 @@ bool HTFProperties::SetUserDefinedFluid( const util::matrix_t<double> &table )
 
 void HTFProperties::set_temp_enth_lookup()
 {
-	double T_low = 270.0 + 273.15;
-	double T_high = 600.0 + 273.15;
+    double T_low = this->min_temp();
+    double T_high = this->max_temp();
+
+    if (!std::isfinite(T_low)) {
+        T_low = 270.0 + 273.15;
+    }
+    if (!std::isfinite(T_high)) {
+        T_high = 720.0 + 273.15;
+    }
 
 	double delta_T_target = 1.0;
 
@@ -228,7 +236,7 @@ bool HTFProperties::equals(HTFProperties *comp_class)
 	return m_userTable.equals(	(*comp_class->get_prop_table()) );
 }
 
-double HTFProperties::Cp_ave(double T_cold_K, double T_hot_K, int n_points)
+double HTFProperties::Cp_ave(double T_cold_K, double T_hot_K)
 {
 	// Check that temperatures are at least positive values
 	if(T_cold_K <= 0.0)
@@ -242,23 +250,16 @@ double HTFProperties::Cp_ave(double T_cold_K, double T_hot_K, int n_points)
 		"HTFProperties::Cp_ave",1));
 	}
 	
-	// Check that 2 < n_points < 500
-	if(n_points < 2)
-		n_points = 2;
-
-	if(n_points > 500)
-		n_points = 500;
-
+    // Composite Midpoint Rule
 	double cp_sum = 0.0;
-	double T_i = std::numeric_limits<double>::quiet_NaN();
-	double delta_T = (T_hot_K - T_cold_K)/double(n_points-1);
-	for(int i = 0; i < n_points; i++)
+    double delta_T = (T_hot_K - T_cold_K) / double(m_integration_points);
+    double T_i = T_cold_K + delta_T / 2; // half step
+	for(int i = 0; i < m_integration_points; i++)
 	{
-		T_i = T_cold_K + delta_T*i;
-		cp_sum += Cp(T_i);
+        cp_sum += Cp(T_i);
+        T_i += delta_T;
 	}
-
-	return cp_sum/double(n_points);
+	return cp_sum/double(m_integration_points);
 }
 
 double HTFProperties::Cp( double T_K )
@@ -333,12 +334,16 @@ double HTFProperties::Cp( double T_K )
 		return 0.0033*T_C + 1.6132;
 	case Pressurized_Water:
 		return 1.E-5*T_C*T_C - 0.0014*T_C + 4.2092;
+    case Methanol:
+        return 3.E-5*T_C*T_C + 0.0047*T_C + 2.3996;
     case N06230:
         return 0.2888*T_C + 397.42; // BPVC II D
     case N07740:
         return -1.E-9*std::pow(T_C, 4) + 3.E-6*std::pow(T_C, 3) -
             0.0022*std::pow(T_C, 2) + 0.6218*T_C + 434.06;  // BPVC_CC_BPV_2017 Case 2702 - 3
-	case User_defined:
+    case Salt_45MgCl2_39KCl_16NaCl:
+        return 1.284E-6*T_C*T_C - 1.843E-3*T_C + 1.661;  // Zhao 2020 Molten Chloride Thermophysical Properties, Chemical Optimization, and Purification Purification
+    case User_defined:
 		{
 			if ( m_userTable.nrows() < 3 ) return std::numeric_limits<double>::quiet_NaN();
 			// Interpolate
@@ -422,11 +427,15 @@ double HTFProperties::dens(double T_K, double P)
 			return -0.0003*T_C*T_C - 0.6963*T_C + 988.44;
 		case Pressurized_Water:
 			return -0.0023*T_C*T_C - 0.2337*T_C + 1005.6;
+        case Methanol:
+            return -0.9566*T_C + 810.3;
         case N06230:
             return 8970.0; // BPVC II D
         case N07740:
             return 8072.0;  // BPVC_CC_BPV_2017 Case 2702 - 3
-		case User_defined:
+        case Salt_45MgCl2_39KCl_16NaCl:
+            return -5.878E-1*T_C + 1974.0;  // Zhao 2020 Molten Chloride Thermophysical Properties, Chemical Optimization, and Purification Purification
+        case User_defined:
 			if ( m_userTable.nrows() < 3 )
 						return std::numeric_limits<double>::quiet_NaN();
 
@@ -519,7 +528,9 @@ double HTFProperties::visc(double T_K)
 		}
 	case Pressurized_Water:
 		return 3.E-8*T_C*T_C - 1.E-5*T_C + 0.0011;
-	case User_defined:
+    case Salt_45MgCl2_39KCl_16NaCl:
+        return 0.689*std::exp(1224.73/T_K)*1.E-3;   // convert from cP; Zhao 2020 Molten Chloride Thermophysical Properties, Chemical Optimization, and Purification Purification
+    case User_defined:
 		if ( m_userTable.nrows() < 3 )
 					return std::numeric_limits<double>::quiet_NaN();
 
@@ -604,7 +615,9 @@ double HTFProperties::cond(double T_K)
         return 0.0197*T_C + 8.5359; // BPVC II D
     case N07740:
         return 0.0155*T_C + 9.7239;  // BPVC_CC_BPV_2017 Case 2702 - 3
-	case User_defined:
+    case Salt_45MgCl2_39KCl_16NaCl:
+        return 7.151E-7*std::pow(T_C,2) - 1.066E-3*T_C + 0.811; //[W/K-m] // Zhao 2020 Molten Chloride Thermophysical Properties, Chemical Optimization, and Purification Purification
+    case User_defined:
 		if ( m_userTable.nrows() < 3 )
 					return std::numeric_limits<double>::quiet_NaN();
 
@@ -695,6 +708,12 @@ double HTFProperties::min_temp()
     case Pressurized_Water:
         T_C = 10.;
         break;
+    case Methanol:
+        T_C = -97.0;
+        break;
+    case Salt_45MgCl2_39KCl_16NaCl:
+        T_C = 450.0;
+        break;
     case User_defined:
         if (m_userTable.nrows() < 2) {
             T_C = std::numeric_limits<double>::quiet_NaN();
@@ -747,6 +766,12 @@ double HTFProperties::max_temp()
         break;
     case Pressurized_Water:
         T_C = 220.;
+        break;
+    case Methanol:
+        T_C = 64.;
+        break;
+    case Salt_45MgCl2_39KCl_16NaCl:
+        T_C = 720.0;
         break;
     case User_defined:
         if (m_userTable.nrows() < 2) {
@@ -855,4 +880,16 @@ double HTFProperties::Re(double T_K, double P, double vel, double d)
 	// Outputs: Reynolds number [-]
 	double Re_num = dens(T_K, P) * vel * d / visc(T_K);
 	return Re_num;
+}
+
+void HTFProperties::set_integration_points(double n_points)
+{
+    // Check that 1 < n_points < 500
+    if (n_points < 1)
+        n_points = 1;
+
+    if (n_points > 500)
+        n_points = 500;
+
+    m_integration_points = n_points;
 }

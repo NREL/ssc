@@ -36,6 +36,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cmod_host_developer_test.h"
 
 
+TEST_F(CmodHostDeveloperTest, ssc_1047) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/FinancialModels/host_developer/Default_HD_10_IBI_PVWatts_Host_Developer_cmod_host_developer.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/FinancialModels/host_developer/Default_HD_10_IBI_PVWatts_Host_Developer_cmod_host_developer_outputs.json";
+    std::vector<std::string> compare_number_variables = { "project_return_aftertax_npv", "npv", "lnte_nom" };
+    std::vector<std::string> compare_array_variables = { "CF_ppa_price" };
+
+    Test("host_developer", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
+
+
 TEST_F(CmodHostDeveloperTest, PVWatts) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/host_developer/2022.08.08_develop_branch_PVWatts_Host_Developer_cmod_host_developer.json";

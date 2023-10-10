@@ -84,8 +84,8 @@ var_info vtab_fuelcell_input[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "dispatch_manual_fuelcelldischarge", "Periods 1-6 discharging allowed?",       "",          "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "dispatch_manual_percent_fc_discharge","Periods 1-6 percent of max fuelcell output", "",    "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "dispatch_manual_units_fc_discharge","Periods 1-6 number of fuel cell units?", "",          "",                 "Fuel Cell",                  "",                        "",                              "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "dispatch_manual_sched",             "Dispatch schedule for weekday",          "",          "",                 "Fuel Cell",                  "",                        "",                              "" },
-	{ SSC_INPUT,        SSC_MATRIX,      "dispatch_manual_sched_weekend",     "Dispatch schedule for weekend",          "",          "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "dispatch_manual_fuelcell_sched",             "Dispatch schedule for weekday",          "",          "",                 "Fuel Cell",                  "",                        "",                              "" },
+	{ SSC_INPUT,        SSC_MATRIX,      "dispatch_manual_fuelcell_sched_weekend",     "Dispatch schedule for weekend",          "",          "",                 "Fuel Cell",                  "",                        "",                              "" },
 
 	{ SSC_INOUT,        SSC_NUMBER,      "capacity_factor",                   "Capacity factor",                        "%",          "",                "",                           "?=0",                     "",                              "" },
 	{ SSC_INOUT,        SSC_NUMBER,      "annual_energy",                     "Annual Energy",                          "kWh",        "",                "",                           "?=0",                     "",                              "" },
@@ -118,6 +118,7 @@ cm_fuelcell::cm_fuelcell()
 	add_var_info(vtab_fuelcell_input);
 	add_var_info(vtab_fuelcell_output);
 	add_var_info(vtab_technology_outputs);
+    add_var_info(vtab_hybrid_tech_om);
 }
 
 // Have to add this since compute module isn't actually fully constructed until compute is called with
@@ -251,8 +252,7 @@ void cm_fuelcell::allocateOutputs()
 	    p_fuelCellToLoad_kW = allocate("fuelcell_to_load", fcVars->numberOfLifetimeRecords);
 
 	// annual outputs
-	size_t annual_size = fcVars->numberOfYears + 1;
-	//if (fcVars->numberOfYears == 1) { annual_size = 1; }; // why?
+	size_t annual_size = fcVars->numberOfYears + 1; // Fuel cell startup consumption in year 0
 
 	p_fuelCellReplacements = allocate("fuelcell_replacement", annual_size);
 	p_fuelCellConsumption_MCf_annual = allocate("annual_fuel_usage_lifetime", annual_size);

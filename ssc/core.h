@@ -169,7 +169,7 @@ public:
 	public:
 		log_item() { }
 		log_item(int t, std::string s, float f=-1.0)
-			: type(t), text(move(s)), time(f) {  }
+        : type(t), text(std::move(s)), time(f) {  }
 
 		int type;
 
@@ -207,6 +207,9 @@ public:
 	*/
 	virtual bool on_extproc_output( const std::string & ) { return false; }
 
+    void add_var_info(var_info vi[]);
+
+
 protected:
 
     std::string name;
@@ -221,7 +224,6 @@ protected:
 	virtual void exec( ) = 0;
 
 	/* can be called in constructors to build up the variable table references */
-	void add_var_info( var_info vi[] );
 	void build_info_map();
 	bool has_info_map() { return m_infomap!=NULL; }
 
@@ -270,6 +272,8 @@ public:
 
 	ssc_number_t accumulate_annual_for_year(const std::string &hourly_var, const std::string &annual_var, double scale, size_t step_per_hour, size_t year = 1, size_t steps = 8760);
 	ssc_number_t *accumulate_monthly_for_year(const std::string &hourly_var, const std::string &annual_var, double scale, size_t step_per_hour, size_t year = 1);
+
+    var_table* get_var_table() { return m_vartab; }
 
 protected:
 	// called by 'compute' as necessary for precheck and postcheck
