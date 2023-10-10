@@ -31,7 +31,13 @@
     "adjust_en_timeindex" : 0,
     "adjust_en_periods" : 0,
 	"adjust_timeindex" : [ 0 ],
-	"adjust_periods" : [ [ 0 ] ],
+    "adjust_periods": [
+        [
+            0.0,
+            0.0,
+            0.0
+        ]
+    ],
 	"number_compute_modules" : 0,
 	"number_metrics" : 0
 }

@@ -579,7 +579,7 @@ double C_csp_cr_heat_pump::calculate_optical_efficiency(const C_csp_weatherreade
     throw(C_csp_exception("C_csp_cr_heat_pump::calculate_optical_efficiency() is not complete"));
 }
 
-double C_csp_cr_heat_pump::calculate_thermal_efficiency_approx(const C_csp_weatherreader::S_outputs& weather, double q_incident /*MW*/)
+double C_csp_cr_heat_pump::calculate_thermal_efficiency_approx(const C_csp_weatherreader::S_outputs& weather, double q_incident /*MW*/, const C_csp_solver_sim_info& sim)
 {
     throw(C_csp_exception("C_csp_cr_heat_pump::calculate_thermal_efficiency() is not complete"));
 }

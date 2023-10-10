@@ -49,7 +49,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 SSCEXPORT int ssc_version()
 {
-	return 281;
+	return 285;
 }
 
 SSCEXPORT const char *ssc_build_info()
@@ -71,10 +71,6 @@ extern module_entry_info
 	cm_entry_iec61853interp,
 	cm_entry_6parsolve,
 	cm_entry_pvsamv1,
-	cm_entry_pvwattsv0,
-	cm_entry_pvwattsv1,
-	cm_entry_pvwattsv1_1ts,
-	cm_entry_pvwattsv1_poa,
 	cm_entry_pvwattsv5,
 	cm_entry_pvwattsv7,
     cm_entry_pvwattsv8,
@@ -105,7 +101,6 @@ extern module_entry_info
 	cm_entry_geothermal,
 	cm_entry_geothermal_costs,
 	cm_entry_windpower,
-	cm_entry_poacalib,
 	cm_entry_snowmodel,
 	cm_entry_generic_system,
 	cm_entry_wfcsvconv,
@@ -117,8 +112,11 @@ extern module_entry_info
 	cm_entry_iph_to_lcoefcr,
 	cm_entry_tcsgeneric_solar,
 	cm_entry_tcsmolten_salt,
+    cm_entry_mspt_iph,
     cm_entry_mspt_sf_and_rec_isolated,
     cm_entry_ptes_design_point,
+    cm_entry_fresnel_physical,
+    cm_entry_fresnel_physical_iph,
 	cm_entry_tcslinear_fresnel,
 	cm_entry_linear_fresnel_dsg_iph,
 	cm_entry_tcsmslf,
@@ -151,6 +149,7 @@ extern module_entry_info
 	cm_entry_battwatts,
 	cm_entry_fuelcell,
    	cm_entry_lcoefcr,
+    cm_entry_lcoefcr_design,
 	cm_entry_pv_get_shade_loss_mpp,
 	cm_entry_inv_cec_cg,
 	cm_entry_thermalrate,
@@ -175,10 +174,6 @@ static module_entry_info *module_table[] = {
 	&cm_entry_6parsolve,
 	&cm_entry_pv6parmod,
 	&cm_entry_pvsamv1,
-	//&cm_entry_pvwattsv0,
-	&cm_entry_pvwattsv1,
-	&cm_entry_pvwattsv1_1ts,
-	&cm_entry_pvwattsv1_poa,
 	&cm_entry_pvwattsv5,
 	&cm_entry_pvwattsv7,
     &cm_entry_pvwattsv8,
@@ -208,7 +203,6 @@ static module_entry_info *module_table[] = {
 	&cm_entry_geothermal,
 	&cm_entry_geothermal_costs,
 	&cm_entry_windpower,
-	&cm_entry_poacalib,
 	&cm_entry_snowmodel,
 	&cm_entry_generic_system,
 	&cm_entry_wfcsvconv,
@@ -220,7 +214,10 @@ static module_entry_info *module_table[] = {
 	&cm_entry_iph_to_lcoefcr,
 	&cm_entry_tcsgeneric_solar,
 	&cm_entry_tcsmolten_salt,
+    &cm_entry_mspt_iph,
     &cm_entry_mspt_sf_and_rec_isolated,
+    &cm_entry_fresnel_physical,
+    &cm_entry_fresnel_physical_iph,
     &cm_entry_ptes_design_point,
 	&cm_entry_tcslinear_fresnel,
 	&cm_entry_linear_fresnel_dsg_iph,
@@ -254,6 +251,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_battwatts,
 	&cm_entry_fuelcell,
 	&cm_entry_lcoefcr,
+    &cm_entry_lcoefcr_design,
 	&cm_entry_pv_get_shade_loss_mpp,
 	&cm_entry_inv_cec_cg,
 	&cm_entry_thermalrate,
