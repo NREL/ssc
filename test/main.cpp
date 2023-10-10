@@ -55,9 +55,6 @@ GTEST_API_ int main(int argc, char **argv) {
     //    filter to include
     //    ::testing::GTEST_FLAG(filter) = "lib_ptes_chp_dispatch_test*";
 
-   //    ::testing::GTEST_FLAG(filter) = "CmodHybridTest*";
-
-
     //    filter to exclude
     //    ::testing::GTEST_FLAG(filter) = "-PVSmoothing_lib_battery_dispatch*";
 

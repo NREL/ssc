@@ -290,6 +290,12 @@ var_info vtab_battery_outputs[] = {
     { SSC_OUTPUT,        SSC_NUMBER,      "batt_pvs_energy_to_grid_percent",           "PV smoothing energy to grid percent (loss due to curtail and battery loss)",                               "%",      "",                       "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_NUMBER,      "batt_pvs_energy_to_grid_percent_sam",       "PV smoothing energy to grid percent actual (loss due to curtail and battery loss)",                               "%",      "",                       "Battery",       "",                           "",                              "" },
 
+    // Self-consumption outputs
+    { SSC_OUTPUT,        SSC_NUMBER,      "num_ts_load_met_by_system_yr1",                  "Number of timesteps electric load met by system (year 1)",     "",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "percent_ts_load_met_by_system_yr1",              "Percent of timesteps electric load met by system (year 1)",     "",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "num_ts_load_met_by_system_lifetime",             "Number of timesteps electric load met by system (lifetime)",     "",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "percent_ts_load_met_by_system_lifetime",         "Percent of timesteps electric load met by system (lifetime)",     "",      "",                       "Battery",       "",                           "",                              "" },
+
     // validation outputs at ramp interval - use for debugging and remove for release
 /*
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_outpower_vec",                          "PV smoothing outpower at ramp interval",                                "kW",      "",                       "Battery",       "",                           "",                              "" },
@@ -2093,6 +2099,28 @@ void battstor::calculate_monthly_and_annual_outputs(compute_module& cm)
         cm.accumulate_monthly_for_year("system_to_load", "monthly_system_to_load", _dt_hour, step_per_hour);
         cm.accumulate_monthly_for_year("batt_to_load", "monthly_batt_to_load", _dt_hour, step_per_hour);
         cm.accumulate_monthly_for_year("grid_to_load", "monthly_grid_to_load", _dt_hour, step_per_hour);
+
+        if (batt_vars->batt_dispatch == dispatch_t::SELF_CONSUMPTION)
+        {
+            //calculate all outputs for number of timesteps the load is met by the system, using grid_to_load == 0 as a qualification
+            //better to parse the grid_to_load timeseries once here for all outputs, than to create a new timeseries variable for whether load is met by system
+            outTimestepsLoadMetBySystemYear1 = 0.0;
+            outTimestepsLoadMetBySystemLifetime = 0.0;
+            for (size_t i = 0; i < total_steps; i++)
+            {
+                if (outGridToLoad[i] == 0.0)
+                {
+                    outTimestepsLoadMetBySystemLifetime++;
+                    if (i < step_per_year) outTimestepsLoadMetBySystemYear1++;
+                }
+            }
+            cm.assign("num_ts_load_met_by_system_yr1", outTimestepsLoadMetBySystemYear1);
+            cm.assign("num_ts_load_met_by_system_lifetime", outTimestepsLoadMetBySystemLifetime);
+            outPercentTimestepsLoadMetBySystemYear1 = (outTimestepsLoadMetBySystemYear1 / step_per_year) * 100.0;
+            cm.assign("percent_ts_load_met_by_system_yr1", (ssc_number_t)outPercentTimestepsLoadMetBySystemYear1);
+            outPercentTimestepsLoadMetBySystemLifetime = (outTimestepsLoadMetBySystemLifetime / total_steps) * 100.0;
+            cm.assign("percent_ts_load_met_by_system_lifetime", (ssc_number_t)outPercentTimestepsLoadMetBySystemLifetime);
+         }
     }
     else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
     {
