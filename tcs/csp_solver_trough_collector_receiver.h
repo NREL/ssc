@@ -357,7 +357,7 @@ public:
 	int m_accept_loc;		//[-] In acceptance testing mode - temperature sensor location (1=hx,2=loop)
 	bool m_is_using_input_gen;
 
-	double m_solar_mult;		//[-] Solar multiple 
+	
 	double m_mc_bal_hot_per_MW;		//[kWht/K-MWt] The heat capacity per MWt design of the balance of plant on the hot side
 	double m_mc_bal_cold_per_MW;	//[kWht/K-MWt] The heat capacity per MWt design of the balance of plant on the cold side
 	double m_mc_bal_sca;		//[Wht/K-m] Non-HTF heat capacity associated with each SCA - per meter basis
@@ -425,10 +425,6 @@ public:
     double m_northsouth_field_sep;                //[m] Shortest north/south distance between SCAs in different subfields
     double m_N_hdr_per_xpan;                      //[-] Number of collector loops per header expansion loops. 1 = expansion loop between every collector loop
     double m_offset_xpan_hdr;                     //[-] Location of first header expansion loop. 1 = after first collector loop
-    util::matrix_t<double> m_K_cpnt;              //[-] Minor loss coefficients of the components in each loop interconnect
-    util::matrix_t<double> m_D_cpnt;              //[m] Inner diameters of the components in each loop interconnect
-    util::matrix_t<double> m_L_cpnt;              //[m] Lengths of the components in each loop interconnect
-    util::matrix_t<double> m_Type_cpnt;           //[-] Type of component in each loop interconnect [0=fitting | 1=pipe | 2=flex_hose]
     util::matrix_t<double> m_rough_cpnt;
     util::matrix_t<double> m_u_cpnt;
     util::matrix_t<double> m_mc_cpnt;
@@ -481,15 +477,16 @@ public:
     util::matrix_t<double> m_trough_loop_control;
     double m_P_ref;                                 //[W] Design Turbine Net Output
     double m_eta_ref;                               //[] Design Cycle Thermal Efficiency
+    double m_non_solar_field_land_area_multiplier;  //[]
 
     // Design Point Outputs
     double m_field_htf_cp_avg_des;                  //[kJ/kg-K] Field average htf cp value at design
     double m_single_loop_aperture;                  //[m2] Aperture of single loop
     double m_min_inner_diameter;                    //[m] Min inner diameter
     std::vector<double> m_HCE_heat_loss_des;        //[W/m]
-    double m_HCE_heat_loss_loop_des;                //[W/m]
-    util::matrix_t<double> m_csp_dtr_sca_calc_sca_effs; // SCA optical efficiencies at design
-    util::matrix_t<double> m_csp_dtr_hce_optical_effs;  // HCE optical efficiencies at design
+    double m_HCE_heat_loss_loop_des;                //[W/m] Loop Heat Loss from HCE at Design
+    std::vector<double> m_csp_dtr_sca_calc_sca_effs; // SCA optical efficiencies at design
+    std::vector<double> m_csp_dtr_hce_optical_effs;  // HCE optical efficiencies at design
     double m_loop_optical_efficiency_des;           // Loop total optical effiency at design
     util::matrix_t<double> m_SCAInfoArray;          //[-] Receiver (,1) and collector (,2) type for each assembly in loop
     std::vector<int> m_SCADefocusArray;             //[-] Order in which the SCA's should be defocused
@@ -499,12 +496,18 @@ public:
     double m_min_field_flow_velocity;               //[m/s] Minimum Field Flow Velocity
     double m_total_loop_conversion_efficiency_des;  //[] Total Loop Conversion Efficiency at Design
     double m_total_required_aperture_for_SM1;       //[m2] Aperture required for solar mult = 1
+    double m_solar_mult;		                    //[-] Solar multiple 
     double m_q_design;		                        //[Wt] Design-point thermal power from the solar field
     double m_q_pb_design;                           //[Wt] Power cycle thermal input at design
     double m_required_number_of_loops_for_SM1;      //[] Required number of loops for solar mult = 1
     int m_nLoops;			                        //[-] Number of loops in the field
     double m_Ap_tot;		                        //[m^2] Total field aperture area
-    double m_Q_rec_des;                             //
+    util::matrix_t<double> m_K_cpnt;                //[-] Minor loss coefficients of the components in each loop interconnect
+    util::matrix_t<double> m_D_cpnt;                //[m] Inner diameters of the components in each loop interconnect
+    util::matrix_t<double> m_L_cpnt;                //[m] Lengths of the components in each loop interconnect
+    util::matrix_t<double> m_Type_cpnt;             //[-] Type of component in each loop interconnect [0=fitting | 1=pipe | 2=flex_hose]
+    double m_fixed_land_area;                       //[acre] Fixed Land Area
+    double m_total_land_area;                       //[acre] Total Land Area
 
 	// **************************************************************************
 	// **************************************************************************

@@ -870,6 +870,9 @@ double C_csp_trough_collector_receiver::get_max_power_delivery(double T_cold_in 
 
 double C_csp_trough_collector_receiver::get_tracking_power()
 {
+    if (m_is_solar_mult_designed == false)
+        return std::numeric_limits<double>::quiet_NaN();
+
     return m_SCA_drives_elec * 1.e-6 * m_nSCA * m_nLoops;     //MWe
 }
 
@@ -4292,7 +4295,7 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
     }
 
     // SCA Design Optical Efficiency 
-    m_csp_dtr_sca_calc_sca_effs = util::matrix_t<double>(m_TrackingError.size());
+    m_csp_dtr_sca_calc_sca_effs = std::vector<double>(m_TrackingError.size());
     {
         size_t n = m_TrackingError.size();
         
@@ -4303,11 +4306,11 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
     }
 
     // HCE Design Optical Efficiency
-    m_csp_dtr_hce_optical_effs = util::matrix_t<double>(m_HCE_FieldFrac.nrows());
+    m_csp_dtr_hce_optical_effs = std::vector<double>(m_HCE_FieldFrac.nrows(),
+                                                     std::numeric_limits<double>::quiet_NaN());
     {
         size_t n = m_HCE_FieldFrac.nrows();
 
-        m_csp_dtr_hce_optical_effs.fill(std::numeric_limits<double>::quiet_NaN());
         for (size_t i = 0; i < n; i++) {
             m_csp_dtr_hce_optical_effs.at(i) =
                 m_HCE_FieldFrac.at(i, 0)
@@ -4418,7 +4421,7 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
     // Total Loop Conversion Efficiency
     m_total_loop_conversion_efficiency_des = 0;
     {
-        m_total_loop_conversion_efficiency_des = m_loop_optical_efficiency_des * m_csp_dtr_hce_optical_effs;
+        m_total_loop_conversion_efficiency_des = m_loop_optical_efficiency_des * m_HCE_heat_loss_loop_des;
     }
 
     // Design Power cycle thermal input
@@ -4473,6 +4476,141 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
     // Calculate Field Thermal Output
     {
         m_q_design = m_I_bn_des * m_Ap_tot * m_total_loop_conversion_efficiency_des;
+    }
+
+    // Interconnect component minor loss coefficients
+    m_K_cpnt = util::matrix_t<double>(m_nSCA + 3, 11, std::numeric_limits<double>::quiet_NaN());
+    {
+        std::vector<double> K_cpnt_0 = { 0.9, 0, 0.19, 0, 0.9, -1, -1, -1, -1, -1, -1 };
+        std::vector<double> K_cpnt_1 = { 0, 0.6, 0.05, 0, 0.6, 0, 0.6, 0, 0.42, 0, 0.15 };
+        std::vector<double> K_cpnt_i = { 0.05, 0, 0.42, 0, 0.6, 0, 0.6, 0, 0.42, 0, 0.15 };
+        std::vector<double> K_cpnt_x_2 = { 0.05, 0, 0.42, 0, 0.6, 0, 0.6, 0, 0.15, 0.6, 0 };
+        std::vector<double> K_cpnt_x_1 = { 0.9, 0, 0.19, 0, 0.9, -1, -1, -1, -1, -1, -1 };
+
+        
+
+        // After cold header before SCAs
+        for (size_t j = 0; j < K_cpnt_0.size(); j++) {
+            m_K_cpnt.at(0, j) = K_cpnt_0.at(j);
+            m_K_cpnt.at(1, j) = K_cpnt_1.at(j);
+        }
+
+        // Between SCAs
+        for (size_t i = 0; i < (size_t)m_nSCA - 1; i++) {
+            for (size_t j = 0; j < K_cpnt_i.size(); j++) {
+                m_K_cpnt.at(i + 2, j) = K_cpnt_i.at(j);
+            }
+        }
+
+        // After SCAs before hot header
+        for (size_t j = 0; j < K_cpnt_x_2.size(); j++) {
+            m_K_cpnt.at(m_nSCA + 1, j) = K_cpnt_x_2.at(j);
+            m_K_cpnt.at(m_nSCA + 2, j) = K_cpnt_x_1.at(j);
+        }
+    }
+
+    // Inner diameters of the components in each loop interconnect
+    m_D_cpnt = util::matrix_t<double>(m_nSCA + 3, 11, std::numeric_limits<double>::quiet_NaN());
+    {
+        std::vector<double> D_cpnt_0 = { 0.085, 0.0635, 0.085, 0.0635, 0.085, -1, -1, -1, -1, -1, -1 };
+        std::vector<double> D_cpnt_1 = { 0.085, 0.085, 0.085, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.085 };
+        std::vector<double> D_cpnt_i = { 0.085, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.085 };
+        std::vector<double> D_cpnt_x_2 = { 0.085, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.085, 0.085, 0.085 };
+        std::vector<double> D_cpnt_x_1 = { 0.085, 0.0635, 0.085, 0.0635, 0.085, -1, -1, -1, -1, -1, -1 };
+
+        // After cold header before SCAs
+        for (size_t j = 0; j < D_cpnt_0.size(); j++) {
+            m_D_cpnt.at(0, j) = D_cpnt_0.at(j);
+            m_D_cpnt.at(1, j) = D_cpnt_1.at(j);
+        }
+
+        // Between SCAs
+        for (size_t i = 0; i < (size_t)m_nSCA - 1; i++) {
+            for (size_t j = 0; j < D_cpnt_i.size(); j++) {
+                m_D_cpnt.at(i + 2, j) = D_cpnt_i.at(j);
+            }
+        }
+
+        // After SCAs before hot header
+        for (size_t j = 0; j < D_cpnt_x_2.size(); j++) {
+            m_D_cpnt.at(m_nSCA + 1, j) = D_cpnt_x_2.at(j);
+            m_D_cpnt.at(m_nSCA + 2, j) = D_cpnt_x_1.at(j);
+        }
+    }
+
+    // Lengths of the components in each loop interconnect
+    m_L_cpnt = util::matrix_t<double>(m_nSCA + 3, 11, std::numeric_limits<double>::quiet_NaN());
+    {
+        std::vector<double> L_cpnt_0 = { 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1 };
+        std::vector<double> L_cpnt_1 = { 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0 };
+        std::vector<double> L_cpnt_i = { 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0 };
+        std::vector<double> L_cpnt_x_2 = { 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0 };
+        std::vector<double> L_cpnt_x_1 = { 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1 };
+
+        // After cold header before SCAs
+        for (size_t j = 0; j < L_cpnt_0.size(); j++) {
+            m_L_cpnt.at(0, j) = L_cpnt_0.at(j);
+            m_L_cpnt.at(1, j) = L_cpnt_1.at(j);
+        }
+
+        // Between SCAs
+        for (size_t i = 0; i < (size_t)m_nSCA - 1; i++) {
+            for (size_t j = 0; j < L_cpnt_i.size(); j++) {
+                m_L_cpnt.at(i + 2, j) = L_cpnt_i.at(j);
+            }
+        }
+
+        // After SCAs before hot header
+        for (size_t j = 0; j < L_cpnt_x_2.size(); j++) {
+            m_L_cpnt.at(m_nSCA + 1, j) = L_cpnt_x_2.at(j);
+            m_L_cpnt.at(m_nSCA + 2, j) = L_cpnt_x_1.at(j);
+        }
+    }
+
+    // Type of component in each loop interconnect [0=fitting | 1=pipe | 2=flex_hose]
+    m_Type_cpnt = util::matrix_t<double>(m_nSCA + 3, 11, std::numeric_limits<double>::quiet_NaN());
+    {
+        std::vector<double> Type_cpnt_0 = { 0, 1, 0, 1, 0, -1, -1, -1, -1, -1, -1 };
+        std::vector<double> Type_cpnt_1 = { 1, 0, 0, 2, 0, 1, 0, 2, 0, 2, 0 };
+        std::vector<double> Type_cpnt_i = { 0, 2, 0, 2, 0, 1, 0, 2, 0, 2, 0 };
+        std::vector<double> Type_cpnt_x_2 = { 0, 2, 0, 2, 0, 1, 0, 2, 0, 0, 1 };
+        std::vector<double> Type_cpnt_x_1 = { 0, 1, 0, 1, 0, -1, -1, -1, -1, -1, -1 };
+
+        // After cold header before SCAs
+        for (size_t j = 0; j < Type_cpnt_0.size(); j++) {
+            m_Type_cpnt.at(0, j) = Type_cpnt_0.at(j);
+            m_Type_cpnt.at(1, j) = Type_cpnt_1.at(j);
+        }
+
+        // Between SCAs
+        for (size_t i = 0; i < (size_t)m_nSCA - 1; i++) {
+            for (size_t j = 0; j < Type_cpnt_i.size(); j++) {
+                m_Type_cpnt.at(i + 2, j) = Type_cpnt_i.at(j);
+            }
+        }
+
+        // After SCAs before hot header
+        for (size_t j = 0; j < Type_cpnt_x_2.size(); j++) {
+            m_Type_cpnt.at(m_nSCA + 1, j) = Type_cpnt_x_2.at(j);
+            m_Type_cpnt.at(m_nSCA + 2, j) = Type_cpnt_x_1.at(j);
+        }
+    }
+
+    // Fixed Land Area
+    m_fixed_land_area = 0;
+    {
+        double max_collector_width = 0.;
+        for (size_t i = 0; i < m_SCAInfoArray.nrows(); i++) {
+            max_collector_width = std::max(max_collector_width, m_W_aperture.at((size_t)m_SCAInfoArray.at(i, 0) - 1));
+        }
+
+        m_fixed_land_area = m_Ap_tot * m_Row_Distance / max_collector_width * 0.0002471;
+    }
+
+    // Total Land Area
+    m_total_land_area = 0;
+    {
+        m_total_land_area = m_fixed_land_area * m_non_solar_field_land_area_multiplier;
     }
 
 }

@@ -45,7 +45,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_two_tank_tes.h"
 #include "csp_solver_tou_block_schedules.h"
 #include "csp_dispatch.h"
-#include "cmod_csp_common_eqns.h"
+//#include "cmod_csp_common_eqns.h"
 
 #include <ctime>
 #include <algorithm>
@@ -279,10 +279,10 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "northsouth_field_sep",      "North/south separation between subfields. 0 = SCAs are touching",                  "m",            "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "N_hdr_per_xpan",            "Number of collector loops per expansion loop",                                     "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "offset_xpan_hdr",           "Location of first header expansion loop. 1 = after first collector loop",          "none",         "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_MATRIX,      "K_cpnt",                    "Interconnect component minor loss coefficients, row=intc, col=cpnt",               "none",         "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_MATRIX,      "D_cpnt",                    "Interconnect component diameters, row=intc, col=cpnt",                             "none",         "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_MATRIX,      "L_cpnt",                    "Interconnect component lengths, row=intc, col=cpnt",                               "none",         "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_MATRIX,      "Type_cpnt",                 "Interconnect component type, row=intc, col=cpnt",                                  "none",         "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_MATRIX,      "K_cpnt",                    "Interconnect component minor loss coefficients, row=intc, col=cpnt",               "none",         "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_MATRIX,      "D_cpnt",                    "Interconnect component diameters, row=intc, col=cpnt",                             "none",         "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_MATRIX,      "L_cpnt",                    "Interconnect component lengths, row=intc, col=cpnt",                               "none",         "",               "solar_field",    "*",                       "",                      "" },
+    //{ SSC_INPUT,        SSC_MATRIX,      "Type_cpnt",                 "Interconnect component type, row=intc, col=cpnt",                                  "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "custom_sf_pipe_sizes",      "Use custom solar field pipe diams, wallthks, and lengths",                         "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "sf_rnr_diams",              "Custom runner diameters",                                                          "m",            "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "sf_rnr_wallthicks",         "Custom runner wall thicknesses",                                                   "m",            "",               "solar_field",    "*",                       "",                      "" },
@@ -330,14 +330,37 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,       SSC_NUMBER,     "q_dot_cycle_des",            "Cycle thermal power at design",                                                    "MWt",          "",               "Power Cycle",    "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "nameplate",                  "Nameplate capacity",                                                               "MWe",          "",               "System Design Calc",           "*",         "",                      "" },
 
+
     // Solar Field
     { SSC_OUTPUT,       SSC_NUMBER,     "field_htf_min_temp",               "Minimum field htf temp",                                               "C",            "",         "Power Cycle",                    "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "field_htf_max_temp",               "Maximum field htf temp",                                               "C",            "",         "Power Cycle",                    "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "field_htf_cp_avg_des",             "Field average htf cp at design",                                       "kJ/kgK",       "",         "Solar Field",                    "*",                                                                "",              "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "single_loop_aperture_des",         "Single loop aperture",                                                 "m2",           "",         "Solar Field",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "single_loop_aperture",         "Single loop aperture",                                                 "m2",           "",         "Solar Field",                    "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "min_inner_diameter",               "Minimum absorber inner diameter in loop",                              "m",            "",         "Solar Field",                    "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "csp_dtr_hce_design_heat_losses"      "Heat loss at design"                                                   "W/m",          "",         "Solar Field",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "cspdtr_loop_hce_heat_loss"      "Loop Heat Loss from HCE at Design"                                            "W/m",          "",         "Solar Field",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "csp_dtr_sca_calc_sca_effs"      "SCA optical efficiencies at design"                                                   "",          "",         "Solar Field",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "loop_optical_efficiency"      "Loop total optical effiency at design"                                                   "",          "",         "Solar Field",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "csp_dtr_hce_optical_effs"      "HCE optical efficiencies at design"                                                   "",          "",         "Solar Field",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_MATRIX,     "SCAInfoArray"      "Receiver (,1) and collector (,2) type for each assembly in loop"                                                   "",          "",         "Solar Field",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "SCADefocusArray"      "Order in which the SCA's should be defocused"                                                   "",          "",         "Solar Field",                    "*",                                                                "",              "" },
 
+    { SSC_OUTPUT,       SSC_NUMBER,      "total_loop_conversion_efficiency"   "Total Loop Conversion Efficiency at Design"                        "",          "",         "Solar Field",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "total_required_aperture_for_SM1"      "Aperture required for solar mult = 1"                                                   "m2",          "",         "Solar Field",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "required_number_of_loops_for_SM1"      "Heat loss at design"                                                   "",          "",         "Solar Field",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "nLoops"      "Number of loops in the field"                                                   "",          "",         "Solar Field",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "total_aperture"      "Total field aperture area"                                                   "m2",          "",         "Solar Field",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "field_thermal_output"      "Design-point thermal power from the solar field"                                                   "MWt",          "",         "Solar Field",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "solar_mult"      "Solar multiple"                                                   "",          "",         "Solar Field",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "fixed_land_area"      "Fixed Land Area"                                                   "acre",          "",         "Solar Field",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "total_land_area"      "Total Land Area"                                                   "acre",          "",         "Solar Field",                    "*",                                                                "",              "" },
+
+
+    { SSC_OUTPUT,       SSC_NUMBER,      "total_tracking_power"      "Total Tracking Power"                                                   "MWe",          "",         "Solar Field",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_MATRIX,      "K_cpnt"      "Minor loss coefficients of the components in each loop interconnect" "",          "",         "Solar Field",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_MATRIX,      "D_cpnt"      "Inner diameters of the components in each loop interconnect"                                                   "m",          "",         "Solar Field",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_MATRIX,      "L_cpnt"      "Lengths of the components in each loop interconnect"                                                   "m",          "",         "Solar Field",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_MATRIX,      "Type_cpnt"      "Type of component in each loop interconnect [0=fitting | 1=pipe | 2=flex_hose]"                                                   "Wm",          "",         "Solar Field",                    "*",                                                                "",              "" },
 
     // Simulation Kernel
     { SSC_OUTPUT,       SSC_ARRAY,       "time_hr",                   "Time at end of timestep",                                                          "hr",           "",               "solver",         "sim_type=1",                       "",                      "" },
@@ -726,6 +749,7 @@ public:
 
                 c_trough.m_P_ref = as_double("P_ref") * 1e6;                //[W] Design Turbine Net Output
                 c_trough.m_eta_ref = as_double("eta_ref");                  //[] Design cycle thermal efficiency
+                c_trough.m_non_solar_field_land_area_multiplier = as_double("non_solar_field_land_area_multiplier");    //[]
 
                 //[m] The collector aperture width (Total structural area.. used for shadowing)
                 size_t nval_W_aperture = 0;
@@ -887,10 +911,10 @@ public:
                 c_trough.m_northsouth_field_sep = as_double("northsouth_field_sep"); //[m] Shortest north/south distance between SCAs in different subfields
                 c_trough.m_N_hdr_per_xpan = as_double("N_hdr_per_xpan");          //[-] Number of collector loops per header expansion loops. 1 = expansion loop between every collector loop
                 c_trough.m_offset_xpan_hdr = as_double("offset_xpan_hdr");        //[-] Location of first header expansion loop. 1 = after first collector loop
-                c_trough.m_K_cpnt = as_matrix("K_cpnt");                          //[-] Minor loss coefficients of the components in each loop interconnect
-                c_trough.m_D_cpnt = as_matrix("D_cpnt");                          //[m] Inner diameters of the components in each loop interconnect
-                c_trough.m_L_cpnt = as_matrix("L_cpnt");                          //[m] Lengths of the components in each loop interconnect
-                c_trough.m_Type_cpnt = as_matrix("Type_cpnt");                    //[-] Type of component in each loop interconnect [0=fitting | 1=pipe | 2=flex_hose]
+                //c_trough.m_K_cpnt = as_matrix("K_cpnt");                          //[-] Minor loss coefficients of the components in each loop interconnect
+                //c_trough.m_D_cpnt = as_matrix("D_cpnt");                          //[m] Inner diameters of the components in each loop interconnect
+                //c_trough.m_L_cpnt = as_matrix("L_cpnt");                          //[m] Lengths of the components in each loop interconnect
+                //c_trough.m_Type_cpnt = as_matrix("Type_cpnt");                    //[-] Type of component in each loop interconnect [0=fitting | 1=pipe | 2=flex_hose]
                 c_trough.m_custom_sf_pipe_sizes = as_boolean("custom_sf_pipe_sizes"); //[-] Should the field pipe diameters, wall thickness and lengths be imported instead of calculated
                 c_trough.m_sf_rnr_diams = as_matrix("sf_rnr_diams");              //[m] Imported runner diameters, used if custom_sf_pipe_sizes is true
                 c_trough.m_sf_rnr_wallthicks = as_matrix("sf_rnr_wallthicks");    //[m] Imported runner wall thicknesses, used if custom_sf_pipe_sizes is true
@@ -1504,21 +1528,41 @@ public:
 
             // Solar Field
             {
-                double field_htf_min_temp = c_trough.m_htfProps.min_temp() - 273.15;    // [C]
-                double field_htf_max_temp = c_trough.m_htfProps.max_temp() - 273.15;    // [C]
-                double field_htf_cp_avg_des = c_trough.m_field_htf_cp_avg_des;          // [kJ/kg-K]
-                double single_loop_aperture_des = c_trough.m_single_loop_aperture;  // [m2]
-                double min_inner_diameter_des = c_trough.m_min_inner_diameter;      // [m]
-                std::vector<double> csp_dtr_hce_design_heat_losses = c_trough.m_HCE_heat_loss_des;     // [W/m]
-
-                assign("field_htf_min_temp", field_htf_min_temp);
-                assign("field_htf_max_temp", field_htf_max_temp);
-                assign("field_htf_cp_avg_des", field_htf_cp_avg_des);
-                assign("single_loop_aperture_des", single_loop_aperture_des);
-                assign("min_inner_diameter_des", min_inner_diameter_des);
-                ssc_number_t* hce_design = allocate("csp_dtr_hce_design_heat_losses", csp_dtr_hce_design_heat_losses.size());
-                for (int i = 0; i < csp_dtr_hce_design_heat_losses.size(); i++)
-                    hce_design[i] = csp_dtr_hce_design_heat_losses[i];
+                assign("field_htf_min_temp", c_trough.m_htfProps.min_temp() - 273.15);    // [C]
+                assign("field_htf_max_temp", c_trough.m_htfProps.max_temp() - 273.15);    // [C]
+                assign("field_htf_cp_avg_des", c_trough.m_field_htf_cp_avg_des);          // [kJ/kg-K]
+                assign("single_loop_aperture", c_trough.m_single_loop_aperture);  // [m2]
+                assign("min_inner_diameter_des", c_trough.m_min_inner_diameter);      // [m]
+                ssc_number_t* hce_design = allocate("csp_dtr_hce_design_heat_losses", c_trough.m_HCE_heat_loss_des.size());
+                for (int i = 0; i < c_trough.m_HCE_heat_loss_des.size(); i++)
+                    hce_design[i] = c_trough.m_HCE_heat_loss_des[i];    // [W/m]
+                assign("cspdtr_loop_hce_heat_loss", c_trough.m_HCE_heat_loss_loop_des); //[W/m]
+                ssc_number_t* sca_effs = allocate("csp_dtr_sca_calc_sca_effs", c_trough.m_csp_dtr_sca_calc_sca_effs.size());
+                for (int i = 0; i < c_trough.m_csp_dtr_sca_calc_sca_effs.size(); i++)
+                    sca_effs[i] = c_trough.m_csp_dtr_sca_calc_sca_effs[i];    // []
+                assign("loop_optical_efficiency_des", c_trough.m_loop_optical_efficiency_des);  //[]
+                ssc_number_t* hce_effs = allocate("csp_dtr_hce_optical_effs", c_trough.m_csp_dtr_hce_optical_effs.size());
+                for (int i = 0; i < c_trough.m_csp_dtr_hce_optical_effs.size(); i++)
+                    hce_effs[i] = c_trough.m_csp_dtr_hce_optical_effs[i];    // []
+                assign("SCAInfoArray", c_trough.m_SCAInfoArray);    // []
+                //assign("SCADefocusArray", c_trough.m_SCADefocusArray);  //[]
+                set_vector("SCADefocusArray", c_trough.m_SCADefocusArray);
+                assign("max_field_flow_velocity", c_trough.m_max_field_flow_velocity);  //[m/s]
+                assign("min_field_flow_velocity", c_trough.m_min_field_flow_velocity);  //[m/s]
+                assign("total_loop_conversion_efficiency_des", c_trough.m_total_loop_conversion_efficiency_des);
+                assign("total_required_aperture_for_SM1", c_trough.m_total_required_aperture_for_SM1);
+                assign("required_number_of_loops_for_SM1", c_trough.m_required_number_of_loops_for_SM1);
+                assign("nLoops", c_trough.m_nLoops);
+                assign("total_aperture", c_trough.m_Ap_tot);    //[m2]
+                assign("field_thermal_output", c_trough.m_q_design / 1e6); // [MWt]
+                assign("solar_mult", c_trough.m_solar_mult);
+                assign("fixed_land_area", c_trough.m_fixed_land_area);  //[acre]
+                assign("total_land_area", c_trough.m_total_land_area);  //[acre]
+                assign("total_tracking_power", c_trough.get_tracking_power());  //[MWe]
+                assign("K_cpnt", c_trough.m_K_cpnt);
+                assign("D_cpnt", c_trough.m_D_cpnt);    //[m]
+                assign("L_cpnt", c_trough.m_L_cpnt);    //[m]
+                assign("Type_cpnt", c_trough.m_Type_cpnt);   //[]
                 
             }
         }
@@ -1768,7 +1812,16 @@ public:
         assign("capacity_factor", (ssc_number_t)(kWh_per_kW / ((double)n_steps_fixed / (double)steps_per_hour)*100.));
         assign("kwh_per_kw", (ssc_number_t)kWh_per_kW);
     }
-    
+
+    template <typename T>
+    void set_vector(const std::string& name, const vector<T> vec)
+    {
+        int size = vec.size();
+        ssc_number_t* alloc_vals = allocate(name, size);
+        for (int i = 0; i < size; i++)
+            alloc_vals[i] = vec[i];    // []
+    }
+
 };
 
 DEFINE_MODULE_ENTRY(trough_physical, "Physical trough applications", 1)
