@@ -1036,7 +1036,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 
     }
 
-    bool cycleCostRelevant = (batt_vars->batt_meter_position == dispatch_t::BEHIND && batt_vars->batt_dispatch == dispatch_t::FORECAST) ||
+    bool cycleCostRelevant = (batt_vars->batt_meter_position == dispatch_t::BEHIND && batt_vars->batt_dispatch == dispatch_t::RETAIL_RATE) ||
         (batt_vars->batt_meter_position == dispatch_t::FRONT && (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL && batt_vars->batt_dispatch != dispatch_t::FOM_CUSTOM_DISPATCH));
     if (cycleCostRelevant && batt_vars->batt_cycle_cost_choice == dispatch_t::MODEL_CYCLE_COST) {
         outCostToCycle = vt.allocate("batt_cost_to_cycle", nrec * nyears);
@@ -1383,7 +1383,7 @@ void battstor::parse_configuration()
         prediction_index = 0;
         if (batt_meter_position == dispatch_t::BEHIND)
         {
-            if (batt_dispatch == dispatch_t::PEAK_SHAVING || batt_dispatch == dispatch_t::MAINTAIN_TARGET || batt_dispatch == dispatch_t::FORECAST ||
+            if (batt_dispatch == dispatch_t::PEAK_SHAVING || batt_dispatch == dispatch_t::MAINTAIN_TARGET || batt_dispatch == dispatch_t::RETAIL_RATE ||
                 batt_dispatch == dispatch_t::SELF_CONSUMPTION)
             {
                 switch (batt_weather_forecast) {
@@ -1781,7 +1781,7 @@ bool battstor::uses_forecast() {
         return batt_vars->batt_dispatch == dispatch_t::FOM_AUTOMATED_ECONOMIC || batt_vars->batt_dispatch == dispatch_t::FOM_PV_SMOOTHING;
     }
     else {
-        return batt_vars->batt_dispatch == dispatch_t::FORECAST || dispatch_t::PEAK_SHAVING;
+        return batt_vars->batt_dispatch == dispatch_t::RETAIL_RATE || dispatch_t::PEAK_SHAVING;
     }
 }
 
@@ -1946,7 +1946,7 @@ void battstor::outputs_topology_dependent()
         }
     }
 
-    bool cycleCostRelevant = (batt_vars->batt_meter_position == dispatch_t::BEHIND && batt_vars->batt_dispatch == dispatch_t::FORECAST) ||
+    bool cycleCostRelevant = (batt_vars->batt_meter_position == dispatch_t::BEHIND && batt_vars->batt_dispatch == dispatch_t::RETAIL_RATE) ||
         (batt_vars->batt_meter_position == dispatch_t::FRONT && (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL && batt_vars->batt_dispatch != dispatch_t::FOM_CUSTOM_DISPATCH));
     if (cycleCostRelevant && batt_vars->batt_cycle_cost_choice == dispatch_t::MODEL_CYCLE_COST) {
         outCostToCycle[index] = (ssc_number_t)(dispatch_model->cost_to_cycle_per_kwh());

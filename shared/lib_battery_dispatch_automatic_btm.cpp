@@ -173,7 +173,7 @@ double dispatch_automatic_behind_the_meter_t::power_grid_target() { return _P_ta
 
 void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
 {
-    if (_mode == dispatch_t::FORECAST)
+    if (_mode == dispatch_t::RETAIL_RATE)
     {
 
         forecast_setup rate_setup(_steps_per_hour, _nyears);
@@ -196,7 +196,7 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t year, size_t 
     // [kWh] - the maximum energy that can be cycled
     double E_max = 0;
 
-    if (_mode == dispatch_t::FORECAST)
+    if (_mode == dispatch_t::RETAIL_RATE)
     {
         // Hourly rolling forecast horizon
         if ((hour_of_year != _hour_last_updated) || m_outage_manager->recover_from_outage)
