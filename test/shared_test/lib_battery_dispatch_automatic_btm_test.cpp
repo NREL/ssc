@@ -1224,7 +1224,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutagePeakShavingEmp
 
 }
 
-TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutagePriceSignalsEmptyAndFull) {
+TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutageRetailRAteEmptyAndFull) {
     double dtHour = 1;
     CreateBattery(dtHour);
 

@@ -883,7 +883,7 @@ void dispatch_automatic_behind_the_meter_t::costToCycle()
             m_cycleCost = 0.01 * capacityPercentDamagePerCycle * m_battReplacementCostPerKWH[curr_year] * _Battery->get_params().nominal_energy;
         }
         else {
-            // Should only apply to BattWatts. BattWatts doesn't have price signal dispatch, so this is fine.
+            // Should only apply to BattWatts. BattWatts doesn't have retal rate dispatch, so this is fine.
             m_cycleCost = 0.0;
         }
     }
