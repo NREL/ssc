@@ -88,7 +88,7 @@ static var_info _cm_tidal_file_reader[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,      "tz",                      "Time zone",                                   "",       "",                      "Weather Reader",      "",                        "",               "" },
 	{ SSC_OUTPUT,        SSC_STRING,      "data_source",             "Data source",                                 "",       "",                      "Weather Reader",      "",                        "",               "" },
 	{ SSC_OUTPUT,        SSC_STRING,      "notes",                   "Notes",                                       "",       "",                      "Weather Reader",      "",                        "",               "" },
-    { SSC_OUTPUT,        SSC_NUMBER,      "location_id",             "Location ID",               "",       "",                      "Weather Reader",     "tidal_resource_model_choice=1",                        "",               "" },
+    { SSC_OUTPUT,        SSC_STRING,      "location_id",             "Location ID",               "",       "",                      "Weather Reader",     "tidal_resource_model_choice=1",                        "",               "" },
     { SSC_OUTPUT,        SSC_NUMBER,      "distance_to_shore_file",       "Distance to shore",               "m",       "",                      "Weather Reader",     "tidal_resource_model_choice=1",                        "",               "" },
     { SSC_OUTPUT,        SSC_NUMBER,      "water_depth_file",             "Water depth",               "m",       "",                      "Weather Reader",     "tidal_resource_model_choice=1",                        "",               "" },
 
@@ -204,7 +204,7 @@ public:
                 assign("notes", var_data(values[12]));
             }
             else {
-                assign("location_id", var_data(std::stod(values[1])));
+                assign("location_id", var_data(values[1]));
                 assign("distance_to_shore_file", var_data(std::stod(values[7])));
                 assign("water_depth_file", var_data(std::stod(values[18])));
                 assign("lat", var_data(std::stod(values[3])));
