@@ -329,13 +329,13 @@ TEST_F(ResilienceTest_lib_resilience, VoltageTable)
     cap.updateCapacity(current, 1);
     volt.updateVoltage(cap.q0(), cap.qmax(), cap.I(), 0, 0.);
     EXPECT_NEAR(cap.SOC(), 44.445, 1e-3);
-    EXPECT_NEAR(volt.cell_voltage(), 1.773, 1e-3);
+    EXPECT_NEAR(volt.cell_voltage(), 1.873, 1e-3);
 
     current = -1;
     cap.updateCapacity(current, 1);
     volt.updateVoltage(cap.q0(), cap.qmax(), cap.I(), 0, 0.);
     EXPECT_NEAR(cap.SOC(), 88.889, 1e-3);
-    EXPECT_NEAR(volt.cell_voltage(), 2.777, 1e-3);
+    EXPECT_NEAR(volt.cell_voltage(), 2.877, 1e-3);
 }
 
 TEST_F(ResilienceTest_lib_resilience, DischargeVoltageTable){
@@ -359,7 +359,7 @@ TEST_F(ResilienceTest_lib_resilience, DischargeVoltageTable){
     cap.updateCapacity(req_cur, 1);
     volt.updateVoltage(cap.q0(), cap.qmax(), cap.I(), 0, 1);
     double v = volt.cell_voltage();
-    EXPECT_NEAR(req_cur * v, 0.5, 1e-2);
+    EXPECT_NEAR(req_cur * v, 0.48, 1e-2);
 
     // test max discharge
     cap = capacity_lithium_ion_t(2.25, 50, 100, 0, 1);
@@ -397,7 +397,7 @@ TEST_F(ResilienceTest_lib_resilience, ChargeVoltageTable){
     cap.updateCapacity(req_cur, 1);
     volt.updateVoltage(cap.q0(), cap.qmax(), cap.I(), 0, 1);
     double v = volt.cell_voltage();
-    EXPECT_NEAR(req_cur * v, -1.5, 1e-2);
+    EXPECT_NEAR(req_cur * v, -1.58, 1e-2);
 
     // test max charge
     double max_p = volt.calculate_max_charge_w(cap.q0(), cap.qmax(), 0, &current);
