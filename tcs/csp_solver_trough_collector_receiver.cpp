@@ -257,6 +257,10 @@ C_csp_trough_collector_receiver::~C_csp_trough_collector_receiver()
 void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs, 
 				C_csp_collector_receiver::S_csp_cr_solved_params & solved_params)
 {
+
+    // If solar multiple is not yet calculated
+    if (m_is_solar_mult_designed == false)
+        this->design_solar_mult();
 	
 	// double some_calc = m_nSCA + m_nHCEt;
 	/*
@@ -278,37 +282,6 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_shift *= m_d2r;			//[rad] convert from [deg]
 
     m_P_field_in = 17 / 1.e-5;                //Assumed inlet htf pressure for property lookups (DP_tot_max = 16 bar + 1 atm) [Pa]
-
-	// Set trough HTF properties
-	if (m_Fluid != HTFProperties::User_defined)
-	{
-		if (!m_htfProps.SetFluid(m_Fluid))
-		{
-			throw(C_csp_exception("Field HTF code is not recognized", "Trough Collector Solver"));
-		}
-	}
-	else if (m_Fluid == HTFProperties::User_defined)
-	{
-		int n_rows = (int)m_field_fl_props.nrows();
-		int n_cols = (int)m_field_fl_props.ncols();
-		if (n_rows > 2 && n_cols == 7)
-		{
-			if (!m_htfProps.SetUserDefinedFluid(m_field_fl_props))
-			{
-				m_error_msg = util::format(m_htfProps.UserFluidErrMessage(), n_rows, n_cols);
-				throw(C_csp_exception(m_error_msg, "Trough Collector Solver"));
-			}
-		}
-		else
-		{
-			m_error_msg = util::format("The user defined field HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", n_rows, n_cols);
-			throw(C_csp_exception(m_error_msg, "Trough Collector Solver"));
-		}
-	}
-	else
-	{
-		throw(C_csp_exception("Receiver HTF code is not recognized", "Trough Collector Solver"));
-	}
 
 	// Adjust parameters
 	m_ColTilt = m_ColTilt*m_d2r;	//[rad] Collector tilt angle (0 is horizontal, 90deg is vertical), convert from [deg]
@@ -642,7 +615,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 
 		m_m_dot_loop_des = m_m_dot_design/(double)m_nLoops;	//[kg/s]
 		//mjw 1.16.2011 Design field thermal power 
-		m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
+		//m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
 		//mjw 1.16.2011 Convert the thermal inertia terms here
 		m_mc_bal_hot = m_mc_bal_hot_per_MW * 3.6 * m_q_design;    //[J/K]
 		m_mc_bal_cold = m_mc_bal_cold_per_MW * 3.6 * m_q_design;  //[J/K]
@@ -4224,8 +4197,39 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
 
     // Calculate nLoops, depending on designing for solar mult or total field aperture.
 
+    // Set trough HTF properties
+    if (m_Fluid != HTFProperties::User_defined)
+    {
+        if (!m_htfProps.SetFluid(m_Fluid))
+        {
+            throw(C_csp_exception("Field HTF code is not recognized", "Trough Collector Solver"));
+        }
+    }
+    else if (m_Fluid == HTFProperties::User_defined)
+    {
+        int n_rows = (int)m_field_fl_props.nrows();
+        int n_cols = (int)m_field_fl_props.ncols();
+        if (n_rows > 2 && n_cols == 7)
+        {
+            if (!m_htfProps.SetUserDefinedFluid(m_field_fl_props))
+            {
+                m_error_msg = util::format(m_htfProps.UserFluidErrMessage(), n_rows, n_cols);
+                throw(C_csp_exception(m_error_msg, "Trough Collector Solver"));
+            }
+        }
+        else
+        {
+            m_error_msg = util::format("The user defined field HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", n_rows, n_cols);
+            throw(C_csp_exception(m_error_msg, "Trough Collector Solver"));
+        }
+    }
+    else
+    {
+        throw(C_csp_exception("Receiver HTF code is not recognized", "Trough Collector Solver"));
+    }
+
     // Single Loop Aperture
-    m_single_loop_aperture_des = 0;
+    m_single_loop_aperture = 0;
     {
         int nsca = static_cast<int>(m_trough_loop_control.at(0));
 
@@ -4233,20 +4237,20 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
         for (int i = 0; i < nsca; i++)
         {
             sca_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
-            m_single_loop_aperture_des += + m_A_aperture[sca_t];
+            m_single_loop_aperture += + m_A_aperture[sca_t];
         }
     }
 
     // Min_inner_diameter
-    m_min_inner_diameter_des = 0;
+    m_min_inner_diameter = 0;
     {
-        m_min_inner_diameter_des = m_D_2[0];
+        m_min_inner_diameter = m_D_2[0];
         int hce_t = -1;
         for (int i = 0; i < static_cast<int>(m_trough_loop_control.at(0)); i++)
         {
             hce_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(i * 3 + 2)), 1), 4) - 1;
-            if (m_D_2[hce_t] < m_min_inner_diameter_des) {
-                m_min_inner_diameter_des = m_D_2[hce_t];
+            if (m_D_2[hce_t] < m_min_inner_diameter) {
+                m_min_inner_diameter = m_D_2[hce_t];
             }
         }
     }
@@ -4393,6 +4397,82 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
         for (int i = 0; i < assemblies; i++) {
             m_SCADefocusArray[i] = static_cast<int>(m_trough_loop_control.at(3 + 3 * i));
         }
+    }
+
+    // Max Field Flow Velocity
+    m_max_field_flow_velocity = 0;
+    {
+        double density = m_htfProps.dens(m_T_loop_out_des + 273.15, std::numeric_limits<double>::quiet_NaN());
+
+        m_max_field_flow_velocity = m_m_dot_htfmax * 4 / (density * M_PI * m_min_inner_diameter * m_min_inner_diameter);
+    }
+
+    // Min Field Flow Velocity
+    m_min_field_flow_velocity = 0;
+    {
+        double density = m_htfProps.dens(m_T_loop_in_des + 273.15, std::numeric_limits<double>::quiet_NaN());
+
+        m_min_field_flow_velocity = m_m_dot_htfmin * 4 / (density * M_PI * m_min_inner_diameter * m_min_inner_diameter);
+    }
+
+    // Total Loop Conversion Efficiency
+    m_total_loop_conversion_efficiency_des = 0;
+    {
+        m_total_loop_conversion_efficiency_des = m_loop_optical_efficiency_des * m_csp_dtr_hce_optical_effs;
+    }
+
+    // Design Power cycle thermal input
+    m_q_pb_design = 0;
+    {
+        m_q_pb_design = m_P_ref / m_eta_ref;
+    }
+
+    // Total Required Aperture for SM1
+    m_total_required_aperture_for_SM1 = 0;
+    {
+        m_total_required_aperture_for_SM1 = m_q_pb_design / (m_I_bn_des * m_total_loop_conversion_efficiency_des);
+    }
+
+    // Required number of loops for SM1
+    m_required_number_of_loops_for_SM1 = 0;
+    {
+        m_required_number_of_loops_for_SM1 = std::ceil(m_total_required_aperture_for_SM1 / m_single_loop_aperture);
+    }
+
+    // nLoops, Total Aperture, and solar mult
+    m_nLoops = 0;
+    m_Ap_tot = 0;
+    m_solar_mult = 0;
+    {
+        // Use solar mult
+        if (m_use_solar_mult_or_aperature_area == 0)
+        {
+            m_Ap_tot = m_specified_solar_mult * m_total_required_aperture_for_SM1;
+            m_solar_mult = m_specified_solar_mult;
+            m_nLoops = std::ceil(m_Ap_tot / m_single_loop_aperture);
+
+            // Get Actual total aperture
+            m_Ap_tot = m_nLoops * m_single_loop_aperture;
+        }
+        // Use total aperture
+        else if (m_use_solar_mult_or_aperature_area == 1)
+        {
+            m_Ap_tot = m_specified_total_aperture;
+            m_nLoops = std::ceil(m_Ap_tot / m_single_loop_aperture);
+
+            // Get Actual total aperture
+            m_Ap_tot = m_nLoops * m_single_loop_aperture;
+            m_solar_mult = m_Ap_tot / m_total_required_aperture_for_SM1;
+        }
+        else
+        {
+            throw std::runtime_error("Physical Trough. Number of loops calculation failed, invalid option.");
+        }
+    }
+
+    // Calculate Field Thermal Output
+    {
+        m_q_design = m_I_bn_des * m_Ap_tot * m_total_loop_conversion_efficiency_des;
     }
 
 }

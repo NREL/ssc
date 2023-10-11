@@ -105,7 +105,6 @@ private:
 	int m_n_r_iam_matrix;	//[-] Number of rows in the IAM matrix
 	double m_v_hot;			//[m^3] Hot piping volume
 	double m_v_cold;		//[m^3] Cold piping volume
-	double m_Ap_tot;		//[m^2] Total field aperture area
 	int	m_nfsec;			//[-] Number of field sections
 	int	m_nhdrsec;			//[-] Number of header sections
 	int	m_nrunsec;			//[-] Number of unique runner diameters
@@ -113,7 +112,6 @@ private:
 	double m_opteff_des;	//[-] Design-point optical efficieny (theta = 0) from the solar field
 	double m_m_dot_design;	//[kg/s] Total solar field mass flow rate at design
 	double m_m_dot_loop_des;//[kg/s] LOOP design mass flow rate
-	double m_q_design;		//[Wt] Design-point thermal power from the solar field
 	double m_W_dot_sca_tracking_nom;		//[MWe] Tracking parasitics when trough is on sun
 
 	std::vector<double> m_L_actSCA;	//[m] Lengths of each SCA
@@ -325,7 +323,6 @@ public:
 	int m_nHCEt;			//[-] Number of HCE types
 	int m_nColt;			//[-] Number of collector types
 	int m_nHCEVar;			//[-] Number of HCE variants per type
-	int m_nLoops;			//[-] Number of loops in the field
 	int m_FieldConfig;		//[-] Number of subfield headers
 	bool m_include_fixed_power_block_runner;	//[-] True: model 50[m] of runner sized for full mass flow rate
 	double m_L_power_block_piping;	//[m] Length of piping (full mass flow) through heat sink (if applicable)
@@ -477,13 +474,18 @@ public:
     vector<interconnect> m_interconnects;
 
     // Design Point Inputs
+    int m_use_solar_mult_or_aperature_area;         // Use specified solar mult (0) or total aperture (1)
+    double m_specified_solar_mult;                  // User specified solar mult
+    double m_specified_total_aperture;              //[m2] User specified total aperture
     bool m_is_solar_mult_designed = false;          // Flag for whether solar multiple has been calculated
     util::matrix_t<double> m_trough_loop_control;
+    double m_P_ref;                                 //[W] Design Turbine Net Output
+    double m_eta_ref;                               //[] Design Cycle Thermal Efficiency
 
     // Design Point Outputs
     double m_field_htf_cp_avg_des;                  //[kJ/kg-K] Field average htf cp value at design
-    double m_single_loop_aperture_des;              //[m2] Aperture of single loop
-    double m_min_inner_diameter_des;                //[m] Min inner diameter
+    double m_single_loop_aperture;                  //[m2] Aperture of single loop
+    double m_min_inner_diameter;                    //[m] Min inner diameter
     std::vector<double> m_HCE_heat_loss_des;        //[W/m]
     double m_HCE_heat_loss_loop_des;                //[W/m]
     util::matrix_t<double> m_csp_dtr_sca_calc_sca_effs; // SCA optical efficiencies at design
@@ -493,6 +495,16 @@ public:
     std::vector<int> m_SCADefocusArray;             //[-] Order in which the SCA's should be defocused
     double m_m_dot_htfmin;	                        //[kg/s] Minimum loop HTF flow rate
     double m_m_dot_htfmax;	                        //[kg/s] Maximum loop HTF flow rate
+    double m_max_field_flow_velocity;               //[m/s] Maximum Field Flow Velocity
+    double m_min_field_flow_velocity;               //[m/s] Minimum Field Flow Velocity
+    double m_total_loop_conversion_efficiency_des;  //[] Total Loop Conversion Efficiency at Design
+    double m_total_required_aperture_for_SM1;       //[m2] Aperture required for solar mult = 1
+    double m_q_design;		                        //[Wt] Design-point thermal power from the solar field
+    double m_q_pb_design;                           //[Wt] Power cycle thermal input at design
+    double m_required_number_of_loops_for_SM1;      //[] Required number of loops for solar mult = 1
+    int m_nLoops;			                        //[-] Number of loops in the field
+    double m_Ap_tot;		                        //[m^2] Total field aperture area
+    double m_Q_rec_des;                             //
 
 	// **************************************************************************
 	// **************************************************************************

@@ -670,6 +670,9 @@ public:
         {
             // Collect Inputs
             {
+                c_trough.m_use_solar_mult_or_aperature_area = as_number("use_solar_mult_or_aperture_area"); // Use specified solar mult (0) or total aperture (1)
+                c_trough.m_specified_solar_mult = as_number("specified_solar_multiple");            // User specified solar mult
+                c_trough.m_specified_total_aperture = as_number("specified_total_aperture");    //[m2] User specified total aperture
                 c_trough.m_nSCA = as_integer("nSCA");                       //[-] Number of SCA's in a loop
                 c_trough.m_nHCEt = as_integer("nHCEt");                     //[-] Number of HCE types
                 c_trough.m_nColt = as_integer("nColt");                     //[-] Number of collector types
@@ -720,6 +723,9 @@ public:
                 c_trough.m_mc_bal_hot_per_MW = as_double("mc_bal_hot");     //[kWht/K-MWt] The heat capacity of the balance of plant on the hot side
                 c_trough.m_mc_bal_cold_per_MW = as_double("mc_bal_cold");   //[kWht/K-MWt] The heat capacity of the balance of plant on the cold side
                 c_trough.m_mc_bal_sca = as_double("mc_bal_sca");            //[Wht/K-m] Non-HTF heat capacity associated with each SCA - per meter basis
+
+                c_trough.m_P_ref = as_double("P_ref") * 1e6;                //[W] Design Turbine Net Output
+                c_trough.m_eta_ref = as_double("eta_ref");                  //[] Design cycle thermal efficiency
 
                 //[m] The collector aperture width (Total structural area.. used for shadowing)
                 size_t nval_W_aperture = 0;
@@ -1501,8 +1507,8 @@ public:
                 double field_htf_min_temp = c_trough.m_htfProps.min_temp() - 273.15;    // [C]
                 double field_htf_max_temp = c_trough.m_htfProps.max_temp() - 273.15;    // [C]
                 double field_htf_cp_avg_des = c_trough.m_field_htf_cp_avg_des;          // [kJ/kg-K]
-                double single_loop_aperture_des = c_trough.m_single_loop_aperture_des;  // [m2]
-                double min_inner_diameter_des = c_trough.m_min_inner_diameter_des;      // [m]
+                double single_loop_aperture_des = c_trough.m_single_loop_aperture;  // [m2]
+                double min_inner_diameter_des = c_trough.m_min_inner_diameter;      // [m]
                 std::vector<double> csp_dtr_hce_design_heat_losses = c_trough.m_HCE_heat_loss_des;     // [W/m]
 
                 assign("field_htf_min_temp", field_htf_min_temp);
