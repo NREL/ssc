@@ -1055,7 +1055,7 @@ public:
         double dtHour, double tiltDegrees, double azimuthDegrees, double trackerRotationLimitDegrees, double stowAngleDegreesIn,
         double groundCoverageRatio, double slopeTilt, double slopeAzm, std::vector<double> monthlyTiltDegrees, std::vector<double> userSpecifiedAlbedo,
         poaDecompReq* poaAllIn,
-        bool useSpatialAlbedos = false, const util::matrix_t<double>* userSpecifiedSpatialAlbedos = nullptr, bool enableSubhourlyClipping = false);
+        bool useSpatialAlbedos = false, const util::matrix_t<double>* userSpecifiedSpatialAlbedos = nullptr, bool enableSubhourlyClipping = false, bool useCustomTiltAngles = false);
 
     /// Construct the irrad class with an Irradiance_IO() object and Subarray_IO() object
     irrad();

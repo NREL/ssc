@@ -376,6 +376,8 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
                 if (monthlyTiltDegrees[i] < 0.0) throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " monthly tilt angles cannot be negative.");
             }
         }
+        /* Insert checks for custom tilt angles here*/
+
         //azimuth required for fixed tilt, single axis, and seasonal tilt- can't check for this in variable table so check here
         azimuthDegrees = std::numeric_limits<double>::quiet_NaN();
         if (trackMode == irrad::FIXED_TILT || trackMode == irrad::SINGLE_AXIS || trackMode == irrad::SEASONAL_TILT)

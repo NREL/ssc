@@ -1139,8 +1139,8 @@ void cm_pvsamv1::exec()
     for (size_t nn = 0; nn < num_subarrays; nn++)
     {
         if (as_integer("use_user_tilt_angles") == 1 && is_assigned("user_tilt_angles_array")) {
-            Subarrays[nn]->trackMode = irrad::FIXED_TILT;
-            Subarrays[nn]->tiltDegrees = 0; //reset to 0 to then be replaced in loop?
+            Subarrays[nn]->trackMode = irrad::SINGLE_AXIS;
+            //Subarrays[nn]->tiltDegrees = 0; //reset to 0 to then be replaced in loop?
             Subarrays[nn]->backtrackingEnabled = false; //account for backtracking in user-specified angles [deg]
         }
         if (Subarrays[nn]->tiltEqualLatitude)
@@ -1506,10 +1506,11 @@ void cm_pvsamv1::exec()
                     || Subarrays[nn]->nStrings < 1)
                     continue; // skip disabled subarrays
 
+                /*
                 if (as_integer("use_user_tilt_angles") == 1 && is_assigned("user_tilt_angles_array")) {
                     Subarrays[nn]->tiltDegrees = user_tilt_angles[inrec];
                     
-                }
+                }*/
 
                 irrad irr(Irradiance->weatherRecord, Irradiance->weatherHeader,
                     Irradiance->skyModel, Irradiance->radiationMode, Subarrays[nn]->trackMode,

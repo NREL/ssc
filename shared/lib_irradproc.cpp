@@ -1224,6 +1224,8 @@ void incidence(int mode, double tilt, double sazm, double rlim, double zen,
                 rot = backtracking_rotation;
             }
 
+            /*Check if custom tilt angles enabled, apply timeseries value*/
+
             /* Find tilt angle for the tracking surface */
             arg = cos(xtilt) * cos(rot);
             if (arg < -1.0)
@@ -1766,7 +1768,7 @@ irrad::irrad(weather_record wf, weather_header hdr,
              double groundCoverageRatioIn, double slopeTiltIn, double slopeAzmIn, std::vector<double> monthlyTiltDegrees,
              std::vector<double> userSpecifiedAlbedo,
              poaDecompReq *poaAllIn,
-             bool useSpatialAlbedos, const util::matrix_t<double>* userSpecifiedSpatialAlbedos, bool enableSubhourlyClipping) :
+             bool useSpatialAlbedos, const util::matrix_t<double>* userSpecifiedSpatialAlbedos, bool enableSubhourlyClipping, bool useCustomTiltAngles) :
         skyModel(skyModelIn), radiationMode(radiationModeIn), trackingMode(trackModeIn),
         enableBacktrack(backtrackingEnabled), forceToStow(forceToStowIn),
         delt(dtHour), tiltDegrees(tiltDegreesIn), surfaceAzimuthDegrees(azimuthDegreesIn),
