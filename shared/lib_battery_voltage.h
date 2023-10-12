@@ -165,7 +165,7 @@ protected:
     std::vector<double> slopes;
     std::vector<double> intercepts;
 
-    double calculate_voltage(double DOD);
+    double calculate_voltage(double DOD, double I);
 
 private:
     void initialize();
