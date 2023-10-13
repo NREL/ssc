@@ -1273,6 +1273,8 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NonAnnual)
 
     gen = ssc_data_get_array(data, "gen", nullptr)[12];
     EXPECT_NEAR(gen, 3.078, 0.01) << "Gen at noon";
+
+    //free the weather data
     free_weatherdata_array(weather_data);
 }
 
@@ -1307,6 +1309,48 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NonAnnualWithLeapDay)
 
     gen = ssc_data_get_array(data, "gen", nullptr)[12];
     EXPECT_NEAR(gen, 2.6623, 0.01) << "Gen at noon";
+    free_weatherdata_array(weather_data);
+}
+
+//test single timestep that doesn't start at hour 0
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, SingleTimestepNoon)
+{
+    //set up a weather data array containing a single data point at noon
+    const int length = 1;
+    double month[length] = { 6 };
+    double day[length] = { 21 };
+    double hour[length] = { 12 };
+    double dn[length] = { 700 }; //set dn and df to a value to get power out
+    double df[length] = { 100 };
+
+    var_data month_vd = var_data(month, length);
+    var_data day_vd = var_data(day, length);
+    var_data hour_vd = var_data(hour, length);
+    var_data dn_vd = var_data(dn, length);
+    var_data df_vd = var_data(df, length);
+
+    auto weather_data = create_weatherdata_array(length);
+    weather_data->assign("month", month_vd);
+    weather_data->assign("day", day_vd);
+    weather_data->assign("hour", hour_vd);
+    weather_data->assign("dn", dn_vd);
+    weather_data->assign("df", df_vd);
+
+    ssc_data_unassign(data, "solar_resource_file");
+    ssc_data_set_table(data, "solar_resource_data", weather_data);
+
+    std::vector<double> load(length, 1);
+    ssc_data_set_array(data, "load", &load[0], (int)load.size());
+
+    //run the tests
+    EXPECT_FALSE(run_module(data, "pvsamv1"));
+
+    ssc_number_t dc_net, gen;
+    dc_net = ssc_data_get_array(data, "dc_net", nullptr)[0];
+    EXPECT_NEAR(dc_net, 0.743, 0.01) << "DC Net Energy at noon";
+
+    gen = ssc_data_get_array(data, "gen", nullptr)[0];
+    EXPECT_NEAR(gen, 0.704, 0.01) << "Gen at noon";
     free_weatherdata_array(weather_data);
 }
 
