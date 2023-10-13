@@ -219,8 +219,8 @@ void C_falling_particle_receiver::init()
     if (m_model_type == 3 && m_rad_model_type > 0)
     {
         // Set up radiation groups
-        int nybase = (int)((m_n_y - 1) / m_n_y_rad);
-        int nxbase = (int)(m_n_x / m_n_x_rad);
+        int nybase = (int)( (float) (m_n_y - 1) / (float)m_n_y_rad);
+        int nxbase = (int)((float)m_n_x / (float)m_n_x_rad);
         m_ny_per_group.resize_fill(m_n_y_rad, nybase);
         m_nx_per_group.resize_fill(m_n_x_rad, nxbase);
 
@@ -1783,6 +1783,9 @@ void C_falling_particle_receiver::calculate_view_factors()
     // View factors from each curtain element to the aperture and front wall(note, this assumes the curtain is flat!)
     // TODO: Update for a curved curtain
     int nxsim = nx;
+    bool is_symmetric = false;
+
+    /*
     bool is_symmetric = (m_n_x % nx == 0);   // If the number of elements per group is the same for all width groups only need to calculate view factors for half of them
     if (is_symmetric && nx>1)
     {
@@ -1791,6 +1794,7 @@ void C_falling_particle_receiver::calculate_view_factors()
         else
             nxsim = (int)((nx + 1) / 2);
     }
+    */
 
     double vf_ap_sum = 0.0;
     double vf_fw_sum = 0.0;
