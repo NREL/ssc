@@ -2653,21 +2653,24 @@ void cm_pvsamv1::exec()
                 if (dcPower_kW > 0.0) {
                     double dcPower_kW_max = dcPower_kW_csky;
                     log(util::format("dcPower max is %lg", dcPower_kW_max), SSC_NOTICE);
-                    double AM = 1.0 / asin(Irradiance->p_sunAltitudeAngle[idx] * M_PI / 180);
+                    double alt_angle = Irradiance->p_sunAltitudeAngle[idx] * M_PI / 180;
+                    if (Irradiance->p_sunAltitudeAngle[idx] < 0.001) alt_angle = 0.001 * M_PI / 180; //For negative alt angle
+                    double AM = 1.0 / sin(alt_angle);
                     if (AM > 38.0) AM = 38.0;
-                    double dcPower_kW_min = dcPower_kW_max * 0.045 / 1.5; //AM?
+                    double dcPower_kW_min = dcPower_kW_max * 0.045 / AM; //AM?
                     log(util::format("dcPower min is %lg", dcPower_kW_min), SSC_NOTICE);
                     double dcPower_kW_avg = dcPower_kW;
-                    double CF = (dcPower_kW_avg - dcPower_kW_min) / (dcPower_kW_max - dcPower_kW_min);
+                    double CF = (dcPower_kW_max - dcPower_kW_min) > 0.0 ? (dcPower_kW_avg - dcPower_kW_min) / (dcPower_kW_max - dcPower_kW_min) : 0.0;
+                    if (CF == 1.0) CF = 0.999999;
                     double n = CF / (1 - CF);
                     log(util::format("n is %lg", n), SSC_NOTICE);
-                    //int inverter_count = as_integer("inverter_count");
-                    int inverter_count = 99;
+                    int inverter_count = as_integer("inverter_count");
+                    //int inverter_count = 99;
                     //sharedInverter->calculateACPower(dcPower_kW_csky, dcVoltagePerMppt[0], Irradiance->weatherRecord.tdry, as_boolean("enable_subhourly_clipping"));
                     double inv_dc_max = sharedInverter->getInverterDCMaxPower(nameplate_kw) / 1000.0 * inverter_count;
                     //log(util::format("Inverter DC Max is %lg kW", inv_dc_max), SSC_NOTICE);
                     double T = 1.0;
-                    double log_test = 1.0 - (inv_dc_max - dcPower_kW_min) / (dcPower_kW_max - dcPower_kW_min);
+                    double log_test = (dcPower_kW_max - dcPower_kW_min) > 0.0 ? (1.0 - (inv_dc_max - dcPower_kW_min) / (dcPower_kW_max - dcPower_kW_min)) : 0.0;
                     log(util::format("log_test is %lg", log_test), SSC_NOTICE);
                     ssc_number_t t_lm = 0.0;
                     if (log_test > 0.0 && n > 0.0) {
@@ -2679,7 +2682,7 @@ void cm_pvsamv1::exec()
                     double E_remaining = (inv_dc_max - dcPower_kW_max) * T + ((dcPower_kW_max - dcPower_kW_min) * pow(T, n + 1) / ((n + 1) * pow(T, n))) - (inv_dc_max - dcPower_kW_max) * t_lm -
                         ((dcPower_kW_max - dcPower_kW_min) * pow(t_lm, n + 1) / ((n + 1) * pow(T, n)));
                     double subinterval_clipping_loss = E_clipped;
-                    if (E_clipped > 0.0) {
+                    if (E_clipped > 0.0 && E_clipped < 1.0e38) {
                         for (size_t m = 0; m < PVSystem->Inverter->nMpptInputs; m++)
                         {
                             dcPowerNetPerMppt_kW[m] -= E_clipped * dcPowerNetPerMppt_kW[m] / dcPower_kW;
