@@ -234,8 +234,6 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "disp_inventory_incentive",  "Dispatch storage terminal inventory incentive multiplier",                         "",             "",               "System Control", "?=0.0",                   "",                      "SIMULATION_PARAMETER" },
     { SSC_INPUT,        SSC_NUMBER,      "q_rec_standby",             "Receiver standby energy consumption",                                              "kWt",          "",               "tou",            "?=9e99",                  "",                      "SIMULATION_PARAMETER" },
     { SSC_INPUT,        SSC_NUMBER,      "q_rec_heattrace",           "Receiver heat trace energy consumption during startup",                            "kWe-hr",       "",               "tou",            "?=0.0",                   "",                      "SIMULATION_PARAMETER" },
-    { SSC_INPUT,        SSC_NUMBER,      "is_wlim_series",            "Use time-series net electricity generation limits",                                "",             "",               "tou",            "?=0",                     "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "wlim_series",               "Time series net electicity generation limits",                                     "kWe",          "",               "tou",            "is_wlim_series=1",        "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "f_turb_tou_periods",        "Dispatch logic for turbine load fraction",                                         "-",            "",               "tou",            "*",                       "",                      "" },
 
     { SSC_INPUT,        SSC_NUMBER,      "csp_financial_model",       "",                                                                                 "1-8",          "",               "Financial Model",        "?=1",                                                      "INTEGER,MIN=0",  "" },
@@ -372,6 +370,12 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,       SSC_NUMBER,     "vol_min",                          "Minimum Fluid Volume",                                                 "m3",           "",         "Thermal Storage",                              "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "V_tank_hot_ini",                 "Initial hot tank volume",                                             "m3",            "",         "Thermal Storage",                              "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "tes_htf_avg_temp",                 "HTF Average Temperature at Design",                                             "C",            "",         "Thermal Storage",                              "*",                                                                "",              "" },
+
+    // System Control
+    { SSC_OUTPUT,        SSC_NUMBER,      "is_wlim_series",            "Use time-series net electricity generation limits",                                "",             "",               "tou",            "?=0",                     "",                      "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "disp_wlim_max",                   "Max. net power to the grid (incl. availability)",                              "MWe",            "",               "controller",     "*",                       "",                      "" },
+    { SSC_OUTPUT,        SSC_ARRAY,       "wlim_series",               "Time series net electicity generation limits",                                     "kWe",          "",               "tou",            "is_dispatch=1",        "",                      "" },
+
 
 
     // Simulation Kernel
@@ -1601,6 +1605,28 @@ public:
                 assign("vol_min", vol_min); // m3
                 assign("V_tank_hot_ini", V_tank_hot_ini);   // m3
                 assign("tes_htf_avg_temp", T_avg);  // C
+            }
+
+            // System Control
+            {
+                
+
+                double adjust_constant = as_double("adjust_constant");
+                double disp_wlim_maxspec = as_double("disp_wlim_maxspec");
+                double disp_wlim_max = disp_wlim_maxspec * (1.0 - (adjust_constant / 100.0)); // MWe
+
+                int kHoursInYear = 8760;
+                double disp_wlim_max_kW = disp_wlim_max * 1000.0;
+                std::vector<double> wlim_series(kHoursInYear, disp_wlim_max_kW);
+
+
+
+                assign("is_wlim_series", is_dispatch);
+                assign("disp_wlim_max", disp_wlim_max); // MWe
+
+                if (is_dispatch)
+                    set_vector("wlim_series", wlim_series); // kWe
+
             }
         }
 
