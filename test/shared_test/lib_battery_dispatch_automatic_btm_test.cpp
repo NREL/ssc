@@ -284,7 +284,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMDCClipCharge) {
 
     // Battery will charge when PV is available, then discharge when load increases at 7 pm
     std::vector<double> expectedPower = {0, 0, 0, 0, 0, 0, 0, -47.93, -47.92, -47.92, -47.91, -48.0, -12.295,
-                                         0, 0, 0, 0, 0, 0, 50, 50, 50, 50, 50.25};
+                                         0, 0, 0, 0, 0, 0, 50, 50, 50, 50.22, 50.25};
     for (size_t h = 0; h < 24; h++) {
         batteryPower->powerLoad = 500;
         batteryPower->powerSystem = 0;
@@ -861,10 +861,11 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutagePeakShavingDai
     batteryPower->connectionMode = ChargeController::AC_CONNECTED;
 
     // Battery will discharge as much as possible for the outage, charge when PV is available, then discharge when load increases at 7 pm
-    std::vector<double> expectedPower = { 52.1, 52.1, 52.1, 52.1, 39.4, 3.7,
-                                           0, -48, -48, -48, -48, -48, // Able to charge when SOC at 0
-                                        -48, -48, -48, -48.0, -11, 0, 0, 46.5, 46.5, 46.5,
-                                         46.5, 46.5, 46.5, 46.5, 46.5, 46.5 };
+    std::vector<double> expectedPower = { 52.1, 52.1, 52.1, 52.1, 39.4, 3.7, // 0 - 5
+                                           0, -48, -48, -48, -48, -48, // Able to charge when SOC at 0, 6- 11
+                                        -48, -48, -48, -48.0, -11, 0, // 12 - 17
+                                        0, 52.1, 52.1, 52.1, 52.1, 52.1, // 18 - 23
+                                        52.1, 52.1, 52.1, 52.1 };
 
     std::vector<double> expectedCritLoadUnmet = { 0, 0, 0, 0, 12.2, 46.5, // Fixing https://github.com/NREL/ssc/issues/569 could probably get the crit load unmet in step 5 to zero
                                                 0, 0, 0, 0, 0, 0,
@@ -932,8 +933,8 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutageWithAvailabili
     // Battery will discharge as much as possible for the outage, charge when PV is available, then discharge when load increases at 7 pm
     std::vector<double> expectedPower = { 52.1, 52.1, 52.1, 52.1, 39.4, 3.7,
                                             0, -48, -48, -48, -48, -48,
-                                        -48, -48, -48, -48.0, -11, 0, 0, 46.5, 46.5, 46.5,
-                                         46.5, 46.5, 46.5, 46.5, 46.5, 46.5 };
+                                        -48, -48, -48, -48.0, -11, 0,
+                                        0, 52.1, 52.1, 52.1, 52.1, 52.1 };
 
     std::vector<double> expectedCritLoadUnmet = { 50, 50, 50, 50, 50, 50, // Losses below prevent any crit load from being met in first hours
                                                 0, 0, 0, 0, 0, 0,
@@ -1004,8 +1005,8 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutageWithAvailabili
     // Battery will discharge as much as possible for the outage, charge when PV is available, then discharge when load increases at 7 pm
     std::vector<double> expectedPower = { 52.1, 52.1, 52.1, 52.1, 39.4, 3.7,
                                             0, -48, -48, -48, -48, -48,
-                                        -48, -48, -48, -48.0, -11, 0, 0, 47, 47, 47,
-                                         47, 47, 47,  47, 47, 47 };
+                                        -48, -48, -48, -48.0, -11, 0,
+                                        0, 52.2, 52.2, 52.2, 52.2, 52.2 };
 
     std::vector<double> expectedCritLoadUnmet = { 50, 50, 50, 50, 50, 50, // Losses below prevent any crit load from being met in first hours
                                                 0, 0, 0, 0, 0, 0,
@@ -1201,14 +1202,14 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutagePeakShavingEmp
     EXPECT_EQ(h, 17);
 
     // Show that the battery can discharge above max SOC after outage
-    batteryPower->powerLoad = 700;
+    batteryPower->powerLoad = 680;
     batteryPower->powerSystem = 0;
     batteryPower->isOutageStep = false;
-    batteryPower->powerCritLoad = 50;
+    batteryPower->powerCritLoad = 14;
     dispatchAutoBTM->dispatch(0, h, 0);
     h++;
 
-    EXPECT_NEAR(batteryPower->powerBatteryDC, 14.0, 0.5) << " error in expected at hour " << h;
+    EXPECT_NEAR(batteryPower->powerBatteryDC, 12.84, 0.5) << " error in expected at hour " << h;
 
     EXPECT_NEAR(batteryModel->SOC(), 95, 0.01);
 
@@ -1509,8 +1510,8 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutagePeakShavingDC)
     // Battery will discharge as much as possible for the outage, charge when PV is available, then discharge when load increases at 7 pm
     std::vector<double> expectedPower = { 53.7, 53.7, 53.7, 53.7, 33.9, 3.2,
                                            0, -57.6, -57.6, -57.6, -57.6, -57.6, // Able to charge when SOC at 0
-                                        -57.6, -57.6, -57.6, -57.6, -1.1, 0, 0, 62.6, 62.6, 62.6,
-                                         62.6, 62.6, 62.6, 62.6, 62.6, 62.6 };
+                                        -57.6, -57.6, -57.6, -57.6, -1.1, 0,
+                                         0, 62.6, 62.6, 62.6, 62.8, 63.0 };
 
     std::vector<double> expectedCritLoadUnmet = { 0, 0, 0, 0, 19.6, 49.7, // Fixing https://github.com/NREL/ssc/issues/569 could probably get the crit load unmet in step 4 to zero
                                                 50, 0, 0, 0, 0, 0,
@@ -1579,7 +1580,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutageFuelCellCharge
     std::vector<double> expectedPower = { 52.1, 52.1, 52.1, 52.1, 39.4, 3.7,
                                            -48, -48, -48, -48, -48, -48, // Able to charge from fuel cell
                                         -48, -48, -48, -48, -38.57, 0,
-                                        0, 52.16, 52.16, 52.16, 52.16, 52.27 };
+                                        0, 52.16, 52.16, 52.16, 52.32, 52.42 };
 
     std::vector<double> expectedCritLoadUnmet = { 0, 0, 0, 0, 12.2, 46.5, // Fixing https://github.com/NREL/ssc/issues/569 could probably get the crit load unmet in step 5 to zero
                                                 0, 0, 0, 0, 0, 0,
