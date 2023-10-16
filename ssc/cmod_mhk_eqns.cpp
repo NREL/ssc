@@ -178,7 +178,7 @@ bool me_array_cable_voltage(ssc_data_t data) {
         return false;
     }
 
-    double devices_per_row, device_spacing_in_row, number_rows, row_spacing, cable_system_overbuild, floating_array, export_cable_redundancy, water_depth, number_devices, distance_to_shore;
+    double devices_per_row, device_spacing_in_row, distance_to_shore;
     double device_rated_power, system_capacity, inter_array_cable_length, riser_cable_length, export_cable_length;
     double use_onshore_substation, load_grid_voltage;
     vt_get_number(vt, "devices_per_row", &devices_per_row);
@@ -190,7 +190,7 @@ bool me_array_cable_voltage(ssc_data_t data) {
     vt_get_number(vt, "export_cable_length", &export_cable_length);
     vt_get_number(vt, "use_onshore_substation", &use_onshore_substation);
     vt_get_number(vt, "load_grid_voltage", &load_grid_voltage);
-
+    vt_get_number(vt, "distance_to_shore", &distance_to_shore);
 
     double PF = 0.95; //Power Factor
     double angle = acos(PF);
