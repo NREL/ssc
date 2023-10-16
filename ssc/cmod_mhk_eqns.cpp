@@ -349,6 +349,7 @@ bool me_array_cable_voltage(ssc_data_t data) {
     }
     else {
         //do nothing
+        offshore_substation_cost_total = 0.0;
     }
     vt->assign("offshore_substation_cost_total", offshore_substation_cost_total);
 
@@ -375,6 +376,7 @@ bool me_array_cable_voltage(ssc_data_t data) {
         //do nothing
     }
     vt->assign("onshore_substation_cost_total", onshore_substation_cost_total);
+    return true;
 }
 
 
