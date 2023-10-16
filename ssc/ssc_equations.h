@@ -86,7 +86,7 @@ static ssc_equation_entry ssc_equation_table [] = {
             "Marine energy", me_array_cable_length_doc,
             false, true},
         {"tidal_turbine_calculate_powercurve", tidal_turbine_calculate_powercurve,
-            "Marine energy", me_array_cable_length_doc,
+            "Marine energy", tidal_turbine_calculate_powercurve_doc,
             false, true},
         {"me_array_cable_voltage", me_array_cable_voltage,
             "Marine energy", me_array_cable_voltage_doc,
