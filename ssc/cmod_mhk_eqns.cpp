@@ -45,7 +45,7 @@ bool me_array_cable_length(ssc_data_t data)
         return false;
     }
 
-    double devices_per_row, device_spacing_in_row, number_rows, row_spacing, cable_system_overbuild, floating_array, export_cable_redundancy, water_depth, number_devices, distance_to_shore;
+    double devices_per_row, device_spacing_in_row, number_rows, row_spacing, cable_system_overbuild, floating_array, export_cable_redundancy, water_depth, number_devices, distance_to_shore = 0;
 
     vt_get_number(vt, "devices_per_row", &devices_per_row);
     vt_get_number(vt, "device_spacing_in_row", &device_spacing_in_row);
@@ -96,12 +96,9 @@ bool tidal_turbine_calculate_powercurve(ssc_data_t data)
         return false;
     }
 
-    double turbine_size, rotor_diameter, elevation, max_tip_speed, max_tip_sp_ratio, cut_in,
-        cut_out, rotor_area, generator_rated_capacity, water_depth, velocity_power_law_fit, number_rotors;
-    int drive_train;
+    double rotor_diameter, cut_in,
+        cut_out, rotor_area, generator_rated_capacity, number_rotors = 0;
     util::matrix_t<double> tidal_resource;
-    double min_vel;
-    int max_cp_length, pto_efficiency_length;
     std::vector<double> pto_efficiency;
     std::vector<double> max_cp;
 
@@ -178,9 +175,9 @@ bool me_array_cable_voltage(ssc_data_t data) {
         return false;
     }
 
-    double devices_per_row, device_spacing_in_row, distance_to_shore;
-    double device_rated_power, system_capacity, inter_array_cable_length, riser_cable_length, export_cable_length;
-    double use_onshore_substation, load_grid_voltage;
+    double devices_per_row, device_spacing_in_row, distance_to_shore = 0;
+    double device_rated_power, system_capacity, inter_array_cable_length, riser_cable_length, export_cable_length = 0;
+    double use_onshore_substation, load_grid_voltage = 0;
     vt_get_number(vt, "devices_per_row", &devices_per_row);
     vt_get_number(vt, "device_rated_power", &device_rated_power);
     vt_get_number(vt, "system_capacity", &system_capacity);
