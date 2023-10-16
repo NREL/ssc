@@ -355,13 +355,24 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,       SSC_NUMBER,      "solar_mult"      "Solar multiple"                                                   "",          "",         "Solar Field",                    "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "fixed_land_area"      "Fixed Land Area"                                                   "acre",          "",         "Solar Field",                    "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "total_land_area"      "Total Land Area"                                                   "acre",          "",         "Solar Field",                    "*",                                                                "",              "" },
-
-
     { SSC_OUTPUT,       SSC_NUMBER,      "total_tracking_power"      "Total Tracking Power"                                                   "MWe",          "",         "Solar Field",                    "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_MATRIX,      "K_cpnt"      "Minor loss coefficients of the components in each loop interconnect" "",          "",         "Solar Field",                    "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_MATRIX,      "D_cpnt"      "Inner diameters of the components in each loop interconnect"                                                   "m",          "",         "Solar Field",                    "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_MATRIX,      "L_cpnt"      "Lengths of the components in each loop interconnect"                                                   "m",          "",         "Solar Field",                    "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_MATRIX,      "Type_cpnt"      "Type of component in each loop interconnect [0=fitting | 1=pipe | 2=flex_hose]"                                                   "Wm",          "",         "Solar Field",                    "*",                                                                "",              "" },
+
+    // Thermal Storage
+    { SSC_OUTPUT,       SSC_NUMBER,     "vol_tank",                         "Total tank volume",                                                    "m3",           "",         "Thermal Storage",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "q_tes",                        "TES design capacity",                                                  "MWt-hr",       "",         "Thermal Storage",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "csp_pt_tes_tank_diameter",                           "Tank diameter",                                                        "m",            "",         "Thermal Storage",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "q_dot_tes_est",               "Estimated TES Heat Loss",                                              "MW",           "",         "Thermal Storage",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "csp_pt_tes_htf_density",                     "Storage htf density",                                                  "kg/m3",        "",         "Thermal Storage",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "tes_avail_vol",                 "Available HTF volume",                                             "m3",            "",         "Thermal Storage",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "is_hx",                 "System has heat exchanger no/yes (0/1)",                                             "",            "",         "Thermal Storage",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "vol_min",                          "Minimum Fluid Volume",                                                 "m3",           "",         "Thermal Storage",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "V_tank_hot_ini",                 "Initial hot tank volume",                                             "m3",            "",         "Thermal Storage",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "tes_htf_avg_temp",                 "HTF Average Temperature at Design",                                             "C",            "",         "Thermal Storage",                              "*",                                                                "",              "" },
+
 
     // Simulation Kernel
     { SSC_OUTPUT,       SSC_ARRAY,       "time_hr",                   "Time at end of timestep",                                                          "hr",           "",               "solver",         "sim_type=1",                       "",                      "" },
@@ -1565,6 +1576,31 @@ public:
                 assign("L_cpnt", c_trough.m_L_cpnt);    //[m]
                 assign("Type_cpnt", c_trough.m_Type_cpnt);   //[]
                 
+            }
+
+            // Thermal Storage
+            {
+                double V_tes_htf_avail_calc /*m3*/, V_tes_htf_total_calc /*m3*/,
+                    d_tank_calc /*m*/, q_dot_loss_tes_des_calc /*MWt*/, dens_store_htf_at_T_ave_calc /*kg/m3*/,
+                    Q_tes_des_calc /*MWt-hr*/;
+
+                storage.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
+                    d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
+
+                double vol_min = V_tes_htf_total_calc * (storage.m_h_tank_min / storage.m_h_tank);
+                double V_tank_hot_ini = (as_double("h_tank_min") / as_double("h_tank")) * V_tes_htf_total_calc; // m3
+                double T_avg = (as_double("T_loop_in_des") + as_double("T_loop_out")) / 2.0;    // C
+
+                assign("q_tes", Q_tes_des_calc); // MWt-hr
+                assign("tes_avail_vol", V_tes_htf_avail_calc); // m3
+                assign("vol_tank", V_tes_htf_total_calc);   // m3
+                assign("csp_pt_tes_tank_diameter", d_tank_calc);    // m
+                assign("q_dot_tes_est", q_dot_loss_tes_des_calc);   // MWt
+                assign("csp_pt_tes_htf_density", dens_store_htf_at_T_ave_calc); // kg/m3
+                assign("is_hx", storage.get_is_hx());
+                assign("vol_min", vol_min); // m3
+                assign("V_tank_hot_ini", V_tank_hot_ini);   // m3
+                assign("tes_htf_avg_temp", T_avg);  // C
             }
         }
 
