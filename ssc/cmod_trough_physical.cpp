@@ -385,6 +385,8 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,        SSC_NUMBER,      "csp_dtr_sca_calc_latitude",            "Latitude",                                "degree",             "",               "Collector",            "?=0",                     "",                      "" },
     { SSC_OUTPUT,        SSC_MATRIX,      "csp_dtr_sca_calc_iams",            "IAM at summer solstice",                                "",             "",               "Collector",            "?=0",                     "",                      "" },
 
+    // Power Cycle
+    { SSC_OUTPUT,       SSC_NUMBER,     "m_dot_htf_cycle_des",                   "PC mass flow rate at design",                                          "kg/s",         "",         "Power Cycle",                              "*",                                                                "",              "" },
 
 
     // System Control
@@ -1634,7 +1636,7 @@ public:
 
                 util::matrix_t<ssc_number_t> csp_dtr_sca_ap_lengths;
                 {
-                    
+
 
                     size_t n = L_SCA.size();
 
@@ -1718,7 +1720,7 @@ public:
                             csp_dtr_sca_calc_iams.at(i) = IAM;
                         }
                     }
-                    
+
                 }
 
                 assign("csp_dtr_sca_ap_lengths", csp_dtr_sca_ap_lengths);
@@ -1729,6 +1731,32 @@ public:
                 assign("csp_dtr_sca_calc_end_losses", csp_dtr_sca_calc_end_losses);
                 assign("csp_dtr_sca_calc_latitude", csp_dtr_sca_calc_latitude);
                 assign("csp_dtr_sca_calc_iams", csp_dtr_sca_calc_iams);
+            }
+
+            // Power Cycle
+            {
+                double m_dot_htf_pc_des_perhr;    //[kg/hr]
+                double cp_htf_pc_des;       //[kJ/kg-K]
+                double W_dot_pc_pump_des;   //[MWe]
+                double W_dot_pc_cooling_des;   //[MWe]
+                int n_T_htf_pars, n_T_amb_pars, n_m_dot_pars;
+                n_T_htf_pars = n_T_amb_pars = n_m_dot_pars = -1;
+                double T_htf_ref_calc, T_htf_low_calc, T_htf_high_calc, T_amb_ref_calc, T_amb_low_calc, T_amb_high_calc,
+                    m_dot_htf_ND_ref_calc, m_dot_htf_ND_low_calc, m_dot_htf_ND_high_calc, W_dot_gross_ND_des, Q_dot_HTF_ND_des,
+                    W_dot_cooling_ND_des, m_dot_water_ND_des;
+                T_htf_ref_calc = T_htf_low_calc = T_htf_high_calc =
+                    T_amb_ref_calc = T_amb_low_calc = T_amb_high_calc =
+                    m_dot_htf_ND_ref_calc = m_dot_htf_ND_low_calc = m_dot_htf_ND_high_calc =
+                    W_dot_gross_ND_des = Q_dot_HTF_ND_des = W_dot_cooling_ND_des = m_dot_water_ND_des = std::numeric_limits<double>::quiet_NaN();
+
+                rankine_pc.get_design_parameters(m_dot_htf_pc_des_perhr, cp_htf_pc_des, W_dot_pc_pump_des, W_dot_pc_cooling_des,
+                    n_T_htf_pars, n_T_amb_pars, n_m_dot_pars,
+                    T_htf_ref_calc /*C*/, T_htf_low_calc /*C*/, T_htf_high_calc /*C*/,
+                    T_amb_ref_calc /*C*/, T_amb_low_calc /*C*/, T_amb_high_calc /*C*/,
+                    m_dot_htf_ND_ref_calc, m_dot_htf_ND_low_calc /*-*/, m_dot_htf_ND_high_calc /*-*/,
+                    W_dot_gross_ND_des, Q_dot_HTF_ND_des, W_dot_cooling_ND_des, m_dot_water_ND_des);
+
+                assign("m_dot_htf_cycle_des", m_dot_htf_pc_des_perhr / 3600.0); //   [kg/s]
             }
 
             // System Control
