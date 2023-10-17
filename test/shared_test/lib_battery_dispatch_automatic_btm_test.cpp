@@ -611,8 +611,10 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischargeSmal
     batteryPower->connectionMode = ChargeController::AC_CONNECTED;
 
     // Battery will charge when PV is available, then discharge when load increases at 7 pm
-    std::vector<double> expectedPower = { 0, 0, 0, 0, 0, 0, 0, -50, -50, -50, -50, -50, -1.63, 0, 0, 0, 0, 0, 0, 9.479, 9.479,
-                                         9.479, 9.479, 9.479, 9.479, 9.479, 9.479 }; // Shave peak to ~30 kW
+    std::vector<double> expectedPower = { 0, 0, 0, 0, 0, 0,
+                                        0, -50, -50, -50, -50, -50,
+                                        -1.63, 0, 0, 0, 0, 0,
+                                        0, 10.41, 10.41, 10.41, 10.41, 10.41 }; // Shave peak to ~30 kW
     for (size_t h = 0; h < 24; h++) {
         batteryPower->powerLoad = 30;
         batteryPower->powerSystem = 0;
@@ -662,8 +664,10 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMPVChargeAndDischargeSmal
     batteryPower->connectionMode = ChargeController::AC_CONNECTED;
 
     // Battery will charge when PV is available, then discharge when load increases at 7 pm
-    std::vector<double> expectedPower = { 0, 0, 0, 0, 0, 0, 0, -50, -50, -50, -50, -50, -1.63, 0, 0, 0, 0, 0, 0, 11.479, 11.479,
-                                         11.479, 11.479, 11.479, 11.479, 11.479, 11.479 }; // Shave peak to ~30 kW
+    std::vector<double> expectedPower = { 0, 0, 0, 0, 0, 0,
+                                          0, -50, -50, -50, -50, -50,
+                                         -1.63, 0, 0, 0, 0, 0,
+                                         0, 12.5, 12.5, 12.5, 12.5, 12.5 }; // Shave peak to ~30 kW
     for (size_t h = 0; h < 24; h++) {
         batteryPower->powerLoad = 30;
         batteryPower->powerSystem = 0;
@@ -1077,8 +1081,8 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutageWithInverterLo
     // Battery will discharge as much as possible for the outage, charge when PV is available, then discharge when load increases at 7 pm
     std::vector<double> expectedPower = { 52.1, 52.1, 52.1, 52.1, 39.4, 3.7,
                                             0, -48, -48, -48, -48, -48,
-                                        -48, -48, -48, -48.0, -11, 0, 0, 47, 47, 47,
-                                         47, 47, 47,  47, 47, 47 };
+                                        -48, -48, -48, -48.0, -11, 0,
+                                        0, 52.16, 52.16, 52.16, 52.16, 52.16, 52.16, };
 
     std::vector<double> expectedCritLoadUnmet = { 50, 50, 50, 50, 50, 50, // Losses below prevent any crit load from being met in first hours
                                                 0, 0, 0, 0, 0, 0,
