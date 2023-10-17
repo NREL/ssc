@@ -308,7 +308,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestBasicForecast) {
     dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
         max_current,
         max_current, max_power, max_power, max_power, max_power,
-        0, dispatch_t::BTM_MODES::FORECAST, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
+        0, dispatch_t::BTM_MODES::RETAIL_RATE, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
         true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, omCost, interconnection_limit,
         chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc, dispatch_t::LOAD_FORECAST_CHOICE::LOAD_LOOK_AHEAD);
 
@@ -364,7 +364,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeak) {
     dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
         max_current,
         max_current, max_power, max_power, max_power, max_power,
-        0, dispatch_t::BTM_MODES::FORECAST, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
+        0, dispatch_t::BTM_MODES::RETAIL_RATE, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
         true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, omCost, interconnection_limit,
         chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc, dispatch_t::LOAD_FORECAST_CHOICE::LOAD_LOOK_AHEAD);
 
@@ -404,7 +404,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeakNetMeteringCredits) {
     dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
         max_current,
         max_current, max_power, max_power, max_power, max_power,
-        0, dispatch_t::BTM_MODES::FORECAST, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
+        0, dispatch_t::BTM_MODES::RETAIL_RATE, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
         true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, omCost, interconnection_limit,
         chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc, dispatch_t::LOAD_FORECAST_CHOICE::LOAD_LOOK_AHEAD);
 
@@ -444,7 +444,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeakGridCharging) {
     dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
         max_current,
         max_current, max_power, max_power, max_power, max_power,
-        0, dispatch_t::BTM_MODES::FORECAST, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
+        0, dispatch_t::BTM_MODES::RETAIL_RATE, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
         true, canGridCharge, false, util_rate, replacementCost, cyclingChoice, cyclingCost, omCost, interconnection_limit,
         chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc, dispatch_t::LOAD_FORECAST_CHOICE::LOAD_LOOK_AHEAD);
 
@@ -485,7 +485,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestSummerPeakGridChargingSubhourly) {
     dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
         max_current,
         max_current, max_power, max_power, max_power, max_power,
-        0, dispatch_t::BTM_MODES::FORECAST, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
+        0, dispatch_t::BTM_MODES::RETAIL_RATE, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
         true, canGridCharge, false, util_rate, replacementCost, cyclingChoice, cyclingCost, omCost, interconnection_limit,
         chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc, dispatch_t::LOAD_FORECAST_CHOICE::LOAD_LOOK_AHEAD);
 
@@ -539,7 +539,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, TestCommercialPeakForecasting) {
     dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
         max_current,
         max_current, max_power, max_power, max_power, max_power,
-        0, dispatch_t::BTM_MODES::FORECAST, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
+        0, dispatch_t::BTM_MODES::RETAIL_RATE, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
         true, true, false, util_rate, replacementCost, cyclingChoice, cyclingCost, omCost, interconnection_limit,
         chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc, dispatch_t::LOAD_FORECAST_CHOICE::LOAD_LOOK_AHEAD);
 
@@ -1224,7 +1224,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutagePeakShavingEmp
 
 }
 
-TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutagePriceSignalsEmptyAndFull) {
+TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutageRetailRAteEmptyAndFull) {
     double dtHour = 1;
     CreateBattery(dtHour);
 
@@ -1236,7 +1236,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutagePriceSignalsEm
     dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
         max_current,
         max_current, max_power * defaultEff, max_power / defaultEff, max_power, max_power,
-        0, dispatch_t::BTM_MODES::FORECAST, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
+        0, dispatch_t::BTM_MODES::RETAIL_RATE, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, 1, 24, 1, true,
         true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, omCost, interconnection_limit, chargeOnlySystemExceedLoad,
         dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc, dispatch_t::LOAD_FORECAST_CHOICE::LOAD_LOOK_AHEAD);
 

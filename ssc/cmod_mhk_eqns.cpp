@@ -45,7 +45,7 @@ bool me_array_cable_length(ssc_data_t data)
         return false;
     }
 
-    double devices_per_row, device_spacing_in_row, number_rows, row_spacing, cable_system_overbuild, floating_array, export_cable_redundancy, water_depth, number_devices, distance_to_shore;
+    double devices_per_row, device_spacing_in_row, number_rows, row_spacing, cable_system_overbuild, floating_array, export_cable_redundancy, water_depth, number_devices, distance_to_shore = 0;
 
     vt_get_number(vt, "devices_per_row", &devices_per_row);
     vt_get_number(vt, "device_spacing_in_row", &device_spacing_in_row);
@@ -96,12 +96,9 @@ bool tidal_turbine_calculate_powercurve(ssc_data_t data)
         return false;
     }
 
-    double turbine_size, rotor_diameter, elevation, max_tip_speed, max_tip_sp_ratio, cut_in,
-        cut_out, rotor_area, generator_rated_capacity, water_depth, velocity_power_law_fit, number_rotors;
-    int drive_train;
+    double rotor_diameter, cut_in,
+        cut_out, rotor_area, generator_rated_capacity, number_rotors = 0;
     util::matrix_t<double> tidal_resource;
-    double min_vel;
-    int max_cp_length, pto_efficiency_length;
     std::vector<double> pto_efficiency;
     std::vector<double> max_cp;
 
@@ -178,9 +175,9 @@ bool me_array_cable_voltage(ssc_data_t data) {
         return false;
     }
 
-    double devices_per_row, device_spacing_in_row, number_rows, row_spacing, cable_system_overbuild, floating_array, export_cable_redundancy, water_depth, number_devices, distance_to_shore;
-    double device_rated_power, system_capacity, inter_array_cable_length, riser_cable_length, export_cable_length;
-    double use_onshore_substation, load_grid_voltage;
+    double devices_per_row, device_spacing_in_row, distance_to_shore = 0;
+    double device_rated_power, system_capacity, inter_array_cable_length, riser_cable_length, export_cable_length = 0;
+    double use_onshore_substation, load_grid_voltage = 0;
     vt_get_number(vt, "devices_per_row", &devices_per_row);
     vt_get_number(vt, "device_rated_power", &device_rated_power);
     vt_get_number(vt, "system_capacity", &system_capacity);
@@ -190,7 +187,7 @@ bool me_array_cable_voltage(ssc_data_t data) {
     vt_get_number(vt, "export_cable_length", &export_cable_length);
     vt_get_number(vt, "use_onshore_substation", &use_onshore_substation);
     vt_get_number(vt, "load_grid_voltage", &load_grid_voltage);
-
+    vt_get_number(vt, "distance_to_shore", &distance_to_shore);
 
     double PF = 0.95; //Power Factor
     double angle = acos(PF);
@@ -211,22 +208,22 @@ bool me_array_cable_voltage(ssc_data_t data) {
     }
     vt->assign("export_cable_type", export_cable_type);
     //Riser Cable
-    double riser_cable_voltage = 0;
-    double riser_cable_cost = 0; //$/m
-    if ( array_cable_rated_power_per_row < 4) {
+    double riser_cable_voltage = 0.0;
+    double riser_cable_cost = 0.0; //$/m
+    if ( array_cable_rated_power_per_row < 4.0) {
         riser_cable_voltage = 7.2;
         riser_cable_cost = 57.955 * riser_cable_rated_power_per_device;
     }
-    else if (riser_cable_rated_power_per_device >= 5 && riser_cable_rated_power_per_device < 9) {
-        riser_cable_voltage = 12;
+    else if (riser_cable_rated_power_per_device >= 5.0 && riser_cable_rated_power_per_device < 9.0) {
+        riser_cable_voltage = 12.0;
         riser_cable_cost = 47.214 * riser_cable_rated_power_per_device - 91.05;
     }
-    else if (riser_cable_rated_power_per_device >= 9 && riser_cable_rated_power_per_device < 14) {
-        riser_cable_voltage = 24;
+    else if (riser_cable_rated_power_per_device >= 9.0 && riser_cable_rated_power_per_device < 14.0) {
+        riser_cable_voltage = 24.0;
         riser_cable_cost = 22.748 * riser_cable_rated_power_per_device - 68.376;
     }
-    else if (riser_cable_rated_power_per_device >= 14) {
-        riser_cable_voltage = 36;
+    else {
+        riser_cable_voltage = 36.0;
         riser_cable_cost = 20.82 * riser_cable_rated_power_per_device - 163.14;
     }
     vt->assign("riser_cable_voltage", riser_cable_voltage);
@@ -235,26 +232,26 @@ bool me_array_cable_voltage(ssc_data_t data) {
     vt->assign("riser_cable_cost_total", riser_cable_cost_total);
 
     //Array Cable
-    double array_cable_voltage = 0;
-    double array_cable_cost = 0;
-    if ( array_cable_rated_power_per_row < 4) {
+    double array_cable_voltage = 0.0;
+    double array_cable_cost = 0.0;
+    if ( array_cable_rated_power_per_row < 4.0) {
         array_cable_voltage = 7.2;
         array_cable_cost = 44.245 *  array_cable_rated_power_per_row;
     }
-    else if ( array_cable_rated_power_per_row >= 4 &&  array_cable_rated_power_per_row < 9) {
-        array_cable_voltage = 12;
+    else if ( array_cable_rated_power_per_row >= 4.0 &&  array_cable_rated_power_per_row < 9.0) {
+        array_cable_voltage = 12.0;
         array_cable_cost = 31.029 *  array_cable_rated_power_per_row - 40.744;
     }
-    else if ( array_cable_rated_power_per_row >= 9 &&  array_cable_rated_power_per_row < 14) {
-        array_cable_voltage = 24;
+    else if ( array_cable_rated_power_per_row >= 9.0 &&  array_cable_rated_power_per_row < 14.0) {
+        array_cable_voltage = 24.0;
         array_cable_cost = 17.348 *  array_cable_rated_power_per_row - 61.467;
     }
-    else if ( array_cable_rated_power_per_row >= 14 && array_cable_rated_power_per_row < 30) {
-        array_cable_voltage = 36;
+    else if ( array_cable_rated_power_per_row >= 14.0 && array_cable_rated_power_per_row < 30.0) {
+        array_cable_voltage = 36.0;
         array_cable_cost = 13.791 *  array_cable_rated_power_per_row - 93.272;
     }
-    else if (array_cable_rated_power_per_row >= 30) {
-        array_cable_voltage = 66;
+    else {
+        array_cable_voltage = 66.0;
         array_cable_cost = 11.984 * array_cable_rated_power_per_row - 155.97;
     }
     vt->assign("array_cable_voltage", array_cable_voltage);
@@ -267,62 +264,62 @@ bool me_array_cable_voltage(ssc_data_t data) {
     double export_cable_cost = 0;
     double offshore_substation_voltage = 0;
     if (export_cable_type == 0) {
-        if (export_cable_rated_power_array_ac < 4) {
+        if (export_cable_rated_power_array_ac < 4.0) {
             export_cable_voltage = 7.2;
             export_cable_cost = 44.245 * export_cable_rated_power_array_ac;
             offshore_substation_voltage = 8; //kVAC
         }
-        else if (export_cable_rated_power_array_ac >= 4 && export_cable_rated_power_array_ac < 9) {
+        else if (export_cable_rated_power_array_ac >= 4.0 && export_cable_rated_power_array_ac < 9.0) {
             export_cable_voltage = 12;
             export_cable_cost = 31.029 * export_cable_rated_power_array_ac - 40.744;
             offshore_substation_voltage = 15; //kVAC
         }
-        else if (export_cable_rated_power_array_ac >= 9 && export_cable_rated_power_array_ac < 14) {
+        else if (export_cable_rated_power_array_ac >= 9.0 && export_cable_rated_power_array_ac < 14.0) {
             export_cable_voltage = 24;
             export_cable_cost = 17.348 * export_cable_rated_power_array_ac - 61.467;
             offshore_substation_voltage = 25; //kVAC
         }
-        else if (export_cable_rated_power_array_ac >= 14 && export_cable_rated_power_array_ac < 30) {
+        else if (export_cable_rated_power_array_ac >= 14.0 && export_cable_rated_power_array_ac < 30.0) {
             export_cable_voltage = 36;
             export_cable_cost = 13.791 * export_cable_rated_power_array_ac - 93.272;
             offshore_substation_voltage = 46; //kVAC
         }
-        else if (export_cable_rated_power_array_ac >= 30 && export_cable_rated_power_array_ac < 40) {
+        else if (export_cable_rated_power_array_ac >= 30.0 && export_cable_rated_power_array_ac < 40.0) {
             export_cable_voltage = 66;
             array_cable_cost = 11.984 * export_cable_rated_power_array_ac - 155.97;
             offshore_substation_voltage = 69; //kVAC
         }
-        else if (export_cable_rated_power_array_ac >= 40 && export_cable_rated_power_array_ac < 121) {
+        else if (export_cable_rated_power_array_ac >= 40.0 && export_cable_rated_power_array_ac < 121.0) {
             export_cable_voltage = 72.5;
             array_cable_cost = 9.8977 * export_cable_rated_power_array_ac - 195.75;
             offshore_substation_voltage = 115; //kVAC
         }
-        else if (export_cable_rated_power_array_ac >= 121 && export_cable_rated_power_array_ac < 250) {
+        else if (export_cable_rated_power_array_ac >= 121.0 && export_cable_rated_power_array_ac < 250.0) {
             export_cable_voltage = 145;
             array_cable_cost = 10.046 * export_cable_rated_power_array_ac - 886.49;
             offshore_substation_voltage = 161; //kVAC
         }
-        else if (export_cable_rated_power_array_ac >= 250 && export_cable_rated_power_array_ac < 550) {
-            export_cable_voltage = 220;
+        else if (export_cable_rated_power_array_ac >= 250.0 && export_cable_rated_power_array_ac < 550.0) {
+            export_cable_voltage = 220.0;
             array_cable_cost = 5.2937 * export_cable_rated_power_array_ac - 318.15;
-            offshore_substation_voltage = 230; //kVAC
+            offshore_substation_voltage = 230.0; //kVAC
         }
-        else if (export_cable_rated_power_array_ac >= 550) {
-            export_cable_voltage = 400;
+        else {
+            export_cable_voltage = 400.0;
             array_cable_cost = 7.7566 * export_cable_rated_power_array_ac - 2704.6;
-            offshore_substation_voltage = 415; //kVAC
+            offshore_substation_voltage = 415.0; //kVAC
         }
     }
     else {
-        if (export_cable_rated_power_array_hvdc < 500) {
-            export_cable_voltage = 150;
+        if (export_cable_rated_power_array_hvdc < 500.0) {
+            export_cable_voltage = 150.0;
             export_cable_cost = 2.5026 * export_cable_rated_power_array_hvdc;
-            offshore_substation_voltage = 161; //kV HVDC
+            offshore_substation_voltage = 161.0; //kV HVDC
         }
         else {
-            export_cable_voltage = 300;
+            export_cable_voltage = 300.0;
             export_cable_cost = 2.0375 * export_cable_rated_power_array_hvdc - 516.02;
-            offshore_substation_voltage = 345; //kVAC
+            offshore_substation_voltage = 345.0; //kVAC
         }
     }
     vt->assign("export_cable_voltage", export_cable_voltage);
@@ -342,13 +339,17 @@ bool me_array_cable_voltage(ssc_data_t data) {
     double static_var_compensator_cost = 105060 * reactive_power;
     //HVDC Electrical equipment
     double hvdc_converter_station_cost = 142.61 * system_capacity;
-    double offshore_substation_cost_total = 0;
-    if (array_cable_voltage != export_cable_voltage && export_cable_type == 0) {
+    double offshore_substation_cost_total = 0.0;
+    if (array_cable_voltage != export_cable_voltage && export_cable_type == 0.0) {
         offshore_substation_cost_total = offshore_foundation_cost + circuit_breaker_cost + ac_switchgear_cost + transformer_cost +
             shunt_reactor_cost + series_capacitor_cost + static_var_compensator_cost;
     }
-    else if (array_cable_voltage != export_cable_voltage && export_cable_type == 1) {
+    else if (array_cable_voltage != export_cable_voltage && export_cable_type == 1.0) {
         offshore_substation_cost_total = offshore_foundation_cost + hvdc_converter_station_cost;
+    }
+    else {
+        //do nothing
+        offshore_substation_cost_total = 0.0;
     }
     vt->assign("offshore_substation_cost_total", offshore_substation_cost_total);
 
@@ -363,15 +364,19 @@ bool me_array_cable_voltage(ssc_data_t data) {
     double onshore_static_var_compensator_cost = 105060 * reactive_power;
     //HVDC Electrical equipment
     double onshore_hvdc_converter_station_cost = 142.61 * system_capacity;
-    double onshore_substation_cost_total = 0;
-    if (use_onshore_substation==0 && export_cable_type == 0) {
+    double onshore_substation_cost_total = 0.0;
+    if (use_onshore_substation== 0.0 && export_cable_type == 0.0) {
         onshore_substation_cost_total = onshore_foundation_cost + onshore_circuit_breaker_cost + onshore_ac_switchgear_cost + onshore_transformer_cost +
             onshore_shunt_reactor_cost + onshore_series_capacitor_cost + onshore_static_var_compensator_cost;
     }
-    else if (use_onshore_substation==0 && export_cable_type == 1) {
+    else if (use_onshore_substation== 0.0 && export_cable_type == 1.0) {
         onshore_substation_cost_total = onshore_foundation_cost + onshore_hvdc_converter_station_cost;
     }
+    else {
+        //do nothing
+    }
     vt->assign("onshore_substation_cost_total", onshore_substation_cost_total);
+    return true;
 }
 
 

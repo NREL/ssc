@@ -3055,6 +3055,47 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, AC_system_w_ac_losses) {
     gen = m_batteryPower->powerSystem + m_batteryPower->powerBatteryAC;
     EXPECT_NEAR(m_batteryPower->powerGeneratedBySystem, gen, error);
     EXPECT_NEAR(m_batteryPower->powerLoad, 0, error);
+
+    // Post batt loss affects meeting critical load
+    m_batteryPower->acLossPostBattery = 0.05;
+    m_batteryPower->acLossWiring = 0;
+    m_batteryPower->powerBatteryDC = 50;
+    m_batteryPower->isOutageStep = true;
+    m_batteryPower->powerCritLoad = 50;
+    m_batteryPower->powerLoad = 50;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 48, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBatteryAC, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 45.6, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 4.4, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 2, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerLoad, 50, error);
+
+    // Increasing batt power allows meeting critical load
+    m_batteryPower->acLossPostBattery = 0.05;
+    m_batteryPower->acLossWiring = 0;
+    m_batteryPower->powerBatteryDC = 60;
+    m_batteryPower->isOutageStep = true;
+    m_batteryPower->powerLoad = 50;
+    m_batteryPower->powerCritLoad = 50;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 55.4, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryDC, 57.7, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBatteryAC, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 50.0, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 2.308, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerLoad, 50, error);
 }
 
 TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_system_w_ac_losses) {
@@ -3259,4 +3300,47 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, DC_system_w_ac_losses) {
     EXPECT_NEAR(m_batteryPower->powerConversionLoss, 3.738, error);
     EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
     EXPECT_NEAR(m_batteryPower->powerLoad, 0, error);
+
+    m_batteryPower->acXfmrLoadLoss = 0.0;
+    m_batteryPower->acXfmrNoLoadLoss = 0.0;
+
+    // Post batt loss affects meeting critical load
+    m_batteryPower->acLossPostBattery = 0.05;
+    m_batteryPower->acLossWiring = 0;
+    m_batteryPower->powerBatteryDC = 50;
+    m_batteryPower->isOutageStep = true;
+    m_batteryPower->powerCritLoad = 50;
+    m_batteryPower->powerLoad = 50;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 46.26, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBatteryAC, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 43.947, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 6.053, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 3.738, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerLoad, 50, error);
+
+    // Increasing batt power allows meeting critical load
+    m_batteryPower->acLossPostBattery = 0.05;
+    m_batteryPower->acLossWiring = 0;
+    m_batteryPower->powerBatteryDC = 60;
+    m_batteryPower->isOutageStep = true;
+    m_batteryPower->powerLoad = 50;
+    m_batteryPower->powerCritLoad = 50;
+    m_batteryPowerFlow->calculate();
+
+    EXPECT_NEAR(m_batteryPower->powerBatteryAC, 52.63, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToLoad, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToBatteryAC, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerGridToBattery, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerBatteryToLoad, 50.0, error);
+    EXPECT_NEAR(m_batteryPower->powerCritLoadUnmet, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemToGrid, 0, error);
+    EXPECT_NEAR(m_batteryPower->powerConversionLoss, 3.99, error);
+    EXPECT_NEAR(m_batteryPower->powerSystemLoss, 0.0, error);
+    EXPECT_NEAR(m_batteryPower->powerLoad, 50, error);
 }

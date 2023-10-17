@@ -53,18 +53,50 @@ static const char* me_array_cable_length_doc =
 
 SSCEXPORT bool me_array_cable_length(ssc_data_t data);
 
+static const char* tidal_turbine_calculate_powercurve_doc =
+"Calculates the tidal energy converter power output for tidal velocity bins in an ME array\\n"
+"Input: var_table with key-value pairs\\n"
+"     'tidal_turbine_rotor_diameter' - double [m]\\n"
+"     'number_rotors' - integer [-]\\n"
+"     'tidal_turbine_max_cp' - double [-]\\n"
+"     'pto_efficiency' - double [%]\\n"
+"     'cut_in' - double [m/s]\\n"
+"     'cut_out' - double [m/s]\\n"
+"     'tidal_resource' - matrix [-]\\n"
+"     'generator_rated_capacity' - matrix [-]\\n"
+"Output: key-value pairs added to var_table\\n"
+"     'tidal_turbine_powercurve_tidespeeds' - array [m/s]\\n"
+"     'tidal_turbine_powercurve_powerout' - array [kW]\\n"
+"     'error - string [-]\\n";
+
+
 SSCEXPORT bool tidal_turbine_calculate_powercurve(ssc_data_t data);
 
 static const char* me_array_cable_voltage_doc =
 "Calculates the cable voltages in an ME array\\n"
 "Input: var_table with key-value pairs\\n"
 "     'devices_per_row' - double [-]\\n"
+"     'device_rated_power' - double [kW]\\n"
+"     'system_capacity' - double [kW]\\n"
 "     'device_spacing_in_row' - double [m]\\n"
-"     'number_rows' - double [-]\\n"
 "     'row_spacing' - double [m]\\n"
-"     'cable_system_overbuild' - double [%]\\n"
+"     'inter_array_cable_length' - double [m]\\n"
+"     'riser_cable_length' - double [m]\\n"
+"     'export_cable_length' - double [m]\\n"
+"     'use_onshore_substation' - double [-]\\n"
+"     'load_grid_voltage' - double [-]\\n"
 "Output: key-value pairs added to var_table\\n"
-"     'inter_array_cable_voltage' - double [m]\\n";
+"     'array_cable_voltage' - double [V]\\n"
+"     'array_cable_cost' - double [$]\\n"
+"     'array_cable_cost_total' - double [$]\\n"
+"     'export_cable_voltage' - double [V]\\n"
+"     'export_cable_cost' - double [$]\\n"
+"     'export_cable_cost_total' - double [$]\\n"
+"     'riser_cable_voltage' - double [V]\\n"
+"     'riser_cable_cost' - double [$]\\n"
+"     'riser_cable_cost_total' - double [$]\\n"
+"     'onshore_substation_cost_total' - double [$]\\n"
+"     'offshore_substation_cost_total' - double [$]\\n";
 
 SSCEXPORT bool me_array_cable_voltage(ssc_data_t data);
 
