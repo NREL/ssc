@@ -319,6 +319,10 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "P_boil",                              "Boiler operating pressure",                                              "bar",          "",               "powerblock",         "",           "",              "SIMULATION_PARAMETER" },
 
 
+    // ADDED For Design Point
+    { SSC_INPUT,        SSC_NUMBER,      "lat",                   "Latitude",                                                "degree",       "",               "",    "*",                       "",                      "" },
+
+
     // *************************************************************************************************
     //    OUTPUTS
     // *************************************************************************************************
@@ -370,6 +374,18 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,       SSC_NUMBER,     "vol_min",                          "Minimum Fluid Volume",                                                 "m3",           "",         "Thermal Storage",                              "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "V_tank_hot_ini",                 "Initial hot tank volume",                                             "m3",            "",         "Thermal Storage",                              "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "tes_htf_avg_temp",                 "HTF Average Temperature at Design",                                             "C",            "",         "Thermal Storage",                              "*",                                                                "",              "" },
+
+    // Collector
+    { SSC_OUTPUT,        SSC_MATRIX,      "csp_dtr_sca_ap_lengths",            "Length of single module",                                "m",             "",               "Collector",            "?=0",                     "",                      "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "csp_dtr_sca_calc_zenith",            "Calculated zenith",                                "degree",             "",               "Collector",            "?=0",                     "",                      "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "csp_dtr_sca_calc_costh",            "Calculated costheta",                                "",             "",               "Collector",            "?=0",                     "",                      "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "csp_dtr_sca_calc_theta",            "Calculated theta",                                "degree",             "",               "Collector",            "?=0",                     "",                      "" },
+    { SSC_OUTPUT,        SSC_MATRIX,      "csp_dtr_sca_calc_end_gains",            "End gain factor",                                "",             "",               "Collector",            "?=0",                     "",                      "" },
+    { SSC_OUTPUT,        SSC_MATRIX,      "csp_dtr_sca_calc_end_losses",            "Use time-series net electricity generation limits",            "",             "",               "Collector",            "?=0",                     "",                      "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "csp_dtr_sca_calc_latitude",            "Latitude",                                "degree",             "",               "Collector",            "?=0",                     "",                      "" },
+    { SSC_OUTPUT,        SSC_MATRIX,      "csp_dtr_sca_calc_iams",            "IAM at summer solstice",                                "",             "",               "Collector",            "?=0",                     "",                      "" },
+
+
 
     // System Control
     { SSC_OUTPUT,        SSC_NUMBER,      "is_wlim_series",            "Use time-series net electricity generation limits",                                "",             "",               "tou",            "?=0",                     "",                      "" },
@@ -1607,10 +1623,114 @@ public:
                 assign("tes_htf_avg_temp", T_avg);  // C
             }
 
+            // Collector
+            {
+                vector<double> L_SCA = as_vector_double("L_SCA");
+                vector<double> ColperSCA = as_vector_double("ColperSCA");
+                vector<double> Ave_Focal_Length = as_vector_double("Ave_Focal_Length");
+                double lat = as_double("lat");
+
+                util::matrix_t<ssc_number_t> csp_dtr_sca_ap_lengths;
+                {
+                    
+
+                    size_t n = L_SCA.size();
+
+                    csp_dtr_sca_ap_lengths.resize(n);           // NOTE!: You must do a separate 'fill', probably with how this is eventually set to an array instead of a matrix. This fails:  result(n, 1, std::numeric_limits<double>::quiet_NaN())
+                    csp_dtr_sca_ap_lengths.fill(std::numeric_limits<double>::quiet_NaN());
+                    for (size_t i = 0; i < n; i++) {
+                        csp_dtr_sca_ap_lengths.at(i) = L_SCA.at(i) / ColperSCA.at(i);
+                    }
+
+
+                }
+
+                double csp_dtr_sca_calc_zenith = std::numeric_limits<double>::quiet_NaN();
+                {
+                    csp_dtr_sca_calc_zenith = M_PI / 180. * (90. - (90. - (lat - 23.5)));
+                }
+
+                double csp_dtr_sca_calc_costh = std::numeric_limits<double>::quiet_NaN();
+                {
+                    double tilt = as_double("tilt");
+                    double azimuth = as_double("azimuth");
+
+                    csp_dtr_sca_calc_costh = sqrt(1 - pow(cos(1.57 - csp_dtr_sca_calc_zenith - tilt)
+                        - cos(tilt)
+                        * cos(1.57 - csp_dtr_sca_calc_zenith)
+                        * (1. - cos(0. - azimuth)), 2));
+                }
+
+                double csp_dtr_sca_calc_theta = std::numeric_limits<double>::quiet_NaN();
+                {
+                    csp_dtr_sca_calc_theta = acos(csp_dtr_sca_calc_costh);
+                }
+
+                util::matrix_t<ssc_number_t> csp_dtr_sca_calc_end_gains(1, 1, std::numeric_limits<double>::quiet_NaN());
+                {
+                    vector<double> Distance_SCA = as_vector_double("Distance_SCA");
+
+                    size_t n = Ave_Focal_Length.size();
+
+                    csp_dtr_sca_calc_end_gains.resize(n);            // NOTE!: You must do a separate 'fill', probably with how this is eventually set to an array instead of a matrix. This fails:  result(n, 1, std::numeric_limits<double>::quiet_NaN())
+                    csp_dtr_sca_calc_end_gains.fill(std::numeric_limits<double>::quiet_NaN());
+                    for (size_t i = 0; i < n; i++)
+                    {
+                        double end_gain_calc = Ave_Focal_Length.at(i) * tan(csp_dtr_sca_calc_theta) - Distance_SCA.at(i);
+                        csp_dtr_sca_calc_end_gains.at(i) = end_gain_calc > 0 ? end_gain_calc : 0;
+                    }
+                }
+
+                util::matrix_t<ssc_number_t> csp_dtr_sca_calc_end_losses(1, 1, std::numeric_limits<double>::quiet_NaN());
+                {
+                    int nSCA = as_number("nSCA");
+
+                    size_t n = Ave_Focal_Length.size();
+
+                    csp_dtr_sca_calc_end_losses.resize(n);
+                    csp_dtr_sca_calc_end_losses.fill(std::numeric_limits<double>::quiet_NaN());
+                    for (size_t i = 0; i < n; i++) {
+                        csp_dtr_sca_calc_end_losses.at(i) = 1 - (Ave_Focal_Length.at(i) * tan(csp_dtr_sca_calc_theta)
+                            - (nSCA - 1) / nSCA * csp_dtr_sca_calc_end_gains.at(i))
+                            / (L_SCA.at(i) * ColperSCA.at(i));
+                    }
+                }
+
+                double csp_dtr_sca_calc_latitude = lat;
+
+                util::matrix_t<ssc_number_t> csp_dtr_sca_calc_iams(1, 1, std::numeric_limits<double>::quiet_NaN());
+                {
+                    util::matrix_t<double> IAM_matrix = as_matrix("IAM_matrix");
+
+                    csp_dtr_sca_calc_iams.resize(IAM_matrix.nrows());
+                    csp_dtr_sca_calc_iams.fill(std::numeric_limits<double>::quiet_NaN());
+                    for (size_t i = 0; i < IAM_matrix.nrows(); i++) {
+                        if (IAM_matrix.ncols() < 2) {                            // not sure this actually captures varying lengths of the different 1-D arrays in this matrix
+                            csp_dtr_sca_calc_iams.at(i) = IAM_matrix.at(i, 0);
+                        }
+                        else {
+                            double IAM = IAM_matrix.at(i, 0);
+                            for (size_t j = 1; j < IAM_matrix.ncols(); j++) {
+                                IAM = IAM + IAM_matrix.at(i, j) * pow(csp_dtr_sca_calc_theta, j) / csp_dtr_sca_calc_costh;
+                            }
+                            csp_dtr_sca_calc_iams.at(i) = IAM;
+                        }
+                    }
+                    
+                }
+
+                assign("csp_dtr_sca_ap_lengths", csp_dtr_sca_ap_lengths);
+                assign("csp_dtr_sca_calc_zenith", csp_dtr_sca_calc_zenith);
+                assign("csp_dtr_sca_calc_costh", csp_dtr_sca_calc_costh);
+                assign("csp_dtr_sca_calc_theta", csp_dtr_sca_calc_theta);
+                assign("csp_dtr_sca_calc_end_gains", csp_dtr_sca_calc_end_gains);
+                assign("csp_dtr_sca_calc_end_losses", csp_dtr_sca_calc_end_losses);
+                assign("csp_dtr_sca_calc_latitude", csp_dtr_sca_calc_latitude);
+                assign("csp_dtr_sca_calc_iams", csp_dtr_sca_calc_iams);
+            }
+
             // System Control
             {
-                
-
                 double adjust_constant = as_double("adjust_constant");
                 double disp_wlim_maxspec = as_double("disp_wlim_maxspec");
                 double disp_wlim_max = disp_wlim_maxspec * (1.0 - (adjust_constant / 100.0)); // MWe
