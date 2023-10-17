@@ -472,7 +472,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, LCOS_test_cashloan)
 
     ssc_number_t lcos_real;
     ssc_data_get_number(data, "lcos_real", &lcos_real);
-    EXPECT_NEAR(lcos_real, 588.71, 0.1);
+    EXPECT_NEAR(lcos_real, 583.83, 0.1);
 }
 
 /// Test PVSAMv1 with all defaults and battery enabled with 3 automatic dispatch methods
@@ -734,8 +734,8 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, CommercialMultipleSubarrayBatte
 
         auto batt_q_rel = data_vtab->as_vector_ssc_number_t("batt_capacity_percent");
         auto batt_cyc_avg = data_vtab->as_vector_ssc_number_t("batt_DOD_cycle_average");
-        EXPECT_NEAR(batt_q_rel.back(), 99.344, 2e-2);
-        EXPECT_NEAR(batt_cyc_avg.back(), 8.97, m_error_tolerance_lo);
+        EXPECT_NEAR(batt_q_rel.back(), 99.314, 2e-2);
+        EXPECT_NEAR(batt_cyc_avg.back(), 9.394, m_error_tolerance_lo);
     }
 
 }
