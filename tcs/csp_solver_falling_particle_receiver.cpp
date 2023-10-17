@@ -219,17 +219,19 @@ void C_falling_particle_receiver::init()
     if (m_model_type == 3 && m_rad_model_type > 0)
     {
         // Set up radiation groups
-        int nybase = (int)( (float) (m_n_y - 1) / (float)m_n_y_rad);
-        int nxbase = (int)((float)m_n_x / (float)m_n_x_rad);
-        m_ny_per_group.resize_fill(m_n_y_rad, nybase);
-        m_nx_per_group.resize_fill(m_n_x_rad, nxbase);
+        int ny_extra = (m_n_y - 1) % m_n_y_rad;
+        int ny_base = (m_n_y - 1 - ny_extra) / m_n_y_rad;
 
-        int n;
-        n = (m_n_y - 1) - (nybase * m_n_y_rad);
-        for (int j = 0; j < n; j++)
+        int nx_extra = m_n_x % m_n_x_rad;
+        int nx_base = (m_n_x - nx_extra) / m_n_x_rad;
+
+        m_ny_per_group.resize_fill(m_n_y_rad, ny_base);
+        m_nx_per_group.resize_fill(m_n_x_rad, nx_base);
+
+        for (int j = 0; j < ny_extra; j++)
             m_ny_per_group.at(j) += 1;
-        n = (m_n_x) - (nxbase * m_n_x_rad);
-        for (int j = 0; j < n; j++)
+
+        for (int j = 0; j < nx_extra; j++)
             m_nx_per_group.at(j) += 1;
 
         // Calculate view factors
@@ -1909,15 +1911,15 @@ util::matrix_t<double> C_falling_particle_receiver::get_reflectivity_vector(util
         else if (i < 1 + (nx * ny))  // Front of curtain
         {
             i0 = 1;
-            x = (i - i0) % nx;           // Width position on curtain
-            y = (int)((i - i0) / nx);    // Height position on curtain
+            x = (i - i0) % nx;        // Width position on curtain
+            y = (i - i0 - x) / nx;    // Height position on curtain
             rho.at(i) = rhoc_per_group.at(y, x);
         }
         else if (i < 1 + 2*(nx * ny))  // Back of curtain
         {
             i0 = 1 + (nx * ny);
             x = (i - i0) % nx;
-            y = (int)((i - i0) / nx);
+            y = (i - i0 - x) / nx;    // Height position on curtain
             rho.at(i) = rhoc_per_group.at(y, x);
         }
         else            // Back cavity wall or front cavity wall
@@ -1979,17 +1981,19 @@ void C_falling_particle_receiver::calculate_coeff_matrix(util::matrix_t<double>&
             // Add modifications accounting for transmissivity of curtain
             if (i1 >= 1 && i1 < 1 + (nx * ny))  // Element on front of curtain
             {
-                iback = i1 + (nx * ny);         // Corresponding element on the back of the curtain
-                x = (i1 - 1) % nx;              // Width position on curtain
-                y = (int)((i1 - 1) / nx);       // Height position on curtain
+                iback = i1 + (nx * ny);       // Corresponding element on the back of the curtain
+                i0 = 1;
+                x = (i1 - i0) % nx;           // Width position on curtain
+                y = (i1 - i0 - x) / nx;       // Height position on curtain
                 K(i1, i2) -= tauc_per_group.at(y, x) * m_vf.at(iback, i2);
             }
 
             else if (i1 >= 1 + (nx * ny) && i1 < 1 + 2*(nx * ny))  // Element on back of curtain
             {
-                ifront = i1 - (nx * ny);            // Corresponding element on the front of the curtain
-                x = (i1 - 1 - nx*ny) % nx;          // Width position on curtain
-                y = (int)((i1 - 1 - nx*ny) / nx);   // Height position on curtain
+                ifront = i1 - (nx * ny);  // Corresponding element on the front of the curtain
+                i0 = 1 + (nx * ny);
+                x = (i1 - i0) % nx;       // Width position on curtain
+                y = (i1 - i0 - x) / nx;   // Height position on curtain
                 K(i1, i2) -= tauc_per_group.at(y, x) * m_vf.at(ifront, i2);
             }
         }
@@ -2090,7 +2094,7 @@ void C_falling_particle_receiver::calculate_radiative_exchange(util::matrix_t<do
         {
             int k = (i < 1 + nx * ny) ? 1 : 1 + nx * ny;
             x = (i - k) % nx;           // Width position on curtain
-            y = (int)((i - k) / nx);    // Height position on curtain
+            y = (i - k - x) / nx;       // Height position on curtain
             qnet.at(i) -= tauc_per_group.at(y, x) * qin.at(i);
         }
     }
