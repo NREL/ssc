@@ -259,7 +259,7 @@ public:
                 //p_annual_energy_dist[i] = p_gen[i] * 8760.0 / number_records;
                 annual_energy += p_gen[i] * 8760.0 / number_records;
                 //p_annual_cumulative_energy_dist[i] = p_annual_energy_dist[i] + p_annual_cumulative_energy_dist[i - 1];
-                device_average_power += p_gen[i] / number_devices;
+                device_average_power += p_gen[i] / number_devices / number_records;
                 for (int k = 0; k < tidal_power_curve.nrows(); k++) {
                     if (tidal_power_curve.at(k, 1) > device_rated_capacity)
                         device_rated_capacity = tidal_power_curve.at(k, 1);
