@@ -388,9 +388,11 @@ static var_info _cm_vtab_trough_physical[] = {
 
 
     // System Control
-    { SSC_OUTPUT,        SSC_NUMBER,      "is_wlim_series",            "Use time-series net electricity generation limits",                                "",             "",               "tou",            "?=0",                     "",                      "" },
-    { SSC_OUTPUT,        SSC_NUMBER,      "disp_wlim_max",                   "Max. net power to the grid (incl. availability)",                              "MWe",            "",               "controller",     "*",                       "",                      "" },
-    { SSC_OUTPUT,        SSC_ARRAY,       "wlim_series",               "Time series net electicity generation limits",                                     "kWe",          "",               "tou",            "is_dispatch=1",        "",                      "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "is_wlim_series",            "Use time-series net electricity generation limits",                                "",             "",               "System Control",            "?=0",                     "",                      "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "disp_wlim_max",                   "Max. net power to the grid (incl. availability)",                              "MWe",            "",               "System Control",     "*",                       "",                      "" },
+    { SSC_OUTPUT,        SSC_ARRAY,       "wlim_series",               "Time series net electicity generation limits",                                     "kWe",          "",               "System Control",            "is_dispatch=1",        "",                      "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "bop_design",                       "BOP parasitics at design",                                             "MWe",          "",         "System Control",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "aux_design",                       "Aux parasitics at design",                                             "MWe",          "",         "System Control",                              "*",                                                                "",              "" },
 
 
 
@@ -1734,6 +1736,11 @@ public:
                 double adjust_constant = as_double("adjust_constant");
                 double disp_wlim_maxspec = as_double("disp_wlim_maxspec");
                 double disp_wlim_max = disp_wlim_maxspec * (1.0 - (adjust_constant / 100.0)); // MWe
+                double W_dot_bop_design, W_dot_fixed_parasitic_design;    //[MWe]
+                csp_solver.get_design_parameters(W_dot_bop_design, W_dot_fixed_parasitic_design);
+                vector<double> aux_vec = as_vector_double("aux_array");
+                double aux_design = aux_vec[0] * aux_vec[1] * (aux_vec[2] + aux_vec[3] + aux_vec[4]) * W_dot_cycle_des;
+
 
                 int kHoursInYear = 8760;
                 double disp_wlim_max_kW = disp_wlim_max * 1000.0;
@@ -1743,6 +1750,8 @@ public:
 
                 assign("is_wlim_series", is_dispatch);
                 assign("disp_wlim_max", disp_wlim_max); // MWe
+                assign("bop_design", W_dot_bop_design); // MWe
+                assign("aux_design", aux_design);       // MWe
 
                 if (is_dispatch)
                     set_vector("wlim_series", wlim_series); // kWe
