@@ -45,6 +45,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_two_tank_tes.h"
 #include "csp_solver_tou_block_schedules.h"
 #include "csp_dispatch.h"
+#include "csp_system_costs.h"
 //#include "cmod_csp_common_eqns.h"
 
 #include <ctime>
@@ -323,6 +324,31 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "lat",                   "Latitude",                                                "degree",       "",               "",    "*",                       "",                      "" },
 
 
+    // Direct Capital Costs
+    { SSC_INPUT,    SSC_NUMBER,         "csp.dtr.cost.site_improvements.cost_per_m2", "Site Improvement Cost per m2",                                                          "$/m2",                "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "csp.dtr.cost.solar_field.cost_per_m2",       "Solar Field Cost per m2",                                                               "$/m2",                "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "csp.dtr.cost.htf_system.cost_per_m2",        "HTF System Cost Per m2",                                                                "$/m2",                "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "csp.dtr.cost.storage.cost_per_kwht",           "Storage cost per kWht",                                                                 "$/kWht",              "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "csp.dtr.cost.fossil_backup.cost_per_kwe",            "Fossil Backup Cost per kWe",                                                            "$/kWe",               "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "csp.dtr.cost.power_plant.cost_per_kwe",       "Power Plant Cost per kWe",                                                              "$/kWe",               "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "csp.dtr.cost.bop_per_kwe",               "Balance of Plant Cost per kWe",                                                         "$/kWe",               "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "csp.dtr.cost.contingency_percent",         "Contingency Percent",                                                                   "%",                   "",                             "Capital_Costs",                 "?=0",       "",              "" },
+
+        // Indirect Capital Costs
+    { SSC_INPUT,    SSC_NUMBER,         "csp.dtr.cost.epc.per_acre",           "EPC Costs per acre",                                                                    "$/acre",              "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "csp.dtr.cost.epc.percent",     "EPC Costs % direct",                                                                    "%",                   "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "csp.dtr.cost.epc.per_watt",           "EPC Cost Wac",                                                                          "$/Wac",               "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "csp.dtr.cost.epc.fixed",              "Fixed EPC Cost",                                                                        "$",                   "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "csp.dtr.cost.plm.per_acre",           "Land Cost per acre",                                                                    "$/acre",              "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "csp.dtr.cost.plm.percent",     "Land Cost % direct",                                                                    "%",                   "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "csp.dtr.cost.plm.per_watt",           "Land Cost Wac",                                                                         "$/Wac",               "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "csp.dtr.cost.plm.fixed",              "Fixed Land Cost",                                                                       "$",                   "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    
+        // Sales Tax
+    { SSC_INPUT,    SSC_NUMBER,         "csp.dtr.cost.sales_tax.percent",           "Sales Tax Percentage of Direct Cost",                                                   "%",                   "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "sales_tax_rate",              "Sales Tax Rate",                                                                        "%",                   "",                             "Capital_Costs",                 "?=0",       "",              "" },
+
+
     // *************************************************************************************************
     //    OUTPUTS
     // *************************************************************************************************
@@ -396,6 +422,31 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,        SSC_NUMBER,      "bop_design",                       "BOP parasitics at design",                                             "MWe",          "",         "System Control",                              "*",                                                                "",              "" },
     { SSC_OUTPUT,        SSC_NUMBER,      "aux_design",                       "Aux parasitics at design",                                             "MWe",          "",         "System Control",                              "*",                                                                "",              "" },
 
+        // Capital Costs
+
+           // Direct Capital Costs
+    { SSC_OUTPUT,       SSC_NUMBER,     "csp.dtr.cost.site_improvements",           "Site improvements cost",                                               "$",          "",         "Capital Costs",                              "",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "csp.dtr.cost.solar_field",                 "Solar field cost",                                                     "$",          "",         "Capital Costs",                              "",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "csp.dtr.cost.htf_system",                  "HTF system cost",                                                      "$",          "",         "Capital Costs",                              "",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "csp.dtr.cost.storage",                          "Thermal storage cost",                                                 "$",          "",         "Capital Costs",                              "",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "csp.dtr.cost.fossil_backup",               "Fossil backup cost",                                                   "$",          "",         "Capital Costs",                              "",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "csp.dtr.cost.power_plant",                 "Power plant cost",                                                     "$",          "",         "Capital Costs",                              "",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "csp.dtr.cost.bop",                         "Balance of plant cost",                                                "$",          "",         "Capital Costs",                              "",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "csp.dtr.cost.contingency",                 "Contingency cost",                                                     "$",          "",         "Capital Costs",                              "",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "total_direct_cost",                "Total direct cost",                                                    "$",          "",         "Capital Costs",                              "",                                                                "",              "" },
+
+        // Indirect Capital Costs
+    { SSC_OUTPUT,       SSC_NUMBER,     "csp.dtr.cost.epc.total",                   "EPC total cost",                                                       "$",          "",         "Capital Costs",                              "",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "csp.dtr.cost.plm.total",                   "Total land cost",                                                      "$",          "",         "Capital Costs",                              "",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "total_indirect_cost",              "Total direct cost",                                                    "$",          "",         "Capital Costs",                              "",                                                                "",              "" },
+
+
+        // Sales Tax
+    { SSC_OUTPUT,       SSC_NUMBER,     "csp.dtr.cost.sales_tax.total",                  "Sales tax total",                                                      "$",          "",         "Capital Costs",                              "",                                                                "",              "" },
+
+        // Total Installed Costs
+    { SSC_OUTPUT,       SSC_NUMBER,     "total_installed_cost",             "Total installed cost",                                                 "$",          "",         "Capital Costs",                              "",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "csp.dtr.cost.installed_per_capacity",           "Estimated total installed cost per net capacity ($/kW)",               "$/kW",       "",         "Capital Costs",                              "",                                                                "",              "" },
 
 
     // Simulation Kernel
@@ -609,6 +660,7 @@ public:
         // Common Parameters
         bool is_dispatch = as_boolean("is_dispatch");
         int sim_type = as_number("sim_type");
+        int csp_financial_model = as_integer("csp_financial_model");
 
         // *****************************************************
         // Check deprecated variables
@@ -1229,7 +1281,7 @@ public:
                 std::copy(load_fractions, load_fractions + N_load_fractions, std::back_inserter(tou_params->mc_csp_ops.timestep_load_fractions));
             }
 
-            int csp_financial_model = as_integer("csp_financial_model");
+            
 
             if (sim_type == 1)
             {
@@ -1552,11 +1604,12 @@ public:
         // Report Design Point Calculations to UI
         // ********************************
         // ********************************
+        double nameplate_des;
         {
             // System Design
             {
                 double gross_net_conversion_des = as_number("gross_net_conversion_factor");
-                double nameplate_des = W_dot_cycle_des * gross_net_conversion_des;
+                nameplate_des = W_dot_cycle_des * gross_net_conversion_des;
 
                 assign("q_dot_cycle_des", q_dot_cycle_des);
                 assign("nameplate", nameplate_des);
@@ -1784,6 +1837,80 @@ public:
                 if (is_dispatch)
                     set_vector("wlim_series", wlim_series); // kWe
 
+            }
+        }
+
+        // Calculate Costs and assign outputs
+        if (csp_financial_model != 8)
+        {
+
+            // Collect dedicated cost inputs
+            double site_improvements_spec_cost = as_double("csp.dtr.cost.site_improvements.cost_per_m2");
+            double solar_field_spec_cost = as_double("csp.dtr.cost.solar_field.cost_per_m2");
+            double htf_system_spec_cost = as_double("csp.dtr.cost.htf_system.cost_per_m2");
+            double storage_spec_cost = as_double("csp.dtr.cost.storage.cost_per_kwht");
+            double fossil_spec_cost = as_double("csp.dtr.cost.fossil_backup.cost_per_kwe");
+            double power_plant_spec_cost = as_double("csp.dtr.cost.power_plant.cost_per_kwe");
+            double bop_spec_cost = as_double("csp.dtr.cost.bop_per_kwe");
+            double contingency_percent = as_double("csp.dtr.cost.contingency_percent");
+
+            double epc_cost_per_acre = as_double("csp.dtr.cost.epc.per_acre");
+            double epc_cost_percent_direct = as_double("csp.dtr.cost.epc.percent");
+            double epc_cost_per_watt = as_double("csp.dtr.cost.epc.per_watt");
+            double epc_cost_fixed = as_double("csp.dtr.cost.epc.fixed");
+            double plm_cost_per_acre = as_double("csp.dtr.cost.plm.per_acre");
+            double plm_cost_percent_direct = as_double("csp.dtr.cost.plm.percent");
+            double plm_cost_per_watt = as_double("csp.dtr.cost.plm.per_watt");
+            double plm_cost_fixed = as_double("csp.dtr.cost.plm.fixed");
+
+            double sales_tax_percent = as_double("csp.dtr.cost.sales_tax.percent");
+
+            // Collect necessary variables defined in other tabs
+            double site_improvements_area = c_trough.m_Ap_tot;
+            double solar_field_area = c_trough.m_Ap_tot;
+            double htf_system_area = c_trough.m_Ap_tot;
+            double Q_tes = q_dot_cycle_des * as_double("tshours");
+            double P_ref = as_double("P_ref");      // MWe
+            double fossil_backup_mwe = P_ref;       // MWe
+            double power_plant_mwe = P_ref;         // MWe
+            double bop_mwe = P_ref;                 // MWe
+            // total_land_area                      // m2
+            // nameplate_des                        // MWe
+            double sales_tax_rate = as_double("sales_tax_rate");
+
+
+
+            // Define outputs
+            double power_plant_cost_out, ts_cost_out, site_improvements_cost_out, bop_cost_out, solar_field_cost_out, htf_system_cost_out, fossil_backup_cost_out, contingency_cost_out,
+                total_direct_cost_out, epc_total_cost_out, plm_total_cost_out, total_indirect_cost_out, sales_tax_total_out, total_installed_cost_out, installed_per_capacity_out;
+
+            // Calculate Costs
+            N_mspt::calculate_mslf_costs(site_improvements_area, site_improvements_spec_cost, solar_field_area, solar_field_spec_cost, htf_system_area, htf_system_spec_cost, Q_tes, storage_spec_cost, fossil_backup_mwe,
+                fossil_spec_cost, power_plant_mwe, power_plant_spec_cost, bop_mwe, bop_spec_cost, contingency_percent, c_trough.m_total_land_area, nameplate_des, epc_cost_per_acre, epc_cost_percent_direct, epc_cost_per_watt,
+                epc_cost_fixed, plm_cost_per_acre, plm_cost_percent_direct, plm_cost_per_watt, plm_cost_fixed, sales_tax_rate, sales_tax_percent,
+
+                power_plant_cost_out, ts_cost_out, site_improvements_cost_out, bop_cost_out, solar_field_cost_out, htf_system_cost_out, fossil_backup_cost_out, contingency_cost_out,
+                total_direct_cost_out, epc_total_cost_out, plm_total_cost_out, total_indirect_cost_out, sales_tax_total_out, total_installed_cost_out, installed_per_capacity_out);
+
+            // Assign Outputs
+            {
+                assign("csp.dtr.cost.site_improvements", site_improvements_cost_out);
+                assign("csp.dtr.cost.solar_field", solar_field_cost_out);
+                assign("csp.dtr.cost.htf_system", htf_system_cost_out);
+                assign("csp.dtr.cost.storage", ts_cost_out);
+                assign("csp.dtr.cost.fossil_backup", fossil_backup_cost_out);
+                assign("csp.dtr.cost.power_plant", power_plant_cost_out);
+                assign("csp.dtr.cost.bop", bop_cost_out);
+                assign("csp.dtr.cost.contingency", contingency_cost_out);
+                assign("total_direct_cost", total_direct_cost_out);
+
+                assign("csp.dtr.cost.epc.total", epc_total_cost_out);
+                assign("csp.dtr.cost.plm.total", plm_total_cost_out);
+                assign("total_indirect_cost", total_indirect_cost_out);
+
+                assign("csp.dtr.cost.sales_tax.total", sales_tax_total_out);
+                assign("total_installed_cost", total_installed_cost_out);
+                assign("csp.dtr.cost.installed_per_capacity", installed_per_capacity_out);
             }
         }
 
