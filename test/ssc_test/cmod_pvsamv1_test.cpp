@@ -1109,6 +1109,19 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, SubhourlyClippingCorrectionModel)
     EXPECT_NEAR(subhourly_clipping_loss_percent, 0.74, m_error_tolerance_lo);
 }
 
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, DistributionClippingMethod) {
+    std::map<std::string, double> pairs;
+
+    //Run with model enabled
+    pairs["enable_subinterval_distribution"] = 1;
+    int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+    EXPECT_FALSE(pvsam_errors);
+    //check answers for subhourly clipping annual loss
+    ssc_number_t distribution_clipping_loss;
+    ssc_data_get_number(data, "annual_distribution_clipping_loss", &distribution_clipping_loss);
+    EXPECT_NEAR(distribution_clipping_loss, 327.222952, m_error_tolerance_lo);
+}
+
 /// Test PVSAMv1 with all defaults and no-financial model- look at MPPT input 1 voltage at night
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, InverterNighttime) {
 
