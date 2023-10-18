@@ -60,6 +60,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_system_costs.h"
 
 #include <ctime>
+#include <cmath>
+#include <limits>
 
 static var_info _cm_vtab_tcsmolten_salt[] = {
 
@@ -2477,7 +2479,12 @@ public:
         double W_dot_bop_design, W_dot_fixed_parasitic_design;    //[MWe]
         csp_solver.get_design_parameters(W_dot_bop_design, W_dot_fixed_parasitic_design);
 
-        double plant_net_capacity_calc = W_dot_cycle_des - W_dot_col_tracking_des - W_dot_rec_pump_des -
+        double W_dot_rec_pump_des_for_cap_calc = W_dot_rec_pump_des;
+        if (!std::isfinite(W_dot_rec_pump_des_for_cap_calc)) {
+            W_dot_rec_pump_des_for_cap_calc = 0.02 * W_dot_cycle_des;
+        }
+
+        double plant_net_capacity_calc = W_dot_cycle_des - W_dot_col_tracking_des - W_dot_rec_pump_des_for_cap_calc -
                                         W_dot_pc_pump_des - W_dot_pc_cooling_des - W_dot_bop_design - W_dot_fixed_parasitic_design;    //[MWe]
 
         
