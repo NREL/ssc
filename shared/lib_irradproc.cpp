@@ -1692,7 +1692,7 @@ perez(double, double dn, double df, double alb, double inc, double tilt, double 
     }
 }
 
-void ineichen(double clearsky_results[3], double apparent_zenith, double absolute_airmass, double linke_turbidity = 1.0, double altitude = 0.0, double dni_extra = 1364.0, bool perez_enhancement = false) {
+void ineichen(double clearsky_results[3], double apparent_zenith, int month, int day, double pressure = 101325.0, double linke_turbidity = 1.0, double altitude = 0.0, double dni_extra = 1364.0, bool perez_enhancement = false) {
     double cos_zenith = Max(cosd(apparent_zenith), 0);
     double tl = linke_turbidity;
 
@@ -1701,15 +1701,25 @@ void ineichen(double clearsky_results[3], double apparent_zenith, double absolut
     double cg1 = 5.09e-5 * altitude + 0.868;
     double cg2 = 3.92e-5 * altitude + 0.0387;
 
-    double ghi = exp(-cg2 * absolute_airmass * (fh1 + fh2 * (tl - 1)));
-    if (perez_enhancement) ghi *= exp(0.01 * pow(absolute_airmass, 1.8));
+    //double am = Min(15.25, 1.0 / (cosd(apparent_zenith) + 0.15 * (pow(93.9 - apparent_zenith, -1.253)))); // air mass
+    double am = Min(15.25, 1.0 / (cosd(apparent_zenith) + 0.50572 * (pow(6.07995 + (90 - apparent_zenith), -1.6364)))); // air mass kastenyoung1989 pvlib
 
-    ghi = cg1 * dni_extra * cos_zenith * tl / tl * Max(ghi, 0);
+    double abs_am = am * pressure / 101325.0;
+
+    double ghi = exp(-cg2 * abs_am * (fh1 + fh2 * (tl - 1)));
+    if (perez_enhancement) ghi *= exp(0.01 * pow(abs_am, 1.8));
+
+    double Gon = 1367 * (1 + 0.033 * cos(360.0 / 365.0 * day_of_year(month, day) * M_PI /
+        180));
+
+    if (dni_extra != 0) Gon = dni_extra;
+
+    ghi = cg1 * Gon * cos_zenith * tl / tl * Max(ghi, 0);
 
     double b = 0.664 + 0.163 / fh1;
 
-    double bnci = b * exp(-0.09 * absolute_airmass * (tl - 1));
-    bnci = dni_extra * Max(bnci, 0);
+    double bnci = b * exp(-0.09 * abs_am * (tl - 1));
+    bnci = Gon * Max(bnci, 0);
 
     double bnci_2 = ((1 - (0.1 - 0.2 * exp(-tl)) / (0.1 + 0.882 / fh1)) / cos_zenith);
     bnci_2 = ghi * Min(Max(bnci_2, 0), 1e20);
@@ -1958,6 +1968,12 @@ void irrad::get_irrad(double *ghi, double *dni, double *dhi) {
     *dhi = diffuseHorizontal;
 }
 
+void irrad::get_clearsky_irrad(double* ghi_cs, double* dni_cs, double* dhi_cs) {
+    *ghi_cs = clearskyIrradiance[0];
+    *dni_cs = clearskyIrradiance[1];
+    *dhi_cs = clearskyIrradiance[2];
+}
+
 void irrad::set_time(int y, int m, int d, int h, double min, double delt_hr) {
     this->year = y;
     this->month = m;
@@ -2160,7 +2176,7 @@ int irrad::calc() {
 
     //clearsky
     if (enableSubhourlyClipping) {
-        ineichen(clearskyIrradiance, RTOD * sunAnglesRadians[1], 1.5, 1.0, elevation);
+        ineichen(clearskyIrradiance, RTOD * sunAnglesRadians[1], month, day, pressure * 100.0, 1.0, elevation, 0, true);
     }
 
 

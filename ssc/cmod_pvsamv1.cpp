@@ -652,6 +652,7 @@ static var_info _cm_vtab_pvsamv1[] = {
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_gross",                   "Subarray 1 DC power gross",                                             "kW",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_voc",                        "Subarray 1 Open circuit DC voltage",                                      "V",      "", "Time Series (Subarray 1)",       "",                     "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_isc",                        "Subarray 1 String short circuit DC current",                                     "A",      "", "Time Series (Subarray 1)",       "",                     "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dni_index",                        "Subarray 1 DNI Index",                                     "W/m2",      "", "Time Series (Subarray 1)",       "",                     "",                              "" },
 
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_surf_tilt",                  "Subarray 2 Surface tilt",                                              "degrees",    "", "Time Series (Subarray 2)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_surf_azi",                   "Subarray 2 Surface azimuth",                                           "degrees",    "", "Time Series (Subarray 2)",       "",                    "",                              "" },
@@ -805,6 +806,8 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "ac_gross",                             "Inverter AC output power",                                       "kW",   "",   "Time Series (Array)",       "*",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "clipping_potential",                       "Clipping potential",                                       "",   "",   "Time Series (Inverter)",      "",                        "",                   "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subhourly_clipping_loss",                       "Subhourly clipping correction loss",                                       "kW",   "",   "Time Series (Inverter)",      "",                        "",                   "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "clipping_potential_bin",                       "Clipping potential bin",                                       "",   "",   "Time Series (Inverter)",      "",                        "",                   "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "dni_index_bin",                       "DNI Index bin",                                       "",   "",   "Time Series (Inverter)",      "",                        "",                   "" },
 
         // transformer model outputs
         { SSC_OUTPUT,        SSC_ARRAY,      "xfmr_nll_ts",                          "Transformer no load loss",                              "kW", "",    "Time Series (Transformer)", "", "", "" },
@@ -960,6 +963,7 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT, SSC_NUMBER, "annual_ac_inv_eff_loss_percent", "AC inverter efficiency loss", "%", "", "Loss", "", "", "" },
         { SSC_OUTPUT, SSC_NUMBER, "annual_ac_wiring_loss_percent", "AC wiring loss", "%", "", "Loss", "", "", "" },
         { SSC_OUTPUT, SSC_NUMBER, "annual_subhourly_clipping_loss_percent", "Subhourly clipping correction loss percent", "%", "", "Loss", "", "", "" },
+        { SSC_OUTPUT, SSC_NUMBER, "nominal_annual_clipping_output", "Test output for nominal annual clipping output", "kWh", "", "", "", "", "" },
 
         { SSC_OUTPUT, SSC_NUMBER, "annual_transmission_loss_percent", "AC transmission loss", "%", "", "Loss", "", "", "" },
         //	{ SSC_OUTPUT, SSC_NUMBER, "annual_ac_transformer_loss_percent", "AC step-up transformer loss", "%", "", "Loss", "", "", "" },
@@ -1532,7 +1536,10 @@ void cm_pvsamv1::exec()
                 // beam, skydiff, and grounddiff IN THE PLANE OF ARRAY (W/m2)
                 double ibeam, iskydiff, ignddiff;
                 double ibeam_csky, iskydiff_csky, ignddiff_csky;
+                double ghi_cs, dni_cs, dhi_cs;
                 double aoi, stilt, sazi, rot, btd;
+
+                irr.get_clearsky_irrad(&ghi_cs, &dni_cs, &dhi_cs);
 
                 // Ensure that the usePOAFromWF flag is false unless a reference cell has been used.
                 //  This will later get forced to false if any shading has been applied (in any scenario)
@@ -1918,8 +1925,8 @@ void cm_pvsamv1::exec()
                     PVSystem->p_poaBeamFrontCS[nn][idx] = (ssc_number_t)ibeam_csky;
                     PVSystem->p_poaDiffuseFrontCS[nn][idx] = (ssc_number_t)(iskydiff_csky);
                     PVSystem->p_poaDiffuseFrontCS[nn][idx] = (ssc_number_t)(ignddiff_csky);
-                    if (ibeam_csky != 0) {
-                        PVSystem->p_DNIIndex[nn][idx] = (ssc_number_t)(ibeam / ibeam_csky);
+                    if (dni_cs != 0) {
+                        PVSystem->p_DNIIndex[nn][idx] = (ssc_number_t)(Irradiance->p_weatherFileDNI[idx] / dni_cs);
                     }
                     else {
                         PVSystem->p_DNIIndex[nn][idx] = 0;
@@ -2591,6 +2598,7 @@ void cm_pvsamv1::exec()
             annual_subhourly_clipping_loss += sub_clipping_matrix.at(dni_row, clip_pot_col);
             */
         }
+        assign("nominal_annual_clipping_output", nominal_annual_clipping_output);
     }
 
     for (size_t iyear = 0; iyear < nyears; iyear++)
@@ -2714,6 +2722,7 @@ void cm_pvsamv1::exec()
                 double clip_pot = (dcPower_kW_csky - paco ) / (paco);
                 
                 PVSystem->p_ClippingPotential[idx] = clip_pot;
+                //PVSystem->p_DNIIndex[idx] = dni_clearness_index;
                 
                 //Lookup matrix for percentage effect based on DNI index, Clipping potential
 
@@ -2731,6 +2740,7 @@ void cm_pvsamv1::exec()
                         }
                     }
                 }
+                PVSystem->p_DNIIndexBin[idx] = dni_row;
 
                 //Clipping potential indexing
                 if (clip_pot < sub_clipping_matrix.at(0, 1)) clip_pot_col = 1;
@@ -2742,9 +2752,10 @@ void cm_pvsamv1::exec()
                         }
                     }
                 }
+                PVSystem->p_CPBin[idx] = clip_pot_col;
 
                 //acpwr_gross *= (1 - sub_clipping_matrix.at(dni_row, clip_pot_col));
-                if (dcPower_kW_csky > 0.0) {
+                if (dcPower_kW > 0.0) {
                     ac_subhourlyclipping_loss = sub_clipping_matrix.at(dni_row, clip_pot_col) * nominal_annual_clipping_output;
                     //ac_subhourlyclipping_loss = sub_clipping_matrix.at(dni_row, clip_pot_col) * sharedInverter->powerAC_kW_clipping;
                 }

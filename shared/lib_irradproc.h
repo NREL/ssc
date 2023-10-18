@@ -778,7 +778,7 @@ void perez(double hextra, double dn, double df, double alb, double inc, double t
 * \param[out] clearsky_results[1] clear sky dni
 * \param[out] clearsky_results[2] clear sky dhi
 */
-void ineichen(double clearsky_results[3], double apparent_zenith, double absolute_airmass, double linke_turbidity, double altitude, double dni_extra, bool perez_enhancement);
+void ineichen(double clearsky_results[3], double apparent_zenith, int month, int day, double pressure, double linke_turbidity, double altitude, double dni_extra, bool perez_enhancement);
 /**
 * Isotropic sky model for diffuse irradiance on a tilted surface, see also perez(), hdkr().
 *
@@ -1167,6 +1167,8 @@ public:
 
     /// Return the front-side irradiance components
     void get_irrad(double* ghi, double* dni, double* dhi);
+
+    void get_clearsky_irrad(double* ghi_cs, double* dni_cs, double* dhi_cs);
 
     /// Return the effective hour and fraction used for the sun position calculation
     double get_sunpos_calc_hour();
