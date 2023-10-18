@@ -4613,6 +4613,9 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
         m_total_land_area = m_fixed_land_area * m_non_solar_field_land_area_multiplier;
     }
 
+    m_is_solar_mult_designed = true;
+
+    return m_is_solar_mult_designed;
 }
 
 /*

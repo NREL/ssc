@@ -1647,7 +1647,8 @@ public:
                 assign("solar_mult", c_trough.m_solar_mult);
                 assign("fixed_land_area", c_trough.m_fixed_land_area);  //[acre]
                 assign("total_land_area", c_trough.m_total_land_area);  //[acre]
-                assign("total_tracking_power", c_trough.get_tracking_power());  //[MWe]
+                double total_tracking_power = c_trough.get_tracking_power();
+                assign("total_tracking_power", total_tracking_power);  //[MWe]
                 assign("K_cpnt", c_trough.m_K_cpnt);
                 assign("D_cpnt", c_trough.m_D_cpnt);    //[m]
                 assign("L_cpnt", c_trough.m_L_cpnt);    //[m]
