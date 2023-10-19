@@ -380,7 +380,7 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
         
         /* Insert checks for custom tilt angles here*/
         if (cm->is_assigned("custom_tilt_angles_array") && useCustomTiltAngles == 1) {
-            customTiltAngles = cm->as_vector_double("custom_tilt_angle_array");
+            customTiltAngles = cm->as_vector_double("custom_tilt_angles_array");
             for (int i = 0; i < customTiltAngles.size(); i++) {
                 if (customTiltAngles[i] < 0.0) throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + "custom tilt angles cannot be negative.");
             }
@@ -651,7 +651,7 @@ void PVSystem_IO::SetupPOAInput()
 
 
                 if (tms[2] > 0) {
-                    incidence(Subarrays[nn]->trackMode, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, sun[1], sun[0], Subarrays[nn]->backtrackingEnabled, Subarrays[nn]->groundCoverageRatio, Subarrays[nn]->slopeTilt, Subarrays[nn]->slopeAzm, false, 0.0, angle);
+                    incidence(Subarrays[nn]->trackMode, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, sun[1], sun[0], Subarrays[nn]->backtrackingEnabled, Subarrays[nn]->groundCoverageRatio, Subarrays[nn]->slopeTilt, Subarrays[nn]->slopeAzm, false, 0.0, false, 0.0, angle);
                 }
                 else {
                     angle[0] = -999;

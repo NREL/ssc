@@ -724,6 +724,8 @@ void solarpos_spa(int year, int month, int day, int hour, double minute, double 
 * \param[in] slope_azm azimuth angle of slopted terrain relative to tracker azimuth in radians
 * \param[in] force_to_stow: force the single-axis tracking array to the stow angle specified in the next input
 * \param[in] stow_angle_deg: the angle to force the single-axis tracking array to stow to, in degrees
+* \param[in] useCustomAngle: use custom rotation angles for single axis tracking 0/1
+* \param[in] customAngle: custom rotation angle to use, in degrees
 * \param[out] angle array of elements to return angles to calling function
 * \param[out] angle[0] incident angle in radians
 * \param[out] angle[1] tilt angle of surface from horizontal in radians

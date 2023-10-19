@@ -1771,7 +1771,7 @@ irrad::irrad(weather_record wf, weather_header hdr,
              double groundCoverageRatioIn, double slopeTiltIn, double slopeAzmIn, std::vector<double> monthlyTiltDegrees,
              std::vector<double> userSpecifiedAlbedo,
              poaDecompReq *poaAllIn,
-             bool useSpatialAlbedos, const util::matrix_t<double>* userSpecifiedSpatialAlbedos, bool enableSubhourlyClipping, bool useCustomTiltAngles, double customTiltAngles) :
+             bool useSpatialAlbedos, const util::matrix_t<double>* userSpecifiedSpatialAlbedos, bool enableSubhourlyClipping, bool useCustomTiltAngles, double customTiltAngle) :
         skyModel(skyModelIn), radiationMode(radiationModeIn), trackingMode(trackModeIn),
         enableBacktrack(backtrackingEnabled), forceToStow(forceToStowIn),
         delt(dtHour), tiltDegrees(tiltDegreesIn), surfaceAzimuthDegrees(azimuthDegreesIn),
