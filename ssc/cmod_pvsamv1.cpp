@@ -1126,9 +1126,9 @@ void cm_pvsamv1::exec()
 
     std::vector<ssc_number_t> user_tilt_angles; user_tilt_angles.reserve(nrec);
     size_t user_tilt_angles_size;
-    int use_user_tilt_angles = (as_integer("use_user_tilt_angles") == 1 && is_assigned("user_tilt_angles_array"));
-    if (as_integer("use_user_tilt_angles") == 1 && is_assigned("user_tilt_angles_array")) {
-        user_tilt_angles = as_vector_ssc_number_t("user_tilt_angles_array");
+    int use_custom_tilt_angles = (as_integer("use_custom_tilt_angles") == 1 && is_assigned("custom_tilt_angles_array"));
+    if (as_integer("use_custom_tilt_angles") == 1 && is_assigned("custom_tilt_angles_array")) {
+        user_tilt_angles = as_vector_ssc_number_t("custom_tilt_angles_array");
         user_tilt_angles_size = user_tilt_angles.size();
         if (user_tilt_angles_size != nrec)
             throw exec_error("pvsamv1", "The measured temperature array must be the size of nrecords per year");
@@ -1138,7 +1138,7 @@ void cm_pvsamv1::exec()
     //also check here for tilt > 0 for tracking systems, since this is a very uncommon configuration but an easy mistake to make
     for (size_t nn = 0; nn < num_subarrays; nn++)
     {
-        if (as_integer("use_user_tilt_angles") == 1 && is_assigned("user_tilt_angles_array")) {
+        if (as_integer("use_custom_tilt_angles") == 1 && is_assigned("custom_tilt_angles_array")) {
             Subarrays[nn]->trackMode = irrad::SINGLE_AXIS;
             //Subarrays[nn]->tiltDegrees = 0; //reset to 0 to then be replaced in loop?
             Subarrays[nn]->backtrackingEnabled = false; //account for backtracking in user-specified angles [deg]
@@ -1507,7 +1507,7 @@ void cm_pvsamv1::exec()
                     continue; // skip disabled subarrays
 
                 /*
-                if (as_integer("use_user_tilt_angles") == 1 && is_assigned("user_tilt_angles_array")) {
+                if (as_integer("use_custom_tilt_angles") == 1 && is_assigned("custom_tilt_angles_array")) {
                     Subarrays[nn]->tiltDegrees = user_tilt_angles[inrec];
                     
                 }*/
@@ -1518,7 +1518,7 @@ void cm_pvsamv1::exec()
                     Irradiance->dtHour, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, 0.0, Subarrays[nn]->groundCoverageRatio, Subarrays[nn]->slopeTilt, Subarrays[nn]->slopeAzm,
                     Subarrays[nn]->monthlyTiltDegrees, Irradiance->userSpecifiedMonthlyAlbedo,
                     Subarrays[nn]->poa.poaAll.get(),
-                    Irradiance->useSpatialAlbedos, &Irradiance->userSpecifiedMonthlySpatialAlbedos, as_boolean("enable_subhourly_clipping"));
+                    Irradiance->useSpatialAlbedos, &Irradiance->userSpecifiedMonthlySpatialAlbedos, as_boolean("enable_subhourly_clipping"), as_boolean("use_custom_tilt_angles"), user_tilt_angles[inrec]);
 
                 int code = irr.calc();
 
