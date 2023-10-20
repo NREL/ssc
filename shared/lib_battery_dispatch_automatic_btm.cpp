@@ -466,7 +466,7 @@ void dispatch_automatic_behind_the_meter_t::target_power(double E_useful, size_t
 				if (sorted_grid[ii].Grid() > P_target_min)
 					break;
 
-				E_charge += (P_target_min - sorted_grid[ii].Grid())*_dt_hour;
+				E_charge += (P_target_min - sorted_grid[ii].Grid()) * _dt_hour * m_batteryPower->singlePointEfficiencyACToDC;
 			}
 			E_charge_vec.push_back(E_charge);
 			if (debug)
