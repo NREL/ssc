@@ -138,7 +138,7 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
             kwac_per_kwdc[i] = gen[i] / system_cap;
             kwac_per_kwdc[i] = std::max(0.0, kwac_per_kwdc[i]);
         }
-        reopt_pv.assign("prod_factor_series_kw", kwac_per_kwdc);
+        reopt_pv.assign("production_factor_series", kwac_per_kwdc);
         // The above already includes losses
         reopt_pv.assign("losses", 0.0);
     }
@@ -148,43 +148,43 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
     // Else use REopt default losses (14%)
 
     // financial inputs
-    map_optional_input(vt, "itc_fed_percent", &reopt_pv, "federal_itc_pct", 0., true);
-    map_optional_input(vt, "pbi_fed_amount", &reopt_pv, "pbi_us_dollars_per_kwh", 0.);
-    map_optional_input(vt, "pbi_fed_term", &reopt_pv, "pbi_years", 0.);
-    vd = reopt_pv.lookup("pbi_years");
+    map_optional_input(vt, "itc_fed_percent", &reopt_pv, "federal_itc_fraction", 0., true);
+    map_optional_input(vt, "pbi_fed_amount", &reopt_pv, "production_incentive_per_kwh", 0.);
+    map_optional_input(vt, "pbi_fed_term", &reopt_pv, "production_incentive_years", 0.);
+    vd = reopt_pv.lookup("production_incentive_years");
     if (vd->num[0] < 1) vd->num[0] = 1;    // minimum is 1, set pbi_fed_amount to 0 to disable
 
-    map_optional_input(vt, "ibi_sta_percent", &reopt_pv, "state_ibi_pct", 0., true);
-    map_optional_input(vt, "ibi_sta_percent_maxvalue", &reopt_pv, "state_ibi_max_us_dollars", 10000000000);
-    vd = reopt_pv.lookup("state_ibi_max_us_dollars");
+    map_optional_input(vt, "ibi_sta_percent", &reopt_pv, "state_ibi_fraction", 0., true);
+    map_optional_input(vt, "ibi_sta_percent_maxvalue", &reopt_pv, "state_ibi_max", 10000000000);
+    vd = reopt_pv.lookup("state_ibi_max");
     if (vd->num[0] > 10000000000) vd->num[0] = 10000000000;
 
-    map_optional_input(vt, "ibi_uti_percent", &reopt_pv, "utility_ibi_pct", 0., true);
-    map_optional_input(vt, "ibi_uti_percent_maxvalue", &reopt_pv, "utility_ibi_max_us_dollars", 10000000000);
-    vd = reopt_pv.lookup("utility_ibi_max_us_dollars");
+    map_optional_input(vt, "ibi_uti_percent", &reopt_pv, "utility_ibi_fraction", 0., true);
+    map_optional_input(vt, "ibi_uti_percent_maxvalue", &reopt_pv, "utility_ibi_max", 10000000000);
+    vd = reopt_pv.lookup("utility_ibi_max");
     if (vd->num[0] > 10000000000) vd->num[0] = 10000000000;
 
     vd = vt->lookup("om_fixed");
     vd2 = vt->lookup("om_production");
 
     if (vd && !vd2){
-        reopt_pv.assign("om_cost_us_dollars_per_kw", vd->num[0] / system_cap);
+        reopt_pv.assign("om_cost_per_kw", vd->num[0] / system_cap);
     }
     else if (!vd && vd2) {
-        reopt_pv.assign("om_cost_us_dollars_per_kw", vd2->num[0]);
+        reopt_pv.assign("om_cost_per_kw", vd2->num[0]);
     }
     else if (vd && vd2){
-        reopt_pv.assign("om_cost_us_dollars_per_kw", (vd->num[0] / system_cap) + vd2->num[0]);
+        reopt_pv.assign("om_cost_per_kw", (vd->num[0] / system_cap) + vd2->num[0]);
     }
 
     vd = vt->lookup("total_installed_cost");
     if (vd){
-        reopt_pv.assign("installed_cost_us_dollars_per_kw", vd->num[0]/system_cap);
+        reopt_pv.assign("installed_cost_per_kw", vd->num[0]/system_cap);
     }
 
     vd = vt->lookup("depr_bonus_fed");
     if (vd){
-        reopt_pv.assign("macrs_bonus_pct", vd->num[0]/100.);
+        reopt_pv.assign("macrs_bonus_fraction", vd->num[0]/100.);
     }
     vd = vt->lookup("depr_bonus_fed_macrs_5");
     if (vd && vd->num[0] == 1){

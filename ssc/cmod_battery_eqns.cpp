@@ -118,8 +118,7 @@ bool Reopt_size_standalone_battery_params(ssc_data_t data) {
     auto reopt_params = var_data();
     reopt_params.type = SSC_TABLE;
     var_table* reopt_table = &reopt_params.table;
-    var_table reopt_electric, reopt_utility, reopt_load, reopt_fin, reopt_batt, reopt_wind, reopt_settings;
-    reopt_wind.assign("max_kw", 0);
+    var_table reopt_electric, reopt_utility, reopt_load, reopt_fin, reopt_batt, reopt_settings;
 
     var_data* vd, * vd2;
 
@@ -127,17 +126,17 @@ bool Reopt_size_standalone_battery_params(ssc_data_t data) {
     vt_get_number(vt, "system_capacity", &system_cap);
 
     // financial inputs
-    map_optional_input(vt, "itc_fed_percent", &reopt_batt, "total_itc_pct", 0., true);
+    map_optional_input(vt, "itc_fed_percent", &reopt_batt, "total_itc_fraction", 0., true);
     // TODO: what about reopt vars total_rebate_us_dollars_per_kw?
 
     vd = vt->lookup("total_installed_cost");
     if (vd) {
-        reopt_batt.assign("installed_cost_us_dollars_per_kw", vd->num[0] / system_cap);
+        reopt_batt.assign("installed_cost_per_kw", vd->num[0] / system_cap);
     }
 
     vd = vt->lookup("depr_bonus_fed");
     if (vd) {
-        reopt_batt.assign("macrs_bonus_pct", vd->num[0] / 100.);
+        reopt_batt.assign("macrs_bonus_fraction", vd->num[0] / 100.);
     }
     vd = vt->lookup("depr_bonus_fed_macrs_5");
     if (vd && vd->num[0] == 1) {
@@ -147,38 +146,39 @@ bool Reopt_size_standalone_battery_params(ssc_data_t data) {
     // These exist in the GUI but not in the default PySAM export
     vd = vt->lookup("battery_per_kW");
     if (vd)
-        reopt_batt.assign("installed_cost_us_dollars_per_kw", vd->num[0]);
+        reopt_batt.assign("installed_cost_per_kw", vd->num[0]);
     vd = vt->lookup("battery_per_kWh");
     if (vd)
-        reopt_batt.assign("installed_cost_us_dollars_per_kwh", vd->num[0]);
+        reopt_batt.assign("installed_cost_per_kwh", vd->num[0]);
 
     vd = vt->lookup("batt_dc_ac_efficiency");
     vd2 = vt->lookup("batt_ac_dc_efficiency");
     if (vd && vd2) {
         // ReOpt's internal_efficient_pct = SAM's (batt_dc_ac_efficiency + batt_ac_dc_efficiency)/2
-        reopt_batt.assign("internal_efficiency_pct", (vd->num[0] + vd2->num[0]) / 200.);
+        // TODO: these might correspond better to REopt's inverter and rectifier efficinces - correct as needed.
+        reopt_batt.assign("internal_efficiency_fraction", (vd->num[0] + vd2->num[0]) / 200.);
     }
     else if (vd && !vd2) {
-        reopt_batt.assign("internal_efficiency_pct", vd->num[0] / 100.);
+        reopt_batt.assign("internal_efficiency_fraction", vd->num[0] / 100.);
     }
     else if (!vd && vd2) {
-        reopt_batt.assign("internal_efficiency_pct", vd2->num[0] / 100.);
+        reopt_batt.assign("internal_efficiency_fraction", vd2->num[0] / 100.);
     }
 
     vd = vt->lookup("batt_initial_SOC");
     vd2 = vt->lookup("batt_minimum_SOC");
     if (vd && vd2) {
-        reopt_batt.assign("soc_init_pct", vd->num[0] / 100.);
-        reopt_batt.assign("soc_min_pct", vd2->num[0] / 100.);
+        reopt_batt.assign("soc_init_fraction", vd->num[0] / 100.);
+        reopt_batt.assign("soc_min_fraction", vd2->num[0] / 100.);
     }
     else {
-        reopt_batt.assign("soc_init_pct", 0.5);
-        reopt_batt.assign("soc_min_pct", 0.15);
+        reopt_batt.assign("soc_init_fraction", 0.5);
+        reopt_batt.assign("soc_min_fraction", 0.15);
     }
 
     // battery replacement only enabled for pvsam, use REopt defaults otherwise
     if ((vd = vt->lookup("om_batt_replacement_cost")))
-        reopt_batt.assign("replace_cost_us_dollars_per_kwh", vd->num[0]);
+        reopt_batt.assign("replace_cost_per_kwh", vd->num[0]);
 
     // ReOpt's battery replacement single year versus SAM's array schedule
     std::vector<double> vec;
@@ -200,9 +200,9 @@ bool Reopt_size_standalone_battery_params(ssc_data_t data) {
     // convert financial inputs and set variables not modeled by SAM to 0
     //
     map_input(vt, "analysis_period", &reopt_fin, "analysis_years");
-    map_input(vt, "rate_escalation", &reopt_fin, "escalation_pct", false, true);
-    map_optional_input(vt, "value_of_lost_load", &reopt_fin, "value_of_lost_load_us_dollars_per_kwh", 0);
-    reopt_fin.assign("microgrid_upgrade_cost_pct", 0);
+    map_input(vt, "rate_escalation", &reopt_fin, "elec_cost_escalation_rate_fraction", false, true);
+    map_optional_input(vt, "value_of_lost_load", &reopt_fin, "value_of_lost_load_per_kwh", 0);
+    reopt_fin.assign("microgrid_upgrade_cost_fraction", 0);
 
     vd = vt->lookup("federal_tax_rate");
     vd2 = vt->lookup("state_tax_rate");
@@ -214,18 +214,18 @@ bool Reopt_size_standalone_battery_params(ssc_data_t data) {
     vd = vt->lookup("real_discount_rate");
     if (vd) val2 = vd->num;
     else val2 = 6.4;
-    reopt_fin.assign("offtaker_discount_pct", (1 + val1 / 100.) * (1 + val2 / 100.) - 1);
+    reopt_fin.assign("offtaker_discount_rate_fraction", (1 + val1 / 100.) * (1 + val2 / 100.) - 1);
 
     vd = vt->lookup("om_fixed_escal");
     vd2 = vt->lookup("om_production_escal");
     if (vd && !vd2) {
-        reopt_fin.assign("om_cost_escalation_pct", vd->num[0] / system_cap);
+        reopt_fin.assign("om_cost_escalation_rate_fraction", vd->num[0] / system_cap);
     }
     else if (!vd && vd2) {
-        reopt_fin.assign("om_cost_escalation_pct", vd2->num[0]);
+        reopt_fin.assign("om_cost_escalation_rate_fraction", vd2->num[0]);
     }
     else if (vd && vd2) {
-        reopt_fin.assign("om_cost_escalation_pct", (vd->num[0] / system_cap) + vd2->num[0]);
+        reopt_fin.assign("om_cost_escalation_rate_fraction", (vd->num[0] / system_cap) + vd2->num[0]);
     }
 
     // convert load profile inputs, which are not net loads
@@ -253,10 +253,9 @@ bool Reopt_size_standalone_battery_params(ssc_data_t data) {
     // assign the reopt parameter table and log messages
     reopt_electric.assign_match_case("urdb_response", reopt_utility);
     reopt_table->assign_match_case("ElectricTariff", reopt_electric);
-    reopt_table->assign_match_case("LoadProfile", reopt_load);
+    reopt_table->assign_match_case("ElectricLoad", reopt_load);
     reopt_table->assign_match_case("Financial", reopt_fin);
-    reopt_table->assign_match_case("Storage", reopt_batt);
-    reopt_table->assign_match_case("Wind", reopt_wind);
+    reopt_table->assign_match_case("ElectricStorage", reopt_batt);
     reopt_table->assign_match_case("Settings", reopt_settings);
     vt->assign_match_case("reopt_scenario", reopt_params);
     vt->assign_match_case("log", log);
