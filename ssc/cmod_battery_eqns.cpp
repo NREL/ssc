@@ -118,8 +118,7 @@ bool Reopt_size_standalone_battery_params(ssc_data_t data) {
     auto reopt_params = var_data();
     reopt_params.type = SSC_TABLE;
     var_table* reopt_table = &reopt_params.table;
-    var_table reopt_scenario, reopt_site, reopt_electric, reopt_utility, reopt_load, reopt_fin, reopt_batt,
-        reopt_wind;
+    var_table reopt_electric, reopt_utility, reopt_load, reopt_fin, reopt_batt, reopt_wind, reopt_settings;
     reopt_wind.assign("max_kw", 0);
 
     var_data* vd, * vd2;
@@ -249,16 +248,16 @@ bool Reopt_size_standalone_battery_params(ssc_data_t data) {
         reopt_load.assign("critical_loads_kw", var_data(&vec[0], vec.size()));
     }
 
+    reopt_settings.assign_match_case("time_steps_per_hour", var_data((int)(sim_len / 8760)));
+
     // assign the reopt parameter table and log messages
     reopt_electric.assign_match_case("urdb_response", reopt_utility);
-    reopt_site.assign_match_case("ElectricTariff", reopt_electric);
-    reopt_site.assign_match_case("LoadProfile", reopt_load);
-    reopt_site.assign_match_case("Financial", reopt_fin);
-    reopt_site.assign_match_case("Storage", reopt_batt);
-    reopt_site.assign_match_case("Wind", reopt_wind);
-    reopt_scenario.assign_match_case("Site", reopt_site);
-    reopt_scenario.assign_match_case("time_steps_per_hour", var_data((int)(sim_len / 8760)));
-    reopt_table->assign_match_case("Scenario", reopt_scenario);
+    reopt_table->assign_match_case("ElectricTariff", reopt_electric);
+    reopt_table->assign_match_case("LoadProfile", reopt_load);
+    reopt_table->assign_match_case("Financial", reopt_fin);
+    reopt_table->assign_match_case("Storage", reopt_batt);
+    reopt_table->assign_match_case("Wind", reopt_wind);
+    reopt_table->assign_match_case("Settings", reopt_settings);
     vt->assign_match_case("reopt_scenario", reopt_params);
     vt->assign_match_case("log", log);
     return true;

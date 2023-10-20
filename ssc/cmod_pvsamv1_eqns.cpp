@@ -49,8 +49,6 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
     auto reopt_params = *(vt->lookup("reopt_scenario"));
     std::string log = vt->as_string("log");
     var_table* reopt_table = &reopt_params.table;
-    var_table reopt_scenario = reopt_table->lookup("Scenario")->table;
-    reopt_site = reopt_scenario.lookup("Site")->table;
 
     // site lat and lon
     map_input(vt, "lat", &reopt_site, "latitude");
@@ -196,9 +194,8 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
 
 
     // assign the reopt parameter table and log messages
-    reopt_site.assign_match_case("PV", reopt_pv);
-    reopt_scenario.assign_match_case("Site", reopt_site);
-    reopt_table->assign_match_case("Scenario", reopt_scenario);
+    reopt_table->assign_match_case("PV", reopt_pv);
+    reopt_table->assign_match_case("Site", reopt_site);
     vt->assign_match_case("reopt_scenario", reopt_params);
     vt->assign_match_case("log", log);
     return result;
