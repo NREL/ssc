@@ -358,7 +358,8 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
         nModulesPerString = cm->as_integer(prefix + "modules_per_string");
         mpptInput = cm->as_integer(prefix + "mppt_input");
         trackMode = cm->as_integer(prefix + "track_mode");
-        useCustomTiltAngles = cm->as_integer("use_custom_tilt_angles");
+        useCustomTiltAngles = cm->as_integer(prefix + "use_custom_tilt_angles");
+        useMeasuredTemp = cm->as_integer(prefix + "use_measured_temp");
         tiltEqualLatitude = 0;
         if (cm->is_assigned(prefix + "tilt_eq_lat")) tiltEqualLatitude = cm->as_boolean(prefix + "tilt_eq_lat");
 
@@ -379,11 +380,27 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
         }
         
         /* Insert checks for custom tilt angles here*/
-        if (cm->is_assigned("custom_tilt_angles_array") && useCustomTiltAngles == 1) {
-            customTiltAngles = cm->as_vector_double("custom_tilt_angles_array");
+        if (cm->is_assigned(prefix + "custom_tilt_angles_array") && useCustomTiltAngles == 1) {
+            customTiltAngles = cm->as_vector_double(prefix + "custom_tilt_angles_array");
             for (int i = 0; i < customTiltAngles.size(); i++) {
-                if (customTiltAngles[i] < 0.0) throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + "custom tilt angles cannot be negative.");
+                if (customTiltAngles[i] > 90.0 || customTiltAngles[i] < -90.0) throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + "custom tilt angles cannot be outside of 90deg.");
             }
+        }
+        else {
+            throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " custom rotation angles required but not assigned.");
+
+        }
+
+        /* Insert checks for using measured temperature array*/
+        if (cm->is_assigned(prefix + "measured_temp_array") && useMeasuredTemp == 1) {
+            measuredTempArray = cm->as_vector_double(prefix + "measured_temp_array");
+            for (int i = 0; i < measuredTempArray.size(); i++) {
+                if (measuredTempArray[i] > 100.0) throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + "custom tilt angles cannot be greater than 100degC.");
+            }
+        }
+        else {
+            throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " custom rotation angles required but not assigned.");
+
         }
         //azimuth required for fixed tilt, single axis, and seasonal tilt- can't check for this in variable table so check here
         azimuthDegrees = std::numeric_limits<double>::quiet_NaN();

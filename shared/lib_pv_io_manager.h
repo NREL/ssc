@@ -467,6 +467,8 @@ public:
 	double tiltDegrees;					// The surface tilt [degrees]
     flag useCustomTiltAngles;           // Use custom timeseries rotation angles
     std::vector<double> customTiltAngles; //Custom timeseries rotation angles [degrees]
+    flag useMeasuredTemp;
+    std::vector<double> measuredTempArray;
 	double azimuthDegrees;				// The surface azimuth [degrees]
 	int trackMode;						// The tracking mode [0 = fixed, 1 = single-axis tracking, 2 = two-axis tracking, 3 = azimuth-axis tracking, 4 = seasonal-tilt
 	double trackerRotationLimitDegrees; // The rotational limit of the tracker [degrees]
