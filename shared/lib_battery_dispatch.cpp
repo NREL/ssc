@@ -681,7 +681,7 @@ dispatch_automatic_t::dispatch_automatic_t(
 
     _mode = dispatch_mode;
     _weather_forecast_mode = weather_forecast_mode;
-    _safety_factor = 0.03;
+    _safety_factor = 0.0;
 
 	m_batteryPower->canClipCharge = can_clip_charge;
 	m_batteryPower->canSystemCharge = can_charge;
