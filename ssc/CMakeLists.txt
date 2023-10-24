@@ -118,6 +118,7 @@ set(SSC_SRC
 		cmod_utilityrate5.cpp
 		cmod_utilityrate5.h
 		cmod_wavefile.cpp
+        cmod_tidalfile.cpp
 		cmod_utilityrate5_eqns.cpp
 		cmod_utilityrate5_eqns.h
         cmod_utilityrateforecast.cpp

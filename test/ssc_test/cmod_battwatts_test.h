@@ -49,6 +49,7 @@ public:
     std::vector<double> ac;
     std::vector<double> load;
     std::vector<double> crit_load;
+    std::vector<double> dispatch;
 
     double m_error_tolerance_hi = 1.0;
     double m_error_tolerance_lo = 0.1;
@@ -57,11 +58,14 @@ public:
         for (size_t i = 0; i < 8760 * nyears; i++){
             size_t hr = i % 24;
             if (hr > 7 && hr < 18 )
-                ac.push_back(1.);
+                ac.push_back(1.); // Watts
             else
                 ac.push_back(0.);
-            load.push_back(0.5);
-            crit_load.push_back(0.25);
+            load.push_back(0.5); // kW
+            crit_load.push_back(0.25); // kW
+            if (i < 8760) {
+                dispatch.push_back(-0.1); // kW - keep the battery fully charged
+            }
         }
 
 
@@ -71,7 +75,8 @@ public:
         data.assign("batt_simple_kwh", 10);
         data.assign("batt_simple_kw", 5);
         data.assign("batt_simple_chemistry", 1);
-        data.assign("batt_simple_dispatch", 0);
+        data.assign("batt_simple_dispatch", 2);
+        data.assign("batt_custom_dispatch", dispatch);
         data.assign("batt_simple_meter_position", 0);
         data.assign("ac", ac);
         data.assign("load", load);
