@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_util.h"
 
 SharedInverter::SharedInverter(int inverterType, size_t numberOfInverters,
-    sandia_inverter_t* sandiaInverter, partload_inverter_t* partloadInverter, ond_inverter* ondInverter, size_t numberOfInvertersClipping)
+    sandia_inverter_t* sandiaInverter, partload_inverter_t* partloadInverter, ond_inverter* ondInverter, double numberOfInvertersClipping)
 {
     m_inverterType = inverterType;
     m_numInverters = numberOfInverters;
@@ -82,6 +82,7 @@ SharedInverter::SharedInverter(const SharedInverter& orig) {
     efficiencyAC = orig.efficiencyAC;
 
     m_subhourlyClippingEnabled = orig.m_subhourlyClippingEnabled;
+    m_numInvertersClipping = orig.m_numInvertersClipping;
 
     powerDC_kW = orig.powerDC_kW;
     powerAC_kW = orig.powerAC_kW;

@@ -1711,6 +1711,7 @@ void cm_pvsamv1::exec()
                     // Sara 1/25/16 - shading database derate applied to dc only
                     // shading loss applied to beam if not from shading database
                     ibeam *= Subarrays[nn]->shadeCalculator.beam_shade_factor();
+                    ibeam_csky *= Subarrays[nn]->shadeCalculator.beam_shade_factor();
                     if (radmode == irrad::POA_R || radmode == irrad::POA_P) {
                         Subarrays[nn]->poa.usePOAFromWF = false;
                         if (Subarrays[nn]->poa.poaShadWarningCount == 0) {
@@ -1776,10 +1777,13 @@ void cm_pvsamv1::exec()
                         if (linear && trackbool) //one-axis linear
                         {
                             ibeam *= (1 - shad1xf); //derate beam irradiance linearly by the geometric shading fraction calculated above per Chris Deline 2/10/16
+                            ibeam_csky *= (1 - shad1xf);
                             beam_shading_factor *= (1 - shad1xf);
                             // Sky diffuse and ground-reflected diffuse are derated according to C. Deline's algorithm
                             iskydiff *= Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
                             ignddiff *= Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
+                            iskydiff_csky *= Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
+                            ignddiff_csky *= Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
 
                             if (iyear == 0 || save_full_lifetime_variables == 1)
                             {
@@ -1793,9 +1797,12 @@ void cm_pvsamv1::exec()
                         else if (linear) //fixed tilt linear
                         {
                             ibeam *= (1 - Subarrays[nn]->selfShadingOutputs.m_shade_frac_fixed);
+                            ibeam_csky *= (1 - shad1xf);
                             beam_shading_factor *= (1 - Subarrays[nn]->selfShadingOutputs.m_shade_frac_fixed);
                             iskydiff *= Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
                             ignddiff *= Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
+                            iskydiff_csky *= Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
+                            ignddiff_csky *= Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
 
                             if (iyear == 0 || save_full_lifetime_variables == 1)
                             {
@@ -1810,6 +1817,8 @@ void cm_pvsamv1::exec()
                         {
                             iskydiff *= Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
                             ignddiff *= Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
+                            iskydiff_csky *= Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
+                            ignddiff_csky *= Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
 
                             if (iyear == 0 || save_full_lifetime_variables == 1)
                             {
@@ -1827,6 +1836,8 @@ void cm_pvsamv1::exec()
 
                             iskydiff *= Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
                             ignddiff *= Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
+                            iskydiff_csky *= Subarrays[nn]->selfShadingOutputs.m_diffuse_derate;
+                            ignddiff_csky *= Subarrays[nn]->selfShadingOutputs.m_reflected_derate;
 
                             if (iyear == 0 || save_full_lifetime_variables == 1)
                             {
@@ -1855,6 +1866,9 @@ void cm_pvsamv1::exec()
                     ibeam *= soiling_factor;
                     iskydiff *= soiling_factor;
                     ignddiff *= soiling_factor;
+                    ibeam_csky *= soiling_factor;
+                    iskydiff_csky *= soiling_factor;
+                    ignddiff_csky *= soiling_factor;
                     if (radmode == irrad::POA_R || radmode == irrad::POA_P) {
                         ipoa[nn] *= soiling_factor;
                         if (soiling_factor < 1 && idx == 0)
@@ -2095,8 +2109,12 @@ void cm_pvsamv1::exec()
                 //now calculate power for each subarray on this mppt input. stringVoltage will still be -1 if mismatch calcs aren't enabled, or the value decided by mismatch calcs if they are enabled
                 std::vector<pvinput_t> in{ num_subarrays }; //create arrays for the pv input and output structures because we have to deal with them in multiple loops to check for MPPT clipping
                 std::vector<pvoutput_t> out{ num_subarrays };
+                std::vector<pvinput_t> in_cs{ num_subarrays }; //create arrays for the pv input and output structures because we have to deal with them in multiple loops to check for MPPT clipping
+                std::vector<pvoutput_t> out_cs{ num_subarrays };
+
                 pvoutput_t out_temp_csky(0, 0, 0, 0, 0, 0, 0, 0);
                 double tcell = wf.tdry;
+                double tcell_cs = wf.tdry;
                 double tcellSS = wf.tdry;
 
                 for (int nSubarray = 0; nSubarray < nSubarraysOnMpptInput; nSubarray++) //sweep across all subarrays connected to this MPPT input
@@ -2120,6 +2138,8 @@ void cm_pvsamv1::exec()
                     pvoutput_t out_temp(0, 0, 0, 0, 0, 0, 0, 0);
                     in[nn] = in_temp;
                     out[nn] = out_temp;
+                    in_cs[nn] = in_temp_csky;
+                    out[nn] = out_temp_csky;
 
                     if (Subarrays[nn]->poa.sunUp)
                     {
@@ -2132,9 +2152,10 @@ void cm_pvsamv1::exec()
                         // calculate module power output using conversion model previously specified
                         if (use_measured_temp == 1)
                             tcell = measured_temp[inrec];
-                        else
+                        else {
                             (*Subarrays[nn]->Module->cellTempModel)(in[nn], *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
-
+                            (*Subarrays[nn]->Module->cellTempModel)(in_cs[nn], *Subarrays[nn]->Module->moduleModel, module_voltage, tcell_cs);
+                        }
                         // begin Transient Thermal model
                         // steady state cell temperature - confirm modification from module model to cell temp
                         tcellSS = tcell;
@@ -2200,7 +2221,7 @@ void cm_pvsamv1::exec()
 
                         (*Subarrays[nn]->Module->moduleModel)(in[nn], tcell, module_voltage, out[nn]);
                         //ClearSky DC calculations
-                        (*Subarrays[nn]->Module->moduleModel)(in_temp_csky, tcell, module_voltage, out_temp_csky);
+                        (*Subarrays[nn]->Module->moduleModel)(in_cs[nn], tcell_cs, module_voltage, out_cs[nn]);
                     }
                 }
 
@@ -2287,7 +2308,7 @@ void cm_pvsamv1::exec()
                     }
 
                     //Clearsky DC power
-                    Subarrays[nn]->Module->dcPowerWCS = out_temp_csky.Power;
+                    Subarrays[nn]->Module->dcPowerWCS = out_cs[nn].Power;
 
                     // save DC module outputs for this subarray
                     Subarrays[nn]->Module->dcPowerW = out[nn].Power;
@@ -2401,7 +2422,7 @@ void cm_pvsamv1::exec()
                 // apply pre-inverter power derate
                 dcPowerNetPerSubarray[nn] = Subarrays[nn]->dcPowerSubarray * (1 - Subarrays[nn]->dcLossTotalPercent);
                 dcPowerNetPerSubarrayCS[nn] = Subarrays[nn]->dcPowerSubarrayCS * (1 - Subarrays[nn]->dcLossTotalPercent);
-
+                //dcPowerNetPerSubarrayCS[nn] = Subarrays[nn]->dcPowerSubarrayCS;
                 //module degradation and lifetime DC losses apply to all subarrays
                 if (save_full_lifetime_variables == 1) {
                     dcPowerNetPerSubarray[nn] *= PVSystem->dcDegradationFactor[iyear];

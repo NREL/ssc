@@ -283,7 +283,7 @@ struct PVSystem_IO
 
 	size_t numberOfSubarrays;
 	size_t numberOfInverters;
-    size_t numberOfInvertersClipping;
+    double numberOfInvertersClipping;
     double dcNameplate;
 
 	Irradiance_IO * Irradiance;

@@ -1703,7 +1703,7 @@ void ineichen(double clearsky_results[3], double apparent_zenith, int month, int
 
     //double am = Min(15.25, 1.0 / (cosd(apparent_zenith) + 0.15 * (pow(93.9 - apparent_zenith, -1.253)))); // air mass
     double am = Min(15.25, 1.0 / (cosd(apparent_zenith) + 0.50572 * (pow(6.07995 + (90 - apparent_zenith), -1.6364)))); // air mass kastenyoung1989 pvlib
-
+    //am = 1.5;
     double abs_am = am * pressure / 101325.0;
 
     double ghi = exp(-cg2 * abs_am * (fh1 + fh2 * (tl - 1)));
