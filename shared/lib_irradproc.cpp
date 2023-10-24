@@ -1756,6 +1756,7 @@ void irrad::setup() {
     poaRearDirectDiffuse = 0.;
     poaRearRowReflections = 0.;
     poaRearSelfShaded = 0.;
+    useCustomTiltAngles = 0.;
 
 }
 
