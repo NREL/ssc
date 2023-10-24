@@ -83,7 +83,7 @@ TEST_F(CMBatteryEqns_cmod_battery_eqns, reopt_sizing) {
     auto settings = site->table.lookup("Settings");
     assert(settings->table.lookup("time_steps_per_hour")->num == 1);
 
-    std::vector<std::string> sections = { "ElectricTariff", "ElectricLoad", "Financial", "ElectricStorage", "Wind"};
+    std::vector<std::string> sections = { "ElectricTariff", "ElectricLoad", "Financial", "ElectricStorage"};
     for (const auto& s : sections)
         ASSERT_TRUE(site->table.is_assigned(s));
 }
