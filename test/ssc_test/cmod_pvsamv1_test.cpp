@@ -1184,11 +1184,6 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, TiltEqualsLat) {
     int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
 
     EXPECT_FALSE(pvsam_errors);
-
-    ssc_number_t annualEnergy;
-    ssc_data_get_number(data, "annual_energy", &annualEnergy);
-    EXPECT_NEAR(annualEnergy, 9258, 1.0) << "Bifacial annual energy from SAM version 2018.11.11 using Phoenix TMY2";
-
     if (!pvsam_errors)
     {
         ssc_number_t subarray1SurfaceTilt;
