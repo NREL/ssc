@@ -46,6 +46,8 @@ static var_info _cm_vtab_mhk_tidal[] = {
     { SSC_INPUT,			SSC_NUMBER,			"financial_cost_total",						"Financial costs",									"$",				"",             "MHKTidal",         "?=1",                      "",				"" },
     { SSC_INPUT,			SSC_NUMBER,			"total_operating_cost",						"O&M costs",									"$",				"",             "MHKTidal",         "?=1",                      "",				"" },
     { SSC_INPUT,			SSC_NUMBER,			"system_capacity",						"System Nameplate Capacity",										"kW",			"",				"MHKTidal",			"?=0",						"",							"" },
+    { SSC_INPUT,         SSC_NUMBER,      "tidal_resource_model_choice",           "Resource distribution or time series tidal resource data",                                 "0/1",             "",             "MHKTidal",          "?=0",                         "INTEGER",                  "" },
+    { SSC_INPUT,        SSC_ARRAY,       "tidal_velocity",           "Tidal velocity",                                        "m/s",     "",                       "MHKTidal",      "?",                        "",                            "" },
 
 
 	// losses
@@ -60,9 +62,11 @@ static var_info _cm_vtab_mhk_tidal[] = {
 	{ SSC_OUTPUT,			SSC_NUMBER,			"device_rated_capacity",				"Rated capacity of device",													"kW",			"",				"MHKTidal",			"",		"",						"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"device_average_power",					"Average power production of a single device",								"kW",			"",				"MHKTidal",			"*",						"",						"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production of array",										"kWh",			"",				"MHKTidal",			"*",						"",						"" },
-	{ SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity factor",													"%",			"",				"MHKTidal",			"*",						"",						"" },
-	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_energy_distribution",			"Annual energy production of array as function of speed",					"kWh",			"",				"MHKTidal",			"*",						"",						"" },
-	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_cumulative_energy_distribution","Cumulative annual energy production of array as function of speed",		"kWh",			"",				"MHKTidal",			"*",						"",						"" },
+    { SSC_OUTPUT,			SSC_ARRAY,			"gen",			                        "System power generated",					"kW",			"",				"MHKTidal",			"",						"",						"" },
+
+    { SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity factor",													"%",			"",				"MHKTidal",			"*",						"",						"" },
+	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_energy_distribution",			"Annual energy production of array as function of speed",					"kWh",			"",				"MHKTidal",			"",						"",						"" },
+	{ SSC_OUTPUT,			SSC_ARRAY,			"annual_cumulative_energy_distribution","Cumulative annual energy production of array as function of speed",		"kWh",			"",				"MHKTidal",			"",						"",						"" },
     { SSC_OUTPUT,			SSC_NUMBER,			"tidal_resource_start_velocity",        "First tidal velocity where probability distribution is greater than 0 ",   "m/s",			"",				"MHKTidal",			"*",						"",						"" },
     { SSC_OUTPUT,			SSC_NUMBER,			"tidal_resource_end_velocity",          "Last tidal velocity where probability distribution is greater than 0 ",	"m/s",			"",				"MHKTidal",			"*",						"",						"" },
     { SSC_OUTPUT,			SSC_NUMBER,			"tidal_power_start_velocity",           "First tidal velocity where power curve is greater than 0 ",		        "m/s",			"",				"MHKTidal",			"*",						"",						"" },
@@ -149,93 +153,138 @@ public:
 			+ as_double("loss_downtime")
 			+ as_double("loss_additional");
 
-
-		//Storing each column of the tidal_resource_matrix and tidal_power_curve as vectors:
+        int tidal_resource_model_choice = as_integer("tidal_resource_model_choice");
         double tidal_resource_start_velocity = 0;
         double tidal_power_start_velocity = 0;
         double tidal_resource_end_velocity = 0;
         double tidal_power_end_velocity = 0;
-        double min_velocity, max_velocity = 0;
-        min_velocity = tidal_resource_matrix.at(0, 0);
-        max_velocity = tidal_resource_matrix.at(size_t(number_rows) - 1, 0);
+        if (tidal_resource_model_choice == 0) {
+            //Storing each column of the tidal_resource_matrix and tidal_power_curve as vectors:
+            double min_velocity, max_velocity = 0;
+            min_velocity = tidal_resource_matrix.at(0, 0);
+            max_velocity = tidal_resource_matrix.at(size_t(number_rows) - 1, 0);
 
-        for (int i = 0; i < number_rows; i++) {
-            size_t n = i;
-            if (i != 0) {
-                if (tidal_resource_matrix.at(n, 1) != 0 && tidal_resource_matrix.at(n - 1, 1) == 0)
-                {
-                    tidal_resource_start_velocity = tidal_resource_matrix.at(n, 0);
+            for (int i = 0; i < number_rows; i++) {
+                size_t n = i;
+                if (i != 0) {
+                    if (tidal_resource_matrix.at(n, 1) != 0 && tidal_resource_matrix.at(n - 1, 1) == 0)
+                    {
+                        tidal_resource_start_velocity = tidal_resource_matrix.at(n, 0);
+                    }
+                    if (tidal_power_curve.at(n, 1) != 0 && tidal_power_curve.at(n - 1, 1) == 0 && n != 0)
+                    {
+                        tidal_power_start_velocity = tidal_power_curve.at(n, 0);
+                    }
                 }
-                if (tidal_power_curve.at(n, 1) != 0 && tidal_power_curve.at(n - 1, 1) == 0 && n != 0)
-                {
-                    tidal_power_start_velocity = tidal_power_curve.at(n, 0);
+                else {
+                    if (tidal_resource_matrix.at(n, 1) != 0)
+                    {
+                        tidal_resource_start_velocity = tidal_resource_matrix.at(n, 0);
+                    }
+                    if (tidal_power_curve.at(n, 1) != 0)
+                    {
+                        tidal_power_start_velocity = tidal_power_curve.at(n, 0);
+                    }
                 }
-            }
-            else {
-                if (tidal_resource_matrix.at(n, 1) != 0)
-                {
-                    tidal_resource_start_velocity = tidal_resource_matrix.at(n, 0);
+                if (i != number_rows - 1) {
+                    if (tidal_resource_matrix.at(n, 1) != 0 && tidal_resource_matrix.at(n + 1, 1) == 0 && n != 0)
+                    {
+                        tidal_resource_end_velocity = tidal_resource_matrix.at(n, 0);
+                    }
+                    if (tidal_power_curve.at(n, 1) != 0 && tidal_power_curve.at(n + 1, 1) == 0 && n != 0)
+                    {
+                        tidal_power_end_velocity = tidal_power_curve.at(n, 0);
+                    }
                 }
-                if (tidal_power_curve.at(n, 1) != 0)
-                {
-                    tidal_power_start_velocity = tidal_power_curve.at(n, 0);
+                else {
+                    if (i == number_rows - 1 && tidal_resource_end_velocity == 0)
+                    {
+                        tidal_resource_end_velocity = tidal_resource_matrix.at(n, 0);
+                    }
+                    if (i == number_rows - 1 && tidal_power_end_velocity == 0)
+                    {
+                        tidal_power_end_velocity = tidal_power_curve.at(n, 0);
+                    }
                 }
-            }
-            if (i != number_rows - 1) {
-                if (tidal_resource_matrix.at(n, 1) != 0 && tidal_resource_matrix.at(n + 1, 1) == 0 && n != 0)
-                {
-                    tidal_resource_end_velocity = tidal_resource_matrix.at(n, 0);
-                }
-                if (tidal_power_curve.at(n, 1) != 0 && tidal_power_curve.at(n + 1, 1) == 0 && n != 0)
-                {
-                    tidal_power_end_velocity = tidal_power_curve.at(n, 0);
-                }
-            }
-            else {
-                if (i == number_rows - 1 && tidal_resource_end_velocity == 0)
-                {
-                    tidal_resource_end_velocity = tidal_resource_matrix.at(n, 0);
-                }
-                if (i == number_rows - 1 && tidal_power_end_velocity == 0)
-                {
-                    tidal_power_end_velocity = tidal_power_curve.at(n, 0);
-                }
-            }
-            
-			_speed_vect[i] = tidal_resource_matrix.at(i, 0);	
-			_probability_vect[i] = tidal_resource_matrix.at(i, 1); //*******************again need to modify to handle different depths
-			_power_vect[i] = tidal_power_curve.at(i, 1);
-			
-			//Store max power if not set in UI:
-			/*if (as_boolean("calculate_capacity")) */
-				if (_power_vect[i] > device_rated_capacity)
-					device_rated_capacity = _power_vect[i];
-			
-			//Checker to ensure probability distribution adds to >= 99.5%:
-			_probability_vect_checker += _probability_vect[i];
-		
-			//Calculate annual energy production at each stream speed bin:
-			p_annual_energy_dist[i] = _power_vect[i] * _probability_vect[i] * number_devices * 8760;
 
-			//Add current annual energy bin to total annual energy
-			annual_energy += p_annual_energy_dist[i];
+                _speed_vect[i] = tidal_resource_matrix.at(i, 0);
+                _probability_vect[i] = tidal_resource_matrix.at(i, 1); //*******************again need to modify to handle different depths
+                _power_vect[i] = tidal_power_curve.at(i, 1);
 
-			
-		    p_annual_cumulative_energy_dist[i] = p_annual_energy_dist[i] + p_annual_cumulative_energy_dist[i - 1];
-			
-			//Contribution to Average Power from this speed bin 
-			device_average_power += _power_vect[i] * _probability_vect[i];
-		}
+                //Store max power if not set in UI:
+                /*if (as_boolean("calculate_capacity")) */
+                if (_power_vect[i] > device_rated_capacity)
+                    device_rated_capacity = _power_vect[i];
+
+                //Checker to ensure probability distribution adds to >= 99.5%:
+                _probability_vect_checker += _probability_vect[i];
+
+                //Calculate annual energy production at each stream speed bin:
+                p_annual_energy_dist[i] = _power_vect[i] * _probability_vect[i] * number_devices * 8760 * (1 - total_loss/100.0);
+
+                //Add current annual energy bin to total annual energy
+                annual_energy += p_annual_energy_dist[i];
+
+
+                p_annual_cumulative_energy_dist[i] = p_annual_energy_dist[i] + p_annual_cumulative_energy_dist[i - 1];
+
+                //Contribution to Average Power from this speed bin 
+                device_average_power += _power_vect[i] * _probability_vect[i];
+            }
+        }
+        else {
+            size_t number_records;
+            ssc_number_t* tidal_velocity = as_array("tidal_velocity", &number_records);
+            ssc_number_t* p_gen = allocate("gen", number_records);
+            int power_bin = 0;
+            //Find velocity bin of power array
+            for (int i = 0; i < number_records; i++) {
+                if (tidal_velocity[i] > tidal_power_curve.at(tidal_power_curve.nrows() - 1, 0)) {
+                        power_bin = tidal_power_curve.nrows() - 1;
+                        continue;
+                }
+                else if (tidal_velocity[i] < tidal_power_curve.at(0, 0)) {
+                        power_bin = 0;
+                        continue;
+                }
+                else {
+                    for (int j = 1; j < tidal_power_curve.nrows(); j++) {
+                        if (tidal_velocity[i] - tidal_power_curve.at(j - 1, 0) > 0 && tidal_velocity[i] - tidal_power_curve.at(j, 0) < 0) {
+                            power_bin = j;
+                        }
+        
+                    }
+                }
+                p_gen[i] = tidal_power_curve.at(power_bin, 1) * (1 - total_loss/100.0) * number_devices; //kW
+                //p_annual_energy_dist[i] = p_gen[i] * 8760.0 / number_records;
+                annual_energy += p_gen[i] * 8760.0 / number_records;
+                p_annual_energy_dist[power_bin] += p_gen[i] * 8760.0 / number_records;
+                
+                //p_annual_cumulative_energy_dist[i] = p_annual_energy_dist[i] + p_annual_cumulative_energy_dist[i - 1];
+                device_average_power += p_gen[i] / number_devices / number_records;
+                for (int k = 0; k < tidal_power_curve.nrows(); k++) {
+                    if (tidal_power_curve.at(k, 1) > device_rated_capacity)
+                        device_rated_capacity = tidal_power_curve.at(k, 1);
+                }
+                
+            }
+            p_annual_cumulative_energy_dist[0] = p_annual_energy_dist[0];
+            for (int i = 1; i < tidal_power_curve.nrows() - 1; i++) { 
+                p_annual_cumulative_energy_dist[i] = p_annual_energy_dist[i] + p_annual_cumulative_energy_dist[i - 1];
+            }
+        }
 
 
 				
 		//Throw exception if frequency distribution vector sums to < 99.5%
-		double probability_tolerance = 0.005;
-		if (std::abs(1.0 - _probability_vect_checker) > probability_tolerance)
-			throw exec_error("mhk_tidal", "Probability distribution vector does not add up to 100%.");
+        if (tidal_resource_model_choice == 0) {
+            double probability_tolerance = 0.005;
+            if (std::abs(1.0 - _probability_vect_checker) > probability_tolerance)
+                throw exec_error("mhk_tidal", "Probability distribution vector does not add up to 100%.");
+        }
 
 		//Factoring in losses in total annual energy production:
-		annual_energy *= (1 - (total_loss / 100 ));
+		//annual_energy *= (1 - (total_loss / 100 ));
 		// leave device power without losses
         if (is_assigned("device_costs_total")) {
             //TEST cost metrics in tidal page rather than cost page
