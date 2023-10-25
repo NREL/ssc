@@ -470,7 +470,7 @@ public:
     vector<interconnect> m_interconnects;
 
     // Design Point Inputs
-    int m_use_solar_mult_or_aperature_area;         // Use specified solar mult (0) or total aperture (1)
+    int m_use_solar_mult_or_aperture_area;         // Use specified solar mult (0) or total aperture (1)
     double m_specified_solar_mult;                  // User specified solar mult
     double m_specified_total_aperture;              //[m2] User specified total aperture
     bool m_is_solar_mult_designed = false;          // Flag for whether solar multiple has been calculated

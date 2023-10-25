@@ -782,7 +782,7 @@ public:
         {
             // Collect Inputs
             {
-                c_trough.m_use_solar_mult_or_aperature_area = as_number("use_solar_mult_or_aperture_area"); // Use specified solar mult (0) or total aperture (1)
+                c_trough.m_use_solar_mult_or_aperture_area = as_number("use_solar_mult_or_aperture_area"); // Use specified solar mult (0) or total aperture (1)
                 c_trough.m_specified_solar_mult = as_number("specified_solar_multiple");            // User specified solar mult
                 c_trough.m_specified_total_aperture = as_number("specified_total_aperture");    //[m2] User specified total aperture
                 c_trough.m_nSCA = as_integer("nSCA");                       //[-] Number of SCA's in a loop

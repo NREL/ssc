@@ -4448,7 +4448,7 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
     m_solar_mult = 0;
     {
         // Use solar mult
-        if (m_use_solar_mult_or_aperature_area == 0)
+        if (m_use_solar_mult_or_aperture_area == 0)
         {
             m_Ap_tot = m_specified_solar_mult * m_total_required_aperture_for_SM1;
             m_solar_mult = m_specified_solar_mult;
@@ -4458,7 +4458,7 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
             m_Ap_tot = m_nLoops * m_single_loop_aperture;
         }
         // Use total aperture
-        else if (m_use_solar_mult_or_aperature_area == 1)
+        else if (m_use_solar_mult_or_aperture_area == 1)
         {
             m_Ap_tot = m_specified_total_aperture;
             m_nLoops = std::ceil(m_Ap_tot / m_single_loop_aperture);
