@@ -162,7 +162,7 @@ var_info vtab_battery_inputs[] = {
     { SSC_INPUT,        SSC_ARRAY,      "batt_target_power_monthly",                   "Grid target power on monthly basis",                     "kW",       "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=0&batt_dispatch_choice=1",                        "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_target_choice",                          "Target power input option",                              "0/1",      "0=InputMonthlyTarget,1=InputFullTimeSeries", "BatteryDispatch", "en_batt=1&en_standalone_batt=0&batt_meter_position=0&batt_dispatch_choice=1",                        "",                             "" },
     { SSC_INPUT,        SSC_ARRAY,      "batt_custom_dispatch",                        "Custom battery power for every time step",               "kW",       "kWAC if AC-connected, else kWDC", "BatteryDispatch",       "en_batt=1&en_standalone_batt=0&batt_dispatch_choice=2","",                         "" },
-    { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_choice",                        "Battery dispatch algorithm",                             "0/1/2/3/4", "If behind the meter: 0=PeakShaving,1=InputGridTarget,2=InputBatteryPower,3=ManualDispatch,4=PriceSignalForecast if front of meter: 0=AutomatedEconomic,1=PV_Smoothing,2=InputBatteryPower,3=ManualDispatch",                    "BatteryDispatch",       "en_batt=1",                        "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_choice",                        "Battery dispatch algorithm",                             "0/1/2/3/4/5", "If behind the meter: 0=PeakShaving,1=InputGridTarget,2=InputBatteryPower,3=ManualDispatch,4=RetailRateDispatch,5=SelfConsumption if front of meter: 0=AutomatedEconomic,1=PV_Smoothing,2=InputBatteryPower,3=ManualDispatch",                    "BatteryDispatch",       "en_batt=1",                        "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_fuelcellcharge",       "Charging from fuel cell allowed for automated dispatch?", "0/1",       "",                   "BatteryDispatch",       "",                           "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_gridcharge",           "Grid charging allowed for automated dispatch?",          "0/1",       "",                    "BatteryDispatch",       "",                           "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_charge",               "System charging allowed for automated dispatch?",            "0/1",       "",                "BatteryDispatch",       "",                           "",                             "" },
@@ -289,6 +289,12 @@ var_info vtab_battery_outputs[] = {
     { SSC_OUTPUT,        SSC_NUMBER,      "batt_pvs_violation_percent",                "PV smoothing violation percent (of all intervals-including nighttime)",                               "%",      "",                       "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_NUMBER,      "batt_pvs_energy_to_grid_percent",           "PV smoothing energy to grid percent (loss due to curtail and battery loss)",                               "%",      "",                       "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_NUMBER,      "batt_pvs_energy_to_grid_percent_sam",       "PV smoothing energy to grid percent actual (loss due to curtail and battery loss)",                               "%",      "",                       "Battery",       "",                           "",                              "" },
+
+    // Self-consumption outputs
+    { SSC_OUTPUT,        SSC_NUMBER,      "num_ts_load_met_by_system_yr1",                  "Number of timesteps electric load met by system (year 1)",     "",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "percent_ts_load_met_by_system_yr1",              "Percent of timesteps electric load met by system (year 1)",     "",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "num_ts_load_met_by_system_lifetime",             "Number of timesteps electric load met by system (lifetime)",     "",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "percent_ts_load_met_by_system_lifetime",         "Percent of timesteps electric load met by system (lifetime)",     "",      "",                       "Battery",       "",                           "",                              "" },
 
     // validation outputs at ramp interval - use for debugging and remove for release
 /*
@@ -694,7 +700,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                         target_power = batt_vars->target_power;
 
                     if (target_power.size() != nrec)
-                        throw exec_error("battery", "Invalid number of target powers, must be equal to number of records in weather file.");
+                        throw exec_error("battery", "Length of target_power must equal number of records in weather file.");
 
                     // extend target power to lifetime internally
                     for (size_t y = 1; y < nyears; y++) {
@@ -704,6 +710,12 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                     }
                     batt_vars->target_power = target_power;
 
+                }
+                else if (batt_vars->batt_dispatch == dispatch_t::SELF_CONSUMPTION)
+                {
+                    //for self-consumption (aka 24/7 carbon-free energy) dispatch option, we're going to use the grid target power algorithm with an array of zeros
+                    std::vector<double> target_power_temp(nyears* nrec, 0.0);
+                    target_power = target_power_temp;
                 }
                 else if (batt_vars->batt_dispatch == dispatch_t::CUSTOM_DISPATCH)
                 {
@@ -859,7 +871,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 
         // If outage is all zeroes we don't care about the length, make sure if an outage is specified that it matches the weather file
         if (analyze_outage && batt_vars->grid_outage_steps.size() < step_per_hour * 8760) {
-            throw exec_error("Battery", "Length of grid_outage did not match number of steps in one year of simulation");
+            throw exec_error("Battery", "Length of grid_outage must equal number of steps in one year of simulation.");
         }
     }
 
@@ -938,7 +950,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 
     if (!batt_vars->system_use_lifetime_output) {
         if (batt_vars->batt_replacement_option > 0)
-            throw exec_error("battery", "Battery replacements are enabled with single year simulation. You must enable lifetime simulations to model battery replacements.");
+            throw exec_error("battery", "Battery replacements are enabled with single year simulation. You must enable lifetime simulations (system_use_lifetime_output = 1) to model battery replacements.");
     }
     chem = batt_vars->batt_chem;
 
@@ -1024,7 +1036,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 
     }
 
-    bool cycleCostRelevant = (batt_vars->batt_meter_position == dispatch_t::BEHIND && batt_vars->batt_dispatch == dispatch_t::FORECAST) ||
+    bool cycleCostRelevant = (batt_vars->batt_meter_position == dispatch_t::BEHIND && batt_vars->batt_dispatch == dispatch_t::RETAIL_RATE) ||
         (batt_vars->batt_meter_position == dispatch_t::FRONT && (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL && batt_vars->batt_dispatch != dispatch_t::FOM_CUSTOM_DISPATCH));
     if (cycleCostRelevant && batt_vars->batt_cycle_cost_choice == dispatch_t::MODEL_CYCLE_COST) {
         outCostToCycle = vt.allocate("batt_cost_to_cycle", nrec * nyears);
@@ -1094,12 +1106,12 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
         lifetime_model = new lifetime_lmolto_t(dt_hr);
     }
     else {
-        throw exec_error("battery", "Unrecognized `batt_life_model` option. Valid options are 0 for separate calendar & cycle models; "
-                                    "1 for NMC (Smith 2017) life model; 2 for LMO/LTO life model");
+        throw exec_error("battery", "Unrecognized batt_life_model option. Valid options are 0 for separate calendar and cycle models, "
+                                    "1 for NMC (Smith 2017) life model, 2 for LMO/LTO life model.");
     }
 
     if (batt_vars->T_room.size() != nrec) {
-        throw exec_error("battery", "Environment temperature input length must equal number of weather file and/or electric load data records.");
+        throw exec_error("battery", "Length of battery environment temperature batt_room_temperature_celsius must equal number of weather file and/or electric load data records.");
     }
 
     if (batt_vars->batt_life_model == lifetime_params::NMC) {
@@ -1155,16 +1167,16 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
         if (*std::min_element(batt_vars->batt_losses_charging.begin(), batt_vars->batt_losses_charging.end()) < 0
             || *std::min_element(batt_vars->batt_losses_discharging.begin(), batt_vars->batt_losses_discharging.end()) < 0
             || *std::min_element(batt_vars->batt_losses_idle.begin(), batt_vars->batt_losses_idle.end()) < 0) {
-            throw exec_error("battery", "System loss inputs cannot include negative numbers.");
+            throw exec_error("battery", "Battery loss inputs batt_losses_charging, batt_losses_discharging, and batt_losses_idle cannot include negative numbers.");
         }
         losses_model = new losses_t(batt_vars->batt_losses_charging, batt_vars->batt_losses_discharging, batt_vars->batt_losses_idle);
     }
     else if (batt_vars->batt_loss_choice == losses_params::SCHEDULE) {
         if (!(batt_vars->batt_losses.size() == 1 || batt_vars->batt_losses.size() == nrec)) {
-            throw exec_error("battery", "System loss input length must be 1 or equal to weather file length for time series input mode.");
+            throw exec_error("battery", "Length of battery loss input batt_losses must be 1 or equal to weather file length for time series input mode.");
         }
         if (*std::min_element(batt_vars->batt_losses.begin(), batt_vars->batt_losses.end()) < 0) {
-            throw exec_error("battery", "System loss inputs cannot include negative numbers.");
+            throw exec_error("battery", "Battery loss input batt_losses cannot include negative numbers.");
         }
         losses_model = new losses_t(batt_vars->batt_losses);
     }
@@ -1192,7 +1204,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             throw exec_error("battery", "Invalid manual dispatch control vector length, must be length 6.");
 
         if (batt_vars->batt_discharge_schedule_weekday.nrows() != 12 || batt_vars->batt_discharge_schedule_weekday.ncols() != 24)
-            throw exec_error("battery", "Invalid manual dispatch schedule matrix dimensions, must be 12 x 24.");
+            throw exec_error("battery", "Invalid manual dispatch schedule matrix batt_discharge_schedule dimensions, must be 12 x 24.");
 
         size_t max_period = 6;
         size_t* discharge_schedule_vec = batt_vars->batt_discharge_schedule_weekday.data();
@@ -1219,7 +1231,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             }
 
             if (batt_vars->batt_dispatch_batt_system_charge_first && batt_vars->batt_dispatch_charge_only_system_exceeds_load) {
-                throw exec_error("Battery", "Invalid charging priority choices. Only enable dispatch_manual_system_charge_first if batt_dispatch_charge_only_system_exceeds_load is false");
+                throw exec_error("Battery", "Invalid charging priority choices. Only enable dispatch_manual_system_charge_first if batt_dispatch_charge_only_system_exceeds_load is false.");
             }
         }
 
@@ -1310,7 +1322,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 if (dispatch_automatic_front_of_meter_t* dispatch_fom = dynamic_cast<dispatch_automatic_front_of_meter_t*>(dispatch_model))
                 {
                     if (batt_vars->batt_custom_dispatch.size() != 8760 * step_per_hour) {
-                        throw exec_error("battery", "Invalid custom dispatch length, must be 8760 * steps_per_hour.");
+                        throw exec_error("battery", "Length of batt_custom_dispatch must be 8760 * steps_per_hour.");
                     }
                     dispatch_fom->set_custom_dispatch(batt_vars->batt_custom_dispatch);
                 }
@@ -1334,14 +1346,14 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge, batt_vars->batt_dispatch_auto_can_fuelcellcharge,
             util_rate_data, batt_vars->batt_cost_per_kwh, batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost, batt_vars->om_batt_variable_cost_per_kwh, batt_vars->grid_interconnection_limit_kW,
             batt_vars->batt_dispatch_charge_only_system_exceeds_load, batt_vars->batt_dispatch_discharge_only_load_exceeds_system,
-            batt_vars->batt_dispatch_auto_btm_can_discharge_to_grid, batt_vars->batt_minimum_outage_SOC
+            batt_vars->batt_dispatch_auto_btm_can_discharge_to_grid, batt_vars->batt_minimum_outage_SOC, batt_vars->batt_dispatch_load_forecast
         );
         if (batt_vars->batt_dispatch == dispatch_t::CUSTOM_DISPATCH)
         {
             if (dispatch_automatic_behind_the_meter_t* dispatch_btm = dynamic_cast<dispatch_automatic_behind_the_meter_t*>(dispatch_model))
             {
                 if (batt_vars->batt_custom_dispatch.size() != 8760 * step_per_hour) {
-                    throw exec_error("battery", "Invalid custom dispatch, must be 8760 * steps_per_hour.");
+                    throw exec_error("battery", "Length of batt_custom_dispach must be 8760 * steps_per_hour.");
                 }
                 dispatch_btm->set_custom_dispatch(batt_vars->batt_custom_dispatch);
             }
@@ -1371,7 +1383,8 @@ void battstor::parse_configuration()
         prediction_index = 0;
         if (batt_meter_position == dispatch_t::BEHIND)
         {
-            if (batt_dispatch == dispatch_t::PEAK_SHAVING || batt_dispatch == dispatch_t::MAINTAIN_TARGET || batt_dispatch == dispatch_t::FORECAST)
+            if (batt_dispatch == dispatch_t::PEAK_SHAVING || batt_dispatch == dispatch_t::MAINTAIN_TARGET || batt_dispatch == dispatch_t::RETAIL_RATE ||
+                batt_dispatch == dispatch_t::SELF_CONSUMPTION)
             {
                 switch (batt_weather_forecast) {
                     case dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD:
@@ -1397,7 +1410,7 @@ void battstor::parse_configuration()
                         break;
                 }
 
-                if (batt_dispatch == dispatch_t::MAINTAIN_TARGET)
+                if (batt_dispatch == dispatch_t::MAINTAIN_TARGET || batt_dispatch == dispatch_t::SELF_CONSUMPTION)
                     input_target = true;
             }
             else if (batt_dispatch == dispatch_t::CUSTOM_DISPATCH)
@@ -1768,7 +1781,7 @@ bool battstor::uses_forecast() {
         return batt_vars->batt_dispatch == dispatch_t::FOM_AUTOMATED_ECONOMIC || batt_vars->batt_dispatch == dispatch_t::FOM_PV_SMOOTHING;
     }
     else {
-        return batt_vars->batt_dispatch == dispatch_t::FORECAST || dispatch_t::PEAK_SHAVING;
+        return batt_vars->batt_dispatch == dispatch_t::RETAIL_RATE || dispatch_t::PEAK_SHAVING;
     }
 }
 
@@ -1933,7 +1946,7 @@ void battstor::outputs_topology_dependent()
         }
     }
 
-    bool cycleCostRelevant = (batt_vars->batt_meter_position == dispatch_t::BEHIND && batt_vars->batt_dispatch == dispatch_t::FORECAST) ||
+    bool cycleCostRelevant = (batt_vars->batt_meter_position == dispatch_t::BEHIND && batt_vars->batt_dispatch == dispatch_t::RETAIL_RATE) ||
         (batt_vars->batt_meter_position == dispatch_t::FRONT && (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL && batt_vars->batt_dispatch != dispatch_t::FOM_CUSTOM_DISPATCH));
     if (cycleCostRelevant && batt_vars->batt_cycle_cost_choice == dispatch_t::MODEL_CYCLE_COST) {
         outCostToCycle[index] = (ssc_number_t)(dispatch_model->cost_to_cycle_per_kwh());
@@ -2086,6 +2099,28 @@ void battstor::calculate_monthly_and_annual_outputs(compute_module& cm)
         cm.accumulate_monthly_for_year("system_to_load", "monthly_system_to_load", _dt_hour, step_per_hour);
         cm.accumulate_monthly_for_year("batt_to_load", "monthly_batt_to_load", _dt_hour, step_per_hour);
         cm.accumulate_monthly_for_year("grid_to_load", "monthly_grid_to_load", _dt_hour, step_per_hour);
+
+        if (batt_vars->batt_dispatch == dispatch_t::SELF_CONSUMPTION)
+        {
+            //calculate all outputs for number of timesteps the load is met by the system, using grid_to_load == 0 as a qualification
+            //better to parse the grid_to_load timeseries once here for all outputs, than to create a new timeseries variable for whether load is met by system
+            outTimestepsLoadMetBySystemYear1 = 0.0;
+            outTimestepsLoadMetBySystemLifetime = 0.0;
+            for (size_t i = 0; i < total_steps; i++)
+            {
+                if (outGridToLoad[i] == 0.0)
+                {
+                    outTimestepsLoadMetBySystemLifetime++;
+                    if (i < step_per_year) outTimestepsLoadMetBySystemYear1++;
+                }
+            }
+            cm.assign("num_ts_load_met_by_system_yr1", outTimestepsLoadMetBySystemYear1);
+            cm.assign("num_ts_load_met_by_system_lifetime", outTimestepsLoadMetBySystemLifetime);
+            outPercentTimestepsLoadMetBySystemYear1 = (outTimestepsLoadMetBySystemYear1 / step_per_year) * 100.0;
+            cm.assign("percent_ts_load_met_by_system_yr1", (ssc_number_t)outPercentTimestepsLoadMetBySystemYear1);
+            outPercentTimestepsLoadMetBySystemLifetime = (outTimestepsLoadMetBySystemLifetime / total_steps) * 100.0;
+            cm.assign("percent_ts_load_met_by_system_lifetime", (ssc_number_t)outPercentTimestepsLoadMetBySystemLifetime);
+         }
     }
     else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
     {
@@ -2213,6 +2248,8 @@ public:
         add_var_info(vtab_resilience_outputs);
         add_var_info(vtab_utility_rate_common);
         add_var_info(vtab_grid_curtailment);
+        add_var_info(vtab_hybrid_tech_om);
+
     }
 
     void exec() override
@@ -2266,7 +2303,7 @@ public:
                 nload = load_year_one.size();
                 // Array length for non-lifetime mode, lifetime mode, and hourly load
                 if (nload != n_rec_lifetime && nload != n_rec_lifetime / analysis_period && nload != 8760)
-                    throw exec_error("battery", "The electric load profile must have either the same time step as the weather file, or 8760 time steps.");
+                    throw exec_error("battery", "Electric load must have either the same time step as the weather file, or 8760 time steps.");
             }
 
             // resilience metrics for battery
@@ -2277,9 +2314,11 @@ public:
             // Need to grab the crit load before battstor assigns it as an output
             if (is_assigned("crit_load")) {
                 p_crit_load = as_vector_ssc_number_t("crit_load");
-                size_t nload = p_crit_load.size();
-                if (nload != n_rec_single_year)
-                    throw exec_error("battery", "Electric load profile must have same number of values as weather file, or 8760.");
+                size_t n_crit_load = p_crit_load.size();
+                if (n_crit_load != n_rec_single_year && n_crit_load != 8760)
+                    throw exec_error("battery", "Critical load crit_load must have same number of values as weather file, or 8760.");
+                if (n_crit_load != nload)
+                    throw exec_error("battery", "Critical load crit_load must have same number of values as load.");
 
             }
 
@@ -2296,11 +2335,11 @@ public:
                         }
                     }
                     else {
-                        throw exec_error("battery", "If run_resiliency_calcs is 1, crit_load must have length > 0 and values > 0");
+                        throw exec_error("battery", "If run_resiliency_calcs is 1, crit_load must have length > 0 and values > 0.");
                     }
                 }
                 if (!crit_load_specified && batt->analyze_outage) {
-                    throw exec_error("battery", "If grid_outage is specified in any time step, crit_load must have length > 0 and values > 0");
+                    throw exec_error("battery", "If grid_outage is specified in any time step, crit_load must have length > 0 and values > 0.");
                 }
             }
 
@@ -2328,7 +2367,7 @@ public:
                 // Annual simulation is enforced above
                 if (p_pv_ac_forecast.size() < dt_hour_gen * 8760) {
                     if (batt_forecast_choice == dispatch_t::WEATHER_FORECAST_CHOICE::WF_CUSTOM && batt->uses_forecast()) {
-                        throw exec_error("battery", "batt_pv_ac_forecast forecast length is " + std::to_string(p_pv_ac_forecast.size()) + " when custom weather file forecast is selected. Change batt_dispatch_wf_forecast_choice or provide a forecast of at least length " + std::to_string(dt_hour_gen * 8760));
+                        throw exec_error("battery", "Length of batt_pv_ac_forecast is " + std::to_string(p_pv_ac_forecast.size()) + " when custom weather file forecast is selected. Change batt_dispatch_wf_forecast_choice or provide a forecast of at least length " + std::to_string(dt_hour_gen * 8760) + ".");
                     }
                     else {
                         // Using look ahead or look behind, and need to clear inputs from lk
@@ -2353,7 +2392,7 @@ public:
                 }
                 // Array length for non-lifetime mode, lifetime mode, and hourly load
                 else if (nload != n_rec_lifetime && nload != n_rec_lifetime / analysis_period && nload != 8760) {
-                        throw exec_error("battery", "The electric load forecast must have either the same time step as the weather file, or 8760 time steps.");
+                        throw exec_error("battery", "Electric load forecast must have either the same time step as the weather file, or 8760 time steps.");
                 }
             }
             if (p_load_forecast_in.size() > 0) {
@@ -2384,7 +2423,7 @@ public:
                 throw exec_error("battery", "Load length does not match system generation length.");
             }
             if (batt->batt_vars->batt_topology == ChargeController::DC_CONNECTED) {
-                throw exec_error("battery", "Generic System must be AC connected to battery.");
+                throw exec_error("battery", "Generic system requires AC-connected battery.");
             }
 
             // compute critical load (electric demand) annual escalation multipliers
@@ -2426,6 +2465,8 @@ public:
             float percent_complete = 0.0;
             float percent = 0.0;
             size_t nStatusUpdates = 50;
+            // assume that anyone using this module is chaining with two techs
+            float techs = 1;
 
             if (is_assigned("percent_complete")) {
                 percent_complete = as_float("percent_complete");
@@ -2439,11 +2480,9 @@ public:
                     // status bar
                     if (hour % (8760 / nStatusUpdates) == 0)
                     {
-                        // assume that anyone using this module is chaining with two techs
-                        float techs = 3;
                         percent = percent_complete + 100.0f * ((float)lifetime_idx + 1) / ((float)n_rec_lifetime) / techs;
                         if (!update("", percent, (float)hour)) {
-                            throw exec_error("battery", "Simulation canceled at hour " + util::to_string(hour + 1.0));
+                            throw exec_error("battery", "Simulation canceled at hour " + util::to_string(hour + 1.0) + ".");
                         }
                     }
 

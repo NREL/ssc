@@ -85,6 +85,12 @@ static ssc_equation_entry ssc_equation_table [] = {
 		{"me_array_cable_length", me_array_cable_length,
             "Marine energy", me_array_cable_length_doc,
             false, true},
+        {"tidal_turbine_calculate_powercurve", tidal_turbine_calculate_powercurve,
+            "Marine energy", tidal_turbine_calculate_powercurve_doc,
+            false, true},
+        {"me_array_cable_voltage", me_array_cable_voltage,
+            "Marine energy", me_array_cable_voltage_doc,
+            false, true},
 		{"mp_ancillary_services", mp_ancillary_services,
             "Merchant plant", mp_ancillary_services_doc,
             false, true},
@@ -104,6 +110,9 @@ static ssc_equation_entry ssc_equation_table [] = {
         {"Calculate_thermal_params", Calculate_thermal_params,
             "Battery", calculate_thermal_params_doc,
             false, false},
+        {"Reopt_size_standalone_battery_post",  Reopt_size_standalone_battery_params,
+            "Battery", Reopt_size_standalone_battery_params_doc,
+            false, true},
 
         // Battery stateful
         {"Calculate_thermal_params", Calculate_thermal_params,
@@ -159,8 +168,8 @@ static ssc_equation_entry ssc_equation_table [] = {
             true, false},
 
         // Utility Rate
-        {"ElectricityRates_format_as_URDBv7", ElectricityRates_format_as_URDBv7,
-            "UtilityRate5", ElectricityRates_format_as_URDBv7_doc,
+        {"ElectricityRates_format_as_URDBv7", ElectricityRates_format_as_URDBv8,
+            "UtilityRate5", ElectricityRates_format_as_URDBv8_doc,
             false, true},
 
         // analysis period change
