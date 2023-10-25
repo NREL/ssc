@@ -52,7 +52,7 @@ var_info vtab_grid_input[] = {
     { SSC_INPUT,		SSC_ARRAY,	     "crit_load",			              "Critical electricity load (year 1)",    "kW",	        "",				        "Load",                             "",	                      "",	                            "" },
     { SSC_INOUT,        SSC_ARRAY,       "grid_outage",                       "Grid outage in this time step",            "0/1",        "0=GridAvailable,1=GridUnavailable,Length=load", "Load",    "",                       "",                               "" },
     { SSC_INPUT,        SSC_ARRAY,       "load_escalation",                   "Annual load escalation",                "%/year",    "",                                    "Load",                        "?=0",                      "",                            "" },
-    { SSC_INOUT,        SSC_ARRAY,      "monthly_energy",                              "AC energy gross",              "kWh/mo",    "",                 "Monthly",       "",                    "LENGTH=12",                              "" },
+    { SSC_INOUT,        SSC_ARRAY,       "monthly_energy",                    "AC energy (year 1)",              "kWh/mo",    "",                 "Monthly",       "",                    "LENGTH=12",                              "" },
 
 
 var_info_invalid };
