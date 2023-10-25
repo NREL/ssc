@@ -1226,12 +1226,7 @@ void incidence(int mode, double tilt, double sazm, double rlim, double zen,
 
             /*Check if custom tilt angles enabled, apply timeseries value*/
             if (useCustomAngle) {
-                if (rot < -rlim) /* Do not let rotation exceed physical constraints */
-                    rot = -rlim;
-                else if (rot > rlim)
-                    rot = rlim;
-                else 
-                    rot = customAngle * DTOR; //overwrite rotation angle with input from array
+                rot = customAngle * DTOR; //overwrite rotation angle with input from array
             }
 
             /* Find tilt angle for the tracking surface */
