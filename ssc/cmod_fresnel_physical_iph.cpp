@@ -266,8 +266,6 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
     { SSC_OUTPUT,       SSC_NUMBER,     "solar_mult",                       "Actual solar multiple",                                                "",          "",         "System Design Calc",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "total_Ap",                         "Actual field aperture",                                                "m2",          "",         "System Design Calc",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "nLoops",                           "Number of loops in the field",                                         "",             "",         "controller",                              "*",        "",              "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "nameplate",                        "Nameplate capacity",                                                   "MWe",          "",         "System Design Calc",                       "*",                                                                "",              "" },
-
 
     // Solar Field
     { SSC_OUTPUT,       SSC_NUMBER,     "q_dot_rec_des",                    "Receiver thermal output at design",                                    "MWt",          "",         "Receiver",                       "*",                                                                "",              "" },
@@ -1188,7 +1186,7 @@ public:
 
             // Assign
             {
-                assign("nameplate", nameplate_des * 1.E-3); // [MWt]
+                //assign("nameplate", nameplate_des * 1.E-3); // [MWt]
                 assign("W_dot_bop_design", W_dot_bop_design);
                 assign("W_dot_fixed", W_dot_fixed_parasitic_design);
 
