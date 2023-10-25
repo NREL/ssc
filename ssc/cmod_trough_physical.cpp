@@ -356,6 +356,7 @@ static var_info _cm_vtab_trough_physical[] = {
     // Design Point Outputs
     { SSC_OUTPUT,       SSC_NUMBER,      "q_dot_cycle_des",                  "Cycle thermal power at design",                                            "MWt",           "",               "Power Cycle",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "nameplate",                        "Nameplate capacity",                                                       "MWe",           "",               "System Design Calc","*",                             "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "solar_mult",                       "Actual solar multiple",                                                    "",              "",               "System Design Calc","*",                             "",                      "" },
 
 
     // Solar Field
@@ -365,7 +366,7 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,       SSC_NUMBER,      "single_loop_aperture",             "Single loop aperture",                                                     "m2",            "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "min_inner_diameter",               "Minimum absorber inner diameter in loop",                                  "m",             "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "csp_dtr_hce_design_heat_losses"    "Heat loss at design"                                                       "W/m",           "",               "Solar Field",    "*",                                "",                      "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "cspdtr_loop_hce_heat_loss"         "Loop Heat Loss from HCE at Design"                                         "W/m",           "",               "Solar Field",    "*",                                "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "csp_dtr_loop_hce_heat_loss"         "Loop Heat Loss from HCE at Design"                                         "W/m",           "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "csp_dtr_sca_calc_sca_effs"         "SCA optical efficiencies at design"                                        "",              "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "loop_optical_efficiency"           "Loop total optical effiency at design"                                     "",              "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "csp_dtr_hce_optical_effs"          "HCE optical efficiencies at design"                                        "",              "",               "Solar Field",    "*",                                "",                      "" },
@@ -380,7 +381,6 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,       SSC_NUMBER,      "nLoops"                            "Number of loops in the field"                                              "",              "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "total_aperture"                    "Total field aperture area"                                                 "m2",            "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "field_thermal_output"              "Design-point thermal power from the solar field"                           "MWt",           "",               "Solar Field",    "*",                                "",                      "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "solar_mult"                        "Solar multiple"                                                            "",              "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "fixed_land_area"                   "Fixed Land Area"                                                           "acre",          "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "total_land_area"                   "Total Land Area"                                                           "acre",          "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "total_tracking_power"              "Total Tracking Power"                                                      "MWe",           "",               "Solar Field",    "*",                                "",                      "" },
@@ -626,7 +626,6 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",           "Capacity factor",                                                                  "%",            "",               "system",         "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",                "First year kWh/kW",                                                                "kWh/kW",       "",               "system",         "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "sim_duration",              "Computational time of timeseries simulation",                                      "s",            "",               "system",         "sim_type=1",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "solar_multiple_actual",     "Actual solar multiple of system",                                                  "-",            "",               "system",         "sim_type=1",                       "",                      "" },
     //{ SSC_OUTPUT,       SSC_NUMBER,      "W_dot_par_tot_haf",         "Adjusted parasitic power",                                                         "kWe",          "",               "system",         "*",                       "",                      "" },
     //{ SSC_OUTPUT,       SSC_NUMBER,      "q_dot_defocus_est",         "Thermal energy intentionally lost by defocusing",                                  "MWt",          "",               "system",         "*",                       "",                      "" },
 
@@ -726,7 +725,9 @@ public:
 
         // System Design Calcs
         double q_dot_cycle_des = W_dot_cycle_des / eta_cycle;   //[MWt]
-        double q_dot_rec_des = q_dot_cycle_des*as_double("solar_mult"); //[MWt]
+
+        //double solar = as_double("solar_mult");
+        //double q_dot_rec_des = q_dot_cycle_des*as_double("solar_mult"); //[MWt]
 
         // ********************************
         // ********************************
@@ -830,7 +831,6 @@ public:
                 c_trough.m_wind_stow_speed = as_double("wind_stow_speed");  //[m/s] Wind speed at and above which the collectors will be stowed
                 c_trough.m_accept_mode = as_integer("accept_mode");         //[-] Acceptance testing mode? (1=yes, 0=no)
                 c_trough.m_accept_init = as_boolean("accept_init");         //[-] In acceptance testing mode - require steady-state startup
-                c_trough.m_solar_mult = as_double("solar_mult");            //[-] Solar Multiple (set during verify() using cmod_csp_trough_eqns.cpp)
                 c_trough.m_mc_bal_hot_per_MW = as_double("mc_bal_hot");     //[kWht/K-MWt] The heat capacity of the balance of plant on the hot side
                 c_trough.m_mc_bal_cold_per_MW = as_double("mc_bal_cold");   //[kWht/K-MWt] The heat capacity of the balance of plant on the cold side
                 c_trough.m_mc_bal_sca = as_double("mc_bal_sca");            //[Wht/K-m] Non-HTF heat capacity associated with each SCA - per meter basis
@@ -979,13 +979,6 @@ public:
                 c_trough.m_Shadowing = as_matrix("Shadowing");                  //[-] Receiver bellows shadowing loss factor
                 c_trough.m_Dirt_HCE = as_matrix("Dirt_HCE");                    //[-] Loss due to dirt on the receiver envelope
                 c_trough.m_Design_loss = as_matrix("Design_loss");              //[-] Receiver heat loss at design
-
-                // Calculated during verify() using cmod_csp_trough_eqns.cpp:
-                //c_trough.m_SCAInfoArray = as_matrix("scainfoarray");            //[-] Receiver (,1) and collector (,2) type for each assembly in loop
-                size_t SCADefocusArraySize = -1;
-                ssc_number_t* SCADefocusArray = as_array("scadefocusarray", &SCADefocusArraySize);      //[-] Collector defocus order
-                std::copy(SCADefocusArray, SCADefocusArray + SCADefocusArraySize, back_inserter(c_trough.m_SCADefocusArray));    // convert matrix_t and set to vector
-
                 c_trough.m_rec_su_delay = as_double("rec_su_delay");            //[hr] Fixed startup delay time for the receiver
                 c_trough.m_rec_qf_delay = as_double("rec_qf_delay");            //[-] Energy-based receiver startup delay (fraction of rated thermal power)
                 c_trough.m_p_start = as_double("p_start");                      //[kWe-hr] Collector startup energy, per SCA
@@ -1190,7 +1183,7 @@ public:
                 as_integer("store_fluid"),
                 as_matrix("store_fl_props"),
                 as_double("P_ref") / as_double("eta_ref"),
-                as_double("solar_mult"),
+                c_trough.m_solar_mult,
                 as_double("P_ref") / as_double("eta_ref") * as_double("tshours"),
                 as_double("h_tank"),
                 as_double("u_tank"),
@@ -1438,6 +1431,8 @@ public:
         {
             if (as_boolean("is_dispatch")) {
 
+                double q_dot_rec_des = q_dot_cycle_des*c_trough.m_solar_mult; //[MWt]
+
                 dispatch.solver_params.set_user_inputs(as_boolean("is_dispatch"), as_integer("disp_steps_per_hour"), as_integer("disp_frequency"), as_integer("disp_horizon"),
                     as_integer("disp_max_iter"), as_double("disp_mip_gap"), as_double("disp_timeout"),
                     as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_spec_scaling"), as_integer("disp_reporting"),
@@ -1621,24 +1616,23 @@ public:
                 assign("field_htf_max_temp", c_trough.m_htfProps.max_temp() - 273.15);    // [C]
                 assign("field_htf_cp_avg_des", c_trough.m_field_htf_cp_avg_des);          // [kJ/kg-K]
                 assign("single_loop_aperture", c_trough.m_single_loop_aperture);  // [m2]
-                assign("min_inner_diameter_des", c_trough.m_min_inner_diameter);      // [m]
+                assign("min_inner_diameter", c_trough.m_min_inner_diameter);      // [m]
                 ssc_number_t* hce_design = allocate("csp_dtr_hce_design_heat_losses", c_trough.m_HCE_heat_loss_des.size());
                 for (int i = 0; i < c_trough.m_HCE_heat_loss_des.size(); i++)
                     hce_design[i] = c_trough.m_HCE_heat_loss_des[i];    // [W/m]
-                assign("cspdtr_loop_hce_heat_loss", c_trough.m_HCE_heat_loss_loop_des); //[W/m]
+                assign("csp_dtr_loop_hce_heat_loss", c_trough.m_HCE_heat_loss_loop_des); //[W/m]
                 ssc_number_t* sca_effs = allocate("csp_dtr_sca_calc_sca_effs", c_trough.m_csp_dtr_sca_calc_sca_effs.size());
                 for (int i = 0; i < c_trough.m_csp_dtr_sca_calc_sca_effs.size(); i++)
                     sca_effs[i] = c_trough.m_csp_dtr_sca_calc_sca_effs[i];    // []
-                assign("loop_optical_efficiency_des", c_trough.m_loop_optical_efficiency_des);  //[]
+                assign("loop_optical_efficiency", c_trough.m_loop_optical_efficiency_des);  //[]
                 ssc_number_t* hce_effs = allocate("csp_dtr_hce_optical_effs", c_trough.m_csp_dtr_hce_optical_effs.size());
                 for (int i = 0; i < c_trough.m_csp_dtr_hce_optical_effs.size(); i++)
                     hce_effs[i] = c_trough.m_csp_dtr_hce_optical_effs[i];    // []
                 assign("SCAInfoArray", c_trough.m_SCAInfoArray);    // []
-                //assign("SCADefocusArray", c_trough.m_SCADefocusArray);  //[]
                 set_vector("SCADefocusArray", c_trough.m_SCADefocusArray);
                 assign("max_field_flow_velocity", c_trough.m_max_field_flow_velocity);  //[m/s]
                 assign("min_field_flow_velocity", c_trough.m_min_field_flow_velocity);  //[m/s]
-                assign("total_loop_conversion_efficiency_des", c_trough.m_total_loop_conversion_efficiency_des);
+                assign("total_loop_conversion_efficiency", c_trough.m_total_loop_conversion_efficiency_des);
                 assign("total_required_aperture_for_SM1", c_trough.m_total_required_aperture_for_SM1);
                 assign("required_number_of_loops_for_SM1", c_trough.m_required_number_of_loops_for_SM1);
                 assign("nLoops", c_trough.m_nLoops);
@@ -1946,7 +1940,6 @@ public:
         std::clock_t clock_end = std::clock();
         double sim_duration = (clock_end - clock_start) / (double)CLOCKS_PER_SEC;		//[s]
         assign("sim_duration", (ssc_number_t)sim_duration);
-        assign("solar_multiple_actual", as_double("solar_mult"));   // calculated during verify() using cmod_csp_trough_eqns.cpp
 
         // Do unit post-processing here
         double *p_q_pc_startup = allocate("q_pc_startup", n_steps_fixed);
