@@ -105,7 +105,7 @@ void pvsamv_nofinancial_default(ssc_data_t& data)
     ssc_data_set_number(data, "subarray1_tracking_loss", 0);
     ssc_data_set_number(data, "subarray1_nameplate_loss", 0);
     set_array(data, "subarray1_measured_temp_array", measured_temp_array_path, 8760);
-    set_array(data, "subarray1_custom_tilt_angles_array", custom_rot_angle_array_path, 8760);
+    set_array(data, "subarray1_custom_rot_angles_array", custom_rot_angle_array_path, 8760);
     ssc_data_set_number(data, "subarray2_rear_soiling_loss", 0);
     ssc_data_set_number(data, "subarray2_rack_shading", 0);
     ssc_data_set_number(data, "subarray2_electrical_mismatch", 0);

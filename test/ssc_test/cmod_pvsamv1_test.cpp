@@ -1139,7 +1139,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, UseCustomAngles) {
 
     std::map<std::string, double> pairs;
 
-    pairs["subarray1_use_custom_tilt_angles"] = 1;
+    pairs["subarray1_use_custom_rot_angles"] = 1;
     int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
 
     EXPECT_FALSE(pvsam_errors);
@@ -1150,7 +1150,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, UseCustomAngles) {
     ssc_data_get_number(data, "annual_energy", &annualEnergy);
     EXPECT_NEAR(annualEnergy, 11516, 1.0);
 
-    pairs["subarray1_use_custom_tilt_angles"] = 0;
+    pairs["subarray1_use_custom_rot_angles"] = 0;
     pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
 
     EXPECT_FALSE(pvsam_errors);

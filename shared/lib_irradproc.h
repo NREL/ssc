@@ -994,8 +994,8 @@ protected:
     bool enableSubhourlyClipping;
 
     //Custom rotation angles for single-axis trackers
-    bool useCustomTiltAngles;
-    double customTiltAngle;         // custom tracker rotation angle in degrees
+    bool useCustomRotAngles;
+    double customRotAngle;         // custom tracker rotation angle in degrees
 
     // Subarray properties
     double tiltDegrees;				///< Surface tilt of subarray in degrees
@@ -1061,7 +1061,7 @@ public:
         double dtHour, double tiltDegrees, double azimuthDegrees, double trackerRotationLimitDegrees, double stowAngleDegreesIn,
         double groundCoverageRatio, double slopeTilt, double slopeAzm, std::vector<double> monthlyTiltDegrees, std::vector<double> userSpecifiedAlbedo,
         poaDecompReq* poaAllIn,
-        bool useSpatialAlbedos = false, const util::matrix_t<double>* userSpecifiedSpatialAlbedos = nullptr, bool enableSubhourlyClipping = false, bool useCustomTiltAngles = false, double customTiltAngle = 0);
+        bool useSpatialAlbedos = false, const util::matrix_t<double>* userSpecifiedSpatialAlbedos = nullptr, bool enableSubhourlyClipping = false, bool useCustomRotAngles = false, double customRotAngle = 0);
 
     /// Construct the irrad class with an Irradiance_IO() object and Subarray_IO() object
     irrad();
@@ -1084,7 +1084,7 @@ public:
     //Set whether to use subhourly clipping model
     void set_subhourly_clipping(bool enable = false);
 
-    void set_custom_tilt_angles(bool enable = false, double angle = 0);
+    void set_custom_rot_angles(bool enable = false, double angle = 0);
 
     /// Set the sky model for the irradiance processor, using \link Irradiance_IO::SKYMODEL 
     void set_sky_model(int skymodel, double albedo, const std::vector<double> &albedoSpatial = std::vector<double>());

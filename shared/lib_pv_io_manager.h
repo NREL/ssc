@@ -465,8 +465,8 @@ public:
     double slopeTilt;                   // Angle of sloped terrain [degrees]
     double slopeAzm;                    // azimuth of sloped terrain relative to tracker azimuth [degrees]
 	double tiltDegrees;					// The surface tilt [degrees]
-    flag useCustomTiltAngles;           // Use custom timeseries rotation angles
-    std::vector<double> customTiltAngles; //Custom timeseries rotation angles [degrees]
+    flag useCustomRotAngles;           // Use custom timeseries rotation angles
+    std::vector<double> customRotAngles; //Custom timeseries rotation angles [degrees]
     flag useMeasuredTemp;
     std::vector<double> measuredTempArray;
 	double azimuthDegrees;				// The surface azimuth [degrees]

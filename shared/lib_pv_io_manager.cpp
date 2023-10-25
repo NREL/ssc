@@ -358,8 +358,8 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
         nModulesPerString = cm->as_integer(prefix + "modules_per_string");
         mpptInput = cm->as_integer(prefix + "mppt_input");
         trackMode = cm->as_integer(prefix + "track_mode");
-        useCustomTiltAngles = cm->as_integer(prefix + "use_custom_tilt_angles");
-        useMeasuredTemp = cm->as_integer(prefix + "use_measured_temp");
+        useCustomRotAngles = cm->as_boolean(prefix + "use_custom_rot_angles");
+        useMeasuredTemp = cm->as_boolean(prefix + "use_measured_temp");
         tiltEqualLatitude = 0;
         if (cm->is_assigned(prefix + "tilt_eq_lat")) tiltEqualLatitude = cm->as_boolean(prefix + "tilt_eq_lat");
 
@@ -380,11 +380,11 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
         }
         
         /* Insert checks for custom tilt angles here*/
-        if (useCustomTiltAngles == 1) {
-            if (cm->is_assigned(prefix + "custom_tilt_angles_array")) {
-                customTiltAngles = cm->as_vector_double(prefix + "custom_tilt_angles_array");
-                for (int i = 0; i < customTiltAngles.size(); i++) {
-                    if (customTiltAngles[i] > 90.0 || customTiltAngles[i] < -90.0) throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + "custom tilt angles cannot be outside of 90deg.");
+        if (useCustomRotAngles == 1) {
+            if (cm->is_assigned(prefix + "custom_rot_angles_array")) {
+                customRotAngles = cm->as_vector_double(prefix + "custom_rot_angles_array");
+                for (int i = 0; i < customRotAngles.size(); i++) {
+                    if (customRotAngles[i] > 90.0 || customRotAngles[i] < -90.0) throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + "custom tilt angles cannot be outside of 90deg.");
                 }
             }
             else {
