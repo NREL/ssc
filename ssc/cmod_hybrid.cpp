@@ -288,6 +288,7 @@ public:
 
                 var_table& input = compute_module_inputs->table;
                 ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);
+                ssc_data_set_number(static_cast<ssc_data_t>(&input), "system_use_lifetime_output", 1); // for fuelcell_annual_energy_discharged
 
                 if (!ssc_module_exec(module, static_cast<ssc_data_t>(&input))) {
                     // merge in hybrid vartable for configurations where battery and fuel cell dispatch are combined and not in the technology bin
@@ -362,12 +363,35 @@ public:
                 for (size_t i = 0; i <= (size_t)analysisPeriod; i++)
                     pOMProduction[i] *= fuelcell_discharged[i];
 
-
+                /* exception when freeing owning vartable - create separate container
                 // add calculations to compute module outputs - done above for regular ompute module outputs
+                // add to gen "fuelcell_power" * timestep (set for pGen above)
+                // cash flow line item is fuelcell_annual_energy_discharged from cmod_fuelcell
+                size_t count_gen;
+                ssc_number_t* gen = ((var_table*)compute_module_outputs)->as_array("fuelcell_power", &count_gen);
+                if (count_gen != genLength)
+                    throw exec_error("hybrid", util::format("fuelcell_power size (%d) incorrect", (int)count_gen));
+                for (size_t g = 0; g < count_gen; g++) {
+                    pGen[idx] += gen[g] * maximumTimeStepsPerHour;
+                }
+                */
+                // add to gen "fuelcell_power" * timestep (set for pGen above)
+                // cash flow line item is fuelcell_annual_energy_discharged from cmod_fuelcell
+                std::vector<double> gen(genLength, 0);
+                gen = ((var_table*)compute_module_outputs)->as_vector_double("fuelcell_power");
+                if (gen.size() != genLength)
+                    throw exec_error("hybrid", util::format("fuelcell_power size (%d) incorrect", (int)gen.size()));
+                for (size_t g = 0; g < genLength; g++) {
+                    pGen[idx] += gen[g] * maximumTimeStepsPerHour;
+                }
+
+
 
                 ssc_data_set_table(outputs, compute_module.c_str(), compute_module_outputs);
                 ssc_module_free(module);
                 ssc_data_free(compute_module_outputs);
+
+ 
 
             }
 
@@ -572,9 +596,9 @@ public:
 
                 var_table& input = compute_module_inputs->table;
 
-                if (use_batt_output)
-                    ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pBattGen, (int)battGenLen);
-                else
+ //               if (use_batt_output)
+ //                   ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pBattGen, (int)battGenLen);
+ //               else
                     ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);
 
                 if (batteries.size() > 0)
