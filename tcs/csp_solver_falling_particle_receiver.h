@@ -336,8 +336,6 @@ public:
 
     double area_proj() override;
 
-    void get_solved_design_common(double& m_dot_rec_total /*kg/s*/, double& m_dot_rec_max /*kg/s*/, double& T_htf_cold_des /*K*/);
-
     void overwrite_startup_requirements_to_on();
 
     

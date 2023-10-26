@@ -125,7 +125,7 @@ C_falling_particle_receiver::C_falling_particle_receiver(double h_tower /*m*/,
     m_include_back_wall_convection = false;
     m_include_wall_axial_conduction = false;
 
-    m_invert_matrices = true;  // Invert coefficient matrix for radiative exchange?  Used multiple times during temperautre iterations - test case solution time was faster when the coefficient matrix was inverted up front
+    m_invert_matrices = true;  // Invert coefficient matrix for radiative exchange?  Used multiple times during temperature iterations - test case solution time was faster when the coefficient matrix was inverted up front
 
     // Calculated parameters
     m_curtain_height = std::numeric_limits<double>::quiet_NaN();
@@ -153,17 +153,6 @@ C_falling_particle_receiver::C_falling_particle_receiver(double h_tower /*m*/,
 
 }
 
-
-
-
-
-
-void C_falling_particle_receiver::get_solved_design_common(double& m_dot_rec_total /*kg/s*/, double& m_dot_rec_max /*kg/s*/, double& T_htf_cold_des /*K*/)
-{
-   m_dot_rec_total = m_m_dot_htf_des;      //[kg/s]
-   m_dot_rec_max = m_m_dot_htf_max;      //[kg/s]
-   T_htf_cold_des = m_T_htf_cold_des;      //[K]
-}
 
 void C_falling_particle_receiver::init()
 {
