@@ -932,11 +932,11 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
         double A, B, C, D, E, F, G, H;
         if (m_model_type == 1)  // Free-falling particle receiver
         {
-            A = 0.8481;
-            B = 0.2498;
-            C = -1.0116;
-            D = -7.9429e-5;
-            E = -1.4575e-7;
+            A = 0.848109;
+            B = 0.249759;
+            C = -1.0115660;
+            D = -7.942869e-5;
+            E = -1.4575091E-07;
             F = 5.5;
             G = 7.5;
             H = 5000.;
