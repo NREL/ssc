@@ -156,6 +156,7 @@ private:
 	double m_q_pb_design;		//[Wt] thermal power to sink at design
 	double m_V_tank_hot_ini;	//[m^3] Initial volume in hot storage tank
     double m_mass_total_active; //[kg] Total HTF mass at design point inlet/outlet T
+    double m_mass_total;        //[kg] Total HTF mass (active + inactive)
     double m_d_tank;            //[m] diameter of a single tank
     double m_q_dot_loss_des;    //[MWt] design tank heat loss
     double m_ts_hours;          //[hr] hours of storage at design sink operation		
@@ -348,7 +349,7 @@ public:
         double T_sf_in /*K*/, double T_sf_out /*K*/, double T_pb_in /*K*/, double T_pb_out /*K*/, bool recirculating);
 
     void get_design_parameters(double& vol_one_temp_avail /*m3*/, double& vol_one_temp_total /*m3*/, double& d_tank /*m*/,
-        double& q_dot_loss_des /*MWt*/, double& dens_store_htf_at_T_ave /*kg/m3*/, double& Q_tes /*MWt-hr*/);
+        double& q_dot_loss_des /*MWt*/, double& dens_store_htf_at_T_ave /*kg/m3*/, double& Q_tes /*MWt-hr*/, double& total_mass);
 };
 
 class C_hx_cold_tes

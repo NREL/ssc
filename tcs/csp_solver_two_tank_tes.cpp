@@ -876,6 +876,7 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
     double m_cold_ini = (1.0 - m_f_V_hot_ini * 0.01) * m_mass_total_active + V_inactive * rho_cold_des * tes_packed_vol_frac;
     double V_hot_ini = m_hot_ini / (rho_hot * tes_packed_vol_frac);
     double V_cold_ini = m_cold_ini / (rho_cold * tes_packed_vol_frac);
+    m_mass_total = m_hot_ini + m_cold_ini;
 
     //double rho_hot = mc_store_htfProps.dens(m_T_tank_hot_ini, 1.0);  
 	//double rho_cold = mc_store_htfProps.dens(m_T_tank_cold_ini, 1.0);
@@ -947,7 +948,7 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
 }
 
 void C_csp_two_tank_tes::get_design_parameters(double& vol_one_temp_avail /*m3*/, double& vol_one_temp_total /*m3*/, double& d_tank /*m*/,
-    double& q_dot_loss_des /*MWt*/, double& dens_store_htf_at_T_ave /*kg/m3*/, double& Q_tes /*MWt-hr*/)
+    double& q_dot_loss_des /*MWt*/, double& dens_store_htf_at_T_ave /*kg/m3*/, double& Q_tes /*MWt-hr*/, double& total_mass)
 {
     vol_one_temp_avail = m_V_tank_active;   //[m3]
     vol_one_temp_total = m_vol_tank;        //[m3]
@@ -955,6 +956,7 @@ void C_csp_two_tank_tes::get_design_parameters(double& vol_one_temp_avail /*m3*/
     q_dot_loss_des = m_q_dot_loss_des;      //[MWt]
     dens_store_htf_at_T_ave = m_rho_store_avg;  //[kg/m3]
     Q_tes = m_Q_tes_des;                    //[MWt-hr]
+    total_mass = m_mass_total;              //[kg]
 }
 
 bool C_csp_two_tank_tes::does_tes_exist()
@@ -1768,8 +1770,8 @@ void two_tank_tes_sizing(HTFProperties &tes_htf_props, double Q_tes_des /*MWt-hr
 
 	// Volume required to supply design hours of thermal energy storage
 		//[m^3] = [MJ/s-hr] * [sec]/[hr] = [MJ] / (kg/m^3 * MJ/kg-K * K 
-	vol_one_temp_avail = Q_tes_des*3600.0 / (rho_ave * cp_ave / 1000.0 * (T_tes_hot - T_tes_cold));
-    vol_one_temp_avail /= tes_packed_vol_frac;  // accounting for packing volume fraction
+	vol_one_temp_avail = Q_tes_des*3600.0 / (rho_ave * tes_packed_vol_frac * cp_ave / 1000.0 * (T_tes_hot - T_tes_cold));
+    // accounting for packing volume fraction
 
 	// Additional volume necessary due to minimum tank limits
 	vol_one_temp_total = vol_one_temp_avail / (1.0 - h_min / h_tank);	//[m^3]
