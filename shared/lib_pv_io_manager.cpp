@@ -384,7 +384,7 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
             if (cm->is_assigned(prefix + "custom_rot_angles_array")) {
                 customRotAngles = cm->as_vector_double(prefix + "custom_rot_angles_array");
                 for (int i = 0; i < customRotAngles.size(); i++) {
-                    if (customRotAngles[i] > 90.0 || customRotAngles[i] < -90.0) throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + "custom tracker rotation angles cannot be outside of 90deg.");
+                    if (customRotAngles[i] > 90.0 || customRotAngles[i] < -90.0) throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " custom tracker rotation angles must be between -90 and 90 degrees.");
                 }
             }
             else {
@@ -399,7 +399,7 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
             if (cm->is_assigned(prefix + "custom_cell_temp_array")) {
                 customCellTempArray = cm->as_vector_double(prefix + "custom_cell_temp_array");
                     for (int i = 0; i < customCellTempArray.size(); i++) {
-                        if (customCellTempArray[i] > 100.0) throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " custom cell temperatures cannot be greater than 100degC.");
+                        if (customCellTempArray[i] > 100.0) throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " custom cell temperature cannot be greater than 100 degrees Celsius.");
                     }
             }
             else {
