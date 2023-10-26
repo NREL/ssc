@@ -241,7 +241,6 @@ enum {
 	
 	CF_ptc_fed,
 	CF_ptc_sta,
-	CF_ptc_total,
 	
 	CF_sta_depr_sched,
 	CF_sta_depreciation,
@@ -987,8 +986,6 @@ public:
 			
 			// compute pbi total		
 			cf.at(CF_pbi_total, i) = cf.at(CF_pbi_fed, i) + cf.at(CF_pbi_sta, i) + cf.at(CF_pbi_uti, i) + cf.at(CF_pbi_oth, i);
-			// compute ptc total		
-			cf.at(CF_ptc_total, i) = cf.at(CF_ptc_fed, i) + cf.at(CF_ptc_sta, i);
 			
 			// compute depreciation from basis and precalculated schedule
 			cf.at(CF_sta_depreciation,i) = cf.at(CF_sta_depr_sched,i)*state_depr_basis;
@@ -1435,7 +1432,6 @@ public:
 	
 		save_cf( CF_ptc_fed, nyears, "cf_ptc_fed" );
 		save_cf( CF_ptc_sta, nyears, "cf_ptc_sta" );
-		save_cf( CF_ptc_total, nyears, "cf_ptc_total" );
 
 
         // SAM 1038
