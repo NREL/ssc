@@ -1224,7 +1224,7 @@ void incidence(int mode, double tilt, double sazm, double rlim, double zen,
                 rot = backtracking_rotation;
             }
 
-            /*Check if custom tilt angles enabled, apply timeseries value*/
+            /*Check if custom tracker rotation angles enabled, apply timeseries value*/
             if (useCustomAngle) {
                 rot = customAngle * DTOR; //overwrite rotation angle with input from array
             }

@@ -1109,11 +1109,11 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, SubhourlyClippingCorrectionModel)
     EXPECT_NEAR(subhourly_clipping_loss_percent, 0.74, m_error_tolerance_lo);
 }
 
-TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, UseMeasuredTemp) {
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, useCustomCellTemp) {
 
     std::map<std::string, double> pairs;
 
-    pairs["subarray1_use_measured_temp"] = 1;
+    pairs["subarray1_use_custom_cell_temp"] = 1;
     int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
 
     EXPECT_FALSE(pvsam_errors);
@@ -1124,7 +1124,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, UseMeasuredTemp) {
     ssc_data_get_number(data, "annual_energy", &annualEnergy);
     EXPECT_NEAR(annualEnergy, 8725, 1.0);
 
-    pairs["subarray1_use_measured_temp"] = 0;
+    pairs["subarray1_use_custom_cell_temp"] = 0;
     pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
 
     EXPECT_FALSE(pvsam_errors);
