@@ -400,6 +400,9 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,       SSC_NUMBER,      "vol_min",                          "Minimum Fluid Volume",                                                     "m3",            "",               "Thermal Storage","*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "V_tank_hot_ini",                   "Initial hot tank volume",                                                  "m3",            "",               "Thermal Storage","*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "tes_htf_avg_temp",                 "HTF Average Temperature at Design",                                        "C",             "",               "Thermal Storage","*",                                "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "tes_htf_min_temp",                 "Minimum storage htf temp",                                             "C",            "",         "Power Cycle",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "tes_htf_max_temp",                 "Maximum storage htf temp",                                             "C",            "",         "Power Cycle",                              "*",                                                                "",              "" },
+
 
     // Collector
     { SSC_OUTPUT,       SSC_MATRIX,      "csp_dtr_sca_ap_lengths",           "Length of single module",                                                  "m",             "",               "Collector",      "?=0",                              "",                      "" },
@@ -434,7 +437,9 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,       SSC_NUMBER,      "csp.dtr.cost.bop",                 "Balance of plant cost",                                                    "$",             "",               "Capital Costs",  "",                                 "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "csp.dtr.cost.contingency",         "Contingency cost",                                                         "$",             "",               "Capital Costs",  "",                                 "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "total_direct_cost",                "Total direct cost",                                                        "$",             "",               "Capital Costs",  "",                                 "",                      "" },
-                                         
+    { SSC_OUTPUT,       SSC_NUMBER,      "direct_subtotal",                  "Direct subtotal",                                                          "$",             "",               "Capital Costs",  "",                                 "",                      "" },
+
+
         // Indirect Capital Costs        
     { SSC_OUTPUT,       SSC_NUMBER,      "csp.dtr.cost.epc.total",           "EPC total cost",                                                           "$",             "",               "Capital Costs",  "",                                 "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "csp.dtr.cost.plm.total",           "Total land cost",                                                          "$",             "",               "Capital Costs",  "",                                 "",                      "" },
@@ -1662,6 +1667,8 @@ public:
                 double vol_min = V_tes_htf_total_calc * (storage.m_h_tank_min / storage.m_h_tank);
                 double V_tank_hot_ini = (as_double("h_tank_min") / as_double("h_tank")) * V_tes_htf_total_calc; // m3
                 double T_avg = (as_double("T_loop_in_des") + as_double("T_loop_out")) / 2.0;    // C
+                double tes_htf_min_temp = storage.get_min_storage_htf_temp() - 273.15;
+                double tes_htf_max_temp = storage.get_max_storage_htf_temp() - 273.15;
 
                 assign("q_tes", Q_tes_des_calc); // MWt-hr
                 assign("tes_avail_vol", V_tes_htf_avail_calc); // m3
@@ -1673,6 +1680,8 @@ public:
                 assign("vol_min", vol_min); // m3
                 assign("V_tank_hot_ini", V_tank_hot_ini);   // m3
                 assign("tes_htf_avg_temp", T_avg);  // C
+                assign("tes_htf_min_temp", tes_htf_min_temp);
+                assign("tes_htf_max_temp", tes_htf_max_temp);
             }
 
             // Collector
@@ -1887,6 +1896,8 @@ public:
                 power_plant_cost_out, ts_cost_out, site_improvements_cost_out, bop_cost_out, solar_field_cost_out, htf_system_cost_out, fossil_backup_cost_out, contingency_cost_out,
                 total_direct_cost_out, epc_total_cost_out, plm_total_cost_out, total_indirect_cost_out, sales_tax_total_out, total_installed_cost_out, installed_per_capacity_out);
 
+            double direct_subtotal = site_improvements_cost_out + solar_field_cost_out + htf_system_cost_out + ts_cost_out + fossil_backup_cost_out + power_plant_cost_out + bop_cost_out;
+
             // Assign Outputs
             {
                 assign("csp.dtr.cost.site_improvements", site_improvements_cost_out);
@@ -1898,6 +1909,7 @@ public:
                 assign("csp.dtr.cost.bop", bop_cost_out);
                 assign("csp.dtr.cost.contingency", contingency_cost_out);
                 assign("total_direct_cost", total_direct_cost_out);
+                assign("direct_subtotal", direct_subtotal);
 
                 assign("csp.dtr.cost.epc.total", epc_total_cost_out);
                 assign("csp.dtr.cost.plm.total", plm_total_cost_out);
