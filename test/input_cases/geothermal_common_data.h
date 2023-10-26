@@ -74,6 +74,7 @@ static void geothermal_singleowner_default(ssc_data_t &data)
     ssc_data_set_number(data, "dt_prod_well", 0.0);
     ssc_data_set_number(data, "prod_well_choice", 0);
 	ssc_data_set_number(data, "wet_bulb_temp", 15);
+    ssc_data_set_number(data, "use_weather_file_conditions", 0);
 	ssc_data_set_number(data, "ambient_pressure", 14.699999809265137);
 	ssc_data_set_number(data, "well_flow_rate", 110);
 	ssc_data_set_number(data, "pump_efficiency", 67.5);
@@ -85,6 +86,8 @@ static void geothermal_singleowner_default(ssc_data_t &data)
     ssc_data_set_number(data, "inj_casing_size", 11.5);
     ssc_data_set_number(data, "geotherm.cost.inj_cost_curve_welltype", 0);
     ssc_data_set_number(data, "geotherm.cost.prod_cost_curve_welltype", 0);
+    ssc_data_set_number(data, "geotherm.cost.inj_cost_curve_welldiam", 0);
+    ssc_data_set_number(data, "geotherm.cost.prod_cost_curve_welldiam", 0);
 	ssc_data_set_number(data, "design_temp", 200);
 	ssc_data_set_number(data, "specify_pump_work", 0);
 	ssc_data_set_number(data, "rock_thermal_conductivity", 259200);

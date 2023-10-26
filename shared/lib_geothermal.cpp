@@ -101,8 +101,9 @@ namespace geothermal
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	const bool IMITATE_GETEM = false;
 	const double GETEM_FT_IN_METER = (IMITATE_GETEM) ? 3.28083 : physics::FT_PER_METER; // feet per meter - largest source of discrepancy
-	const double GETEM_PSI_PER_BAR = (IMITATE_GETEM) ? 14.50377 : physics::PSI_PER_BAR; // psi per bar
-	const double GETEM_PSI_PER_INHG = (IMITATE_GETEM) ? 0.49115 : physics::PSI_PER_INHG; // psi per inch of mercury
+	//const double GETEM_PSI_PER_BAR = (IMITATE_GETEM) ? 14.50377 : physics::PSI_PER_BAR; // psi per bar
+    const double GETEM_PSI_PER_BAR = 14.50377; // psi per bar
+    const double GETEM_PSI_PER_INHG = (IMITATE_GETEM) ? 0.49115 : physics::PSI_PER_INHG; // psi per inch of mercury
 	const double GETEM_KGM3_PER_LBF3 = (IMITATE_GETEM) ? (35.3146 / 2.20462) : physics::KGM3_PER_LBF3; // lbs/ft^3 per kg/m^3 
 	const double GETEM_LB_PER_KG = (IMITATE_GETEM) ? 2.20462 : physics::LB_PER_KG; // pounds per kilogram
 	const double GETEM_KW_PER_HP = (IMITATE_GETEM) ? 0.7457 : physics::KW_PER_HP; // kilowatts per unit of horsepower
@@ -577,8 +578,8 @@ double CGeothermalAnalyzer::MaxSecondLawEfficiency()
 double CGeothermalAnalyzer::FractionOfMaxEfficiency()
 {
 	double dTemperatureRatio = 0.0;
-	dTemperatureRatio = physics::CelciusToKelvin(mo_geo_in.md_TemperatureWetBulbC) / physics::CelciusToKelvin(md_WorkingTemperatureC);
-    double carnot_eff_initial = 1 - physics::CelciusToKelvin(mo_geo_in.md_TemperatureWetBulbC) / physics::CelciusToKelvin(GetTemperaturePlantDesignC());
+	dTemperatureRatio = physics::CelciusToKelvin(physics::FarenheitToCelcius(TemperatureWetBulbF())) / physics::CelciusToKelvin(md_WorkingTemperatureC);
+    double carnot_eff_initial = 1 - physics::CelciusToKelvin(physics::FarenheitToCelcius(TemperatureWetBulbF())) / physics::CelciusToKelvin(GetTemperaturePlantDesignC());
     double carnot_eff = 1 - dTemperatureRatio;
     double carnot_ratio = carnot_eff / carnot_eff_initial;
 	if (me_makeup == MA_FLASH || me_makeup == MA_EGS_FLASH)
@@ -755,7 +756,8 @@ double CGeothermalAnalyzer::GetInjectionPumpWorkft(void)
     double rho_sat = 1 / geothermal::oSVC.evaluate(T_star * 1.8 + 32);
     double viscosity = 407.22 * pow((T_star * 1.8 + 32), -1.194) / 3600;
     double rho_head = L_int * 3.28084 * rho_sat / 144;
-    double P_ratio = 0.5 * (rho_head + mp_geo_out->md_PressureLPFlashPSI) / P_sat;
+    double P_inject_wellhead = (mo_geo_in.me_ct == FLASH) ? mp_geo_out->md_PressureLPFlashPSI : geothermal::oPC.evaluate((GetTemperaturePlantDesignC() - DT_prod_well(mo_geo_in.md_dtProdWellChoice)) * 1.8 + 32) + physics::PSI_PER_BAR * mo_geo_in.md_ExcessPressureBar - mo_geo_in.md_PressureChangeAcrossSurfaceEquipmentPSI;
+    double P_ratio = 0.5 * (rho_head + P_inject_wellhead) / P_sat;
     double rho_correction = 1 + (7.15037e-19 * pow(physics::CelciusToFarenheit(T_star), 5.91303)) * (P_ratio - 1);
     double mu_correction = 1 + (4.02401e-18 * pow(physics::CelciusToFarenheit(T_star), 5.736882)) * (P_ratio - 1);
     double flow_cubic = flow_lbh / (3600 * rho_sat * rho_correction);
@@ -1194,12 +1196,12 @@ void CGeothermalAnalyzer::ReplaceReservoir(double dElapsedTimeInYears)
 double CGeothermalAnalyzer::GetTemperatureGradient(void) // degrees C per km
 {	// Conversation with Chad on August 30th 2010, 10am MT - just use the average gradient, even if it's changing at that point according to the depth/temp graph.
 	if (mo_geo_in.me_rt == HYDROTHERMAL) { return ((mo_geo_in.md_TemperatureResourceC - GetAmbientTemperatureC(BINARY)) / mo_geo_in.md_ResourceDepthM) * 1000; }
-	return ((mo_geo_in.md_TemperatureResourceC - mo_geo_in.md_TemperatureEGSAmbientC) / mo_geo_in.md_ResourceDepthM) * 1000;
+	return ((mo_geo_in.md_TemperatureResourceC - GetAmbientTemperatureC(BINARY)) / mo_geo_in.md_ResourceDepthM) * 1000;
 }
 
 double CGeothermalAnalyzer::GetResourceTemperatureC(void) // degrees C
 {
-	if ((mo_geo_in.me_rt == EGS) && (mo_geo_in.me_dc == DEPTH)) return ((mo_geo_in.md_ResourceDepthM / 1000) * GetTemperatureGradient()) + mo_geo_in.md_TemperatureEGSAmbientC;
+	if ((mo_geo_in.me_rt == EGS) && (mo_geo_in.me_dc == DEPTH)) return ((mo_geo_in.md_ResourceDepthM / 1000) * GetTemperatureGradient()) + GetAmbientTemperatureC(BINARY);
 	return mo_geo_in.md_TemperatureResourceC;
 }
 
@@ -1207,15 +1209,16 @@ double CGeothermalAnalyzer::GetTemperaturePlantDesignC(void) { return (mo_geo_in
 
 double CGeothermalAnalyzer::GetResourceDepthM(void) // meters
 {
-	if ((mo_geo_in.me_rt == EGS) && (mo_geo_in.me_dc == TEMPERATURE)) return 1000 * (mo_geo_in.md_TemperatureResourceC - mo_geo_in.md_TemperatureEGSAmbientC) / GetTemperatureGradient();
+	if ((mo_geo_in.me_rt == EGS) && (mo_geo_in.me_dc == TEMPERATURE)) return 1000 * (mo_geo_in.md_TemperatureResourceC - GetAmbientTemperatureC(BINARY)) / GetTemperatureGradient();
 	return mo_geo_in.md_ResourceDepthM;
 }
 
 double CGeothermalAnalyzer::GetAmbientTemperatureC(conversionTypes ct)
 {
 	if (ct == NO_CONVERSION_TYPE) ct = mo_geo_in.me_ct;
-	//return (ct == BINARY) ? geothermal::DEFAULT_AMBIENT_TEMPC_BINARY : (1.3842 * geothermal::WET_BULB_TEMPERATURE_FOR_FLASH_CALCS) + 5.1772 ;
-	return (ct == BINARY) ? geothermal::DEFAULT_AMBIENT_TEMPC_BINARY : (mo_geo_in.md_TemperatureWetBulbC);
+	//return (ct == BINARY) ? geothermal::DEFAULT_AMBIENT_TEMPC_BINARY : (1.3842 * physics::FarenheitToCelcius(TemperatureWetBulbF())) + 5.1772 ;
+	//return (ct == BINARY) ? geothermal::DEFAULT_AMBIENT_TEMPC_BINARY : physics::FarenheitToCelcius(TemperatureWetBulbF());
+    return physics::FarenheitToCelcius(TemperatureWetBulbF());
 }
 
 double CGeothermalAnalyzer::InjectionTemperatureC() // calculate injection temperature in degrees C
@@ -1324,7 +1327,7 @@ double CGeothermalAnalyzer::EGSLengthOverVelocity(double tempC)
 
 double CGeothermalAnalyzer::EGSAvailableEnergy()
 {	// watt-hr/lb - not sure why the flash constants are used to calc EGS available energy
-	return geothermal::oGFC.GetAEForFlashWattHrUsingC(mo_geo_in.md_TemperaturePlantDesignC, geothermal::TEMPERATURE_EGS_AMBIENT_C);
+	return geothermal::oGFC.GetAEForFlashWattHrUsingC(mo_geo_in.md_TemperaturePlantDesignC, GetAmbientTemperatureC(BINARY));
 }
 
 double CGeothermalAnalyzer::EGSReservoirConstant(double avgWaterTempC, double dDays)
@@ -1461,13 +1464,13 @@ double CGeothermalAnalyzer::pressureWellHeadPSI()
 
 double CGeothermalAnalyzer::pressureHydrostaticPSI()
 {	// calculate the hydrostatic pressure (at the bottom of the well)
-	double tempAmbientF = (geothermal::IMITATE_GETEM) ? physics::CelciusToFarenheit(geothermal::TEMPERATURE_EGS_AMBIENT_C) : physics::CelciusToFarenheit(11.6);
+	double tempAmbientF = physics::CelciusToFarenheit(11.6);
 	double pressureAmbientBar = physics::PsiToBar(geothermal::oPressureAmbientConstants.evaluate(tempAmbientF));
     if (tempAmbientF <= 212) pressureAmbientBar = 1.014;
-	double tempF = (geothermal::IMITATE_GETEM) ? physics::CelciusToFarenheit(geothermal::TEMPERATURE_EGS_AMBIENT_C) : physics::CelciusToFarenheit(11.6);
+	double tempF = physics::CelciusToFarenheit(11.6);
 	double densityAmbient = geothermal::LbPerCfToKgPerM3_B(geothermal::oDensityConstants.evaluate(tempF));
 
-	double tempAmbientC = (geothermal::IMITATE_GETEM) ? 10 : 11.6; // GETEM assumes 10 deg C ambient temperature here. Above, the assumption is 15 deg C ambient.
+	double tempAmbientC = 11.6; // GETEM assumes 10 deg C ambient temperature here. Above, the assumption is 15 deg C ambient.
 	double tempGradient = (mo_geo_in.me_rt == EGS) ? GetTemperatureGradient() / 1000 : (GetResourceTemperatureC() - tempAmbientC) / GetResourceDepthM();
 
 	// hydrostatic pressure at production well depth (GetResourceDepthFt) in bar
@@ -1749,7 +1752,115 @@ double CGeothermalAnalyzer::calculateDH2(double pressureIn)
     return turbine2EnthalpyG() - h_ex_isent;
 }
 
-double CGeothermalAnalyzer::TemperatureWetBulbF(void) { return physics::CelciusToFarenheit(mo_geo_in.md_TemperatureWetBulbC); }
+double CGeothermalAnalyzer::TemperatureWetBulbF(void) {
+    double ElapsedTime = 0;
+    
+    if (mo_geo_in.md_UseWeatherFileConditions == 0 || isnan(m_wf.tdry) )
+        return physics::CelciusToFarenheit(mo_geo_in.md_TemperatureWetBulbC);
+    else {
+        /*
+        if (IsHourly()) ElapsedTime = mp_geo_out->ElapsedHours;
+        else ElapsedTime = mp_geo_out->ElapsedMonths;
+        OpenWeatherFile(mo_geo_in.mc_WeatherFileName);
+        ReadWeatherForTimeStep(IsHourly(), ElapsedTime);
+        */
+        if (isnan(m_wf.twet)) {
+            if (isnan(m_wf.rhum) || isnan(m_wf.pres)) {
+                double dp_depression = (physics::CelciusToFarenheit(m_wf.tdry) - physics::CelciusToFarenheit(m_wf.tdew)) / 3.0;
+                return physics::CelciusToFarenheit(m_wf.tdry) - dp_depression;
+            }
+            else {
+                return physics::CelciusToFarenheit(calc_twet(m_wf.tdry, m_wf.rhum, m_wf.pres));
+            }
+        }
+        else 
+            return physics::CelciusToFarenheit(m_wf.twet);
+    }
+}
+
+double CGeothermalAnalyzer::calc_twet(double T, double RH, double P)
+{
+    //	function [Twet] = calctwet(T, RH, P)
+    //% calculate wet bulb temperature from T (dry bulb, 'C), RH (%), Pressure
+    //% (mbar)
+    //% see http://www.ejournal.unam.mx/atm/Vol07-3/ATM07304.pdf for eqns.
+
+    /*
+    Mike Wagner:
+    There is a units error here! The original reference specifies that pressure should be provided in
+    hPa (hectoPascals), which is equivalent with millibar. However, the units SHOULD BE in kPa, or mbar/10.
+    Correct for the units issue here.
+
+    IMPACT:
+    This subroutine has been returning wet bulb temperatures much too high. This could adversely affect any
+    model that calls the method and whose performance is sensitive to the wet bulb temperature.
+    */
+    if (T == -999. || RH == -999. || P == -999.) return -999.;
+
+    volatile double Pkpa = P / 10.;	//Correct for units problem
+
+    //volatile double Twet = T*0.7;// initial guess
+    volatile double Twet = T - 5.;	//Initial guess [mjw -- negative values of T were causing problems here]
+
+    //[mjw] Use a bisection method to solve for Twet. The previous iteration method is unstable.
+    bool
+        hiflag = false,
+        lowflag = false;
+    double
+        hival = 0, lowval = 0, err;
+    const double tol = 0.05;
+
+    int i = 0;
+    while (i++ < 250)
+    {
+        err = exp((21.3 * Twet + 494.41) / (Twet + 273.15)) - RH / 100 * exp((21.3 * T + 494.41) / (T + 273.15)) - (6.53 * 10e-4) * Pkpa * (T - Twet);
+        //double G = exp( (21.3 * Twet + 494.41) / (Twet+273.15) ) * ( (21.4 * (Twet+273.15) - (21.4 * Twet+494.41)) / pow(Twet+273.15, 2) ) + 6.53*10e-4 * Pkpa * Twet;
+        if (err < 0.) {
+            lowval = Twet;
+            lowflag = true;
+        }
+        else if (err > 0.) {
+            hival = Twet;
+            hiflag = true;
+        }
+
+        if (std::abs(err) < tol) break;
+
+        //If the error is still too high, guess new values
+        if (hiflag && lowflag) {
+            //Bisect
+            Twet = (hival + lowval) / 2.;
+        }
+        else if (hiflag) {
+            //A lower bound hasn't yet been found. Try decreasing by 5 C
+            Twet += -5;
+        }
+        else if (lowflag) {
+            //An upper bound hasn't yet been found. Bisect the current Twet and the Tdry
+            Twet = (Twet + T) / 2.;
+        }
+        else {
+            //Neither flags have been set. Guess a lower temp.
+            Twet += -5.;
+        }
+
+    }
+
+    if (Twet != Twet) // check for NaN
+    {
+        /*
+        from biopower, Jennie Jorgenson:
+        For estimating the dew point (first line of code), I used this very simple relation from wikipedia: http://en.wikipedia.org/wiki/Dew_point#Simple_approximation
+        The second line is from a slightly sketchier source (http://www.theweatherprediction.com/habyhints/170/), meteorologist Jeff Haby. His procedure is for temperatures in F.
+        */
+
+        double dp_est = T - ((1 - RH / 100) / 0.05);
+        Twet = T - ((T - dp_est) / 3.0);
+    }
+
+    return Twet;
+}
+
 double CGeothermalAnalyzer::temperatureCondF(void)
 {	// D71 - deg F
 	return (TemperatureWetBulbF() + geothermal::DELTA_TEMPERATURE_CWF + geothermal::TEMPERATURE_PINCH_PT_CONDENSER_F + geothermal::TEMPERATURE_PINCH_PT_COOLING_TOWER_F);
@@ -2305,6 +2416,7 @@ bool CGeothermalAnalyzer::RunAnalysis(bool(*update_function)(float, void*), void
 				CalculateNewTemperature(dElapsedTimeInYears + (1.0 / 12)); // once per month -> reduce temperature from last temp
 
 			iElapsedMonths++;  //for recording values into arrays, not used in calculations
+            mp_geo_out->ElapsedMonths = iElapsedMonths;
 		}//months
 	}//years
 
