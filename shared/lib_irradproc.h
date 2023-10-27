@@ -1151,6 +1151,9 @@ public:
     /// Return the rear-side average total plane-of-array irradiance
     double get_poa_rear();
 
+    /// Return the rear-side average total plane-of-array clearsky irradiance
+    double get_poa_rear_clearsky();
+
     /// Return the rear-side spatial total plane-of-array irradiance
     std::vector<double> get_poa_rear_spatial();
 

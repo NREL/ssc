@@ -351,6 +351,7 @@ struct PVSystem_IO
     std::vector<ssc_number_t*> p_poaBeamFrontCS;
     std::vector<ssc_number_t*> p_poaDiffuseFrontCS;
     std::vector<ssc_number_t*> p_poaGroundFrontCS;
+    std::vector<ssc_number_t*> p_poaRearCS;
     std::vector<ssc_number_t*> p_DNIIndex;
 
 	// MPPT level outputs
@@ -515,6 +516,7 @@ public:
         double poaBeamFrontCS;	/// POA due to clearsky beam irradiance on the front of the subarray [W/m2]
         double poaDiffuseFrontCS; /// POA due to clearsky diffuse irradiance on the front of the subarray [W/m2]
         double poaGroundFrontCS;  /// POA due to clearsky ground reflection on the front of the subarray [W/m2]
+        double poaRearCS;       /// POA total clearsky irradiance on the back of the subarray if bifacial modules [W/m2]
 		double poaRear;			/// POA total irradiance on the back of the subarray if bifacial modules [W/m2]
 		double poaTotal;		/// POA total of front and rear side of array [W/m2]
 		bool sunUp;				/// Flag indicating whether the sun is up or not

@@ -1920,6 +1920,10 @@ double irrad::get_poa_rear() {
     return planeOfArrayIrradianceRearAverage;
 }
 
+double irrad::get_poa_rear_clearsky() {
+    return planeOfArrayIrradianceRearAverageCS;
+}
+
 std::vector<double> irrad::get_poa_rear_spatial() {
     return planeOfArrayIrradianceRearSpatial;
 }
@@ -3056,7 +3060,7 @@ void irrad::getBackSurfaceIrradiancesCS(double pvBackShadeFraction, double rowTo
     // Calculate components for a 90 degree tilt to get horizon brightening
     double surfaceAnglesRadians90[5] = { 0, 0, 0, 0, 0 };
     incidence(0, 90.0, 180.0, 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack,
-        this->groundCoverageRatio, this->slopeTilt, this->slopeAzm, this->forceToStow, this->stowAngleDegrees, surfaceAnglesRadians90);
+        this->groundCoverageRatio, this->slopeTilt, this->slopeAzm, this->forceToStow, this->stowAngleDegrees, this->useCustomRotAngles, this->customRotAngle, surfaceAnglesRadians90);
     perez(0, clearskyIrradiance[1], clearskyIrradiance[2], albedo, surfaceAnglesRadians90[0],
         surfaceAnglesRadians90[1], solarZenithRadians, planeOfArrayIrradianceRear, diffuseIrradianceRear);
     double horizonDiffuse = diffuseIrradianceRear[2];
@@ -3256,7 +3260,7 @@ void irrad::getBackSurfaceIrradiancesCS(double pvBackShadeFraction, double rowTo
         // Calculate and add direct and circumsolar irradiance components
         incidence(0, 180.0 - tiltRadians * RTOD, (surfaceAzimuthRadians * RTOD - 180.0), 45.0, solarZenithRadians,
             solarAzimuthRadians, this->enableBacktrack,
-            this->groundCoverageRatio, this->slopeTilt, this->slopeAzm, this->forceToStow, this->stowAngleDegrees, surfaceAnglesRadians);
+            this->groundCoverageRatio, this->slopeTilt, this->slopeAzm, this->forceToStow, this->stowAngleDegrees, this->useCustomRotAngles, this->customRotAngle, surfaceAnglesRadians);
         perez(0, clearskyIrradiance[1], clearskyIrradiance[2], albedo, surfaceAnglesRadians[0],
             surfaceAnglesRadians[1], solarZenithRadians, planeOfArrayIrradianceRear, diffuseIrradianceRear);
 

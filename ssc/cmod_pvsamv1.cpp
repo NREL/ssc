@@ -660,6 +660,7 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_beam_front_cs",                 "Subarray 1 beam POA clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_diffuse_front_cs",                 "Subarray 1 diffuse POA clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_ground_front_cs",                 "Subarray 1 ground reflected POA clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_poa_rear_cs",                 "Subarray 1 rear POA clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
 
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_voltage",                 "Subarray 1 Operating DC voltage",                                         "V",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_dc_gross",                   "Subarray 1 DC power gross",                                             "kW",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
@@ -702,6 +703,7 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_beam_front_cs",                 "Subarray 2 beam POA clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_diffuse_front_cs",                 "Subarray 2 diffuse POA clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_ground_front_cs",                 "Subarray 2 ground reflected POA clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_poa_rear_cs",                 "Subarray 2 rear POA clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
 
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_surf_tilt",                  "Subarray 3 Surface tilt",                                              "degrees",    "", "Time Series (Subarray 3)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_surf_azi",                   "Subarray 3 Surface azimuth",                                           "degrees",    "", "Time Series (Subarray 3)",       "",                    "",                              "" },
@@ -738,6 +740,7 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_beam_front_cs",                 "Subarray 3 beam POA clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_diffuse_front_cs",                 "Subarray 3 diffuse POA clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_ground_front_cs",                 "Subarray 3 ground reflected POA clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_poa_rear_cs",                 "Subarray 3 rear POA clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
 
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_surf_tilt",                  "Subarray 4 Surface tilt",                                              "degrees",    "", "Time Series (Subarray 4)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_surf_azi",                   "Subarray 4 Surface azimuth",                                           "degrees",    "", "Time Series (Subarray 4)",       "",                    "",                              "" },
@@ -774,6 +777,7 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_beam_front_cs",                 "Subarray 4 beam POA clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_diffuse_front_cs",                 "Subarray 4 diffuse POA clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_ground_front_cs",                 "Subarray 4 ground reflected POA clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_poa_rear_cs",                 "Subarray 4 rear POA clearsky irradiance",             "W/m2",   "", "Time Series (Subarray 1)",       "",                    "",                              "" },
 
     /* aggregate array level outputs */
         { SSC_OUTPUT,        SSC_ARRAY,      "poa_nom",                              "Array POA front-side total radiation nominal",                    "kW",   "",  "Time Series (Array)",       "*",                    "",                              "" },
@@ -1503,7 +1507,7 @@ void cm_pvsamv1::exec()
             double ts_accum_electrical_mismatch = 0.0;
 
             // calculate incident irradiance on each subarray
-            std::vector<double> ipoa_rear, ipoa_rear_after_losses, ipoa_front, ipoa;
+            std::vector<double> ipoa_rear, ipoa_rear_after_losses, ipoa_rear_cs, ipoa_rear_after_losses_cs, ipoa_front, ipoa;
             std::vector<std::vector<double>> ipoa_rear_spatial, ipoa_rear_spatial_after_losses, ignd_rear;
             double alb = 0.;
             std::vector<double> alb_spatial;
@@ -1512,6 +1516,8 @@ void cm_pvsamv1::exec()
             {
                 ipoa_rear.push_back(0);
                 ipoa_rear_after_losses.push_back(0);
+                ipoa_rear_cs.push_back(0);
+                ipoa_rear_after_losses_cs.push_back(0);
                 ipoa_front.push_back(0);
                 ipoa.push_back(0);
                 ipoa_rear_spatial.push_back(std::vector<double>());
@@ -1916,6 +1922,7 @@ void cm_pvsamv1::exec()
                 double slopeLength = module_length * Subarrays[nn]->selfShadingInputs.nmody;
                 irr.calc_rear_side(Subarrays[nn]->Module->bifacialTransmissionFactor, Subarrays[nn]->Module->groundClearanceHeight, slopeLength);
                 ipoa_rear[nn] = irr.get_poa_rear();
+                ipoa_rear_cs[nn] = irr.get_poa_rear_clearsky();
                 double rack_shading_loss_factor = 0.;
                 if (Subarrays[nn]->calculateRackShading) {
                     //rack_shading_loss_factor = calculated_rack_shading_loss;        // TODO: implement
@@ -1926,6 +1933,8 @@ void cm_pvsamv1::exec()
                 double rear_irradiance_loss_factor = (1 - rack_shading_loss_factor);
                 rear_irradiance_loss_factor *= (1 - Subarrays[nn]->rearSoilingLossPercent);
                 ipoa_rear_after_losses[nn] = ipoa_rear[nn] * rear_irradiance_loss_factor;
+                ipoa_rear_after_losses_cs[nn] = ipoa_rear_cs[nn] * rear_irradiance_loss_factor;
+
                 ipoa_rear_spatial[nn] = irr.get_poa_rear_spatial();
                 ipoa_rear_spatial_after_losses[nn].clear();
                 for (size_t i = 0; i < ipoa_rear_spatial[nn].size(); i++) {
@@ -1965,6 +1974,7 @@ void cm_pvsamv1::exec()
                     PVSystem->p_poaBeamFrontCS[nn][idx] = (ssc_number_t)ibeam_csky;
                     PVSystem->p_poaDiffuseFrontCS[nn][idx] = (ssc_number_t)(iskydiff_csky);
                     PVSystem->p_poaDiffuseFrontCS[nn][idx] = (ssc_number_t)(ignddiff_csky);
+                    PVSystem->p_poaRearCS[nn][idx] = (ssc_number_t)(ipoa_rear_after_losses_cs[nn]);
                     if (dni_cs != 0) {
                         PVSystem->p_DNIIndex[nn][idx] = (ssc_number_t)(Irradiance->p_weatherFileDNI[idx] / dni_cs);
                     }
@@ -2041,6 +2051,8 @@ void cm_pvsamv1::exec()
                     bifaciality = 0.;       // TODO: remove and uncomment lines 1352 in lib_pv_io_manager.cpp instead
                 }
                 ipoa_rear_after_losses[nn] *= (1 - electrical_mismatch_loss_fraction);
+                ipoa_rear_after_losses_cs[nn] *= (1 - electrical_mismatch_loss_fraction);
+
                 ts_accum_electrical_mismatch += ipoa_rear[nn] * area_subarray * rear_irradiance_loss_factor * electrical_mismatch_loss_fraction;    // energy lost due to intra-module electrical mismatch
 
                 // save the required irradiance inputs on array plane for the module output calculations.
@@ -2057,6 +2069,7 @@ void cm_pvsamv1::exec()
                 Subarrays[nn]->poa.poaBeamFrontCS = ibeam_csky;
                 Subarrays[nn]->poa.poaDiffuseFrontCS = iskydiff_csky;
                 Subarrays[nn]->poa.poaGroundFrontCS = ignddiff_csky;
+                Subarrays[nn]->poa.poaRearCS = ipoa_rear_after_losses_cs[nn];
             }
 
             std::vector<double> mpptVoltageClipping; //a vector to store power that is clipped due to the inverter MPPT low & high voltage limits for each subarray
@@ -2154,12 +2167,12 @@ void cm_pvsamv1::exec()
                         ((double)wf.hour) + wf.minute / 60.0,
                         radmode, Subarrays[nn]->poa.usePOAFromWF);
 
-                    pvinput_t in_temp_csky(Subarrays[nn]->poa.poaBeamFrontCS, Subarrays[nn]->poa.poaDiffuseFrontCS, Subarrays[nn]->poa.poaGroundFrontCS, Subarrays[nn]->poa.poaRear* bifaciality, Subarrays[nn]->poa.poaTotal,
+                    pvinput_t in_temp_csky(Subarrays[nn]->poa.poaBeamFrontCS, Subarrays[nn]->poa.poaDiffuseFrontCS, Subarrays[nn]->poa.poaGroundFrontCS, Subarrays[nn]->poa.poaRearCS * bifaciality, Subarrays[nn]->poa.poaTotal,
                         wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
                         solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, hdr.elev,
                         Subarrays[nn]->poa.surfaceTiltDegrees, Subarrays[nn]->poa.surfaceAzimuthDegrees,
                         ((double)wf.hour) + wf.minute / 60.0,
-                        radmode, Subarrays[nn]->poa.usePOAFromWF);
+                        0, false);
                     
                     pvoutput_t out_temp(0, 0, 0, 0, 0, 0, 0, 0);
                     in[nn] = in_temp;
