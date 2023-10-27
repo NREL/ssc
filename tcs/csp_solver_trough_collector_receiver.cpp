@@ -4456,6 +4456,7 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
 
             // Get Actual total aperture
             m_Ap_tot = m_nLoops * m_single_loop_aperture;
+            m_solar_mult = m_Ap_tot / m_total_required_aperture_for_SM1;
         }
         // Use total aperture
         else if (m_use_solar_mult_or_aperture_area == 1)
