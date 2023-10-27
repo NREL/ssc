@@ -39,12 +39,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
     auto vt = static_cast<var_table*>(data);
-    if (!vt){
+    if (!vt) {
         return false;
     }
-    var_table reopt_site, reopt_pv;
+    var_table reopt_site, reopt_pv, reopt_utility;
 
     bool result = Reopt_size_standalone_battery_params(data);
+
+    bool size_for_grid_outage = false;
+    if (vt->is_assigned("size_for_grid_outage")) {
+        size_for_grid_outage = vt->as_boolean("size_for_grid_outage");
+    }
 
     auto reopt_params = *(vt->lookup("reopt_scenario"));
     std::string log = vt->as_string("log");
@@ -57,37 +62,41 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
     //
     // convert required pvsamv1 or pvwatts inputs
     //
-    // use existing pv system from SAM, not allowing additional PV
-    map_input(vt, "system_capacity", &reopt_pv, "existing_kw");
-    map_input(vt, "system_capacity", &reopt_pv, "max_kw");
+
+    // Use existing PV size for economic runs, allow REopt to return PV size for grid outage runs
+    if (!size_for_grid_outage) {
+        // use existing pv system from SAM, not allowing additional PV
+        map_input(vt, "system_capacity", &reopt_pv, "existing_kw");
+        map_input(vt, "system_capacity", &reopt_pv, "max_kw");
+    }
     map_optional_input(vt, "degradation", &reopt_pv, "degradation_pct", 0.5, true);
 
     map_optional_input(vt, "module_type", &reopt_pv, "module_type", 1);
 
     int opt1, opt2;
-    var_data* vd, *vd2;
+    var_data* vd, * vd2;
     vd = vt->lookup("subarray1_track_mode");
     vd2 = vt->lookup("subarray1_backtrack");
-    if (vd && vd2){
+    if (vd && vd2) {
         opt1 = (int)vd->num[0];
         opt2 = (int)vd2->num[0];
         if (opt1 == 2 && opt2 == 1)
             opt1 = 3;
-        std::vector<int> opt_map = {0, 0, 2, 3, 4};
+        std::vector<int> opt_map = { 0, 0, 2, 3, 4 };
         reopt_pv.assign("array_type", opt_map[opt1]);
     }
-    else{
+    else {
         map_input(vt, "array_type", &reopt_pv, "array_type");
     }
 
-    auto assign_matching_pv_vars = [&vt](var_table& dest, std::string pvwatts_var, std::string pvsam_var, bool ratio=false){
-        try{
+    auto assign_matching_pv_vars = [&vt](var_table& dest, std::string pvwatts_var, std::string pvsam_var, bool ratio = false) {
+        try {
             map_input(vt, pvsam_var, &dest, pvwatts_var, false, ratio);
         }
-        catch(std::runtime_error&){
+        catch (std::runtime_error&) {
             map_input(vt, pvwatts_var, &dest, pvwatts_var, false, ratio);
         }
-    };
+        };
 
     assign_matching_pv_vars(reopt_pv, "azimuth", "subarray1_azimuth");
     assign_matching_pv_vars(reopt_pv, "tilt", "subarray1_tilt");
@@ -97,9 +106,9 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
     int inv_model = 0;
     double val1, val2, system_cap;
     vt_get_number(vt, "system_capacity", &system_cap);
-	vd = vt->lookup("inverter_model");
-	if (vd){
-        std::vector<std::string> inv_eff_names = {"inv_snl_eff_cec", "inv_ds_eff", "inv_pd_eff", "inv_cec_cg_eff"};
+    vd = vt->lookup("inverter_model");
+    if (vd) {
+        std::vector<std::string> inv_eff_names = { "inv_snl_eff_cec", "inv_ds_eff", "inv_pd_eff", "inv_cec_cg_eff" };
         double eff;
         inv_model = (int)vd->num[0];
         if (inv_model == 4) {
@@ -111,12 +120,12 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
         reopt_pv.assign("inv_eff", eff);
 
         // calculate the dc ac ratio
-        std::vector<std::string> inv_power_names = {"inv_snl_paco", "inv_ds_paco", "inv_pd_paco", "inv_cec_cg_paco"};
+        std::vector<std::string> inv_power_names = { "inv_snl_paco", "inv_ds_paco", "inv_pd_paco", "inv_cec_cg_paco" };
         vt_get_number(vt, inv_power_names[inv_model], &val1);
         vt_get_number(vt, "inverter_count", &val2);
         reopt_pv.assign("dc_ac_ratio", system_cap * 1000. / (val2 * val1));
     }
-	else{
+    else {
         map_input(vt, "inv_eff", &reopt_pv, "inv_eff", false, true);
         map_input(vt, "dc_ac_ratio", &reopt_pv, "dc_ac_ratio");
     }
@@ -167,35 +176,66 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
     vd = vt->lookup("om_fixed");
     vd2 = vt->lookup("om_production");
 
-    if (vd && !vd2){
+    if (vd && !vd2) {
         reopt_pv.assign("om_cost_per_kw", vd->num[0] / system_cap);
     }
     else if (!vd && vd2) {
         reopt_pv.assign("om_cost_per_kw", vd2->num[0]);
     }
-    else if (vd && vd2){
+    else if (vd && vd2) {
         reopt_pv.assign("om_cost_per_kw", (vd->num[0] / system_cap) + vd2->num[0]);
     }
 
     vd = vt->lookup("total_installed_cost");
-    if (vd){
-        reopt_pv.assign("installed_cost_per_kw", vd->num[0]/system_cap);
+    if (vd) {
+        reopt_pv.assign("installed_cost_per_kw", vd->num[0] / system_cap);
     }
 
     vd = vt->lookup("depr_bonus_fed");
-    if (vd){
-        reopt_pv.assign("macrs_bonus_fraction", vd->num[0]/100.);
+    if (vd) {
+        reopt_pv.assign("macrs_bonus_fraction", vd->num[0] / 100.);
     }
     vd = vt->lookup("depr_bonus_fed_macrs_5");
-    if (vd && vd->num[0] == 1){
+    if (vd && vd->num[0] == 1) {
         reopt_pv.assign("macrs_option_years", 5);
     }
 
+    // Translate SAM timestep grid outage format into REopt outage start times format
+    if (size_for_grid_outage) {
+        std::vector<bool> outage_steps = vt->as_vector_bool("grid_outage");
+        std::vector<int> outage_start_times;
+        std::vector<int> outage_durations;
+        std::vector<double> outage_probabilities;
 
+        bool existing_outage = false;
+        int outage_duration = 0;
+        for (size_t i = 0; i < outage_steps.size(); i++) {
+            bool outage_status = outage_steps[i];
+            if (outage_status) {
+                // Outage starts this step
+                if (!existing_outage) {
+                    outage_start_times.push_back(i + 1); // SAM is zero indexed, REopt (Julia) is 1 indexed
+                    existing_outage = true;
+                }
+                outage_duration++;
+            }
+            else if (existing_outage) {
+                // Outage ends this step
+                outage_durations.push_back(outage_duration);
+                outage_probabilities.push_back(1.0);
+                outage_duration = 0;
+                existing_outage = false;
+            }
+        }
+        reopt_utility.assign("outage_start_time_steps", outage_start_times);
+        reopt_utility.assign("outage_durations", outage_durations);
+        reopt_utility.assign("outage_probabilities", outage_probabilities);
+    }
 
     // assign the reopt parameter table and log messages
     reopt_table->assign_match_case("PV", reopt_pv);
     reopt_table->assign_match_case("Site", reopt_site);
+    reopt_table->assign_match_case("ElectricUtility", reopt_utility);
     vt->assign_match_case("reopt_scenario", reopt_params);
     vt->assign_match_case("log", log);
     return result;
