@@ -358,6 +358,8 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
         nModulesPerString = cm->as_integer(prefix + "modules_per_string");
         mpptInput = cm->as_integer(prefix + "mppt_input");
         trackMode = cm->as_integer(prefix + "track_mode");
+        useCustomRotAngles = cm->as_boolean(prefix + "use_custom_rot_angles");
+        useCustomCellTemp = cm->as_boolean(prefix + "use_custom_cell_temp");
         tiltEqualLatitude = 0;
         if (cm->is_assigned(prefix + "tilt_eq_lat")) tiltEqualLatitude = cm->as_boolean(prefix + "tilt_eq_lat");
 
@@ -376,6 +378,35 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
                 if (monthlyTiltDegrees[i] < 0.0) throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " monthly tilt angles cannot be negative.");
             }
         }
+        
+        /* Insert checks for custom tracker rotation angles here*/
+        if (useCustomRotAngles == 1) {
+            if (cm->is_assigned(prefix + "custom_rot_angles_array")) {
+                customRotAngles = cm->as_vector_double(prefix + "custom_rot_angles_array");
+                for (int i = 0; i < customRotAngles.size(); i++) {
+                    if (customRotAngles[i] > 90.0 || customRotAngles[i] < -90.0) throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " custom tracker rotation angles must be between -90 and 90 degrees.");
+                }
+            }
+            else {
+                throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " custom tracker rotation angles required but not assigned.");
+            }
+        }
+        
+        
+
+        /* Insert checks for using custom cell temperature array*/
+        if (useCustomCellTemp == 1) {
+            if (cm->is_assigned(prefix + "custom_cell_temp_array")) {
+                customCellTempArray = cm->as_vector_double(prefix + "custom_cell_temp_array");
+                    for (int i = 0; i < customCellTempArray.size(); i++) {
+                        if (customCellTempArray[i] > 100.0) throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " custom cell temperature cannot be greater than 100 degrees Celsius.");
+                    }
+            }
+            else {
+                throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " custom cell temperatures required but not assigned.");
+            }
+        }
+        
         //azimuth required for fixed tilt, single axis, and seasonal tilt- can't check for this in variable table so check here
         azimuthDegrees = std::numeric_limits<double>::quiet_NaN();
         if (trackMode == irrad::FIXED_TILT || trackMode == irrad::SINGLE_AXIS || trackMode == irrad::SEASONAL_TILT)
@@ -642,7 +673,7 @@ void PVSystem_IO::SetupPOAInput()
 
 
                 if (tms[2] > 0) {
-                    incidence(Subarrays[nn]->trackMode, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, sun[1], sun[0], Subarrays[nn]->backtrackingEnabled, Subarrays[nn]->groundCoverageRatio, Subarrays[nn]->slopeTilt, Subarrays[nn]->slopeAzm, false, 0.0, angle);
+                    incidence(Subarrays[nn]->trackMode, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, sun[1], sun[0], Subarrays[nn]->backtrackingEnabled, Subarrays[nn]->groundCoverageRatio, Subarrays[nn]->slopeTilt, Subarrays[nn]->slopeAzm, false, 0.0, false, 0.0, angle);
                 }
                 else {
                     angle[0] = -999;

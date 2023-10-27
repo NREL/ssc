@@ -75,9 +75,6 @@ static var_info _cm_vtab_pvsamv1[] = {
         {SSC_INPUT, SSC_NUMBER,   "calculate_rack_shading",               "Calculate rack shading",                              "",       "",                                                                                                                                                                                      "Losses",                                                "?=0",                                "BOOLEAN",             "" },
         {SSC_INPUT, SSC_NUMBER,   "calculate_bifacial_electrical_mismatch", "Calculate bifacial electrical mismatch",            "",       "",                                                                                                                                                                                      "Losses",                                                "?=1",                                "BOOLEAN",             "" },
 
-        {SSC_INPUT, SSC_NUMBER,   "use_measured_temp",                    "Use measured temperatures",         "0/1",       "",                                                                                                                                                                                      "System Design",                                         "?=0",                                "INTEGER,MIN=0,MAX=1",             "" },
-        {SSC_INPUT, SSC_ARRAY,    "measured_temp_array",                   "Measured module temperature",                            "C",      "",                                                                                                                                                                                      "System Design",                                              "use_measured_temp=1",            "",                    "" },
-
         // subarray 1
         {SSC_INPUT, SSC_NUMBER,   "subarray1_nstrings",                   "Sub-array 1 Number of parallel strings",              "",       "",                                                                                                                                                                                      "System Design",                                         "",                                   "INTEGER",             "" },
         {SSC_INPUT, SSC_NUMBER,   "subarray1_modules_per_string",         "Sub-array 1 Modules per string",                      "",       "",                                                                                                                                                                                      "System Design",                                         "*",                                  "INTEGER,POSITIVE",    "" },
@@ -92,6 +89,10 @@ static var_info _cm_vtab_pvsamv1[] = {
         {SSC_INPUT, SSC_NUMBER,   "subarray1_slope_tilt",                 "Sub-array 1 terrain tilt",                        "degrees",   "",                                                                                                                                                                                      "System Design",                                         "subarray1_track_mode=1",                                        "MIN=0,MAX=90",   "" },
         {SSC_INPUT, SSC_NUMBER,   "subarray1_slope_azm",                  "Sub-array 1 terrain azimuth",                        "degrees",   "",                                                                                                                                                                                      "System Design",                                         "subarray1_track_mode=1",                                     "MIN=0,MAX=359.9",   "" },
         {SSC_INPUT, SSC_ARRAY,    "subarray1_monthly_tilt",               "Sub-array 1 monthly tilt input",                      "degrees",    "",                                                                                                                                                                                      "System Design",                                         "subarray1_track_mode=4",             "LENGTH=12",           "" },
+        {SSC_INPUT, SSC_NUMBER,   "subarray1_use_custom_rot_angles",                    "Sub-array 1 Use custom tracker rotation angles",         "0/1",       "",                                                                                                                                                                                      "System Design",                                         "?=0",                                "INTEGER,MIN=0,MAX=1",             "" },
+        {SSC_INPUT, SSC_ARRAY,    "subarray1_custom_rot_angles_array",                   "Sub-array 1 Custom tracker rotation angles",                            "deg",      "",                                                                                                                                                                                      "System Design",                                              "subarray1_use_custom_rot_angles=1",            "",                    "" },
+        {SSC_INPUT, SSC_NUMBER,   "subarray1_use_custom_cell_temp",                    "Subarray 1 Use custom cell temperatures",         "0/1",       "",                                                                                                                                                                                      "System Design",                                         "?=0",                                "INTEGER,MIN=0,MAX=1",             "" },
+        {SSC_INPUT, SSC_ARRAY,    "subarray1_custom_cell_temp_array",                   "Subarray 1 custom cell temperature",                            "C",      "",                                                                                                                                                                                      "System Design",                                              "subarray1_use_custom_cell_temp=1",            "",                    "" },
 
         {SSC_INPUT, SSC_NUMBER,   "subarray1_shading_en_string_option",   "Enable Sub-array 1 shading string option",          "0/1",    "0=false,1=true",                                                                                                                                                                        "Shading",                                               "?=0",                                  "BOOLEAN",                    "" },
         {SSC_INPUT, SSC_NUMBER,   "subarray1_shading_string_option",      "Sub-array 1 shading string option",                   "",       "0=shadingdb,1=average,2=maximum,3=minimum",                                                                                                                            "Shading",                                               "?=-1",                               "INTEGER,MIN=-1,MAX=4","" },
@@ -180,6 +181,10 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_INPUT, SSC_MATRIX,   "subarray2_shading_azal",               "Sub-array 2 Azimuth x altitude beam shading losses",  "%",      "",                                                                                                                                                                                      "Shading",                                               "?",                                  "",                    "" },
         { SSC_INPUT, SSC_NUMBER,   "subarray2_shading_en_diff",               "Enable Sub-array 2 Diffuse shading loss",          "0/1",    "0=false,1=true",                                                                                                                                                                        "Shading",                                               "?=0",                                  "BOOLEAN",                    "" },
         { SSC_INPUT, SSC_NUMBER,   "subarray2_shading_diff",               "Sub-array 2 Diffuse shading loss",                    "%",      "",                                                                                                                                                                                      "Shading",                                               "?",                                  "",                    "" },
+        { SSC_INPUT, SSC_NUMBER,   "subarray2_use_custom_rot_angles",                    "Sub-array 2 Use custom tracker rotation angles",         "0/1",       "",                                                                                                                                                                                      "System Design",                                         "?=0",                                "INTEGER,MIN=0,MAX=1",             "" },
+        { SSC_INPUT, SSC_ARRAY,    "subarray2_custom_rot_angles_array",                   "Sub-array 2 Custom tracker rotation angles",                            "deg",      "",                                                                                                                                                                                      "System Design",                                              "subarray2_use_custom_rot_angles=1",            "",                    "" },
+        { SSC_INPUT, SSC_NUMBER,   "subarray2_use_custom_cell_temp",                    "Subarray 2 Use custom cell temperatures",         "0/1",       "",                                                                                                                                                                                      "System Design",                                         "?=0",                                "INTEGER,MIN=0,MAX=1",             "" },
+        { SSC_INPUT, SSC_ARRAY,    "subarray2_custom_cell_temp_array",                   "Subarray 2 custom cell temperatures",                            "C",      "",                                                                                                                                                                                      "System Design",                                              "subarray2_use_custom_cell_temp=1",            "",                    "" },
 
 
 
@@ -204,6 +209,10 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_INPUT, SSC_NUMBER,   "subarray3_slope_tilt",                 "Sub-array 3 terrain tilt",                        "degrees",   "",                                                                                                                                                                                      "System Design",                                         "subarray3_enable=1&subarray3_track_mode=1",                                                "MIN=0,MAX=90",   "" },
         { SSC_INPUT, SSC_NUMBER,   "subarray3_slope_azm",                  "Sub-array 3 terrain azimuth",                        "degrees",   "",                                                                                                                                                                                      "System Design",                                         "subarray3_enable=1&subarray3_track_mode=1",                                             "MIN=0,MAX=359.9",   "" },
         { SSC_INPUT, SSC_ARRAY,    "subarray3_monthly_tilt",               "Sub-array 3 Monthly tilt input",                      "degrees",    "",                                                                                                                                                                                      "System Design",                                         "subarray3_enable=1&subarray3_track_mode=4",                                   "LENGTH=12",           "" },
+        { SSC_INPUT, SSC_NUMBER,   "subarray3_use_custom_rot_angles",                    "Sub-array 3 Use custom tracker rotation angles",         "0/1",       "",                                                                                                                                                                                      "System Design",                                         "?=0",                                "INTEGER,MIN=0,MAX=1",             "" },
+        { SSC_INPUT, SSC_ARRAY,    "subarray3_custom_rot_angles_array",                   "Sub-array 3 Custom tracker rotation angles",                            "deg",      "",                                                                                                                                                                                      "System Design",                                              "subarray3_use_custom_rot_angles=1",            "",                    "" },
+        { SSC_INPUT, SSC_NUMBER,   "subarray3_use_custom_cell_temp",                    "Subarray 3 Use custom cell temperatures",         "0/1",       "",                                                                                                                                                                                      "System Design",                                         "?=0",                                "INTEGER,MIN=0,MAX=1",             "" },
+        { SSC_INPUT, SSC_ARRAY,    "subarray3_custom_cell_temp_array",                   "Subarray 3 custom cell temperatures",                            "C",      "",                                                                                                                                                                                      "System Design",                                              "subarray3_use_custom_cell_temp=1",            "",                    "" },
 
         { SSC_INPUT, SSC_NUMBER,   "subarray3_shading_en_string_option",   "Enable Sub-array 3 shading string option",          "0/1",    "0=false,1=true",                                                                                                                                                                        "Shading",                                               "?=0",                                  "BOOLEAN",                    "" },
         { SSC_INPUT, SSC_NUMBER,   "subarray3_shading_string_option",      "Sub-array 3 shading string option",                   "",       "0=shadingdb,1=average,2=maximum,3=minimum",                                                                                                                            "Shading",                                               "?=-1",                               "INTEGER,MIN=-1,MAX=4","" },
@@ -240,6 +249,10 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_INPUT, SSC_NUMBER,   "subarray4_slope_azm",                  "Sub-array 4 terrain azimuth",                        "degrees",   "",                                                                                                                                                                                      "System Design",                                         "subarray4_enable=1&subarray4_track_mode=1",                                                "MIN=0,MAX=359.9",   "" },
         { SSC_INPUT, SSC_ARRAY,    "subarray4_monthly_tilt",               "Sub-array 4 Monthly tilt input",                      "degrees",    "",                                                                                                                                                                                      "System Design",                                         "subarray2_enable=1&subarray2_track_mode=4",                                   "LENGTH=12",           "" },
 //        { SSC_INPUT, SSC_TABLE,   "subarray4_shading",           "Sub-array 4 shading losses",            "",      "",                                                                                                                                                                                      "Shading",                                               "?",                                  "",                    "" },
+        { SSC_INPUT, SSC_NUMBER,   "subarray4_use_custom_rot_angles",                    "Sub-array 4 Use custom tracker rotation angles",         "0/1",       "",                                                                                                                                                                                      "System Design",                                         "?=0",                                "INTEGER,MIN=0,MAX=1",             "" },
+        { SSC_INPUT, SSC_ARRAY,    "subarray4_custom_rot_angles_array",                   "Sub-array 4 Custom tracker rotation angles",                            "deg",      "",                                                                                                                                                                                      "System Design",                                              "subarray4_use_custom_rot_angles=1",            "",                    "" },
+        { SSC_INPUT, SSC_NUMBER,   "subarray4_use_custom_cell_temp",                    "Subarray 4 Use custom cell temperatures",         "0/1",       "",                                                                                                                                                                                      "System Design",                                         "?=0",                                "INTEGER,MIN=0,MAX=1",             "" },
+        { SSC_INPUT, SSC_ARRAY,    "subarray4_custom_cell_temp_array",                   "Subarray 4 custom cell temperatures",                            "C",      "",                                                                                                                                                                                      "System Design",                                              "subarray4_use_custom_cell_temp=1",            "",                    "" },
 
         { SSC_INPUT, SSC_NUMBER,   "subarray4_shading_en_string_option",   "Enable Sub-array 4 shading string option",          "0/1",    "0=false,1=true",                                                                                                                                                                        "Shading",                                               "?=0",                                  "BOOLEAN",                    "" },
         { SSC_INPUT, SSC_NUMBER,   "subarray4_shading_string_option",      "Sub-array 4 shading string option",                   "",       "0=shadingdb,1=average,2=maximum,3=minimum",                                                                                                                            "Shading",                                               "?=-1",                               "INTEGER,MIN=-1,MAX=4","" },
@@ -1118,20 +1131,32 @@ void cm_pvsamv1::exec()
     double module_watts_stc = Subarrays[0]->Module->moduleWattsSTC;
     SharedInverter* sharedInverter = PVSystem->m_sharedInverter.get();
 
-    std::vector<ssc_number_t> measured_temp; measured_temp.reserve(nrec);
-    size_t measured_temp_size;
-    int use_measured_temp = (as_integer("use_measured_temp") == 1 && is_assigned("measured_temp_array"));
-    if (as_integer("use_measured_temp") == 1 && is_assigned("measured_temp_array")) {
-        measured_temp = as_vector_ssc_number_t("measured_temp_array");
-        measured_temp_size = measured_temp.size();
-        if (measured_temp_size != nrec)
-            throw exec_error("pvsamv1", "The measured temperature array must be the size of nrecords per year");
-    }
+    
+
+    
 
     //overwrite tilt with latitude if flag is set- can't do this in PVIOManager because need latitude from weather file
     //also check here for tilt > 0 for tracking systems, since this is a very uncommon configuration but an easy mistake to make
     for (size_t nn = 0; nn < num_subarrays; nn++)
     {
+        size_t user_tilt_angles_size;
+        if (Subarrays[nn]->useCustomRotAngles == 1) {
+            user_tilt_angles_size = Subarrays[nn]->customRotAngles.size();
+            if (user_tilt_angles_size != nrec)
+                throw exec_error("pvsamv1", "The custom tracker rotation angle array must be the size of nrecords per year");
+            Subarrays[nn]->trackMode = irrad::SINGLE_AXIS;
+            //Subarrays[nn]->tiltDegrees = 0; //reset to 0 to then be replaced in loop?
+            Subarrays[nn]->backtrackingEnabled = false; //account for backtracking in user-specified angles [deg]
+
+        }
+
+        size_t custom_cell_temp_size;
+        if (Subarrays[nn]->useCustomCellTemp == 1) {
+            custom_cell_temp_size = Subarrays[nn]->customCellTempArray.size();
+            if (custom_cell_temp_size != nrec)
+                throw exec_error("pvsamv1", "The custom cell temperature array must be the size of nrecords per year");
+        }
+
         if (Subarrays[nn]->tiltEqualLatitude)
             Subarrays[nn]->tiltDegrees = std::abs(Irradiance->weatherHeader.lat);
         if (Subarrays[nn]->trackMode == irrad::SINGLE_AXIS && Subarrays[nn]->tiltDegrees > 0 && !Subarrays[nn]->Module->isBifacial)
@@ -1497,13 +1522,14 @@ void cm_pvsamv1::exec()
                     || Subarrays[nn]->nStrings < 1)
                     continue; // skip disabled subarrays
 
+                double custom_rot = (Subarrays[nn]->useCustomRotAngles) ? Subarrays[nn]->customRotAngles[inrec] : 0.0;
                 irrad irr(Irradiance->weatherRecord, Irradiance->weatherHeader,
                     Irradiance->skyModel, Irradiance->radiationMode, Subarrays[nn]->trackMode,
                     Irradiance->useWeatherFileAlbedo, Irradiance->instantaneous, Subarrays[nn]->backtrackingEnabled, false,
                     Irradiance->dtHour, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, 0.0, Subarrays[nn]->groundCoverageRatio, Subarrays[nn]->slopeTilt, Subarrays[nn]->slopeAzm,
                     Subarrays[nn]->monthlyTiltDegrees, Irradiance->userSpecifiedMonthlyAlbedo,
                     Subarrays[nn]->poa.poaAll.get(),
-                    Irradiance->useSpatialAlbedos, &Irradiance->userSpecifiedMonthlySpatialAlbedos, as_boolean("enable_subhourly_clipping"));
+                    Irradiance->useSpatialAlbedos, &Irradiance->userSpecifiedMonthlySpatialAlbedos, as_boolean("enable_subhourly_clipping"), Subarrays[nn]->useCustomRotAngles, custom_rot);
 
                 int code = irr.calc();
 
@@ -1666,8 +1692,8 @@ void cm_pvsamv1::exec()
                             ((double)wf.hour) + wf.minute / 60.0,
                             radmode, Subarrays[nn]->poa.usePOAFromWF);
                         // voltage set to -1 for max power
-                        if (use_measured_temp == 1)
-                            tcell = measured_temp[inrec];
+                        if (Subarrays[nn]->useCustomCellTemp == 1)
+                            tcell = Subarrays[nn]->customCellTempArray[inrec];
                         else
                             (*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, -1.0, tcell);
                     }
@@ -2085,8 +2111,8 @@ void cm_pvsamv1::exec()
                             {
                                 double tcell = wf.tdry;
                                 // calculate cell temperature using selected temperature model
-                                if (use_measured_temp == 1)
-                                    tcell = measured_temp[inrec];
+                                if (Subarrays[nn]->useCustomCellTemp == 1)
+                                    tcell = Subarrays[nn]->customCellTempArray[inrec];
                                 else
                                     (*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, V, tcell);
                                 // calculate module power output using conversion model previously specified
@@ -2150,8 +2176,8 @@ void cm_pvsamv1::exec()
                         if (stringVoltage != -1) module_voltage = stringVoltage / (double)Subarrays[nn]->nModulesPerString;
                         // calculate cell temperature using selected temperature model
                         // calculate module power output using conversion model previously specified
-                        if (use_measured_temp == 1)
-                            tcell = measured_temp[inrec];
+                        if (Subarrays[nn]->useCustomCellTemp == 1)
+                            tcell = Subarrays[nn]->customCellTempArray[inrec];
                         else {
                             (*Subarrays[nn]->Module->cellTempModel)(in[nn], *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
                             (*Subarrays[nn]->Module->cellTempModel)(in_cs[nn], *Subarrays[nn]->Module->moduleModel, module_voltage, tcell_cs);
@@ -2272,8 +2298,8 @@ void cm_pvsamv1::exec()
 
                                 //recalculate power at the correct voltage
                                 double module_voltage = avgVoltage / (double)Subarrays[nn]->nModulesPerString;
-                                if (use_measured_temp == 1)
-                                    tcell = measured_temp[inrec];
+                                if (Subarrays[nn]->useCustomCellTemp == 1)
+                                    tcell = Subarrays[nn]->customCellTempArray[inrec];
                                 else
                                     (*Subarrays[nn]->Module->cellTempModel)(in[nn], *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
                                 (*Subarrays[nn]->Module->moduleModel)(in[nn], tcell, module_voltage, out[nn]);
@@ -2314,9 +2340,9 @@ void cm_pvsamv1::exec()
                     Subarrays[nn]->Module->dcPowerW = out[nn].Power;
                     Subarrays[nn]->Module->dcEfficiency = out[nn].Efficiency * 100;
                     Subarrays[nn]->Module->dcVoltage = out[nn].Voltage;
-                    if (use_measured_temp) {
-                        Subarrays[nn]->Module->temperatureCellCelcius = measured_temp[inrec];
-                        Subarrays[nn]->Module->temperatureCellCelciusSS = measured_temp[inrec];
+                    if (Subarrays[nn]->useCustomCellTemp) {
+                        Subarrays[nn]->Module->temperatureCellCelcius = Subarrays[nn]->customCellTempArray[inrec];
+                        Subarrays[nn]->Module->temperatureCellCelciusSS = Subarrays[nn]->customCellTempArray[inrec];
                     }
                     else {
                         Subarrays[nn]->Module->temperatureCellCelcius = out[nn].CellTemp;
