@@ -374,7 +374,7 @@ public:
                 for (size_t g = 0; g < count_gen; g++) {
                     pGen[idx] += gen[g] * maximumTimeStepsPerHour;
                 }
-                */
+                
                 // add to gen "fuelcell_power" * timestep (set for pGen above)
                 // cash flow line item is fuelcell_annual_energy_discharged from cmod_fuelcell
                 std::vector<double> gen(genLength, 0);
@@ -384,16 +384,26 @@ public:
                 for (size_t g = 0; g < genLength; g++) {
                     pGen[idx] += gen[g] * maximumTimeStepsPerHour;
                 }
-
+                */
 
 
                 ssc_data_set_table(outputs, compute_module.c_str(), compute_module_outputs);
                 ssc_module_free(module);
                 ssc_data_free(compute_module_outputs);
-
- 
-
             }
+
+            // add fuel cell dischaged to gen
+            if (fuelcells.size() > 0) { // currently set up for one fuel cell only
+                var_table fuelcell_outputs = ((var_table*)outputs)->lookup(fuelcells[0])->table;
+                size_t count_gen;
+                ssc_number_t* gen = fuelcell_outputs.as_array("fuelcell_power", &count_gen);
+                if (count_gen != genLength)
+                    throw exec_error("hybrid", util::format("fuelcell_power size (%d) incorrect", (int)count_gen));
+                for (size_t g = 0; g < genLength; g++) {
+                    pGen[g] += gen[g] * maximumTimeStepsPerHour;
+                }
+            }
+
 
             if (batteries.size() > 0) { // run single battery (refator running code below)
 
