@@ -298,11 +298,11 @@ public:
 				geoPlant_inputs.md_EGSFractureWidthM = fracture_width;
 				geoPlant_inputs.md_EGSFractureAngle = fracture_angle;
 
-                geoPlant_inputs.md_DrillSuccessRate = 75;
+                geoPlant_inputs.md_DrillSuccessRate = .75;
                 geoPlant_inputs.md_StimSuccessRate = 0;
                 geoPlant_inputs.md_InjectionWellDiam = 0;
                 geoPlant_inputs.md_ProductionWellDiam = 0;
-                geoPlant_inputs.md_InjectivityIndex = 3000;
+                geoPlant_inputs.md_InjectivityIndex = 2500;
 
 				// calculate output array sizes
 				geoPlant_inputs.mi_ModelChoice = 0;		 // 0=GETEM, 1=Power Block monthly, 2=Power Block hourly
