@@ -72,7 +72,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
 
     // Simulation parameters
     { SSC_INPUT,     SSC_NUMBER, "is_dispatch",                        "Allow dispatch optimization?",                                                                                                            "",             "",                                  "System Control",                           "?=0",                                                              "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "sim_type",                           "1 (default): timeseries, 2: design only",                                                                                                 "",             "",                                  "System Control",                           "?=1",                                                              "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,     SSC_NUMBER, "sim_type",                           "1 (default): time-series, 2: design only",                                                                                                 "",             "",                                 "System Control",                           "?=1",                                                              "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_NUMBER, "csp_financial_model",                "",                                                                                                                                        "1-8",          "",                                  "Financial Model",                          "?=1",                                                              "INTEGER,MIN=0", ""},
     { SSC_INPUT,     SSC_NUMBER, "time_start",                         "Simulation start time",                                                                                                                   "s",            "",                                  "System Control",                           "?=0",                                                              "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_NUMBER, "time_stop",                          "Simulation stop time",                                                                                                                    "s",            "",                                  "System Control",                           "?=31536000",                                                       "",              "SIMULATION_PARAMETER"},
@@ -90,24 +90,24 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_INPUT,     SSC_NUMBER, "dni_des",                            "Design-point DNI",                                                                                                                        "W/m2",         "",                                  "System Design",                            "*",                                                                "",              ""},
 
     // Solar field
-    { SSC_INPUT,     SSC_NUMBER, "field_model_type",                   "0=design field and tower/receiver geometry, 1=design field, 2=user specified field, 3=user flux and eta map, pass heliostat_positions to SolarPILOT for layout, 4=user flux and eta maps, no SolarPILOT, input A_sf_in, total_land_area_in, and N_hel", "", "", "Heliostat Field", "*",     "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "field_model_type",                   "0=optimize field and tower/receiver geometry, 1=design field, 2=user specified field, 3=user flux and eta map, pass heliostat_positions to SolarPILOT for layout, 4=user flux and eta maps, no SolarPILOT, input A_sf_in, total_land_area_in, and N_hel", "", "", "Heliostat Field", "*",     "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "helio_width",                        "Heliostat width",                                                                                                                         "m",            "",                                  "Heliostat Field",                          "field_model_type<4",                                               "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "helio_height",                       "Heliostat height",                                                                                                                        "m",            "",                                  "Heliostat Field",                          "field_model_type<4",                                               "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "helio_optical_error_mrad",           "Heliostat optical error",                                                                                                                 "mrad",         "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "helio_active_fraction",              "Heliostat active fraction",                                                                                                               "",             "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "dens_mirror",                        "Ratio of heliostat reflective area to profile",                                                                                           "",             "",                                  "Heliostat Field",                          "field_model_type<4",                                               "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "helio_reflectance",                  "Heliostat reflectance",                                                                                                                   "",             "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "land_max",                           "Land max boundary",                                                                                                                       "-ORm",         "",                                  "Heliostat Field",                          "?=7.5",                                                            "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "land_min",                           "Land min boundary",                                                                                                                       "-ORm",         "",                                  "Heliostat Field",                          "?=0.75",                                                           "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "land_max",                           "Land max boundary",                                                                                                                       "-",            "",                                  "Heliostat Field",                          "?=7.5",                                                            "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "land_min",                           "Land min boundary",                                                                                                                       "-",            "",                                  "Heliostat Field",                          "?=0.75",                                                           "",              ""},
     { SSC_INPUT,     SSC_MATRIX, "land_bound_table",                   "Land boundary table",                                                                                                                     "m",            "",                                  "Heliostat Field",                          "?",                                                                "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_ARRAY,  "land_bound_list",                    "Land boundary table listing",                                                                                                             "",             "",                                  "Heliostat Field",                          "?",                                                                "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_NUMBER, "p_start",                            "Heliostat startup energy",                                                                                                                "kWe-hr",       "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "p_track",                            "Heliostat tracking energy",                                                                                                               "kWe",          "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "p_track",                            "Heliostat tracking power",                                                                                                               "kWe",          "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "hel_stow_deploy",                    "Stow/deploy elevation angle",                                                                                                             "deg",          "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "v_wind_max",                         "Heliostat max wind velocity",                                                                                                             "m/s",          "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     // TODO (Bill): Talk to Ty about removing -> these should be passed into C_pt_sf_perf_interp but are hard-coded instead
     //{ SSC_INPUT,     SSC_NUMBER, "interp_nug",                         "Interpolation nugget",                                                                                                                    "-",            "",                                  "Heliostat Field",                          "?=0",                                                              "",              "SIMULATION_PARAMETER"},
-    //{ SSC_INPUT,     SSC_NUMBER, "interp_beta",                        "Interpolation beta coef.",                                                                                                                "-",            "",                                  "Heliostat Field",                          "?=1.99",                                                           "",              "SIMULATION_PARAMETER"},
+    //{ SSC_INPUT,     SSC_NUMBER, "interp_beta",                        "Interpolation beta coefficient",                                                                                                                "-",            "",                                  "Heliostat Field",                          "?=1.99",                                                           "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_MATRIX, "helio_aim_points",                   "Heliostat aim point table",                                                                                                               "m",            "",                                  "Heliostat Field",                          "?",                                                                "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_MATRIX, "eta_map",                            "Field efficiency array",                                                                                                                  "",             "",                                  "Heliostat Field",                          "field_model_type>2",                                               "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_NUMBER, "eta_map_aod_format",                 "Use 3D AOD format field efficiency array",                                                                                                "",             "heliostat",                         "Heliostat Field",                          "field_model_type>2",                                               "",              "SIMULATION_PARAMETER"},
@@ -125,10 +125,10 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_INPUT,     SSC_NUMBER, "check_max_flux",                     "Check max flux at design point",                                                                                                          "",             "",                                  "Heliostat Field",                          "?=0",                                                              "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "sf_excess",                          "Heliostat field multiple",                                                                                                                "",             "",                                  "System Design",                            "?=1.0",                                                            "",              ""},
 
-    // Inputs required for user defined SF performance when field_model_type = 4
+    // Inputs required for user-defined SF performance when field_model_type = 4
     // Values can be defined by mapping to equivalent _calc output for simulation results with field_model_type < 3
     { SSC_INPUT,     SSC_NUMBER, "A_sf_in",                            "Solar field area",                                                                                                                        "m^2",          "",                                  "Heliostat Field",                          "field_model_type>3",                                               "",              "SIMULATION_PARAMETER"},
-    { SSC_INPUT,     SSC_NUMBER, "total_land_area_in",                 "Total land area - in",                                                                                 "acre",         "",                                  "Heliostat Field",                          "field_model_type>3",                                               "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,     SSC_NUMBER, "total_land_area_in",                 "Total land area - in",                                                                                                                    "acre",         "",                                  "Heliostat Field",                          "field_model_type>3",                                               "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_NUMBER, "N_hel",                              "Number of heliostats - in",                                                                                                               "",             "",                                  "Heliostat Field",                          "field_model_type>3",                                               "",              "SIMULATION_PARAMETER"},
 
     { SSC_INPUT,     SSC_NUMBER, "flux_max",                           "Maximum allowable flux",                                                                                                                  "",             "",                                  "Tower and Receiver",                       "?=1000",                                                           "",              ""},
@@ -140,8 +140,8 @@ static var_info _cm_vtab_csp_tower_particle[] = {
 
     
     // Receiver parameters - general
-    { SSC_INPUT,     SSC_NUMBER, "rec_htf",                            "Receiver HTF, 17=Salt (60% NaNO3, 40% KNO3) 10=Salt (46.5% LiF 11.5% NaF 42% KF) 50=Lookup tables",                                       "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
-    { SSC_INPUT,     SSC_MATRIX, "field_fl_props",                     "User defined field fluid property data",                                                                                                  "-",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "rec_htf",                            "Receiver HTF, 36=Bauxite particles 50=Lookup tables",                                                                                     "",             "",                                  "Tower and Receiver",                       "?=36",                                                             "",              ""},
+    { SSC_INPUT,     SSC_MATRIX, "field_fl_props",                     "User-defined field fluid property data",                                                                                                  "-",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "f_rec_min",                          "Minimum receiver mass flow rate turn down fraction",                                                                                      "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "rec_su_delay",                       "Fixed startup delay time for the receiver",                                                                                               "hr",           "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "rec_qf_delay",                       "Energy-based receiver startup delay (fraction of rated thermal power)",                                                                   "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
@@ -168,7 +168,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_INPUT,     SSC_NUMBER, "max_curtain_depth",                  "Particle curtain entrance depth",                                                                                                         "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_INPUT,     SSC_MATRIX, "norm_heights_depths",                "Normalized troughs heights and depths, pass [[0,0]] for no curtain troughs",                                                              "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "curtain_type",                       "Flat=0;Curved=1",                                                                                                                         "",             "",                                  "Tower and Receiver",                       "?=0",                                                              "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "curtain_radius",                     "Particle curtain radius",                                                                                                                 "m",            "",                                  "Tower and Receiver",                       "curtain_type=1",                                                   "",              "" },
+    //{ SSC_INPUT,     SSC_NUMBER, "curtain_radius",                     "Particle curtain radius",                                                                                                                 "m",            "",                                  "Tower and Receiver",                       "curtain_type=1",                                                   "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "is_snout",                           "Is SNOUT enabled?",                                                                                                                       "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "snout_depth",                        "Distance from aperture window to SNOUT front plane",                                                                                      "m",            "",                                  "Tower and Receiver",                       "is_snout=1",                                                       "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "snout_horiz_angle",                  "SNOUT spanning angle defined in the aperture vertical mid-plane",                                                                          "deg",          "",                                  "Tower and Receiver",                       "is_snout=1",                                                       "",              "" },
@@ -177,7 +177,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
 
         // TODO (Bill/Janna): Combine inputs for rec_absorptance and particle_abs?  
     { SSC_INPUT,     SSC_NUMBER, "rec_absorptance",                    "Receiver absorptance",                                                                                                                    "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "rec_hl_perm2",                       "Receiver design heatloss",                                                                                                                "kW/m2",        "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "rec_hl_perm2",                       "Receiver design heat loss",                                                                                                                "kW/m2",        "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "n_flux_days",                        "Number of days in flux map lookup",                                                                                                       "",             "",                                  "Tower and Receiver",                       "?=8",                                                              "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "delta_flux_hrs",                     "Hourly frequency in flux map lookup",                                                                                                     "",             "",                                  "Tower and Receiver",                       "?=1",                                                              "",              "" },
 
@@ -189,7 +189,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_INPUT,     SSC_NUMBER, "rec_hadv_fixed",                     "User-provided fixed receiver advective loss coefficient",                                                                                 "W/m2/K",       "",                                  "Tower and Receiver",                       "rec_adv_model_type=0",                                             "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "rec_rad_ny",                         "Number of curtain element groups in vertical dimension for radiative exchange",                                                           "",             "",                                  "Tower and Receiver",                       "?=5",                                                              "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "rec_rad_nx",                         "Number of curtain element groups in width dimension for radiative exchange",                                                              "",             "",                                  "Tower and Receiver",                       "?=3",                                                              "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "particle_dp",                        "Particle diameter",                                                                                                                       "m",             "",                                  "Tower and Receiver",                       "?=350e-6",                                                         "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "particle_dp",                        "Particle diameter",                                                                                                                       "m",            "",                                  "Tower and Receiver",                       "?=350e-6",                                                         "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "particle_abs",                       "Particle absorptivity",                                                                                                                   "",             "",                                  "Tower and Receiver",                       "?=0.9",                                                            "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "curtain_emis",                       "Curtain emissivity",                                                                                                                      "",             "",                                  "Tower and Receiver",                       "?=0.9",                                                            "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "curtain_dthdy",                      "Rate of curtain thickness increase with respect to fall distance",                                                                        "",             "",                                  "Tower and Receiver",                       "?=0.0087",                                                         "",              "" },
@@ -197,8 +197,8 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_INPUT,     SSC_NUMBER, "cav_twall",                          "Cavity wall thickness",                                                                                                                   "m",            "",                                  "Tower and Receiver",                       "?=0.05",                                                           "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "cav_kwall",                          "Cavity wall thermal conductivity",                                                                                                        "W/m/K",        "",                                  "Tower and Receiver",                       "?=0.2",                                                            "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "cav_hext",                           "Cavity wall external convective loss coefficient",                                                                                        "W/m2/K",       "",                                  "Tower and Receiver",                       "?=10.0",                                                           "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "rec_tauc_mult",                  "User-provided multiplier for calculated curtain transmissivity",                                                                          "",             "",                                  "Tower and Receiver",                       "?=1.0",                                                            "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "rec_hadv_mult",                  "User-provided multiplier for calculated advective loss coefficient",                                                                      "",             "",                                  "Tower and Receiver",                       "?=1.0",                                                            "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "rec_tauc_mult",                      "User-provided multiplier for calculated curtain transmissivity",                                                                          "",             "",                                  "Tower and Receiver",                       "?=1.0",                                                            "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "rec_hadv_mult",                      "User-provided multiplier for calculated advective loss coefficient",                                                                      "",             "",                                  "Tower and Receiver",                       "?=1.0",                                                            "",              "" },
 
 
 
@@ -231,7 +231,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_INPUT,     SSC_NUMBER, "u_tank",                             "Loss coefficient from the tank",                                                                                                          "W/m2-K",       "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "tank_pairs",                         "Number of equivalent tank pairs",                                                                                                         "",             "",                                  "Thermal Storage",                          "*",                                                                "INTEGER",       ""},
     { SSC_INPUT,     SSC_NUMBER, "cold_tank_Thtr",                     "Minimum allowable cold tank HTF temperature",                                                                                             "C",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "packed_vol_frac",                    "Packed volume fraction",                                                                                             "-",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "packed_vol_frac",                    "Packed volume fraction",                                                                                                                  "-",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     // TES parameters - 2 tank
     { SSC_INPUT,     SSC_NUMBER, "h_tank_min",                         "Minimum allowable HTF height in storage tank",                                                                                            "m",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "hot_tank_Thtr",                      "Minimum allowable hot tank HTF temperature",                                                                                              "C",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
@@ -287,6 +287,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_INPUT,     SSC_NUMBER, "can_cycle_use_standby",              "Can the cycle use standby operation?",                                                                                                    "",             "",                                  "System Control",                           "?=0",                                                              "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_NUMBER, "disp_horizon",                       "Time horizon for dispatch optimization",                                                                                                  "hour",         "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "disp_frequency",                     "Frequency for dispatch optimization calculations",                                                                                        "hour",         "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
+    // TODO (bill): can we get rid of "disp_steps_per_hour"?
     { SSC_INPUT,     SSC_NUMBER, "disp_steps_per_hour",                "Time steps per hour for dispatch optimization calculations",                                                                              "",             "",                                  "System Control",                           "?=1",                                                              "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_NUMBER, "disp_max_iter",                      "Max number of dispatch optimization iterations",                                                                                          "",             "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "disp_timeout",                       "Max dispatch optimization solve duration",                                                                                                "s",            "",                                  "System Control",                           "is_dispatch=1",                                                    "",              ""},
@@ -304,12 +305,14 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_INPUT,     SSC_NUMBER, "disp_csu_cost_rel",                  "Cycle startup cost",                                                                                                                      "$/MWe-cycle/start", "",                             "System Control",                           "",                                                                 "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "disp_pen_ramping",                   "Dispatch cycle production change penalty",                                                                                                "$/MWe-change", "",                                  "System Control",                           "",                                                                 "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "disp_inventory_incentive",           "Dispatch storage terminal inventory incentive multiplier",                                                                                "",             "",                                  "System Control",                           "?=0.0",                                                            "",              "SIMULATION_PARAMETER"},
+
+    // TODO (bill): check these values? 
     { SSC_INPUT,     SSC_NUMBER, "q_rec_standby",                      "Receiver standby energy consumption",                                                                                                     "kWt",          "",                                  "System Control",                           "?=9e99",                                                           "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_NUMBER, "q_rec_heattrace",                    "Receiver heat trace energy consumption during startup",                                                                                   "kWe-hr",       "",                                  "System Control",                           "?=0.0",                                                            "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_NUMBER, "is_wlim_design",                     "Use fixed design-point net electricity generation limits (dispatch opt only)",                                                            "",             "",                                  "System Control",                           "?=0",                                                              "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "disp_wlim_maxspec",                  "Fixed design-point max net power to the grid (dispatch opt only)",                                                                        "",             "",                                  "System Control",                           "is_wlim_design=1",                                                 "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "is_wlim_series",                     "Use time-series net electricity generation limits (dispatch opt only)",                                                                   "",             "",                                  "System Control",                           "?=0",                                                              "",              "SIMULATION_PARAMETER"},
-    { SSC_INPUT,     SSC_ARRAY,  "wlim_series",                        "Time series net electicity generation limits (dispatch opt only)",                                                                        "kWe",          "",                                  "System Control",                           "is_wlim_series=1",                                                 "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,     SSC_ARRAY,  "wlim_series",                        "Time series net electricity generation limits (dispatch opt only)",                                                                       "kWe",          "",                                  "System Control",                           "is_wlim_series=1",                                                 "",              "SIMULATION_PARAMETER"},
 
     // Pricing schedules and multipliers
         // Ideally this would work with sim_type = 2, but UI inputs availability depends on financial mode
@@ -333,11 +336,17 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_INPUT,     SSC_NUMBER, "rec_ref_cost",                       "Receiver reference cost",                                                                                                                 "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "rec_ref_area",                       "Receiver reference area for cost scale",                                                                                                  "",             "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "rec_cost_exp",                       "Receiver cost scaling exponent",                                                                                                          "",             "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "rec_lift_spec_cost",                 "Receiver lift specific cost",                                                                                                             "$-s/m-kg",     "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "site_spec_cost",                     "Site improvement cost",                                                                                                                   "$/m2",         "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "heliostat_spec_cost",                "Heliostat field cost",                                                                                                                    "$/m2",         "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "plant_spec_cost",                    "Power cycle specific cost",                                                                                                               "$/kWe",        "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "bop_spec_cost",                      "BOS specific cost",                                                                                                                       "$/kWe",        "",                                  "System Costs",                             "*",                                                                "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "tes_spec_cost",                      "Thermal energy storage cost",                                                                                                             "$/kWht",       "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "tes_cost_model",                     "TES cost model type (0 = Energy based, 1 = Detailed)",                                                                                    "",             "",                                  "System Costs",                             "?=1",                                                              "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "tes_spec_cost",                      "Thermal energy storage cost",                                                                                                             "$/kWht",       "",                                  "System Costs",                             "tes_cost_model=0",                                                 "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "tes_cost_per_mass",                  "Thermal energy storage cost per mass",                                                                                                    "$/kg",         "",                                  "System Costs",                             "*",                                                 "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "bin_cost_per_mass",                  "Thermal energy storage bin cost per mass",                                                                                                "$/kg",         "",                                  "System Costs",                             "tes_cost_model=1",                                                 "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "bin_cost_per_mass_exp",              "Thermal energy storage bin cost per mass scaling exponent",                                                                               "-",            "",                                  "System Costs",                             "tes_cost_model=1",                                                 "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "tes_phx_lift_spec_cost",             "Lift specific cost (TES and PHX)",                                                                                                        "$-s/m-kg",     "",                                  "System Costs",                             "tes_cost_model=1",                                                 "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "land_spec_cost",                     "Total land area cost",                                                                                                                    "$/acre",       "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "contingency_rate",                   "Contingency for cost overrun",                                                                                                            "%",            "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "sales_tax_rate",                     "Sales tax rate",                                                                                                                          "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
@@ -353,6 +362,8 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_INPUT,     SSC_NUMBER, "csp.pt.cost.plm.fixed",              "PLM fixed",                                                                                                                               "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "csp.pt.sf.fixed_land_area",          "Fixed land area",                                                                                                                         "acre",         "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "csp.pt.sf.land_overhead_factor",     "Land overhead factor",                                                                                                                    "",             "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
+    { SSC_INPUT,     SSC_ARRAY,  "om_fixed_in",                        "Fixed O&M annual amount",                                                                                                                 "$/year",       "",                                  "System Costs",                             "*",                                                            "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "frac_rec_flow_lost",                 "Fraction of receiver flow lost",                                                                                                          "kg/kg",        "",                                  "System Costs",                             "*",                                                                "",              "" },
 
         // Construction financing inputs/outputs (SSC variable table from cmod_cb_construction_financing)
     { SSC_INPUT,     SSC_NUMBER, "const_per_interest_rate1",           "Interest rate, loan 1",                                                                                                                   "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              ""},
@@ -388,8 +399,8 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "total_land_area",                    "Total land area",                                                                                                                         "acre",         "",                                  "System Costs",                             "*",                                                                "",              "" },
         // System capacity required by downstream financial model
     { SSC_OUTPUT,    SSC_NUMBER, "system_capacity",                    "System capacity",                                                                                                                         "kWe",          "",                                  "System Costs",                             "*",                                                                "",              "" },
-    { SSC_OUTPUT,    SSC_NUMBER, "cp_system_nameplate",                 "System capacity for capacity payments",                                                                                                   "MWe",          "",                                  "System Costs",                             "*",                                                                "",              "" },
-    { SSC_OUTPUT,    SSC_NUMBER, "cp_battery_nameplate",                "Battery nameplate",                                                                                                                       "MWe",          "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "cp_system_nameplate",                "System capacity for capacity payments",                                                                                                   "MWe",          "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "cp_battery_nameplate",               "Battery nameplate",                                                                                                                       "MWe",          "",                                  "System Costs",                             "*",                                                                "",              "" },
 
         // Solar Field
     { SSC_OUTPUT,    SSC_NUMBER, "N_hel_calc",                         "Number of heliostats - out",                                                                                                               "",             "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
@@ -401,7 +412,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "land_min_abs",                       "Min distance from tower to heliostat",                                                                                                     "m",            "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "land_max_abs",                       "Max distance from tower to heliostat",                                                                                                     "m",            "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "land_area_base_calc",                "Land area occupied by heliostats",                                                                                                         "acre",         "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
-    { SSC_OUTPUT,    SSC_NUMBER, "total_land_area_calc",               "Total land area - out",                                                                               "acre",         "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "total_land_area_calc",               "Total land area - out",                                                                                                                    "acre",         "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "W_dot_col_tracking_des",             "Collector tracking power at design",                                                                                                       "MWe",          "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
 
         // Receiver Geometry
@@ -413,7 +424,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "L_tower_piping_calc",                "Tower piping length",                                                                                                                      "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
 
         // Receiver Performance
-    //{ SSC_OUTPUT,    SSC_NUMBER, "q_dot_rec_des",                      "Receiver thermal output at design",                                                                                                       "MWt",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "q_dot_rec_des",                      "Receiver thermal output at design",                                                                                                       "MWt",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     //{ SSC_OUTPUT,    SSC_NUMBER, "eta_rec_thermal_des",                "Receiver estimated thermal efficiency at design",                                                                                         "",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     //{ SSC_OUTPUT,    SSC_NUMBER, "W_dot_rec_pump_des",                 "Receiver estimated pump power at design",                                                                                                 "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     //{ SSC_OUTPUT,    SSC_NUMBER, "W_dot_rec_pump_tower_share_des",     "Receiver estimated pump power due to tower height at design",                                                                             "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
@@ -473,7 +484,12 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "csp.pt.cost.heliostats",             "Heliostat cost",                                                                                                                          "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "csp.pt.cost.tower",                  "Tower cost",                                                                                                                              "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "csp.pt.cost.receiver",               "Receiver cost",                                                                                                                           "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "receiver_lift_cost",                 "Receiver lift cost",                                                                                                                      "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "csp.pt.cost.storage",                "TES cost",                                                                                                                                "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "tes_medium_cost",                    "TES medium cost",                                                                                                                         "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "tes_bin_cost",                       "TES bin cost",                                                                                                                            "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "tes_lift_cost",                      "TES lift cost",                                                                                                                           "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "phx_lift_cost",                      "PHX lift cost",                                                                                                                           "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "csp.pt.cost.power_block",            "Power cycle cost",                                                                                                                        "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "heater_cost",                        "Heater cost",                                                                                                                             "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "csp.pt.cost.bop",                    "BOP cost",                                                                                                                                "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
@@ -661,6 +677,8 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "annual_q_rec_inc",                   "Annual receiver incident thermal power",                                                                                                  "MWt-hr",       "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "annual_q_rec_reflection_loss",       "Annual receiver reflection losses",                                                                                                       "MWt-hr",       "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "annual_q_rec_thermal_loss",          "Annual receiver advective and radiative losses",                                                                                          "MWt-hr",       "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              ""},
+    { SSC_OUTPUT,    SSC_NUMBER, "annual_rec_mass_throughput",         "Annual receiver mass throughput",                                                                                                         "kg",           "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              ""},
+    { SSC_OUTPUT,    SSC_NUMBER, "particles_lost_per_year",            "Particles lost per year",                                                                                                                 "kg",           "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "annual_eta_rec",                     "Annual receiver efficiency including reflective, advective, radiative loss",                                                              "",             "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              ""},
 
     { SSC_OUTPUT,    SSC_NUMBER, "conversion_factor",                  "Gross to net conversion factor",                                                                                                          "%",            "",                                  "",                                         "sim_type=1",                                                       "",              ""},
@@ -698,7 +716,7 @@ public:
 	void exec() override
 	{
         std::clock_t clock_start = std::clock();
-        int sim_type = as_integer("sim_type");      // 1 (default): timeseries, 2: design only
+        int sim_type = as_integer("sim_type");      // 1 (default): time-series, 2: design only
         bool is_dispatch = as_boolean("is_dispatch");
 
         // *****************************************************
@@ -710,7 +728,6 @@ public:
 
         // System Design calculations
         double q_dot_pc_des = W_dot_cycle_des / eta_cycle;          // [MWt]
-        double Q_tes = q_dot_pc_des * tshours;                      // [MWt-hr]
         double q_dot_rec_des = q_dot_pc_des * as_number("solarm");  // [MWt]
 
         // *****************************************************
@@ -841,24 +858,6 @@ public:
                 }
             }
             spi.run(weather_reader.m_weather_data_provider);    // Runs SolarPILOT
-
-            //Optimization iteration history
-            //if (field_model_type == 0) { // is optimize
-            //    vector<vector<double> > steps;
-            //    vector<double> obj, flux;
-            //    spi.getOptimizationSimulationHistory(steps, obj, flux);
-            //    size_t nr = steps.size();
-            //    if (nr > 0) {
-            //        size_t nc = steps.front().size() + 2;
-            //        ssc_number_t* ssc_hist = allocate("opt_history", nr, nc);       // TODO (Bill): who owns "opt_history"? GUI?
-            //        for (size_t i = 0; i < nr; i++) {
-            //            for (size_t j = 0; j < steps.front().size(); j++)
-            //                ssc_hist[i * nc + j] = (ssc_number_t)steps.at(i).at(j);
-            //            ssc_hist[i * nc + nc - 2] = (ssc_number_t)obj.at(i);
-            //            ssc_hist[i * nc + nc - 1] = (ssc_number_t)flux.at(i);
-            //        }
-            //    }
-            //}
 
             // Collect the optical efficiency and flux map data
             if (field_model_type <= 2) {
@@ -1111,14 +1110,10 @@ public:
             as_double("T_htf_hot_des"), as_double("rec_clearsky_fraction")
         ));   // steady-state receiver
 
-
-
-
         // Test mspt_receiver initialization
         //receiver.init();
 
-        // *******************************
-        // *******************************
+        // *******************************************************
         // Construct heliostat field class after receiver
         //    so it can use the active receiver area
         C_pt_sf_perf_interp heliostatfield(A_rec_curtain);
@@ -1181,7 +1176,6 @@ public:
         //collector_receiver.init();
 
         // *******************************************************
-        // *******************************************************
         // Set receiver outputs
         //float *p_q_thermal_copy = allocate("Q_thermal_123", n_steps_fixed);
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_FIELD_Q_DOT_INC, allocate("q_sf_inc", n_steps_fixed), n_steps_fixed);
@@ -1207,6 +1201,8 @@ public:
 
         }
 
+        // *****************************************************
+        // Electric Heater
         // Check if system configuration includes a heater parallel to primary collector receiver
         C_csp_collector_receiver* p_heater;
         C_csp_cr_electric_resistance* p_electric_resistance = NULL;
@@ -1217,7 +1213,7 @@ public:
 
             if (!is_dispatch && sim_type == 1) {
                 if (!as_boolean("allow_heater_no_dispatch_opt")) {
-                    throw exec_error("csp_tower_particle", "When the molten salt power tower case has an electric HTF charger, dispatch optimization must be selected");
+                    throw exec_error("csp_tower_particle", "When the particle power tower case has an electric HTF charger, dispatch optimization must be selected");
                 }
             }
 
@@ -1246,7 +1242,7 @@ public:
         }
         p_heater = p_electric_resistance;
 
-
+        // *****************************************************
         // Thermal energy storage
         C_csp_two_tank_tes storage(
             as_integer("rec_htf"),
@@ -1286,7 +1282,7 @@ public:
         storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_HOT_TANK, allocate("mass_tes_hot", n_steps_fixed), n_steps_fixed);
         storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HTF_PUMP, allocate("tes_htf_pump_power", n_steps_fixed), n_steps_fixed);
 
-
+        // *****************************************************
         // TOU parameters
         C_csp_tou_block_schedules tou;
         C_csp_tou_block_schedules::S_params *tou_params = &tou.ms_params;
@@ -1469,8 +1465,6 @@ public:
 
 
         // *****************************************************
-        //
-
         // System parameters
         C_csp_solver::S_csp_system_params system;
         system.m_pb_fixed_par = as_double("pb_fixed_par");
@@ -1803,7 +1797,7 @@ public:
         double plant_net_capacity_calc = W_dot_cycle_des - W_dot_col_tracking_des - //W_dot_rec_pump_des - //TODO(Bill): This needs to be updated
                                         W_dot_pc_pump_des - W_dot_pc_cooling_des - W_dot_bop_design - W_dot_fixed_parasitic_design;    //[MWe]
 
-        double plant_net_conv_calc = plant_net_capacity_calc / W_dot_cycle_des; //[-]
+        //double plant_net_conv_calc = plant_net_capacity_calc / W_dot_cycle_des; //[-]
 
         double system_capacity = plant_net_capacity_calc * 1.E3;         //[kWe], convert from MWe
 
@@ -1815,168 +1809,118 @@ public:
         assign("cp_system_nameplate", system_capacity * 1.E-3); //[MWe]
         assign("cp_battery_nameplate", 0.0);             //[MWe]
 
-            // ******* Costs ************
-        double A_sf_refl = A_sf;
-        double site_improv_spec_cost = as_double("site_spec_cost");
-        double heliostat_spec_cost = as_double("heliostat_spec_cost");
-        double heliostat_fixed_cost = as_double("cost_sf_fixed");
+            // *****************************
+            // ******* System Costs ********
 
-        double h_rec_cost_in = std::numeric_limits<double>::quiet_NaN();
-        h_rec_cost_in = rec_height; //[m]   // TODO (Bill): Update cost correlations
+        double site_improvement_cost =
+            N_mspt::site_improvement_cost(A_sf, as_double("site_spec_cost"));
+        assign("csp.pt.cost.site_improvements", (ssc_number_t)site_improvement_cost);
 
-        double tower_fixed_cost = as_double("tower_fixed_cost");
-        double tower_cost_scaling_exp = as_double("tower_exp");
+        double heliostat_cost =
+            N_mspt::heliostat_cost(A_sf, as_double("heliostat_spec_cost"), as_double("cost_sf_fixed"));
+        assign("csp.pt.cost.heliostats", (ssc_number_t)heliostat_cost);
 
-        double rec_ref_cost = as_double("rec_ref_cost");
-        double A_rec_ref = as_double("rec_ref_area");
-        double rec_cost_scaling_exp = as_double("rec_cost_exp");
+        double tower_cost = N_mspt::tower_cost(THT, rec_height, h_helio, as_double("tower_fixed_cost"), as_double("tower_exp"));
+        assign("h_rec_input_to_cost_model", (ssc_number_t)rec_height);       //[m]
+        assign("csp.pt.cost.tower", (ssc_number_t)tower_cost);
 
-        double Q_storage = as_double("P_ref") / as_double("design_eff") * as_double("tshours");
-        double tes_spec_cost = as_double("tes_spec_cost");
+        double receiver_cost =
+            N_mspt::receiver_cost(A_rec_aperture, as_double("rec_ref_cost"), as_double("rec_ref_area"), as_double("rec_cost_exp"));
+        assign("csp.pt.cost.receiver", (ssc_number_t)receiver_cost);
 
-        // no Cold Temp TES, so set those cost model inputs to 0
-        double Q_CT_tes = 0.0;
-        double CT_tes_spec_cost = 0.0;
+        double rec_lift_height = THT + rec_height / 2. + h_helio / 2.;
+        double rec_lift_cost =
+            N_mspt::lift_cost(m_dot_htf_rec_des, rec_lift_height, as_double("rec_lift_spec_cost"), 1.0);    //TODO (bill): m_dot_htf_rec_max, 
+        assign("receiver_lift_cost", (ssc_number_t)rec_lift_cost);
+
+        // Two types of TES costs models
+        double tes_cost, tes_medium_cost, tes_bin_cost, tes_lift_cost, phx_lift_cost;
+        tes_cost = tes_medium_cost = tes_bin_cost = tes_lift_cost = phx_lift_cost = std::numeric_limits<double>::quiet_NaN();;
+        if (as_integer("tes_cost_model") == 0) {
+            double Q_storage = as_double("P_ref") / as_double("design_eff") * as_double("tshours");
+            tes_cost = N_mspt::tes_cost(Q_storage, as_double("tes_spec_cost")); //energy based method
+            tes_medium_cost = tes_bin_cost = tes_lift_cost = phx_lift_cost = 0.0;
+        }
+        else if (as_integer("tes_cost_model") == 1) {
+            tes_medium_cost =
+                N_mspt::tes_medium_cost(tes_total_mass, as_double("tes_cost_per_mass"), 0.0); //inactive fraction is already accounted
+            tes_bin_cost =
+                N_mspt::tes_tank_cost(tes_total_mass, as_double("bin_cost_per_mass"), as_double("bin_cost_per_mass_exp"));
+            tes_lift_cost =
+                N_mspt::lift_cost(m_dot_htf_pc_des, as_double("h_tank"), as_double("tes_phx_lift_spec_cost"), 1.0);
+            phx_lift_cost =
+                N_mspt::lift_cost(m_dot_htf_pc_des, as_double("phx_height"), as_double("tes_phx_lift_spec_cost"), 1.0);
+            tes_cost = tes_medium_cost + tes_bin_cost + tes_lift_cost + phx_lift_cost;
+        }
+        else {
+            string msg = util::format("'tes_cost_model' must be either 0 (energy-based) or 1 (detailed).");
+            throw exec_error("csp_tower_particle", msg);
+        }
+        assign("tes_medium_cost", (ssc_number_t)tes_medium_cost);
+        assign("tes_bin_cost", (ssc_number_t)tes_bin_cost);
+        assign("tes_lift_cost", (ssc_number_t)tes_lift_cost);
+        assign("phx_lift_cost", (ssc_number_t)phx_lift_cost);
+        assign("csp.pt.cost.storage", (ssc_number_t)tes_cost);
 
         double W_dot_design = as_double("P_ref");
-        double power_cycle_spec_cost = as_double("plant_spec_cost");
+        double power_cycle_cost =
+            N_mspt::power_cycle_cost(W_dot_design, as_double("plant_spec_cost"));
+        assign("csp.pt.cost.power_block", (ssc_number_t)power_cycle_cost);
 
-        // Set heater thermal power and cost above, because they're dependent on is_heater boolean
+        double bop_cost =
+            N_mspt::bop_cost(W_dot_design, as_double("bop_spec_cost"));
+        assign("csp.pt.cost.bop", (ssc_number_t)bop_cost);
 
-        double bop_spec_cost = as_double("bop_spec_cost");
+        double fossil_backup_cost =
+            N_mspt::fossil_backup_cost(W_dot_design, as_double("fossil_spec_cost"));
+        assign("csp.pt.cost.fossil", (ssc_number_t)fossil_backup_cost);
 
-        double fossil_backup_spec_cost = as_double("fossil_spec_cost");
+        double heater_cost =
+            N_mspt::heater_cost(q_dot_heater_des, heater_spec_cost);
+        assign("heater_cost", (ssc_number_t)heater_cost);
 
-        double contingency_rate = as_double("contingency_rate");
+        double direct_capital_precontingency_cost =
+            site_improvement_cost + heliostat_cost + tower_cost + receiver_cost + rec_lift_cost +
+            tes_cost + power_cycle_cost + heater_cost + bop_cost + fossil_backup_cost;
+        assign("ui_direct_subtotal", (ssc_number_t)direct_capital_precontingency_cost);
 
-        //land area
+        double contingency_cost =
+            N_mspt::contingency_cost(as_double("contingency_rate"), direct_capital_precontingency_cost);
+        assign("csp.pt.cost.contingency", (ssc_number_t)contingency_cost);
+
+        double total_direct_cost =
+            N_mspt::total_direct_cost(direct_capital_precontingency_cost, contingency_cost);
+        assign("total_direct_cost", (ssc_number_t)total_direct_cost);
+
+        double total_land_cost =
+            N_mspt::total_land_cost(total_land_area, total_direct_cost, plant_net_capacity_calc,
+                as_double("land_spec_cost"), as_double("csp.pt.cost.plm.percent"),
+                as_double("csp.pt.cost.plm.per_watt"), as_double("csp.pt.cost.plm.fixed"));
+        assign("csp.pt.cost.plm.total", (ssc_number_t)total_land_cost);
         //double total_land_area_acres = total_land_area / 4046.86 /*acres/m^2*/; // TODO (Bill): Check units of this
         assign("total_land_area", (ssc_number_t)total_land_area);
 
-        double plant_net_capacity = system_capacity / 1000.0;         //[MWe], convert from kWe
-        double EPC_land_spec_cost = as_double("csp.pt.cost.epc.per_acre");
-        double EPC_land_perc_direct_cost = as_double("csp.pt.cost.epc.percent");
-        double EPC_land_per_power_cost = as_double("csp.pt.cost.epc.per_watt");
-        double EPC_land_fixed_cost = as_double("csp.pt.cost.epc.fixed");
-        double total_land_spec_cost = as_double("land_spec_cost");
-        double total_land_perc_direct_cost = as_double("csp.pt.cost.plm.percent");
-        double total_land_per_power_cost = as_double("csp.pt.cost.plm.per_watt");
-        double total_land_fixed_cost = as_double("csp.pt.cost.plm.fixed");
-        double sales_tax_basis = as_double("sales_tax_frac");
-        double sales_tax_rate = as_double("sales_tax_rate");
+        double epc_and_owner_cost =
+            N_mspt::epc_and_owner_cost(total_land_area, total_direct_cost, plant_net_capacity_calc,
+                as_double("csp.pt.cost.epc.per_acre"), as_double("csp.pt.cost.epc.percent"),
+                as_double("csp.pt.cost.epc.per_watt"), as_double("csp.pt.cost.epc.fixed"));
+        assign("csp.pt.cost.epc.total", (ssc_number_t)epc_and_owner_cost);
 
-        double site_improvement_cost, heliostat_cost, tower_cost, receiver_cost, tes_cost, CT_tes_cost, power_cycle_cost,
-            heater_cost, rad_field_totcost, rad_fluid_totcost, rad_storage_totcost, bop_cost, fossil_backup_cost,
-            direct_capital_precontingency_cost, contingency_cost, total_direct_cost, epc_and_owner_cost, total_land_cost,
-            sales_tax_cost, total_indirect_cost, total_installed_cost, estimated_installed_cost_per_cap;
+        double sales_tax_cost =
+            N_mspt::sales_tax_cost(total_direct_cost, as_double("sales_tax_frac"), as_double("sales_tax_rate"));
+        assign("csp.pt.cost.sales_tax.total", (ssc_number_t)sales_tax_cost);
 
-        site_improvement_cost = heliostat_cost = tower_cost = receiver_cost = tes_cost = CT_tes_cost = power_cycle_cost =
-            heater_cost = rad_field_totcost = rad_fluid_totcost = rad_storage_totcost = bop_cost = fossil_backup_cost =
-            direct_capital_precontingency_cost = contingency_cost = total_direct_cost = epc_and_owner_cost = total_land_cost =
-            sales_tax_cost = total_indirect_cost = total_installed_cost = estimated_installed_cost_per_cap = std::numeric_limits<double>::quiet_NaN();
+        double total_indirect_cost =
+            N_mspt::total_indirect_cost(total_land_cost, epc_and_owner_cost, sales_tax_cost);
+        assign("total_indirect_cost", (ssc_number_t)total_indirect_cost);
 
-        N_mspt::calculate_mspt_etes_costs(
-            A_sf_refl,
-            site_improv_spec_cost,
-            heliostat_spec_cost,
-            heliostat_fixed_cost,
-
-            THT,
-            h_rec_cost_in,
-            h_helio,
-            tower_fixed_cost,
-            tower_cost_scaling_exp,
-
-            A_rec_aperture,
-            rec_ref_cost,
-            A_rec_ref,
-            rec_cost_scaling_exp,
-
-            Q_storage,
-            tes_spec_cost,
-
-            Q_CT_tes,
-            CT_tes_spec_cost,
-
-            W_dot_design,
-            power_cycle_spec_cost,
-
-            q_dot_heater_des,       //[MWt]
-            heater_spec_cost,
-
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-
-            bop_spec_cost,
-
-            fossil_backup_spec_cost,
-
-            contingency_rate,
-
-            total_land_area,
-            plant_net_capacity,
-            EPC_land_spec_cost,
-            EPC_land_perc_direct_cost,
-            EPC_land_per_power_cost,
-            EPC_land_fixed_cost,
-            total_land_spec_cost,
-            total_land_perc_direct_cost,
-            total_land_per_power_cost,
-            total_land_fixed_cost,
-            sales_tax_basis,
-            sales_tax_rate,
-
-            site_improvement_cost,
-            heliostat_cost,
-            tower_cost,
-            receiver_cost,
-            tes_cost,
-            CT_tes_cost,
-            power_cycle_cost,
-            heater_cost,
-            rad_field_totcost,
-            rad_fluid_totcost,
-            rad_storage_totcost,
-            bop_cost,
-            fossil_backup_cost,
-            direct_capital_precontingency_cost,
-            contingency_cost,
-            total_direct_cost,
-            total_land_cost,
-            epc_and_owner_cost,
-            sales_tax_cost,
-            total_indirect_cost,
-            total_installed_cost,
-            estimated_installed_cost_per_cap
-        );
-
-        // 1.5.2016 twn: financial model needs an updated total_installed_cost, remaining are for reporting only
+        // Financial model needs an updated total_installed_cost, remaining are for reporting only
+        double total_installed_cost =
+            N_mspt::total_installed_cost(total_direct_cost, total_indirect_cost);
         assign("total_installed_cost", (ssc_number_t)total_installed_cost);
 
-        assign("h_rec_input_to_cost_model", (ssc_number_t)h_rec_cost_in);       //[m]
-        assign("csp.pt.cost.site_improvements", (ssc_number_t)site_improvement_cost);
-        assign("csp.pt.cost.heliostats", (ssc_number_t)heliostat_cost);
-        assign("csp.pt.cost.tower", (ssc_number_t)tower_cost);
-        assign("csp.pt.cost.receiver", (ssc_number_t)receiver_cost);
-        assign("csp.pt.cost.storage", (ssc_number_t)tes_cost);
-        assign("csp.pt.cost.power_block", (ssc_number_t)power_cycle_cost);
-        assign("heater_cost", (ssc_number_t)heater_cost);
-
-        assign("csp.pt.cost.bop", (ssc_number_t)bop_cost);
-        assign("csp.pt.cost.fossil", (ssc_number_t)fossil_backup_cost);
-        assign("ui_direct_subtotal", (ssc_number_t)direct_capital_precontingency_cost);
-        assign("csp.pt.cost.contingency", (ssc_number_t)contingency_cost);
-        assign("total_direct_cost", (ssc_number_t)total_direct_cost);
-        assign("csp.pt.cost.epc.total", (ssc_number_t)epc_and_owner_cost);
-        assign("csp.pt.cost.plm.total", (ssc_number_t)total_land_cost);
-        assign("csp.pt.cost.sales_tax.total", (ssc_number_t)sales_tax_cost);
-        assign("total_indirect_cost", (ssc_number_t)total_indirect_cost);
+        double estimated_installed_cost_per_cap =
+            N_mspt::estimated_installed_cost_per_cap(total_installed_cost, plant_net_capacity_calc);
         assign("csp.pt.cost.installed_per_capacity", (ssc_number_t)estimated_installed_cost_per_cap);
 
         // Update construction financing costs, specifically, update: "construction_financing_cost"
@@ -2111,7 +2055,7 @@ public:
         size_t n_rows_eta_map = heliostatfield.ms_params.m_eta_map.nrows();             // Number of solar positions
         ssc_number_t *eta_map_out = allocate("eta_map_out", n_rows_eta_map, 3);
         size_t n_rows_flux_maps = heliostatfield.ms_params.m_flux_maps.nrows();         // solar positions * number of y flux points
-        size_t n_cols_flux_maps = heliostatfield.ms_params.m_flux_maps.ncols() + 2;     // Adding 2 for solar positions
+        size_t n_cols_flux_maps = heliostatfield.ms_params.m_flux_maps.ncols();         // REMOVED Adding 2 for solar positions
         ssc_number_t *flux_maps_out = allocate("flux_maps_out", n_rows_flux_maps, n_cols_flux_maps);
         ssc_number_t *flux_maps_for_import = allocate("flux_maps_for_import", n_rows_flux_maps, n_cols_flux_maps);
         size_t rec_n_flux_x = heliostatfield.ms_params.m_n_flux_x;
@@ -2135,14 +2079,14 @@ public:
             size_t idx;
             for (size_t j = 0; j < rec_n_flux_y; j++) { // for all y flux positions
                 idx = rec_n_flux_y * n_cols_flux_maps * i + n_cols_flux_maps * j;
-                flux_maps_for_import[idx] = flux_maps_out[idx] = azi_angle;
-                flux_maps_for_import[idx + 1] = flux_maps_out[idx + 1] = zen_angle;
+                //flux_maps_for_import[idx] = flux_maps_out[idx] = azi_angle;
+                //flux_maps_for_import[idx + 1] = flux_maps_out[idx + 1] = zen_angle;
                 size_t flux_map_row;
-                for (size_t k = 2; k < n_cols_flux_maps; k++) {
+                for (size_t k = 0; k < n_cols_flux_maps; k++) {
                     flux_map_row = rec_n_flux_y * i + j;
                     flux_maps_out[idx + k] =
-                        (ssc_number_t)(heliostatfield.ms_params.m_flux_maps(flux_map_row, k - 2) * heliostatfield.ms_params.m_eta_map(i, 2) * flux_scaling_mult);      //[kW/m^2]
-                    flux_maps_for_import[idx + k] = (ssc_number_t)heliostatfield.ms_params.m_flux_maps(flux_map_row, k - 2);
+                        (ssc_number_t)(heliostatfield.ms_params.m_flux_maps(flux_map_row, k) * heliostatfield.ms_params.m_eta_map(i, 2) * flux_scaling_mult);      //[kW/m^2]
+                    flux_maps_for_import[idx + k] = (ssc_number_t)heliostatfield.ms_params.m_flux_maps(flux_map_row, k);
                 }
             }
         }
@@ -2153,7 +2097,7 @@ public:
 
         // 'adjustment_factors' class stores factors in hourly array, so need to index as such
         adjustment_factors haf(this, "adjust");
-        if( !haf.setup(count) )
+        if( !haf.setup((int)count) )
             throw exec_error("csp_tower_particle", "failed to setup adjustment factors: " + haf.error());
 
         ssc_number_t *p_gen = allocate("gen", count);
@@ -2164,7 +2108,7 @@ public:
             p_gen[i] = (ssc_number_t)(p_W_dot_net[i] * 1.E3 * haf(hour));           //[kWe]
             p_gensales_after_avail[i] = max(0.0, p_gen[i]);                         //[kWe]
         }
-        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
+        //ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
         accumulate_annual_for_year("gen", "annual_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed/steps_per_hour);
         accumulate_annual_for_year("gensales_after_avail", "annual_sales_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
         
@@ -2174,10 +2118,22 @@ public:
         accumulate_annual_for_year("q_dot_rec_inc", "annual_q_rec_inc", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);           //[MWt-hr]  // Incident power on particle curtain not including reflection (note that this is different than the definition of "incident" in the MSPT model)
         accumulate_annual_for_year("q_reflection_loss", "annual_q_rec_reflection_loss", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
         accumulate_annual_for_year("q_thermal_loss", "annual_q_rec_thermal_loss", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
+        accumulate_annual_for_year("m_dot_rec", "annual_rec_mass_throughput", sim_setup.m_report_step, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
 
         assign("annual_eta_rec", (ssc_number_t)(1.0 - (as_number("annual_q_rec_thermal_loss") + as_number("annual_q_rec_reflection_loss"))/ as_number("annual_q_rec_inc")));
 
+        // Update fixed O&M based on receiver throughput
+        ssc_number_t* om_fixed_in = as_array("om_fixed_in", &count);
+        ssc_number_t* om_fixed_out = allocate("om_fixed", count);
+        // TODO (bill): can we account for this in the storage model? do we care?
+        double particles_lost_per_year = as_double("frac_rec_flow_lost") * as_number("annual_rec_mass_throughput");
+        assign("particles_lost_per_year", (ssc_number_t)particles_lost_per_year);
+        double om_particle_cost = as_double("tes_cost_per_mass") * particles_lost_per_year;
+        for (size_t i = 0; i < count; i++) {
+            om_fixed_out[i] = om_fixed_in[i] + om_particle_cost;
+        }
 
+        //Annual dispatch outputs
         accumulate_annual_for_year("disp_objective", "disp_objective_ann", sim_setup.m_report_step / 3600.0 / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed/steps_per_hour);
         accumulate_annual_for_year("disp_solve_iter", "disp_iter_ann", sim_setup.m_report_step / 3600.0 / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed/steps_per_hour);
         accumulate_annual_for_year("disp_presolve_nconstr", "disp_presolve_nconstr_ann", sim_setup.m_report_step / 3600.0/ as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed/steps_per_hour);
