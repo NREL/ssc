@@ -299,7 +299,7 @@ public:
 
         int ppi_base_year = as_integer("ppi_base_year");
 
-        int resource_type = as_integer("resource_type");
+        //int resource_type = as_integer("resource_type");
 
         
 
