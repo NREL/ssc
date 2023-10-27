@@ -45,6 +45,10 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
     var_table reopt_site, reopt_pv, reopt_utility;
 
     bool result = Reopt_size_standalone_battery_params(data);
+    // Continue error handling for the prior function
+    if (!result) {
+        return result;
+    }
 
     bool size_for_grid_outage = false;
     if (vt->is_assigned("size_for_grid_outage")) {
@@ -205,7 +209,6 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
         std::vector<bool> outage_steps = vt->as_vector_bool("grid_outage");
         std::vector<int> outage_start_times;
         std::vector<int> outage_durations;
-        std::vector<double> outage_probabilities;
 
         bool existing_outage = false;
         int outage_duration = 0;
@@ -222,14 +225,12 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
             else if (existing_outage) {
                 // Outage ends this step
                 outage_durations.push_back(outage_duration);
-                outage_probabilities.push_back(1.0);
                 outage_duration = 0;
                 existing_outage = false;
             }
         }
         reopt_utility.assign("outage_start_time_steps", outage_start_times);
         reopt_utility.assign("outage_durations", outage_durations);
-        reopt_utility.assign("outage_probabilities", outage_probabilities);
     }
 
     // assign the reopt parameter table and log messages
