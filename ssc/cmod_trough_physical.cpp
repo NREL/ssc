@@ -400,8 +400,8 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,       SSC_NUMBER,      "vol_min",                          "Minimum Fluid Volume",                                                     "m3",            "",               "Thermal Storage","*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "V_tank_hot_ini",                   "Initial hot tank volume",                                                  "m3",            "",               "Thermal Storage","*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "tes_htf_avg_temp",                 "HTF Average Temperature at Design",                                        "C",             "",               "Thermal Storage","*",                                "",                      "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "tes_htf_min_temp",                 "Minimum storage htf temp",                                             "C",            "",         "Power Cycle",                              "*",                                                                "",              "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "tes_htf_max_temp",                 "Maximum storage htf temp",                                             "C",            "",         "Power Cycle",                              "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "tes_htf_min_temp",                 "Minimum storage htf temp",                                                 "C",             "",               "Power Cycle",    "*",                                "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "tes_htf_max_temp",                 "Maximum storage htf temp",                                                 "C",             "",               "Power Cycle",    "*",                                "",                      "" },
 
 
     // Collector
