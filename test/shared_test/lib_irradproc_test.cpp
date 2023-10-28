@@ -195,10 +195,10 @@ TEST_F(IrradTest, ineichenTest) {
     double clearskyIrradiance[3];
     double apparent_zenith = 60;
     double elevation = 0;
-    ineichen(clearskyIrradiance, apparent_zenith, 1.5, 1.0, elevation, 1364.0, false);
-    EXPECT_NEAR(clearskyIrradiance[0], 558.590191, e) << "clearsky GHI";
-    EXPECT_NEAR(clearskyIrradiance[1], 1087.118774, e) << "clearsky DNI";
-    EXPECT_NEAR(clearskyIrradiance[2], 15.030804, e) << "clearsky GHI";
+    ineichen(clearskyIrradiance, apparent_zenith, month, day, pres, 1.0, elevation, 1364.0, false);
+    EXPECT_NEAR(clearskyIrradiance[0], 591.519294, e) << "clearsky GHI";
+    EXPECT_NEAR(clearskyIrradiance[1], 1128.028, e) << "clearsky DNI";
+    EXPECT_NEAR(clearskyIrradiance[2], 27.505294, e) << "clearsky GHI";
 }
 
 
