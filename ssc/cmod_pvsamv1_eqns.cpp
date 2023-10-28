@@ -135,9 +135,9 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
     }
 
     // If gen is assigned, use REopt's prod_factor_series_kw number, if not use lat/lon and losses with the PVWatts weather files (as called by REopt)
-    if (vt->is_assigned("gen")) {
+    if (vt->is_assigned("gen_without_battery")) {
         std::vector<double> gen;
-        vt_get_array_vec(vt, "gen", gen);
+        vt_get_array_vec(vt, "gen_without_battery", gen);
         bool lifetime_mode;
         vt_get_bool(vt, "system_use_lifetime_output", &lifetime_mode);
         size_t year_one_values = gen.size();

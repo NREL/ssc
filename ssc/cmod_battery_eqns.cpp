@@ -153,16 +153,12 @@ bool Reopt_size_standalone_battery_params(ssc_data_t data) {
 
     vd = vt->lookup("batt_dc_ac_efficiency");
     vd2 = vt->lookup("batt_ac_dc_efficiency");
-    if (vd && vd2) {
-        // ReOpt's internal_efficient_pct = SAM's (batt_dc_ac_efficiency + batt_ac_dc_efficiency)/2
-        // TODO: these might correspond better to REopt's inverter and rectifier efficinces - correct as needed.
-        reopt_batt.assign("internal_efficiency_fraction", (vd->num[0] + vd2->num[0]) / 200.);
+
+    if (vd) {
+        reopt_batt.assign("inverter_efficiency_fraction", vd->num[0] / 100.);
     }
-    else if (vd && !vd2) {
-        reopt_batt.assign("internal_efficiency_fraction", vd->num[0] / 100.);
-    }
-    else if (!vd && vd2) {
-        reopt_batt.assign("internal_efficiency_fraction", vd2->num[0] / 100.);
+    if (vd2) {
+        reopt_batt.assign("rectifier_efficiency_fraction", vd2->num[0] / 100.);
     }
 
     vd = vt->lookup("batt_initial_SOC");
@@ -187,6 +183,15 @@ bool Reopt_size_standalone_battery_params(ssc_data_t data) {
         if (vec.size() > 1)
             log += "Warning: only first value of 'batt_replacement_schedule' array is used for the ReOpt input 'battery_replacement_year'.\n";
         reopt_batt.assign("battery_replacement_year", vec[0]);
+    }
+
+    if (vt->is_assigned("batt_dispatch_auto_can_gridcharge")) {
+        vd = vt->lookup("batt_dispatch_auto_can_gridcharge");
+        reopt_batt.assign("can_grid_charge", vd->num[0]);
+    }
+    else {
+        // Grid charging is always on for battwatts
+        reopt_batt.assign("can_grid_charge", true);
     }
 
     //
