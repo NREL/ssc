@@ -1109,6 +1109,58 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, SubhourlyClippingCorrectionModel)
     EXPECT_NEAR(subhourly_clipping_loss_percent, 0.74, m_error_tolerance_lo);
 }
 
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, useCustomCellTemp) {
+
+    std::map<std::string, double> pairs;
+
+    pairs["subarray1_use_custom_cell_temp"] = 1;
+    int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+
+    EXPECT_FALSE(pvsam_errors);
+    ssc_number_t annualEnergy;
+    int n1;
+    ssc_number_t* subarray1_cell_temp = ssc_data_get_array(data, "subarray1_celltemp", &n1);
+    EXPECT_NEAR(subarray1_cell_temp[8], 17.8071, 0.001);
+    ssc_data_get_number(data, "annual_energy", &annualEnergy);
+    EXPECT_NEAR(annualEnergy, 8725, 1.0);
+
+    pairs["subarray1_use_custom_cell_temp"] = 0;
+    pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+
+    EXPECT_FALSE(pvsam_errors);
+    ssc_data_get_number(data, "annual_energy", &annualEnergy);
+    EXPECT_NEAR(annualEnergy, 8834, 1.0);
+
+
+
+}
+
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, UseCustomAngles) {
+
+    std::map<std::string, double> pairs;
+
+    pairs["subarray1_use_custom_rot_angles"] = 1;
+    int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+
+    EXPECT_FALSE(pvsam_errors);
+    ssc_number_t annualEnergy;
+    int n1;
+    ssc_number_t* subarray1_cell_temp = ssc_data_get_array(data, "subarray1_axisrot", &n1);
+    EXPECT_NEAR(subarray1_cell_temp[11], -24.8588, 0.001);
+    ssc_data_get_number(data, "annual_energy", &annualEnergy);
+    EXPECT_NEAR(annualEnergy, 11516, 1.0);
+
+    pairs["subarray1_use_custom_rot_angles"] = 0;
+    pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+
+    EXPECT_FALSE(pvsam_errors);
+    ssc_data_get_number(data, "annual_energy", &annualEnergy);
+    EXPECT_NEAR(annualEnergy, 8834, 1.0);
+
+
+
+}
+
 /// Test PVSAMv1 with all defaults and no-financial model- look at MPPT input 1 voltage at night
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, InverterNighttime) {
 
