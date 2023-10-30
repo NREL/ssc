@@ -87,7 +87,9 @@ static var_info _cm_vtab_wfreader[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_beam",             "Average daily beam normal",        "kWh/m2/day",   "",                "Weather Reader",      "header_only=0",                        "",     "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_diff",          "Average daily diffuse",            "kWh/m2/day",   "",                "Weather Reader",      "header_only=0",                        "",     "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "annual_tdry",             "Average dry bulb temperature",     "'C",           "",                "Weather Reader",      "header_only=0",                        "",     "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "annual_wspd", "Average wind speed", "m/s", "", "Weather Reader", "header_only=0", "", "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "annual_twet",             "Average wet bulb temperature",     "'C",           "",                "Weather Reader",      "header_only=0",                        "",     "" },
+
+    { SSC_OUTPUT, SSC_NUMBER, "annual_wspd", "Average wind speed", "m/s", "", "Weather Reader", "header_only=0", "", "" },
 
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_snow", "Maximum snow depth", "cm", "", "Weather Reader", "header_only=0", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "annual_albedo", "Average albedo", "", "", "Weather Reader", "header_only=0", "", "" },
@@ -173,7 +175,7 @@ public:
 		ssc_number_t *p_albedo = allocate( "albedo", records );
 
 		double gh_sum = 0.0, dn_sum = 0.0, df_sum = 0.0;
-		double temp_sum = 0.0, wind_sum = 0.0, albedo_sum = 0.0;
+		double temp_sum = 0.0, twet_sum = 0.0, wind_sum = 0.0, albedo_sum = 0.0;
 		double snow_max = -1;
 
 		double ts_hour = wfile.step_sec() / 3600.0;
@@ -210,6 +212,7 @@ public:
 			dn_sum += wf.dn * ts_hour;
 			df_sum += wf.df * ts_hour;
 			temp_sum += wf.tdry;
+            twet_sum += wf.twet;
 			wind_sum += wf.wspd;
 			albedo_sum += wf.alb;
 			if (!std::isnan(wf.snow) && (wf.snow > snow_max))
@@ -224,6 +227,7 @@ public:
 		assign("annual_beam", var_data((ssc_number_t) (0.001 * dn_sum / 365)));
 		assign("annual_diff", var_data((ssc_number_t)(0.001 * df_sum / 365)));
 		assign("annual_tdry", var_data((ssc_number_t)(temp_sum / records)));
+        assign("annual_twet", var_data((ssc_number_t)(twet_sum / records)));
 		assign("annual_wspd", var_data((ssc_number_t)(wind_sum / records)));
 		assign("annual_snow", var_data((ssc_number_t)snow_max));
 		assign("annual_albedo", var_data((ssc_number_t)(albedo_sum / records)));
