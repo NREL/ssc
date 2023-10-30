@@ -72,6 +72,9 @@ struct SGeothermal_Inputs
 		md_TemperatureEGSAmbientC = md_RatioInjectionToProduction = 0.0;
 		md_AdditionalPressure = 1.0;
         md_dtProdWell = md_dtProdWellChoice = 0.0;
+        md_NumberOfWellsProdExp = md_NumberOfWellsInjDrilled = md_NumberOfWellsProdDrilled = md_FailedWells = md_StimSuccessRate = md_DrillSuccessRate = 0;
+        md_FailedInjFlowRatio = md_FailedProdFlowRatio = md_InjWellFriction = md_ProdWellFriction = md_InjWellPressurePSI = md_InjectivityIndex = md_ExplorationWellsProd = 0;
+        md_UseWeatherFileConditions = 0.0;
 	}
 
 	calculationBasis me_cb;									// { NO_CALCULATION_BASIS, POWER_SALES, NUMBER_OF_WELLS };
@@ -91,6 +94,17 @@ struct SGeothermal_Inputs
 	size_t mi_TotalMakeupCalculations;						// mi_ProjectLifeYears * mi_MakeupCalculationsPerYear
 
 	double md_DesiredSalesCapacityKW;						// entered or calculated, linked to 'cb'
+    double md_NumberOfWellsProdExp;
+    double md_NumberOfWellsProdDrilled;
+    double md_NumberOfWellsInjDrilled;
+    double md_FailedWells;
+    double md_FailedInjFlowRatio;
+    double md_FailedProdFlowRatio;
+    double md_StimSuccessRate;
+    double md_DrillSuccessRate;
+    double md_InjWellFriction;
+    double md_InjWellPressurePSI;
+    double md_ProdWellFriction;
 	double md_NumberOfWells;								// entered or calculated, depending on 'cb'
     double md_NumberofWellsInj;
 	double md_PlantEfficiency;								// not in GETEM - essentially the ratio of plant brine effectiveness to max possible brine effectiveness
@@ -98,16 +112,19 @@ struct SGeothermal_Inputs
 	double md_MaxTempDeclineC;								// degrees C, default = 30
 	double md_TemperatureWetBulbC;							// degrees celcius - used in Flash brine effectiveness
 	double md_PressureAmbientPSI;							// psi, default=14.7, mostly for use in calculating flash brine effectiveness, but also pump work
-	double md_ProductionFlowRateKgPerS;						// 70 kilograms per second in one well (default FlowRate in GETEM)
+    int md_UseWeatherFileConditions;
+    double md_ProductionFlowRateKgPerS;						// 70 kilograms per second in one well (default FlowRate in GETEM)
 	double md_GFPumpEfficiency;								// default=0.6 or 60%
 	double md_PressureChangeAcrossSurfaceEquipmentPSI;		// default 25 psi
 	double md_ExcessPressureBar;							// default 3.5 bar, [2B.Resource&Well Input].D205
 	double md_DiameterProductionWellInches;					// default 10 inches
     double md_ProductionWellType;                           // 0 open hole, 1 liner
+    double md_ProductionWellDiam;
 	double md_DiameterPumpCasingInches;						// default 9.925 inches
     double md_DiameterInjPumpCasingInches;
 	double md_DiameterInjectionWellInches;					// default 10 inches
     double md_InjectionWellType;                            // 0 open hole, 1 liner
+    double md_InjectionWellDiam;
 	double md_UserSpecifiedPumpWorkKW;
 	double md_PotentialResourceMW;							// MW, default = 200 MW, determines how many times reservoir can be replaced
 	double md_ResourceDepthM;								// meters, default 2000
@@ -118,6 +135,8 @@ struct SGeothermal_Inputs
 	double md_EGSSpecificHeatConstant;						// default 950 Joules per kg-C, [2B.Resource&Well Input].D241
 	double md_EGSRockDensity;								// default 2600 kg per cubic meter, [2B.Resource&Well Input].D242
 	double md_ReservoirDeltaPressure;						// default 0.35 psi-h per 1000lb, [2B.Resource&Well Input].D171
+    double md_InjectivityIndex;
+    double md_ExplorationWellsProd; 
 	double md_ReservoirWidthM;
 	double md_ReservoirHeightM;
 	double md_ReservoirPermeability;
@@ -151,12 +170,22 @@ struct SGeothermal_Outputs
 		maf_timestep_power = maf_timestep_test_values = maf_timestep_pressure = maf_timestep_dry_bulb = maf_timestep_wet_bulb = NULL;
 		mb_BrineEffectivenessCalculated = mb_FlashPressuresCalculated = false;
 		maf_hourly_power = NULL;
-        ElapsedHours = 0;
+        md_NumberOfWellsProdExp = md_NumberOfWellsProdDrilled = md_NumberOfWellsInjDrilled = md_FailedWells = md_StimSuccessRate = md_DrillSuccessRate = 0;
+        md_FailedInjFlowRatio = md_FailedProdFlowRatio = 0;
+        ElapsedHours = ElapsedMonths = 0;
 
 	}
 
 	//Following list of variables used as inputs in cmod_geothermal_costs.cpp for calculating direct geothermal plant cost:
 	double md_NumberOfWells;
+    double md_NumberOfWellsProdExp;
+    double md_NumberOfWellsProdDrilled;
+    double md_NumberOfWellsInjDrilled;
+    double md_FailedWells;
+    double md_FailedInjFlowRatio;
+    double md_FailedProdFlowRatio;
+    double md_StimSuccessRate;
+    double md_DrillSuccessRate;
     double md_NumberOfWellsInj;
 	double md_PumpWorkKW;
 	double eff_secondlaw;				//Overall Plant 2nd Law Efficiency 
@@ -184,6 +213,7 @@ struct SGeothermal_Outputs
 	double flash_count;
 	double max_secondlaw;				//Max 2nd Law efficiency
     double ElapsedHours;
+    double ElapsedMonths;
 
 
 // single values used in calculations, some also used in UI
@@ -393,6 +423,7 @@ private:
 	double calculateDH1(double pressureIn);
     double calculateDH2(double pressureIn);
 	double TemperatureWetBulbF(void);
+    double calc_twet(double T, double RH, double P);
 	double temperatureCondF(void); // D72 - deg F
 	double pressureSaturation(void); // D72 - psi
 	double pressureCondenser(void); // D74 - psi
