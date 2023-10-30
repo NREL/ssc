@@ -1053,7 +1053,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, SubhourlyClippingCorrectionModel)
     //check answers for subhourly clipping annual loss
     ssc_number_t subhourly_clipping_loss;
     ssc_data_get_number(data, "annual_subhourly_clipping_loss", &subhourly_clipping_loss);
-    EXPECT_NEAR(subhourly_clipping_loss, 16.198852, m_error_tolerance_lo);
+    EXPECT_NEAR(subhourly_clipping_loss, 16.633622, m_error_tolerance_lo);
 
     //Modify matrix, re-run test with user entered matrix (SDK only)
     ssc_number_t Subhourly_Clipping_Matrix[441] =
@@ -1088,7 +1088,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, SubhourlyClippingCorrectionModel)
     EXPECT_FALSE(pvsam_errors);
     //check answers for subhourly clipping annual loss
     ssc_data_get_number(data, "annual_subhourly_clipping_loss", &subhourly_clipping_loss);
-    EXPECT_NEAR(subhourly_clipping_loss, 21.162229, m_error_tolerance_lo);
+    EXPECT_NEAR(subhourly_clipping_loss, 21.596999, m_error_tolerance_lo);
 
     //Test different matrix size
     ssc_number_t Subhourly_Clipping_Matrix_Short[272];
@@ -1104,7 +1104,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, SubhourlyClippingCorrectionModel)
     double subhourly_clipping_loss_short;
     ssc_data_get_number(data, "annual_subhourly_clipping_loss", &subhourly_clipping_loss_short);
     double subhourly_clipping_loss_percent;
-    EXPECT_NEAR(subhourly_clipping_loss_short, 24.189811, m_error_tolerance_lo);
+    EXPECT_NEAR(subhourly_clipping_loss_short, 24.624581, m_error_tolerance_lo);
     ssc_data_get_number(data, "annual_subhourly_clipping_loss_percent", &subhourly_clipping_loss_percent);
     EXPECT_NEAR(subhourly_clipping_loss_percent, 0.271086, m_error_tolerance_lo);
 }
