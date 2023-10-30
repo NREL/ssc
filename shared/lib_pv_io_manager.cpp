@@ -711,7 +711,6 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO* 
     numberOfInverters = cm->as_integer("inverter_count");
     
     dcNameplate = cm->as_double("system_capacity");
-    //numberOfInvertersClipping = cm->as_integer("num_inverter_subhourly_clipping");
     numberOfInvertersClipping = dcNameplate / (Inverter->ratedACOutput / 1000);
     if (numberOfInvertersClipping == 0.0) numberOfInvertersClipping = 1;
     
@@ -966,7 +965,6 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
     p_acWiringLoss = cm->allocate("ac_wiring_loss", numberOfWeatherFileRecords);
     p_ClippingPotential = cm->allocate("clipping_potential", numberOfWeatherFileRecords);
     p_CPBin = cm->allocate("clipping_potential_bin", numberOfWeatherFileRecords);
-    //p_DNIIndex = cm->allocate("dni_index", numberOfWeatherFileRecords);
     p_DNIIndexBin = cm->allocate("dni_index_bin", numberOfWeatherFileRecords);
 
     p_transmissionLoss = cm->allocate("ac_transmission_loss", numberOfWeatherFileRecords);

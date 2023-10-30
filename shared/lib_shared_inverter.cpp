@@ -269,11 +269,6 @@ void SharedInverter::calculateACPower(const double powerDC_kW_in, const double D
     if (m_tempEnabled) {
         calculateTempDerate(DCStringVoltage, tempC, powerDC_Watts, power_ratio, tempLoss);
     }
-    /*
-    if (m_numInvertersClipping > 0) {
-        m_sandiaInverter->acpower(std::abs(powerDC_Watts) / m_numInvertersClipping, DCStringVoltage, &powerAC_Watts_clipping, &P_par_clipping, &P_lr_clipping, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW);
-
-    }*/
 
     if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
         m_sandiaInverter->acpower(std::abs(powerDC_Watts) / m_numInverters, DCStringVoltage, &powerAC_Watts, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW);
@@ -288,11 +283,6 @@ void SharedInverter::calculateACPower(const double powerDC_kW_in, const double D
         efficiencyAC = NONE_INVERTER_EFF;
         powerAC_Watts = powerDC_Watts * efficiencyAC;
     }
-    /*
-    if (m_subhourlyClippingEnabled == 1) {
-        powerAC_kW_clipping = powerAC_Watts * m_numInverters * util::watt_to_kilowatt;
-        return;
-    }*/
 
     // Convert units to kW- no need to scale to system size because passed in as power to total number of inverters
     powerDC_kW = powerDC_Watts * util::watt_to_kilowatt;
@@ -327,12 +317,7 @@ void SharedInverter::calculateACPower(const double powerDC_kW_in, const double D
     if (m_tempEnabled) {
         calculateTempDerate(DCStringVoltage, tempC, powerDC_Watts, power_ratio, tempLoss);
     }
-    /*
-    if (clippingEnabled) {
-        m_sandiaInverter->acpower(std::abs(powerDC_Watts) / m_numInvertersClipping, DCStringVoltage, &powerAC_Watts_clipping, &P_par_clipping, &P_lr_clipping, &efficiencyAC_clipping, &powerClipLoss_kW_clipping, &powerConsumptionLoss_kW_clipping, &powerNightLoss_kW_clipping);
 
-    }
-    */
     if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
         m_sandiaInverter->acpower(std::abs(powerDC_Watts) / m_numInvertersClipping, DCStringVoltage, &powerAC_Watts_clipping, &P_par_clipping, &P_lr, &efficiencyAC_clipping, &powerClipLoss_kW_clipping, &powerConsumptionLoss_kW_clipping, &powerNightLoss_kW_clipping);
     else if (m_inverterType == PARTLOAD_INVERTER)

@@ -2614,44 +2614,9 @@ void cm_pvsamv1::exec()
         for (size_t inrec = 0; inrec < nrec; inrec++) {
             idx = inrec;
             double dcPower_kW_nominal = PVSystem->p_systemDCPower[idx];
-            //Calculate DNI clearness index (time step basis)
-            //double dni_clearness_index = PVSystem->p_DNIIndex[0][idx];
             //Calculate Clipping Potential ((P_dc,dryclean - P_ac,0) / P_ac,0) (time step basis)
             sharedInverter->calculateACPower(dcPower_kW_nominal, PVSystem->p_mpptVoltage[0][idx], Irradiance->weatherRecord.tdry, as_boolean("enable_subhourly_clipping")); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
             nominal_annual_clipping_output += sharedInverter->powerAC_kW_clipping; //AC nominal output
-            /*
-            double clip_pot = (dcPower_kW_csky - sharedInverter->powerAC_kW_clipping) / sharedInverter->powerAC_kW_clipping;
-            //Lookup matrix for percentage effect based on DNI index, Clipping potential                                                                                                        //Lookup bias error in matrix (unitless) [CP, DNI]
-            util::matrix_t<double> sub_clipping_matrix = as_matrix("subhourly_clipping_matrix");
-            size_t nrows = sub_clipping_matrix.nrows();
-            size_t ncols = sub_clipping_matrix.ncols();
-            size_t dni_row = 0;
-            size_t clip_pot_col = 0;
-            double clip_correction = 0;
-            if (dni_clearness_index < sub_clipping_matrix.at(1, 0)) dni_row = 1;
-            else if (dni_clearness_index > sub_clipping_matrix.at(nrows - 1, 0)) dni_row = nrows - 1;
-            else {
-                for (size_t r = 1; r < nrows; r++) {
-                    if (dni_clearness_index > sub_clipping_matrix.at(r, 0) && dni_clearness_index < sub_clipping_matrix.at(r + 1, 0)) {
-                        dni_row = r;
-                    }
-                }
-            }
-
-            //Clipping potential indexing
-            if (clip_pot < sub_clipping_matrix.at(0, 1)) clip_pot_col = 1;
-            else if (clip_pot > sub_clipping_matrix.at(0, ncols - 1)) clip_pot_col = ncols - 1;
-            else {
-                for (size_t c = 1; c < ncols; c++) {
-                    if (clip_pot > sub_clipping_matrix.at(0, c) && clip_pot < sub_clipping_matrix.at(0, c + 1)) {
-                        clip_pot_col = c;
-                    }
-                }
-            }
-
-            //acpwr_gross *= (1 - sub_clipping_matrix.at(dni_row, clip_pot_col));
-            annual_subhourly_clipping_loss += sub_clipping_matrix.at(dni_row, clip_pot_col);
-            */
         }
         assign("nominal_annual_clipping_output", nominal_annual_clipping_output);
     }
@@ -2772,12 +2737,9 @@ void cm_pvsamv1::exec()
                 //Calculate DNI clearness index (time step basis)
                 double dni_clearness_index = PVSystem->p_DNIIndex[0][idx];
                 //Calculate Clipping Potential ((P_dc,dryclean - P_ac,0) / P_ac,0) (time step basis)
-                //sharedInverter->calculateACPower(dcPower_kW_csky, dcVoltagePerMppt[0], Irradiance->weatherRecord.tdry, as_boolean("enable_subhourly_clipping")); //DC batteries not allowed with multiple MPPT, so can just use MPPT 1's voltage
-                //double clip_pot = (dcPower_kW_csky - sharedInverter->powerAC_kW_clipping) / sharedInverter->powerAC_kW_clipping;
                 double clip_pot = (dcPower_kW_csky - paco ) / (paco);
                 
                 PVSystem->p_ClippingPotential[idx] = clip_pot;
-                //PVSystem->p_DNIIndex[idx] = dni_clearness_index;
                 
                 //Lookup matrix for percentage effect based on DNI index, Clipping potential
 
@@ -2809,7 +2771,6 @@ void cm_pvsamv1::exec()
                 }
                 PVSystem->p_CPBin[idx] = clip_pot_col;
 
-                //acpwr_gross *= (1 - sub_clipping_matrix.at(dni_row, clip_pot_col));
                 if (dcPower_kW > 0.0) {
                     //Sunrise + hour after, sunset + hour preceding are excluding from correction
                     //check if sunrise happens in hour, or if sunrise was last hour, exclude those hours
@@ -2817,12 +2778,10 @@ void cm_pvsamv1::exec()
                     //check if sunset happens in hour, or in next hour, exclude both from correction
                     else if (Irradiance->p_sunUpOverHorizon[idx] == 3) ac_subhourlyclipping_loss = 0.0;
                     else ac_subhourlyclipping_loss = sub_clipping_matrix.at(dni_row, clip_pot_col) * nominal_annual_clipping_output;
-                    //ac_subhourlyclipping_loss = sub_clipping_matrix.at(dni_row, clip_pot_col) * sharedInverter->powerAC_kW_clipping;
                 }
                 else { //No inverter clipping at night time, skip checks?
                     ac_subhourlyclipping_loss = 0.0;
                 }
-                //annual_subhourly_clipping_loss += ac_subhourlyclipping_loss;
             }
             
 
@@ -2867,7 +2826,6 @@ void cm_pvsamv1::exec()
             PVSystem->p_systemDCPower[idx] = (ssc_number_t)(sharedInverter->powerDC_kW);
 
 			//ac losses should always be subtracted, this means you can't just multiply by the derate because at nighttime it will add power
-			//PVSystem->p_systemACPower[idx] = (ssc_number_t)(acpwr_gross - ac_wiringloss - ac_subhourlyclipping_loss);
             PVSystem->p_systemACPower[idx] = (ssc_number_t)(acpwr_gross - ac_wiringloss - ac_subhourlyclipping_loss);
             // AC connected batteries will set this laster
             if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
