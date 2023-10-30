@@ -339,14 +339,14 @@ public:
                 if (fuelcell_discharged.size() != (size_t)analysisPeriod + 1)
                     throw exec_error("hybrid", util::format("fuelcell_discharged size (%d) incorrect", (int)fuelcell_discharged.size()));
                 // fuelcell cost - replacement from lifetime analysis
-                if (((var_table*)compute_module_outputs)->is_assigned("fuelcell_replacement_option") && (((var_table*)compute_module_outputs)->as_integer("fuelcell_replacement_option") > 0))
+                if (input.is_assigned("fuelcell_replacement_option") && (input.as_integer("fuelcell_replacement_option") > 0))
                 {
                     size_t count;
                     ssc_number_t* fuelcell_rep = 0;
-                    if (((var_table*)compute_module_outputs)->as_integer("fuelcell_replacement_option") == 1)
+                    if (input.as_integer("fuelcell_replacement_option") == 1)
                         fuelcell_rep = ((var_table*)compute_module_outputs)->as_array("fuelcell_replacement", &count); // replacements per year calculated
                     else // user specified
-                        fuelcell_rep = ((var_table*)compute_module_outputs)->as_array("fuelcell_replacement_schedule", &count); // replacements per year user-defined
+                        fuelcell_rep = input.as_array("fuelcell_replacement_schedule", &count); // replacements per year user-defined
 
                     escal_or_annual(input, pFuelCellReplacement, analysisPeriod, "om_fuelcell_replacement_cost", inflation_rate, nameplate, false, input.as_double("om_replacement_cost_escal") * 0.01);
 
