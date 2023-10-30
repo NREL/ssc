@@ -2813,9 +2813,9 @@ void cm_pvsamv1::exec()
                 if (dcPower_kW > 0.0) {
                     //Sunrise + hour after, sunset + hour preceding are excluding from correction
                     //check if sunrise happens in hour, or if sunrise was last hour, exclude those hours
-                    if (Irradiance->p_sunUpOverHorizon[idx] == 2 || Irradiance->p_sunUpOverHorizon[idx - 1] == 2) ac_subhourlyclipping_loss = 0.0;
+                    if (Irradiance->p_sunUpOverHorizon[idx] == 2) ac_subhourlyclipping_loss = 0.0;
                     //check if sunset happens in hour, or in next hour, exclude both from correction
-                    else if (Irradiance->p_sunUpOverHorizon[idx] == 3 || Irradiance->p_sunUpOverHorizon[idx + 1] == 3) ac_subhourlyclipping_loss = 0.0;
+                    else if (Irradiance->p_sunUpOverHorizon[idx] == 3) ac_subhourlyclipping_loss = 0.0;
                     else ac_subhourlyclipping_loss = sub_clipping_matrix.at(dni_row, clip_pot_col) * nominal_annual_clipping_output;
                     //ac_subhourlyclipping_loss = sub_clipping_matrix.at(dni_row, clip_pot_col) * sharedInverter->powerAC_kW_clipping;
                 }
