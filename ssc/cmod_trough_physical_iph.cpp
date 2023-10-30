@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include "csp_solver_util.h"
 #include "csp_solver_core.h"
 #include "csp_solver_trough_collector_receiver.h"
-#include "csp_solver_pc_Rankine_indirect_224.h"
+#include "csp_solver_pc_heat_sink.h"
 #include "csp_solver_two_tank_tes.h"
 #include "csp_solver_tou_block_schedules.h"
 #include "csp_dispatch.h"
@@ -70,6 +70,9 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     //{ SSC_INPUT,        SSC_NUMBER,      "track_mode",                "Tracking mode",                                                                    "none",         "",               "weather",        "*",                       "",                      "" },
 
     // Solar Field, Trough
+
+    { SSC_INPUT,        SSC_NUMBER,      "q_pb_design",               "Design heat input to power block",                                                 "MWt",          "",               "System_Design",  "*",                       "",                      "" },
+
     { SSC_INPUT,        SSC_NUMBER,      "nSCA",                      "Number of SCAs in a loop",                                                         "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "nHCEt",                     "Number of HCE types",                                                              "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "nColt",                     "Number of collector types",                                                        "none",         "constant=4",     "solar_field",    "*",                       "",                      "" },
@@ -159,36 +162,11 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_INPUT,        SSC_NUMBER,      "rec_qf_delay",              "Energy-based receiver startup delay (fraction of rated thermal power)",            "-",            "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "p_start",                   "Collector startup energy, per SCA",                                                "kWe-hr",       "",               "solar_field",    "*",                       "",                      "" },
 
-    // Power Cycle
-    //{ SSC_INPUT,        SSC_NUMBER,      "q_pb_design",               "Design heat input to power block",                                                 "MWt",          "",               "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "pc_config",                 "0: Steam Rankine (224), 1: user defined",                                          "-",            "",               "powerblock",     "?=0",                     "INTEGER",               "" },
-    { SSC_INPUT,        SSC_NUMBER,      "P_ref",                     "Rated plant capacity",                                                             "MWe",          "",               "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "eta_ref",                   "Power cycle efficiency at design",                                                 "none",         "",               "powerblock",     "*",                       "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "T_htf_hot_des",             "Hot HTF outlet temperature at design conditions",                                  "C",            "",               "powerblock",     "*",                       "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "T_htf_cold_des",            "Cold HTF inlet temperature at design conditions",                                  "C",            "",               "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "cycle_max_frac",            "Maximum turbine over design operation fraction",                                   "-",            "",               "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "cycle_cutoff_frac",         "Minimum turbine operation fraction before shutdown",                               "-",            "",               "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "q_sby_frac",                "Fraction of thermal power required for standby mode",                              "none",         "",               "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "startup_time",              "Time needed for power block startup",                                              "hr",           "",               "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "startup_frac",              "Fraction of design thermal power needed for startup",                              "none",         "",               "powerblock",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "pb_pump_coef",              "Pumping power to move 1kg of HTF through PB loop",                                 "kW/kg",        "",               "powerblock",     "*",                       "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "rec_htf",                   "17: Salt (60% NaNO3, 40% KNO3) 10: Salt (46.5% LiF 11.5% NaF 42% KF) 50: Lookup tables", "",       "",               "powerblock",     "*",                      "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "dT_cw_ref",                 "Reference condenser cooling water inlet/outlet T diff",                            "C",            "",               "powerblock",     "pc_config=0",             "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_amb_des",                 "Reference ambient temperature at design point",                                    "C",            "",               "powerblock",     "pc_config=0",             "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "CT",                        "Flag for using dry cooling or wet cooling system",                                 "none",         "",               "powerblock",     "pc_config=0",             "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "tech_type",                 "Turbine inlet pressure control flag (sliding=user, fixed=trough)",                 "1/2/3",        "tower/trough/user", "powerblock",  "pc_config=0",             "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_approach",                "Cooling tower approach temperature",                                               "C",            "",               "powerblock",     "pc_config=0",             "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_ITD_des",                 "ITD at design for dry system",                                                     "C",            "",               "powerblock",     "pc_config=0",             "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "P_cond_ratio",              "Condenser pressure ratio",                                                         "none",         "",               "powerblock",     "pc_config=0",             "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "pb_bd_frac",                "Power block blowdown steam fraction ",                                             "none",         "",               "powerblock",     "pc_config=0",             "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "P_cond_min",                "Minimum condenser pressure",                                                       "inHg",         "",               "powerblock",     "pc_config=0",             "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "n_pl_inc",                  "Number of part-load increments for the heat rejection system",                     "none",         "",               "powerblock",     "pc_config=0",             "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "F_wc",                      "Fraction indicating wet cooling use for hybrid system",                            "none",         "constant=[0,0,0,0,0,0,0,0,0]",     "powerblock", "pc_config=0", "",                    "" },
+    // Heat Sink
 
-    // UDPC parameters
-    { SSC_INPUT,        SSC_NUMBER,      "ud_f_W_dot_cool_des",       "Percent of user-defined power cycle design gross output consumed by cooling",      "%",            "",               "powerblock",     "pc_config=1",             "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "ud_m_dot_water_cool_des",   "Mass flow rate of water required at user-defined power cycle design point",        "kg/s",         "",               "powerblock",     "pc_config=1",             "",                      "" },
-    { SSC_INPUT,        SSC_MATRIX,      "ud_ind_od",                 "Off design user-defined power cycle performance as function of T_htf, m_dot_htf [ND], and T_amb",   "", "",          "powerblock",     "pc_config=1",             "",                      "" },
+    /*Heat Sink*/{ SSC_INPUT,     SSC_NUMBER,         "pb_pump_coef",                "Pumping power to move 1kg of HTF through PB loop",                                      "kW/kg",               "",                              "Heat Sink",           "*",                "",                 "" },
+
+
 
     // TES
     { SSC_INPUT,        SSC_NUMBER,      "store_fluid",               "Material number for storage fluid",                                                "-",            "",               "TES",            "*",                       "",                      "" },
@@ -413,10 +391,6 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_OUTPUT,       SSC_MATRIX,      "csp_dtr_sca_calc_end_losses",      "Use time-series net electricity generation limits",                        "",              "",               "Collector",      "?=0",                              "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "csp_dtr_sca_calc_latitude",        "Latitude",                                                                 "degree",        "",               "Collector",      "?=0",                              "",                      "" },
     { SSC_OUTPUT,       SSC_MATRIX,      "csp_dtr_sca_calc_iams",            "IAM at summer solstice",                                                   "",              "",               "Collector",      "?=0",                              "",                      "" },
-
-    // Power Cycle
-    { SSC_OUTPUT,       SSC_NUMBER,      "m_dot_htf_cycle_des",              "PC mass flow rate at design",                                              "kg/s",          "",               "Power Cycle",    "*",                                "",                      "" },
-
 
     // System Control
     { SSC_OUTPUT,       SSC_NUMBER,      "is_wlim_series",                   "Use time-series net electricity generation limits",                        "",              "",               "System Control", "?=0",                              "",                      "" },
@@ -665,6 +639,9 @@ public:
         bool is_dispatch = as_boolean("is_dispatch");
         int sim_type = as_number("sim_type");
         int csp_financial_model = as_integer("csp_financial_model");
+        double T_htf_cold_des = as_double("T_loop_in_des");    //[C]
+        double T_htf_hot_des = as_double("T_loop_out");      //[C]
+        double q_dot_pc_des = as_double("q_pb_design");         //[MWt] HEAT SINK design thermal power
 
         // *****************************************************
         // Check deprecated variables
@@ -1056,98 +1033,33 @@ public:
         }
         
 
-        // ********************************
-        // ********************************
-        // Power cycle
-        // ********************************
-        // ********************************
-        C_csp_power_cycle * p_csp_power_cycle;
-        // Steam Rankine and User Defined power cycle classes
-        C_pc_Rankine_indirect_224 rankine_pc;
+        // Heat Sink
+        C_pc_heat_sink c_heat_sink;
         {
-            int pb_tech_type = as_integer("pc_config");
-            if (!(pb_tech_type == 0 || pb_tech_type == 1))  // 0 = Rankine, 1 = UDPC
-            {
-                throw exec_error("trough_physical", "unsupported power cycle");
+            size_t n_f_turbine1 = 0;
+            ssc_number_t* p_f_turbine1 = as_array("f_turb_tou_periods", &n_f_turbine1);   // heat sink, not turbine
+            double f_turbine_max1 = 1.0;
+            for (size_t i = 0; i < n_f_turbine1; i++) {
+                f_turbine_max1 = max(f_turbine_max1, p_f_turbine1[i]);
             }
-            else
-            {
-                C_pc_Rankine_indirect_224::S_params* pc = &rankine_pc.ms_params;
-                pc->m_P_ref = as_double("P_ref");
-                pc->m_eta_ref = as_double("eta_ref");
-                pc->m_T_htf_hot_ref = as_double("T_loop_out");
-                pc->m_T_htf_cold_ref = as_double("T_loop_in_des");
-                pc->m_cycle_max_frac = as_double("cycle_max_frac");
-                pc->m_cycle_cutoff_frac = as_double("cycle_cutoff_frac");
-                pc->m_q_sby_frac = as_double("q_sby_frac");
-                pc->m_startup_time = as_double("startup_time");
-                pc->m_startup_frac = as_double("startup_frac");
-                pc->m_htf_pump_coef = as_double("pb_pump_coef");
-                pc->m_pc_fl = as_integer("Fluid");                            // power cycle HTF is same as receiver HTF
-                pc->m_pc_fl_props = as_matrix("field_fl_props");
-                pc->DP_SGS = as_double("DP_SGS");
 
-                if (pb_tech_type == 0)
-                {
-                    pc->m_dT_cw_ref = as_double("dT_cw_ref");
-                    pc->m_T_amb_des = as_double("T_amb_des");
-                    //pc->m_P_boil = as_double("P_boil");
-                    pc->m_P_boil_des = 100.0;       //[bar]
-                    pc->m_CT = as_integer("CT");                    // cooling tech type: 1=evaporative, 2=air, 3=hybrid    
-                    pc->m_tech_type = as_integer("tech_type");      // turbine inlet pressure: 1: Fixed, 3: Sliding
-                    if (pc->m_tech_type == 1) { pc->m_tech_type = 2; }; // changing fixed pressure for the tower to fixed pressure for the trough
-                    if (pc->m_tech_type == 3) { pc->m_tech_type = 8; }; // changing sliding pressure for the tower to sliding pressure for the trough
-                    if (!(pc->m_tech_type == 2 || pc->m_tech_type == 5 || pc->m_tech_type == 6 || pc->m_tech_type == 8))
-                    {
-                        std::string tech_msg = util::format("tech_type must be either 2 (fixed pressure) or 8 (sliding). Input was %d."
-                            " Simulation proceeded with fixed pressure", pc->m_tech_type);
-                        pc->m_tech_type = 2;
-                    }
-                    pc->m_T_approach = as_double("T_approach");
-                    pc->m_T_ITD_des = as_double("T_ITD_des");
-                    pc->m_P_cond_ratio = as_double("P_cond_ratio");
-                    pc->m_pb_bd_frac = as_double("pb_bd_frac");
-                    pc->m_P_cond_min = as_double("P_cond_min");
-                    pc->m_n_pl_inc = as_integer("n_pl_inc");
+            c_heat_sink.ms_params.m_T_htf_hot_des = T_htf_hot_des;		//[C] FIELD design outlet temperature
+            c_heat_sink.ms_params.m_T_htf_cold_des = T_htf_cold_des;	//[C] FIELD design inlet temperature
+            c_heat_sink.ms_params.m_q_dot_des = q_dot_pc_des;			//[MWt] HEAT SINK design thermal power (could have field solar multiple...)
+            // 9.18.2016 twn: assume for now there's no pressure drop though heat sink
+            c_heat_sink.ms_params.m_htf_pump_coef = as_double("pb_pump_coef");		//[kWe/kg/s]
+            c_heat_sink.ms_params.m_max_frac = f_turbine_max1;
 
-                    size_t n_F_wc = 0;
-                    ssc_number_t* p_F_wc = as_array("F_wc", &n_F_wc);
-                    pc->m_F_wc.resize(n_F_wc, 0.0);
-                    for (size_t i = 0; i < n_F_wc; i++)
-                        pc->m_F_wc[i] = (double)p_F_wc[i];
+            c_heat_sink.ms_params.m_pc_fl = as_integer("Fluid");
+            c_heat_sink.ms_params.m_pc_fl_props = as_matrix("field_fl_props");
 
-                    pc->m_is_user_defined_pc = false;
-                    pc->m_W_dot_cooling_des = std::numeric_limits<double>::quiet_NaN();
-                }
-                else if (pb_tech_type == 1)
-                {
-                    pc->m_is_user_defined_pc = true;
 
-                    // User-Defined Cycle Parameters
-                    pc->m_W_dot_cooling_des = as_double("ud_f_W_dot_cool_des") / 100.0 * as_double("P_ref");  //[MWe]
-                    pc->m_m_dot_water_des = as_double("ud_m_dot_water_cool_des");       //[kg/s]
-
-                    // User-Defined Cycle Off-Design Tables 
-                    pc->mc_combined_ind = as_matrix("ud_ind_od");
-                }
-
-                // Set pointer to parent class
-                p_csp_power_cycle = &rankine_pc;
-
-                // Set power cycle outputs common to all power cycle technologies
-                p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_Q_DOT_HTF, allocate("q_pb", n_steps_fixed), n_steps_fixed);
-                p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_M_DOT_HTF, allocate("m_dot_pc", n_steps_fixed), n_steps_fixed);
-                p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_Q_DOT_STARTUP, allocate("q_dot_pc_startup", n_steps_fixed), n_steps_fixed);
-                p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_W_DOT, allocate("P_cycle", n_steps_fixed), n_steps_fixed);
-                p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_HTF_IN, allocate("T_pc_in", n_steps_fixed), n_steps_fixed);
-                p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_T_HTF_OUT, allocate("T_pc_out", n_steps_fixed), n_steps_fixed);
-                p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_M_DOT_WATER, allocate("m_dot_water_pc", n_steps_fixed), n_steps_fixed);
-                p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_W_DOT_HTF_PUMP, allocate("cycle_htf_pump_power", n_steps_fixed), n_steps_fixed);
-                p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_W_DOT_COOLER, allocate("P_cooling_tower_tot", n_steps_fixed), n_steps_fixed);
-
-                // Dependent reported variable
-                p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_ETA_THERMAL, allocate("eta", n_steps_fixed), n_steps_fixed);
-            }
+            // Allocate heat sink outputs
+            c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_Q_DOT_HEAT_SINK, allocate("q_dot_to_heat_sink", n_steps_fixed), n_steps_fixed);
+            c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_W_DOT_PUMPING, allocate("W_dot_pc_pump", n_steps_fixed), n_steps_fixed);
+            c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_M_DOT_HTF, allocate("m_dot_htf_heat_sink", n_steps_fixed), n_steps_fixed);
+            c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_T_HTF_IN, allocate("T_heat_sink_in", n_steps_fixed), n_steps_fixed);
+            c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_T_HTF_OUT, allocate("T_heat_sink_out", n_steps_fixed), n_steps_fixed);
         }
         
 
@@ -1458,7 +1370,7 @@ public:
         // Instantiate Solver
         C_csp_solver csp_solver(weather_reader, 
                                 c_trough,
-                                *p_csp_power_cycle,
+                                c_heat_sink,
                                 storage, 
                                 tou,
                                 dispatch,
