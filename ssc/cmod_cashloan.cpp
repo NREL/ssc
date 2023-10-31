@@ -503,8 +503,8 @@ public:
 		std::vector<double> fuel_use;
 		if ((as_integer("system_use_lifetime_output") == 1) && is_assigned("annual_fuel_usage_lifetime")) {
 			fuel_use = as_vector_double("annual_fuel_usage_lifetime");
-			if (fuel_use.size() != (size_t)(nyears + 1)) {
-				throw exec_error("cashloan", util::format("fuel usage years (%d) not equal to analysis period years (%d).", (int)fuel_use.size() - 1, nyears));
+			if (fuel_use.size() != (size_t)(nyears)) {
+				throw exec_error("cashloan", util::format("fuel usage years (%d) not equal to analysis period years (%d).", (int)fuel_use.size(), nyears));
 			}
 		}
 		else {
@@ -908,7 +908,7 @@ public:
 			// TODO additional production o and m here
 
 
-			cf.at(CF_om_fuel_expense,i) *= fuel_use[i];
+			cf.at(CF_om_fuel_expense,i) *= fuel_use[i-1];
 
             //Battery Production OM Costs
             cf.at(CF_om_production1_expense, i) *= battery_discharged[i - 1]; //$/MWh * 0.001 MWh/kWh * kWh = $
