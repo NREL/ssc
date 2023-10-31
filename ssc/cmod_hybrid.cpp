@@ -332,11 +332,11 @@ public:
 
                 nameplate = system_capacity;
                 fuelcell_discharged = ((var_table*)compute_module_outputs)->as_vector_double("fuelcell_annual_energy_discharged");
-                if (fuelcell_discharged.size() == 2) { // ssc #992
+                if (fuelcell_discharged.size() == 1) { // ssc #992
                     double first_val = fuelcell_discharged[0]; // first value differs here!
-                    fuelcell_discharged.resize(analysisPeriod + 1, first_val);
+                    fuelcell_discharged.resize(analysisPeriod , first_val);
                 }
-                if (fuelcell_discharged.size() != (size_t)analysisPeriod + 1)
+                if (fuelcell_discharged.size() != (size_t)analysisPeriod )
                     throw exec_error("hybrid", util::format("fuelcell_discharged size (%d) incorrect", (int)fuelcell_discharged.size()));
                 // fuelcell cost - replacement from lifetime analysis
                 if (input.is_assigned("fuelcell_replacement_option") && (input.as_integer("fuelcell_replacement_option") > 0))
@@ -360,8 +360,8 @@ public:
                     }
                 }
                 // production O and M conversion to $
-                for (size_t i = 0; i <= (size_t)analysisPeriod; i++)
-                    pOMProduction[i] *= fuelcell_discharged[i];
+                for (size_t i = 0; i < (size_t)analysisPeriod; i++)
+                    pOMProduction[i + 1] *= fuelcell_discharged[i];
 
                 // add to gen "fuelcell_power" * timestep (set for pGen above)
                 // cash flow line item is fuelcell_annual_energy_discharged from cmod_fuelcell
@@ -485,8 +485,8 @@ public:
                 escal_or_annual(input, pOMCapacity, analysisPeriod, "om_batt_capacity_cost", inflation_rate, batt_cap, false, input.as_double("om_capacity_escal") * 0.01);
 
                 // production O and M conversion to $
-                for (size_t i = 1; i <= (size_t)analysisPeriod; i++)
-                    pOMProduction[i] *= battery_discharged[i - 1];
+                for (size_t i = 0; i < (size_t)analysisPeriod; i++)
+                    pOMProduction[i+1] *= battery_discharged[i];
 
 
 

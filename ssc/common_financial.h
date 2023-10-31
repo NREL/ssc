@@ -55,6 +55,8 @@ void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double
 
 // Prepend the 0 to relevant outputs
 void update_battery_outputs(compute_module* cm, size_t nyears);
+// Prepend the 0 to relevant outputs
+void update_fuelcell_outputs(compute_module* cm, size_t nyears);
 
 class dispatch_calculations
 {

@@ -3753,3 +3753,13 @@ void update_battery_outputs(compute_module* cm, size_t nyears) {
         prepend_to_output(cm, "batt_annual_charge_from_system", arr_length, yr_0_value);
     }
 }
+
+void update_fuelcell_outputs(compute_module* cm, size_t nyears) {
+    if (cm->as_integer("system_use_lifetime_output") == 1) {
+        size_t arr_length = nyears + 1;
+        ssc_number_t yr_0_value = 0.0;
+        prepend_to_output(cm, "fuelcell_replacement", arr_length, yr_0_value);
+        prepend_to_output(cm, "annual_fuel_usage_lifetime", arr_length, yr_0_value);
+        prepend_to_output(cm, "fuelcell_annual_energy_discharged", arr_length, yr_0_value);
+    }
+}
