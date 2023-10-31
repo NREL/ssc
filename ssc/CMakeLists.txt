@@ -10,7 +10,6 @@ include_directories(. ../splinter ../shared ../nlopt ../lpsolve ../solarpilot ..
 
 set(SSC_SRC
 		cmod_6parsolve.cpp
-		cmod_annualoutput.cpp
 		cmod_analysisperiodchange_eqns.cpp
 		cmod_analysisperiodchange_eqns.h
 		cmod_battery.cpp

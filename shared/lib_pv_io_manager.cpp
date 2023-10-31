@@ -711,8 +711,8 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO* 
     numberOfInverters = cm->as_integer("inverter_count");
     
     dcNameplate = cm->as_double("system_capacity");
-    //numberOfInvertersClipping = cm->as_integer("num_inverter_subhourly_clipping");
     numberOfInvertersClipping = dcNameplate / (Inverter->ratedACOutput / 1000);
+    if (numberOfInvertersClipping == 0.0) numberOfInvertersClipping = 1;
     
 
     ratedACOutput = Inverter->ratedACOutput * numberOfInverters;
@@ -900,6 +900,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
             p_poaBeamFrontCS.push_back(cm->allocate(prefix + "poa_beam_front_cs", numberOfWeatherFileRecords));
             p_poaDiffuseFrontCS.push_back(cm->allocate(prefix + "poa_diffuse_front_cs", numberOfWeatherFileRecords));
             p_poaGroundFrontCS.push_back(cm->allocate(prefix + "poa_ground_front_cs", numberOfWeatherFileRecords));
+            p_poaRearCS.push_back(cm->allocate(prefix + "poa_rear_cs", numberOfWeatherFileRecords));
 
             if (enableSnowModel) {
                 p_snowLoss.push_back(cm->allocate(prefix + "snow_loss", numberOfWeatherFileRecords));
@@ -963,6 +964,9 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
     p_inverterACOutputPreLoss = cm->allocate("ac_gross", numberOfWeatherFileRecords);
     p_acWiringLoss = cm->allocate("ac_wiring_loss", numberOfWeatherFileRecords);
     p_ClippingPotential = cm->allocate("clipping_potential", numberOfWeatherFileRecords);
+    p_CPBin = cm->allocate("clipping_potential_bin", numberOfWeatherFileRecords);
+    p_DNIIndexBin = cm->allocate("dni_index_bin", numberOfWeatherFileRecords);
+
     p_transmissionLoss = cm->allocate("ac_transmission_loss", numberOfWeatherFileRecords);
     p_acPerfAdjLoss = cm->allocate("ac_perf_adj_loss", numberOfWeatherFileRecords);
     p_acLifetimeLoss = cm->allocate("ac_lifetime_loss", numberOfWeatherFileRecords);

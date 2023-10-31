@@ -103,6 +103,7 @@ var_info vtab_fuelcell_output[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_to_load",                   "Electricity to load from fuel cell",    "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_to_grid",                   "Electricity to grid from fuel cell",    "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_annual_energy_discharged",  "Fuel cell annual energy discharged",    "kWh",        "",                 "Fuel Cell",                  "",                        "",                              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "annual_energy_discharged",           "Annual energy discharged",                          "kWh",          "",      "Fuel Cell",           "*",               "",                    "" },
 
 	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_replacement",                "Fuel cell replacements per year",      "number/year", "",              "Fuel Cell",           "",                           "",                              "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "system_heat_rate",                    "Heat rate conversion factor (MMBTUs/MWhe)",  "MMBTUs/MWhe",   "",      "Fuel Cell",           "*",               "",                    "" },
@@ -149,8 +150,9 @@ void cm_fuelcell::construct()
 
 void cm_fuelcell::exec()
 {
-	double annual_energy = 0.0;
-	double annual_fuel = 0.0;
+    double annual_energy = 0.0;
+    double annual_energy_discharged = 0.0;
+    double annual_fuel = 0.0;
 	// float percent_complete = 0.0;
 //	float percent = 0.0;
 	// size_t nStatusUpdates = 50;
@@ -209,6 +211,7 @@ void cm_fuelcell::exec()
 		}
 		if (y == 0) {
 			annual_fuel = p_fuelCellConsumption_MCf_annual[annual_index];
+            annual_energy_discharged = annual_energy_fc;
 		}
 
         p_fuelCellAnnualEnergy[annual_index] = annual_energy_fc;
@@ -231,8 +234,9 @@ void cm_fuelcell::exec()
 	}
 	double nameplate = nameplate_in + (fcVars->unitPowerMax_kW * fcVars->numberOfUnits);
 	assign("capacity_factor", var_data(static_cast<ssc_number_t>(annual_energy * util::fraction_to_percent / (nameplate * 8760.))));
-	assign("annual_energy", var_data(static_cast<ssc_number_t>(annual_energy)));
-	// assign("percent_complete", var_data((ssc_number_t)percent));
+    assign("annual_energy", var_data(static_cast<ssc_number_t>(annual_energy)));
+    assign("annual_energy_discharged", var_data(static_cast<ssc_number_t>(annual_energy_discharged)));
+    // assign("percent_complete", var_data((ssc_number_t)percent));
 
 	// Ratio of MMBtu to MWh to get cash flow calculation correct (fuel costs in $/MMBtu)
 	assign("system_heat_rate", var_data((ssc_number_t)BTU_PER_KWH / 1000));

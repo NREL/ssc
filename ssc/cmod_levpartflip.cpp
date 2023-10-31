@@ -1257,6 +1257,8 @@ public:
                 cf.at(CF_om_production_expense, i) *= cf.at(CF_energy_sales, i);
             }
             cf.at(CF_om_capacity_expense,i) *= nameplate;
+            cf.at(CF_om_capacity1_expense, i) *= nameplate1;
+            cf.at(CF_om_capacity2_expense, i) *= nameplate2;
 			cf.at(CF_om_fuel_expense,i) *= year1_fuel_use;
 
             //Battery Production OM Costs
