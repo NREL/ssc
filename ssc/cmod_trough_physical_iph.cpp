@@ -1450,14 +1450,17 @@ public:
 
             // System Control
             {
-                double adjust_constant = as_double("adjust_constant");
-                double W_dot_bop_design, W_dot_fixed_parasitic_design;    //[MWe]
-                csp_solver.get_design_parameters(W_dot_bop_design, W_dot_fixed_parasitic_design);
+                //double adjust_constant = as_double("adjust_constant");
+                //double W_dot_bop_design, W_dot_fixed_parasitic_design;    //[MWe]
+                //csp_solver.get_design_parameters(W_dot_bop_design, W_dot_fixed_parasitic_design);
+
+                vector<double> bop_vec = as_vector_double("bop_array");
+                double bop_design = bop_vec[0] * bop_vec[1] * (bop_vec[2] + bop_vec[3] + bop_vec[4]) * q_dot_pc_des;
                 vector<double> aux_vec = as_vector_double("aux_array");
                 double aux_design = aux_vec[0] * aux_vec[1] * (aux_vec[2] + aux_vec[3] + aux_vec[4]) * q_dot_pc_des;
 
-                assign("bop_design", W_dot_bop_design); // MWe
-                assign("aux_design", W_dot_fixed_parasitic_design);       // MWe
+                assign("bop_design", bop_design);       // MWe
+                assign("aux_design", aux_design);       // MWe
             }
         }
 
