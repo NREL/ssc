@@ -663,7 +663,7 @@ public:
     {   
         // Common Parameters
         bool is_dispatch = as_boolean("is_dispatch");
-        int sim_type = as_number("sim_type");
+        int sim_type = as_integer("sim_type");
         int csp_financial_model = as_integer("csp_financial_model");
 
         // *****************************************************
@@ -787,9 +787,9 @@ public:
         {
             // Collect Inputs
             {
-                c_trough.m_use_solar_mult_or_aperture_area = as_number("use_solar_mult_or_aperture_area"); // Use specified solar mult (0) or total aperture (1)
-                c_trough.m_specified_solar_mult = as_number("specified_solar_multiple");            // User specified solar mult
-                c_trough.m_specified_total_aperture = as_number("specified_total_aperture");    //[m2] User specified total aperture
+                c_trough.m_use_solar_mult_or_aperture_area = as_integer("use_solar_mult_or_aperture_area"); // Use specified solar mult (0) or total aperture (1)
+                c_trough.m_specified_solar_mult = as_double("specified_solar_multiple");            // User specified solar mult
+                c_trough.m_specified_total_aperture = as_double("specified_total_aperture");    //[m2] User specified total aperture
                 c_trough.m_nSCA = as_integer("nSCA");                       //[-] Number of SCA's in a loop
                 c_trough.m_nHCEt = as_integer("nHCEt");                     //[-] Number of HCE types
                 c_trough.m_nColt = as_integer("nColt");                     //[-] Number of collector types
@@ -1608,7 +1608,7 @@ public:
         {
             // System Design
             {
-                double gross_net_conversion_des = as_number("gross_net_conversion_factor");
+                double gross_net_conversion_des = as_double("gross_net_conversion_factor");
                 nameplate_des = W_dot_cycle_des * gross_net_conversion_des;
 
                 assign("q_dot_cycle_des", q_dot_cycle_des);
@@ -1744,7 +1744,7 @@ public:
 
                 util::matrix_t<ssc_number_t> csp_dtr_sca_calc_end_losses(1, 1, std::numeric_limits<double>::quiet_NaN());
                 {
-                    int nSCA = as_number("nSCA");
+                    int nSCA = as_integer("nSCA");
 
                     size_t n = Ave_Focal_Length.size();
 
