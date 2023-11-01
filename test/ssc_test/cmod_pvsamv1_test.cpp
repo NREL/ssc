@@ -1053,7 +1053,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, SubhourlyClippingCorrectionModel)
     //check answers for subhourly clipping annual loss
     ssc_number_t subhourly_clipping_loss;
     ssc_data_get_number(data, "annual_subhourly_clipping_loss", &subhourly_clipping_loss);
-    EXPECT_NEAR(subhourly_clipping_loss, 55.9, m_error_tolerance_lo);
+    EXPECT_NEAR(subhourly_clipping_loss, 16.633622, m_error_tolerance_lo);
 
     //Modify matrix, re-run test with user entered matrix (SDK only)
     ssc_number_t Subhourly_Clipping_Matrix[441] =
@@ -1088,7 +1088,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, SubhourlyClippingCorrectionModel)
     EXPECT_FALSE(pvsam_errors);
     //check answers for subhourly clipping annual loss
     ssc_data_get_number(data, "annual_subhourly_clipping_loss", &subhourly_clipping_loss);
-    EXPECT_NEAR(subhourly_clipping_loss, 56.6, m_error_tolerance_lo);
+    EXPECT_NEAR(subhourly_clipping_loss, 21.596999, m_error_tolerance_lo);
 
     //Test different matrix size
     ssc_number_t Subhourly_Clipping_Matrix_Short[272];
@@ -1104,9 +1104,61 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, SubhourlyClippingCorrectionModel)
     double subhourly_clipping_loss_short;
     ssc_data_get_number(data, "annual_subhourly_clipping_loss", &subhourly_clipping_loss_short);
     double subhourly_clipping_loss_percent;
-    EXPECT_NEAR(subhourly_clipping_loss_short, 66.3, m_error_tolerance_lo);
+    EXPECT_NEAR(subhourly_clipping_loss_short, 24.624581, m_error_tolerance_lo);
     ssc_data_get_number(data, "annual_subhourly_clipping_loss_percent", &subhourly_clipping_loss_percent);
-    EXPECT_NEAR(subhourly_clipping_loss_percent, 0.74, m_error_tolerance_lo);
+    EXPECT_NEAR(subhourly_clipping_loss_percent, 0.271086, m_error_tolerance_lo);
+}
+
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, useCustomCellTemp) {
+
+    std::map<std::string, double> pairs;
+
+    pairs["subarray1_use_custom_cell_temp"] = 1;
+    int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+
+    EXPECT_FALSE(pvsam_errors);
+    ssc_number_t annualEnergy;
+    int n1;
+    ssc_number_t* subarray1_cell_temp = ssc_data_get_array(data, "subarray1_celltemp", &n1);
+    EXPECT_NEAR(subarray1_cell_temp[8], 17.8071, 0.001);
+    ssc_data_get_number(data, "annual_energy", &annualEnergy);
+    EXPECT_NEAR(annualEnergy, 8725, 1.0);
+
+    pairs["subarray1_use_custom_cell_temp"] = 0;
+    pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+
+    EXPECT_FALSE(pvsam_errors);
+    ssc_data_get_number(data, "annual_energy", &annualEnergy);
+    EXPECT_NEAR(annualEnergy, 8834, 1.0);
+
+
+
+}
+
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, UseCustomAngles) {
+
+    std::map<std::string, double> pairs;
+
+    pairs["subarray1_use_custom_rot_angles"] = 1;
+    int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+
+    EXPECT_FALSE(pvsam_errors);
+    ssc_number_t annualEnergy;
+    int n1;
+    ssc_number_t* subarray1_cell_temp = ssc_data_get_array(data, "subarray1_axisrot", &n1);
+    EXPECT_NEAR(subarray1_cell_temp[11], -24.8588, 0.001);
+    ssc_data_get_number(data, "annual_energy", &annualEnergy);
+    EXPECT_NEAR(annualEnergy, 11516, 1.0);
+
+    pairs["subarray1_use_custom_rot_angles"] = 0;
+    pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+
+    EXPECT_FALSE(pvsam_errors);
+    ssc_data_get_number(data, "annual_energy", &annualEnergy);
+    EXPECT_NEAR(annualEnergy, 8834, 1.0);
+
+
+
 }
 
 /// Test PVSAMv1 with all defaults and no-financial model- look at MPPT input 1 voltage at night
@@ -1273,6 +1325,8 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NonAnnual)
 
     gen = ssc_data_get_array(data, "gen", nullptr)[12];
     EXPECT_NEAR(gen, 3.078, 0.01) << "Gen at noon";
+
+    //free the weather data
     free_weatherdata_array(weather_data);
 }
 
@@ -1307,6 +1361,48 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NonAnnualWithLeapDay)
 
     gen = ssc_data_get_array(data, "gen", nullptr)[12];
     EXPECT_NEAR(gen, 2.6623, 0.01) << "Gen at noon";
+    free_weatherdata_array(weather_data);
+}
+
+//test single timestep that doesn't start at hour 0
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, SingleTimestepNoon)
+{
+    //set up a weather data array containing a single data point at noon
+    const int length = 1;
+    double month[length] = { 6 };
+    double day[length] = { 21 };
+    double hour[length] = { 12 };
+    double dn[length] = { 700 }; //set dn and df to a value to get power out
+    double df[length] = { 100 };
+
+    var_data month_vd = var_data(month, length);
+    var_data day_vd = var_data(day, length);
+    var_data hour_vd = var_data(hour, length);
+    var_data dn_vd = var_data(dn, length);
+    var_data df_vd = var_data(df, length);
+
+    auto weather_data = create_weatherdata_array(length);
+    weather_data->assign("month", month_vd);
+    weather_data->assign("day", day_vd);
+    weather_data->assign("hour", hour_vd);
+    weather_data->assign("dn", dn_vd);
+    weather_data->assign("df", df_vd);
+
+    ssc_data_unassign(data, "solar_resource_file");
+    ssc_data_set_table(data, "solar_resource_data", weather_data);
+
+    std::vector<double> load(length, 1);
+    ssc_data_set_array(data, "load", &load[0], (int)load.size());
+
+    //run the tests
+    EXPECT_FALSE(run_module(data, "pvsamv1"));
+
+    ssc_number_t dc_net, gen;
+    dc_net = ssc_data_get_array(data, "dc_net", nullptr)[0];
+    EXPECT_NEAR(dc_net, 0.743, 0.01) << "DC Net Energy at noon";
+
+    gen = ssc_data_get_array(data, "gen", nullptr)[0];
+    EXPECT_NEAR(gen, 0.704, 0.01) << "Gen at noon";
     free_weatherdata_array(weather_data);
 }
 

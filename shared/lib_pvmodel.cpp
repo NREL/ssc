@@ -55,7 +55,7 @@ pvinput_t::pvinput_t( double ib, double id, double ig, double irear, double ip,
 		double ta, double td, double ws, double wd, double patm,
 		double zen, double inc, 
 		double elv, double tlt, double azi,
-		double hrday, int rmode, bool up )
+		double hrday, int rmode, bool up)
 {
 	Ibeam = ib;
 	Idiff = id;

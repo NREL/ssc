@@ -52,6 +52,8 @@ var_info vtab_grid_input[] = {
     { SSC_INPUT,		SSC_ARRAY,	     "crit_load",			              "Critical electricity load (year 1)",    "kW",	        "",				        "Load",                             "",	                      "",	                            "" },
     { SSC_INOUT,        SSC_ARRAY,       "grid_outage",                       "Grid outage in this time step",            "0/1",        "0=GridAvailable,1=GridUnavailable,Length=load", "Load",    "",                       "",                               "" },
     { SSC_INPUT,        SSC_ARRAY,       "load_escalation",                   "Annual load escalation",                "%/year",    "",                                    "Load",                        "?=0",                      "",                            "" },
+    { SSC_INOUT,        SSC_ARRAY,       "monthly_energy",                    "AC energy (year 1)",              "kWh/mo",    "",                 "Monthly",       "",                    "LENGTH=12",                              "" },
+
 
 var_info_invalid };
 
@@ -233,6 +235,7 @@ void cm_grid::exec()
 	annual_energy_pre_interconnect *= gridVars->dt_hour_gen;
 	annual_energy *= gridVars->dt_hour_gen;
 
+    accumulate_monthly_for_year("gen", "monthly_energy", gridVars->dt_hour_gen, num_steps_per_hour);
 
 //	annual_energy_interconnect = std::accumulate(gridVars->systemGenerationLifetime_kW.begin(), gridVars->systemGenerationLifetime_kW.begin() + gridVars->numberOfSingleYearRecords, (double)0.0)*gridVars->dt_hour_gen;
     if (gridVars->enable_interconnection_limit)
