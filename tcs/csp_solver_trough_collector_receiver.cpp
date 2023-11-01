@@ -616,6 +616,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		m_m_dot_loop_des = m_m_dot_design/(double)m_nLoops;	//[kg/s]
 		//mjw 1.16.2011 Design field thermal power 
 		//m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
+		m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
 		//mjw 1.16.2011 Convert the thermal inertia terms here
 		m_mc_bal_hot = m_mc_bal_hot_per_MW * 3.6 * m_q_design;    //[J/K]
 		m_mc_bal_cold = m_mc_bal_cold_per_MW * 3.6 * m_q_design;  //[J/K]
@@ -4477,6 +4478,7 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
     // Calculate Field Thermal Output
     {
         m_q_design = m_I_bn_des * m_Ap_tot * m_total_loop_conversion_efficiency_des;
+        //m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des);
     }
 
     // Interconnect component minor loss coefficients
