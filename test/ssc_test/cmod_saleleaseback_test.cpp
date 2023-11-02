@@ -38,9 +38,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 TEST_F(CmodSaleLeasebackTest, Biopower) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_Biopower_Sale_Leaseback_cmod_saleleaseback.json";
+    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_Biopower_Sale_Leaseback_cmod_saleleaseback.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_Biopower_Sale_Leaseback_cmod_saleleaseback_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_Biopower_Sale_Leaseback_cmod_saleleaseback_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -49,9 +49,9 @@ TEST_F(CmodSaleLeasebackTest, Biopower) {
 
 TEST_F(CmodSaleLeasebackTest, DSLF) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_DSLF_Sale_Leaseback_cmod_saleleaseback.json";
+    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_DSLF_Sale_Leaseback_cmod_saleleaseback.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_DSLF_Sale_Leaseback_cmod_saleleaseback_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_DSLF_Sale_Leaseback_cmod_saleleaseback_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -60,9 +60,9 @@ TEST_F(CmodSaleLeasebackTest, DSLF) {
 
 TEST_F(CmodSaleLeasebackTest, EmpiricalTrough) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_Empirical_Trough_Sale_Leaseback_cmod_saleleaseback.json";
+    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_Empirical_Trough_Sale_Leaseback_cmod_saleleaseback.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_Empirical_Trough_Sale_Leaseback_cmod_saleleaseback_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_Empirical_Trough_Sale_Leaseback_cmod_saleleaseback_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -72,9 +72,9 @@ TEST_F(CmodSaleLeasebackTest, EmpiricalTrough) {
 
 TEST_F(CmodSaleLeasebackTest, PV) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_Flat_Plate_PV_Sale_Leaseback_cmod_saleleaseback.json";
+    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_Flat_Plate_PV_Sale_Leaseback_cmod_saleleaseback.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_Flat_Plate_PV_Sale_Leaseback_cmod_saleleaseback_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_Flat_Plate_PV_Sale_Leaseback_cmod_saleleaseback_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -84,9 +84,9 @@ TEST_F(CmodSaleLeasebackTest, PV) {
 
 TEST_F(CmodSaleLeasebackTest, GenericBattery) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_Generic_Battery_Sale_Leaseback_cmod_saleleaseback.json";
+    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_Generic_Battery_Sale_Leaseback_cmod_saleleaseback.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_Generic_Battery_Sale_Leaseback_cmod_saleleaseback_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_Generic_Battery_Sale_Leaseback_cmod_saleleaseback_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -95,9 +95,9 @@ TEST_F(CmodSaleLeasebackTest, GenericBattery) {
 
 TEST_F(CmodSaleLeasebackTest, GenericCSP) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_Generic_CSP_System_Sale_Leaseback_cmod_saleleaseback.json";
+    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_Generic_CSP_System_Sale_Leaseback_cmod_saleleaseback.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_Generic_CSP_System_Sale_Leaseback_cmod_saleleaseback_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_Generic_CSP_System_Sale_Leaseback_cmod_saleleaseback_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -106,9 +106,9 @@ TEST_F(CmodSaleLeasebackTest, GenericCSP) {
 
 TEST_F(CmodSaleLeasebackTest, Generic) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_Generic_System_Sale_Leaseback_cmod_saleleaseback.json";
+    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_Generic_System_Sale_Leaseback_cmod_saleleaseback.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_Generic_System_Sale_Leaseback_cmod_saleleaseback_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_Generic_System_Sale_Leaseback_cmod_saleleaseback_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -118,9 +118,9 @@ TEST_F(CmodSaleLeasebackTest, Generic) {
 
 TEST_F(CmodSaleLeasebackTest, Geotherrmal) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_Geothermal_Power_Sale_Leaseback_cmod_saleleaseback.json";
+    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_Geothermal_Power_Sale_Leaseback_cmod_saleleaseback.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_Geothermal_Power_Sale_Leaseback_cmod_saleleaseback_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_Geothermal_Power_Sale_Leaseback_cmod_saleleaseback_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -129,9 +129,9 @@ TEST_F(CmodSaleLeasebackTest, Geotherrmal) {
 
 TEST_F(CmodSaleLeasebackTest, CPV) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_High-X_Concentrating_PV_Sale_Leaseback_cmod_saleleaseback.json";
+    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_High-X_Concentrating_PV_Sale_Leaseback_cmod_saleleaseback.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_High-X_Concentrating_PV_Sale_Leaseback_cmod_saleleaseback_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_High-X_Concentrating_PV_Sale_Leaseback_cmod_saleleaseback_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -141,9 +141,9 @@ TEST_F(CmodSaleLeasebackTest, CPV) {
 
 TEST_F(CmodSaleLeasebackTest, MSLF) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_MSLF_Sale_Leaseback_cmod_saleleaseback.json";
+    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_MSLF_Sale_Leaseback_cmod_saleleaseback.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_MSLF_Sale_Leaseback_cmod_saleleaseback_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_MSLF_Sale_Leaseback_cmod_saleleaseback_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -152,9 +152,9 @@ TEST_F(CmodSaleLeasebackTest, MSLF) {
 
 TEST_F(CmodSaleLeasebackTest, MSPT) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_MSPT_Sale_Leaseback_cmod_saleleaseback.json";
+    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_MSPT_Sale_Leaseback_cmod_saleleaseback.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_MSPT_Sale_Leaseback_cmod_saleleaseback_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_MSPT_Sale_Leaseback_cmod_saleleaseback_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -163,9 +163,9 @@ TEST_F(CmodSaleLeasebackTest, MSPT) {
 
 TEST_F(CmodSaleLeasebackTest, PhysicalTrough) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_Physical_Trough_Sale_Leaseback_cmod_saleleaseback.json";
+    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_Physical_Trough_Sale_Leaseback_cmod_saleleaseback.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_Physical_Trough_Sale_Leaseback_cmod_saleleaseback_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_Physical_Trough_Sale_Leaseback_cmod_saleleaseback_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -175,9 +175,9 @@ TEST_F(CmodSaleLeasebackTest, PhysicalTrough) {
 
 TEST_F(CmodSaleLeasebackTest, PVBattery) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_PV_Battery_Sale_Leaseback_cmod_saleleaseback.json";
+    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_PV_Battery_Sale_Leaseback_cmod_saleleaseback.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_PV_Battery_Sale_Leaseback_cmod_saleleaseback_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_PV_Battery_Sale_Leaseback_cmod_saleleaseback_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -187,9 +187,9 @@ TEST_F(CmodSaleLeasebackTest, PVBattery) {
 
 TEST_F(CmodSaleLeasebackTest, PVWatts) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_PVWatts_Sale_Leaseback_cmod_saleleaseback.json";
+    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_PVWatts_Sale_Leaseback_cmod_saleleaseback.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_PVWatts_Sale_Leaseback_cmod_saleleaseback_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_PVWatts_Sale_Leaseback_cmod_saleleaseback_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -198,9 +198,9 @@ TEST_F(CmodSaleLeasebackTest, PVWatts) {
 
 TEST_F(CmodSaleLeasebackTest, StandaloneBattery) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_Standalone_Battery_Sale_Leaseback_cmod_saleleaseback.json";
+    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_Standalone_Battery_Sale_Leaseback_cmod_saleleaseback.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_Standalone_Battery_Sale_Leaseback_cmod_saleleaseback_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_Standalone_Battery_Sale_Leaseback_cmod_saleleaseback_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -210,9 +210,9 @@ TEST_F(CmodSaleLeasebackTest, StandaloneBattery) {
 
 TEST_F(CmodSaleLeasebackTest, Wind) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_Wind_Power_Sale_Leaseback_cmod_saleleaseback.json";
+    file_inputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_Wind_Power_Sale_Leaseback_cmod_saleleaseback.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2022.08.08_develop_branch_Wind_Power_Sale_Leaseback_cmod_saleleaseback_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_Wind_Power_Sale_Leaseback_cmod_saleleaseback_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 

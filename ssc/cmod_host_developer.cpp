@@ -1228,6 +1228,8 @@ public:
                 cf.at(CF_om_production_expense, i) *= cf.at(CF_energy_sales, i);
             }
             cf.at(CF_om_capacity_expense,i) *= nameplate;
+            cf.at(CF_om_capacity1_expense, i) *= nameplate1;
+            cf.at(CF_om_capacity2_expense, i) *= nameplate2;
 			cf.at(CF_om_fuel_expense,i) *= year1_fuel_use;
 
             //Battery Production OM Costs
@@ -2822,7 +2824,7 @@ public:
 		cf.at(CF_host_energy_value, i) = (double)arrp[i];
 	// calculated ppa in cents/kWh - cash flow line items in $
 	for ( i = 1; i <= nyears; i++)
-		cf.at(CF_agreement_cost, i) = (ppa/100.0) * cf.at(CF_energy_net, i) * pow(1 + ppa_escalation, i - 1);
+		cf.at(CF_agreement_cost, i) = (ppa/100.0) * cf.at(CF_energy_sales, i) * pow(1 + ppa_escalation, i - 1);
 
 	for (i = 1; i <= nyears; i++)
 	{

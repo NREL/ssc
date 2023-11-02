@@ -54,7 +54,7 @@ public:
 
     /// Construct a shared inverter by registering the previously constructed inverter
     SharedInverter(int inverterType, size_t numberOfInverters,
-        sandia_inverter_t* sandiaInverter, partload_inverter_t* partloadInverter, ond_inverter* ondInverter, size_t numberOfInvertersClipping = 0);
+        sandia_inverter_t* sandiaInverter, partload_inverter_t* partloadInverter, ond_inverter* ondInverter, double numberOfInvertersClipping = 0);
 
     SharedInverter(const SharedInverter& orig);
 
@@ -116,7 +116,7 @@ protected:
 
     int m_inverterType;  ///< The inverter type
     size_t m_numInverters;  ///< The number of inverters in the system
-    size_t m_numInvertersClipping;
+    double m_numInvertersClipping;
     double m_nameplateAC_kW; ///< The total nameplate AC capacity for all inverters in kW
 
     /// Temperate Derating: each curve contains DC voltage and pairs of start-derate temp [C] and slope [efficiency% lost per C]

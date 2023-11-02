@@ -49,7 +49,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 SSCEXPORT int ssc_version()
 {
-	return 285;
+	return 286;
 }
 
 SSCEXPORT const char *ssc_build_info()
@@ -85,7 +85,6 @@ extern module_entry_info
 	cm_entry_utilityrate4,
 	cm_entry_utilityrate5,
     cm_entry_utilityrateforecast,
-	cm_entry_annualoutput,
 	cm_entry_cashloan,
 	cm_entry_thirdpartyownership,
 	cm_entry_ippppa,
@@ -157,6 +156,7 @@ extern module_entry_info
 	cm_entry_mhk_wave,
 	cm_entry_mhk_costs,
 	cm_entry_wave_file_reader,
+    cm_entry_tidal_file_reader,
 	cm_entry_grid,
 	cm_entry_battery_stateful,
     cm_entry_csp_subcomponent,
@@ -186,7 +186,6 @@ static module_entry_info *module_table[] = {
 	&cm_entry_utilityrate4,
 	&cm_entry_utilityrate5,
     &cm_entry_utilityrateforecast,
-	&cm_entry_annualoutput,
 	&cm_entry_cashloan,
 	&cm_entry_thirdpartyownership,
 	&cm_entry_ippppa,
@@ -258,6 +257,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_mhk_wave,
 	&cm_entry_mhk_costs,
 	&cm_entry_wave_file_reader,
+    &cm_entry_tidal_file_reader,
 	&cm_entry_grid,
 	&cm_entry_battery_stateful,
     &cm_entry_csp_subcomponent,
