@@ -1036,7 +1036,6 @@ public:
 			}
 		}
 		else {
-			fuel_use.push_back(0.);
 			for (size_t y = 0; y < (size_t)(nyears); y++) {
 				fuel_use.push_back(year1_fuel_use);
 			}

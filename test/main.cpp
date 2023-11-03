@@ -56,7 +56,7 @@ GTEST_API_ int main(int argc, char **argv) {
     //    ::testing::GTEST_FLAG(filter) = "CmodPVWatts*:CMPvwatts*";
     //::testing::GTEST_FLAG(filter) = "CmodCashLoanTest.FuelCell*";
 
-   //    ::testing::GTEST_FLAG(filter) = "CmodHybridTest*";
+    //   ::testing::GTEST_FLAG(filter) = "CmodCashLoanTest*:CmodSingleOwnerTest*";
 
 
     //    filter to exclude
