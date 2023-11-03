@@ -38,9 +38,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 TEST_F(CmodAllEquityPartnershipFlipTest, Biopower) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_Biopower_All_Equity_Partnership_Flip_cmod_equpartflip.json";
+    file_inputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_Biopower_All_Equity_Partnership_Flip_cmod_equpartflip.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_Biopower_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_Biopower_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -49,9 +49,9 @@ TEST_F(CmodAllEquityPartnershipFlipTest, Biopower) {
 
 TEST_F(CmodAllEquityPartnershipFlipTest, DSLF) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_DSLF_All_Equity_Partnership_Flip_cmod_equpartflip.json";
+    file_inputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_DSLF_All_Equity_Partnership_Flip_cmod_equpartflip.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_DSLF_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_DSLF_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -60,9 +60,9 @@ TEST_F(CmodAllEquityPartnershipFlipTest, DSLF) {
 
 TEST_F(CmodAllEquityPartnershipFlipTest, EmpiricalTrough) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_Empirical_Trough_All_Equity_Partnership_Flip_cmod_equpartflip.json";
+    file_inputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_Empirical_Trough_All_Equity_Partnership_Flip_cmod_equpartflip.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_Empirical_Trough_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_Empirical_Trough_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -72,9 +72,9 @@ TEST_F(CmodAllEquityPartnershipFlipTest, EmpiricalTrough) {
 
 TEST_F(CmodAllEquityPartnershipFlipTest, PV) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_Flat_Plate_PV_All_Equity_Partnership_Flip_cmod_equpartflip.json";
+    file_inputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_Flat_Plate_PV_All_Equity_Partnership_Flip_cmod_equpartflip.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_Flat_Plate_PV_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_Flat_Plate_PV_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -84,9 +84,9 @@ TEST_F(CmodAllEquityPartnershipFlipTest, PV) {
 
 TEST_F(CmodAllEquityPartnershipFlipTest, GenericBattery) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_Generic_Battery_All_Equity_Partnership_Flip_cmod_equpartflip.json";
+    file_inputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_Generic_Battery_All_Equity_Partnership_Flip_cmod_equpartflip.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_Generic_Battery_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_Generic_Battery_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -95,9 +95,9 @@ TEST_F(CmodAllEquityPartnershipFlipTest, GenericBattery) {
 
 TEST_F(CmodAllEquityPartnershipFlipTest, GenericCSP) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_Generic_CSP_System_All_Equity_Partnership_Flip_cmod_equpartflip.json";
+    file_inputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_Generic_CSP_System_All_Equity_Partnership_Flip_cmod_equpartflip.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_Generic_CSP_System_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_Generic_CSP_System_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -106,9 +106,9 @@ TEST_F(CmodAllEquityPartnershipFlipTest, GenericCSP) {
 
 TEST_F(CmodAllEquityPartnershipFlipTest, Generic) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_Generic_System_All_Equity_Partnership_Flip_cmod_equpartflip.json";
+    file_inputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_Generic_System_All_Equity_Partnership_Flip_cmod_equpartflip.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_Generic_System_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_Generic_System_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -118,9 +118,9 @@ TEST_F(CmodAllEquityPartnershipFlipTest, Generic) {
 
 TEST_F(CmodAllEquityPartnershipFlipTest, Geotherrmal) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_Geothermal_Power_All_Equity_Partnership_Flip_cmod_equpartflip.json";
+    file_inputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_Geothermal_Power_All_Equity_Partnership_Flip_cmod_equpartflip.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_Geothermal_Power_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_Geothermal_Power_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -129,9 +129,9 @@ TEST_F(CmodAllEquityPartnershipFlipTest, Geotherrmal) {
 
 TEST_F(CmodAllEquityPartnershipFlipTest, CPV) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_High-X_Concentrating_PV_All_Equity_Partnership_Flip_cmod_equpartflip.json";
+    file_inputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_High-X_Concentrating_PV_All_Equity_Partnership_Flip_cmod_equpartflip.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_High-X_Concentrating_PV_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_High-X_Concentrating_PV_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -141,9 +141,9 @@ TEST_F(CmodAllEquityPartnershipFlipTest, CPV) {
 
 TEST_F(CmodAllEquityPartnershipFlipTest, MSLF) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_MSLF_All_Equity_Partnership_Flip_cmod_equpartflip.json";
+    file_inputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_MSLF_All_Equity_Partnership_Flip_cmod_equpartflip.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_MSLF_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_MSLF_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -152,9 +152,9 @@ TEST_F(CmodAllEquityPartnershipFlipTest, MSLF) {
 
 TEST_F(CmodAllEquityPartnershipFlipTest, MSPT) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_MSPT_All_Equity_Partnership_Flip_cmod_equpartflip.json";
+    file_inputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_MSPT_All_Equity_Partnership_Flip_cmod_equpartflip.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_MSPT_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_MSPT_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -163,9 +163,9 @@ TEST_F(CmodAllEquityPartnershipFlipTest, MSPT) {
 
 TEST_F(CmodAllEquityPartnershipFlipTest, PhysicalTrough) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_Physical_Trough_All_Equity_Partnership_Flip_cmod_equpartflip.json";
+    file_inputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_Physical_Trough_All_Equity_Partnership_Flip_cmod_equpartflip.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_Physical_Trough_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_Physical_Trough_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -175,9 +175,9 @@ TEST_F(CmodAllEquityPartnershipFlipTest, PhysicalTrough) {
 
 TEST_F(CmodAllEquityPartnershipFlipTest, PVBattery) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_PV_Battery_All_Equity_Partnership_Flip_cmod_equpartflip.json";
+    file_inputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_PV_Battery_All_Equity_Partnership_Flip_cmod_equpartflip.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_PV_Battery_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_PV_Battery_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -187,9 +187,9 @@ TEST_F(CmodAllEquityPartnershipFlipTest, PVBattery) {
 
 TEST_F(CmodAllEquityPartnershipFlipTest, PVWatts) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_PVWatts_All_Equity_Partnership_Flip_cmod_equpartflip.json";
+    file_inputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_PVWatts_All_Equity_Partnership_Flip_cmod_equpartflip.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_PVWatts_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_PVWatts_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -198,9 +198,9 @@ TEST_F(CmodAllEquityPartnershipFlipTest, PVWatts) {
 
 TEST_F(CmodAllEquityPartnershipFlipTest, StandaloneBattery) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_Standalone_Battery_All_Equity_Partnership_Flip_cmod_equpartflip.json";
+    file_inputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_Standalone_Battery_All_Equity_Partnership_Flip_cmod_equpartflip.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_Standalone_Battery_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_Standalone_Battery_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
@@ -210,9 +210,9 @@ TEST_F(CmodAllEquityPartnershipFlipTest, StandaloneBattery) {
 
 TEST_F(CmodAllEquityPartnershipFlipTest, Wind) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_Wind_Power_All_Equity_Partnership_Flip_cmod_equpartflip.json";
+    file_inputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_Wind_Power_All_Equity_Partnership_Flip_cmod_equpartflip.json";
     std::string file_outputs = SSCDIR;
-    file_outputs += "/test/input_json/FinancialModels/equpartflip/2022.08.08_develop_branch_Wind_Power_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
+    file_outputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_Wind_Power_All_Equity_Partnership_Flip_cmod_equpartflip_outputs.json";
     std::vector<std::string> compare_number_variables = { "ppa", "tax_investor_aftertax_npv", "sponsor_aftertax_npv", "lcoe_real", "lppa_nom"};
     std::vector<std::string> compare_array_variables = {"cf_tax_investor_aftertax", "cf_sponsor_aftertax", "cf_annual_costs"};
 
