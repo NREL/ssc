@@ -2188,6 +2188,7 @@ void cm_pvsamv1::exec()
                             tcell = Subarrays[nn]->customCellTempArray[inrec];
                         else {
                             (*Subarrays[nn]->Module->cellTempModel)(in[nn], *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
+                            if (isnan(tcell)) throw exec_error("pvsamv1", Subarrays[nn]->Module->cellTempModel->error());
                             (*Subarrays[nn]->Module->cellTempModel)(in_cs[nn], *Subarrays[nn]->Module->moduleModel, module_voltage, tcell_cs);
                         }
                         // begin Transient Thermal model
