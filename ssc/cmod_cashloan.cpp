@@ -202,6 +202,7 @@ extern var_info
     vtab_tax_credits[],
     vtab_payment_incentives[],
     vtab_lcos_inputs[],
+    vtab_update_tech_outputs[],
     vtab_utility_rate_common[];
     
 
@@ -363,6 +364,7 @@ public:
 		add_var_info(vtab_fuelcell_replacement_cost);
 		add_var_info(vtab_cashloan);
         add_var_info(vtab_lcos_inputs);
+        add_var_info(vtab_update_tech_outputs);
 	}
 
 	void exec( )

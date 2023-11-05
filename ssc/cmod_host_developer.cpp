@@ -660,6 +660,7 @@ extern var_info
 	vtab_payment_incentives[],
 	vtab_debt[],
     vtab_financial_metrics[],
+    vtab_update_tech_outputs[],
     vtab_lcos_inputs[],
 	vtab_battery_replacement_cost[],
     vtab_utility_rate_common[],
@@ -920,6 +921,7 @@ public:
         add_var_info(vtab_lcos_inputs);
         add_var_info(vtab_tod_dispatch_periods);
         add_var_info(vtab_hybrid_fin_om);
+        add_var_info(vtab_update_tech_outputs);
     }
 
 	void exec( )

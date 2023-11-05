@@ -3312,14 +3312,19 @@ var_info vtab_tod_dispatch_periods[] = {
         { SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekend",                 "Diurnal weekend TOD periods",                                   "1..9", "12 x 24 matrix",    "Revenue", "ppa_multiplier_model=0", "", "" },
         var_info_invalid };
 
-
-
-var_info vtab_lcos_inputs[] = {
-    /*   VARTYPE           DATATYPE         NAME                             LABEL                                UNITS      META                 GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-
+var_info vtab_update_tech_outputs[] = {
     { SSC_INOUT,        SSC_ARRAY,      "batt_annual_charge_from_system",                 "Battery annual energy charged from system",                 "kWh",      "",                      "LCOS",       "",                           "",                               "" },
     { SSC_INOUT,        SSC_ARRAY,      "batt_annual_discharge_energy",               "Battery annual energy discharged",                      "kWh",      "",                      "LCOS",       "",                           "",                               "" },
     { SSC_INOUT,        SSC_ARRAY,      "batt_annual_charge_energy",               "Battery annual energy charged",                      "kWh",      "",                      "LCOS",       "",                           "",                               "" },
+
+    { SSC_INOUT,       SSC_ARRAY,      "annual_fuel_usage_lifetime",            "Annual Fuel Usage (lifetime)",               "kWht",          "",      "Fuel Cell",           "",               "",                    "" },
+    { SSC_INOUT,       SSC_ARRAY,       "fuelcell_annual_energy_discharged",  "Fuel cell annual energy discharged",    "kWh",        "",                 "Fuel Cell",                  "",                        "",                              "" },
+    { SSC_INOUT,       SSC_ARRAY,       "fuelcell_replacement",                "Fuel cell replacements per year",      "number/year", "",              "Fuel Cell",           "",                           "",                              "" },
+    var_info_invalid
+};
+
+var_info vtab_lcos_inputs[] = {
+    /*   VARTYPE           DATATYPE         NAME                             LABEL                                UNITS      META                 GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
     { SSC_INPUT,        SSC_NUMBER,     "batt_salvage_percentage",                     "Net pre-tax cash battery salvage value",	                               "%",	 "",					  "LCOS",             "?=0",                     "MIN=0,MAX=100",      			"" },
 
     { SSC_INPUT,        SSC_NUMBER,      "battery_total_cost_lcos",               "Battery total investment cost",                      "$",      "",                      "LCOS",       "",                           "",                               "" },

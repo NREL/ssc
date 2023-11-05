@@ -649,7 +649,8 @@ static var_info _cm_vtab_singleowner[] = {
 var_info_invalid };
 
 extern var_info
-	vtab_ppa_inout[],
+    vtab_update_tech_outputs[],
+    vtab_ppa_inout[],
 	vtab_standard_financial[],
 	vtab_oandm[],
     vtab_equip_reserve[],
@@ -920,9 +921,11 @@ public:
 		add_var_info(vtab_financial_capacity_payments);
 		add_var_info(vtab_financial_grid);
         add_var_info(vtab_lcos_inputs);
+        add_var_info(vtab_update_tech_outputs);
         add_var_info(vtab_tod_dispatch_periods);
         add_var_info(vtab_hybrid_fin_om);
-	}
+        add_var_info(vtab_update_tech_outputs);
+    }
 
 	void exec( )
 	{

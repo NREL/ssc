@@ -372,7 +372,16 @@ public:
                 for (size_t g = 0; g < genLength; g++) {
                     pGen[g] += gen[g] * maximumTimeStepsPerHour;
                 }
-                
+
+
+                // resize annual outputs
+                size_t arr_length = analysisPeriod + 1;
+                ssc_number_t yr_0_value = 0.0;
+                prepend_to_output((var_table*)compute_module_outputs, "fuelcell_replacement", arr_length, yr_0_value);
+                prepend_to_output((var_table*)compute_module_outputs, "annual_fuel_usage_lifetime", arr_length, yr_0_value);
+                prepend_to_output((var_table*)compute_module_outputs, "fuelcell_annual_energy_discharged", arr_length, yr_0_value);
+
+
                 ssc_data_set_table(outputs, compute_module.c_str(), compute_module_outputs);
                 ssc_module_free(module);
                 ssc_data_free(compute_module_outputs);

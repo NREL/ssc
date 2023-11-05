@@ -626,7 +626,8 @@ extern var_info
 	vtab_financial_grid[],
 	vtab_fuelcell_replacement_cost[],
     vtab_lcos_inputs[],
-	vtab_battery_replacement_cost[];
+    vtab_update_tech_outputs[],
+    vtab_battery_replacement_cost[];
 
 enum {
 	CF_energy_net,
@@ -877,7 +878,8 @@ public:
 		add_var_info(vtab_financial_capacity_payments);
         add_var_info(vtab_lcos_inputs);
 		add_var_info(vtab_financial_grid);
-	}
+        add_var_info(vtab_update_tech_outputs);
+    }
 
 	void exec( )
 	{
