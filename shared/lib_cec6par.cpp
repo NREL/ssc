@@ -480,7 +480,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 
 	// convert to kelvin
 	double TA = input.Tdry+273.15;
-    if (isnan(input.Patm)) {
+    if (std::isnan(input.Patm)) {
         m_err = "Atmospheric pressure (millibar) is required for this temperature model.";
         Tcell = std::numeric_limits<double>::quiet_NaN();
         return false;
@@ -510,7 +510,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 	Fcs        = 1. - Fcg;              // !view factor between top of tilted plate and everything else (sky)
 	Fbs        = Fcg;                   // !view factor bewteen top and ground = bottom and sky
 	Fbg        = Fcs;                   // !view factor bewteen bottom and ground = top and sky
-    if (isnan(input.Tdew)) {
+    if (std::isnan(input.Tdew)) {
         m_err = "Dew point temperature (degC) is required for this temperature model.";
         Tcell = std::numeric_limits<double>::quiet_NaN();
         return false;
