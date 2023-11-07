@@ -173,7 +173,7 @@ double dispatch_automatic_behind_the_meter_t::power_grid_target() { return _P_ta
 
 void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
 {
-    if (_mode == dispatch_t::FORECAST)
+    if (_mode == dispatch_t::RETAIL_RATE)
     {
 
         forecast_setup rate_setup(_steps_per_hour, _nyears);
@@ -196,7 +196,7 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t year, size_t 
     // [kWh] - the maximum energy that can be cycled
     double E_max = 0;
 
-    if (_mode == dispatch_t::FORECAST)
+    if (_mode == dispatch_t::RETAIL_RATE)
     {
         // Hourly rolling forecast horizon
         if ((hour_of_year != _hour_last_updated) || m_outage_manager->recover_from_outage)
@@ -466,7 +466,7 @@ void dispatch_automatic_behind_the_meter_t::target_power(double E_useful, size_t
 				if (sorted_grid[ii].Grid() > P_target_min)
 					break;
 
-				E_charge += (P_target_min - sorted_grid[ii].Grid())*_dt_hour;
+				E_charge += (P_target_min - sorted_grid[ii].Grid()) * _dt_hour * m_batteryPower->singlePointEfficiencyACToDC;
 			}
 			E_charge_vec.push_back(E_charge);
 			if (debug)
@@ -883,7 +883,7 @@ void dispatch_automatic_behind_the_meter_t::costToCycle()
             m_cycleCost = 0.01 * capacityPercentDamagePerCycle * m_battReplacementCostPerKWH[curr_year] * _Battery->get_params().nominal_energy;
         }
         else {
-            // Should only apply to BattWatts. BattWatts doesn't have price signal dispatch, so this is fine.
+            // Should only apply to BattWatts. BattWatts doesn't have retal rate dispatch, so this is fine.
             m_cycleCost = 0.0;
         }
     }

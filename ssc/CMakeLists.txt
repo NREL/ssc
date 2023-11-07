@@ -73,7 +73,6 @@ set(SSC_SRC
 		cmod_mhk_wave.cpp
 		cmod_mspt_sf_and_rec_isolated.cpp
         cmod_mspt_iph.cpp
-		cmod_poacalib.cpp
         cmod_ptes_design_point.cpp
 		cmod_pv6parmod.cpp
 		cmod_pv_get_shade_loss_mpp.cpp
@@ -82,10 +81,6 @@ set(SSC_SRC
 		cmod_pvsamv1_eqns.cpp
 		cmod_pvsamv1_eqns.h
 		cmod_pvsandiainv.cpp
-		cmod_pvwattsv0.cpp
-		cmod_pvwattsv1.cpp
-		cmod_pvwattsv1_1ts.cpp
-		cmod_pvwattsv1_poa.cpp
 		cmod_pvwattsv5.cpp
 		cmod_pvwattsv7.cpp
 		cmod_pvwattsv8.cpp
@@ -123,6 +118,7 @@ set(SSC_SRC
 		cmod_utilityrate5.cpp
 		cmod_utilityrate5.h
 		cmod_wavefile.cpp
+        cmod_tidalfile.cpp
 		cmod_utilityrate5_eqns.cpp
 		cmod_utilityrate5_eqns.h
         cmod_utilityrateforecast.cpp
