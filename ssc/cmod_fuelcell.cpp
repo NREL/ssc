@@ -168,8 +168,7 @@ void cm_fuelcell::exec()
  	for (size_t y = 0; y < fcVars->numberOfYears; y++) {
 
 		size_t idx_year = 0;
-		size_t annual_index;
-		fcVars->numberOfYears > 1 ? annual_index = y + 1 : annual_index = 0;
+		size_t annual_index = y;
         annual_energy_fc = 0;
 
 		for (size_t h = 0; h < 8760; h++){
@@ -241,6 +240,7 @@ void cm_fuelcell::exec()
 	// Ratio of MMBtu to MWh to get cash flow calculation correct (fuel costs in $/MMBtu)
 	assign("system_heat_rate", var_data((ssc_number_t)BTU_PER_KWH / 1000));
 	assign("annual_fuel_usage", var_data((ssc_number_t)annual_fuel));
+
 }
 
 void cm_fuelcell::allocateOutputs()
@@ -256,16 +256,13 @@ void cm_fuelcell::allocateOutputs()
 	    p_fuelCellToLoad_kW = allocate("fuelcell_to_load", fcVars->numberOfLifetimeRecords);
 
 	// annual outputs
-	size_t annual_size = fcVars->numberOfYears + 1; // Fuel cell startup consumption in year 0
+    size_t annual_size = fcVars->numberOfYears;
 
 	p_fuelCellReplacements = allocate("fuelcell_replacement", annual_size);
 	p_fuelCellConsumption_MCf_annual = allocate("annual_fuel_usage_lifetime", annual_size);
-	p_fuelCellReplacements[0] = 0;
-	p_fuelCellConsumption_MCf_annual[0] = 0;
 
 	p_gen_kW = allocate("gen", fcVars->numberOfLifetimeRecords);
     p_fuelCellAnnualEnergy = allocate("fuelcell_annual_energy_discharged", annual_size);
-    p_fuelCellAnnualEnergy[0] = 0;
 
 }
 
