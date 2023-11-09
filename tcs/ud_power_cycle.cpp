@@ -40,7 +40,30 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <unordered_set>
 #include <map>
 
-void C_ud_power_cycle::init(const util::matrix_t<double>& udpc_table,
+C_ud_power_cycle::C_ud_power_cycle()
+{
+    m_is_sco2_regr = false;
+    m_is_sco2_design_set = false;
+
+    m_T_htf_cold_des_sco2_regr = m_deltaT_HTF_des = std::numeric_limits<double>::quiet_NaN();
+}
+
+void C_ud_power_cycle::set_is_sco2_regr(bool is_sco2_regr)
+{
+    m_is_sco2_regr = is_sco2_regr;
+}
+
+void C_ud_power_cycle::set_sco2_design_for_sco2_regr(double T_htf_hot_des /*C*/, double T_htf_cold_des /*C*/)
+{
+    m_T_htf_cold_des_sco2_regr = T_htf_cold_des;        //[C]
+    m_deltaT_HTF_des = T_htf_hot_des - T_htf_cold_des;  //[C]
+
+    if (std::isfinite(m_deltaT_HTF_des)) {
+        m_is_sco2_design_set = true;
+    }
+}
+
+void C_ud_power_cycle::init(bool is_sco2_regr, const util::matrix_t<double>& udpc_table,
     int& n_T_htf_pars, int& n_T_amb_pars, int& n_m_dot_pars,
     double& T_htf_ref_calc /*C*/, double& T_htf_low_calc /*C*/, double& T_htf_high_calc /*C*/,
     double& T_amb_ref_calc /*C*/, double& T_amb_low_calc /*C*/, double& T_amb_high_calc /*C*/,
@@ -48,10 +71,14 @@ void C_ud_power_cycle::init(const util::matrix_t<double>& udpc_table,
     std::vector<double>& Y_at_T_htf_ref, std::vector<double>& Y_at_T_amb_ref,
     std::vector<double>& Y_at_m_dot_htf_ND_ref, std::vector<double>& Y_avg_at_refs)
 {
-    util::matrix_t<double> T_htf_ind_table, m_dot_htf_ND_ind_table, T_amb_ind_table;
+    m_is_sco2_regr = is_sco2_regr;
+
+    util::matrix_t<double> T_htf_ind_table, m_dot_htf_ND_ind_table, T_amb_ind_table;    
 
     N_udpc_common::split_ind_tbl(udpc_table,
         T_htf_ind_table, m_dot_htf_ND_ind_table, T_amb_ind_table,
+        mv_T_htf_unique, mv_m_dot_unique,
+        mv_T_amb_unique,
         n_T_htf_pars, n_T_amb_pars, n_m_dot_pars,
         m_dot_htf_ND_low_calc, m_dot_htf_ND_ref_calc, m_dot_htf_ND_high_calc,
         T_htf_low_calc, T_htf_ref_calc, T_htf_high_calc,
@@ -304,7 +331,7 @@ void C_ud_power_cycle::init(const util::matrix_t<double>& udpc_table,
 
 }
 
-double C_ud_power_cycle::get_W_dot_gross_ND(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/)
+double C_ud_power_cycle::get_W_dot_gross_ND_interp(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/)
 {
 	// This call needs to define which columns to search
 	// Then use 'get_interpolated_ND_output' to get ND total effect
@@ -314,7 +341,7 @@ double C_ud_power_cycle::get_W_dot_gross_ND(double T_htf_hot /*C*/, double T_amb
 	// Also, maybe want to check parameters against max/min, or if extrapolating, or something?
 }
 
-double C_ud_power_cycle::get_Q_dot_HTF_ND(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/)
+double C_ud_power_cycle::get_Q_dot_HTF_ND_interp(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/)
 {
 	// This call needs to define which columns to search
 	// Then use 'get_interpolated_ND_output' to get ND total effect
@@ -324,7 +351,7 @@ double C_ud_power_cycle::get_Q_dot_HTF_ND(double T_htf_hot /*C*/, double T_amb /
 	// Also, maybe want to check parameters against max/min, or if extrapolating, or something?
 }
 
-double C_ud_power_cycle::get_W_dot_cooling_ND(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/)
+double C_ud_power_cycle::get_W_dot_cooling_ND_interp(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/)
 {
 	// This call needs to define which columns to search
 	// Then use 'get_interpolated_ND_output' to get ND total effect
@@ -334,14 +361,201 @@ double C_ud_power_cycle::get_W_dot_cooling_ND(double T_htf_hot /*C*/, double T_a
 	// Also, maybe want to check parameters against max/min, or if extrapolating, or something?
 }
 
-double C_ud_power_cycle::get_m_dot_water_ND(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/)
+double C_ud_power_cycle::get_m_dot_water_ND_interp(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/)
 {
 	// This call needs to define which columns to search
 	// Then use 'get_interpolated_ND_output' to get ND total effect
 
-	return get_interpolated_ND_output(i_m_dot_water, T_htf_hot, T_amb, m_dot_htf_ND);
-
+    return get_interpolated_ND_output(i_m_dot_water, T_htf_hot, T_amb, m_dot_htf_ND);
 	// Also, maybe want to check parameters against max/min, or if extrapolating, or something?
+}
+
+double C_ud_power_cycle::get_W_dot_gross_nd(double T_htf_hot /*C*/, double T_amb /*C*/,
+    double m_dot_htf_ND /*-*/, double max_frac /*-*/)
+{
+    if (m_is_sco2_regr) {
+        double W_dot_gross_ND, q_dot_ND, W_dot_cooling_ND, m_dot_water_ND;
+        udpc_sco2_regr_off_design(T_htf_hot, T_amb, m_dot_htf_ND, max_frac,
+            W_dot_gross_ND, q_dot_ND, W_dot_cooling_ND, m_dot_water_ND);
+        return W_dot_gross_ND;
+    }
+    else {
+        return get_W_dot_gross_ND_interp(T_htf_hot, T_amb, m_dot_htf_ND);
+    }
+}
+
+double C_ud_power_cycle::get_Q_dot_HTF_nd(double T_htf_hot /*C*/, double T_amb /*C*/,
+    double m_dot_htf_ND /*-*/, double max_frac /*-*/)
+{
+    if (m_is_sco2_regr) {
+        double W_dot_gross_ND, q_dot_ND, W_dot_cooling_ND, m_dot_water_ND;
+        udpc_sco2_regr_off_design(T_htf_hot, T_amb, m_dot_htf_ND, max_frac,
+            W_dot_gross_ND, q_dot_ND, W_dot_cooling_ND, m_dot_water_ND);
+        return q_dot_ND;
+    }
+    else {
+        return get_Q_dot_HTF_ND_interp(T_htf_hot, T_amb, m_dot_htf_ND);
+    }
+}
+
+double C_ud_power_cycle::get_W_dot_cooling_nd(double T_htf_hot /*C*/, double T_amb /*C*/,
+    double m_dot_htf_ND /*-*/, double max_frac /*-*/)
+{
+    if (m_is_sco2_regr) {
+        double W_dot_gross_ND, q_dot_ND, W_dot_cooling_ND, m_dot_water_ND;
+        udpc_sco2_regr_off_design(T_htf_hot, T_amb, m_dot_htf_ND, max_frac,
+            W_dot_gross_ND, q_dot_ND, W_dot_cooling_ND, m_dot_water_ND);
+        return W_dot_cooling_ND;
+    }
+    else {
+        return get_W_dot_cooling_ND_interp(T_htf_hot, T_amb, m_dot_htf_ND);
+    }
+}
+
+double C_ud_power_cycle::get_m_dot_water_nd(double T_htf_hot /*C*/, double T_amb /*C*/,
+    double m_dot_htf_ND /*-*/, double max_frac /*-*/)
+{
+    if (m_is_sco2_regr) {
+        double W_dot_gross_ND, q_dot_ND, W_dot_cooling_ND, m_dot_water_ND;
+        udpc_sco2_regr_off_design(T_htf_hot, T_amb, m_dot_htf_ND, max_frac,
+            W_dot_gross_ND, q_dot_ND, W_dot_cooling_ND, m_dot_water_ND);
+        return m_dot_water_ND;
+    }
+    else {
+        return get_m_dot_water_ND_interp(T_htf_hot, T_amb, m_dot_htf_ND);
+    }
+}
+
+void C_ud_power_cycle::get_sco2_regr_max_ND_q_dot(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_max_ND /*-*/,
+    double& delta_T_HTF_OD /*C*/, double& m_dot_htf_ND_max /*-*/, double& q_dot_htf_ND_max /*-*/)
+{
+    if (!m_is_sco2_design_set) {
+        throw(C_csp_exception("You must set design information via set_sco2_design_for_sco2_regr method before"
+            " calling udpc_sco2_regr_off_design method."));
+    }
+
+    // 0)
+    delta_T_HTF_OD = T_htf_hot - m_T_htf_cold_des_sco2_regr;    //[C]
+
+    // 1)
+    q_dot_htf_ND_max = get_Q_dot_HTF_ND_interp(T_htf_hot, T_amb, m_dot_max_ND);
+
+    // 2)
+    m_dot_htf_ND_max = q_dot_htf_ND_max / (delta_T_HTF_OD / m_deltaT_HTF_des);
+
+    return;
+}
+
+void C_ud_power_cycle::udpc_sco2_regr_off_design(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/,
+    double m_dot_max_ND,
+    double& W_dot_gross_ND, double& q_dot_ND, double& W_dot_cooling_ND, double& m_dot_water_ND)
+{
+    // 0) Calculate off-design temperature difference over HTF using OD hot htf temperature
+    // 1) Get q_dot_ND_max at m_dot_ND = 1
+    // 2) m_dot_ND_max = q_dot_ND_max / (delta_T_HTF_OD/m_deltaT_HTF_des)
+    // 3) New performance model as f(m_dot_ND, T_amb, T_htf)
+    // --- a) eta_gross_ND = 'original' udpc model = w_dot_gross(udpc) / q_dot(udpc)
+    // --- b) if m_dot_ND > q_dot_ND_max
+    // --------- q_dot_ND = q_dot_ND_max
+    // -------else
+    // --------- q_dot_ND = m_dot_ND
+    //     c) W_dot_ND = q_dot_ND * eta_ND
+    //     d) W_dot_parasitics = 1.0
+    //     e) m_dot_water_ND = interpolate
+
+    // ----------------------------------------------------------------------------
+
+    if (!m_is_sco2_design_set) {
+        throw(C_csp_exception("You must set design information via set_sco2_design_for_sco2_regr method before"
+            " calling udpc_sco2_regr_off_design method."));
+    }
+
+    // 0, 1, 2)
+    double delta_T_HTF_OD, q_dot_htf_ND_max_regr, m_dot_htf_ND_max_regr;
+    delta_T_HTF_OD = q_dot_htf_ND_max_regr =  m_dot_htf_ND_max_regr = std::numeric_limits<double>::quiet_NaN();
+    get_sco2_regr_max_ND_q_dot(T_htf_hot /*C*/, T_amb /*C*/, m_dot_max_ND /*-*/,
+        delta_T_HTF_OD, m_dot_htf_ND_max_regr, q_dot_htf_ND_max_regr);
+
+    // 0)
+    //delta_T_HTF_OD = T_htf_hot - m_T_htf_cold_des_sco2_regr;    //[C]
+    //
+    //// 1)
+    //double q_dot_htf_ND_max_regr = get_Q_dot_HTF_ND_interp(T_htf_hot, T_amb, m_dot_max_ND);
+    //
+    //// 2)
+    //double m_dot_htf_ND_max_regr = q_dot_htf_ND_max_regr / (delta_T_HTF_OD/m_deltaT_HTF_des);
+
+    // 3.a)
+    double q_dot_ND_udpc = get_Q_dot_HTF_ND_interp(T_htf_hot, T_amb, m_dot_htf_ND);
+    double w_dot_gross_ND_udpc = get_W_dot_gross_ND_interp(T_htf_hot, T_amb, m_dot_htf_ND);
+    double eta_gross_ND_udpc = w_dot_gross_ND_udpc / q_dot_ND_udpc;
+
+    // 3.b)
+    q_dot_ND = std::numeric_limits<double>::quiet_NaN();
+    if (m_dot_htf_ND > m_dot_htf_ND_max_regr) {
+        q_dot_ND = q_dot_htf_ND_max_regr;
+    }
+    else {
+        q_dot_ND = m_dot_htf_ND*(delta_T_HTF_OD / m_deltaT_HTF_des);
+    }
+
+    // 3.c)
+    W_dot_gross_ND = q_dot_ND * eta_gross_ND_udpc;
+
+    // 3.d)
+    W_dot_cooling_ND = get_W_dot_cooling_ND_interp(T_htf_hot, T_amb, m_dot_htf_ND);
+
+    // 3.e)
+    m_dot_water_ND = get_m_dot_water_ND_interp(T_htf_hot, T_amb, m_dot_htf_ND);
+}
+
+void C_ud_power_cycle::get_max_m_dot_and_W_dot_ND(double T_htf_hot /*C*/, double T_amb /*C*/,
+    double max_frac /*-*/, double cutoff_frac /*-*/,
+    double& m_dot_HTF_ND_max, double& W_dot_gross_ND_max)
+{
+    // 22-12-13 try using q_dot_ND instead of W_dot_ND
+
+    // Heuristic sets max ND mass flow to q_dot_ND at global max ND mass flow rate
+
+    if (m_is_sco2_regr) {
+
+        double delta_T_HTF_OD, q_dot_htf_ND_max;
+        delta_T_HTF_OD = m_dot_HTF_ND_max = q_dot_htf_ND_max = std::numeric_limits<double>::quiet_NaN();
+        get_sco2_regr_max_ND_q_dot(T_htf_hot /*C*/, T_amb /*C*/, max_frac /*-*/,
+            delta_T_HTF_OD, m_dot_HTF_ND_max, q_dot_htf_ND_max);
+
+    }
+    else {
+        // Calculate non-dimensional mass flow rate relative to design point
+        m_dot_HTF_ND_max = max_frac;		//[-] Use max mass flow rate
+
+        double q_dot_ND_max = get_Q_dot_HTF_ND_interp(T_htf_hot,
+            T_amb,
+            m_dot_HTF_ND_max);	//[-]
+
+        if (q_dot_ND_max >= m_dot_HTF_ND_max)
+        {
+            return;
+        }
+
+        // set m_dot_ND to q_dot_max
+        m_dot_HTF_ND_max = q_dot_ND_max;
+    }
+
+    W_dot_gross_ND_max = get_W_dot_gross_nd(T_htf_hot,
+        T_amb,
+        m_dot_HTF_ND_max,
+        max_frac);	//[-]
+
+    return;
+}
+
+void C_ud_power_cycle::get_ind_var_params(std::vector<double>& v_T_htf_unique, std::vector<double>& v_m_dot_unique,
+    std::vector<double>& v_T_amb_unique)
+{
+    v_T_htf_unique = mv_T_htf_unique;
+    v_T_amb_unique = mv_T_amb_unique;
+    v_m_dot_unique = mv_m_dot_unique;
 }
 
 double C_ud_power_cycle::get_interpolated_ND_output(int i_ME /*M.E. table index*/, 
@@ -703,7 +917,10 @@ void N_udpc_common::get_var_setup(const std::vector<double>& vec_unique, const s
     int var_count_max = v_var_count[n_var_unique - 1];      // highest count
     int var_count_2 = v_var_count[n_var_unique - 2];        // 2nd highest count
     int var_count_3 = v_var_count[n_var_unique - 3];        // 3rd highest count
-    int var_count_4 = v_var_count[n_var_unique - 4];        // 4th highest count
+    int var_count_4 = 0;
+    if (v_var_count.size() > 3) {
+        var_count_4 = v_var_count[n_var_unique - 4];        // 4th highest count
+    }
 
     // Map independent variable with count, then check against some udpc rules
     var_des = std::numeric_limits<double>::quiet_NaN();
@@ -790,7 +1007,13 @@ int N_udpc_common::split_ind_tbl(const util::matrix_t<double>& cmbd_ind, util::m
     double m_dot_low, m_dot_des, m_dot_high, T_htf_low, T_htf_des, T_htf_high, T_amb_low, T_amb_des, T_amb_high;
     m_dot_low = m_dot_des = m_dot_high = T_htf_low = T_htf_des = T_htf_high = T_amb_low = T_amb_des = T_amb_high = std::numeric_limits<double>::quiet_NaN();
 
+    std::vector<double> v_T_htf_unique;
+    std::vector<double> v_m_dot_unique;
+    std::vector<double> v_T_amb_unique;
+
     return split_ind_tbl(cmbd_ind, T_htf_ind, m_dot_ind, T_amb_ind,
+        v_T_htf_unique, v_m_dot_unique,
+        v_T_amb_unique,
         n_T_htf_pars, n_T_amb_pars, n_m_dot_pars,
         m_dot_low, m_dot_des, m_dot_high,
         T_htf_low, T_htf_des, T_htf_high,
@@ -799,13 +1022,15 @@ int N_udpc_common::split_ind_tbl(const util::matrix_t<double>& cmbd_ind, util::m
 
 int N_udpc_common::split_ind_tbl(const util::matrix_t<double>& cmbd_ind, util::matrix_t<double>& T_htf_ind,
     util::matrix_t<double>& m_dot_ind, util::matrix_t<double>& T_amb_ind,
+    std::vector<double>& v_T_htf_unique, std::vector<double>& v_m_dot_unique,
+    std::vector<double>& v_T_amb_unique,
     int& n_T_htf_pars, int& n_T_amb_pars, int& n_m_dot_pars,
     double& m_dot_low, double& m_dot_des, double& m_dot_high,
     double& T_htf_low, double& T_htf_des, double& T_htf_high,
     double& T_amb_low, double& T_amb_des, double& T_amb_high)
 {
     // check for minimum length
-    int n_par_min = 4;
+    int n_par_min = 3;
     int n_levels = 3;
     int n_ind_vars = 3;
     int n_min_runs = n_par_min * n_levels * n_ind_vars;
@@ -828,9 +1053,9 @@ int N_udpc_common::split_ind_tbl(const util::matrix_t<double>& cmbd_ind, util::m
     set<double, std::less<double>> T_htf_unique(T_htf_col.data(), T_htf_col.data() + T_htf_col.ncells());
     set<double, std::less<double>> m_dot_unique(m_dot_col.data(), m_dot_col.data() + m_dot_col.ncells());
     set<double, std::less<double>> T_amb_unique(T_amb_col.data(), T_amb_col.data() + T_amb_col.ncells());
-    std::vector<double> v_T_htf_unique(T_htf_unique.begin(), T_htf_unique.end());
-    std::vector<double> v_m_dot_unique(m_dot_unique.begin(), m_dot_unique.end());
-    std::vector<double> v_T_amb_unique(T_amb_unique.begin(), T_amb_unique.end());
+    v_T_htf_unique = std::vector<double>(T_htf_unique.begin(), T_htf_unique.end());
+    v_m_dot_unique = std::vector<double>(m_dot_unique.begin(), m_dot_unique.end());
+    v_T_amb_unique = std::vector<double>(T_amb_unique.begin(), T_amb_unique.end());
 
     // Get HTF temperature levels
     T_htf_des = T_htf_low = T_htf_high = std::numeric_limits<double>::quiet_NaN();
@@ -917,9 +1142,11 @@ int N_udpc_common::split_ind_tbl(const util::matrix_t<double>& cmbd_ind, util::m
     n_T_amb_pars = v_T_amb_unique.size();
     n_T_htf_pars = v_T_htf_unique.size();
 
-    if (n_m_dot_pars < 4 || n_T_amb_pars < 4 || n_T_htf_pars < 4)
+    if (n_m_dot_pars < n_par_min || n_T_amb_pars < n_par_min || n_T_htf_pars < n_par_min)
     {
-        throw(C_csp_exception("Filtered UDPC parametric for each variable must contain at least 4 unique values"));
+        std::string error_msg = util::format("The filtered UDPC parametric for each variable must contain at least %d unique values",
+            n_par_min);
+        throw(C_csp_exception(error_msg, "User defined power cycle initialization"));
     }
 
     // Build tables for each independent variable

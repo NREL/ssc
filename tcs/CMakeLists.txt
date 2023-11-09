@@ -18,6 +18,7 @@ set(TCS_SRC
 		csp_solver_cr_electric_resistance.cpp
 		csp_solver_cr_heat_pump.cpp
 		csp_solver_falling_particle_receiver.cpp
+        csp_solver_fresnel_collector_receiver.cpp
 		csp_solver_gen_collector_receiver.cpp
 		csp_solver_lf_dsg_collector_receiver.cpp
 		csp_solver_mono_eq_methods.cpp
@@ -101,7 +102,6 @@ set(TCS_SRC
 		atmospheric_aod.h
 		base_dispatch.h
 		cavity_calcs.h
-		co2props_nn1.h
 		co2_compressor_library.h
 		CO2_properties.h
 		co2_testing.h
@@ -112,6 +112,7 @@ set(TCS_SRC
 		csp_solver_cr_electric_resistance.h
 		csp_solver_cr_heat_pump.h
 		csp_solver_falling_particle_receiver.h
+        csp_solver_fresnel_collector_receiver.h
 		csp_solver_gen_collector_receiver.h
 		csp_solver_lf_dsg_collector_receiver.h
 		csp_solver_mspt_collector_receiver.h

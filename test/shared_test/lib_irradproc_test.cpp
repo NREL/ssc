@@ -190,6 +190,17 @@ TEST_F(IrradTest, atmos_refractionTest_spa_lib_irradproc) {
     EXPECT_NEAR((double)sun_results[2], elevation_angle, e) << "elevation angle for lat " << latitude << " long " << longitude << " failed\n";
 }
 
+TEST_F(IrradTest, ineichenTest) {
+
+    double clearskyIrradiance[3];
+    double apparent_zenith = 60;
+    double elevation = 0;
+    ineichen(clearskyIrradiance, apparent_zenith, month, day, pres, 1.0, elevation, 1364.0, false);
+    EXPECT_NEAR(clearskyIrradiance[0], 591.519294, e) << "clearsky GHI";
+    EXPECT_NEAR(clearskyIrradiance[1], 1128.028, e) << "clearsky DNI";
+    EXPECT_NEAR(clearskyIrradiance[2], 27.505294, e) << "clearsky GHI";
+}
+
 
 TEST_F(DayCaseIrradProc, solarposTest_lib_irradproc) {
     double sun[9];
@@ -354,7 +365,7 @@ TEST_F(NightCaseIrradProc, incidenceTest_lib_irradproc) {
     /* Just before sunrise test case */
     sun_azm = 0.95662;
     sun_zen = 1.79457;
-    incidence(mode, tilt, azim, rotlim, sun_zen, sun_azm, backtrack_on, gcr, 0, 0, false, 0.0, angle);
+    incidence(mode, tilt, azim, rotlim, sun_zen, sun_azm, backtrack_on, gcr, 0, 0, false, 0.0, 0.0, 0.0, angle);
     solutions = { 1.89243, 0.174533, 3.14159, 0, 0 };
     for (int i = 0; i < 5; i++) {
         EXPECT_NEAR(angle[i], solutions[i], e) << "before-sunrise case";
@@ -370,7 +381,7 @@ TEST_F(SunriseCaseIrradProc, incidenceTest_lib_irradproc) {
 
     sun_azm = 1.11047;
     sun_zen = 1.6031;
-    incidence(mode, tilt, azim, rotlim, sun_zen, sun_azm, backtrack_on, gcr, 0, 0, false, 0.0, angle);
+    incidence(mode, tilt, azim, rotlim, sun_zen, sun_azm, backtrack_on, gcr, 0, 0, false, 0.0, 0.0, 0.0, angle);
     solution = 1.67992;
     EXPECT_NEAR(angle[0], solution, e) << "sunrise case";
 }
@@ -384,7 +395,7 @@ TEST_F(DayCaseIrradProc, incidenceTest_lib_irradproc) {
 
     sun_azm = 0;
     sun_zen = 0;
-    incidence(mode, tilt, azim, rotlim, sun_zen, sun_azm, backtrack_on, gcr, 0, 0, false, 0.0, angle);
+    incidence(mode, tilt, azim, rotlim, sun_zen, sun_azm, backtrack_on, gcr, 0, 0, false, 0.0, 0.0, 0.0, angle);
     solution = 0.174533;
     EXPECT_NEAR(angle[0], solution, e) << "noon case";
 }
@@ -398,7 +409,7 @@ TEST_F(SunsetCaseIrradProc, incidenceTest_lib_irradproc) {
 
     sun_azm = 5.13947;
     sun_zen = 1.55886;
-    incidence(mode, tilt, azim, rotlim, sun_zen, sun_azm, backtrack_on, gcr, 0, 0, false, 0.0, angle);
+    incidence(mode, tilt, azim, rotlim, sun_zen, sun_azm, backtrack_on, gcr, 0, 0, false, 0.0, 0.0, 0.0, angle);
     solution = 1.631;
     EXPECT_NEAR(angle[0], solution, e) << "sunset case";
 }

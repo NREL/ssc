@@ -54,9 +54,11 @@ GTEST_API_ int main(int argc, char **argv) {
 
     //    filter to include
     //    ::testing::GTEST_FLAG(filter) = "CmodPVWatts*:CMPvwatts*";
-    //::testing::GTEST_FLAG(filter) = "CMBatteryStatefulIntegration_cmod_battery_stateful.ssc_1023";
+    //::testing::GTEST_FLAG(filter) = "CmodCashLoanTest.FuelCell*";
 
-    
+    //   ::testing::GTEST_FLAG(filter) = "CmodCashLoanTest*:CmodSingleOwnerTest*";
+
+
     //    filter to exclude
     //    ::testing::GTEST_FLAG(filter) = "-PVSmoothing_lib_battery_dispatch*";
 

@@ -66,6 +66,10 @@ extern var_info vtab_forecast_price_signal[];
 extern var_info vtab_resilience_outputs[];
 extern var_info vtab_utility_rate_common[];
 
+// hybrids
+extern var_info vtab_hybrid_tech_om[];
+extern var_info vtab_hybrid_fin_om[];
+
 bool calculate_p50p90(compute_module *cm);
 
 void calculate_resilience_outputs(compute_module *cm, std::unique_ptr<resilience_runner> &resilience);

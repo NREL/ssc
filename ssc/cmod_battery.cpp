@@ -162,7 +162,7 @@ var_info vtab_battery_inputs[] = {
     { SSC_INPUT,        SSC_ARRAY,      "batt_target_power_monthly",                   "Grid target power on monthly basis",                     "kW",       "",                     "BatteryDispatch",       "en_batt=1&batt_meter_position=0&batt_dispatch_choice=1",                        "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_target_choice",                          "Target power input option",                              "0/1",      "0=InputMonthlyTarget,1=InputFullTimeSeries", "BatteryDispatch", "en_batt=1&en_standalone_batt=0&batt_meter_position=0&batt_dispatch_choice=1",                        "",                             "" },
     { SSC_INPUT,        SSC_ARRAY,      "batt_custom_dispatch",                        "Custom battery power for every time step",               "kW",       "kWAC if AC-connected, else kWDC", "BatteryDispatch",       "en_batt=1&en_standalone_batt=0&batt_dispatch_choice=2","",                         "" },
-    { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_choice",                        "Battery dispatch algorithm",                             "0/1/2/3/4", "If behind the meter: 0=PeakShaving,1=InputGridTarget,2=InputBatteryPower,3=ManualDispatch,4=PriceSignalForecast if front of meter: 0=AutomatedEconomic,1=PV_Smoothing,2=InputBatteryPower,3=ManualDispatch",                    "BatteryDispatch",       "en_batt=1",                        "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_choice",                        "Battery dispatch algorithm",                             "0/1/2/3/4/5", "If behind the meter: 0=PeakShaving,1=InputGridTarget,2=InputBatteryPower,3=ManualDispatch,4=RetailRateDispatch,5=SelfConsumption if front of meter: 0=AutomatedEconomic,1=PV_Smoothing,2=InputBatteryPower,3=ManualDispatch",                    "BatteryDispatch",       "en_batt=1",                        "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_fuelcellcharge",       "Charging from fuel cell allowed for automated dispatch?", "0/1",       "",                   "BatteryDispatch",       "",                           "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_gridcharge",           "Grid charging allowed for automated dispatch?",          "0/1",       "",                    "BatteryDispatch",       "",                           "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_charge",               "System charging allowed for automated dispatch?",            "0/1",       "",                "BatteryDispatch",       "",                           "",                             "" },
@@ -289,6 +289,12 @@ var_info vtab_battery_outputs[] = {
     { SSC_OUTPUT,        SSC_NUMBER,      "batt_pvs_violation_percent",                "PV smoothing violation percent (of all intervals-including nighttime)",                               "%",      "",                       "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_NUMBER,      "batt_pvs_energy_to_grid_percent",           "PV smoothing energy to grid percent (loss due to curtail and battery loss)",                               "%",      "",                       "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_NUMBER,      "batt_pvs_energy_to_grid_percent_sam",       "PV smoothing energy to grid percent actual (loss due to curtail and battery loss)",                               "%",      "",                       "Battery",       "",                           "",                              "" },
+
+    // Self-consumption outputs
+    { SSC_OUTPUT,        SSC_NUMBER,      "num_ts_load_met_by_system_yr1",                  "Number of timesteps electric load met by system (year 1)",     "",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "percent_ts_load_met_by_system_yr1",              "Percent of timesteps electric load met by system (year 1)",     "",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "num_ts_load_met_by_system_lifetime",             "Number of timesteps electric load met by system (lifetime)",     "",      "",                       "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "percent_ts_load_met_by_system_lifetime",         "Percent of timesteps electric load met by system (lifetime)",     "",      "",                       "Battery",       "",                           "",                              "" },
 
     // validation outputs at ramp interval - use for debugging and remove for release
 /*
@@ -705,6 +711,12 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                     batt_vars->target_power = target_power;
 
                 }
+                else if (batt_vars->batt_dispatch == dispatch_t::SELF_CONSUMPTION)
+                {
+                    //for self-consumption (aka 24/7 carbon-free energy) dispatch option, we're going to use the grid target power algorithm with an array of zeros
+                    std::vector<double> target_power_temp(nyears* nrec, 0.0);
+                    target_power = target_power_temp;
+                }
                 else if (batt_vars->batt_dispatch == dispatch_t::CUSTOM_DISPATCH)
                 {
                     batt_vars->batt_custom_dispatch = vt.as_vector_double("batt_custom_dispatch");
@@ -1024,7 +1036,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
 
     }
 
-    bool cycleCostRelevant = (batt_vars->batt_meter_position == dispatch_t::BEHIND && batt_vars->batt_dispatch == dispatch_t::FORECAST) ||
+    bool cycleCostRelevant = (batt_vars->batt_meter_position == dispatch_t::BEHIND && batt_vars->batt_dispatch == dispatch_t::RETAIL_RATE) ||
         (batt_vars->batt_meter_position == dispatch_t::FRONT && (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL && batt_vars->batt_dispatch != dispatch_t::FOM_CUSTOM_DISPATCH));
     if (cycleCostRelevant && batt_vars->batt_cycle_cost_choice == dispatch_t::MODEL_CYCLE_COST) {
         outCostToCycle = vt.allocate("batt_cost_to_cycle", nrec * nyears);
@@ -1371,7 +1383,8 @@ void battstor::parse_configuration()
         prediction_index = 0;
         if (batt_meter_position == dispatch_t::BEHIND)
         {
-            if (batt_dispatch == dispatch_t::PEAK_SHAVING || batt_dispatch == dispatch_t::MAINTAIN_TARGET || batt_dispatch == dispatch_t::FORECAST)
+            if (batt_dispatch == dispatch_t::PEAK_SHAVING || batt_dispatch == dispatch_t::MAINTAIN_TARGET || batt_dispatch == dispatch_t::RETAIL_RATE ||
+                batt_dispatch == dispatch_t::SELF_CONSUMPTION)
             {
                 switch (batt_weather_forecast) {
                     case dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD:
@@ -1397,7 +1410,7 @@ void battstor::parse_configuration()
                         break;
                 }
 
-                if (batt_dispatch == dispatch_t::MAINTAIN_TARGET)
+                if (batt_dispatch == dispatch_t::MAINTAIN_TARGET || batt_dispatch == dispatch_t::SELF_CONSUMPTION)
                     input_target = true;
             }
             else if (batt_dispatch == dispatch_t::CUSTOM_DISPATCH)
@@ -1768,7 +1781,7 @@ bool battstor::uses_forecast() {
         return batt_vars->batt_dispatch == dispatch_t::FOM_AUTOMATED_ECONOMIC || batt_vars->batt_dispatch == dispatch_t::FOM_PV_SMOOTHING;
     }
     else {
-        return batt_vars->batt_dispatch == dispatch_t::FORECAST || dispatch_t::PEAK_SHAVING;
+        return batt_vars->batt_dispatch == dispatch_t::RETAIL_RATE || dispatch_t::PEAK_SHAVING;
     }
 }
 
@@ -1933,7 +1946,7 @@ void battstor::outputs_topology_dependent()
         }
     }
 
-    bool cycleCostRelevant = (batt_vars->batt_meter_position == dispatch_t::BEHIND && batt_vars->batt_dispatch == dispatch_t::FORECAST) ||
+    bool cycleCostRelevant = (batt_vars->batt_meter_position == dispatch_t::BEHIND && batt_vars->batt_dispatch == dispatch_t::RETAIL_RATE) ||
         (batt_vars->batt_meter_position == dispatch_t::FRONT && (batt_vars->batt_dispatch != dispatch_t::FOM_MANUAL && batt_vars->batt_dispatch != dispatch_t::FOM_CUSTOM_DISPATCH));
     if (cycleCostRelevant && batt_vars->batt_cycle_cost_choice == dispatch_t::MODEL_CYCLE_COST) {
         outCostToCycle[index] = (ssc_number_t)(dispatch_model->cost_to_cycle_per_kwh());
@@ -2086,6 +2099,28 @@ void battstor::calculate_monthly_and_annual_outputs(compute_module& cm)
         cm.accumulate_monthly_for_year("system_to_load", "monthly_system_to_load", _dt_hour, step_per_hour);
         cm.accumulate_monthly_for_year("batt_to_load", "monthly_batt_to_load", _dt_hour, step_per_hour);
         cm.accumulate_monthly_for_year("grid_to_load", "monthly_grid_to_load", _dt_hour, step_per_hour);
+
+        if (batt_vars->batt_dispatch == dispatch_t::SELF_CONSUMPTION)
+        {
+            //calculate all outputs for number of timesteps the load is met by the system, using grid_to_load == 0 as a qualification
+            //better to parse the grid_to_load timeseries once here for all outputs, than to create a new timeseries variable for whether load is met by system
+            outTimestepsLoadMetBySystemYear1 = 0.0;
+            outTimestepsLoadMetBySystemLifetime = 0.0;
+            for (size_t i = 0; i < total_steps; i++)
+            {
+                if (outGridToLoad[i] == 0.0)
+                {
+                    outTimestepsLoadMetBySystemLifetime++;
+                    if (i < step_per_year) outTimestepsLoadMetBySystemYear1++;
+                }
+            }
+            cm.assign("num_ts_load_met_by_system_yr1", outTimestepsLoadMetBySystemYear1);
+            cm.assign("num_ts_load_met_by_system_lifetime", outTimestepsLoadMetBySystemLifetime);
+            outPercentTimestepsLoadMetBySystemYear1 = (outTimestepsLoadMetBySystemYear1 / step_per_year) * 100.0;
+            cm.assign("percent_ts_load_met_by_system_yr1", (ssc_number_t)outPercentTimestepsLoadMetBySystemYear1);
+            outPercentTimestepsLoadMetBySystemLifetime = (outTimestepsLoadMetBySystemLifetime / total_steps) * 100.0;
+            cm.assign("percent_ts_load_met_by_system_lifetime", (ssc_number_t)outPercentTimestepsLoadMetBySystemLifetime);
+         }
     }
     else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
     {
@@ -2213,6 +2248,8 @@ public:
         add_var_info(vtab_resilience_outputs);
         add_var_info(vtab_utility_rate_common);
         add_var_info(vtab_grid_curtailment);
+        add_var_info(vtab_hybrid_tech_om);
+
     }
 
     void exec() override
@@ -2428,6 +2465,8 @@ public:
             float percent_complete = 0.0;
             float percent = 0.0;
             size_t nStatusUpdates = 50;
+            // assume that anyone using this module is chaining with two techs
+            float techs = 1;
 
             if (is_assigned("percent_complete")) {
                 percent_complete = as_float("percent_complete");
@@ -2441,8 +2480,6 @@ public:
                     // status bar
                     if (hour % (8760 / nStatusUpdates) == 0)
                     {
-                        // assume that anyone using this module is chaining with two techs
-                        float techs = 3;
                         percent = percent_complete + 100.0f * ((float)lifetime_idx + 1) / ((float)n_rec_lifetime) / techs;
                         if (!update("", percent, (float)hour)) {
                             throw exec_error("battery", "Simulation canceled at hour " + util::to_string(hour + 1.0) + ".");

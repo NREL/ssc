@@ -49,7 +49,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 SSCEXPORT int ssc_version()
 {
-	return 280;
+	return 286;
 }
 
 SSCEXPORT const char *ssc_build_info()
@@ -71,10 +71,6 @@ extern module_entry_info
 	cm_entry_iec61853interp,
 	cm_entry_6parsolve,
 	cm_entry_pvsamv1,
-	cm_entry_pvwattsv0,
-	cm_entry_pvwattsv1,
-	cm_entry_pvwattsv1_1ts,
-	cm_entry_pvwattsv1_poa,
 	cm_entry_pvwattsv5,
 	cm_entry_pvwattsv7,
     cm_entry_pvwattsv8,
@@ -89,7 +85,6 @@ extern module_entry_info
 	cm_entry_utilityrate4,
 	cm_entry_utilityrate5,
     cm_entry_utilityrateforecast,
-	cm_entry_annualoutput,
 	cm_entry_cashloan,
 	cm_entry_thirdpartyownership,
 	cm_entry_ippppa,
@@ -105,7 +100,6 @@ extern module_entry_info
 	cm_entry_geothermal,
 	cm_entry_geothermal_costs,
 	cm_entry_windpower,
-	cm_entry_poacalib,
 	cm_entry_snowmodel,
 	cm_entry_generic_system,
 	cm_entry_wfcsvconv,
@@ -117,9 +111,12 @@ extern module_entry_info
 	cm_entry_iph_to_lcoefcr,
 	cm_entry_tcsgeneric_solar,
 	cm_entry_tcsmolten_salt,
+    cm_entry_mspt_iph,
     cm_entry_mspt_sf_and_rec_isolated,
     cm_entry_csp_tower_particle,
     cm_entry_ptes_design_point,
+    cm_entry_fresnel_physical,
+    cm_entry_fresnel_physical_iph,
 	cm_entry_tcslinear_fresnel,
 	cm_entry_linear_fresnel_dsg_iph,
 	cm_entry_tcsmslf,
@@ -152,6 +149,7 @@ extern module_entry_info
 	cm_entry_battwatts,
 	cm_entry_fuelcell,
    	cm_entry_lcoefcr,
+    cm_entry_lcoefcr_design,
 	cm_entry_pv_get_shade_loss_mpp,
 	cm_entry_inv_cec_cg,
 	cm_entry_thermalrate,
@@ -159,10 +157,13 @@ extern module_entry_info
 	cm_entry_mhk_wave,
 	cm_entry_mhk_costs,
 	cm_entry_wave_file_reader,
+    cm_entry_tidal_file_reader,
 	cm_entry_grid,
 	cm_entry_battery_stateful,
-    cm_entry_csp_subcomponent
-	;
+    cm_entry_csp_subcomponent,
+    cm_entry_hybrid_steps,
+    cm_entry_hybrid
+    ;
 
 /* official module table */
 static module_entry_info *module_table[] = {
@@ -173,10 +174,6 @@ static module_entry_info *module_table[] = {
 	&cm_entry_6parsolve,
 	&cm_entry_pv6parmod,
 	&cm_entry_pvsamv1,
-	//&cm_entry_pvwattsv0,
-	&cm_entry_pvwattsv1,
-	&cm_entry_pvwattsv1_1ts,
-	&cm_entry_pvwattsv1_poa,
 	&cm_entry_pvwattsv5,
 	&cm_entry_pvwattsv7,
     &cm_entry_pvwattsv8,
@@ -190,7 +187,6 @@ static module_entry_info *module_table[] = {
 	&cm_entry_utilityrate4,
 	&cm_entry_utilityrate5,
     &cm_entry_utilityrateforecast,
-	&cm_entry_annualoutput,
 	&cm_entry_cashloan,
 	&cm_entry_thirdpartyownership,
 	&cm_entry_ippppa,
@@ -206,7 +202,6 @@ static module_entry_info *module_table[] = {
 	&cm_entry_geothermal,
 	&cm_entry_geothermal_costs,
 	&cm_entry_windpower,
-	&cm_entry_poacalib,
 	&cm_entry_snowmodel,
 	&cm_entry_generic_system,
 	&cm_entry_wfcsvconv,
@@ -218,8 +213,11 @@ static module_entry_info *module_table[] = {
 	&cm_entry_iph_to_lcoefcr,
 	&cm_entry_tcsgeneric_solar,
 	&cm_entry_tcsmolten_salt,
+    &cm_entry_mspt_iph,
     &cm_entry_mspt_sf_and_rec_isolated,
     &cm_entry_csp_tower_particle,
+    &cm_entry_fresnel_physical,
+    &cm_entry_fresnel_physical_iph,
     &cm_entry_ptes_design_point,
 	&cm_entry_tcslinear_fresnel,
 	&cm_entry_linear_fresnel_dsg_iph,
@@ -253,6 +251,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_battwatts,
 	&cm_entry_fuelcell,
 	&cm_entry_lcoefcr,
+    &cm_entry_lcoefcr_design,
 	&cm_entry_pv_get_shade_loss_mpp,
 	&cm_entry_inv_cec_cg,
 	&cm_entry_thermalrate,
@@ -260,10 +259,13 @@ static module_entry_info *module_table[] = {
 	&cm_entry_mhk_wave,
 	&cm_entry_mhk_costs,
 	&cm_entry_wave_file_reader,
+    &cm_entry_tidal_file_reader,
 	&cm_entry_grid,
 	&cm_entry_battery_stateful,
     &cm_entry_csp_subcomponent,
-	0 };
+    &cm_entry_hybrid_steps,
+    &cm_entry_hybrid,
+0 };
 
 SSCEXPORT ssc_module_t ssc_module_create( const char *name )
 {
@@ -1285,6 +1287,19 @@ SSCEXPORT void ssc_module_extproc_output( ssc_handler_t p_handler, const char *o
 	handler_interface *hi = static_cast<handler_interface*>( p_handler );
 	if (hi)	hi->on_stdout( output_line );
 }
+
+SSCEXPORT ssc_bool_t ssc_module_add_var_info(ssc_module_t p_mod, ssc_info_t v)
+{
+    compute_module* cm = static_cast<compute_module*>(p_mod);
+    if (!p_mod) return 0;
+
+    var_info* vi = static_cast<var_info*>(v);
+    if (!vi) return 0;
+    cm->add_var_info(vi);
+
+    return 1;
+}
+
 
 SSCEXPORT const char *ssc_module_log( ssc_module_t p_mod, int index, int *item_type, float *time )
 {

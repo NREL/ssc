@@ -141,7 +141,6 @@ var_info vtab_oandm[] = {
 { SSC_INPUT,SSC_ARRAY   , "om_fuelcell_fixed_cost"                            , "Fuel cell fixed System Costs annual amount"                     , "$/year"                                 , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
 { SSC_INPUT,SSC_ARRAY   , "om_fuelcell_variable_cost"                       , "Fuel cell production-based System Costs amount"                 , "$/MWh"                                  , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
 { SSC_INPUT,SSC_ARRAY   , "om_fuelcell_capacity_cost"                         , "Fuel cell capacity-based System Costs amount"                   , "$/kWcap"                                , ""                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
-{ SSC_INPUT, SSC_ARRAY,   "fuelcell_annual_energy_discharged",  "Fuel cell annual energy discharged",    "kWh",        "",                 "System Costs",                  "?=0",                        "",                              "" },
 
 // optional land lease
 { SSC_INPUT,        SSC_NUMBER,     "land_area",                      "Total land area",	                                                "acres",                "",                        "Land Lease",            "?=0",					   "",                              "" },
@@ -428,7 +427,6 @@ var_info vtab_payment_incentives[] = {
 
 { SSC_OUTPUT,       SSC_ARRAY,      "cf_ptc_fed",                             "Federal PTC income",                 "$",            "",                      "Cash Flow Incentives",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 { SSC_OUTPUT,       SSC_ARRAY,      "cf_ptc_sta",                             "State PTC income",                   "$",            "",                      "Cash Flow Incentives",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-{ 	SSC_OUTPUT, 	SSC_ARRAY, 	    "cf_ptc_total", 	                      "Total PTC income", 	            "$", 	            "", 	                "Cash Flow Incentives", 	        "", 	"LENGTH_EQUAL=cf_length", 	""},
 // SAM 1038 - make required after other compute module updated - see ssc 910
 { SSC_OUTPUT,       SSC_ARRAY,      "cf_itc_fed_amount",                     "Federal ITC amount income",                 "$",            "",                      "Cash Flow Incentives",      "",                     "LENGTH_EQUAL=cf_length",                "" },
 { SSC_OUTPUT,       SSC_ARRAY,      "cf_itc_sta_amount",                     "State ITC amount income",                   "$",            "",                      "Cash Flow Incentives",      "",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -939,9 +937,9 @@ var_info vtab_resilience_outputs[] = {
 { SSC_OUTPUT, SSC_NUMBER , "resilience_hrs_max" , "Hours of autonomy during grid outage maximum"                     , "hr"  , ""                                                         , "Resilience" , ""  , "MIN=0"        , ""},
 { SSC_OUTPUT, SSC_NUMBER , "resilience_hrs_avg" , "Hours of autonomy during grid outage average"                     , "hr"  , ""                                                         , "Resilience" , ""  , "MIN=0"        , ""},
 { SSC_OUTPUT, SSC_ARRAY  , "outage_durations"   , "Hours of autonomy during grid outage hour list from min to max"   , "hr"  , "Hours from resilience_hrs_min to resilience_hrs_max"      , "Resilience" , ""  , ""             , ""},
-{ SSC_OUTPUT, SSC_ARRAY  , "pdf_of_surviving"   , "Hours of autonomy during grid outage probabilities"               , ""    , "Hours from resilience_hrs_min to resilience_hrs_max"      , "Resilience" , ""  , "MIN=0,MAX=1"  , ""},
-{ SSC_OUTPUT, SSC_ARRAY  , "cdf_of_surviving"   , "Hours of autonomy during grid outage cumulative probabilities"    , ""    , "Prob surviving at least x hrs; hrs from min to max"       , "Resilience" , ""  , "MIN=0,MAX=1"  , ""},
-{ SSC_OUTPUT, SSC_ARRAY  , "survival_function"  , "Hours of autonomy during grid outage survival function"           , ""    , "Prob surviving greater than x hours; hrs from min to max" , "Resilience" , ""  , "MIN=0,MAX=1"  , ""},
+{ SSC_OUTPUT, SSC_ARRAY  , "pdf_of_surviving"   , "Hours of autonomy during grid outage probabilities"               , ""    , "Hours from resilience_hrs_min to resilience_hrs_max"      , "Resilience" , ""  , ""  , ""},
+{ SSC_OUTPUT, SSC_ARRAY  , "cdf_of_surviving"   , "Hours of autonomy during grid outage cumulative probabilities"    , ""    , "Prob surviving at least x hrs; hrs from min to max"       , "Resilience" , ""  , ""  , ""},
+{ SSC_OUTPUT, SSC_ARRAY  , "survival_function"  , "Hours of autonomy during grid outage survival function"           , ""    , "Prob surviving greater than x hours; hrs from min to max" , "Resilience" , ""  , ""  , ""},
 { SSC_OUTPUT, SSC_NUMBER , "avg_critical_load"  , "Hours of autonomy during grid outage critical load met"           , "kWh" , ""                                                         , "Resilience" , ""  , "MIN=0"        , ""},
         var_info_invalid
 };
@@ -962,6 +960,32 @@ void calculate_resilience_outputs(compute_module *cm, std::unique_ptr<resilience
 	cm->assign("survival_function", resilience->get_survival_function());
 	cm->assign("avg_critical_load", resilience->get_avg_crit_load_kwh());
 }
+
+// for o and m cost outputs calculated in cmod_hybrid
+var_info vtab_hybrid_tech_om[] = {
+    /*   VARTYPE           DATATYPE         NAME                           LABEL                UNITS     META                      GROUP           REQUIRED_IF      CONSTRAINTS     UI_HINTS*/
+//    { SSC_INPUT,  SSC_NUMBER,     "is_hybrid",              "hybrid configuration",      "0/1", "0=singletech,1=hybrid",    "HybridTech",       "?=0",      "",             "" },
+    { SSC_OUTPUT,   SSC_ARRAY,      "cf_om_production",                     "production O&M costs",      "$",   "",             "HybridTech",       "",         "",             "" },
+    { SSC_OUTPUT,   SSC_ARRAY,      "cf_om_capacity",                       "capacity O&M costs",        "$",   "",             "HybridTech",       "",         "",             "" },
+    { SSC_OUTPUT,   SSC_ARRAY,      "cf_om_fixed",                          "fixed O&M costs",           "$",   "",             "HybridTech",       "",         "",             "" },
+    { SSC_OUTPUT,   SSC_ARRAY,      "cf_om_land_lease",                     "land lease O&M costs",      "$",   "",             "HybridTech",       "",         "",             "" },
+    { SSC_OUTPUT,   SSC_ARRAY,      "cf_om_fuel_cost",                      "fossil fuel O&M costs",     "$",   "",             "HybridTech",       "",         "",             "" },
+    { SSC_OUTPUT,   SSC_ARRAY,      "cf_battery_replacement_cost_schedule", "replacement O&M costs",     "$",   "",             "HybridTech",       "",         "",             "" },
+    { SSC_OUTPUT,   SSC_ARRAY,      "cf_fuelcell_replacement_cost_schedule", "replacement O&M costs",    "$",   "",             "HybridTech",       "",         "",             "" },
+    { SSC_OUTPUT,   SSC_ARRAY,      "cf_energy_net",                        "annual energy",             "kWh", "",             "HybridTech",       "",         "",             "" },
+var_info_invalid };
+
+// for o and m cost outputs calculated in cmod_hybrid and added to operating expenses
+var_info vtab_hybrid_fin_om[] = {
+    /*   VARTYPE           DATATYPE         NAME                           LABEL                UNITS     META                      GROUP           REQUIRED_IF      CONSTRAINTS     UI_HINTS*/
+    { SSC_INPUT,          SSC_NUMBER,     "is_hybrid",              "hybrid configuration",      "0/1", "0=singletech,1=hybrid",    "HybridFin",       "?=0",      "",             "" },
+    { SSC_INPUT,          SSC_ARRAY,      "cf_hybrid_om_sum",       "Hybrid O&M costs",          "$",   "",                         "HybridFin",       "",         "",             "" },
+    { SSC_INOUT,          SSC_ARRAY,      "monthly_energy",         "Monthly energy",            "kWh", "",                         "Monthly",         "",         "LENGTH = 12",  "" },
+
+var_info_invalid };
+
+
+
 
 var_info vtab_utility_rate_common[] = {
 /*   VARTYPE           DATATYPE         NAME                        LABEL                                    UNITS      META                     GROUP                      REQUIRED_IF         CONSTRAINTS               UI_HINTS	*/
@@ -1839,15 +1863,17 @@ std::vector<double> scalefactors::get_factors(const char* name)
 
 void prepend_to_output(compute_module* cm, std::string var_name, size_t count, ssc_number_t value) {
     size_t orig_count = 0;
-    ssc_number_t* arr = cm->as_array(var_name, &orig_count);
-    arr = cm->resize_array(var_name, count);
-    if (count > orig_count) {
-        size_t diff = count - orig_count;
-        for (int i = (int)orig_count - 1; i >= 0; i--) {
-            arr[i + diff] = arr[i];
-        }
-        for (int i = 0; i < (int)diff; i++) {
-            arr[i] = value;
+    if (cm->is_assigned(var_name)) {
+        ssc_number_t* arr = cm->as_array(var_name, &orig_count);
+        arr = cm->resize_array(var_name, count);
+        if (count > orig_count) {
+            size_t diff = count - orig_count;
+            for (int i = (int)orig_count - 1; i >= 0; i--) {
+                arr[i + diff] = arr[i];
+            }
+            for (int i = 0; i < (int)diff; i++) {
+                arr[i] = value;
+            }
         }
     }
 }

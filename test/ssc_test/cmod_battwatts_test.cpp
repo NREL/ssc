@@ -55,15 +55,15 @@ TEST_F(CMBattwatts_cmod_battwatts, ResilienceMetricsHalfLoad){
     double avg_critical_load = data.as_double("avg_critical_load"); // Load met
 
     EXPECT_EQ(resilience_hours[0], 14);
-    EXPECT_EQ(resilience_hours[1], 14);
+    EXPECT_EQ(resilience_hours[1], 15);
     EXPECT_NEAR(avg_critical_load, 7.98, 0.1);
-    EXPECT_NEAR(resilience_hrs_avg, 31.66, 0.01);
+    EXPECT_NEAR(resilience_hrs_avg, 31.95, 0.01);
     EXPECT_EQ(resilience_hrs_min, 14);
     EXPECT_EQ(outage_durations[0], 14);
     EXPECT_EQ(resilience_hrs_max, 32);
     EXPECT_EQ(outage_durations[16], 30);
     EXPECT_NEAR(pdf_of_surviving[0], 0.00068, 1e-3);
-    EXPECT_NEAR(pdf_of_surviving[1], 0.00217, 1e-3);
+    EXPECT_NEAR(pdf_of_surviving[1], 0.00034, 1e-3);
 
 }
 
@@ -84,15 +84,15 @@ TEST_F(CMBattwatts_cmod_battwatts, ResilienceMetricsHalfLoadLifetime){
     double avg_critical_load = data.as_double("avg_critical_load");
 
     EXPECT_EQ(resilience_hours[0], 14);
-    EXPECT_EQ(resilience_hours[1], 14);
+    EXPECT_EQ(resilience_hours[1], 15);
     EXPECT_NEAR(avg_critical_load, 8.026, 0.1);
-    EXPECT_NEAR(resilience_hrs_avg, 31.83, 0.01);
+    EXPECT_NEAR(resilience_hrs_avg, 31.975, 0.01);
     EXPECT_EQ(resilience_hrs_min, 14);
     EXPECT_EQ(resilience_hrs_max, 32);
     EXPECT_EQ(outage_durations[0], 14);
     EXPECT_EQ(outage_durations[16], 30);
-    EXPECT_NEAR(pdf_of_surviving[0], 0.00034, 1e-5);
-    EXPECT_NEAR(pdf_of_surviving[1], 0.00103, 1e-5);
+    EXPECT_NEAR(pdf_of_surviving[0], 5.707e-05, 1e-5);
+    EXPECT_NEAR(pdf_of_surviving[1], 0.000171, 1e-5);
 
 }
 
@@ -105,7 +105,7 @@ TEST_F(CMBattwatts_cmod_battwatts, ResidentialDefaults) {
     EXPECT_FALSE(errors);
 
     double charge_percent = data.as_number("batt_system_charge_percent");
-    EXPECT_NEAR(charge_percent, 95.63, 0.1);
+    EXPECT_NEAR(charge_percent, 96.52, 0.1);
 
     auto batt_power_data = data.as_vector_ssc_number_t("batt_power");
     ssc_number_t peakKwDischarge = *std::max_element(batt_power_data.begin(), batt_power_data.end());
@@ -116,11 +116,11 @@ TEST_F(CMBattwatts_cmod_battwatts, ResidentialDefaults) {
 
     auto batt_voltage = data.as_vector_ssc_number_t("batt_voltage");
     ssc_number_t peakVoltage = *std::max_element(batt_voltage.begin(), batt_voltage.end());
-    EXPECT_NEAR(peakVoltage, 578.9, 0.1);
+    EXPECT_NEAR(peakVoltage, 579.3, 0.1);
 
     auto cycles = data.as_vector_ssc_number_t("batt_cycles");
     ssc_number_t maxCycles = *std::max_element(cycles.begin(), cycles.end());
-    EXPECT_NEAR(maxCycles, 613, 0.1);
+    EXPECT_NEAR(maxCycles, 477, 0.1);
 }
 
 TEST_F(CMBattwatts_cmod_battwatts, ResidentialDefaultsLeadAcid) {
@@ -135,7 +135,7 @@ TEST_F(CMBattwatts_cmod_battwatts, ResidentialDefaultsLeadAcid) {
     EXPECT_FALSE(errors);
 
     double charge_percent = data.as_number("batt_system_charge_percent");
-    EXPECT_NEAR(charge_percent, 96.13, 0.1);
+    EXPECT_NEAR(charge_percent, 96.94, 0.1);
 
     auto batt_power_data = data.as_vector_ssc_number_t("batt_power");
     ssc_number_t peakKwDischarge = *std::max_element(batt_power_data.begin(), batt_power_data.end());
@@ -150,7 +150,7 @@ TEST_F(CMBattwatts_cmod_battwatts, ResidentialDefaultsLeadAcid) {
 
     auto cycles = data.as_vector_ssc_number_t("batt_cycles");
     ssc_number_t maxCycles = *std::max_element(cycles.begin(), cycles.end());
-    EXPECT_NEAR(maxCycles, 613, 0.1);
+    EXPECT_NEAR(maxCycles, 477, 0.1);
 }
 
 TEST_F(CMBattwatts_cmod_battwatts, NoPV) {
@@ -171,7 +171,7 @@ TEST_F(CMBattwatts_cmod_battwatts, NoPV) {
     ssc_number_t peakKwDischarge = *std::max_element(batt_power_data.begin(), batt_power_data.end());
     ssc_number_t peakKwCharge = *std::min_element(batt_power_data.begin(), batt_power_data.end());
 
-    EXPECT_NEAR(peakKwDischarge, 0.9, 0.1);
+    EXPECT_NEAR(peakKwDischarge, 1.035, 0.1);
     EXPECT_NEAR(peakKwCharge, -0.7, 0.1);
 
     auto batt_voltage = data.as_vector_ssc_number_t("batt_voltage");
@@ -180,5 +180,5 @@ TEST_F(CMBattwatts_cmod_battwatts, NoPV) {
 
     auto cycles = data.as_vector_ssc_number_t("batt_cycles");
     ssc_number_t maxCycles = *std::max_element(cycles.begin(), cycles.end());
-    EXPECT_NEAR(maxCycles, 520, 0.1);
+    EXPECT_NEAR(maxCycles, 522, 0.1);
 }

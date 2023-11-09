@@ -355,7 +355,7 @@ double C_csp_mspt_collector_receiver::get_collector_area()
     return mc_pt_heliostatfield.ms_params.m_A_sf;
 }
 
-double C_csp_mspt_collector_receiver::calculate_thermal_efficiency_approx( const C_csp_weatherreader::S_outputs &weather, double q_inc )
+double C_csp_mspt_collector_receiver::calculate_thermal_efficiency_approx( const C_csp_weatherreader::S_outputs &weather, double q_inc, const C_csp_solver_sim_info& sim)
 {
     /* 
     A very approximate thermal efficiency used for quick optimization performance projections
