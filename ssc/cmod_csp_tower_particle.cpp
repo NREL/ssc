@@ -1683,7 +1683,8 @@ public:
         assign("A_rec_curtain", A_rec_curtain);     //[m2]
 
         double L_tower_piping = std::numeric_limits<double>::quiet_NaN();
-        receiver->get_design_geometry(L_tower_piping);
+        double od_tube_NA = std::numeric_limits<double>::quiet_NaN();
+        receiver->get_design_geometry(L_tower_piping, od_tube_NA);
         assign("L_tower_piping_calc", L_tower_piping);      //[m]
 
         double eta_rec_thermal_des;     //[-]

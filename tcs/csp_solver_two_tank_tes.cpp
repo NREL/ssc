@@ -956,7 +956,7 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
 }
 
 void C_csp_two_tank_tes::get_design_parameters(double& vol_one_temp_avail /*m3*/, double& vol_one_temp_total /*m3*/, double& d_tank /*m*/,
-    double& q_dot_loss_des /*MWt*/, double& dens_store_htf_at_T_ave /*kg/m3*/, double& Q_tes /*MWt-hr*/, double& total_mass)
+    double& q_dot_loss_des /*MWt*/, double& dens_store_htf_at_T_ave /*kg/m3*/, double& Q_tes /*MWt-hr*/, double& total_mass /*kg*/)
 {
     vol_one_temp_avail = m_V_tank_active;   //[m3]
     vol_one_temp_total = m_vol_tank;        //[m3]

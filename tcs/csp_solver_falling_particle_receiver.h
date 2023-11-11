@@ -169,8 +169,8 @@ protected:
     int m_n_y;              // Particle curtain (and back wall) discretization in height direction
     int m_n_zone_control;   // Number of particle flow control "zones" (not implemented yet, hard-coded to 1)
 
-    int m_n_x_rad;          // Number of curtain and back-wall x-element groups for the radiation model (only used if m_model_type == 2 and m_rad_model_type == 2)
-    int m_n_y_rad;          // Number of curtain and back-wall y-element groups for the radiation model (only used if m_model_type == 2 and m_rad_model_type == 2)
+    int m_n_x_rad;          // Number of curtain and back-wall x-element groups for the radiation model (only used if m_model_type == 3 and m_rad_model_type == 1)
+    int m_n_y_rad;          // Number of curtain and back-wall y-element groups for the radiation model (only used if m_model_type == 3 and m_rad_model_type == 1)
 
 
 

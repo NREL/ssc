@@ -1815,10 +1815,10 @@ public:
         // Thermal Energy Storage
         double V_tes_htf_avail_calc /*m3*/, V_tes_htf_total_calc /*m3*/,
             d_tank_calc /*m*/, q_dot_loss_tes_des_calc /*MWt*/, dens_store_htf_at_T_ave_calc /*kg/m3*/,
-            Q_tes_des_calc /*MWt-hr*/;
+            Q_tes_des_calc /*MWt-hr*/, tes_total_mass/*kg*/;
 
         storage.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
-            d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
+            d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc, tes_total_mass);
 
         assign("Q_tes_des", Q_tes_des_calc);                //[MWt-hr]
         assign("V_tes_htf_avail_des", V_tes_htf_avail_calc);    //[m3]
