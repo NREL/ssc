@@ -4477,8 +4477,8 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
 
     // Calculate Field Thermal Output
     {
-        m_q_design = m_I_bn_des * m_Ap_tot * m_total_loop_conversion_efficiency_des;
-        //m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des);
+        //m_q_design = m_I_bn_des * m_Ap_tot * m_total_loop_conversion_efficiency_des; OLD UI calculations
+        //m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); Already Calculated in init_fieldgeom
     }
 
     // Interconnect component minor loss coefficients
