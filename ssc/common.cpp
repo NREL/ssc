@@ -1093,11 +1093,15 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
                         m_factors[nsteps * a + i] *= (1.0 - p[0]/100.0); //input as factors not percentage
                 }
             }
-            else if (n == (size_t)(nsteps * analysis_period)) { //Hourly or subhourly
+            else if (n == (size_t)(nsteps * analysis_period)) { //Hourly or subhourly- must match weather file resolution
                 for (int a = 0; a < analysis_period; a++) {
                     for (int i = 0; i < nsteps; i++)
                         m_factors[nsteps * a + i] *= (1.0 - p[a*nsteps + i]/100.0); //convert from percentages to factors
                 }
+            }
+            else if ((n % 8760 == 0) && n != (size_t)(nsteps * analysis_period)) // give a helpful error for timestep mismatch
+            {
+                m_error = util::format("Availability losses must be the same timestep as the weather file, if they are not daily/weekly/monthly.");
             }
             else if (n == (size_t)( 12 * analysis_period)) { //Monthly 
                 for (int a = 0; a < analysis_period; a++) {
@@ -1131,10 +1135,6 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
                     for (int i = 0; i < nsteps; i++)
                         m_factors[nsteps * a + i] *= (1.0 - p[a]/100.0); //input as factors not percentage
                 }
-            }
-            else if (n > (size_t)(nsteps * analysis_period)) // more helpful error for timestep mismatch
-            {
-                m_error = util::format("Lifetime availability losses timestep cannot be more granular than weather file timestep.");
             }
             else {
                 m_error = util::format("Error in length of lifetime availability losses.");
