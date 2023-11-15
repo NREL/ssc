@@ -135,8 +135,12 @@ void dispatch_automatic_front_of_meter_t::setup_cost_forecast_vector()
 
     ppa_prices.reserve(_forecast_hours * _steps_per_hour);
     if (discharge_hours >= _forecast_hours * _steps_per_hour) {
-        // -1 for 0 indexed arrays, additional -1 to ensure there is always a charging price lower than the discharing price if the forecast hours is = to battery capacity in hourrs
-        discharge_hours = _forecast_hours * _steps_per_hour - 2; 
+        // -1 for 0 indexed arrays, additional -1 to ensure there is always a charging price lower than the discharing price if the forecast hours is = to battery capacity in hours
+        // exception caused if look_ahead_hours <= 1 and _steps_per_hour =1 ). specifically, size_t extremely large if set to negative integer - see SAM issue 1547
+        if ((int)_forecast_hours * (int)_steps_per_hour - 2 < 0) // handles 1 hour look ahead but 0 hour look ahead still fails (should not be allowed)
+            discharge_hours = 0;
+        else
+            discharge_hours = _forecast_hours * _steps_per_hour - 2; 
     }
 }
 
