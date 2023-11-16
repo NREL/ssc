@@ -897,9 +897,10 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
     double dx = m_curtain_width / m_n_x;
 
     double Q_inc, Q_refl, Q_rad, Q_adv, Q_cond, Q_thermal, Q_imbalance;
-    double Tp_out, T_particle_prop, T_cold_in_rec, cp, particle_density, err, hadv_with_wind;
+    double Tp_out, T_particle_prop, T_cold_in_rec, cp, particle_density, err, hadv_with_wind, Twavg, Twmax, Twf;
 
     Q_refl = Q_rad = Q_adv = Q_cond = Q_thermal = Q_imbalance = 0.0;
+    Twavg = Twmax = Twf = 0.0;
     Tp_out = hadv_with_wind = 0.0;
     Q_inc = sum_over_rows_and_cols(soln.q_dot_inc, true) * m_curtain_elem_area;  // Total solar power incident on curtain [W]
     T_particle_prop = (m_T_htf_hot_des + T_cold_in) / 2.0; 
@@ -974,7 +975,8 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
     {
         double vel_out, Tfilm, hadv, fwind, Rwall, tauc1, rhoc1;
         double qnet_ap, qnet_wf, hwconv, qadv, qtot, dh, Tcond_prev, Tcond_next;
-        double Twf, Twfnew, Tpdiff, Twdiff, Twfdiff;
+        double Twfnew, Tpdiff, Twdiff, Twfdiff;
+        double qnetc_avg, qnetc_sol_avg, qnetw_avg, qnetw_sol_avg;
         util::matrix_t<double> Tp, Tw, Tpnew, Twnew;
 
         Rwall = 1.0 / m_cav_hext + m_cav_twall / m_cav_kwall;  // Cavity wall thermal resistance
@@ -1050,11 +1052,11 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
                         qabs_approx = (1.0 - soln.rhoc.at(j, i) - soln.tauc.at(j, i) + rhow * soln.tauc.at(j, i) + rhow * (1.0 - vf_to_ap) * soln.rhoc.at(j, i)) * soln.q_dot_inc.at(j, i); // Approximate solar energy absorbed by the particle curtain (W/m2)
                         qnet_approx = qabs_approx - hadv_with_wind * (Tp.at(j, i) - soln.T_amb) - m_curtain_emis * CSP::sigma * pow(Tp.at(j, i), 4);  //Approximate net heat transfer rate using curtain temperature at prior element
                         dh_approx = qnet_approx * (dy / (soln.phip.at(j + 1, i) * soln.thc.at(j + 1, i) * soln.vel.at(j + 1, i) * particle_density));
-                        Tp.at(j + 1, i) = max(T_cold_in_rec, Tp.at(j, i) + dh_approx / cp);
+                        Tp.at(j + 1, i) = fmax(T_cold_in_rec, Tp.at(j, i) + dh_approx / cp);
                     }
 
                     qnet_approx = (1.0 - rhow)*(1.0 + rhow*soln.rhoc.at(j,i)) * (m_curtain_emis * CSP::sigma * pow(Tp.at(j, i), 4) + soln.tauc.at(j, i) * soln.q_dot_inc.at(j, i));     // Approximate radiative heat transfer incoming to the back wall (W/m2)
-                    Tw.at(j, i) = max(T_cold_in_rec, pow(qnet_approx / (m_cav_emis * CSP::sigma), 0.25));
+                    Tw.at(j, i) = fmax(T_cold_in_rec, pow(qnet_approx / (m_cav_emis * CSP::sigma), 0.25));
 
                     flux_avg += soln.q_dot_inc.at(j, i) / (m_n_x*m_n_y);
                     rhoc_avg += soln.rhoc.at(j, i) / (m_n_x * m_n_y);
@@ -1062,7 +1064,7 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
                 }
             }
             qnet_approx = (1.0 - vf_to_ap) * m_cav_emis * (rhoc_avg * flux_avg + Ec_avg);
-            Twf = max(T_cold_in_rec, pow(qnet_approx / (m_cav_emis * CSP::sigma), 0.25));  // Initial guess for front wall temperature
+            Twf = fmax(T_cold_in_rec, pow(qnet_approx / (m_cav_emis * CSP::sigma), 0.25));  // Initial guess for front wall temperature
         }
 
 
@@ -1136,15 +1138,18 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
             }
             Q_refl = qnet_ap_sol * m_ap_area;   // Solar reflection loss [W]
         }
-
+        qnetc_sol_avg = sum_over_rows_and_cols(qnetc_sol, true) / (m_n_x * (m_n_y - 1));
+        qnetw_sol_avg = sum_over_rows_and_cols(qnetw_sol, true) / (m_n_x * (m_n_y - 1));
 
 
         //--- Temperature solution iterations
-
         for (int q = 0; q < max_iter; q++)
         {
             Q_rad = Q_adv = Q_cond = Q_thermal = 0.0;
             Tpdiff = Twdiff = Twfdiff = 0.0;
+
+            Twavg = sum_over_rows_and_cols(Tw, true) / (m_n_x * (m_n_y-1));  // Current average back wall temperature (neglecting last element)
+            Twmax = max_over_rows_and_cols(Tw, true);  // Current maximum back wall temperature (neglecting last element)
 
             //-- Calculate advection loss coefficient
             if (m_hadv_model_type == 0)
@@ -1215,6 +1220,8 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
                 qnetw = matrix_addition(qnetw, qnetw_sol);
 
             }
+            qnetc_avg = sum_over_rows_and_cols(qnetc, true) / (m_n_x * (m_n_y - 1));
+            qnetw_avg = sum_over_rows_and_cols(qnetw, true) / (m_n_x * (m_n_y - 1));
 
 
 
@@ -1235,7 +1242,7 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
                         Q_adv += qadv * m_curtain_elem_area;            // Advection loss [W] from this curtain element
                         Q_thermal += dh * mdot_per_elem.at(i);          // Energy into particles [W] in this curtain elemtn
                     }
-                    Tpdiff = max(Tpdiff, fabs(Tpnew.at(j, i) - Tp.at(j, i)));
+                    Tpdiff = fmax(Tpdiff, fabs(Tpnew.at(j, i) - Tp.at(j, i)));
 
                     // Solve for back wall temperature at current node
                     Tcond_prev = Tcond_next = 0.0;
@@ -1253,7 +1260,7 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
                     if (j < m_n_y - 1)
                     {
                         Q_cond += ((Tw.at(j, i) - T_amb) / Rwall) * m_back_wall_elem_area;   // Conduction loss through back wall element [W]
-                        Twdiff = max(Twdiff, fabs(Twnew.at(j, i) - Tw.at(j, i)));
+                        Twdiff = fmax(Twdiff, fabs(Twnew.at(j, i) - Tw.at(j, i)));
                     }
                     
                 }
@@ -1277,12 +1284,20 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
                 soln.T_p = Tpnew;
                 soln.T_back_wall = Twnew;
                 soln.T_front_wall = Twfnew;
+                soln.T_back_wall_avg = Twavg;
+                soln.T_back_wall_max = Twmax; 
                 break;
             }
 
             Tp = Tpnew;
             Tw = Twnew;
             Twf = Twfnew;
+
+            // Delete this later... 
+            double qnet1 = qnetc_sol_avg;
+            double qnet2 = qnetw_sol_avg;
+            double qnet3 = qnetc_avg;
+            double qnet4 = qnetw_avg;
 
             // Stop iterations for very low outlet temperature, or if the solution in the previous iteration failed 
             if (Q_thermal != Q_thermal)
@@ -1455,7 +1470,7 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
                     }
                     if (Tout_history.at(i) < m_T_particle_hot_target && mflow_history.at(i) < soln.m_dot_tot && Tout_history.at(i) < soln.T_particle_hot)
                     {
-                        lower_bound = max(lower_bound, mflow_history.at(i));
+                        lower_bound = fmax(lower_bound, mflow_history.at(i));
                     }
 
                     // Any given point with exit temperature below the target is an upper bound if another point has been sampled with lower mass flow and higher outlet temperature 
@@ -1482,7 +1497,7 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
         if (is_upper_bound && (m_dot_guess_new < lower_bound || m_dot_guess_new > upper_bound))  // New guess is out of bounds and lower/upper bounds are both defined
             m_dot_guess_new = 0.5 * (lower_bound + upper_bound);
         else if (m_dot_guess_new < lower_bound)  // New guess is below lower bound with no defined upper bound
-            m_dot_guess_new = (m_dot_guess_new < m_dot_guess) ? max(1.25 * lower_bound, 0.75 * m_dot_guess) : 1.25 * m_dot_guess;
+            m_dot_guess_new = (m_dot_guess_new < m_dot_guess) ? fmax(1.25 * lower_bound, 0.75 * m_dot_guess) : 1.25 * m_dot_guess;
         m_dot_guess = m_dot_guess_new;
 
 
@@ -2236,6 +2251,22 @@ double C_falling_particle_receiver::sum_over_rows_and_cols(util::matrix_t<double
         }
     }
     return msum;
+}
+
+double C_falling_particle_receiver::max_over_rows_and_cols(util::matrix_t<double>& mat, bool exclude_last_row)
+{
+    int nr = mat.nrows();
+    int nc = mat.ncols();
+    if (exclude_last_row)
+        nr -= 1;
+
+    double mmax = -1e10;
+    for (int j = 0; j < nr; j++) {
+        for (int i = 0; i < nc; i++) {
+            mmax = fmax(mmax, mat.at(j, i));
+        }
+    }
+    return mmax;
 }
 
 util::matrix_t<double> C_falling_particle_receiver::matrix_addition(util::matrix_t<double>& m1, util::matrix_t<double>& m2)

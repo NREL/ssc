@@ -81,11 +81,13 @@ protected:
         double eta;                 // Receiver efficiency (energy to particles / solar energy incident on curtain)
         double eta_with_transport;  // Receiver efficiency including loss from particle transport (energy to particles / solar energy incident on curtain)
         double hadv;                // Advective loss coefficient (including wind effects) (W/m2/K)
+        double T_back_wall_avg;     // Average back wall temperature (K)
+        double T_back_wall_max;     // Maximum back wall temperature (K)
+        double T_front_wall;        // Front wall temperature (K)
 
         //util::matrix_t<double> m_dot_per_zone;  // Particle mass flow per control zone (kg/s)
         util::matrix_t<double> T_p;			// Particle temperature (K) [ny,nx]
         util::matrix_t<double> T_back_wall; // Back wall temperature (K)
-        double T_front_wall;                // Front wall temperature (K)
         util::matrix_t<double> phip;        // Curtain solids volume fraction
         util::matrix_t<double> vel;         // Curtain velocity (m/s)
         util::matrix_t<double> thc;         // Curtain thickness (m)
@@ -105,7 +107,7 @@ protected:
             T_amb = v_wind_10 = p_amb = T_sky = std::numeric_limits<double>::quiet_NaN();
             dni_applied_to_measured = od_control = plant_defocus = clearsky_to_input_dni = std::numeric_limits<double>::quiet_NaN();
             m_dot_tot = T_particle_cold_in = T_particle_hot = T_particle_hot_rec = std::numeric_limits<double>::quiet_NaN();
-            Q_inc = Q_refl = Q_rad = Q_adv = Q_transport = Q_thermal = eta = hadv = std::numeric_limits<double>::quiet_NaN();
+            Q_inc = Q_refl = Q_rad = Q_adv = Q_transport = Q_thermal = eta = hadv = T_back_wall_avg = T_back_wall_max = T_front_wall = std::numeric_limits<double>::quiet_NaN();
 
             mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
             rec_is_off = true;
@@ -288,6 +290,8 @@ protected:
     util::matrix_t<double> sum_over_cols(util::matrix_t<double>& mat);
 
     double sum_over_rows_and_cols(util::matrix_t<double>& mat, bool exclude_last_row);
+
+    double max_over_rows_and_cols(util::matrix_t<double>& mat, bool exclude_last_row);
 
     util::matrix_t<double> matrix_addition(util::matrix_t<double>& m1, util::matrix_t<double>& m2);
 
