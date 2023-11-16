@@ -106,7 +106,7 @@ public:
             // get financial inputs common to all technologies
             var_data* financial_compute_modules = input_table->table.lookup("Hybrid");
             int analysisPeriod = (int)financial_compute_modules->table.lookup("analysis_period")->num;
-            ssc_number_t inflation_rate = financial_compute_modules->table.lookup("inflation_rate")->num;
+            ssc_number_t inflation_rate = financial_compute_modules->table.lookup("inflation_rate")->num * 0.01;
 
             for (size_t igen = 0; igen < generators.size(); igen++) {
 
@@ -176,6 +176,8 @@ public:
                 escal_or_annual(input, pOMFixed, analysisPeriod, "om_fixed", inflation_rate, 1.0, false, input.as_double("om_fixed_escal") * 0.01); // $ 
                 escal_or_annual(input, pOMProduction, analysisPeriod, "om_production", inflation_rate, 0.001, false, input.as_double("om_production_escal") * 0.01); // $/kWh after conversion
                 escal_or_annual(input, pOMCapacity, analysisPeriod, "om_capacity", inflation_rate, system_capacity, false, input.as_double("om_capacity_escal") * 0.01); // $ after multiplying by system capacity
+
+                printf("om capacity: %d, %f, %f, %f \n", analysisPeriod, inflation_rate, system_capacity, input.as_double("om_capacity_escal") * 0.01);
 
                 // production - multiply by yearly gen (initially assume single year) - use degradation - specific to each generator
                 // pvwattsv8 - "degradation" applied in financial model - assuming single year analysis like standalone pvwatts/single owner configuration
