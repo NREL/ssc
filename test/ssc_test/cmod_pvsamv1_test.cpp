@@ -1053,7 +1053,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, SubhourlyClippingCorrectionModel)
     //check answers for subhourly clipping annual loss
     ssc_number_t subhourly_clipping_loss;
     ssc_data_get_number(data, "annual_subhourly_clipping_loss", &subhourly_clipping_loss);
-    EXPECT_NEAR(subhourly_clipping_loss, 55.9, m_error_tolerance_lo);
+    EXPECT_NEAR(subhourly_clipping_loss, 16.633622, m_error_tolerance_lo);
 
     //Modify matrix, re-run test with user entered matrix (SDK only)
     ssc_number_t Subhourly_Clipping_Matrix[441] =
@@ -1088,7 +1088,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, SubhourlyClippingCorrectionModel)
     EXPECT_FALSE(pvsam_errors);
     //check answers for subhourly clipping annual loss
     ssc_data_get_number(data, "annual_subhourly_clipping_loss", &subhourly_clipping_loss);
-    EXPECT_NEAR(subhourly_clipping_loss, 56.6, m_error_tolerance_lo);
+    EXPECT_NEAR(subhourly_clipping_loss, 21.596999, m_error_tolerance_lo);
 
     //Test different matrix size
     ssc_number_t Subhourly_Clipping_Matrix_Short[272];
@@ -1104,9 +1104,61 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, SubhourlyClippingCorrectionModel)
     double subhourly_clipping_loss_short;
     ssc_data_get_number(data, "annual_subhourly_clipping_loss", &subhourly_clipping_loss_short);
     double subhourly_clipping_loss_percent;
-    EXPECT_NEAR(subhourly_clipping_loss_short, 66.3, m_error_tolerance_lo);
+    EXPECT_NEAR(subhourly_clipping_loss_short, 24.624581, m_error_tolerance_lo);
     ssc_data_get_number(data, "annual_subhourly_clipping_loss_percent", &subhourly_clipping_loss_percent);
-    EXPECT_NEAR(subhourly_clipping_loss_percent, 0.74, m_error_tolerance_lo);
+    EXPECT_NEAR(subhourly_clipping_loss_percent, 0.271086, m_error_tolerance_lo);
+}
+
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, useCustomCellTemp) {
+
+    std::map<std::string, double> pairs;
+
+    pairs["subarray1_use_custom_cell_temp"] = 1;
+    int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+
+    EXPECT_FALSE(pvsam_errors);
+    ssc_number_t annualEnergy;
+    int n1;
+    ssc_number_t* subarray1_cell_temp = ssc_data_get_array(data, "subarray1_celltemp", &n1);
+    EXPECT_NEAR(subarray1_cell_temp[8], 17.8071, 0.001);
+    ssc_data_get_number(data, "annual_energy", &annualEnergy);
+    EXPECT_NEAR(annualEnergy, 8725, 1.0);
+
+    pairs["subarray1_use_custom_cell_temp"] = 0;
+    pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+
+    EXPECT_FALSE(pvsam_errors);
+    ssc_data_get_number(data, "annual_energy", &annualEnergy);
+    EXPECT_NEAR(annualEnergy, 8834, 1.0);
+
+
+
+}
+
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, UseCustomAngles) {
+
+    std::map<std::string, double> pairs;
+
+    pairs["subarray1_use_custom_rot_angles"] = 1;
+    int pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+
+    EXPECT_FALSE(pvsam_errors);
+    ssc_number_t annualEnergy;
+    int n1;
+    ssc_number_t* subarray1_cell_temp = ssc_data_get_array(data, "subarray1_axisrot", &n1);
+    EXPECT_NEAR(subarray1_cell_temp[11], -24.8588, 0.001);
+    ssc_data_get_number(data, "annual_energy", &annualEnergy);
+    EXPECT_NEAR(annualEnergy, 11516, 1.0);
+
+    pairs["subarray1_use_custom_rot_angles"] = 0;
+    pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+
+    EXPECT_FALSE(pvsam_errors);
+    ssc_data_get_number(data, "annual_energy", &annualEnergy);
+    EXPECT_NEAR(annualEnergy, 8834, 1.0);
+
+
+
 }
 
 /// Test PVSAMv1 with all defaults and no-financial model- look at MPPT input 1 voltage at night
@@ -1219,15 +1271,63 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, reopt_sizing) {
     ASSERT_TRUE(vd->is_assigned("reopt_scenario"));
     auto site = vd->lookup("reopt_scenario");
 
-    site = site->table.lookup("Scenario");
-    assert(site->table.lookup("time_steps_per_hour")->num == 1);
+    auto settings = site->table.lookup("Settings");
+    assert(settings->table.lookup("time_steps_per_hour")->num == 1);
 
-    site = site->table.lookup("Site");
-    std::vector<std::string> sections = { "ElectricTariff", "LoadProfile", "Financial", "Storage", "Wind", "PV" };
+    std::vector<std::string> sections = { "ElectricTariff", "ElectricLoad", "Financial", "ElectricStorage", "PV" };
     for (const auto& s : sections)
         ASSERT_TRUE(site->table.is_assigned(s));
 }
 
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, reopt_sizing_w_outage) {
+    ssc_data_clear(data);
+    pvsamv1_with_residential_default(data);
+    utility_rate5_default(data);
+    belpe_default(data);
+    ssc_data_set_number(data, "lat", 30);
+    ssc_data_set_number(data, "lon", -30);
+    ssc_number_t gen[8760] = { 0 };
+    ssc_data_set_array(data, "gen", gen, 8760);
+
+    ssc_number_t grid_outage[8760] = { 0 };
+
+    for (int i = 6; i < 24; i++) {
+        if (i > 6 && i < 9) {
+            grid_outage[i] = 1;
+        }
+        else if (i > 17 && i < 24) {
+            grid_outage[i] = 1;
+        }
+    }
+    ssc_data_set_array(data, "grid_outage", grid_outage, 8760);
+    ssc_data_set_number(data, "size_for_grid_outage", 1);
+
+    Reopt_size_battery_params(data);
+
+    auto vd = static_cast<var_table*>(data);
+    ASSERT_TRUE(vd->is_assigned("reopt_scenario"));
+    auto site = vd->lookup("reopt_scenario");
+
+    auto settings = site->table.lookup("Settings");
+    assert(settings->table.lookup("time_steps_per_hour")->num == 1);
+
+    std::vector<std::string> sections = { "ElectricTariff", "ElectricLoad", "Financial", "ElectricStorage", "PV", "ElectricUtility"};
+    for (const auto& s : sections)
+        ASSERT_TRUE(site->table.is_assigned(s));
+
+    auto reopt_utility = site->table.lookup("ElectricUtility");
+    var_table* utility_table = &reopt_utility->table;
+
+    std::vector<int> outage_start_times = utility_table->as_vector_integer("outage_start_time_steps");
+    ASSERT_EQ(outage_start_times.size(), 2);
+    ASSERT_EQ(outage_start_times[0], 8);
+    ASSERT_EQ(outage_start_times[1], 19);
+
+    std::vector<int> outage_durations = utility_table->as_vector_integer("outage_durations");
+    ASSERT_EQ(outage_durations.size(), 2);
+    ASSERT_EQ(outage_durations[0], 2);
+    ASSERT_EQ(outage_durations[1], 6);
+}
 
 /// Integration test for lifetime vs year 1 outputs in SAM
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, lifetime_outputs)

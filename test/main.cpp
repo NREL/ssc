@@ -53,7 +53,11 @@ GTEST_API_ int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
 
     //    filter to include
-    //    ::testing::GTEST_FLAG(filter) = "lib_ptes_chp_dispatch_test*";
+    //    ::testing::GTEST_FLAG(filter) = "CmodPVWatts*:CMPvwatts*";
+    //::testing::GTEST_FLAG(filter) = "CmodCashLoanTest.FuelCell*";
+
+    //   ::testing::GTEST_FLAG(filter) = "CmodCashLoanTest*:CmodSingleOwnerTest*";
+
 
     //    filter to exclude
     //    ::testing::GTEST_FLAG(filter) = "-PVSmoothing_lib_battery_dispatch*";

@@ -10,7 +10,6 @@ include_directories(. ../splinter/include ../shared ../nlopt ../lpsolve ../solar
 
 set(SSC_SRC
 		cmod_6parsolve.cpp
-		cmod_annualoutput.cpp
 		cmod_analysisperiodchange_eqns.cpp
 		cmod_analysisperiodchange_eqns.h
 		cmod_battery.cpp
@@ -118,6 +117,7 @@ set(SSC_SRC
 		cmod_utilityrate5.cpp
 		cmod_utilityrate5.h
 		cmod_wavefile.cpp
+        cmod_tidalfile.cpp
 		cmod_utilityrate5_eqns.cpp
 		cmod_utilityrate5_eqns.h
         cmod_utilityrateforecast.cpp
