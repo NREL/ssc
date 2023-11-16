@@ -636,10 +636,12 @@ void AutoPilot::PostProcessLayout(sp_layout &layout)
 	/* 
 	Layout post-process.. collect the layout results and fill the data into the
 	layout structure for later use
+    Calculate all post layout parameters
 	*/
 
 	Hvector *hpos = _SF->getHeliostats();
 	layout.heliostat_positions.clear();
+    layout.heliostat_positions.reserve(hpos->size());
 	for(int i=0; i<(int)hpos->size(); i++){
 		sp_layout::h_position hp;
 		hp.location.x = hpos->at(i)->getLocation()->x;

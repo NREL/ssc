@@ -2250,10 +2250,9 @@ void Flux::fluxDensity(simulation_info *siminfo, FluxSurface &flux_surface, Hvec
                     pt->location.z + fs_offset->z + rec_offset.z + tht
                 ); 
 				//Test if the flux point is in view of the heliostat...
-				bool is_hel_in_fp_view = true;
 				if (rec_var_map->rec_type.mapval() == var_receiver::REC_TYPE::FALLING_PARTICLE
 					|| rec_var_map->rec_type.mapval() == var_receiver::REC_TYPE::CAVITY) {
-					is_hel_in_fp_view = this->checkApertureSnout(pt_g, hloc, aim, rec_var_map);
+                    if (!this->checkApertureSnout(pt_g, hloc, aim, rec_var_map)) continue;
 				}
 				
 				//Project the current flux point into the image plane as defined by the 
@@ -2283,9 +2282,7 @@ void Flux::fluxDensity(simulation_info *siminfo, FluxSurface &flux_surface, Hvec
 				//Calculate the flux
                 double hfe = hermiteFluxEval(helios.at(i), xn, yn) * exp( -0.5 *( xn*xn + yn*yn) );
 				
-				if (is_hel_in_fp_view) {
-					pt->flux += f_dot_t * hfe * cnorm;
-				}
+				pt->flux += f_dot_t * hfe * cnorm;
 			}
 		}
 	}
@@ -2388,7 +2385,7 @@ bool Flux::checkApertureSnout(sp_point& fp_g, sp_point* hloc, sp_point* aim,  va
 }
 
 bool Flux::calculateProjectedSnoutApertureIntersection(Heliostat& H, Receiver* Rec, double viewable_aperture[4]) {
-	/* Calculates viewable aperature bounds of the heliostat's view of aperture through the SNOUT. This is done by projecting the aperture and SNOUT windows
+	/* Calculates viewable aperture bounds of the heliostat's view of aperture through the SNOUT. This is done by projecting the aperture and SNOUT windows
 	on to the heliostat image plane, determining the intersection of these two projections, and projecting the intersection back onto the receiver plane.
 	Once the windows are projected onto the heliostat image plane, there are three cases that can occur:
 		1. The aperture window is completely within SNOUT window -> SNOUT has no impact on heliostat image
