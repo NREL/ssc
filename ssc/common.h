@@ -67,7 +67,8 @@ extern var_info vtab_resilience_outputs[];
 extern var_info vtab_utility_rate_common[];
 
 // hybrids
-extern var_info vtab_hybrid_tech_om[];
+extern var_info vtab_hybrid_tech_om_inputs[];
+extern var_info vtab_hybrid_tech_om_outputs[];
 extern var_info vtab_hybrid_fin_om[];
 
 bool calculate_p50p90(compute_module *cm);

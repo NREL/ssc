@@ -2248,7 +2248,7 @@ public:
         add_var_info(vtab_resilience_outputs);
         add_var_info(vtab_utility_rate_common);
         add_var_info(vtab_grid_curtailment);
-        add_var_info(vtab_hybrid_tech_om);
+        add_var_info(vtab_hybrid_tech_om_outputs);
 
     }
 
