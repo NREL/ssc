@@ -663,7 +663,7 @@ public:
     void exec( )
     {
         // Uncomment following 2 lines to write cmod inputs to LK script
-        //FILE* fp = fopen("fresnel_iph_cmod_to_lk.lk", "w");
+        //FILE* fp = fopen("trough_iph_cmod_to_lk.lk", "w");
         //write_cmod_to_lk_script(fp, m_vartab);
 
         // Common Parameters
@@ -962,7 +962,11 @@ public:
             }
 
             // Calculate solar multiple (needed for other component constructors)
-            c_trough.design_solar_mult();
+            bool success = c_trough.design_solar_mult();
+            if (success == false)
+                throw exec_error("trough_physical_iph", "Negative solar mult or total aperture.");
+
+
 
             // Allocate trough outputs
             {
@@ -1165,7 +1169,7 @@ public:
             {
                 if (csp_financial_model == 8 || csp_financial_model == 7) {        // No Financial Model or LCOH; Single Owner in progress 9/2023
                     if (is_dispatch) {
-                        throw exec_error("fresnel_physical_iph", "Can't select dispatch optimization if No Financial model");
+                        throw exec_error("trough_physical_iph", "Can't select dispatch optimization if No Financial model");
                     }
                     else { // if no dispatch optimization, don't need an input pricing schedule
                         // If electricity pricing data is not available, then dispatch to a uniform schedule
@@ -1183,7 +1187,7 @@ public:
                     // Get first year base ppa price
                     bool is_ppa_price_input_assigned = is_assigned("ppa_price_input");
                     if (is_dispatch && !is_ppa_price_input_assigned) {
-                        throw exec_error("fresnel_physical_iph", "\n\nYou selected dispatch optimization which requires that the array input ppa_price_input is defined\n");
+                        throw exec_error("trough_physical_iph", "\n\nYou selected dispatch optimization which requires that the array input ppa_price_input is defined\n");
                     }
 
                     if (is_ppa_price_input_assigned) {
@@ -1197,7 +1201,7 @@ public:
 
                     int ppa_soln_mode = as_integer("ppa_soln_mode");    // PPA solution mode (0=Specify IRR target, 1=Specify PPA price)
                     if (ppa_soln_mode == 0 && is_dispatch) {
-                        throw exec_error("fresnel_physical_iph", "\n\nYou selected dispatch optimization and the Specify IRR Target financial solution mode, "
+                        throw exec_error("trough_physical_iph", "\n\nYou selected dispatch optimization and the Specify IRR Target financial solution mode, "
                             "but dispatch optimization requires known absolute electricity prices. Dispatch optimization requires "
                             "the Specify PPA Price financial solution mode. You can continue using dispatch optimization and iteratively "
                             "solve for the PPA that results in a target IRR by running a SAM Parametric analysis or script.\n");
@@ -1236,7 +1240,7 @@ public:
 
                             auto dispatch_tod_factors = as_vector_double("dispatch_tod_factors");
                             if (dispatch_tod_factors.size() != 9)
-                                throw exec_error("fresnel_physical_iph", util::format("\n\nDispatch TOD factors has %d periods instead of the expected 9.\n", (int)dispatch_tod_factors.size()));
+                                throw exec_error("trough_physical_iph", util::format("\n\nDispatch TOD factors has %d periods instead of the expected 9.\n", (int)dispatch_tod_factors.size()));
 
                             tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, 0.0);
                             for (size_t i = 0; i < 9; i++)
@@ -1252,7 +1256,7 @@ public:
 
                 }
                 else {
-                    throw exec_error("fresnel_physical_iph", "csp_financial_model must be 1, 7, or 8");
+                    throw exec_error("trough_physical_iph", "csp_financial_model must be 1, 7, or 8");
                 }
 
 
@@ -1438,7 +1442,6 @@ public:
         {
             // System Design
             nameplate = q_dot_pc_des;
-
             {
                 assign("nameplate", nameplate); // [MWt]
                 assign("system_capacity", nameplate * 1.E3);    //[kWt]
@@ -1976,7 +1979,7 @@ public:
 
         double kWh_per_kW = 0.0;
         if (nameplate > 0.0)
-            kWh_per_kW = ae / nameplate;
+            kWh_per_kW = ae / (nameplate * 1e3);
 
         assign("capacity_factor", (ssc_number_t)(kWh_per_kW / ((double)n_steps_fixed / (double)steps_per_hour)*100.));
         assign("kwh_per_kw", (ssc_number_t)kWh_per_kW);

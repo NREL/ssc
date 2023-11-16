@@ -4473,6 +4473,14 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
         {
             throw std::runtime_error("Physical Trough. Number of loops calculation failed, invalid option.");
         }
+
+        // Verify solar mult and total aperture values
+        if (m_solar_mult <= 0.0 || m_Ap_tot <= 0.0)
+        {
+            m_is_solar_mult_designed = false;
+            return false;
+        }
+
     }
 
     // Calculate Field Thermal Output
