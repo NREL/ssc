@@ -85,6 +85,18 @@ protected:
         double T_back_wall_max;     // Maximum back wall temperature (K)
         double T_front_wall;        // Front wall temperature (K)
 
+        double tauc_avg;            // Average curtain transmittance
+        double rhoc_avg;            // Average curtain reflectance
+        double qnetc_sol_avg;       // Average net incoming solar energy to the particle curtain (W/m2)
+        double qnetw_sol_avg;       // Average net incoming solar energy to the back wall (W/m2)
+        double qnetc_avg;           // Average net incoming radiative energy (solar + IR) to the particle curtain (W/m2)
+        double qnetw_avg;           // Average net incoming radiative energy (solar + IR) to the back wall (W/m2)
+
+        // TODO: Remove these after debugging...
+        double K_sum;
+        double Kinv_sum;
+
+
         //util::matrix_t<double> m_dot_per_zone;  // Particle mass flow per control zone (kg/s)
         util::matrix_t<double> T_p;			// Particle temperature (K) [ny,nx]
         util::matrix_t<double> T_back_wall; // Back wall temperature (K)
@@ -108,6 +120,8 @@ protected:
             dni_applied_to_measured = od_control = plant_defocus = clearsky_to_input_dni = std::numeric_limits<double>::quiet_NaN();
             m_dot_tot = T_particle_cold_in = T_particle_hot = T_particle_hot_rec = std::numeric_limits<double>::quiet_NaN();
             Q_inc = Q_refl = Q_rad = Q_adv = Q_transport = Q_thermal = eta = hadv = T_back_wall_avg = T_back_wall_max = T_front_wall = std::numeric_limits<double>::quiet_NaN();
+            tauc_avg = rhoc_avg = qnetc_sol_avg = qnetw_sol_avg = qnetc_avg = qnetw_avg = std::numeric_limits<double>::quiet_NaN();
+            K_sum = Kinv_sum = std::numeric_limits<double>::quiet_NaN();
 
             mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
             rec_is_off = true;

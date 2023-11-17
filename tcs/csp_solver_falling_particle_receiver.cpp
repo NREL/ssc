@@ -898,10 +898,16 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
 
     double Q_inc, Q_refl, Q_rad, Q_adv, Q_cond, Q_thermal, Q_imbalance;
     double Tp_out, T_particle_prop, T_cold_in_rec, cp, particle_density, err, hadv_with_wind, Twavg, Twmax, Twf;
+    double qnetc_avg, qnetc_sol_avg, qnetw_avg, qnetw_sol_avg;
+    double tauc_avg, rhoc_avg;
+    double K_sum, Kinv_sum;
 
     Q_refl = Q_rad = Q_adv = Q_cond = Q_thermal = Q_imbalance = 0.0;
-    Twavg = Twmax = Twf = 0.0;
-    Tp_out = hadv_with_wind = 0.0;
+    Twavg = Twmax = Twf = Tp_out = hadv_with_wind = 0.0;
+    qnetc_avg = qnetc_sol_avg = qnetw_avg = qnetw_sol_avg = 0.0;
+    tauc_avg = rhoc_avg = 0.0;
+    K_sum = Kinv_sum = 0.0;
+
     Q_inc = sum_over_rows_and_cols(soln.q_dot_inc, true) * m_curtain_elem_area;  // Total solar power incident on curtain [W]
     T_particle_prop = (m_T_htf_hot_des + T_cold_in) / 2.0; 
     particle_density = field_htfProps.dens(T_particle_prop, 1.0);
@@ -976,7 +982,6 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
         double vel_out, Tfilm, hadv, fwind, Rwall, tauc1, rhoc1;
         double qnet_ap, qnet_wf, hwconv, qadv, qtot, dh, Tcond_prev, Tcond_next;
         double Twfnew, Tpdiff, Twdiff, Twfdiff;
-        double qnetc_avg, qnetc_sol_avg, qnetw_avg, qnetw_sol_avg;
         util::matrix_t<double> Tp, Tw, Tpnew, Twnew;
 
         Rwall = 1.0 / m_cav_hext + m_cav_twall / m_cav_kwall;  // Cavity wall thermal resistance
@@ -1002,6 +1007,8 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
                 soln.tauc.at(j, i) = tauc1;
             }
         }
+        tauc_avg = sum_over_rows_and_cols(soln.tauc, false) / (m_n_x * m_n_y);  // Average curtain transmittance
+        rhoc_avg = sum_over_rows_and_cols(soln.rhoc, false) / (m_n_x * m_n_y);  // Average curtain reflectance
 
         //--- Initialize solutions for particle and wall temperatures
         Tp.resize_fill(m_n_y, m_n_x, T_cold_in_rec);        // Particle temperature [K]
@@ -1075,6 +1082,18 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
         if (m_rad_model_type == 1)
         {
             calculate_coeff_matrix(soln.rhoc, soln.tauc, K, Kinv);
+
+            // Remove this after debugging
+            K_sum = Kinv_sum = 0.0;
+            int nelem = get_nelem();
+            for (int i = 0; i < nelem; i++)
+            {
+                for (int j = 0; j < nelem; j++)
+                {
+                    K_sum += K(i, j);
+                    Kinv_sum += Kinv(i, j);
+                }
+            }
         }
 
         //--- Initialize quantities needed in radiation models
@@ -1138,8 +1157,8 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
             }
             Q_refl = qnet_ap_sol * m_ap_area;   // Solar reflection loss [W]
         }
-        qnetc_sol_avg = sum_over_rows_and_cols(qnetc_sol, true) / (m_n_x * (m_n_y - 1));
-        qnetw_sol_avg = sum_over_rows_and_cols(qnetw_sol, true) / (m_n_x * (m_n_y - 1));
+        qnetc_sol_avg = sum_over_rows_and_cols(qnetc_sol, true) / (m_n_x * (m_n_y - 1));  // Average net incoming solar energy to the particle curtain
+        qnetw_sol_avg = sum_over_rows_and_cols(qnetw_sol, true) / (m_n_x * (m_n_y - 1));  // Average net incoming solar energy to the back wall
 
 
         //--- Temperature solution iterations
@@ -1293,12 +1312,6 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
             Tw = Twnew;
             Twf = Twfnew;
 
-            // Delete this later... 
-            double qnet1 = qnetc_sol_avg;
-            double qnet2 = qnetw_sol_avg;
-            double qnet3 = qnetc_avg;
-            double qnet4 = qnetw_avg;
-
             // Stop iterations for very low outlet temperature, or if the solution in the previous iteration failed 
             if (Q_thermal != Q_thermal)
                 break;
@@ -1339,6 +1352,15 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
 
     soln.T_particle_hot = Tp_out_after_transport;
     soln.T_particle_hot_rec = Tp_out;
+
+    soln.tauc_avg = tauc_avg;
+    soln.rhoc_avg = rhoc_avg;
+    soln.qnetc_sol_avg = qnetc_sol_avg;
+    soln.qnetw_sol_avg = qnetw_sol_avg;
+    soln.qnetc_avg = qnetc_avg;
+    soln.qnetw_avg = qnetw_avg;
+    soln.K_sum = K_sum;
+    soln.Kinv_sum = Kinv_sum;
 
 	return;
 
