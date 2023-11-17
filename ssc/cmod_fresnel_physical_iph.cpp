@@ -1242,7 +1242,7 @@ public:
             double power_plant_mwt = heat_sink_mwt;         // MWe
             double bop_mwt = heat_sink_mwt;                 // MWe
             // total_land_area                      // m2
-            // nameplate_des                        // MWe
+            double nameplate_des_mwt = nameplate_des / 1e3;                        // MWe
             double sales_tax_rate = as_double("sales_tax_rate");
 
             // Define outputs
@@ -1252,7 +1252,7 @@ public:
 
             // Calculate Costs
             N_mspt::calculate_mslf_costs(site_improvements_area, site_improvements_spec_cost, solar_field_area, solar_field_spec_cost, htf_system_area, htf_system_spec_cost, Q_tes, storage_spec_cost,0,0,
-                heat_sink_mwt, heat_sink_spec_cost, bop_mwt, bop_spec_cost, contingency_percent, total_land_area, nameplate_des, epc_cost_per_acre, epc_cost_percent_direct, epc_cost_per_watt,
+                heat_sink_mwt, heat_sink_spec_cost, bop_mwt, bop_spec_cost, contingency_percent, total_land_area, nameplate_des_mwt, epc_cost_per_acre, epc_cost_percent_direct, epc_cost_per_watt,
                 epc_cost_fixed, plm_cost_per_acre, plm_cost_percent_direct, plm_cost_per_watt, plm_cost_fixed, sales_tax_rate, sales_tax_percent,
 
                 heat_sink_cost_out, ts_cost_out, site_improvements_cost_out, bop_cost_out, solar_field_cost_out, htf_system_cost_out, dummy, contingency_cost_out,
