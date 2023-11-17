@@ -205,18 +205,16 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
         rf->rec_height.val = m_cmod->as_double("rec_height");
         rf->rec_width.val = m_cmod->as_double("rec_width");
 
-        // Curtain dimenisons
+        // Curtain dimensions
         rf->norm_curtain_height.val = m_cmod->as_double("norm_curtain_height");  // [-]
         rf->norm_curtain_width.val = m_cmod->as_double("norm_curtain_width");    // [-]
         rf->max_curtain_depth.val = m_cmod->as_double("max_curtain_depth");      // [m]
-        // Reading in normizalized curtain heights and depths
-        // TODO (Bill): needs to be fixed, doesn't seem to be importing correctly
+        // Reading in normalized curtain heights and depths
         util::matrix_t<double> norm_heights_depths = m_cmod->as_matrix("norm_heights_depths");  // [-]  
         std::string format = "%f,%f;";
         std::string nhd_input;
         char row[200];
-        for (size_t i = 0; i < norm_heights_depths.nrows(); i++)
-        {
+        for (size_t i = 0; i < norm_heights_depths.nrows(); i++) {
             sprintf(row, format.c_str(), norm_heights_depths.at(i, 0), norm_heights_depths.at(i, 1));
             nhd_input.append(row);
         }
@@ -303,7 +301,7 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
 
     // If cavity in southern hemisphere, then receiver faces south
     if (rec_type == 1 || rec_type == 3) {
-        sf.is_opt_zoning.val = false;   // Turning off optical zoning for flat receivers
+        sf.is_opt_zoning.val = true;   // Turning off optical zoning for flat receivers
         if (hdr.lat < 0) {
             rf->rec_azimuth.val = 180;
         }
@@ -521,11 +519,10 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
 
 		int nflux_x = m_cmod->as_integer("n_flux_x");
 		int nflux_y = m_cmod->as_integer("n_flux_y");
-		//int nflux_x = 12, nflux_y = 1;
 		if(! m_sapi->CalculateFluxMaps(fluxtab, nflux_x, nflux_y, true) )
         {
             flux.aim_method.combo_select( aim_method_save );
-            return false;  //simulation failed or was cancelled.
+            return false;  //simulation failed or was canceled.
         }
         flux.aim_method.combo_select( aim_method_save );
 
@@ -560,7 +557,7 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
 
 		
 		if(! m_sapi->CalculateFluxMaps(flux_temp, 20, 15, false) )
-            return false;  //simulation failed or was cancelled.
+            return false;  //simulation failed or was canceled.
             
         
 		block_t<double> *flux_data = &flux_temp.flux_surfaces.front().flux_data;  //there should be only one flux stack for SAM

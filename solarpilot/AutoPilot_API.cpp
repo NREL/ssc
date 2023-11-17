@@ -670,7 +670,7 @@ void AutoPilot::PostProcessLayout(sp_layout &layout)
 void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, int flux_res_y, bool /*is_normalized*/)
 {
 	var_map *V = _SF->getVarMap();
-    V->amb.sim_time_step.Setval(0.);    //sest the simulation time step for flux
+    V->amb.sim_time_step.Setval(0.);    //set the simulation time step for flux
 
     //simulate flux maps for all of the receivers
 	Rvector rec_to_sim = *_SF->getReceivers();

@@ -975,8 +975,6 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
         Q_adv = (1.0 - eta) * Q_inc; // Artificially assign all losses as advection losses. These are only reported through the compute module as combined "thermal" losses
 
     }
-
-
     else if (m_model_type == 3)        // Quasi-2D physics-based receiver model
     {
         double vel_out, Tfilm, hadv, fwind, Rwall, tauc1, rhoc1;
@@ -1212,7 +1210,6 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
                     }
                 }
             }
-
             else if (m_rad_model_type == 1)
             {
                 Eap = CSP::sigma * pow(T_sky, 4);

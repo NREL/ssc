@@ -147,7 +147,7 @@ class Flux
 	//This method to calculate and convolve all moments of error distribution in the image plane
 	double imagePlaneIntercept(var_map &V, Heliostat &H, Receiver *Rec, Vect *Sun);
 
-	// Calculates viewable aperature window from heliostat location
+	// Calculates viewable aperture window from heliostat location
 	bool calculateProjectedSnoutApertureIntersection(Heliostat& H, Receiver* Rec, double viewable_aperture[4]);
 
 	//An algorithm to initialize the polynomial coefficients
