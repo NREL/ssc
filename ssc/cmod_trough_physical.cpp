@@ -1845,7 +1845,7 @@ public:
         }
 
         // Calculate Costs and assign outputs
-        if (csp_financial_model != 8)
+        if (true)
         {
 
             // Collect dedicated cost inputs
