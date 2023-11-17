@@ -676,7 +676,7 @@ void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, in
 	Rvector rec_to_sim = *_SF->getReceivers();
 	//Get flags and settings
 	
-	if(flux_res_y > 1)
+	if(flux_res_y > 1 && V->recs.front().rec_type.mapval() != var_receiver::REC_TYPE::FALLING_PARTICLE)
         V->flux.aim_method.combo_select_by_mapval( var_fluxsim::AIM_METHOD::IMAGE_SIZE_PRIORITY );
 
 	//Shape the flux surface files to match
