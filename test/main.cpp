@@ -56,8 +56,7 @@ GTEST_API_ int main(int argc, char **argv) {
     //    ::testing::GTEST_FLAG(filter) = "CmodPVWatts*:CMPvwatts*";
     //::testing::GTEST_FLAG(filter) = "PVSmoothing_lib_battery_dispatch*";
     
-    ::testing::GTEST_FLAG(filter) = "csp_trough.PowerTrough*:csp_trough.TroughLoop*";
-    //::testing::GTEST_FLAG(filter) = "csp_trough.TroughLoop*";
+    //::testing::GTEST_FLAG(filter) = "csp_trough.PowerTrough*:csp_trough.TroughLoop*";
 
 
 
