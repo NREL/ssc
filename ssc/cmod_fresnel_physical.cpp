@@ -302,8 +302,38 @@ static var_info _cm_vtab_fresnel_physical[] = {
      /*Fin Tax and Insurace*/{ SSC_INPUT,    SSC_NUMBER,         "sales_tax_rate",              "Sales Tax Rate",                                                                        "%",                   "",                             "Capital_Costs",                 "?=0",       "",              "" },
 
 
+        // Construction financing inputs/outputs (SSC variable table from cmod_cb_construction_financing)
+    { SSC_INPUT,     SSC_NUMBER, "const_per_interest_rate1",           "Interest rate, loan 1",                                                                                                                   "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "const_per_interest_rate2",           "Interest rate, loan 2",                                                                                                                   "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "const_per_interest_rate3",           "Interest rate, loan 3",                                                                                                                   "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "const_per_interest_rate4",           "Interest rate, loan 4",                                                                                                                   "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "const_per_interest_rate5",           "Interest rate, loan 5",                                                                                                                   "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "const_per_months1",                  "Months prior to operation, loan 1",                                                                                                       "",             "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "const_per_months2",                  "Months prior to operation, loan 2",                                                                                                       "",             "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "const_per_months3",                  "Months prior to operation, loan 3",                                                                                                       "",             "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "const_per_months4",                  "Months prior to operation, loan 4",                                                                                                       "",             "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "const_per_months5",                  "Months prior to operation, loan 5",                                                                                                       "",             "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "const_per_percent1",                 "Percent of total installed cost, loan 1",                                                                                                 "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "const_per_percent2",                 "Percent of total installed cost, loan 2",                                                                                                 "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "const_per_percent3",                 "Percent of total installed cost, loan 3",                                                                                                 "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "const_per_percent4",                 "Percent of total installed cost, loan 4",                                                                                                 "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "const_per_percent5",                 "Percent of total installed cost, loan 5",                                                                                                 "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "const_per_upfront_rate1",            "Upfront fee on principal, loan 1",                                                                                                        "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "const_per_upfront_rate2",            "Upfront fee on principal, loan 2",                                                                                                        "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "const_per_upfront_rate3",            "Upfront fee on principal, loan 3",                                                                                                        "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "const_per_upfront_rate4",            "Upfront fee on principal, loan 4",                                                                                                        "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "const_per_upfront_rate5",            "Upfront fee on principal, loan 5",                                                                                                        "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+
+
+
     // OUTPUTS
         // Design Point Outputs
+
+    // System capacity required by downstream financial model
+    { SSC_OUTPUT,    SSC_NUMBER, "system_capacity",                    "System capacity",                                                           "kWe",          "",                                  "System Design",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "cp_system_nameplate",                 "System capacity for capacity payments",                                    "MWe",          "",                                  "System Design",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "cp_battery_nameplate",                "Battery nameplate",                                                        "MWe",          "",                                  "System Design",                             "*",                                                                "",              "" },
+
 
         // System Design
     { SSC_OUTPUT,       SSC_NUMBER,     "solar_mult",                       "Actual solar multiple",                                                "",             "",         "System Design Calc",                       "*",                                                                "",              "" },
@@ -403,15 +433,30 @@ static var_info _cm_vtab_fresnel_physical[] = {
     { SSC_OUTPUT,       SSC_NUMBER,     "total_installed_cost",             "Total installed cost",                                                 "$",          "",         "Capital Costs",                              "",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "installed_per_capacity",           "Estimated total installed cost per net capacity ($/kW)",               "$/kW",       "",         "Capital Costs",                              "",                                                                "",              "" },
 
+        // Financing
+    { SSC_OUTPUT,    SSC_NUMBER, "const_per_principal1",               "Principal, loan 1",                                                                                                                       "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "const_per_principal2",               "Principal, loan 2",                                                                                                                       "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "const_per_principal3",               "Principal, loan 3",                                                                                                                       "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "const_per_principal4",               "Principal, loan 4",                                                                                                                       "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "const_per_principal5",               "Principal, loan 5",                                                                                                                       "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "const_per_interest1",                "Interest cost, loan 1",                                                                                                                   "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "const_per_interest2",                "Interest cost, loan 2",                                                                                                                   "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "const_per_interest3",                "Interest cost, loan 3",                                                                                                                   "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "const_per_interest4",                "Interest cost, loan 4",                                                                                                                   "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "const_per_interest5",                "Interest cost, loan 5",                                                                                                                   "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "const_per_total1",                   "Total financing cost, loan 1",                                                                                                            "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "const_per_total2",                   "Total financing cost, loan 2",                                                                                                            "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "const_per_total3",                   "Total financing cost, loan 3",                                                                                                            "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "const_per_total4",                   "Total financing cost, loan 4",                                                                                                            "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "const_per_total5",                   "Total financing cost, loan 5",                                                                                                            "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "const_per_percent_total",            "Total percent of installed costs, all loans",                                                                                             "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "const_per_principal_total",          "Total principal, all loans",                                                                                                              "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "const_per_interest_total",           "Total interest costs, all loans",                                                                                                         "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "construction_financing_cost",        "Total construction financing cost",                                                                                                       "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
 
-
-
-
-
-
-    // Simulation outputs
-
-
+    // ****************************************************************************************************************************************
+    // Timeseries Simulation Outputs here (sim_type = 1):
+    // ****************************************************************************************************************************************
 
     // Simulation Kernel
     { SSC_OUTPUT,       SSC_ARRAY,      "time_hr",                          "Time at end of timestep",                                              "hr",           "",         "solver",         "sim_type=1",                       "",                      "" },
@@ -1349,9 +1394,9 @@ public:
         }
 
         // Design point is complete, assign technology design outputs
-        double Q_tes;
-        double total_land_area;
-        double nameplate_des;
+        double Q_tes = std::numeric_limits<double>::quiet_NaN();
+        double total_land_area = std::numeric_limits<double>::quiet_NaN();
+        double nameplate = std::numeric_limits<double>::quiet_NaN();
         {
             // System Design Calcs
             double eta_ref = as_double("eta_ref");                          //[-]
@@ -1523,17 +1568,21 @@ public:
             csp_solver.get_design_parameters(W_dot_bop_design, W_dot_fixed_parasitic_design);
 
             double gross_net_conversion_des = as_number("gross_net_conversion_factor");
-            nameplate_des = W_dot_cycle_des * gross_net_conversion_des;
+            nameplate = W_dot_cycle_des * gross_net_conversion_des;     //[MWe]
 
             // Assign
             {
-                assign("nameplate", nameplate_des);
+                assign("nameplate", nameplate);
                 assign("W_dot_bop_design", W_dot_bop_design);
                 assign("W_dot_fixed", W_dot_fixed_parasitic_design);
 
                 assign("solar_mult", c_fresnel.m_solar_mult);
                 assign("nLoops", c_fresnel.m_nLoops);
                 assign("total_Ap", c_fresnel.m_Ap_tot);
+
+                assign("system_capacity", nameplate*1.E3);     //[kWe]
+                assign("cp_system_nameplate", nameplate); //[MWe]
+                assign("cp_battery_nameplate", 0.0);             //[MWe]
             }
 
             // System Control
@@ -1591,7 +1640,7 @@ public:
 
             // Calculate Costs
             N_mspt::calculate_mslf_costs(site_improvements_area, site_improvements_spec_cost, solar_field_area, solar_field_spec_cost, htf_system_area, htf_system_spec_cost, Q_tes, storage_spec_cost, fossil_backup_mwe,
-                fossil_spec_cost, power_plant_mwe, power_plant_spec_cost, bop_mwe, bop_spec_cost, contingency_percent, total_land_area, nameplate_des, epc_cost_per_acre, epc_cost_percent_direct, epc_cost_per_watt,
+                fossil_spec_cost, power_plant_mwe, power_plant_spec_cost, bop_mwe, bop_spec_cost, contingency_percent, total_land_area, nameplate, epc_cost_per_acre, epc_cost_percent_direct, epc_cost_per_watt,
                 epc_cost_fixed, plm_cost_per_acre, plm_cost_percent_direct, plm_cost_per_watt, plm_cost_fixed, sales_tax_rate, sales_tax_percent,
 
                 power_plant_cost_out, ts_cost_out, site_improvements_cost_out, bop_cost_out, solar_field_cost_out, htf_system_cost_out, fossil_backup_cost_out, contingency_cost_out,
@@ -1617,6 +1666,72 @@ public:
                 assign("total_installed_cost", total_installed_cost_out);
                 assign("installed_per_capacity", installed_per_capacity_out);
             }
+
+            // Update construction financing costs, specifically, update: "construction_financing_cost"
+            double const_per_interest_rate1 = as_double("const_per_interest_rate1");
+            double const_per_interest_rate2 = as_double("const_per_interest_rate2");
+            double const_per_interest_rate3 = as_double("const_per_interest_rate3");
+            double const_per_interest_rate4 = as_double("const_per_interest_rate4");
+            double const_per_interest_rate5 = as_double("const_per_interest_rate5");
+            double const_per_months1 = as_double("const_per_months1");
+            double const_per_months2 = as_double("const_per_months2");
+            double const_per_months3 = as_double("const_per_months3");
+            double const_per_months4 = as_double("const_per_months4");
+            double const_per_months5 = as_double("const_per_months5");
+            double const_per_percent1 = as_double("const_per_percent1");
+            double const_per_percent2 = as_double("const_per_percent2");
+            double const_per_percent3 = as_double("const_per_percent3");
+            double const_per_percent4 = as_double("const_per_percent4");
+            double const_per_percent5 = as_double("const_per_percent5");
+            double const_per_upfront_rate1 = as_double("const_per_upfront_rate1");
+            double const_per_upfront_rate2 = as_double("const_per_upfront_rate2");
+            double const_per_upfront_rate3 = as_double("const_per_upfront_rate3");
+            double const_per_upfront_rate4 = as_double("const_per_upfront_rate4");
+            double const_per_upfront_rate5 = as_double("const_per_upfront_rate5");
+
+            double const_per_principal1, const_per_principal2, const_per_principal3, const_per_principal4, const_per_principal5;
+            double const_per_interest1, const_per_interest2, const_per_interest3, const_per_interest4, const_per_interest5;
+            double const_per_total1, const_per_total2, const_per_total3, const_per_total4, const_per_total5;
+            double const_per_percent_total, const_per_principal_total, const_per_interest_total, construction_financing_cost;
+
+            const_per_principal1 = const_per_principal2 = const_per_principal3 = const_per_principal4 = const_per_principal5 =
+                const_per_interest1 = const_per_interest2 = const_per_interest3 = const_per_interest4 = const_per_interest5 =
+                const_per_total1 = const_per_total2 = const_per_total3 = const_per_total4 = const_per_total5 =
+                const_per_percent_total = const_per_principal_total = const_per_interest_total = construction_financing_cost =
+                std::numeric_limits<double>::quiet_NaN();
+
+            N_financial_parameters::construction_financing_total_cost(total_installed_cost_out,
+                const_per_interest_rate1, const_per_interest_rate2, const_per_interest_rate3, const_per_interest_rate4, const_per_interest_rate5,
+                const_per_months1, const_per_months2, const_per_months3, const_per_months4, const_per_months5,
+                const_per_percent1, const_per_percent2, const_per_percent3, const_per_percent4, const_per_percent5,
+                const_per_upfront_rate1, const_per_upfront_rate2, const_per_upfront_rate3, const_per_upfront_rate4, const_per_upfront_rate5,
+                const_per_principal1, const_per_principal2, const_per_principal3, const_per_principal4, const_per_principal5,
+                const_per_interest1, const_per_interest2, const_per_interest3, const_per_interest4, const_per_interest5,
+                const_per_total1, const_per_total2, const_per_total3, const_per_total4, const_per_total5,
+                const_per_percent_total, const_per_principal_total, const_per_interest_total, construction_financing_cost);
+
+            assign("const_per_principal1", (ssc_number_t)const_per_principal1);
+            assign("const_per_principal2", (ssc_number_t)const_per_principal2);
+            assign("const_per_principal3", (ssc_number_t)const_per_principal3);
+            assign("const_per_principal4", (ssc_number_t)const_per_principal4);
+            assign("const_per_principal5", (ssc_number_t)const_per_principal5);
+            assign("const_per_interest1", (ssc_number_t)const_per_interest1);
+            assign("const_per_interest2", (ssc_number_t)const_per_interest2);
+            assign("const_per_interest3", (ssc_number_t)const_per_interest3);
+            assign("const_per_interest4", (ssc_number_t)const_per_interest4);
+            assign("const_per_interest5", (ssc_number_t)const_per_interest5);
+            assign("const_per_total1", (ssc_number_t)const_per_total1);
+            assign("const_per_total2", (ssc_number_t)const_per_total2);
+            assign("const_per_total3", (ssc_number_t)const_per_total3);
+            assign("const_per_total4", (ssc_number_t)const_per_total4);
+            assign("const_per_total5", (ssc_number_t)const_per_total5);
+            assign("const_per_percent_total", (ssc_number_t)const_per_percent_total);
+            assign("const_per_principal_total", (ssc_number_t)const_per_principal_total);
+            assign("const_per_interest_total", (ssc_number_t)const_per_interest_total);
+            assign("construction_financing_cost", (ssc_number_t)construction_financing_cost);
+
+
+
         }
         
 
@@ -1860,10 +1975,8 @@ public:
         assign("conversion_factor", convfactor);
 
         double kWh_per_kW = 0.0;
-        double system_capacity = as_double("P_ref") * as_double("gross_net_conversion_factor") * 1.E3;       //[kWe]
-        double nameplate = system_capacity;     //[kWe]
         if (nameplate > 0.0)
-            kWh_per_kW = ae / nameplate;
+            kWh_per_kW = ae / (nameplate*1.E3);     // convert nameplate to kW
 
         assign("capacity_factor", (ssc_number_t)(kWh_per_kW / ((double)n_steps_fixed / (double)steps_per_hour) * 100.));
         assign("kwh_per_kw", (ssc_number_t)kWh_per_kW);

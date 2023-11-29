@@ -364,8 +364,8 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegr
     ssc_number_t peakCycles[4] = { 1, 1, 1, 3 };
     ssc_number_t avgCycles[4] = { 1.0, 1.0, 0.4794, 1.0110 };
 
-    ssc_number_t q_rel[4] = { 97.198, 97.204, 97.239, 93.334 };
-    ssc_number_t cyc_avg[4] = { 33.73, 33.80, 12.381, 72.29 };
+    ssc_number_t q_rel[4] = { 97.074, 97.054, 97.239, 93.334 };
+    ssc_number_t cyc_avg[4] = { 35.022, 35.218, 12.381, 72.29 };
 
     // Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
     for (int i = 0; i < 4; i++) {
@@ -472,7 +472,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, LCOS_test_cashloan)
 
     ssc_number_t lcos_real;
     ssc_data_get_number(data, "lcos_real", &lcos_real);
-    EXPECT_NEAR(lcos_real, 588.71, 0.1);
+    EXPECT_NEAR(lcos_real, 583.83, 0.1);
 }
 
 /// Test PVSAMv1 with all defaults and battery enabled with 3 automatic dispatch methods
@@ -734,8 +734,8 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, CommercialMultipleSubarrayBatte
 
         auto batt_q_rel = data_vtab->as_vector_ssc_number_t("batt_capacity_percent");
         auto batt_cyc_avg = data_vtab->as_vector_ssc_number_t("batt_DOD_cycle_average");
-        EXPECT_NEAR(batt_q_rel.back(), 99.344, 2e-2);
-        EXPECT_NEAR(batt_cyc_avg.back(), 8.97, m_error_tolerance_lo);
+        EXPECT_NEAR(batt_q_rel.back(), 99.314, 2e-2);
+        EXPECT_NEAR(batt_cyc_avg.back(), 9.394, m_error_tolerance_lo);
     }
 
 }

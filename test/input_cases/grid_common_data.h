@@ -32,8 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#ifndef _FUELCELL_COMMON_DATA_H_
-#define _FUELCELL_COMMON_DATA_H_
+#ifndef _GRID_COMMON_DATA_H_
+#define _GRID_COMMON_DATA_H_
 
 #include <stdio.h>
 #include "code_generator_utilities.h"

@@ -680,6 +680,7 @@ extern var_info
 	vtab_payment_incentives[],
     vtab_financial_metrics[],
     vtab_lcos_inputs[],
+    vtab_update_tech_outputs[],
 	vtab_battery_replacement_cost[],
     vtab_tod_dispatch_periods[];
 
@@ -933,6 +934,7 @@ public:
         add_var_info(vtab_lcos_inputs);
 		add_var_info(vtab_battery_replacement_cost);
         add_var_info(vtab_tod_dispatch_periods);
+        add_var_info(vtab_update_tech_outputs);
     }
 
 	void exec( )
@@ -1036,7 +1038,7 @@ public:
         ssc_number_t nameplate1 = 0;
         ssc_number_t nameplate2 = 0;
         std::vector<double> battery_discharged(nyears,0);
-        std::vector<double> fuelcell_discharged(nyears+1,0);
+        std::vector<double> fuelcell_discharged(nyears,0);
 
         if (add_om_num_types > 0) //PV Battery
         {
@@ -1062,11 +1064,11 @@ public:
             nameplate2 = as_number("om_fuelcell_nameplate");
             fuelcell_discharged = as_vector_double("fuelcell_annual_energy_discharged");
         }
-        if (fuelcell_discharged.size()== 2) { // ssc #992
-            double first_val = fuelcell_discharged[1];
-            fuelcell_discharged.resize(nyears+1, first_val);
+        if (fuelcell_discharged.size()== 1) { // ssc #992
+            double first_val = fuelcell_discharged[0];
+            fuelcell_discharged.resize(nyears, first_val);
          }
-        if (fuelcell_discharged.size() != nyears+1)
+        if (fuelcell_discharged.size() != nyears)
             throw exec_error("equpartflip", util::format("fuelcell_discharged size (%d) incorrect",(int)fuelcell_discharged.size()));
 
         // battery cost - replacement from lifetime analysis
@@ -1234,11 +1236,13 @@ public:
                 cf.at(CF_om_production_expense, i) *= cf.at(CF_energy_sales, i);
             }
             cf.at(CF_om_capacity_expense,i) *= nameplate;
+            cf.at(CF_om_capacity1_expense, i) *= nameplate1;
+            cf.at(CF_om_capacity2_expense, i) *= nameplate2;
 			cf.at(CF_om_fuel_expense,i) *= year1_fuel_use;
 
             //Battery Production OM Costs
             cf.at(CF_om_production1_expense, i) *= battery_discharged[i - 1]; //$/MWh * 0.001 MWh/kWh * kWh = $
-            cf.at(CF_om_production2_expense, i) *= fuelcell_discharged[i];
+            cf.at(CF_om_production2_expense, i) *= fuelcell_discharged[i-1];
 
 			cf.at(CF_om_opt_fuel_1_expense,i) *= om_opt_fuel_1_usage;
 			cf.at(CF_om_opt_fuel_2_expense,i) *= om_opt_fuel_2_usage;
@@ -2716,6 +2720,7 @@ public:
     if (as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1) {
         update_battery_outputs(this, nyears);
     }
+    update_fuelcell_outputs(this, nyears);
 
 
 	double npv_fed_ptc = npv(CF_ptc_fed,nyears,nom_discount_rate);

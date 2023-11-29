@@ -955,6 +955,10 @@ size_t compute_module::check_timestep_seconds(double t_start, double t_end, doub
     return steps;
 }
 
+/*this function accumulates a timeseries array of information into a monthly array
+  the timeseries array must be year one only! cannot be lifetime length.
+  if you are using a lifetime array, use the function accumulate_monthly_for_year instead.
+  scale input is optional to scale between units. to scale from kW to kWh, use dt_hour (i.e. 0.25 for 15-min data) as the "scale" */
 ssc_number_t *
 compute_module::accumulate_monthly(const std::string &ts_var, const std::string &monthly_var, double scale) {
 
@@ -985,7 +989,9 @@ compute_module::accumulate_monthly(const std::string &ts_var, const std::string 
 
     return monthly;
 }
-
+/* this function accumulates monthly values for a specified "year" from a lifetime timeseries value (ts_var).
+   year is an optional input set by default to year 1.
+   scale input is optional to scale between units. to scale from kW to kWh, use dt_hour (i.e. 0.25 for 15-min data) as the "scale" */
 ssc_number_t *
 compute_module::accumulate_monthly_for_year(const std::string &ts_var, const std::string &monthly_var, double scale,
                                             size_t step_per_hour, size_t year) {
@@ -993,7 +999,7 @@ compute_module::accumulate_monthly_for_year(const std::string &ts_var, const std
     size_t count = 0;
     ssc_number_t *ts = as_array(ts_var, &count);
 
-    size_t annual_values = step_per_hour * 8760;
+    size_t annual_values = step_per_hour * 8760; //number of values in one year
 
     if (!ts || step_per_hour < 1 || step_per_hour > 60 || year * step_per_hour * 8760 > count)
         throw exec_error("generic",
@@ -1003,7 +1009,7 @@ compute_module::accumulate_monthly_for_year(const std::string &ts_var, const std
 
     ssc_number_t *monthly = allocate(monthly_var, 12);
 
-    size_t c = (year - 1) * annual_values;
+    size_t c = (year - 1) * annual_values; //this will get you to the correct starting index in the timeseries array for the specified year
     for (int m = 0; m < 12; m++) // each month
     {
         monthly[m] = 0;

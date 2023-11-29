@@ -298,12 +298,15 @@ cm_battwatts::cm_battwatts()
     add_var_info(vtab_grid_curtailment);
 }
 
-std::shared_ptr<batt_variables> cm_battwatts::setup_variables(size_t n_recs)
+std::shared_ptr<batt_variables> cm_battwatts::setup_variables(size_t n_recs_lifetime)
 {
     size_t nyears = 1;
+    size_t n_recs = n_recs_lifetime;
     bool system_use_lifetime_output = as_boolean("system_use_lifetime_output");
-    if (system_use_lifetime_output)
+    if (system_use_lifetime_output) {
         nyears = (size_t)as_double("analysis_period");
+        n_recs = n_recs_lifetime / nyears;
+    }
     int chem = as_integer("batt_simple_chemistry");
     int pos = as_integer("batt_simple_meter_position");
     double kwh = as_number("batt_simple_kwh");
@@ -313,7 +316,7 @@ std::shared_ptr<batt_variables> cm_battwatts::setup_variables(size_t n_recs)
     std::vector<double> dispatch_custom;
     if (dispatch == 2){
         dispatch_custom = as_vector_double("batt_custom_dispatch");
-        if (dispatch_custom.size()!=n_recs) throw exec_error("battwatts",
+        if (dispatch_custom.size()!=n_recs_lifetime / nyears) throw exec_error("battwatts",
                 "'batt_custom_dispatch' length must be equal to length of 'ac'.");
     }
     // Interconnection and curtailment
@@ -328,7 +331,7 @@ std::shared_ptr<batt_variables> cm_battwatts::setup_variables(size_t n_recs)
         single_year_to_lifetime_interpolated<double>(
             system_use_lifetime_output,
             (size_t)nyears,
-            n_recs * nyears,
+            n_recs_lifetime,
             curtailment_year_one,
             scaleFactors,
             interpolation_factor,
@@ -346,7 +349,7 @@ std::shared_ptr<batt_variables> cm_battwatts::setup_variables(size_t n_recs)
         }
     }
 
-    return battwatts_create(n_recs, nyears, chem, pos, kwh, kw, inv_eff, dispatch, dispatch_custom, interconnection_limit, curtailment_lifetime);
+    return battwatts_create(n_recs_lifetime, nyears, chem, pos, kwh, kw, inv_eff, dispatch, dispatch_custom, interconnection_limit, curtailment_lifetime);
 }
 
 
