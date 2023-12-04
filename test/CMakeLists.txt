@@ -77,7 +77,7 @@ endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR MSVC)
     find_library( GTESTD_LIB
-            NAMES libgtest.a gtest.lib libgtest.so
+            NAMES libgtestd.a gtestd.lib libgtesdt.so
             PATHS $ENV{GTEST_DIR} ${GTDIR}/build/lib ${GTDIR}/build/lib/Debug)
     target_link_libraries(Test debug ${GTESTD_LIB})
 endif()

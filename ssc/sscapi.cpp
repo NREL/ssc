@@ -265,6 +265,9 @@ static module_entry_info *module_table[] = {
     &cm_entry_hybrid,
 0 };
 
+extern var_info vtab_hybrid_tech_om_inputs[];
+
+
 SSCEXPORT ssc_module_t ssc_module_create( const char *name )
 {
 	std::string lname = util::lower_case( name );
@@ -1298,6 +1301,15 @@ SSCEXPORT ssc_bool_t ssc_module_add_var_info(ssc_module_t p_mod, ssc_info_t v)
     return 1;
 }
 
+SSCEXPORT ssc_bool_t ssc_module_hybridize(ssc_module_t p_mod)
+{
+    compute_module* cmod = static_cast<compute_module*>(p_mod);
+    if (!p_mod)
+        return 0;
+
+    cmod->add_var_info(vtab_hybrid_tech_om_inputs);
+    return 1;
+}
 
 SSCEXPORT const char *ssc_module_log( ssc_module_t p_mod, int index, int *item_type, float *time )
 {
