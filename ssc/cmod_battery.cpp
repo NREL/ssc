@@ -204,16 +204,16 @@ var_info vtab_battery_inputs[] = {
     { SSC_INPUT,        SSC_NUMBER,     "batt_cycle_cost_choice",                      "Use SAM cost model for degradaton penalty or input custom via batt_cycle_cost", "0/1",     "0=UseCostModel,1=InputCost", "BatteryDispatch", "?=0",                           "",                             "" },
     { SSC_INPUT,        SSC_ARRAY,      "batt_cycle_cost",                             "Input battery cycle degradaton penalty per year",                      "$/cycle-kWh","length 1 or analysis_period, length 1 will be extended using inflation", "BatteryDispatch",       "batt_cycle_cost_choice=1",                           "",                             "" },
 
-    { SSC_INPUT,        SSC_NUMBER,     "inflation_rate",                              "Inflation rate",                                          "%", "", "Lifetime", "?=0", "MIN=-99", "" },
-    { SSC_INPUT,        SSC_ARRAY,      "load_escalation",                             "Annual load escalation",                                  "%/year", "",                                                                                                                                                                                      "Load",                                               "?=0",                                "",                    "" },
-    { SSC_INPUT,        SSC_ARRAY,      "om_batt_replacement_cost"                 , "Replacement cost 1"                                             , "$/kWh"                                  , ""                                      , "System Costs"         , "?=0.0"          , ""                      , "" },
-    { SSC_INPUT,        SSC_NUMBER,     "om_replacement_cost_escal"            , "Replacement cost escalation"                                    , "%/year"                                 , ""                                      , "System Costs"         , "?=0.0"          , ""                      , "" },
+    { SSC_INPUT,        SSC_NUMBER,     "inflation_rate",                              "Inflation rate",                                          "%",      "", "Lifetime", "?=0", "MIN=-99", "" },
+    { SSC_INPUT,        SSC_ARRAY,      "load_escalation",                             "Annual load escalation",                                  "%/year", "", "Load",                                               "?=0",                                "",                    "" },
+    { SSC_INPUT,        SSC_ARRAY,      "om_batt_replacement_cost",                    "Replacement cost 1",                                      "$/kWh",  "", "System Costs"         , "?=0.0"          , ""                      , "" },
+    { SSC_INPUT,        SSC_NUMBER,     "om_replacement_cost_escal",                   "Replacement cost escalation",                             "%/year", "", "System Costs"         , "?=0.0"          , ""                      , "" },
 
-    { SSC_INPUT,SSC_ARRAY   , "om_batt_variable_cost"                       , "Battery production-based System Costs amount"                   , "$/MWh"                                  , ""                                      , "System Costs"         , "?=0.0"          , ""                      , "" },
-    { SSC_INPUT,        SSC_NUMBER,      "om_production_escal",          "Production-based O&M escalation",   "%/year",  "",                  "System Costs",            "?=0.0",                 "",                                         "" },
+    { SSC_INPUT,        SSC_ARRAY,      "om_batt_variable_cost",                       "Battery production-based System Costs amount",            "$/MWh",  "", "System Costs"         , "?=0.0"          , ""                      , "" },
+    { SSC_INPUT,        SSC_NUMBER,     "om_production_escal",                         "Production-based O&M escalation",                         "%/year", "", "System Costs",            "?=0.0",                 "",                                         "" },
 
     // Powerflow calculation inputs
-    { SSC_INPUT,       SSC_ARRAY,       "fuelcell_power",                               "Electricity from fuel cell AC",                            "kW",       "",                     "FuelCell",     "",                           "",                         "" },
+    { SSC_INPUT,       SSC_ARRAY,       "fuelcell_power",                              "Electricity from fuel cell AC",                           "kW",     "", "FuelCell",              "",                           "",                         "" },
 
 
     var_info_invalid

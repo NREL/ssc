@@ -51,6 +51,20 @@ public:
     {
         add_var_info(_cm_vtab_hybrid);
     }
+    void ssc_module_exec_with_error(ssc_module_t module, var_table& input, std::string compute_module) {
+        if (!ssc_module_exec(module, static_cast<ssc_data_t>(&input))){
+            std::string str = std::string(compute_module) + " execution error.\n";
+            int idx = 0;
+            while ( const char *msg = ssc_module_log( module, idx++, nullptr, nullptr ) )
+            {
+                str += "\t";
+                str += std::string(msg);
+                str += "\n\n";
+            }
+            ssc_module_free(module);
+            throw std::runtime_error(str);
+        }
+    }
     void exec()
     {
         float percent = 0;
@@ -103,10 +117,21 @@ public:
             std::vector<size_t> genTimestepsPerHour;
             bool ts_adj = false; // keep track of whether time step is adjusted for log messages
 
-            // get financial inputs common to all technologies
+            // get financial inputs common to all technologies and copy into each tech's input tables
             var_data* financial_compute_modules = input_table->table.lookup("Hybrid");
             int analysisPeriod = (int)financial_compute_modules->table.lookup("analysis_period")->num;
             ssc_number_t inflation_rate = financial_compute_modules->table.lookup("inflation_rate")->num * 0.01;
+            ssc_number_t sales_tax_rate = financial_compute_modules->table.lookup("sales_tax_rate")->num * 0.01;
+
+            for (size_t i = 0; i < vec_cms.size(); i++) {
+                std::string computemodulename = vec_cms[i].str;
+                var_data* compute_module_inputs = input_table->table.lookup(computemodulename);
+                if (compute_module_inputs) {
+                    compute_module_inputs->table.assign("analysis_period", analysisPeriod);
+                    compute_module_inputs->table.assign("inflation_rate", inflation_rate * 1e2);
+                    compute_module_inputs->table.assign("sales_tax_rate", sales_tax_rate * 1e2);
+                }
+            }
 
             for (size_t igen = 0; igen < generators.size(); igen++) {
 
@@ -116,25 +141,12 @@ public:
                 std::string& compute_module = generators[igen];
                 var_data* compute_module_inputs = input_table->table.lookup(compute_module);
                 ssc_module_t module = ssc_module_create(compute_module.c_str());
-                // run verify
-                class compute_module* cmod = static_cast<class compute_module*>(module);
-                cmod->add_var_info(vtab_hybrid_tech_om_inputs);
+                ssc_module_hybridize(module);
 
                 var_table& input = compute_module_inputs->table;
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "en_batt", 0);
 
-                if (!ssc_module_exec(module, static_cast<ssc_data_t>(&input))){
-                    std::string str = std::string(compute_module) + " execution error.\n";
-                    int idx = 0;
-                    while ( const char *msg = ssc_module_log( module, idx++, nullptr, nullptr ) )
-                    {
-                        str += "\t";
-                        str += std::string(msg);
-                        str += "\n\n";
-                    }
-                    ssc_module_free(module);
-                    throw std::runtime_error(str);
-                }
+                ssc_module_exec_with_error(module, input, compute_module);
 
                 ssc_number_t system_capacity = compute_module_inputs->table.lookup("system_capacity")->num;
                 hybridSystemCapacity += system_capacity;
@@ -199,7 +211,10 @@ public:
                 else {
                     size_t count_degrad = 0;
                     ssc_number_t* degrad = 0;
-                    degrad = input.as_array("degradation", &count_degrad);
+                    if (compute_module == "generic_system")
+                        degrad = input.as_array("generic_degradation", &count_degrad);
+                    else
+                        degrad = input.as_array("degradation", &count_degrad);
                     if (count_degrad == 1) {
                         for (int i = 1; i <= analysisPeriod; i++)
                             pDegradation[i] = pow((1.0 - degrad[0] / 100.0), i - 1);
@@ -294,15 +309,17 @@ public:
                 percent = 100.0f * ((float)(generators.size() + fuelcells.size()) / (float)(generators.size() + fuelcells.size() + batteries.size() + financials.size()));
                 update("", percent);
 
-
                 std::string& compute_module = fuelcells[0];
                 var_data* compute_module_inputs = input_table->table.lookup(compute_module);
 
-                ssc_number_t system_capacity = compute_module_inputs->table.lookup("fuelcell_power_nameplate")->num;
+                ssc_module_t module = ssc_module_create(compute_module.c_str());
+                class compute_module* cmod = static_cast<class compute_module*>(module);
+                cmod->add_var_info(vtab_hybrid_tech_om_inputs);
+
+                ssc_number_t system_capacity = compute_module_inputs->table.lookup("fuelcell_unit_max_power")->num;
+                system_capacity *= compute_module_inputs->table.lookup("fuelcell_number_of_units")->num;
                 hybridSystemCapacity += system_capacity;
                 hybridTotalInstalledCost += compute_module_inputs->table.lookup("total_installed_cost")->num;
-
-                ssc_module_t module = ssc_module_create(compute_module.c_str());
 
                 var_table& input = compute_module_inputs->table;
                 ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);
@@ -314,7 +331,7 @@ public:
                     var_data* hybrid_inputs = input_table->table.lookup(hybridVarTable);
                     var_table& hybridinput = hybrid_inputs->table;
                     input.merge(hybridinput, false);
-                    ssc_module_exec(module, static_cast<ssc_data_t>(&input));
+                    ssc_module_exec_with_error(module, input, compute_module);
                 }
 
                 ssc_data_t compute_module_outputs = ssc_data_create();
@@ -410,8 +427,17 @@ public:
                 std::string& compute_module = batteries[0];
                 var_data* compute_module_inputs = input_table->table.lookup(compute_module);
 
-                hybridSystemCapacity += compute_module_inputs->table.lookup("system_capacity")->num; // TODO: check capacity definitions for batteries and hybrid systems
+                hybridSystemCapacity += compute_module_inputs->table.lookup("batt_computed_bank_capacity")->num; // TODO: check capacity definitions for batteries and hybrid systems
                 hybridTotalInstalledCost += compute_module_inputs->table.lookup("total_installed_cost")->num;
+
+                // copy over required dispatch variables from hybrid
+                compute_module_inputs->table.assign("dispatch_sched_weekday", *financial_compute_modules->table.lookup("dispatch_sched_weekday"));
+                compute_module_inputs->table.assign("dispatch_sched_weekend", *financial_compute_modules->table.lookup("dispatch_sched_weekend"));
+                compute_module_inputs->table.assign("dispatch_tod_factors", *financial_compute_modules->table.lookup("dispatch_tod_factors"));
+                compute_module_inputs->table.assign("grid_interconnection_limit_kwac", *financial_compute_modules->table.lookup("grid_interconnection_limit_kwac"));
+                compute_module_inputs->table.assign("ppa_escalation", *financial_compute_modules->table.lookup("ppa_escalation"));
+                compute_module_inputs->table.assign("ppa_multiplier_model", *financial_compute_modules->table.lookup("ppa_multiplier_model"));
+                compute_module_inputs->table.assign("ppa_price_input", *financial_compute_modules->table.lookup("ppa_price_input"));
 
                 ssc_module_t module = ssc_module_create(compute_module.c_str());
 
@@ -428,7 +454,7 @@ public:
                     input.merge(hybridinput, false);
                     ssc_data_set_number(static_cast<ssc_data_t>(&input), "en_batt", 1);
 
-                    ssc_module_exec(module, static_cast<ssc_data_t>(&input));
+                    ssc_module_exec_with_error(module, input, compute_module);
                 }
 
                 ssc_data_t compute_module_outputs = ssc_data_create();
@@ -534,7 +560,6 @@ public:
                 pBattGen = ((var_table*)outputs)->lookup(batteries[0])->table.as_array("gen", &battGenLen);
             }
 
-
             ssc_number_t* pHybridOMSum = ((var_table*)outputs)->allocate("cf_hybrid_om_sum", analysisPeriod + 1); // add to top level "output" - assumes analysis period the same for all generators
 
             for (int i = 0; i <= analysisPeriod; i++)
@@ -584,9 +609,6 @@ public:
                 }
             }
 
-
-
-
             if (financials.size() > 0) { // run remaining compute modules with necessary inputs
                 // note that single vartable is used to run multiple compute modules
                 // battery outputs passed in if present
@@ -627,8 +649,7 @@ public:
                     std::string compute_module = financials[i];
 
                     ssc_module_t module = ssc_module_create(compute_module.c_str());
-                    ssc_module_exec(module, static_cast<ssc_data_t>(&input));
-
+                    ssc_module_exec_with_error(module, input, compute_module);
 
                     int pidx = 0;
                     while (const ssc_info_t p_inf = ssc_module_var_info(module, pidx++)) {

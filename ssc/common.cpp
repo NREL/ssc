@@ -963,15 +963,19 @@ void calculate_resilience_outputs(compute_module *cm, std::unique_ptr<resilience
 
 // for financial inputs required for each technology in cmod_hybrid
 var_info vtab_hybrid_tech_om_inputs[] = {
-    /*   VARTYPE           DATATYPE         NAME                           LABEL                        UNITS     META                      GROUP           REQUIRED_IF      CONSTRAINTS     UI_HINTS*/
-    { SSC_INPUT,   SSC_NUMBER,     "total_installed_cost",         "Total installed cost",              "$",       "",                  "HybridTech",            "*",                 "",             "" },
-    { SSC_INPUT,   SSC_ARRAY,      "om_fixed",                     "Fixed O&M annual amount",           "$/year",  "",                  "HybridTech",            "*",                 "",             "" },
-    { SSC_INPUT,   SSC_NUMBER,     "om_fixed_escal",               "Fixed O&M escalation",              "%/year",  "",                  "HybridTech",            "*",                 "",             "" },
-    { SSC_INPUT,   SSC_ARRAY,      "om_production",                "Production-based O&M amount",       "$/MWh",   "",                  "HybridTech",            "*",                 "",             "" },
-    { SSC_INPUT,   SSC_NUMBER,     "om_production_escal",          "Production-based O&M escalation",   "%/year",  "",                  "HybridTech",            "*",                 "",             "" },
-    { SSC_INPUT,   SSC_ARRAY,      "om_capacity",                  "Capacity-based O&M amount",         "$/kWcap", "",                  "HybridTech",            "*",                 "",             "" },
-    { SSC_INPUT,   SSC_NUMBER,     "om_capacity_escal",            "Capacity-based O&M escalation",     "%/year",  "",                  "HybridTech",            "*",                 "",             "" },
-    { SSC_INPUT,   SSC_ARRAY,      "degradation",                  "Annual degradation",                "%",       "",                  "HybridTech",            "*",                 "",             "" },
+    /*   VARTYPE           DATATYPE         NAME                           LABEL                            UNITS     META                      GROUP           REQUIRED_IF      CONSTRAINTS     UI_HINTS*/
+    { SSC_INPUT,   SSC_NUMBER,     "total_installed_cost",         "Total installed cost",                  "$",       "",                  "HybridTech",            "*",                 "",             "" },
+    { SSC_INPUT,   SSC_ARRAY,      "om_fixed",                     "Fixed O&M annual amount",               "$/year",  "",                  "HybridTech",            "na:fuelcell_unit_max_power",                 "",             "" },
+    { SSC_INPUT,   SSC_NUMBER,     "om_fixed_escal",               "Fixed O&M escalation",                  "%/year",  "",                  "HybridTech",            "na:fuelcell_unit_max_power",                 "",             "" },
+    { SSC_INPUT,   SSC_ARRAY,      "om_production",                "Production-based O&M amount",           "$/MWh",   "",                  "HybridTech",            "na:fuelcell_unit_max_power",                 "",             "" },
+    { SSC_INPUT,   SSC_NUMBER,     "om_production_escal",          "Production-based O&M escalation",       "%/year",  "",                  "HybridTech",            "na:fuelcell_unit_max_power",                 "",             "" },
+    { SSC_INPUT,   SSC_ARRAY,      "om_capacity",                  "Capacity-based O&M amount",             "$/kWcap", "",                  "HybridTech",            "na:fuelcell_unit_max_power",                 "",             "" },
+    { SSC_INPUT,   SSC_NUMBER,     "om_capacity_escal",            "Capacity-based O&M escalation",         "%/year",  "",                  "HybridTech",            "na:fuelcell_unit_max_power",                 "",             "" },
+    { SSC_INPUT,   SSC_ARRAY,      "om_fuelcell_fixed_cost",       "Fuel cell fixed O&M annual amount",     "$/year",  "" ,                 "HybridTech",            "abt:fuelcell_unit_max_power",             "",             ""},
+    { SSC_INPUT,   SSC_ARRAY,      "om_fuelcell_variable_cost",    "Fuel cell production-based O&M amount", "$/MWh",   "" ,                 "HybridTech",            "abt:fuelcell_unit_max_power",             "",             ""},
+    { SSC_INPUT,   SSC_ARRAY,      "om_fuelcell_capacity_cost",    "Fuel cell capacity-based O&M amount",   "$/kWcap", "" ,                 "HybridTech",            "abt:fuelcell_unit_max_power",             "",             ""},
+    { SSC_INPUT,   SSC_ARRAY,	   "om_fuel_cost",                 "Fuel cost",                             "$/MMBtu", "",                  "HybridTech",            "abt:fuelcell_unit_max_power",             "",             "" },
+    { SSC_INPUT,   SSC_ARRAY,      "degradation",                  "Annual AC degradation",                 "%",       "",                  "HybridTech",            "abt:system_use_lifetime_output",                 "",             "" },
 var_info_invalid };
 
 // for o and m cost outputs calculated in cmod_hybrid

@@ -132,3 +132,70 @@ TEST_F(CmodHybridTest, PVWattsv8WindBatteryHostDeveloper) {
     ssc_data_free(dat);
     dat = nullptr;
 }
+
+TEST_F(CmodHybridTest, GenericPVWattsWindFuelCellBatteryHybrid_SingleOwner) {
+    char file_path[256];
+    int nfc1 = sprintf(file_path, "%s/test/input_json/hybrids/Generic PVWatts Wind FuelCell Battery Hybrid_Single Owner.json", SSCDIR);
+    std::ifstream file(file_path);
+    std::ostringstream tmp;
+    tmp << file.rdbuf();
+    file.close();
+    ssc_data_t dat = json_to_ssc_data(tmp.str().c_str());
+    tmp.str("");
+
+    auto table = ssc_data_get_table(dat, "input");
+    auto pv_table = ssc_data_get_table(table, "pvwattsv8");
+    char solar_resource_path[256];
+    sprintf(solar_resource_path, "%s/test/input_cases/general_data/phoenix_az_33.450495_-111.983688_psmv3_60_tmy.csv", std::getenv("SSCDIR"));
+    ssc_data_set_string(pv_table, "solar_resource_file", solar_resource_path);
+
+    auto wind_table = ssc_data_get_table(table, "windpower");
+    char wind_resource_path[256];
+    sprintf(wind_resource_path, "%s/test/input_cases/general_data/WY_Southern-Flat_Lands.srw", std::getenv("SSCDIR"));
+    ssc_data_set_string(wind_table, "wind_resource_filename", wind_resource_path);
+
+    int errors = run_module(dat, "hybrid");
+
+    EXPECT_FALSE(errors);
+    if (!errors)
+    {
+        ssc_number_t genericannualenergy, pvannualenergy, windannualenergy, battannualenergy, npv;
+        int len;
+        auto outputs = ssc_data_get_table(dat, "output");
+
+        auto gs_outputs = ssc_data_get_table(outputs, "generic_system");
+        ssc_data_get_number(gs_outputs, "annual_energy", &genericannualenergy);
+        auto gs_om_expenses = ssc_data_get_array(gs_outputs, "cf_operating_expenses", &len);
+
+        auto pv_outputs = ssc_data_get_table(outputs, "pvwattsv8");
+        ssc_data_get_number(pv_outputs, "annual_energy", &pvannualenergy);
+        auto pv_om_expenses = ssc_data_get_array(pv_outputs, "cf_operating_expenses", &len);
+
+        auto wind_outputs = ssc_data_get_table(outputs, "windpower");
+        ssc_data_get_number(wind_outputs, "annual_energy", &windannualenergy);
+        auto wind_om_expenses = ssc_data_get_array(wind_outputs, "cf_operating_expenses", &len);
+
+        auto batt_outputs = ssc_data_get_table(outputs, "battery");
+        ssc_data_get_number(batt_outputs, "annual_energy", &battannualenergy);
+        auto batt_om_expenses = ssc_data_get_array(batt_outputs, "cf_operating_expenses", &len);
+
+        auto hybrid_outputs = ssc_data_get_table(outputs, "Hybrid");
+        ssc_data_get_number(hybrid_outputs, "project_return_aftertax_npv", &npv);
+        auto ebitda = ssc_data_get_array(hybrid_outputs, "cf_ebitda", &len);
+
+        auto revenue = ssc_data_get_array(hybrid_outputs, "cf_total_revenue", &len);
+        auto om_expenses = ssc_data_get_array(hybrid_outputs, "cf_operating_expenses", &len);
+
+        EXPECT_NEAR(genericannualenergy, 756864000, 1);
+        EXPECT_NEAR(pvannualenergy, 211907359, 1);
+        EXPECT_NEAR(windannualenergy, 818888286, 1);
+        EXPECT_NEAR(battannualenergy, 1780823936, 1);
+        
+        EXPECT_NEAR(om_expenses[1], 155867774, 1);
+        EXPECT_NEAR(revenue[1], 86930659, 1);
+        EXPECT_NEAR(ebitda[1], -68937115, 1);
+        EXPECT_NEAR(npv, -3230348080, 1);
+    }
+    ssc_data_free(dat);
+    dat = nullptr;
+}
