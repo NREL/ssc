@@ -480,6 +480,11 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 
 	// convert to kelvin
 	double TA = input.Tdry+273.15;
+    if (std::isnan(input.Patm)) {
+        m_err = "Atmospheric pressure (millibar) is required for this temperature model.";
+        Tcell = std::numeric_limits<double>::quiet_NaN();
+        return false;
+    }
 	double Patm = input.Patm*100; // convert millibar into Pascal
 
 	double EFFREF = 1e-3;
@@ -505,6 +510,11 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 	Fcs        = 1. - Fcg;              // !view factor between top of tilted plate and everything else (sky)
 	Fbs        = Fcg;                   // !view factor bewteen top and ground = bottom and sky
 	Fbg        = Fcs;                   // !view factor bewteen bottom and ground = top and sky
+    if (std::isnan(input.Tdew)) {
+        m_err = "Dew point temperature (degC) is required for this temperature model.";
+        Tcell = std::numeric_limits<double>::quiet_NaN();
+        return false;
+    }
 	T_sky      = TA*pow(0.711+0.0056*input.Tdew+0.000073*pow(input.Tdew,2)+0.013*cosd(input.HourOfDay), 0.25);   // !Sky Temperature: Berdahl and Martin  
 	T_ground   = TA;                    // !Set ground temp equal to ambient temp
 	T_rw       = TA;                    // !Initial guess for roof or wall temp

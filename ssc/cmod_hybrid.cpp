@@ -288,6 +288,7 @@ public:
 
                 var_table& input = compute_module_inputs->table;
                 ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);
+                ssc_data_set_number(static_cast<ssc_data_t>(&input), "system_use_lifetime_output", 1); // for fuelcell_annual_energy_discharged
 
                 if (!ssc_module_exec(module, static_cast<ssc_data_t>(&input))) {
                     // merge in hybrid vartable for configurations where battery and fuel cell dispatch are combined and not in the technology bin
@@ -331,21 +332,21 @@ public:
 
                 nameplate = system_capacity;
                 fuelcell_discharged = ((var_table*)compute_module_outputs)->as_vector_double("fuelcell_annual_energy_discharged");
-                if (fuelcell_discharged.size() == 2) { // ssc #992
+                if (fuelcell_discharged.size() == 1) { // ssc #992
                     double first_val = fuelcell_discharged[0]; // first value differs here!
-                    fuelcell_discharged.resize(analysisPeriod + 1, first_val);
+                    fuelcell_discharged.resize(analysisPeriod , first_val);
                 }
-                if (fuelcell_discharged.size() != (size_t)analysisPeriod + 1)
+                if (fuelcell_discharged.size() != (size_t)analysisPeriod )
                     throw exec_error("hybrid", util::format("fuelcell_discharged size (%d) incorrect", (int)fuelcell_discharged.size()));
                 // fuelcell cost - replacement from lifetime analysis
-                if (((var_table*)compute_module_outputs)->is_assigned("fuelcell_replacement_option") && (((var_table*)compute_module_outputs)->as_integer("fuelcell_replacement_option") > 0))
+                if (input.is_assigned("fuelcell_replacement_option") && (input.as_integer("fuelcell_replacement_option") > 0))
                 {
                     size_t count;
                     ssc_number_t* fuelcell_rep = 0;
-                    if (((var_table*)compute_module_outputs)->as_integer("fuelcell_replacement_option") == 1)
+                    if (input.as_integer("fuelcell_replacement_option") == 1)
                         fuelcell_rep = ((var_table*)compute_module_outputs)->as_array("fuelcell_replacement", &count); // replacements per year calculated
                     else // user specified
-                        fuelcell_rep = ((var_table*)compute_module_outputs)->as_array("fuelcell_replacement_schedule", &count); // replacements per year user-defined
+                        fuelcell_rep = input.as_array("fuelcell_replacement_schedule", &count); // replacements per year user-defined
 
                     escal_or_annual(input, pFuelCellReplacement, analysisPeriod, "om_fuelcell_replacement_cost", inflation_rate, nameplate, false, input.as_double("om_replacement_cost_escal") * 0.01);
 
@@ -359,18 +360,33 @@ public:
                     }
                 }
                 // production O and M conversion to $
-                for (size_t i = 0; i <= (size_t)analysisPeriod; i++)
-                    pOMProduction[i] *= fuelcell_discharged[i];
+                for (size_t i = 0; i < (size_t)analysisPeriod; i++)
+                    pOMProduction[i + 1] *= fuelcell_discharged[i];
+
+                // add to gen "fuelcell_power" * timestep (set for pGen above)
+                // cash flow line item is fuelcell_annual_energy_discharged from cmod_fuelcell
+                std::vector<double> gen(genLength, 0);
+                gen = ((var_table*)compute_module_outputs)->as_vector_double("fuelcell_power");
+                if (gen.size() != genLength)
+                    throw exec_error("hybrid", util::format("fuelcell_power size (%d) incorrect", (int)gen.size()));
+                for (size_t g = 0; g < genLength; g++) {
+                    pGen[g] += gen[g] * maximumTimeStepsPerHour;
+                }
 
 
-                // add calculations to compute module outputs - done above for regular ompute module outputs
+                // resize annual outputs
+                size_t arr_length = analysisPeriod + 1;
+                ssc_number_t yr_0_value = 0.0;
+                prepend_to_output((var_table*)compute_module_outputs, "fuelcell_replacement", arr_length, yr_0_value);
+                prepend_to_output((var_table*)compute_module_outputs, "annual_fuel_usage_lifetime", arr_length, yr_0_value);
+                prepend_to_output((var_table*)compute_module_outputs, "fuelcell_annual_energy_discharged", arr_length, yr_0_value);
+
 
                 ssc_data_set_table(outputs, compute_module.c_str(), compute_module_outputs);
                 ssc_module_free(module);
                 ssc_data_free(compute_module_outputs);
-
             }
-
+ 
             if (batteries.size() > 0) { // run single battery (refator running code below)
 
                 percent = 100.0f * ((float)(generators.size() + fuelcells.size() + batteries.size()) / (float)(generators.size() + fuelcells.size() + batteries.size() + financials.size()));
@@ -478,8 +494,8 @@ public:
                 escal_or_annual(input, pOMCapacity, analysisPeriod, "om_batt_capacity_cost", inflation_rate, batt_cap, false, input.as_double("om_capacity_escal") * 0.01);
 
                 // production O and M conversion to $
-                for (size_t i = 1; i <= (size_t)analysisPeriod; i++)
-                    pOMProduction[i] *= battery_discharged[i - 1];
+                for (size_t i = 0; i < (size_t)analysisPeriod; i++)
+                    pOMProduction[i+1] *= battery_discharged[i];
 
 
 
@@ -572,9 +588,9 @@ public:
 
                 var_table& input = compute_module_inputs->table;
 
-                if (use_batt_output)
-                    ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pBattGen, (int)battGenLen);
-                else
+ //               if (use_batt_output)
+ //                   ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pBattGen, (int)battGenLen);
+ //               else
                     ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);
 
                 if (batteries.size() > 0)

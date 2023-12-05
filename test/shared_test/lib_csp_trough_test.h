@@ -208,6 +208,14 @@ namespace csp_trough
         util::matrix_t<double> sf_hdr_diams;                      //[m] Imported header diameters, used if custom_sf_pipe_sizes is true
         util::matrix_t<double> sf_hdr_wallthicks;                 //[m] Imported header wall thicknesses, used if custom_sf_pipe_sizes is true
         util::matrix_t<double> sf_hdr_lengths;                    //[m] Imported header lengths, used if custom_sf_pipe_sizes is true
+
+        // TMB 11-28-2023 Added parameters for updated Trough
+        util::matrix_t<double> trough_loop_control;
+        bool use_solar_mult_or_aperture_area;
+        double specified_solar_mult;
+        double P_ref;
+        double eta_ref;
+        double non_solar_field_land_area_multiplier;
     };
 
     struct TroughState
