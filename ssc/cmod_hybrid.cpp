@@ -189,8 +189,6 @@ public:
                 escal_or_annual(input, pOMProduction, analysisPeriod, "om_production", inflation_rate, 0.001, false, input.as_double("om_production_escal") * 0.01); // $/kWh after conversion
                 escal_or_annual(input, pOMCapacity, analysisPeriod, "om_capacity", inflation_rate, system_capacity, false, input.as_double("om_capacity_escal") * 0.01); // $ after multiplying by system capacity
 
-                printf("om capacity: %d, %f, %f, %f \n", analysisPeriod, inflation_rate, system_capacity, input.as_double("om_capacity_escal") * 0.01);
-
                 // production - multiply by yearly gen (initially assume single year) - use degradation - specific to each generator
                 // pvwattsv8 - "degradation" applied in financial model - assuming single year analysis like standalone pvwatts/single owner configuration
                 // wind - "degradation" applied in financial model - assumes system availability already applied to "gen" output
