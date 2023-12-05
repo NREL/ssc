@@ -1335,7 +1335,10 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
          if (batt_vars->ec_rate_defined) {
             util_rate_data = new rate_data();
             rate_setup::setup(&vt, (int)step_per_year, batt_vars->analysis_period, *util_rate_data, "cmod_battery");
-        }
+         }
+         else if (batt_vars->batt_dispatch == dispatch_t::RETAIL_RATE) {
+             throw exec_error("Battery", "Cannot select retail rate dispatch without providing utility rate data.");
+         }
         dispatch_model = new dispatch_automatic_behind_the_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
             batt_vars->batt_current_choice, batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
             batt_vars->batt_power_charge_max_kwdc, batt_vars->batt_power_discharge_max_kwdc,
