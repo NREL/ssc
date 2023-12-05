@@ -43,6 +43,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_trough_collector_receiver.h"
 #include "csp_solver_pc_Rankine_indirect_224.h"
 #include "csp_solver_two_tank_tes.h"
+#include "csp_solver_NTHeatTrap_tes.h"
 #include "csp_solver_tou_block_schedules.h"
 #include "csp_dispatch.h"
 #include "csp_system_costs.h"
@@ -191,6 +192,8 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_MATRIX,      "ud_ind_od",                 "Off design user-defined power cycle performance as function of T_htf, m_dot_htf [ND], and T_amb",   "", "",          "powerblock",     "pc_config=1",             "",                      "" },
 
     // TES
+    { SSC_INPUT,        SSC_NUMBER,      "tes_type",                  "Standard two tank (0), HeatTrap Single Tank (1)",                                  "-",            "",               "TES",            "?=0",                     "",                      "" },
+
     { SSC_INPUT,        SSC_NUMBER,      "store_fluid",               "Material number for storage fluid",                                                "-",            "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "store_fl_props",            "User defined storage fluid property data",                                         "-",            "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tshours",                   "Equivalent full-load thermal storage hours",                                       "hr",           "",               "TES",            "*",                       "",                      "" },
@@ -665,6 +668,9 @@ public:
         bool is_dispatch = as_boolean("is_dispatch");
         int sim_type = as_integer("sim_type");
         int csp_financial_model = as_integer("csp_financial_model");
+
+        // temporary
+        int tes_type = 1;
 
         // *****************************************************
         // Check deprecated variables
@@ -1157,6 +1163,7 @@ public:
         // TES
         // ********************************
         // ********************************
+        C_csp_tes* storage_pointer;
         C_csp_two_tank_tes storage;
         {
 
@@ -1222,6 +1229,8 @@ public:
                 as_double("DP_SGS")
             );
 
+            storage_pointer = &storage;
+
             // Set storage outputs
             storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_Q_DOT_LOSS, allocate("tank_losses", n_steps_fixed), n_steps_fixed);
             storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HEATER, allocate("q_tes_heater", n_steps_fixed), n_steps_fixed);
@@ -1231,6 +1240,8 @@ public:
             storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_COLD_TANK, allocate("mass_tes_cold", n_steps_fixed), n_steps_fixed);
             storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_HOT_TANK, allocate("mass_tes_hot", n_steps_fixed), n_steps_fixed);
             storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HTF_PUMP, allocate("tes_htf_pump_power", n_steps_fixed), n_steps_fixed);
+
+            
         }
         
 
@@ -1459,7 +1470,7 @@ public:
         C_csp_solver csp_solver(weather_reader, 
                                 c_trough,
                                 *p_csp_power_cycle,
-                                storage, 
+                                *storage_pointer,
                                 tou,
                                 dispatch,
                                 system,
@@ -1661,27 +1672,27 @@ public:
                     d_tank_calc /*m*/, q_dot_loss_tes_des_calc /*MWt*/, dens_store_htf_at_T_ave_calc /*kg/m3*/,
                     Q_tes_des_calc /*MWt-hr*/;
 
-                storage.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
-                    d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
+                //storage.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
+                //    d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
 
-                double vol_min = V_tes_htf_total_calc * (storage.m_h_tank_min / storage.m_h_tank);
-                double V_tank_hot_ini = (as_double("h_tank_min") / as_double("h_tank")) * V_tes_htf_total_calc; // m3
-                double T_avg = (as_double("T_loop_in_des") + as_double("T_loop_out")) / 2.0;    // C
-                double tes_htf_min_temp = storage.get_min_storage_htf_temp() - 273.15;
-                double tes_htf_max_temp = storage.get_max_storage_htf_temp() - 273.15;
+                //double vol_min = V_tes_htf_total_calc * (storage.m_h_tank_min / storage.m_h_tank);
+                //double V_tank_hot_ini = (as_double("h_tank_min") / as_double("h_tank")) * V_tes_htf_total_calc; // m3
+                //double T_avg = (as_double("T_loop_in_des") + as_double("T_loop_out")) / 2.0;    // C
+                //double tes_htf_min_temp = storage.get_min_storage_htf_temp() - 273.15;
+                //double tes_htf_max_temp = storage.get_max_storage_htf_temp() - 273.15;
 
-                assign("q_tes", Q_tes_des_calc); // MWt-hr
-                assign("tes_avail_vol", V_tes_htf_avail_calc); // m3
-                assign("vol_tank", V_tes_htf_total_calc);   // m3
-                assign("csp_pt_tes_tank_diameter", d_tank_calc);    // m
-                assign("q_dot_tes_est", q_dot_loss_tes_des_calc);   // MWt
-                assign("csp_pt_tes_htf_density", dens_store_htf_at_T_ave_calc); // kg/m3
-                assign("is_hx", storage.get_is_hx());
-                assign("vol_min", vol_min); // m3
-                assign("V_tank_hot_ini", V_tank_hot_ini);   // m3
-                assign("tes_htf_avg_temp", T_avg);  // C
-                assign("tes_htf_min_temp", tes_htf_min_temp);
-                assign("tes_htf_max_temp", tes_htf_max_temp);
+                //assign("q_tes", Q_tes_des_calc); // MWt-hr
+                //assign("tes_avail_vol", V_tes_htf_avail_calc); // m3
+                //assign("vol_tank", V_tes_htf_total_calc);   // m3
+                //assign("csp_pt_tes_tank_diameter", d_tank_calc);    // m
+                //assign("q_dot_tes_est", q_dot_loss_tes_des_calc);   // MWt
+                //assign("csp_pt_tes_htf_density", dens_store_htf_at_T_ave_calc); // kg/m3
+                //assign("is_hx", storage.get_is_hx());
+                //assign("vol_min", vol_min); // m3
+                //assign("V_tank_hot_ini", V_tank_hot_ini);   // m3
+                //assign("tes_htf_avg_temp", T_avg);  // C
+                //assign("tes_htf_min_temp", tes_htf_min_temp);
+                //assign("tes_htf_max_temp", tes_htf_max_temp);
             }
 
             // Collector
@@ -2037,10 +2048,10 @@ public:
         }
         ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
         // Non-timeseries array outputs
-        double P_adj = storage.P_in_des; // slightly adjust all field design pressures to account for pressure drop in TES before hot tank
-        transform(c_trough.m_P_rnr_dsn.begin(), c_trough.m_P_rnr_dsn.end(), c_trough.m_P_rnr_dsn.begin(), [P_adj](double x) {return x + P_adj; });
-        transform(c_trough.m_P_hdr_dsn.begin(), c_trough.m_P_hdr_dsn.end(), c_trough.m_P_hdr_dsn.begin(), [P_adj](double x) {return x + P_adj; });
-        transform(c_trough.m_P_loop_dsn.begin(), c_trough.m_P_loop_dsn.end(), c_trough.m_P_loop_dsn.begin(), [P_adj](double x) {return x + P_adj; });
+        //double P_adj = storage.P_in_des; // slightly adjust all field design pressures to account for pressure drop in TES before hot tank
+        //transform(c_trough.m_P_rnr_dsn.begin(), c_trough.m_P_rnr_dsn.end(), c_trough.m_P_rnr_dsn.begin(), [P_adj](double x) {return x + P_adj; });
+        //transform(c_trough.m_P_hdr_dsn.begin(), c_trough.m_P_hdr_dsn.end(), c_trough.m_P_hdr_dsn.begin(), [P_adj](double x) {return x + P_adj; });
+        //transform(c_trough.m_P_loop_dsn.begin(), c_trough.m_P_loop_dsn.end(), c_trough.m_P_loop_dsn.begin(), [P_adj](double x) {return x + P_adj; });
 
         ssc_number_t *p_pipe_runner_diams = allocate("pipe_runner_diams", c_trough.m_D_runner.size());
         std::copy(c_trough.m_D_runner.begin(), c_trough.m_D_runner.end(), p_pipe_runner_diams);
@@ -2081,20 +2092,20 @@ public:
         ssc_number_t *p_pipe_loop_P_dsn = allocate("pipe_loop_P_dsn", c_trough.m_P_loop_dsn.size());
         std::copy(c_trough.m_P_loop_dsn.begin(), c_trough.m_P_loop_dsn.end(), p_pipe_loop_P_dsn);
 
-        ssc_number_t *p_pipe_tes_diams = allocate("pipe_tes_diams", storage.pipe_diams.ncells());
-        std::copy(storage.pipe_diams.data(), storage.pipe_diams.data() + storage.pipe_diams.ncells(), p_pipe_tes_diams);
-        ssc_number_t *p_pipe_tes_wallthk = allocate("pipe_tes_wallthk", storage.pipe_wall_thk.ncells());
-        std::copy(storage.pipe_wall_thk.data(), storage.pipe_wall_thk.data() + storage.pipe_wall_thk.ncells(), p_pipe_tes_wallthk);
-        ssc_number_t* p_pipe_tes_lengths = allocate("pipe_tes_lengths", storage.pipe_lengths.ncells());
-        std::copy(storage.pipe_lengths.data(), storage.pipe_lengths.data() + storage.pipe_lengths.ncells(), p_pipe_tes_lengths);
-        ssc_number_t *p_pipe_tes_mdot_dsn = allocate("pipe_tes_mdot_dsn", storage.pipe_m_dot_des.ncells());
-        std::copy(storage.pipe_m_dot_des.data(), storage.pipe_m_dot_des.data() + storage.pipe_m_dot_des.ncells(), p_pipe_tes_mdot_dsn);
-        ssc_number_t *p_pipe_tes_vel_dsn = allocate("pipe_tes_vel_dsn", storage.pipe_vel_des.ncells());
-        std::copy(storage.pipe_vel_des.data(), storage.pipe_vel_des.data() + storage.pipe_vel_des.ncells(), p_pipe_tes_vel_dsn);
-        ssc_number_t *p_pipe_tes_T_dsn = allocate("pipe_tes_T_dsn", storage.pipe_T_des.ncells());
-        std::copy(storage.pipe_T_des.data(), storage.pipe_T_des.data() + storage.pipe_T_des.ncells(), p_pipe_tes_T_dsn);
-        ssc_number_t *p_pipe_tes_P_dsn = allocate("pipe_tes_P_dsn", storage.pipe_P_des.ncells());
-        std::copy(storage.pipe_P_des.data(), storage.pipe_P_des.data() + storage.pipe_P_des.ncells(), p_pipe_tes_P_dsn);
+        //ssc_number_t *p_pipe_tes_diams = allocate("pipe_tes_diams", storage.pipe_diams.ncells());
+        //std::copy(storage.pipe_diams.data(), storage.pipe_diams.data() + storage.pipe_diams.ncells(), p_pipe_tes_diams);
+        //ssc_number_t *p_pipe_tes_wallthk = allocate("pipe_tes_wallthk", storage.pipe_wall_thk.ncells());
+        //std::copy(storage.pipe_wall_thk.data(), storage.pipe_wall_thk.data() + storage.pipe_wall_thk.ncells(), p_pipe_tes_wallthk);
+        //ssc_number_t* p_pipe_tes_lengths = allocate("pipe_tes_lengths", storage.pipe_lengths.ncells());
+        //std::copy(storage.pipe_lengths.data(), storage.pipe_lengths.data() + storage.pipe_lengths.ncells(), p_pipe_tes_lengths);
+        //ssc_number_t *p_pipe_tes_mdot_dsn = allocate("pipe_tes_mdot_dsn", storage.pipe_m_dot_des.ncells());
+        //std::copy(storage.pipe_m_dot_des.data(), storage.pipe_m_dot_des.data() + storage.pipe_m_dot_des.ncells(), p_pipe_tes_mdot_dsn);
+        //ssc_number_t *p_pipe_tes_vel_dsn = allocate("pipe_tes_vel_dsn", storage.pipe_vel_des.ncells());
+        //std::copy(storage.pipe_vel_des.data(), storage.pipe_vel_des.data() + storage.pipe_vel_des.ncells(), p_pipe_tes_vel_dsn);
+        //ssc_number_t *p_pipe_tes_T_dsn = allocate("pipe_tes_T_dsn", storage.pipe_T_des.ncells());
+        //std::copy(storage.pipe_T_des.data(), storage.pipe_T_des.data() + storage.pipe_T_des.ncells(), p_pipe_tes_T_dsn);
+        //ssc_number_t *p_pipe_tes_P_dsn = allocate("pipe_tes_P_dsn", storage.pipe_P_des.ncells());
+        //std::copy(storage.pipe_P_des.data(), storage.pipe_P_des.data() + storage.pipe_P_des.ncells(), p_pipe_tes_P_dsn);
 
 
         // Monthly outputs
