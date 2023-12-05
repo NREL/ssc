@@ -103,6 +103,7 @@ var_info vtab_fuelcell_output[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_to_load",                   "Electricity to load from fuel cell",    "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_to_grid",                   "Electricity to grid from fuel cell",    "kW",        "",                 "Fuel Cell",                  "",                        "",                              "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_annual_energy_discharged",  "Fuel cell annual energy discharged",    "kWh",        "",                 "Fuel Cell",                  "",                        "",                              "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_monthly_energy_discharged", "Fuel cell monthly energy discharged Year 1","kWh",   "",                 "Fuel Cell",                  "",                        "",                              "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "annual_energy_discharged",           "Annual energy discharged",                          "kWh",          "",      "Fuel Cell",           "*",               "",                    "" },
 
 	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_replacement",                "Fuel cell replacements per year",      "number/year", "",              "Fuel Cell",           "",                           "",                              "" },
@@ -168,8 +169,7 @@ void cm_fuelcell::exec()
  	for (size_t y = 0; y < fcVars->numberOfYears; y++) {
 
 		size_t idx_year = 0;
-		size_t annual_index;
-		fcVars->numberOfYears > 1 ? annual_index = y + 1 : annual_index = 0;
+		size_t annual_index = y;
         annual_energy_fc = 0;
 
 		for (size_t h = 0; h < 8760; h++){
@@ -241,6 +241,10 @@ void cm_fuelcell::exec()
 	// Ratio of MMBtu to MWh to get cash flow calculation correct (fuel costs in $/MMBtu)
 	assign("system_heat_rate", var_data((ssc_number_t)BTU_PER_KWH / 1000));
 	assign("annual_fuel_usage", var_data((ssc_number_t)annual_fuel));
+
+    //monthly outputs
+    accumulate_monthly_for_year("fuelcell_power", "fuelcell_monthly_energy_discharged", fcVars->dt_hour, fcVars->stepsPerHour);
+
 }
 
 void cm_fuelcell::allocateOutputs()
@@ -256,17 +260,14 @@ void cm_fuelcell::allocateOutputs()
 	    p_fuelCellToLoad_kW = allocate("fuelcell_to_load", fcVars->numberOfLifetimeRecords);
 
 	// annual outputs
-	size_t annual_size = fcVars->numberOfYears + 1; // Fuel cell startup consumption in year 0
+    size_t annual_size = fcVars->numberOfYears;
 
 	p_fuelCellReplacements = allocate("fuelcell_replacement", annual_size);
 	p_fuelCellConsumption_MCf_annual = allocate("annual_fuel_usage_lifetime", annual_size);
-	p_fuelCellReplacements[0] = 0;
-	p_fuelCellConsumption_MCf_annual[0] = 0;
 
 	p_gen_kW = allocate("gen", fcVars->numberOfLifetimeRecords);
     p_fuelCellAnnualEnergy = allocate("fuelcell_annual_energy_discharged", annual_size);
-    p_fuelCellAnnualEnergy[0] = 0;
-
+    
 }
 
 cm_fuelcell::~cm_fuelcell(){/* nothing to do */ }

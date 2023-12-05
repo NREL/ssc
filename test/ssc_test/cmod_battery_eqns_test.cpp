@@ -80,11 +80,10 @@ TEST_F(CMBatteryEqns_cmod_battery_eqns, reopt_sizing) {
     ASSERT_TRUE(vd->is_assigned("reopt_scenario"));
     auto site = vd->lookup("reopt_scenario");
 
-    site = site->table.lookup("Scenario");
-    assert(site->table.lookup("time_steps_per_hour")->num == 1);
+    auto settings = site->table.lookup("Settings");
+    assert(settings->table.lookup("time_steps_per_hour")->num == 1);
 
-    site = site->table.lookup("Site");
-    std::vector<std::string> sections = { "ElectricTariff", "LoadProfile", "Financial", "Storage", "Wind"};
+    std::vector<std::string> sections = { "ElectricTariff", "ElectricLoad", "Financial", "ElectricStorage"};
     for (const auto& s : sections)
         ASSERT_TRUE(site->table.is_assigned(s));
 }

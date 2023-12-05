@@ -107,6 +107,7 @@ set(SSC_SRC
 		cmod_timeseq.cpp
 		cmod_trough_physical.cpp
 		cmod_trough_physical_iph.cpp
+        	cmod_trough_physical_iph_old.cpp
 		cmod_ui_tes_calcs.cpp
 		cmod_ui_udpc_checks.cpp
 		cmod_user_htf_comparison.cpp

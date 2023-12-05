@@ -75,20 +75,22 @@ static var_info _cm_tidal_file_reader[] = {
     { SSC_INPUT,         SSC_NUMBER,      "use_specific_wf_tidal",               "user specified file",                     "0/1",       "",                      "Weather Reader",      "?=0",                       "INTEGER,MIN=0,MAX=1",      "" },
 	
 // header data
-	{ SSC_OUTPUT,        SSC_STRING,      "name",                    "Name",                                        "",       "",                      "Weather Reader",      "tidal_resource_model_choice=0",                        "",               "" },
-	{ SSC_OUTPUT,        SSC_STRING,      "city",                    "City",                                        "",       "",                      "Weather Reader",      "tidal_resource_model_choice=0",                        "",               "" },
-	{ SSC_OUTPUT,        SSC_STRING,      "state",                   "State",                                       "",       "",                      "Weather Reader",      "tidal_resource_model_choice=0",                        "",               "" },
-	{ SSC_OUTPUT,        SSC_STRING,      "country",                 "Country",                                     "",       "",                      "Weather Reader",      "tidal_resource_model_choice=0",                        "",               "" },
+	{ SSC_OUTPUT,        SSC_STRING,      "name",                    "Name",                                        "",       "",                      "Weather Reader",      "",                        "",               "" },
+	{ SSC_OUTPUT,        SSC_STRING,      "city",                    "City",                                        "",       "",                      "Weather Reader",      "",                        "",               "" },
+	{ SSC_OUTPUT,        SSC_STRING,      "state",                   "State",                                       "",       "",                      "Weather Reader",      "",                        "",               "" },
+	{ SSC_OUTPUT,        SSC_STRING,      "country",                 "Country",                                     "",       "",                      "Weather Reader",      "",                        "",               "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "lat",                     "Latitude",                                    "deg",    "",                      "Weather Reader",      "",                        "",               "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "lon",                     "Longitude",                                   "deg",    "",                      "Weather Reader",      "",                        "",               "" },
-	{ SSC_OUTPUT,        SSC_STRING,      "nearby_buoy_number",      "Nearby buoy number",                          "",       "",                      "Weather Reader",      "tidal_resource_model_choice=0",                        "",               "" },
-	{ SSC_OUTPUT,        SSC_NUMBER,      "average_power_flux",      "Average power flux",                           "kW/m",   "",                      "Weather Reader",      "tidal_resource_model_choice=0",                        "",               "" },
-	{ SSC_OUTPUT,        SSC_STRING,      "bathymetry",              "Bathymetry",                                  "",       "",                      "Weather Reader",      "tidal_resource_model_choice=0",                        "",               "" },
-	{ SSC_OUTPUT,        SSC_STRING,      "sea_bed",                 "Sea bed",                                     "",       "",                      "Weather Reader",      "tidal_resource_model_choice=0",                        "",               "" },
+	{ SSC_OUTPUT,        SSC_STRING,      "nearby_buoy_number",      "Nearby buoy number",                          "",       "",                      "Weather Reader",      "",                        "",               "" },
+	{ SSC_OUTPUT,        SSC_NUMBER,      "average_power_flux",      "Average power flux",                           "kW/m",   "",                      "Weather Reader",      "",                        "",               "" },
+	{ SSC_OUTPUT,        SSC_STRING,      "bathymetry",              "Bathymetry",                                  "",       "",                      "Weather Reader",      "",                        "",               "" },
+	{ SSC_OUTPUT,        SSC_STRING,      "sea_bed",                 "Sea bed",                                     "",       "",                      "Weather Reader",      "",                        "",               "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,      "tz",                      "Time zone",                                   "",       "",                      "Weather Reader",      "",                        "",               "" },
 	{ SSC_OUTPUT,        SSC_STRING,      "data_source",             "Data source",                                 "",       "",                      "Weather Reader",      "",                        "",               "" },
 	{ SSC_OUTPUT,        SSC_STRING,      "notes",                   "Notes",                                       "",       "",                      "Weather Reader",      "",                        "",               "" },
     { SSC_OUTPUT,        SSC_STRING,      "location_id",             "Location ID",               "",       "",                      "Weather Reader",     "tidal_resource_model_choice=1",                        "",               "" },
+    { SSC_OUTPUT,        SSC_STRING,      "location",             "Location",               "",       "",                      "Weather Reader",     "tidal_resource_model_choice=1",                        "",               "" },
+
     { SSC_OUTPUT,        SSC_NUMBER,      "distance_to_shore_file",       "Distance to shore",               "m",       "",                      "Weather Reader",     "tidal_resource_model_choice=1",                        "",               "" },
     { SSC_OUTPUT,        SSC_NUMBER,      "water_depth_file",             "Water depth",               "m",       "",                      "Weather Reader",     "tidal_resource_model_choice=1",                        "",               "" },
 
@@ -124,6 +126,8 @@ public:
     void exec()
     {
       
+        if (as_integer("tidal_resource_model_choice") == 0) return;
+
         std::string file;
         if (is_assigned("tidal_resource_filename") && as_integer("tidal_resource_model_choice")==1)
         {
@@ -205,6 +209,7 @@ public:
             }
             else {
                 assign("location_id", var_data(values[1]));
+                assign("location", var_data(values[2]));
                 assign("distance_to_shore_file", var_data(std::stod(values[7])));
                 assign("water_depth_file", var_data(std::stod(values[18])));
                 assign("lat", var_data(std::stod(values[3])));
