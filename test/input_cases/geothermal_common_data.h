@@ -94,7 +94,7 @@ static void geothermal_singleowner_default(ssc_data_t &data)
 	ssc_data_set_number(data, "rock_specific_heat", 950);
 	ssc_data_set_number(data, "rock_density", 2600);
 	ssc_data_set_number(data, "reservoir_pressure_change_type", 0);
-	ssc_data_set_number(data, "reservoir_pressure_change", 0.40000000596046448);
+	ssc_data_set_number(data, "reservoir_pressure_change", 1000.0 / 0.40000000596046448);
     ssc_data_set_number(data, "injectivity_index", 3000);
     ssc_data_set_number(data, "exploration_wells_production", 0);
     ssc_data_set_number(data, "drilling_success_rate", 75);

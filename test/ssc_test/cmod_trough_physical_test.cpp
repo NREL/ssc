@@ -68,6 +68,10 @@ NAMESPACE_TEST(csp_trough, PowerTroughCmod, Default_NoFinancial)
         EXPECT_NEAR_FRAC(power_trough.GetOutputSum("is_rec_su_allowed"), 8760, kErrorToleranceHi);
         //EXPECT_NEAR_FRAC(power_trough.GetOutputSum("operating_modes_a"), 35458021, kErrorToleranceHi);
     }
+    else
+    {
+        int x = 0;
+    }
 
     //ssc_data_t defaults = singleowner_defaults();
     //CmodUnderTest singleowner = CmodUnderTest("singleowner", defaults);

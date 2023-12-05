@@ -257,6 +257,10 @@ C_csp_trough_collector_receiver::~C_csp_trough_collector_receiver()
 void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp_cr_init_inputs init_inputs, 
 				C_csp_collector_receiver::S_csp_cr_solved_params & solved_params)
 {
+
+    // If solar multiple is not yet calculated
+    if (m_is_solar_mult_designed == false)
+        this->design_solar_mult();
 	
 	// double some_calc = m_nSCA + m_nHCEt;
 	/*
@@ -278,37 +282,6 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 	m_shift *= m_d2r;			//[rad] convert from [deg]
 
     m_P_field_in = 17 / 1.e-5;                //Assumed inlet htf pressure for property lookups (DP_tot_max = 16 bar + 1 atm) [Pa]
-
-	// Set trough HTF properties
-	if (m_Fluid != HTFProperties::User_defined)
-	{
-		if (!m_htfProps.SetFluid(m_Fluid))
-		{
-			throw(C_csp_exception("Field HTF code is not recognized", "Trough Collector Solver"));
-		}
-	}
-	else if (m_Fluid == HTFProperties::User_defined)
-	{
-		int n_rows = (int)m_field_fl_props.nrows();
-		int n_cols = (int)m_field_fl_props.ncols();
-		if (n_rows > 2 && n_cols == 7)
-		{
-			if (!m_htfProps.SetUserDefinedFluid(m_field_fl_props))
-			{
-				m_error_msg = util::format(m_htfProps.UserFluidErrMessage(), n_rows, n_cols);
-				throw(C_csp_exception(m_error_msg, "Trough Collector Solver"));
-			}
-		}
-		else
-		{
-			m_error_msg = util::format("The user defined field HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", n_rows, n_cols);
-			throw(C_csp_exception(m_error_msg, "Trough Collector Solver"));
-		}
-	}
-	else
-	{
-		throw(C_csp_exception("Receiver HTF code is not recognized", "Trough Collector Solver"));
-	}
 
 	// Adjust parameters
 	m_ColTilt = m_ColTilt*m_d2r;	//[rad] Collector tilt angle (0 is horizontal, 90deg is vertical), convert from [deg]
@@ -642,6 +615,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 
 		m_m_dot_loop_des = m_m_dot_design/(double)m_nLoops;	//[kg/s]
 		//mjw 1.16.2011 Design field thermal power 
+		//m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
 		m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
 		//mjw 1.16.2011 Convert the thermal inertia terms here
 		m_mc_bal_hot = m_mc_bal_hot_per_MW * 3.6 * m_q_design;    //[J/K]
@@ -829,6 +803,12 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 	{
 		m_T_htf_out_t_end_converged[i] = m_T_htf_out_t_end_last[i] = T_field_ini;	//[K]
 	}
+
+    // Calculate Design Point Outputs
+    double T_avg = 0.5 * (m_T_loop_in_des + m_T_loop_out_des);
+    m_field_htf_cp_avg_des = m_htfProps.Cp(T_avg + 273.15);         //[kJ/kg-K]
+
+
 	// *********************************************
 
 	if (m_accept_init)
@@ -891,6 +871,9 @@ double C_csp_trough_collector_receiver::get_max_power_delivery(double T_cold_in 
 
 double C_csp_trough_collector_receiver::get_tracking_power()
 {
+    if (m_is_solar_mult_designed == false)
+        return std::numeric_limits<double>::quiet_NaN();
+
     return m_SCA_drives_elec * 1.e-6 * m_nSCA * m_nLoops;     //MWe
 }
 
@@ -4211,6 +4194,440 @@ double C_csp_trough_collector_receiver::get_collector_area()
 
 // ------------------------------------------ supplemental methods -----------------------------------------------------------
 
+bool C_csp_trough_collector_receiver::design_solar_mult()
+{
+    if (m_is_solar_mult_designed == true)
+        return false;
+
+    // Calculate nLoops, depending on designing for solar mult or total field aperture.
+
+    // Set trough HTF properties
+    if (m_Fluid != HTFProperties::User_defined)
+    {
+        if (!m_htfProps.SetFluid(m_Fluid))
+        {
+            throw(C_csp_exception("Field HTF code is not recognized", "Trough Collector Solver"));
+        }
+    }
+    else if (m_Fluid == HTFProperties::User_defined)
+    {
+        int n_rows = (int)m_field_fl_props.nrows();
+        int n_cols = (int)m_field_fl_props.ncols();
+        if (n_rows > 2 && n_cols == 7)
+        {
+            if (!m_htfProps.SetUserDefinedFluid(m_field_fl_props))
+            {
+                m_error_msg = util::format(m_htfProps.UserFluidErrMessage(), n_rows, n_cols);
+                throw(C_csp_exception(m_error_msg, "Trough Collector Solver"));
+            }
+        }
+        else
+        {
+            m_error_msg = util::format("The user defined field HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", n_rows, n_cols);
+            throw(C_csp_exception(m_error_msg, "Trough Collector Solver"));
+        }
+    }
+    else
+    {
+        throw(C_csp_exception("Receiver HTF code is not recognized", "Trough Collector Solver"));
+    }
+
+    // Single Loop Aperture
+    m_single_loop_aperture = 0;
+    {
+        int nsca = static_cast<int>(m_trough_loop_control.at(0));
+
+        int sca_t = -1;
+        for (int i = 0; i < nsca; i++)
+        {
+            sca_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
+            m_single_loop_aperture += + m_A_aperture[sca_t];
+        }
+    }
+
+    // Min_inner_diameter
+    m_min_inner_diameter = 0;
+    {
+        m_min_inner_diameter = m_D_2[0];
+        int hce_t = -1;
+        for (int i = 0; i < static_cast<int>(m_trough_loop_control.at(0)); i++)
+        {
+            hce_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(i * 3 + 2)), 1), 4) - 1;
+            if (m_D_2[hce_t] < m_min_inner_diameter) {
+                m_min_inner_diameter = m_D_2[hce_t];
+            }
+        }
+    }
+
+    // HCE design heat loss
+    m_HCE_heat_loss_des = std::vector<double>();
+    {
+        size_t n = m_HCE_FieldFrac.nrows();
+
+        for (size_t i = 0; i < n; i++) {
+            m_HCE_heat_loss_des.push_back(m_HCE_FieldFrac.at(i, 0) * m_Design_loss.at(i, 0)
+                + m_HCE_FieldFrac.at(i, 1) * m_Design_loss.at(i, 1)
+                + m_HCE_FieldFrac.at(i, 2) * m_Design_loss.at(i, 2)
+                + m_HCE_FieldFrac.at(i, 3) * m_Design_loss.at(i, 3));
+        }
+    }
+
+    // HCE *loop* design heat loss
+    m_HCE_heat_loss_loop_des = 0;
+    {
+        int ncol = static_cast<int>(m_trough_loop_control.at(0));
+        double total_len = 0.;
+
+        for (int i = 0; i < ncol; i++)
+        {
+            int sca_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
+            int hce_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(2 + i * 3)), 1), 4) - 1;
+            total_len = total_len + m_L_SCA[sca_t];
+            m_HCE_heat_loss_loop_des = m_HCE_heat_loss_loop_des + m_L_SCA[sca_t]
+                * (1 - (m_HCE_heat_loss_des[hce_t] / (m_I_bn_des * m_A_aperture[sca_t] / m_L_SCA[sca_t])));
+        }
+
+        if (total_len != 0.0) {
+            m_HCE_heat_loss_loop_des = m_HCE_heat_loss_loop_des / total_len;
+        }
+        else {
+            m_HCE_heat_loss_loop_des = -777.7;
+        }
+    }
+
+    // SCA Design Optical Efficiency 
+    m_csp_dtr_sca_calc_sca_effs = std::vector<double>(m_TrackingError.size());
+    {
+        size_t n = m_TrackingError.size();
+        
+        for (size_t i = 0; i < n; i++) {
+            m_csp_dtr_sca_calc_sca_effs.at(i) = m_TrackingError.at(i) * m_GeomEffects.at(i) *
+                m_Rho_mirror_clean.at(i) * m_Dirt_mirror.at(i) * m_Error.at(i);
+        }
+    }
+
+    // HCE Design Optical Efficiency
+    m_csp_dtr_hce_optical_effs = std::vector<double>(m_HCE_FieldFrac.nrows(),
+                                                     std::numeric_limits<double>::quiet_NaN());
+    {
+        size_t n = m_HCE_FieldFrac.nrows();
+
+        for (size_t i = 0; i < n; i++) {
+            m_csp_dtr_hce_optical_effs.at(i) =
+                m_HCE_FieldFrac.at(i, 0)
+                * m_Shadowing.at(i, 0)
+                * m_Dirt_HCE.at(i, 0)
+                * m_alpha_abs.at(i, 0)
+                * m_Tau_envelope.at(i, 0)
+                + m_HCE_FieldFrac.at(i, 1)
+                * m_Shadowing.at(i, 1)
+                * m_Dirt_HCE.at(i, 1)
+                * m_alpha_abs.at(i, 1)
+                * m_Tau_envelope.at(i, 1)
+                + m_HCE_FieldFrac.at(i, 2)
+                * m_Shadowing.at(i, 2)
+                * m_Dirt_HCE.at(i, 2)
+                * m_alpha_abs.at(i, 2)
+                * m_Tau_envelope.at(i, 2)
+                + m_HCE_FieldFrac.at(i, 3)
+                * m_Shadowing.at(i, 3)
+                * m_Dirt_HCE.at(i, 3)
+                * m_alpha_abs.at(i, 3)
+                * m_Tau_envelope.at(i, 3);
+        }
+    }
+
+    // Loop Optical Efficiency
+    m_loop_optical_efficiency_des = 0;
+    {
+        int ncol = static_cast<int>(m_trough_loop_control.at(0));
+
+        if (m_trough_loop_control.ncells() != (size_t)ncol * 3 + 1) {
+            return -888.8;
+        }
+
+        double total_len = 0.;
+        double weighted_sca_eff = 0.0;
+        for (int i = 0; i < ncol; i++)
+        {
+            int sca_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
+            total_len = total_len + m_L_SCA[sca_t];
+            weighted_sca_eff = weighted_sca_eff + m_L_SCA[sca_t] * m_csp_dtr_sca_calc_sca_effs[sca_t];
+        }
+
+        if (total_len != 0.0) {
+            weighted_sca_eff = weighted_sca_eff / total_len;
+        }
+        else {
+            weighted_sca_eff = -777.7;
+        }
+
+        total_len = 0;
+        double weighted_hce_eff = 0.0;
+        for (int i = 0; i < ncol; i++)
+        {
+            int hce_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(2 + i * 3)), 1), 4) - 1;
+            int sca_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
+            total_len = total_len + m_L_SCA[sca_t];
+            weighted_hce_eff = weighted_hce_eff + m_L_SCA[sca_t] * m_csp_dtr_hce_optical_effs[hce_t];
+        }
+
+        if (total_len != 0.0) {
+            weighted_hce_eff = weighted_hce_eff / total_len;
+        }
+        else {
+            weighted_hce_eff = -777.7;
+        }
+
+        m_loop_optical_efficiency_des = weighted_hce_eff * weighted_sca_eff;
+    }
+
+    // SCAInfoArray
+    m_SCAInfoArray = util::matrix_t<double>(static_cast<int>(m_trough_loop_control.at(0)), 2);
+    {
+        int assemblies = static_cast<int>(m_trough_loop_control.at(0));
+        
+        for (int i = 0; i < assemblies; i++) {
+            m_SCAInfoArray.at(i, 1) = static_cast<int>(m_trough_loop_control.at(1 + 3 * i));
+            m_SCAInfoArray.at(i, 0) = static_cast<int>(m_trough_loop_control.at(2 + 3 * i));
+        }
+    }
+
+    // SCADefocusArray
+    m_SCADefocusArray = vector<int>();
+    {
+        int assemblies = static_cast<int>(m_trough_loop_control.at(0));
+        m_SCADefocusArray.resize(assemblies);
+        for (int i = 0; i < assemblies; i++) {
+            m_SCADefocusArray[i] = static_cast<int>(m_trough_loop_control.at(3 + 3 * i));
+        }
+    }
+
+    // Max Field Flow Velocity
+    m_max_field_flow_velocity = 0;
+    {
+        double density = m_htfProps.dens(m_T_loop_out_des + 273.15, std::numeric_limits<double>::quiet_NaN());
+
+        m_max_field_flow_velocity = m_m_dot_htfmax * 4 / (density * M_PI * m_min_inner_diameter * m_min_inner_diameter);
+    }
+
+    // Min Field Flow Velocity
+    m_min_field_flow_velocity = 0;
+    {
+        double density = m_htfProps.dens(m_T_loop_in_des + 273.15, std::numeric_limits<double>::quiet_NaN());
+
+        m_min_field_flow_velocity = m_m_dot_htfmin * 4 / (density * M_PI * m_min_inner_diameter * m_min_inner_diameter);
+    }
+
+    // Total Loop Conversion Efficiency
+    m_total_loop_conversion_efficiency_des = 0;
+    {
+        m_total_loop_conversion_efficiency_des = m_loop_optical_efficiency_des * m_HCE_heat_loss_loop_des;
+    }
+
+    // Design Power cycle thermal input
+    m_q_pb_design = 0;
+    {
+        m_q_pb_design = m_P_ref / m_eta_ref;
+    }
+
+    // Total Required Aperture for SM1
+    m_total_required_aperture_for_SM1 = 0;
+    {
+        m_total_required_aperture_for_SM1 = m_q_pb_design / (m_I_bn_des * m_total_loop_conversion_efficiency_des);
+    }
+
+    // Required number of loops for SM1
+    m_required_number_of_loops_for_SM1 = 0;
+    {
+        m_required_number_of_loops_for_SM1 = std::ceil(m_total_required_aperture_for_SM1 / m_single_loop_aperture);
+    }
+
+    // nLoops, Total Aperture, and solar mult
+    m_nLoops = 0;
+    m_Ap_tot = 0;
+    m_solar_mult = 0;
+    {
+        // Use solar mult
+        if (m_use_solar_mult_or_aperture_area == 0)
+        {
+            m_Ap_tot = m_specified_solar_mult * m_total_required_aperture_for_SM1;
+            m_solar_mult = m_specified_solar_mult;
+            m_nLoops = std::ceil(m_Ap_tot / m_single_loop_aperture);
+
+            // Get Actual total aperture
+            m_Ap_tot = m_nLoops * m_single_loop_aperture;
+            m_solar_mult = m_Ap_tot / m_total_required_aperture_for_SM1;
+        }
+        // Use total aperture
+        else if (m_use_solar_mult_or_aperture_area == 1)
+        {
+            m_Ap_tot = m_specified_total_aperture;
+            m_nLoops = std::ceil(m_Ap_tot / m_single_loop_aperture);
+
+            // Get Actual total aperture
+            m_Ap_tot = m_nLoops * m_single_loop_aperture;
+            m_solar_mult = m_Ap_tot / m_total_required_aperture_for_SM1;
+        }
+        else
+        {
+            throw std::runtime_error("Physical Trough. Number of loops calculation failed, invalid option.");
+        }
+
+        // Verify solar mult and total aperture values
+        if (m_solar_mult <= 0.0 || m_Ap_tot <= 0.0)
+        {
+            m_is_solar_mult_designed = false;
+            return false;
+        }
+
+    }
+
+    // Calculate Field Thermal Output
+    {
+        //m_q_design = m_I_bn_des * m_Ap_tot * m_total_loop_conversion_efficiency_des; OLD UI calculations
+        //m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); Already Calculated in init_fieldgeom
+    }
+
+    // Interconnect component minor loss coefficients
+    m_K_cpnt = util::matrix_t<double>(m_nSCA + 3, 11, std::numeric_limits<double>::quiet_NaN());
+    {
+        std::vector<double> K_cpnt_0 = { 0.9, 0, 0.19, 0, 0.9, -1, -1, -1, -1, -1, -1 };
+        std::vector<double> K_cpnt_1 = { 0, 0.6, 0.05, 0, 0.6, 0, 0.6, 0, 0.42, 0, 0.15 };
+        std::vector<double> K_cpnt_i = { 0.05, 0, 0.42, 0, 0.6, 0, 0.6, 0, 0.42, 0, 0.15 };
+        std::vector<double> K_cpnt_x_2 = { 0.05, 0, 0.42, 0, 0.6, 0, 0.6, 0, 0.15, 0.6, 0 };
+        std::vector<double> K_cpnt_x_1 = { 0.9, 0, 0.19, 0, 0.9, -1, -1, -1, -1, -1, -1 };
+
+        
+
+        // After cold header before SCAs
+        for (size_t j = 0; j < K_cpnt_0.size(); j++) {
+            m_K_cpnt.at(0, j) = K_cpnt_0.at(j);
+            m_K_cpnt.at(1, j) = K_cpnt_1.at(j);
+        }
+
+        // Between SCAs
+        for (size_t i = 0; i < (size_t)m_nSCA - 1; i++) {
+            for (size_t j = 0; j < K_cpnt_i.size(); j++) {
+                m_K_cpnt.at(i + 2, j) = K_cpnt_i.at(j);
+            }
+        }
+
+        // After SCAs before hot header
+        for (size_t j = 0; j < K_cpnt_x_2.size(); j++) {
+            m_K_cpnt.at(m_nSCA + 1, j) = K_cpnt_x_2.at(j);
+            m_K_cpnt.at(m_nSCA + 2, j) = K_cpnt_x_1.at(j);
+        }
+    }
+
+    // Inner diameters of the components in each loop interconnect
+    m_D_cpnt = util::matrix_t<double>(m_nSCA + 3, 11, std::numeric_limits<double>::quiet_NaN());
+    {
+        std::vector<double> D_cpnt_0 = { 0.085, 0.0635, 0.085, 0.0635, 0.085, -1, -1, -1, -1, -1, -1 };
+        std::vector<double> D_cpnt_1 = { 0.085, 0.085, 0.085, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.085 };
+        std::vector<double> D_cpnt_i = { 0.085, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.085 };
+        std::vector<double> D_cpnt_x_2 = { 0.085, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.0635, 0.085, 0.085, 0.085 };
+        std::vector<double> D_cpnt_x_1 = { 0.085, 0.0635, 0.085, 0.0635, 0.085, -1, -1, -1, -1, -1, -1 };
+
+        // After cold header before SCAs
+        for (size_t j = 0; j < D_cpnt_0.size(); j++) {
+            m_D_cpnt.at(0, j) = D_cpnt_0.at(j);
+            m_D_cpnt.at(1, j) = D_cpnt_1.at(j);
+        }
+
+        // Between SCAs
+        for (size_t i = 0; i < (size_t)m_nSCA - 1; i++) {
+            for (size_t j = 0; j < D_cpnt_i.size(); j++) {
+                m_D_cpnt.at(i + 2, j) = D_cpnt_i.at(j);
+            }
+        }
+
+        // After SCAs before hot header
+        for (size_t j = 0; j < D_cpnt_x_2.size(); j++) {
+            m_D_cpnt.at(m_nSCA + 1, j) = D_cpnt_x_2.at(j);
+            m_D_cpnt.at(m_nSCA + 2, j) = D_cpnt_x_1.at(j);
+        }
+    }
+
+    // Lengths of the components in each loop interconnect
+    m_L_cpnt = util::matrix_t<double>(m_nSCA + 3, 11, std::numeric_limits<double>::quiet_NaN());
+    {
+        std::vector<double> L_cpnt_0 = { 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1 };
+        std::vector<double> L_cpnt_1 = { 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0 };
+        std::vector<double> L_cpnt_i = { 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0 };
+        std::vector<double> L_cpnt_x_2 = { 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0 };
+        std::vector<double> L_cpnt_x_1 = { 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1 };
+
+        // After cold header before SCAs
+        for (size_t j = 0; j < L_cpnt_0.size(); j++) {
+            m_L_cpnt.at(0, j) = L_cpnt_0.at(j);
+            m_L_cpnt.at(1, j) = L_cpnt_1.at(j);
+        }
+
+        // Between SCAs
+        for (size_t i = 0; i < (size_t)m_nSCA - 1; i++) {
+            for (size_t j = 0; j < L_cpnt_i.size(); j++) {
+                m_L_cpnt.at(i + 2, j) = L_cpnt_i.at(j);
+            }
+        }
+
+        // After SCAs before hot header
+        for (size_t j = 0; j < L_cpnt_x_2.size(); j++) {
+            m_L_cpnt.at(m_nSCA + 1, j) = L_cpnt_x_2.at(j);
+            m_L_cpnt.at(m_nSCA + 2, j) = L_cpnt_x_1.at(j);
+        }
+    }
+
+    // Type of component in each loop interconnect [0=fitting | 1=pipe | 2=flex_hose]
+    m_Type_cpnt = util::matrix_t<double>(m_nSCA + 3, 11, std::numeric_limits<double>::quiet_NaN());
+    {
+        std::vector<double> Type_cpnt_0 = { 0, 1, 0, 1, 0, -1, -1, -1, -1, -1, -1 };
+        std::vector<double> Type_cpnt_1 = { 1, 0, 0, 2, 0, 1, 0, 2, 0, 2, 0 };
+        std::vector<double> Type_cpnt_i = { 0, 2, 0, 2, 0, 1, 0, 2, 0, 2, 0 };
+        std::vector<double> Type_cpnt_x_2 = { 0, 2, 0, 2, 0, 1, 0, 2, 0, 0, 1 };
+        std::vector<double> Type_cpnt_x_1 = { 0, 1, 0, 1, 0, -1, -1, -1, -1, -1, -1 };
+
+        // After cold header before SCAs
+        for (size_t j = 0; j < Type_cpnt_0.size(); j++) {
+            m_Type_cpnt.at(0, j) = Type_cpnt_0.at(j);
+            m_Type_cpnt.at(1, j) = Type_cpnt_1.at(j);
+        }
+
+        // Between SCAs
+        for (size_t i = 0; i < (size_t)m_nSCA - 1; i++) {
+            for (size_t j = 0; j < Type_cpnt_i.size(); j++) {
+                m_Type_cpnt.at(i + 2, j) = Type_cpnt_i.at(j);
+            }
+        }
+
+        // After SCAs before hot header
+        for (size_t j = 0; j < Type_cpnt_x_2.size(); j++) {
+            m_Type_cpnt.at(m_nSCA + 1, j) = Type_cpnt_x_2.at(j);
+            m_Type_cpnt.at(m_nSCA + 2, j) = Type_cpnt_x_1.at(j);
+        }
+    }
+
+    // Fixed Land Area
+    m_fixed_land_area = 0;
+    {
+        double max_collector_width = 0.;
+        for (size_t i = 0; i < m_SCAInfoArray.nrows(); i++) {
+            max_collector_width = std::max(max_collector_width, m_W_aperture.at((size_t)m_SCAInfoArray.at(i, 0) - 1));
+        }
+
+        m_fixed_land_area = m_Ap_tot * m_Row_Distance / max_collector_width * 0.0002471;
+    }
+
+    // Total Land Area
+    m_total_land_area = 0;
+    {
+        m_total_land_area = m_fixed_land_area * m_non_solar_field_land_area_multiplier;
+    }
+
+    m_is_solar_mult_designed = true;
+
+    return m_is_solar_mult_designed;
+}
 
 /*
 This subroutine contains the trough detailed plant model.  The collector field is modeled

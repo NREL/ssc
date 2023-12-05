@@ -145,7 +145,7 @@ public:
 		rock_thermal_conductivity = 259200;
 		rock_specific_heat = 950;
 		rock_density = 2600;
-		reservoir_pressure_change = 0.35;
+		reservoir_pressure_change = 1000.0 / 0.35;
 		reservoir_width = 500;
 		reservoir_pressure_change_type = 0;
 		reservoir_height = 100;

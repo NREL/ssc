@@ -313,7 +313,7 @@ void cm_windpower::exec()
 	if (wpc.nTurbines > wpc.GetMaxTurbines())
 		throw exec_error("windpower", util::format("the wind model is only configured to handle up to %d turbines.", wpc.GetMaxTurbines()));
 
-	// create adjustment factors and losses
+	// create adjustment factors and losses - set them up initially here for the Weibull distribution method, rewrite them later with nrec for the time series method
 	adjustment_factors haf(this, "adjust");
 	if (!haf.setup())
 		throw exec_error("windpower", "failed to setup adjustment factors: " + haf.error());
@@ -501,6 +501,10 @@ void cm_windpower::exec()
 	size_t steps_per_hour = nstep / 8760;
 	if (steps_per_hour * 8760 != nstep  && !contains_leap_day)
 		throw exec_error("windpower", util::format("invalid number of data records (%d): must be an integer multiple of 8760", (int)nstep));
+
+    // overwrite adjustment factors setup using the correct value for nrec, which we don't have until this part of the code
+    if (!haf.setup(nstep))
+        throw exec_error("windpower", "failed to setup adjustment factors: " + haf.error());
 
 	// allocate output data
 	ssc_number_t *farmpwr = allocate("gen", nstep);

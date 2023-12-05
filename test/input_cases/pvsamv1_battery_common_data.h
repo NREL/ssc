@@ -415,7 +415,7 @@ void pvsamv1_battery_defaults(ssc_data_t& data) {
     ssc_data_set_number(data, "dc_adjust_constant", 0.0);
     ssc_data_set_number(data, "dc_adjust_en_periods", 1);
     ssc_data_set_matrix(data, "dc_adjust_periods", p_dc_adjust_periods, 1, 3);
-    ssc_data_set_number(data, "dc_adjust_en_timeindex", 1);
+    ssc_data_set_number(data, "dc_adjust_en_timeindex", 0);
     ssc_data_set_array(data, "dc_adjust_timeindex", p_dc_adjust_hourly, 8760);
 
 	ssc_data_set_number(data, "batt_chem", 1);
@@ -1167,7 +1167,7 @@ void commercial_multiarray_default(ssc_data_t& data) {
     ssc_data_set_number(data, "dc_adjust_constant", 0.0);
     ssc_data_set_number(data, "dc_adjust_en_periods", 1);
     ssc_data_set_matrix(data, "dc_adjust_periods", p_dc_adjust_periods, 1, 3);
-    ssc_data_set_number(data, "dc_adjust_en_timeindex", 1);
+    ssc_data_set_number(data, "dc_adjust_en_timeindex", 0);
     ssc_data_set_array(data, "dc_adjust_timeindex", p_dc_adjust_hourly, 8760);
 
 
