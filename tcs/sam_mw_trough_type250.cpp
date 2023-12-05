@@ -4795,8 +4795,8 @@ lab_keep_guess:
 	double FQ_COND_BRACKET(double T_3, double T_6, double P_6, double v_6, int hn, int hv){
 		//           units                    ( K ,  K , bar, m/s)
 	
-		double P_brac, D_brac, A_CS_brac, k_brac, T_base, T_brac, T_brac6, mu_brac6, rho_brac6, 
-			  Cp_brac6, k_brac6, nu_brac6, Alpha_brac6, Beta_brac6, Ra_Dbrac, Pr_brac6, Nu_bar, h_brac6,
+		double P_brac, D_brac, A_CS_brac, T_base, T_brac, T_brac6, mu_brac6, rho_brac6, 
+			  Cp_brac6, nu_brac6, Alpha_brac6, Beta_brac6, Ra_Dbrac, Pr_brac6, Nu_bar, h_brac6,
 			  mu_brac, mu_6, rho_6, rho_brac, k_6, Cp_brac, nu_6, Cp_6, Nu_brac, Alpha_brac,
 			  Re_Dbrac, Pr_brac, Pr_6, n, C, m, L_HCE, alpha_6;
 
@@ -4811,7 +4811,7 @@ lab_keep_guess:
 		A_CS_brac = 0.00016129;  //[m**2]
 
 		// conduction coefficient for carbon steel at 600 K
-		k_brac = 48.0;  //[W/m-K]
+		double k_brac_steel = 48.0;  //[W/m-K]
 
 		// effective bracket base temperature
 		T_base = T_3 - 10.0;  //[C]
@@ -4828,7 +4828,7 @@ lab_keep_guess:
 			mu_brac6 = airProps.visc(T_brac6);  //[N-s/m**2]
 			rho_brac6 = airProps.dens(T_brac6, P_6);  //[kg/m**3]
 			Cp_brac6 = airProps.Cp(T_brac6)*1000.;  //[J/kg-K]
-			k_brac6 = airProps.cond(T_brac6);  //[W/m-K]
+			double k_brac6 = airProps.cond(T_brac6);  //[W/m-K]
 			nu_brac6 = mu_brac6 / rho_brac6;  //[m**2/s]
 			Alpha_brac6 = k_brac6 / (Cp_brac6 * rho_brac6);  //[m**2/s]
 			Beta_brac6 =  1.0 / T_brac6;  //[1/K]
@@ -4850,9 +4850,9 @@ lab_keep_guess:
 			mu_6 = airProps.visc(T_6);  //[N-s/m**2]
 			rho_6 = airProps.dens(T_6, P_6);  //[kg/m**3]
 			rho_brac = airProps.dens(T_brac, P_6);  //[kg/m**3]
-			k_brac = airProps.cond(T_brac);  //[W/m-K]
+			double k_brac = airProps.cond(T_brac);  //[W/m-K]
 			k_6 = airProps.cond(T_6);  //[W/m-K]
-			k_brac6 = airProps.cond(T_brac6);  //[W/m-K]
+			double k_brac6 = airProps.cond(T_brac6);  //[W/m-K]
 			Cp_brac = airProps.Cp(T_brac)*1000.;  //[J/kg-K]
 			Cp_6 = airProps.Cp(T_6)*1000.;  //[J/kg-K]
 			nu_6 = mu_6 / rho_6;  //[m**2/s]
@@ -4908,7 +4908,7 @@ lab_keep_guess:
 
 		// estimated conduction heat loss through HCE support brackets / HCE length 
 		L_HCE = 4.06;  //[m]
-		return sqrt(h_brac6 * P_brac * k_brac * A_CS_brac) * (T_base - T_6)/L_HCE;  //[W/m]
+		return sqrt(h_brac6 * P_brac * k_brac_steel * A_CS_brac) * (T_base - T_6)/L_HCE;  //[W/m]
 
 	}
 
