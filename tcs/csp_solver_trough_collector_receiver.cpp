@@ -430,7 +430,7 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 
 	// Set solved parameters
 	solved_params.m_T_htf_cold_des = m_T_loop_in_des;	//[K]
-	solved_params.m_q_dot_rec_des = m_q_design/1.E6;	//[MWt]
+	solved_params.m_q_dot_rec_des = m_q_design_actual/1.E6;	//[MWt]
 	solved_params.m_A_aper_total = m_Ap_tot;			//[m^2]
 
     // Calculate other design parameters
@@ -598,6 +598,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		m_m_dot_design = (m_Ap_tot*m_I_bn_des*m_opteff_des - loss_tot*float(m_nLoops)) / (m_c_htf_ave*(m_T_loop_out_des - m_T_loop_in_des));  //tn 4.25.11 using m_Ap_tot instead of A_loop. Change location of m_opteff_des
         double m_dot_max = m_m_dot_htfmax * m_nLoops;
         double m_dot_min = m_m_dot_htfmin * m_nLoops;
+        m_q_design_ideal = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
         if (m_m_dot_design > m_dot_max) {
             const char *msg = "The calculated field design mass flow rate of %.2f kg/s is greater than the maximum defined by the max single loop flow rate and number of loops (%.2f kg/s). "
                 "The design mass flow rate is reset to the latter.";
@@ -616,10 +617,10 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		m_m_dot_loop_des = m_m_dot_design/(double)m_nLoops;	//[kg/s]
 		//mjw 1.16.2011 Design field thermal power 
 		//m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
-		m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
+		m_q_design_actual = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
 		//mjw 1.16.2011 Convert the thermal inertia terms here
-		m_mc_bal_hot = m_mc_bal_hot_per_MW * 3.6 * m_q_design;    //[J/K]
-		m_mc_bal_cold = m_mc_bal_cold_per_MW * 3.6 * m_q_design;  //[J/K]
+		m_mc_bal_hot = m_mc_bal_hot_per_MW * 3.6 * m_q_design_actual;    //[J/K]
+		m_mc_bal_cold = m_mc_bal_cold_per_MW * 3.6 * m_q_design_actual;  //[J/K]
 
 		//need to provide fluid density
         double rho_cold = m_htfProps.dens(m_T_loop_in_des, 10.e5); //kg/m3
@@ -834,7 +835,7 @@ double C_csp_trough_collector_receiver::get_startup_time()
 double C_csp_trough_collector_receiver::get_startup_energy()
 {
     // Note: C_csp_trough_collector_receiver::startup() is called after this function
-    return m_rec_qf_delay * m_q_design * 1.e-6;       // MWh
+    return m_rec_qf_delay * m_q_design_actual * 1.e-6;       // MWh
 }
 double C_csp_trough_collector_receiver::get_pumping_parasitic_coef()
 {
@@ -851,7 +852,7 @@ double C_csp_trough_collector_receiver::get_pumping_parasitic_coef()
 
     double dP_field = field_pressure_drop(T_amb_des, m_m_dot_design, P_field_in, T_in_SCA, T_out_SCA);
 
-    return m_W_dot_pump / (m_q_design * 1.e-6);
+    return m_W_dot_pump / (m_q_design_actual * 1.e-6);
 
 }
 

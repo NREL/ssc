@@ -497,7 +497,8 @@ public:
     double m_total_loop_conversion_efficiency_des = std::numeric_limits<double>::quiet_NaN();  //[] Total Loop Conversion Efficiency at Design
     double m_total_required_aperture_for_SM1 = std::numeric_limits<double>::quiet_NaN();       //[m2] Aperture required for solar mult = 1
     double m_solar_mult = std::numeric_limits<double>::quiet_NaN();		                    //[-] Solar multiple 
-    double m_q_design = std::numeric_limits<double>::quiet_NaN();		                        //[Wt] Design-point thermal power from the solar field
+    double m_q_design_actual = std::numeric_limits<double>::quiet_NaN();		                        //[Wt] Design-point thermal power from the solar field
+    double m_q_design_ideal = std::numeric_limits<double>::quiet_NaN();
     double m_q_pb_design = std::numeric_limits<double>::quiet_NaN();                           //[Wt] Power cycle thermal input at design
     double m_required_number_of_loops_for_SM1 = std::numeric_limits<double>::quiet_NaN();      //[] Required number of loops for solar mult = 1
     int m_nLoops = std::numeric_limits<double>::quiet_NaN();			                        //[-] Number of loops in the field
