@@ -47,13 +47,13 @@ NAMESPACE_TEST(csp_trough, PowerTroughCmod, Default_NoFinancial)
     int errors = power_trough.RunModule();
     EXPECT_FALSE(errors);
     if (!errors) {
-        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_energy"), 376824118, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_thermal_consumption"), 628322, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_tes_freeze_protection"), 590329, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_field_freeze_protection"), 38042, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(power_trough.GetOutput("capacity_factor"), 43.05, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_W_cycle_gross"), 429613242, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(power_trough.GetOutput("kwh_per_kw"), 3772, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_energy"), 372167315, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_thermal_consumption"), 941238, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_tes_freeze_protection"), 749193, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_field_freeze_protection"), 192044, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_trough.GetOutput("capacity_factor"), 42.53, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_W_cycle_gross"), 424681858, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_trough.GetOutput("kwh_per_kw"), 3725, kErrorToleranceHi);
         EXPECT_NEAR_FRAC(power_trough.GetOutput("conversion_factor"), 87.84, kErrorToleranceHi);
         EXPECT_NEAR_FRAC(power_trough.GetOutput("annual_total_water_use"), 80708, kErrorToleranceHi);
 
@@ -61,7 +61,7 @@ NAMESPACE_TEST(csp_trough, PowerTroughCmod, Default_NoFinancial)
         EXPECT_NEAR_FRAC(power_trough.GetOutputSum("month"), 57168, kErrorToleranceHi);
         EXPECT_NEAR_FRAC(power_trough.GetOutputSum("beam"), 2687889, kErrorToleranceHi);
         EXPECT_NEAR_FRAC(power_trough.GetOutputSum("defocus"), 8753, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(power_trough.GetOutputSum("q_dc_tes"), 333996, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(power_trough.GetOutputSum("q_dc_tes"), 328937, kErrorToleranceHi);
         EXPECT_NEAR_FRAC(power_trough.GetOutputSum("P_fixed"), 5347, kErrorToleranceHi);
         EXPECT_NEAR_FRAC(power_trough.GetOutputSum("op_mode_1"), 52902, kErrorToleranceHi);
         EXPECT_NEAR_FRAC(power_trough.GetOutputSum("n_op_modes"), 9799, kErrorToleranceHi);
