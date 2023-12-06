@@ -2036,7 +2036,9 @@ bool C_csp_fresnel_collector_receiver::init_fieldgeom()
 
     // Already defined in design_solar_mult (TB)
     //mjw 1.16.2011 Design field thermal power
-    //m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
+    m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
+
+    double q_design_old = m_I_bn_des * m_Ap_tot * m_loop_eff;
 
     //mjw 1.16.2011 Convert the thermal inertia terms here
     m_mc_bal_hot = m_mc_bal_hot * 3.6 * m_q_design;    //[J/K]
@@ -3126,10 +3128,10 @@ bool C_csp_fresnel_collector_receiver::design_solar_mult()
         m_loop_eff = m_loop_opt_eff * m_loop_therm_eff;
 
         // Thermal Power at Design
-        m_q_design = m_P_ref / m_eta_ref;
+        m_q_pb_design = m_P_ref / m_eta_ref; // 279
 
         // Required Aperture for solar multiple = 1
-        m_Ap_sm1 = m_q_design / (m_I_bn_des * m_loop_eff);
+        m_Ap_sm1 = m_q_pb_design / (m_I_bn_des * m_loop_eff);
 
         // Calculate actual solar mult, total field aperture, and nLoops
         switch (m_solar_mult_or_Ap)

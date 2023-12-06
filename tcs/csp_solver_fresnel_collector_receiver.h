@@ -531,6 +531,7 @@ public:
     double m_opt_normal;                            // Collector optical loss at normal incidence
     double m_m_dot_design;	                        // [kg/s] Total solar field mass flow rate at design
     double m_m_dot_loop_des;                        // [kg/s] LOOP design mass flow rate
+    double m_q_pb_design;                           // [Wt] Power block design input power
 
         // Steady State Design Point Outputs
     double m_dP_des_SS;                             // [bar] FIELD pressure drop at design (calculated in init (via steady_state -> On))
