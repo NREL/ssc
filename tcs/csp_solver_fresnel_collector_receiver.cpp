@@ -3153,6 +3153,7 @@ bool C_csp_fresnel_collector_receiver::design_solar_mult()
 
                 // Get 'Actual' Ap_tot
                 m_Ap_tot = m_nLoops * m_A_loop;
+                m_solar_mult = m_Ap_tot / m_Ap_sm1;
                 break;
             }
             case 1:
