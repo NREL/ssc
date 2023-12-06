@@ -2291,9 +2291,24 @@ int irrad::calc() {
                                       directNormal, diffuseHorizontal, globalHorizontal, planeOfArrayIrradianceFront,
                                       diffuseIrradianceFront);
             if (enableSubhourlyClipping) {
-                int errorcode_cs = poaDecomp(weatherFilePOA, surfaceAnglesRadians, sunAnglesRadians, albedo, poaAll,
-                    clearskyIrradiance[1], clearskyIrradiance[2], clearskyIrradiance[0], planeOfArrayIrradianceFrontCS,
-                    diffuseIrradianceFrontCS);
+                double hextra = sunAnglesRadians[8];
+                switch (skyModel) {
+                case 0:
+                    isotropic(hextra, clearskyIrradiance[1], clearskyIrradiance[2], albedo,
+                        surfaceAnglesRadians[0], surfaceAnglesRadians[1], sunAnglesRadians[1],
+                        planeOfArrayIrradianceFrontCS, diffuseIrradianceFrontCS);
+                    break;
+                case 1:
+                    hdkr(hextra, clearskyIrradiance[1], clearskyIrradiance[2], albedo, surfaceAnglesRadians[0],
+                        surfaceAnglesRadians[1], sunAnglesRadians[1], planeOfArrayIrradianceFrontCS,
+                        diffuseIrradianceFrontCS);
+                    break;
+                default:
+                    perez(hextra, clearskyIrradiance[1], clearskyIrradiance[2], albedo, surfaceAnglesRadians[0],
+                        surfaceAnglesRadians[1], sunAnglesRadians[1], planeOfArrayIrradianceFrontCS,
+                        diffuseIrradianceFrontCS);
+                    break;
+                }
             }
             calculatedDirectNormal = directNormal;
             calculatedDiffuseHorizontal = diffuseHorizontal;

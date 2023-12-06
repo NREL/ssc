@@ -290,16 +290,14 @@ public:
                 ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "system_use_lifetime_output", 1); // for fuelcell_annual_energy_discharged
 
-                if (!ssc_module_exec(module, static_cast<ssc_data_t>(&input))) {
-                    // merge in hybrid vartable for configurations where battery and fuel cell dispatch are combined and not in the technology bin
-                    std::string hybridVarTable("Hybrid");
-                    var_data* hybrid_inputs = input_table->table.lookup(hybridVarTable);
-                    if (compute_module_inputs->type != SSC_TABLE)
-                        throw exec_error("hybrid", "No input input_table found for ." + hybridVarTable);
-                    var_table& hybridinput = hybrid_inputs->table;
-                    input.merge(hybridinput, false);
-                    ssc_module_exec(module, static_cast<ssc_data_t>(&input));
-                }
+                // merge in hybrid vartable for configurations where battery and fuel cell dispatch are combined and not in the technology bin
+                std::string hybridVarTable("Hybrid");
+                var_data* hybrid_inputs = input_table->table.lookup(hybridVarTable);
+                if (compute_module_inputs->type != SSC_TABLE)
+                    throw exec_error("hybrid", "No input input_table found for ." + hybridVarTable);
+                var_table& hybridinput = hybrid_inputs->table;
+                input.merge(hybridinput, false);
+                ssc_module_exec(module, static_cast<ssc_data_t>(&input));
 
                 ssc_data_t compute_module_outputs = ssc_data_create();
 
@@ -404,22 +402,20 @@ public:
                 ssc_module_t module = ssc_module_create(compute_module.c_str());
 
                 var_table& input = compute_module_inputs->table;
+
+                // merge in hybrid vartable for configurations where battery dispatch variables are combined and not in the technology bin
+                std::string hybridVarTable("Hybrid");
+                var_data* hybrid_inputs = input_table->table.lookup(hybridVarTable);
+                if (compute_module_inputs->type != SSC_TABLE)
+                    throw exec_error("hybrid", "No input input_table found for ." + hybridVarTable);
+                var_table& hybridinput = hybrid_inputs->table;
+                input.merge(hybridinput, false);
+
                 ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);  // check if issue with lookahead dispatch with hourly PV and subhourly wind
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "system_use_lifetime_output", 1);
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "en_batt", 1); // should be done at UI level
 
-                if (!ssc_module_exec(module, static_cast<ssc_data_t>(&input))) {
-                    // merge in hybrid vartable for configurations where battery and fuel cell dispatch are combined and not in the technology bin
-                    std::string hybridVarTable("Hybrid");
-                    var_data* hybrid_inputs = input_table->table.lookup(hybridVarTable);
-                    if (compute_module_inputs->type != SSC_TABLE)
-                        throw exec_error("hybrid", "No input input_table found for ." + hybridVarTable);
-                    var_table& hybridinput = hybrid_inputs->table;
-                    input.merge(hybridinput, false);
-                    ssc_data_set_number(static_cast<ssc_data_t>(&input), "en_batt", 1);
-
-                    ssc_module_exec(module, static_cast<ssc_data_t>(&input));
-                }
+                ssc_module_exec(module, static_cast<ssc_data_t>(&input));
 
                 ssc_data_t compute_module_outputs = ssc_data_create();
 
@@ -449,7 +445,7 @@ public:
                     battery_discharged.resize(analysisPeriod, first_val);
                 }
                 else if (len != analysisPeriod) {
-                    throw exec_error("hybrid", util::format("battery_discharged size (%d) incorrect", (int)battery_discharged.size()));
+                    throw exec_error("hybrid", util::format("battery_discharged size (%d) incorrect", (int)len));
                 }
                 else {
                     for (int i = 0; i < len; i++)
@@ -497,8 +493,6 @@ public:
                 for (size_t i = 0; i < (size_t)analysisPeriod; i++)
                     pOMProduction[i+1] *= battery_discharged[i];
 
-
-
                 // resize annual outputs
                 size_t arr_length = analysisPeriod + 1;
                 ssc_number_t yr_0_value = 0.0;
@@ -513,7 +507,6 @@ public:
                 ssc_data_set_table(outputs, compute_module.c_str(), compute_module_outputs);
                 ssc_module_free(module);
                 ssc_data_free(compute_module_outputs);
-
             }
 
             bool use_batt_output = false;
@@ -608,8 +601,6 @@ public:
                 ssc_data_set_array(&(compute_module_inputs->table), "monthly_energy", pGenMonthly, 12);
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "annual_energy", pGenAnnual);
 
-
-
                 // run remaining compute modules in sequence and add results to "Hybrid" VarTable
                 ssc_data_t hybridFinancialOutputs = ssc_data_create();
 
@@ -633,20 +624,15 @@ public:
                             ssc_data_set_var(hybridFinancialOutputs, var_name, var_value);
                         }
                     }
-
                     ssc_module_free(module);
-
                 }
 
                 ssc_data_set_table(outputs, hybridVarTable.c_str(), hybridFinancialOutputs);
                 ssc_data_free(hybridFinancialOutputs);
-
-
             }
 
             assign("output", var_data(*(static_cast<var_table*>(outputs))));
             ssc_data_free(outputs);
-
         }
         else {
             throw exec_error("hybrid", "No compute modules specified.");
