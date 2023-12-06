@@ -1719,7 +1719,7 @@ void C_csp_fresnel_collector_receiver::init(const C_csp_collector_receiver::S_cs
 
     // Set solved parameters
     solved_params.m_T_htf_cold_des = m_T_loop_in_des;	//[K]
-    solved_params.m_q_dot_rec_des = m_q_design / 1.E6;	//[MWt]
+    solved_params.m_q_dot_rec_des = m_q_design_actual / 1.E6;	//[MWt]
     solved_params.m_A_aper_total = m_Ap_tot;			//[m^2]
 
     // Set previous operating mode
@@ -1999,7 +1999,9 @@ bool C_csp_fresnel_collector_receiver::init_fieldgeom()
             //correct for receiver optical losses
             hceopt = 0.;
             for (int i = 0; i < m_nRecVar; i++) {
-                hceopt += m_alpha_abs[i] * m_Tau_envelope[i] * m_HCE_FieldFrac[i];
+                // TMB 12-06-2023 Add shadowing and envelope dirt losses to optical loss
+                //hceopt += m_alpha_abs[i] * m_Tau_envelope[i] * m_HCE_FieldFrac[i];
+                hceopt += m_alpha_abs[i] * m_Tau_envelope[i] * m_HCE_FieldFrac[i] * m_Shadowing[i] * m_dirt_env[i];
             }
             m_opteff_des *= hceopt;
             break;
@@ -2014,6 +2016,10 @@ bool C_csp_fresnel_collector_receiver::init_fieldgeom()
 
     //the estimated mass flow rate at design (in solar field)
     m_m_dot_design = (m_Ap_tot * m_I_bn_des * m_opteff_des - loss_tot * float(m_nLoops)) / (m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des));  //tn 4.25.11 using Ap_tot instead of A_loop. Change location of opteff_des
+
+    // 'ideal' m_q_design before mass flow limits
+    m_q_design_ideal = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
+
     double m_dot_max = m_m_dot_htfmax * m_nLoops;
     double m_dot_min = m_m_dot_htfmin * m_nLoops;
     if (m_m_dot_design > m_dot_max) {
@@ -2036,13 +2042,13 @@ bool C_csp_fresnel_collector_receiver::init_fieldgeom()
 
     // Already defined in design_solar_mult (TB)
     //mjw 1.16.2011 Design field thermal power
-    m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
+    m_q_design_actual = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
 
     double q_design_old = m_I_bn_des * m_Ap_tot * m_loop_eff;
 
     //mjw 1.16.2011 Convert the thermal inertia terms here
-    m_mc_bal_hot = m_mc_bal_hot * 3.6 * m_q_design;    //[J/K]
-    m_mc_bal_cold = m_mc_bal_cold * 3.6 * m_q_design;  //[J/K]
+    m_mc_bal_hot = m_mc_bal_hot * 3.6 * m_q_design_actual;    //[J/K]
+    m_mc_bal_cold = m_mc_bal_cold * 3.6 * m_q_design_actual;  //[J/K]
 
 
 
@@ -2211,7 +2217,7 @@ double C_csp_fresnel_collector_receiver::get_startup_time()
 double C_csp_fresnel_collector_receiver::get_startup_energy()
 {
     // Note: C_csp_fresnel_collector_receiver::startup() is called after this function
-    return m_rec_qf_delay * m_q_design * 1.e-6;       // MWh
+    return m_rec_qf_delay * m_q_design_actual * 1.e-6;       // MWh
 }
 
 double C_csp_fresnel_collector_receiver::get_pumping_parasitic_coef()
@@ -2229,7 +2235,7 @@ double C_csp_fresnel_collector_receiver::get_pumping_parasitic_coef()
 
     double dP_field = field_pressure_drop(T_amb_des, m_m_dot_design, P_field_in, T_in_SCA, T_out_SCA);
 
-    return m_W_dot_pump / (m_q_design * 1.e-6);
+    return m_W_dot_pump / (m_q_design_actual * 1.e-6);
 }
 
 double C_csp_fresnel_collector_receiver::get_min_power_delivery()
@@ -3082,7 +3088,9 @@ bool C_csp_fresnel_collector_receiver::design_solar_mult()
         // Optical Derate (Receiver)
         m_opt_derate = 0;
         for (int i = 0; i < m_nRecVar; i++)
-            m_opt_derate += m_HCE_FieldFrac[i] * m_Shadowing[i] * m_dirt_env[i];
+            // TMB 12-06-2023 Add receiver absorptivity and envelope transmissivity to optical derate
+            //m_opt_derate += m_HCE_FieldFrac[i] * m_Shadowing[i] * m_dirt_env[i];
+            m_opt_derate += m_HCE_FieldFrac[i] * m_Shadowing[i] * m_dirt_env[i] * m_alpha_abs[i] * m_Tau_envelope[i];
 
         // Optical Normal (Mirror/Collector)
         m_opt_normal = 0;
@@ -3166,7 +3174,7 @@ bool C_csp_fresnel_collector_receiver::design_solar_mult()
         }
 
         // Update m_q_design with actual aperture
-        m_q_design = m_I_bn_des * m_Ap_tot * m_loop_eff;
+        //m_q_design_actual = m_I_bn_des * m_Ap_tot * m_loop_eff;
 
         // Number of Loops necessary for solar mult = 1
         m_nLoops_sm1 = std::ceil(m_Ap_sm1 / m_A_loop);

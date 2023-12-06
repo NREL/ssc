@@ -343,7 +343,6 @@ static var_info _cm_vtab_fresnel_physical[] = {
    
 
         // Solar Field
-    { SSC_OUTPUT,       SSC_NUMBER,     "q_dot_rec_des",                    "Receiver thermal output at design",                                    "MWt",          "",         "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "A_loop",                           "Aperture of a single loop",                                            "m2",           "",         "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "loop_opt_eff",                     "Loop optical efficiency at design",                                    "",             "",         "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "loop_therm_eff",                   "Loop thermal efficiency at design",                                    "",             "",         "Receiver",                       "*",                                                                "",              "" },
@@ -352,7 +351,9 @@ static var_info _cm_vtab_fresnel_physical[] = {
     { SSC_OUTPUT,       SSC_NUMBER,     "sm1_nLoops",                       "Required number of loops, SM=1",                                       "",             "",         "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "total_tracking_power",             "Design tracking power",                                                "MW",           "",         "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "A_field",                          "Total field aperture",                                                 "m2",           "",         "Receiver",                       "*",                                                                "",              "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "q_field_des",                      "Design field power output",                                            "MW",           "",         "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "q_field_des_actual",               "Design-point thermal power from the solar field limited by mass flow", "MW",           "",         "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "q_field_des_ideal",                "Design-point thermal power from the solar field with no limit",        "MW",           "",         "Receiver",                       "*",                                                                "",              "" },
+
     { SSC_OUTPUT,       SSC_NUMBER,     "field_area",                       "Solar field area",                                                     "acres",        "",         "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "total_land_area",                  "Total land area",                                                      "acres",        "",         "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "field_htf_min_temp",               "Minimum field htf temp",                                               "C",            "",         "Power Cycle",                    "*",                                                                "",              "" },
@@ -1414,7 +1415,6 @@ public:
             // Solar Field
 
             double W_dot_col_tracking_des = c_fresnel.get_tracking_power();                 // [MWe]
-            double q_dot_rec_des = c_fresnel.m_q_design / 1e6;                              // [MWt]
             double A_loop = c_fresnel.m_A_loop;                                             // [m2]
             double loop_opt_eff = c_fresnel.m_loop_opt_eff;
             double loop_therm_eff = c_fresnel.m_loop_therm_eff;
@@ -1423,7 +1423,8 @@ public:
             double sm1_nLoops = c_fresnel.m_nLoops_sm1;
             double total_tracking_power = c_fresnel.m_W_dot_sca_tracking_nom;               // [MW]
             double A_field = c_fresnel.m_Ap_tot;                                            // [m2]
-            double q_field_des = c_fresnel.m_q_design / 1e6;                                // [MW]
+            double q_field_des_actual = c_fresnel.m_q_design_actual / 1e6;                  // [MW]
+            double q_field_des_ideal = c_fresnel.m_q_design_ideal / 1e6;                    // [MW]
 
             double field_area = A_field / 4046.85642;                                       // [acres] (convert m2 to acre)
             double land_mult = as_double("land_mult");
@@ -1454,7 +1455,6 @@ public:
 
             // Assign
             {
-                assign("q_dot_rec_des", q_dot_rec_des);
                 assign("A_loop", A_loop);
                 assign("loop_opt_eff", loop_opt_eff);
                 assign("loop_therm_eff", loop_therm_eff);
@@ -1463,7 +1463,8 @@ public:
                 assign("sm1_nLoops", sm1_nLoops);
                 assign("total_tracking_power", total_tracking_power);
                 assign("A_field", A_field);
-                assign("q_field_des", q_field_des);
+                assign("q_field_des_actual", q_field_des_actual);
+                assign("q_field_des_ideal", q_field_des_ideal);
                 assign("field_area", field_area);
                 assign("total_land_area", total_land_area);
                 assign("field_htf_min_temp", field_htf_min_temp);

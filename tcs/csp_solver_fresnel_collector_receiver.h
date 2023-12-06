@@ -517,7 +517,8 @@ public:
     int m_nLoops;                                   // [-] Number of loops in the field
     double m_solar_mult;		                    // [-] Solar multiple
     double m_Ap_tot;                                // Total field aperture [m2]
-    double m_q_design;		                        // [Wt] Design-point thermal power from the solar field
+    double m_q_design_actual;		                // [Wt] Design-point thermal power from the solar field limited by mass flow
+    double m_q_design_ideal;                        // [Wt] Design-point thermal power from the solar field not limited by mass flow
     double m_Ap_sm1;                                // Total required aperture, SM=1 [m2]
     double m_nLoops_sm1;                            // Required number of loops, SM=1
     double m_A_loop;                                // Aperture of a loop [m2]
