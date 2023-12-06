@@ -2709,7 +2709,7 @@ void cm_pvsamv1::exec()
                     double inv_dc_max = sharedInverter->getInverterDCMaxPower(nameplate_kw) / 1000.0 * inverter_count;
                     //log(util::format("Inverter DC Max is %lg kW", inv_dc_max), SSC_NOTICE);
                     double T = 1.0;
-                    double log_test = (dcPower_kW_max - dcPower_kW_min) > 0.0 ? (1.0 - (inv_dc_max - dcPower_kW_min) / (dcPower_kW_max - dcPower_kW_min)) : 0.0;
+                    double log_test = (dcPower_kW_max - inv_dc_max) > 0.0 ? (1.0 - (inv_dc_max - dcPower_kW_min) / (dcPower_kW_max - dcPower_kW_min)) : 0.0;
                     log(util::format("log_test is %lg", log_test), SSC_NOTICE);
                     ssc_number_t t_lm = 0.0;
                     if (log_test > 0.0 && n > 0.0) {
@@ -2733,11 +2733,11 @@ void cm_pvsamv1::exec()
                         }
                     }
                     else {
-                        PVSystem->p_DistributionClippingLoss[idx] = (ssc_number_t)1;
+                        PVSystem->p_DistributionClippingLoss[idx] = (ssc_number_t)0;
                     }
                 }
                 else {
-                    PVSystem->p_DistributionClippingLoss[idx] = (ssc_number_t)2;
+                    PVSystem->p_DistributionClippingLoss[idx] = (ssc_number_t)0;
                 }
 
             }
