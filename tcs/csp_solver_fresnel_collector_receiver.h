@@ -626,7 +626,7 @@ public:
 
     // ------------------------------------------ supplemental methods -----------------------------------------------------------
 
-    bool design_solar_mult();
+    bool design_solar_mult(double latitude = -377);
 
 
     // Classes

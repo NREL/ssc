@@ -776,7 +776,9 @@ public:
             }
 
             // Calculate solar multiple (needed for other component constructors)
-            c_fresnel.design_solar_mult();
+            // Need latitude from weather reader
+            weather_reader.init();
+            c_fresnel.design_solar_mult(weather_reader.ms_solved_params.m_lat);
 
             // Allocate Outputs
             {
