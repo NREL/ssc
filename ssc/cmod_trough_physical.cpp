@@ -1630,7 +1630,7 @@ public:
                 ssc_number_t* sca_effs = allocate("csp_dtr_sca_calc_sca_effs", c_trough.m_csp_dtr_sca_calc_sca_effs.size());
                 for (int i = 0; i < c_trough.m_csp_dtr_sca_calc_sca_effs.size(); i++)
                     sca_effs[i] = c_trough.m_csp_dtr_sca_calc_sca_effs[i];    // []
-                assign("loop_optical_efficiency", c_trough.m_loop_optical_efficiency_des);  //[]
+                assign("loop_optical_efficiency", c_trough.m_opteff_des);  //[]
                 ssc_number_t* hce_effs = allocate("csp_dtr_hce_optical_effs", c_trough.m_csp_dtr_hce_optical_effs.size());
                 for (int i = 0; i < c_trough.m_csp_dtr_hce_optical_effs.size(); i++)
                     hce_effs[i] = c_trough.m_csp_dtr_hce_optical_effs[i];    // []

@@ -109,7 +109,7 @@ private:
 	int	m_nhdrsec;			//[-] Number of header sections
 	int	m_nrunsec;			//[-] Number of unique runner diameters
 	double m_L_tot;			//[m] Total length of collectors in a loop
-	double m_opteff_des;	//[-] Design-point optical efficieny (theta = 0) from the solar field
+	
 	double m_m_dot_design;	//[kg/s] Total solar field mass flow rate at design
 	double m_m_dot_loop_des;//[kg/s] LOOP design mass flow rate
 	double m_W_dot_sca_tracking_nom;		//[MWe] Tracking parasitics when trough is on sun
@@ -487,7 +487,6 @@ public:
     double m_HCE_heat_loss_loop_des = std::numeric_limits<double>::quiet_NaN();                //[W/m] Loop Heat Loss from HCE at Design
     std::vector<double> m_csp_dtr_sca_calc_sca_effs; // SCA optical efficiencies at design
     std::vector<double> m_csp_dtr_hce_optical_effs;  // HCE optical efficiencies at design
-    double m_loop_optical_efficiency_des = std::numeric_limits<double>::quiet_NaN();           // Loop total optical effiency at design
     util::matrix_t<double> m_SCAInfoArray;          //[-] Receiver (,1) and collector (,2) type for each assembly in loop
     std::vector<int> m_SCADefocusArray;             //[-] Order in which the SCA's should be defocused
     double m_m_dot_htfmin = std::numeric_limits<double>::quiet_NaN();	                        //[kg/s] Minimum loop HTF flow rate
@@ -509,6 +508,7 @@ public:
     util::matrix_t<double> m_Type_cpnt;             //[-] Type of component in each loop interconnect [0=fitting | 1=pipe | 2=flex_hose]
     double m_fixed_land_area = std::numeric_limits<double>::quiet_NaN();                       //[acre] Fixed Land Area
     double m_total_land_area = std::numeric_limits<double>::quiet_NaN();                       //[acre] Total Land Area
+    double m_opteff_des = std::numeric_limits<double>::quiet_NaN();	                           //[-] Design-point optical efficieny (theta = 0) from the solar field
 
 	// **************************************************************************
 	// **************************************************************************

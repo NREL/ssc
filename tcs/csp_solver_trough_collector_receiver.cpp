@@ -533,196 +533,192 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		}
 	}
 
-	
 
-	if (m_accept_loc == 1)
+	m_Ap_tot *= float(m_nLoops);
+
+	//Calculate header diameters here based on min/max velocities
+	//output file with calculated header diameter "header_diam.out"
+	m_nfsec = m_FieldConfig;  //MJW 1.12.11 allow the user to specify the number of field sections
+	//Check to make sure the number of field sections is an even number
+	if(m_nfsec % 2 != 0 && m_nfsec != 1)
 	{
-		m_Ap_tot *= float(m_nLoops);
+		m_error_msg = util::format("Number of field subsections must be an even number or 1");
+		throw(C_csp_exception(m_error_msg, "Trough collector solver"));
+	}
 
-		//Calculate header diameters here based on min/max velocities
-		//output file with calculated header diameter "header_diam.out"
-		m_nfsec = m_FieldConfig;  //MJW 1.12.11 allow the user to specify the number of field sections
-		//Check to make sure the number of field sections is an even number
-		if(m_nfsec % 2 != 0 && m_nfsec != 1)
+	/*
+	The number of header sections (tee-conns.) per field section is equal to the total number of loops divided
+	by the number of distinct headers. Since two loops are connected to the same header section,
+	the total number of header sections is then divided by 2.
+	*/
+	m_nhdrsec = (int)ceil(float(m_nLoops) / float(m_nfsec * 2));
+
+	//the estimated mass flow rate at design
+    //tn 4.25.11 using m_Ap_tot instead of A_loop. Change location of m_opteff_des
+    // TMB 12.7.23 Calculated in design_solar_mult()
+	//m_m_dot_design = (m_Ap_tot*m_I_bn_des*m_opteff_des - loss_tot*float(m_nLoops)) / (m_c_htf_ave*(m_T_loop_out_des - m_T_loop_in_des));
+
+
+    double m_dot_max = m_m_dot_htfmax * m_nLoops;
+    double m_dot_min = m_m_dot_htfmin * m_nLoops;
+    m_q_design_ideal = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
+
+    if (m_m_dot_design > m_dot_max) {
+        const char *msg = "The calculated field design mass flow rate of %.2f kg/s is greater than the maximum defined by the max single loop flow rate and number of loops (%.2f kg/s). "
+            "The design mass flow rate is reset to the latter.";
+        m_error_msg = util::format(msg, m_m_dot_design, m_dot_max);
+        mc_csp_messages.add_message(C_csp_messages::NOTICE, m_error_msg);
+        m_m_dot_design = m_dot_max;
+    }
+    else if (m_m_dot_design < m_dot_min) {
+        const char *msg = "The calculated field design mass flow rate of %.2f kg/s is less than the minimum defined by the min single loop flow rate and number of loops (%.2f kg/s). "
+            "The design mass flow rate is reset to the latter.";
+        m_error_msg = util::format(msg, m_m_dot_design, m_dot_min);
+        mc_csp_messages.add_message(C_csp_messages::NOTICE, m_error_msg);
+        m_m_dot_design = m_dot_min;
+    }
+
+	m_m_dot_loop_des = m_m_dot_design/(double)m_nLoops;	//[kg/s]
+	//mjw 1.16.2011 Design field thermal power 
+	//m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
+	m_q_design_actual = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
+	//mjw 1.16.2011 Convert the thermal inertia terms here
+	m_mc_bal_hot = m_mc_bal_hot_per_MW * 3.6 * m_q_design_actual;    //[J/K]
+	m_mc_bal_cold = m_mc_bal_cold_per_MW * 3.6 * m_q_design_actual;  //[J/K]
+
+	//need to provide fluid density
+    double rho_cold = m_htfProps.dens(m_T_loop_in_des, 10.e5); //kg/m3
+    double rho_hot = m_htfProps.dens(m_T_loop_out_des, 10.e5); //kg/m3
+	double rho_ave = m_htfProps.dens((m_T_loop_out_des + m_T_loop_in_des) / 2.0, 10.e5); //kg/m3
+    //Calculate the header design
+    m_nrunsec = (int)floor(float(m_nfsec) / 4.0) + 1;  //The number of unique runner diameters
+    m_D_runner.resize(2 * m_nrunsec);
+    m_WallThk_runner.resize(2 * m_nrunsec);
+    m_L_runner.resize(2 * m_nrunsec);
+    m_m_dot_rnr_dsn.resize(2 * m_nrunsec);
+    m_V_rnr_dsn.resize(2 * m_nrunsec);
+    m_N_rnr_xpans.resize(2 * m_nrunsec);  //calculated number of expansion loops in the runner section
+    m_DP_rnr.resize(2 * m_nrunsec);
+    m_P_rnr.resize(2 * m_nrunsec);
+    m_T_rnr.resize(2 * m_nrunsec);
+    m_P_rnr_dsn = m_P_rnr;
+    m_T_rnr_dsn = m_T_rnr;
+    m_D_hdr.resize(2 * m_nhdrsec);
+    m_WallThk_hdr.resize(2 * m_nhdrsec);
+    m_L_hdr.resize(2 * m_nhdrsec);
+    m_N_hdr_xpans.resize(2 * m_nhdrsec);
+    m_m_dot_hdr_dsn.resize(2 * m_nhdrsec);
+    m_V_hdr_dsn.resize(2 * m_nhdrsec);
+    m_DP_hdr.resize(2 * m_nhdrsec);
+    m_P_hdr.resize(2 * m_nhdrsec);
+    m_T_hdr.resize(2 * m_nhdrsec);
+    m_P_hdr_dsn = m_P_hdr;
+    m_T_hdr_dsn = m_T_hdr;
+    m_DP_loop.resize(2 * m_nSCA + 3);
+    m_P_loop.resize(2 * m_nSCA + 3);
+    m_T_loop.resize(2 * m_nSCA + 3);
+    m_P_loop_dsn = m_P_loop;
+    m_T_loop_dsn = m_T_loop;
+
+    if (m_custom_sf_pipe_sizes) {
+        if (m_sf_rnr_diams.ncells() == 2 * m_nrunsec && m_sf_rnr_wallthicks.ncells() == 2 * m_nrunsec && m_sf_rnr_lengths.ncells() == 2 * m_nrunsec &&
+            m_sf_hdr_diams.ncells() == 2 * m_nhdrsec && m_sf_hdr_wallthicks.ncells() == 2 * m_nhdrsec && m_sf_hdr_lengths.ncells() == 2 * m_nhdrsec) {
+            m_D_runner.assign(m_sf_rnr_diams, m_sf_rnr_diams.ncells());
+            m_WallThk_runner.assign(m_sf_rnr_wallthicks, m_sf_rnr_wallthicks.ncells());
+            m_L_runner.assign(m_sf_rnr_lengths, m_sf_rnr_lengths.ncells());
+            m_D_hdr.assign(m_sf_hdr_diams, m_sf_hdr_diams.ncells());
+            m_WallThk_hdr.assign(m_sf_hdr_wallthicks, m_sf_hdr_wallthicks.ncells());
+            m_L_hdr.assign(m_sf_hdr_lengths, m_sf_hdr_lengths.ncells());
+        }
+        else {
+            throw(C_csp_exception("The number of custom solar field pipe sections is not correct.", "Trough collector solver"));
+        }
+    }
+
+    std::string summary;
+    // Use legacy m_V_hdr_max and/or m_V_hdr_min if you need to
+    if ((std::isnan(m_V_hdr_cold_max) || std::isnan(m_V_hdr_hot_max)) && !std::isnan(m_V_hdr_max)) {
+        m_V_hdr_cold_max = m_V_hdr_hot_max = m_V_hdr_max;
+    }
+    if ((std::isnan(m_V_hdr_cold_min) || std::isnan(m_V_hdr_hot_min)) && !std::isnan(m_V_hdr_min)) {
+        m_V_hdr_cold_min = m_V_hdr_hot_min = m_V_hdr_min;
+    }
+    rnr_and_hdr_design(m_nhdrsec, m_nfsec, m_nrunsec, rho_cold, rho_hot, m_V_hdr_cold_max, m_V_hdr_cold_min,
+        m_V_hdr_hot_max, m_V_hdr_hot_min, m_N_max_hdr_diams, m_m_dot_design, m_D_hdr, m_D_runner,
+        m_m_dot_rnr_dsn, m_m_dot_hdr_dsn, m_V_rnr_dsn, m_V_hdr_dsn, &summary, m_custom_sf_pipe_sizes);
+    mc_csp_messages.add_message(C_csp_messages::NOTICE, summary);
+
+    if (!m_custom_sf_pipe_sizes) {
+        // Calculate pipe wall thicknesses
+        for (int i = 0; i < m_D_runner.size(); i++) {
+            m_WallThk_runner[i] = CSP::WallThickness(m_D_runner[i]);
+        }
+        for (int i = 0; i < m_D_hdr.size(); i++) {
+            m_WallThk_hdr[i] = CSP::WallThickness(m_D_hdr[i]);
+        }
+    }
+
+    // Do one-time calculations for system geometry.
+        // Determine header section lengths, including expansion loops
+    if (size_hdr_lengths(m_Row_Distance, m_nhdrsec, m_offset_xpan_hdr, m_N_hdr_per_xpan, m_L_xpan_hdr, m_L_hdr, m_N_hdr_xpans, m_custom_sf_pipe_sizes)) {
+        throw(C_csp_exception("header length sizing failed", "Trough collector solver"));
+    }
+
+    // Determine runner section lengths, including expansion loops
+    if (size_rnr_lengths(m_nfsec, m_L_rnr_pb, m_nrunsec, m_SCAInfoArray.at(0, 1), m_northsouth_field_sep,
+        m_L_SCA, m_Min_rnr_xpans, m_Distance_SCA, m_nSCA, m_L_rnr_per_xpan, m_L_xpan_rnr, m_L_runner, m_N_rnr_xpans, m_custom_sf_pipe_sizes)) {
+        throw(C_csp_exception("runner length sizing failed", "Trough collector solver"));
+    }
+
+    double v_from_sgs = 0.0; double v_to_sgs = 0.0;
+	for (int i = 0; i < m_nrunsec; i++)
+	{
+        v_from_sgs = v_from_sgs + 2.*m_L_runner[i] * CSP::pi*pow(m_D_runner[i], 2) / 4.;  // volume of the runner going away from sgs
+        v_to_sgs = v_to_sgs + 2.*m_L_runner[2 * m_nrunsec - i - 1] * CSP::pi*pow(m_D_runner[2 * m_nrunsec - i - 1], 2) / 4.;  // ...and going to the sgs
+	}
+
+	//-------piping from header into and out of the HCE's
+	double v_loop_tot = 0.;
+	for (int j = 0; j < m_nHCEVar; j++)
+	{
+		for (int i = 0; i < m_nSCA; i++)
 		{
-			m_error_msg = util::format("Number of field subsections must be an even number or 1");
-			throw(C_csp_exception(m_error_msg, "Trough collector solver"));
+			int CT = (int)m_SCAInfoArray.at(i, 1) - 1;   //Collector type    
+			int HT = (int)m_SCAInfoArray.at(i, 0) - 1;    //HCE type
+			//v_loop_bal = v_loop_bal + m_Distance_SCA(CT)*m_A_cs(HT,j)*m_HCE_FieldFrac(HT,j)*float(m_nLoops)
+			v_loop_tot += (m_L_SCA[CT] + m_Distance_SCA[CT])*m_A_cs(HT, j)*m_HCE_FieldFrac(HT, j)*float(m_nLoops);
 		}
+	}
 
-		/*
-		The number of header sections (tee-conns.) per field section is equal to the total number of loops divided
-		by the number of distinct headers. Since two loops are connected to the same header section,
-		the total number of header sections is then divided by 2.
-		*/
-		m_nhdrsec = (int)ceil(float(m_nLoops) / float(m_nfsec * 2));
-
-		//the estimated mass flow rate at design
-        //tn 4.25.11 using m_Ap_tot instead of A_loop. Change location of m_opteff_des
-		//m_m_dot_design = (m_Ap_tot*m_I_bn_des*m_opteff_des - loss_tot*float(m_nLoops)) / (m_c_htf_ave*(m_T_loop_out_des - m_T_loop_in_des));
+	//mjw 1.13.2011 Add on volume for the crossover piping 
+	//v_loop_tot = v_loop_tot + m_Row_Distance*m_A_cs(m_SCAInfoArray(m_nSCA/2,1),1)*float(m_nLoops)
+	v_loop_tot += m_Row_Distance*m_A_cs((int)m_SCAInfoArray(max(2, m_nSCA) / 2 - 1, 0), 0)*float(m_nLoops);      //TN 6/20: need to solve for m_nSCA = 1
 
 
-        double m_dot_max = m_m_dot_htfmax * m_nLoops;
-        double m_dot_min = m_m_dot_htfmin * m_nLoops;
-        m_q_design_ideal = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
+	//-------field header loop
+	double v_header_cold = 0.0, v_header_hot = 0.0;
+	for (int i = 0; i < m_nhdrsec; i++)
+	{
+		//Also calculate the hot and cold header volume for later use. 4.25 is for header expansion bends
+		v_header_cold += CSP::pi*m_D_hdr[i] * m_D_hdr[i] / 4.*m_L_hdr[i]*float(m_nfsec);
+        v_header_hot += CSP::pi*m_D_hdr[i + m_nhdrsec] * m_D_hdr[i + m_nhdrsec] / 4.*m_L_hdr[i + m_nhdrsec]*float(m_nfsec);
+	}
+	//Add on inlet/outlet from the header to the loop. Assume header to loop inlet ~= 10 [m] (Kelley/Kearney)
+    v_header_cold += 20.*m_A_cs(0, 0)*float(m_nLoops);
+    v_header_hot += 20.*m_A_cs(0, 0)*float(m_nLoops);
 
-        double therm_ideal = m_q_design_ideal / (m_Ap_tot * m_I_bn_des * m_opteff_des);
+	//Calculate the HTF volume associated with pumps and the SGS
+	double v_sgs = Pump_SGS(rho_ave, m_m_dot_design, m_solar_mult);
 
-        if (m_m_dot_design > m_dot_max) {
-            const char *msg = "The calculated field design mass flow rate of %.2f kg/s is greater than the maximum defined by the max single loop flow rate and number of loops (%.2f kg/s). "
-                "The design mass flow rate is reset to the latter.";
-            m_error_msg = util::format(msg, m_m_dot_design, m_dot_max);
-            mc_csp_messages.add_message(C_csp_messages::NOTICE, m_error_msg);
-            m_m_dot_design = m_dot_max;
-        }
-        else if (m_m_dot_design < m_dot_min) {
-            const char *msg = "The calculated field design mass flow rate of %.2f kg/s is less than the minimum defined by the min single loop flow rate and number of loops (%.2f kg/s). "
-                "The design mass flow rate is reset to the latter.";
-            m_error_msg = util::format(msg, m_m_dot_design, m_dot_min);
-            mc_csp_messages.add_message(C_csp_messages::NOTICE, m_error_msg);
-            m_m_dot_design = m_dot_min;
-        }
+	//Calculate the hot and cold balance-of-plant volumes
+	m_v_hot = v_header_hot + v_to_sgs;
+	m_v_cold = v_header_cold + v_from_sgs;
 
-		m_m_dot_loop_des = m_m_dot_design/(double)m_nLoops;	//[kg/s]
-		//mjw 1.16.2011 Design field thermal power 
-		//m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
-		m_q_design_actual = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
-		//mjw 1.16.2011 Convert the thermal inertia terms here
-		m_mc_bal_hot = m_mc_bal_hot_per_MW * 3.6 * m_q_design_actual;    //[J/K]
-		m_mc_bal_cold = m_mc_bal_cold_per_MW * 3.6 * m_q_design_actual;  //[J/K]
-
-		//need to provide fluid density
-        double rho_cold = m_htfProps.dens(m_T_loop_in_des, 10.e5); //kg/m3
-        double rho_hot = m_htfProps.dens(m_T_loop_out_des, 10.e5); //kg/m3
-		double rho_ave = m_htfProps.dens((m_T_loop_out_des + m_T_loop_in_des) / 2.0, 10.e5); //kg/m3
-        //Calculate the header design
-        m_nrunsec = (int)floor(float(m_nfsec) / 4.0) + 1;  //The number of unique runner diameters
-        m_D_runner.resize(2 * m_nrunsec);
-        m_WallThk_runner.resize(2 * m_nrunsec);
-        m_L_runner.resize(2 * m_nrunsec);
-        m_m_dot_rnr_dsn.resize(2 * m_nrunsec);
-        m_V_rnr_dsn.resize(2 * m_nrunsec);
-        m_N_rnr_xpans.resize(2 * m_nrunsec);  //calculated number of expansion loops in the runner section
-        m_DP_rnr.resize(2 * m_nrunsec);
-        m_P_rnr.resize(2 * m_nrunsec);
-        m_T_rnr.resize(2 * m_nrunsec);
-        m_P_rnr_dsn = m_P_rnr;
-        m_T_rnr_dsn = m_T_rnr;
-        m_D_hdr.resize(2 * m_nhdrsec);
-        m_WallThk_hdr.resize(2 * m_nhdrsec);
-        m_L_hdr.resize(2 * m_nhdrsec);
-        m_N_hdr_xpans.resize(2 * m_nhdrsec);
-        m_m_dot_hdr_dsn.resize(2 * m_nhdrsec);
-        m_V_hdr_dsn.resize(2 * m_nhdrsec);
-        m_DP_hdr.resize(2 * m_nhdrsec);
-        m_P_hdr.resize(2 * m_nhdrsec);
-        m_T_hdr.resize(2 * m_nhdrsec);
-        m_P_hdr_dsn = m_P_hdr;
-        m_T_hdr_dsn = m_T_hdr;
-        m_DP_loop.resize(2 * m_nSCA + 3);
-        m_P_loop.resize(2 * m_nSCA + 3);
-        m_T_loop.resize(2 * m_nSCA + 3);
-        m_P_loop_dsn = m_P_loop;
-        m_T_loop_dsn = m_T_loop;
-
-        if (m_custom_sf_pipe_sizes) {
-            if (m_sf_rnr_diams.ncells() == 2 * m_nrunsec && m_sf_rnr_wallthicks.ncells() == 2 * m_nrunsec && m_sf_rnr_lengths.ncells() == 2 * m_nrunsec &&
-                m_sf_hdr_diams.ncells() == 2 * m_nhdrsec && m_sf_hdr_wallthicks.ncells() == 2 * m_nhdrsec && m_sf_hdr_lengths.ncells() == 2 * m_nhdrsec) {
-                m_D_runner.assign(m_sf_rnr_diams, m_sf_rnr_diams.ncells());
-                m_WallThk_runner.assign(m_sf_rnr_wallthicks, m_sf_rnr_wallthicks.ncells());
-                m_L_runner.assign(m_sf_rnr_lengths, m_sf_rnr_lengths.ncells());
-                m_D_hdr.assign(m_sf_hdr_diams, m_sf_hdr_diams.ncells());
-                m_WallThk_hdr.assign(m_sf_hdr_wallthicks, m_sf_hdr_wallthicks.ncells());
-                m_L_hdr.assign(m_sf_hdr_lengths, m_sf_hdr_lengths.ncells());
-            }
-            else {
-                throw(C_csp_exception("The number of custom solar field pipe sections is not correct.", "Trough collector solver"));
-            }
-        }
-
-        std::string summary;
-        // Use legacy m_V_hdr_max and/or m_V_hdr_min if you need to
-        if ((std::isnan(m_V_hdr_cold_max) || std::isnan(m_V_hdr_hot_max)) && !std::isnan(m_V_hdr_max)) {
-            m_V_hdr_cold_max = m_V_hdr_hot_max = m_V_hdr_max;
-        }
-        if ((std::isnan(m_V_hdr_cold_min) || std::isnan(m_V_hdr_hot_min)) && !std::isnan(m_V_hdr_min)) {
-            m_V_hdr_cold_min = m_V_hdr_hot_min = m_V_hdr_min;
-        }
-        rnr_and_hdr_design(m_nhdrsec, m_nfsec, m_nrunsec, rho_cold, rho_hot, m_V_hdr_cold_max, m_V_hdr_cold_min,
-            m_V_hdr_hot_max, m_V_hdr_hot_min, m_N_max_hdr_diams, m_m_dot_design, m_D_hdr, m_D_runner,
-            m_m_dot_rnr_dsn, m_m_dot_hdr_dsn, m_V_rnr_dsn, m_V_hdr_dsn, &summary, m_custom_sf_pipe_sizes);
-        mc_csp_messages.add_message(C_csp_messages::NOTICE, summary);
-
-        if (!m_custom_sf_pipe_sizes) {
-            // Calculate pipe wall thicknesses
-            for (int i = 0; i < m_D_runner.size(); i++) {
-                m_WallThk_runner[i] = CSP::WallThickness(m_D_runner[i]);
-            }
-            for (int i = 0; i < m_D_hdr.size(); i++) {
-                m_WallThk_hdr[i] = CSP::WallThickness(m_D_hdr[i]);
-            }
-        }
-
-        // Do one-time calculations for system geometry.
-            // Determine header section lengths, including expansion loops
-        if (size_hdr_lengths(m_Row_Distance, m_nhdrsec, m_offset_xpan_hdr, m_N_hdr_per_xpan, m_L_xpan_hdr, m_L_hdr, m_N_hdr_xpans, m_custom_sf_pipe_sizes)) {
-            throw(C_csp_exception("header length sizing failed", "Trough collector solver"));
-        }
-
-        // Determine runner section lengths, including expansion loops
-        if (size_rnr_lengths(m_nfsec, m_L_rnr_pb, m_nrunsec, m_SCAInfoArray.at(0, 1), m_northsouth_field_sep,
-            m_L_SCA, m_Min_rnr_xpans, m_Distance_SCA, m_nSCA, m_L_rnr_per_xpan, m_L_xpan_rnr, m_L_runner, m_N_rnr_xpans, m_custom_sf_pipe_sizes)) {
-            throw(C_csp_exception("runner length sizing failed", "Trough collector solver"));
-        }
-
-        double v_from_sgs = 0.0; double v_to_sgs = 0.0;
-		for (int i = 0; i < m_nrunsec; i++)
-		{
-            v_from_sgs = v_from_sgs + 2.*m_L_runner[i] * CSP::pi*pow(m_D_runner[i], 2) / 4.;  // volume of the runner going away from sgs
-            v_to_sgs = v_to_sgs + 2.*m_L_runner[2 * m_nrunsec - i - 1] * CSP::pi*pow(m_D_runner[2 * m_nrunsec - i - 1], 2) / 4.;  // ...and going to the sgs
-		}
-
-		//-------piping from header into and out of the HCE's
-		double v_loop_tot = 0.;
-		for (int j = 0; j < m_nHCEVar; j++)
-		{
-			for (int i = 0; i < m_nSCA; i++)
-			{
-				int CT = (int)m_SCAInfoArray.at(i, 1) - 1;   //Collector type    
-				int HT = (int)m_SCAInfoArray.at(i, 0) - 1;    //HCE type
-				//v_loop_bal = v_loop_bal + m_Distance_SCA(CT)*m_A_cs(HT,j)*m_HCE_FieldFrac(HT,j)*float(m_nLoops)
-				v_loop_tot += (m_L_SCA[CT] + m_Distance_SCA[CT])*m_A_cs(HT, j)*m_HCE_FieldFrac(HT, j)*float(m_nLoops);
-			}
-		}
-
-		//mjw 1.13.2011 Add on volume for the crossover piping 
-		//v_loop_tot = v_loop_tot + m_Row_Distance*m_A_cs(m_SCAInfoArray(m_nSCA/2,1),1)*float(m_nLoops)
-		v_loop_tot += m_Row_Distance*m_A_cs((int)m_SCAInfoArray(max(2, m_nSCA) / 2 - 1, 0), 0)*float(m_nLoops);      //TN 6/20: need to solve for m_nSCA = 1
-
-
-		//-------field header loop
-		double v_header_cold = 0.0, v_header_hot = 0.0;
-		for (int i = 0; i < m_nhdrsec; i++)
-		{
-			//Also calculate the hot and cold header volume for later use. 4.25 is for header expansion bends
-			v_header_cold += CSP::pi*m_D_hdr[i] * m_D_hdr[i] / 4.*m_L_hdr[i]*float(m_nfsec);
-            v_header_hot += CSP::pi*m_D_hdr[i + m_nhdrsec] * m_D_hdr[i + m_nhdrsec] / 4.*m_L_hdr[i + m_nhdrsec]*float(m_nfsec);
-		}
-		//Add on inlet/outlet from the header to the loop. Assume header to loop inlet ~= 10 [m] (Kelley/Kearney)
-        v_header_cold += 20.*m_A_cs(0, 0)*float(m_nLoops);
-        v_header_hot += 20.*m_A_cs(0, 0)*float(m_nLoops);
-
-		//Calculate the HTF volume associated with pumps and the SGS
-		double v_sgs = Pump_SGS(rho_ave, m_m_dot_design, m_solar_mult);
-
-		//Calculate the hot and cold balance-of-plant volumes
-		m_v_hot = v_header_hot + v_to_sgs;
-		m_v_cold = v_header_cold + v_from_sgs;
-
-		//Write the volume totals to the piping diameter file
-        summary.clear();
-		summary.append("\n----------------------------------------------\n"
-			"Plant HTF volume information:\n"
-			"----------------------------------------------\n");
+	//Write the volume totals to the piping diameter file
+    summary.clear();
+	summary.append("\n----------------------------------------------\n"
+		"Plant HTF volume information:\n"
+		"----------------------------------------------\n");
 #ifdef _MSC_VER
 #define MySnprintf _snprintf
 #else
@@ -730,28 +726,28 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 #endif
 #define TSTRLEN 512
 
-        char tstr[TSTRLEN];
-		MySnprintf(tstr, TSTRLEN,
-			"Cold header pipe volume:   %10.4le m3\n"
-			"Hot header pipe volume:    %10.4le m3\n"
-			"Volume per loop:           %10.4le m3\n"
-			"Total volume in all loops: %10.4le m3\n"
-			"Total solar field volume:  %10.4le m3\n"
-			"Pump / SGS system volume:  %10.4le m3\n"
-			"---------------------------\n"
-			"Total plant HTF volume:    %10.4le m3\n",
+    char tstr[TSTRLEN];
+	MySnprintf(tstr, TSTRLEN,
+		"Cold header pipe volume:   %10.4le m3\n"
+		"Hot header pipe volume:    %10.4le m3\n"
+		"Volume per loop:           %10.4le m3\n"
+		"Total volume in all loops: %10.4le m3\n"
+		"Total solar field volume:  %10.4le m3\n"
+		"Pump / SGS system volume:  %10.4le m3\n"
+		"---------------------------\n"
+		"Total plant HTF volume:    %10.4le m3\n",
 
-			m_v_cold, m_v_hot, v_loop_tot / double(m_nLoops), v_loop_tot,
-            (m_v_hot + m_v_cold + v_loop_tot), v_sgs, (m_v_hot + m_v_cold + v_loop_tot + v_sgs));
+		m_v_cold, m_v_hot, v_loop_tot / double(m_nLoops), v_loop_tot,
+        (m_v_hot + m_v_cold + v_loop_tot), v_sgs, (m_v_hot + m_v_cold + v_loop_tot + v_sgs));
 
-		summary.append(tstr);
+	summary.append(tstr);
 
-		mc_csp_messages.add_message(C_csp_messages::NOTICE, summary);
+	mc_csp_messages.add_message(C_csp_messages::NOTICE, summary);
 
-		//Include the pump/SGS volume with the header
-		m_v_hot = m_v_hot + v_sgs / 2.;
-		m_v_cold = m_v_cold + v_sgs / 2.;
-	}
+	//Include the pump/SGS volume with the header
+	m_v_hot = m_v_hot + v_sgs / 2.;
+	m_v_cold = m_v_cold + v_sgs / 2.;
+	
 
 	/* ----- Set initial storage values ------ */
 	double T_field_ini = 0.5*(m_T_fp + m_T_loop_in_des);	//[K]
@@ -4253,8 +4249,6 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
         }
     }
 
-    
-
     // SCADefocusArray
     m_SCADefocusArray = vector<int>();
     {
@@ -4360,53 +4354,6 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
         }
     }
 
-    // Loop Optical Efficiency
-    ///*m_loop_optical_efficiency_des = 0;
-    //{
-    //    int ncol = static_cast<int>(m_trough_loop_control.at(0));
-
-    //    if (m_trough_loop_control.ncells() != (size_t)ncol * 3 + 1) {
-    //        return -888.8;
-    //    }
-
-    //    double total_len = 0.;
-    //    double weighted_sca_eff = 0.0;
-    //    for (int i = 0; i < ncol; i++)
-    //    {
-    //        int sca_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
-    //        total_len = total_len + m_L_SCA[sca_t];
-    //        weighted_sca_eff = weighted_sca_eff + m_L_SCA[sca_t] * m_csp_dtr_sca_calc_sca_effs[sca_t];
-    //    }*/
-
-    //////    if (total_len != 0.0) {
-    //////        weighted_sca_eff = weighted_sca_eff / total_len;
-    //////    }
-    //////    else {
-    //////        weighted_sca_eff = -777.7;
-    //////    }
-
-    //////    total_len = 0;
-    //////    double weighted_hce_eff = 0.0;
-    //////    for (int i = 0; i < ncol; i++)
-    //////    {
-    //////        int hce_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(2 + i * 3)), 1), 4) - 1;
-    //////        int sca_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
-    //////        total_len = total_len + m_L_SCA[sca_t];
-    //////        weighted_hce_eff = weighted_hce_eff + m_L_SCA[sca_t] * m_csp_dtr_hce_optical_effs[hce_t];
-    //////    }
-
-    //////    if (total_len != 0.0) {
-    //////        weighted_hce_eff = weighted_hce_eff / total_len;
-    //////    }
-    //////    else {
-    //////        weighted_hce_eff = -777.7;
-    //////    }
-
-    //////    m_loop_optical_efficiency_des = weighted_hce_eff * weighted_sca_eff;
-    //////}
-
-
-
     // Calculate Optical Efficiency and Total Thermal Loss
     m_opteff_des = 0;
     m_total_loop_conversion_efficiency_des = 0;
@@ -4446,8 +4393,6 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
         double q_loop_actual = q_loop_ideal * m_opteff_des - loss_tot;
 
         m_total_loop_conversion_efficiency_des = q_loop_actual / q_loop_ideal;
-
-        m_loop_optical_efficiency_des = m_opteff_des;
     }
 
 
@@ -4513,15 +4458,6 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
     {
         m_c_htf_ave = m_htfProps.Cp_ave(m_T_loop_in_des, m_T_loop_out_des) * 1000.;    //[J/kg-K] Specific heat
         m_m_dot_design = (m_Ap_tot * m_I_bn_des * m_opteff_des - loss_tot * float(m_nLoops)) / (m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des));
-
-
-        //double q_design = m_I_bn_des * m_Ap_tot * m_total_loop_conversion_efficiency_des;
-        //double mdot2 = q_design / (m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des));
-    
-        //double m_q_design_1 = m_I_bn_des * m_Ap_tot * m_total_loop_conversion_efficiency_des; //OLD UI calculations
-        //double m_q_design_2 = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //Already Calculated in init_fieldgeom
-
-        //double  x = 0;
     }
 
 
