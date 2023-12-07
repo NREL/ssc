@@ -503,12 +503,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 	Call this method once when call() is first invoked. The calculations require location information that
 	is provided by the weatherreader class and not set until after init() and before the first call().
 	*/
-	//Calculate the actual length of the SCA's based on the aperture length and the collectors per SCA
-	m_L_actSCA.resize(m_nColt);
-	for (int i = 0; i<m_nColt; i++)
-	{
-		m_L_actSCA[i] = m_L_aperture[i] * m_ColperSCA[i];
-	}
+	
 
 	//Calculate the total field aperture area
 	m_Ap_tot = 0.;
@@ -538,12 +533,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		}
 	}
 
-	m_L_tot = 0.0;
-	for (int i = 0; i < m_nSCA; i++)
-	{
-		int ct = (int)m_SCAInfoArray.at(i, 1);
-		m_L_tot += m_L_actSCA[ct - 1];
-	}
+	
 
 	if (m_accept_loc == 1)
 	{
@@ -566,39 +556,17 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 		*/
 		m_nhdrsec = (int)ceil(float(m_nLoops) / float(m_nfsec * 2));
 
-		//We need to determine design information about the field for purposes of header sizing ONLY
-		m_c_htf_ave = m_htfProps.Cp_ave(m_T_loop_in_des, m_T_loop_out_des) * 1000.;    //[J/kg-K] Specific heat
-
-		//Need to loop through to calculate the weighted average optical efficiency at design
-		//Start by initializing sensitive variables
-		double loss_tot = 0.0;
-		m_opteff_des = 0.0;
-		m_m_dot_design = 0.0;
-
-		for (int i = 0; i < m_nSCA; i++)
-		{
-			int CT = (int)m_SCAInfoArray.at(i, 1);    //Collector type    
-			//Calculate the CosTheta value at summer solstice noon
-			//x1 = sqrt(1. - pow(cos((m_latitude - 23.5/180.*m_pi)-m_ColTilt) - cos(m_ColTilt) * cos((m_latitude - 23.5/180.*m_pi)) * (1. - cos(0. -m_ColAz)), 2)); //costheta
-			//Calculate end gain factor
-			//x2 = max((m_Ave_Focal_Length[CT-1]*tan(acos(x1))-m_Distance_SCA[CT-1]),0.0);  //end gain
-			//calculate end loss
-			//el_des =  1. - (m_Ave_Focal_Length[CT-1] * tan(acos(x1)) - (float(m_nSCA) - 1.) /float(m_nSCA)* x2) / m_L_actSCA[CT-1];
-
-			for (int j = 0; j < m_nHCEVar; j++)
-			{
-				int HT = (int)m_SCAInfoArray.at(i, 0);    //HCE type
-				//Calculate optical efficiency approximating use of the first collector only
-				m_opteff_des += m_Shadowing.at(HT - 1, j)*m_TrackingError[CT - 1] * m_GeomEffects[CT - 1] * m_Rho_mirror_clean[CT - 1] * m_Dirt_mirror[CT - 1] *
-					m_Dirt_HCE.at(HT - 1, j)*m_Error[CT - 1] * (m_L_actSCA[CT - 1] / m_L_tot)*m_HCE_FieldFrac.at(HT - 1, j);
-				loss_tot += m_Design_loss.at(HT - 1, j)*m_L_actSCA[CT - 1] * m_HCE_FieldFrac.at(HT - 1, j);
-			}
-		}
 		//the estimated mass flow rate at design
-		m_m_dot_design = (m_Ap_tot*m_I_bn_des*m_opteff_des - loss_tot*float(m_nLoops)) / (m_c_htf_ave*(m_T_loop_out_des - m_T_loop_in_des));  //tn 4.25.11 using m_Ap_tot instead of A_loop. Change location of m_opteff_des
+        //tn 4.25.11 using m_Ap_tot instead of A_loop. Change location of m_opteff_des
+		//m_m_dot_design = (m_Ap_tot*m_I_bn_des*m_opteff_des - loss_tot*float(m_nLoops)) / (m_c_htf_ave*(m_T_loop_out_des - m_T_loop_in_des));
+
+
         double m_dot_max = m_m_dot_htfmax * m_nLoops;
         double m_dot_min = m_m_dot_htfmin * m_nLoops;
         m_q_design_ideal = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
+
+        double therm_ideal = m_q_design_ideal / (m_Ap_tot * m_I_bn_des * m_opteff_des);
+
         if (m_m_dot_design > m_dot_max) {
             const char *msg = "The calculated field design mass flow rate of %.2f kg/s is greater than the maximum defined by the max single loop flow rate and number of loops (%.2f kg/s). "
                 "The design mass flow rate is reset to the latter.";
@@ -4233,6 +4201,31 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
         throw(C_csp_exception("Receiver HTF code is not recognized", "Trough Collector Solver"));
     }
 
+    // SCAInfoArray
+    m_SCAInfoArray = util::matrix_t<double>(static_cast<int>(m_trough_loop_control.at(0)), 2);
+    {
+        int assemblies = static_cast<int>(m_trough_loop_control.at(0));
+
+        for (int i = 0; i < assemblies; i++) {
+            m_SCAInfoArray.at(i, 1) = static_cast<int>(m_trough_loop_control.at(1 + 3 * i));
+            m_SCAInfoArray.at(i, 0) = static_cast<int>(m_trough_loop_control.at(2 + 3 * i));
+        }
+    }
+
+    //Calculate the actual length of the SCA's based on the aperture length and the collectors per SCA
+    m_L_actSCA.resize(m_nColt);
+    for (int i = 0; i < m_nColt; i++)
+    {
+        m_L_actSCA[i] = m_L_aperture[i] * m_ColperSCA[i];
+    }
+
+    m_L_tot = 0.0;
+    for (int i = 0; i < m_nSCA; i++)
+    {
+        int ct = (int)m_SCAInfoArray.at(i, 1);
+        m_L_tot += m_L_actSCA[ct - 1];
+    }
+
     // Single Loop Aperture
     m_single_loop_aperture = 0;
     {
@@ -4259,6 +4252,35 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
             }
         }
     }
+
+    
+
+    // SCADefocusArray
+    m_SCADefocusArray = vector<int>();
+    {
+        int assemblies = static_cast<int>(m_trough_loop_control.at(0));
+        m_SCADefocusArray.resize(assemblies);
+        for (int i = 0; i < assemblies; i++) {
+            m_SCADefocusArray[i] = static_cast<int>(m_trough_loop_control.at(3 + 3 * i));
+        }
+    }
+
+    // Max Field Flow Velocity
+    m_max_field_flow_velocity = 0;
+    {
+        double density = m_htfProps.dens(m_T_loop_out_des + 273.15, std::numeric_limits<double>::quiet_NaN());
+
+        m_max_field_flow_velocity = m_m_dot_htfmax * 4 / (density * M_PI * m_min_inner_diameter * m_min_inner_diameter);
+    }
+
+    // Min Field Flow Velocity
+    m_min_field_flow_velocity = 0;
+    {
+        double density = m_htfProps.dens(m_T_loop_in_des + 273.15, std::numeric_limits<double>::quiet_NaN());
+
+        m_min_field_flow_velocity = m_m_dot_htfmin * 4 / (density * M_PI * m_min_inner_diameter * m_min_inner_diameter);
+    }
+
 
     // HCE design heat loss
     m_HCE_heat_loss_des = std::vector<double>();
@@ -4339,92 +4361,95 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
     }
 
     // Loop Optical Efficiency
-    m_loop_optical_efficiency_des = 0;
-    {
-        int ncol = static_cast<int>(m_trough_loop_control.at(0));
+    ///*m_loop_optical_efficiency_des = 0;
+    //{
+    //    int ncol = static_cast<int>(m_trough_loop_control.at(0));
 
-        if (m_trough_loop_control.ncells() != (size_t)ncol * 3 + 1) {
-            return -888.8;
-        }
+    //    if (m_trough_loop_control.ncells() != (size_t)ncol * 3 + 1) {
+    //        return -888.8;
+    //    }
 
-        double total_len = 0.;
-        double weighted_sca_eff = 0.0;
-        for (int i = 0; i < ncol; i++)
-        {
-            int sca_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
-            total_len = total_len + m_L_SCA[sca_t];
-            weighted_sca_eff = weighted_sca_eff + m_L_SCA[sca_t] * m_csp_dtr_sca_calc_sca_effs[sca_t];
-        }
+    //    double total_len = 0.;
+    //    double weighted_sca_eff = 0.0;
+    //    for (int i = 0; i < ncol; i++)
+    //    {
+    //        int sca_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
+    //        total_len = total_len + m_L_SCA[sca_t];
+    //        weighted_sca_eff = weighted_sca_eff + m_L_SCA[sca_t] * m_csp_dtr_sca_calc_sca_effs[sca_t];
+    //    }*/
 
-        if (total_len != 0.0) {
-            weighted_sca_eff = weighted_sca_eff / total_len;
-        }
-        else {
-            weighted_sca_eff = -777.7;
-        }
+    //////    if (total_len != 0.0) {
+    //////        weighted_sca_eff = weighted_sca_eff / total_len;
+    //////    }
+    //////    else {
+    //////        weighted_sca_eff = -777.7;
+    //////    }
 
-        total_len = 0;
-        double weighted_hce_eff = 0.0;
-        for (int i = 0; i < ncol; i++)
-        {
-            int hce_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(2 + i * 3)), 1), 4) - 1;
-            int sca_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
-            total_len = total_len + m_L_SCA[sca_t];
-            weighted_hce_eff = weighted_hce_eff + m_L_SCA[sca_t] * m_csp_dtr_hce_optical_effs[hce_t];
-        }
+    //////    total_len = 0;
+    //////    double weighted_hce_eff = 0.0;
+    //////    for (int i = 0; i < ncol; i++)
+    //////    {
+    //////        int hce_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(2 + i * 3)), 1), 4) - 1;
+    //////        int sca_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
+    //////        total_len = total_len + m_L_SCA[sca_t];
+    //////        weighted_hce_eff = weighted_hce_eff + m_L_SCA[sca_t] * m_csp_dtr_hce_optical_effs[hce_t];
+    //////    }
 
-        if (total_len != 0.0) {
-            weighted_hce_eff = weighted_hce_eff / total_len;
-        }
-        else {
-            weighted_hce_eff = -777.7;
-        }
+    //////    if (total_len != 0.0) {
+    //////        weighted_hce_eff = weighted_hce_eff / total_len;
+    //////    }
+    //////    else {
+    //////        weighted_hce_eff = -777.7;
+    //////    }
 
-        m_loop_optical_efficiency_des = weighted_hce_eff * weighted_sca_eff;
-    }
+    //////    m_loop_optical_efficiency_des = weighted_hce_eff * weighted_sca_eff;
+    //////}
 
-    // SCAInfoArray
-    m_SCAInfoArray = util::matrix_t<double>(static_cast<int>(m_trough_loop_control.at(0)), 2);
-    {
-        int assemblies = static_cast<int>(m_trough_loop_control.at(0));
-        
-        for (int i = 0; i < assemblies; i++) {
-            m_SCAInfoArray.at(i, 1) = static_cast<int>(m_trough_loop_control.at(1 + 3 * i));
-            m_SCAInfoArray.at(i, 0) = static_cast<int>(m_trough_loop_control.at(2 + 3 * i));
-        }
-    }
 
-    // SCADefocusArray
-    m_SCADefocusArray = vector<int>();
-    {
-        int assemblies = static_cast<int>(m_trough_loop_control.at(0));
-        m_SCADefocusArray.resize(assemblies);
-        for (int i = 0; i < assemblies; i++) {
-            m_SCADefocusArray[i] = static_cast<int>(m_trough_loop_control.at(3 + 3 * i));
-        }
-    }
 
-    // Max Field Flow Velocity
-    m_max_field_flow_velocity = 0;
-    {
-        double density = m_htfProps.dens(m_T_loop_out_des + 273.15, std::numeric_limits<double>::quiet_NaN());
-
-        m_max_field_flow_velocity = m_m_dot_htfmax * 4 / (density * M_PI * m_min_inner_diameter * m_min_inner_diameter);
-    }
-
-    // Min Field Flow Velocity
-    m_min_field_flow_velocity = 0;
-    {
-        double density = m_htfProps.dens(m_T_loop_in_des + 273.15, std::numeric_limits<double>::quiet_NaN());
-
-        m_min_field_flow_velocity = m_m_dot_htfmin * 4 / (density * M_PI * m_min_inner_diameter * m_min_inner_diameter);
-    }
-
-    // Total Loop Conversion Efficiency
+    // Calculate Optical Efficiency and Total Thermal Loss
+    m_opteff_des = 0;
     m_total_loop_conversion_efficiency_des = 0;
+    double loss_tot = 0.0; // W
     {
-        m_total_loop_conversion_efficiency_des = m_loop_optical_efficiency_des * m_HCE_heat_loss_loop_des;
+        //Need to loop through to calculate the weighted average optical efficiency at design
+        //Start by initializing sensitive variables
+        
+        double L_tot = 0.0;
+        double therm_eff_L = 0.0;
+        m_opteff_des = 0.0;
+        m_m_dot_design = 0.0;
+
+        for (int i = 0; i < m_nSCA; i++)
+        {
+            int CT = (int)m_SCAInfoArray.at(i, 1);    //Collector type    
+            double loss_col = 0;
+
+            for (int j = 0; j < m_nHCEVar; j++)
+            {
+                int HT = (int)m_SCAInfoArray.at(i, 0);    //HCE type
+                //Calculate optical efficiency approximating use of the first collector only
+                m_opteff_des += m_Shadowing.at(HT - 1, j) * m_TrackingError[CT - 1] * m_GeomEffects[CT - 1] * m_Rho_mirror_clean[CT - 1] * m_Dirt_mirror[CT - 1] *
+                    m_Dirt_HCE.at(HT - 1, j) * m_Error[CT - 1] * (m_L_actSCA[CT - 1] / m_L_tot) * m_HCE_FieldFrac.at(HT - 1, j)
+                    * m_alpha_abs.at(HT - 1, j) * m_Tau_envelope.at(HT - 1, j);
+                loss_col += m_Design_loss.at(HT - 1, j) * m_L_actSCA[CT - 1] * m_HCE_FieldFrac.at(HT - 1, j);
+            }
+
+            double L_col = m_L_actSCA[CT - 1];
+            double avg_col_design_loss = loss_col / L_col;
+
+            L_tot += L_col;
+            loss_tot += loss_col;
+        }
+
+        double q_loop_ideal = m_single_loop_aperture * m_I_bn_des;
+        double q_loop_actual = q_loop_ideal * m_opteff_des - loss_tot;
+
+        m_total_loop_conversion_efficiency_des = q_loop_actual / q_loop_ideal;
+
+        m_loop_optical_efficiency_des = m_opteff_des;
     }
+
 
     // Design Power cycle thermal input
     m_q_pb_design = 0;
@@ -4484,11 +4509,22 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
 
     }
 
-    // Calculate Field Thermal Output
+    // Calculate Field Mass Flow
     {
-        //m_q_design = m_I_bn_des * m_Ap_tot * m_total_loop_conversion_efficiency_des; OLD UI calculations
-        //m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); Already Calculated in init_fieldgeom
+        m_c_htf_ave = m_htfProps.Cp_ave(m_T_loop_in_des, m_T_loop_out_des) * 1000.;    //[J/kg-K] Specific heat
+        m_m_dot_design = (m_Ap_tot * m_I_bn_des * m_opteff_des - loss_tot * float(m_nLoops)) / (m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des));
+
+
+        //double q_design = m_I_bn_des * m_Ap_tot * m_total_loop_conversion_efficiency_des;
+        //double mdot2 = q_design / (m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des));
+    
+        //double m_q_design_1 = m_I_bn_des * m_Ap_tot * m_total_loop_conversion_efficiency_des; //OLD UI calculations
+        //double m_q_design_2 = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //Already Calculated in init_fieldgeom
+
+        //double  x = 0;
     }
+
+
 
     // Interconnect component minor loss coefficients
     m_K_cpnt = util::matrix_t<double>(m_nSCA + 3, 11, std::numeric_limits<double>::quiet_NaN());
