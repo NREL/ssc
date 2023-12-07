@@ -94,7 +94,7 @@ bool try_get_rate_structure(var_table* vt, const std::string& ssc_name, bool pow
             else if (unit_type == 2)
                 rate_data.table.assign("unit", var_data("kWh daily"));
             else{
-                vt->assign("error", var_data("ElectricityRates_format_as_URDBv7 error. Unit type in " + ssc_name + " not allowed."));
+                vt->assign("error", var_data("ElectricityRates_format_as_URDB error. Unit type in " + ssc_name + " not allowed."));
                 return false;
             }
             rate_data.table.assign("sell", sell);
@@ -122,20 +122,21 @@ SSCEXPORT bool ElectricityRates_format_as_URDBv8(ssc_data_t data) {
     vt_get_int(vt, "ur_metering_option", &net_metering);
     std::string dgrules;
     switch(net_metering) {
-        case 0:
+        case 0: // net energy metering
             dgrules = "Net Metering";
             break;
-        case 1:
-        case 3:
-            throw(std::runtime_error("ElectricityRates_format_as_URDBv7 error. ur_net_metering_option not available in URDBv7."));
-        case 2:
+        case 1: // net energy metering with $ credits
+            throw(std::runtime_error(util::format("ElectricityRates_format_as_URDB error. ur_net_metering_option=%d not available in URDB. Net Metering with $ credits is not supported.", net_metering)));
+        case 2: // net billing
             dgrules = "Net Billing Hourly";
             break;
-        case 4:
+        case 3: // net billing with carryover to next month
+            throw(std::runtime_error(util::format("ElectricityRates_format_as_URDB error. ur_net_metering_option=%d not available in URDB. Net Billing with Carryover to Next Month is not supported.", net_metering)));
+        case 4: // buy all / sell all
             dgrules = "Buy All Sell All";
             break;
         default:
-            vt->assign("error", var_data("ElectricityRates_format_as_URDBv7 error. ur_net_metering_option not recognized."));
+            vt->assign("error", var_data(util::format("ElectricityRates_format_as_URDB error. ur_net_metering_option=%d not recognized.", net_metering)));
     }
     urdb_data.assign("dgrules", dgrules);
 
@@ -271,7 +272,7 @@ SSCEXPORT bool ElectricityRates_format_as_URDBv8(ssc_data_t data) {
 
             if (!all_same) {
                 // SAM supports 12 different percentages, but REopt and URDB only support one. Flag this for users
-                urdb_data.assign("warning", var_data("ur_billing_demand_lookback_percentages had multiple non-zero percentages. REopt/URDB only supports a single percentage for lookbackPercent. Using the last non-zero percent"));
+                urdb_data.assign("warning", var_data("ur_billing_demand_lookback_percentages has multiple non-zero percentages. REopt/URDB only supports a single percentage for lookbackPercent. Using the last non-zero percent"));
             }
 
             // If zeroes are present, use the lookbackMonths structure to indicate which months are relevant
