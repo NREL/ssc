@@ -209,6 +209,7 @@ static var_info _cm_vtab_trough_physical_iph[] = {
 
     { SSC_INPUT,        SSC_NUMBER,      "is_dispatch_series",        "Use time-series dispatch factors",                                                 "",             "",               "tou",                     "?=1",                                                       "",             "" },
     { SSC_INPUT,        SSC_ARRAY,       "dispatch_series",           "Time series dispatch factors",                                                     "",             "",               "tou",                     "",                                                          "",             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "is_timestep_load_fractions","Use turbine load fraction for each timestep instead of block dispatch?",           "",             "",               "tou",                     "?=0",                                                       "",             "SIMULATION_PARAMETER" },
     { SSC_INPUT,        SSC_ARRAY,       "timestep_load_fractions",   "Turbine load fraction for each timestep, alternative to block dispatch",           "",             "",               "tou",                     "?",                                                         "",             "SIMULATION_PARAMETER" },
     { SSC_INPUT,        SSC_ARRAY,       "ppa_price_input",			  "PPA prices - yearly",			                                                  "$/kWh",	      "",	            "Revenue",			       "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1","",      	    "SIMULATION_PARAMETER" },
     { SSC_INPUT,        SSC_MATRIX,      "mp_energy_market_revenue",  "Energy market revenue input",                                                      "",             "Lifetime x 2[Cleared Capacity(MW),Price($/MWh)]", "Revenue", "csp_financial_model=6&is_dispatch=1",      "",             "SIMULATION_PARAMETER" },
@@ -1158,9 +1159,14 @@ public:
                 tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC][i] = (double)p_f_turbine[i];
 
             // Load fraction by time step:
-            bool is_load_fraction_by_timestep = is_assigned("timestep_load_fractions");
-            tou_params->mc_csp_ops.mv_is_diurnal = !(is_load_fraction_by_timestep);
-            if (is_load_fraction_by_timestep) {
+            //bool is_load_fraction_by_timestep = is_assigned("timestep_load_fractions");
+            bool is_is_timestep_load_fractions_assigned = is_assigned("is_timestep_load_fractions");
+            bool is_timestep_load_fractions = false;
+            if (is_is_timestep_load_fractions_assigned) {
+                is_timestep_load_fractions = as_boolean("is_timestep_load_fractions");
+            }
+            tou_params->mc_csp_ops.mv_is_diurnal = !(is_timestep_load_fractions);
+            if (is_timestep_load_fractions) {
                 size_t N_load_fractions;
                 ssc_number_t* load_fractions = as_array("timestep_load_fractions", &N_load_fractions);
                 std::copy(load_fractions, load_fractions + N_load_fractions, std::back_inserter(tou_params->mc_csp_ops.timestep_load_fractions));
