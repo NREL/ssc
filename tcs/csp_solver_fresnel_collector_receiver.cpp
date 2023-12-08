@@ -1719,7 +1719,7 @@ void C_csp_fresnel_collector_receiver::init(const C_csp_collector_receiver::S_cs
 
     // Set solved parameters
     solved_params.m_T_htf_cold_des = m_T_loop_in_des;	//[K]
-    solved_params.m_q_dot_rec_des = m_q_design / 1.E6;	//[MWt]
+    solved_params.m_q_dot_rec_des = m_q_design_actual / 1.E6;	//[MWt]
     solved_params.m_A_aper_total = m_Ap_tot;			//[m^2]
 
     // Set previous operating mode
@@ -1875,7 +1875,7 @@ bool C_csp_fresnel_collector_receiver::init_fieldgeom()
 
     // If solar multiple is not yet calculated
     if(m_is_solar_mult_designed == false)
-        this->design_solar_mult();
+        this->design_solar_mult(m_latitude / m_d2r);
 
     if (m_rec_model == 2)
     {
@@ -1930,6 +1930,7 @@ bool C_csp_fresnel_collector_receiver::init_fieldgeom()
     //translate the solar angles into incidence angles
     double phi_t, theta_L, iam_t, iam_l;
     CSP::theta_trans(0., CSP::pi / 2. - elev_des, m_ColAz, phi_t, theta_L);	//phi_t and theta_L are the translated angles (transverse and longitudinal)
+
     switch (m_opt_model)
     {
         case 1:		//Solar position table
@@ -1937,6 +1938,8 @@ bool C_csp_fresnel_collector_receiver::init_fieldgeom()
             break;
         case 2:		//Collector incidence table
             m_opteff_des = eta_opt_fixed * optical_table.interpolate(0., theta_L);
+            //optical_IAM = optical_table.interpolate(0., theta_L);
+            //m_opteff_des = eta_opt_fixed;
             break;
         case 3:		//IAM polynomials
         {
@@ -1999,7 +2002,9 @@ bool C_csp_fresnel_collector_receiver::init_fieldgeom()
             //correct for receiver optical losses
             hceopt = 0.;
             for (int i = 0; i < m_nRecVar; i++) {
-                hceopt += m_alpha_abs[i] * m_Tau_envelope[i] * m_HCE_FieldFrac[i];
+                // TMB 12-06-2023 Add shadowing and envelope dirt losses to optical loss
+                //hceopt += m_alpha_abs[i] * m_Tau_envelope[i] * m_HCE_FieldFrac[i];
+                hceopt += m_alpha_abs[i] * m_Tau_envelope[i] * m_HCE_FieldFrac[i] * m_Shadowing[i] * m_dirt_env[i];
             }
             m_opteff_des *= hceopt;
             break;
@@ -2014,6 +2019,15 @@ bool C_csp_fresnel_collector_receiver::init_fieldgeom()
 
     //the estimated mass flow rate at design (in solar field)
     m_m_dot_design = (m_Ap_tot * m_I_bn_des * m_opteff_des - loss_tot * float(m_nLoops)) / (m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des));  //tn 4.25.11 using Ap_tot instead of A_loop. Change location of opteff_des
+
+    // 'ideal' m_q_design before mass flow limits
+    m_q_design_ideal = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
+
+
+    double thermal_field = m_Ap_tot * m_I_bn_des * m_opteff_des - loss_tot * float(m_nLoops);
+
+
+
     double m_dot_max = m_m_dot_htfmax * m_nLoops;
     double m_dot_min = m_m_dot_htfmin * m_nLoops;
     if (m_m_dot_design > m_dot_max) {
@@ -2036,11 +2050,13 @@ bool C_csp_fresnel_collector_receiver::init_fieldgeom()
 
     // Already defined in design_solar_mult (TB)
     //mjw 1.16.2011 Design field thermal power
-    //m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
+    m_q_design_actual = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
+
+    double q_design_old = m_I_bn_des * m_Ap_tot * m_loop_eff;
 
     //mjw 1.16.2011 Convert the thermal inertia terms here
-    m_mc_bal_hot = m_mc_bal_hot * 3.6 * m_q_design;    //[J/K]
-    m_mc_bal_cold = m_mc_bal_cold * 3.6 * m_q_design;  //[J/K]
+    m_mc_bal_hot = m_mc_bal_hot * 3.6 * m_q_design_actual;    //[J/K]
+    m_mc_bal_cold = m_mc_bal_cold * 3.6 * m_q_design_actual;  //[J/K]
 
 
 
@@ -2209,7 +2225,7 @@ double C_csp_fresnel_collector_receiver::get_startup_time()
 double C_csp_fresnel_collector_receiver::get_startup_energy()
 {
     // Note: C_csp_fresnel_collector_receiver::startup() is called after this function
-    return m_rec_qf_delay * m_q_design * 1.e-6;       // MWh
+    return m_rec_qf_delay * m_q_design_actual * 1.e-6;       // MWh
 }
 
 double C_csp_fresnel_collector_receiver::get_pumping_parasitic_coef()
@@ -2227,7 +2243,7 @@ double C_csp_fresnel_collector_receiver::get_pumping_parasitic_coef()
 
     double dP_field = field_pressure_drop(T_amb_des, m_m_dot_design, P_field_in, T_in_SCA, T_out_SCA);
 
-    return m_W_dot_pump / (m_q_design * 1.e-6);
+    return m_W_dot_pump / (m_q_design_actual * 1.e-6);
 }
 
 double C_csp_fresnel_collector_receiver::get_min_power_delivery()
@@ -3070,21 +3086,111 @@ double C_csp_fresnel_collector_receiver::get_collector_area()
 
 // ------------------------------------------------------------------- PUBLIC SUPPLEMENTAL
 
-bool C_csp_fresnel_collector_receiver::design_solar_mult()
+bool C_csp_fresnel_collector_receiver::design_solar_mult(double latitude_deg)
 {
     if (m_is_solar_mult_designed == true)
         return false;
+
+    // Set up the optical table object..
+    {
+        /*
+        The input should be defined as follows:
+        - Data of size nx, ny
+        - OpticalTable of size (nx+1)*(ny+1)
+        - First nx+1 values (row 1) are x-axis values, not data, starting at index 1
+        - First value of remaining ny rows are y-axis values, not data
+        - Data is contained in cells i,j : where i>1, j>1
+        */
+        int ncol_OpticalTable = m_OpticalTable.ncols();
+        int nrow_OpticalTable = m_OpticalTable.nrows();
+
+        double* xax = new double[ncol_OpticalTable - 1];
+        double* yax = new double[nrow_OpticalTable - 1];
+        double* data = new double[(ncol_OpticalTable - 1) * (nrow_OpticalTable - 1)];
+
+        //get the xaxis data values
+        for (int i = 1; i < ncol_OpticalTable; i++) {
+            xax[i - 1] = m_OpticalTable.at(0, i) * m_d2r;
+        }
+        //get the yaxis data values
+        for (int j = 1; j < nrow_OpticalTable; j++) {
+            yax[j - 1] = m_OpticalTable.at(j, 0) * m_d2r;
+        }
+        //Get the data values
+        for (int j = 1; j < nrow_OpticalTable; j++) {
+            for (int i = 1; i < ncol_OpticalTable; i++) {
+                data[i - 1 + (ncol_OpticalTable - 1) * (j - 1)] = m_OpticalTable.at(j, i);
+            }
+        }
+
+        optical_table.AddXAxis(xax, ncol_OpticalTable - 1);
+        optical_table.AddYAxis(yax, nrow_OpticalTable - 1);
+        optical_table.AddData(data);
+        delete[] xax;
+        delete[] yax;
+        delete[] data;
+
+    }
 
     // Calculate nLoops, depending on designing for solar mult or total field aperture
     {
         // Optical Derate (Receiver)
         m_opt_derate = 0;
         for (int i = 0; i < m_nRecVar; i++)
-            m_opt_derate += m_HCE_FieldFrac[i] * m_Shadowing[i] * m_dirt_env[i];
+            // TMB 12-06-2023 Add receiver absorptivity and envelope transmissivity to optical derate
+            //m_opt_derate += m_HCE_FieldFrac[i] * m_Shadowing[i] * m_dirt_env[i];
+            m_opt_derate += m_HCE_FieldFrac[i] * m_Shadowing[i] * m_dirt_env[i] * m_alpha_abs[i] * m_Tau_envelope[i];
+
+        // Account for solar position
+        double position_derate = 1;
+        if (latitude_deg != -377)
+        {
+            //design point solar elevation
+            double lat_rad = latitude_deg * m_d2r;
+            double elev_des = asin(sin(0.4092793) * sin(lat_rad) + cos(lat_rad) * cos(0.4092793));
+            //translate the solar angles into incidence angles
+            double phi_t, theta_L, iam_t, iam_l;
+            double ColAz = m_ColAz * m_d2r; // TMB 12.7.2023 temporary dirty fix because unit conversions are in init (and that hasn't been called yet)
+            CSP::theta_trans(0., CSP::pi / 2. - elev_des, ColAz, phi_t, theta_L);	//phi_t and theta_L are the translated angles (transverse and longitudinal)
+
+            
+            switch (m_opt_model)
+            {
+                case 1:		//Solar position table
+                    position_derate = optical_table.interpolate(0., CSP::pi / 2. - elev_des);
+                    break;
+                case 2:		//Collector incidence table
+                    position_derate = optical_table.interpolate(0., theta_L);
+                    //optical_IAM = optical_table.interpolate(0., theta_L);
+                    //m_opteff_des = eta_opt_fixed;
+                    break;
+                case 3:		//IAM polynomials
+                {
+                    iam_t = 0.;
+                    iam_l = 0.;
+                    int n_IAM_L_coefs = m_IAM_L_coefs.size();
+                    int n_IAM_T_coefs = m_IAM_T_coefs.size();
+                    for (int i = 0; i < n_IAM_L_coefs; i++)
+                        iam_l += m_IAM_L_coefs[i] * pow(theta_L, i);
+                    for (int i = 0; i < n_IAM_T_coefs; i++)
+                        iam_t += m_IAM_T_coefs[i] * pow(phi_t, i);
+                    position_derate = iam_t * iam_l;
+                    break;
+                }
+                default:
+                    //message(TCS_ERROR, "The selected optical model (%d) does not exist. Options are 1=Solar position table : 2=Collector incidence table : 3= IAM polynomials", opt_model);
+                    string msg = "The selected optical model (%d) does not exist. Options are 1=Solar position table : 2=Collector incidence table : 3= IAM polynomials";
+                    m_error_msg = util::format(msg.c_str(), m_opt_model);
+                    mc_csp_messages.add_message(C_csp_messages::NOTICE, m_error_msg);
+                    return false;
+            }
+        }
+        
 
         // Optical Normal (Mirror/Collector)
         m_opt_normal = 0;
-        m_opt_normal = m_TrackingError * m_GeomEffects * m_reflectivity * m_Dirt_mirror * m_Error;
+        // TMB 12.7.2023 Add position derate
+        m_opt_normal = m_TrackingError * m_GeomEffects * m_reflectivity * m_Dirt_mirror * m_Error * position_derate;
 
         // Loop Optical Efficiency
         m_loop_opt_eff = m_opt_derate * m_opt_normal;
@@ -3126,10 +3232,10 @@ bool C_csp_fresnel_collector_receiver::design_solar_mult()
         m_loop_eff = m_loop_opt_eff * m_loop_therm_eff;
 
         // Thermal Power at Design
-        m_q_design = m_P_ref / m_eta_ref;
+        m_q_pb_design = m_P_ref / m_eta_ref; // 279
 
         // Required Aperture for solar multiple = 1
-        m_Ap_sm1 = m_q_design / (m_I_bn_des * m_loop_eff);
+        m_Ap_sm1 = m_q_pb_design / (m_I_bn_des * m_loop_eff);
 
         // Calculate actual solar mult, total field aperture, and nLoops
         switch (m_solar_mult_or_Ap)
@@ -3143,6 +3249,7 @@ bool C_csp_fresnel_collector_receiver::design_solar_mult()
 
                 // Get 'Actual' Ap_tot
                 m_Ap_tot = m_nLoops * m_A_loop;
+                m_solar_mult = m_Ap_tot / m_Ap_sm1;
                 break;
             }
             case 1:
@@ -3164,10 +3271,12 @@ bool C_csp_fresnel_collector_receiver::design_solar_mult()
         }
 
         // Update m_q_design with actual aperture
-        m_q_design = m_I_bn_des * m_Ap_tot * m_loop_eff;
+        //m_q_design_actual = m_I_bn_des * m_Ap_tot * m_loop_eff;
 
         // Number of Loops necessary for solar mult = 1
         m_nLoops_sm1 = std::ceil(m_Ap_sm1 / m_A_loop);
+
+        m_is_solar_mult_designed = true;
 
     }
     return true;

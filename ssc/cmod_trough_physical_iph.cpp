@@ -362,7 +362,8 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_OUTPUT,       SSC_NUMBER,      "required_number_of_loops_for_SM1"  "Heat loss at design"                                                       "",              "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "nLoops"                            "Number of loops in the field"                                              "",              "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "total_aperture"                    "Total field aperture area"                                                 "m2",            "",               "Solar Field",    "*",                                "",                      "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "field_thermal_output"              "Design-point thermal power from the solar field"                           "MWt",           "",               "Solar Field",    "*",                                "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "field_thermal_output_actual"       "Design-point thermal power from the solar field limited by mass flow"      "MWt",           "",               "Solar Field",    "*",                                "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "field_thermal_output_ideal"        "Design-point thermal power from the solar field with no limits"            "MWt",           "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "fixed_land_area"                   "Fixed Land Area"                                                           "acre",          "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "total_land_area"                   "Total Land Area"                                                           "acre",          "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "total_tracking_power"              "Total Tracking Power"                                                      "MWe",           "",               "Solar Field",    "*",                                "",                      "" },
@@ -1463,7 +1464,7 @@ public:
                 ssc_number_t* sca_effs = allocate("csp_dtr_sca_calc_sca_effs", c_trough.m_csp_dtr_sca_calc_sca_effs.size());
                 for (int i = 0; i < c_trough.m_csp_dtr_sca_calc_sca_effs.size(); i++)
                     sca_effs[i] = c_trough.m_csp_dtr_sca_calc_sca_effs[i];    // []
-                assign("loop_optical_efficiency", c_trough.m_loop_optical_efficiency_des);  //[]
+                assign("loop_optical_efficiency", c_trough.m_opteff_des);  //[]
                 ssc_number_t* hce_effs = allocate("csp_dtr_hce_optical_effs", c_trough.m_csp_dtr_hce_optical_effs.size());
                 for (int i = 0; i < c_trough.m_csp_dtr_hce_optical_effs.size(); i++)
                     hce_effs[i] = c_trough.m_csp_dtr_hce_optical_effs[i];    // []
@@ -1476,7 +1477,8 @@ public:
                 assign("required_number_of_loops_for_SM1", c_trough.m_required_number_of_loops_for_SM1);
                 assign("nLoops", c_trough.m_nLoops);
                 assign("total_aperture", c_trough.m_Ap_tot);    //[m2]
-                assign("field_thermal_output", c_trough.m_q_design / 1e6); // [MWt]
+                assign("field_thermal_output_actual", c_trough.m_q_design_actual / 1e6); // [MWt]
+                assign("field_thermal_output_ideal", c_trough.m_q_design_ideal / 1e6); // [MWt]
                 assign("solar_mult", c_trough.m_solar_mult);
                 assign("fixed_land_area", c_trough.m_fixed_land_area);  //[acre]
                 assign("total_land_area", c_trough.m_total_land_area);  //[acre]
