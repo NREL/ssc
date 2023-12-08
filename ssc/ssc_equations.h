@@ -168,7 +168,7 @@ static ssc_equation_entry ssc_equation_table [] = {
             true, false},
 
         // Utility Rate
-        {"ElectricityRates_format_as_URDBv7", ElectricityRates_format_as_URDBv8,
+        {"ElectricityRates_format_as_URDBv8", ElectricityRates_format_as_URDBv8,
             "UtilityRate5", ElectricityRates_format_as_URDBv8_doc,
             false, true},
 
