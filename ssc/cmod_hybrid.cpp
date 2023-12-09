@@ -51,6 +51,25 @@ public:
     {
         add_var_info(_cm_vtab_hybrid);
     }
+
+    void ssc_module_exec_with_error(ssc_module_t module, var_table& input, std::string compute_module) {
+        if (!ssc_module_exec(module, static_cast<ssc_data_t>(&input))) {
+            std::string str = std::string(compute_module) + " execution error.\n";
+            int idx = 0;
+            int type = -1;
+            while (const char* msg = ssc_module_log(module, idx++, &type, nullptr))
+            {
+                if (/*/(type == SSC_NOTICE) || */(type == SSC_WARNING) || (type == SSC_ERROR)) {
+                    str += "\t";
+                    str += std::string(msg);
+                    str += "\n\n";
+                }
+            }
+            ssc_module_free(module);
+            throw std::runtime_error(str);
+        }
+    }
+
     void exec()
     {
         float percent = 0;
@@ -120,8 +139,7 @@ public:
                 var_table& input = compute_module_inputs->table;
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "en_batt", 0);
 
-
-                ssc_module_exec(module, static_cast<ssc_data_t>(&input));
+                ssc_module_exec_with_error(module, input, compute_module);
 
                 ssc_data_t compute_module_outputs = ssc_data_create();
 
@@ -297,7 +315,7 @@ public:
                     throw exec_error("hybrid", "No input input_table found for ." + hybridVarTable);
                 var_table& hybridinput = hybrid_inputs->table;
                 input.merge(hybridinput, false);
-                ssc_module_exec(module, static_cast<ssc_data_t>(&input));
+                ssc_module_exec_with_error(module, input, compute_module);
 
                 ssc_data_t compute_module_outputs = ssc_data_create();
 
@@ -415,7 +433,7 @@ public:
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "system_use_lifetime_output", 1);
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "en_batt", 1); // should be done at UI level
 
-                ssc_module_exec(module, static_cast<ssc_data_t>(&input));
+                ssc_module_exec_with_error(module, input, compute_module);
 
                 ssc_data_t compute_module_outputs = ssc_data_create();
 
@@ -612,7 +630,7 @@ public:
                     std::string compute_module = financials[i];
 
                     ssc_module_t module = ssc_module_create(compute_module.c_str());
-                    ssc_module_exec(module, static_cast<ssc_data_t>(&input));
+                    ssc_module_exec_with_error(module, input, compute_module);
 
 
                     int pidx = 0;
