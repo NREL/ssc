@@ -209,6 +209,7 @@ static var_info _cm_vtab_trough_physical_iph[] = {
 
     { SSC_INPUT,        SSC_NUMBER,      "is_dispatch_series",        "Use time-series dispatch factors",                                                 "",             "",               "tou",                     "?=1",                                                       "",             "" },
     { SSC_INPUT,        SSC_ARRAY,       "dispatch_series",           "Time series dispatch factors",                                                     "",             "",               "tou",                     "",                                                          "",             "" },
+    { SSC_INPUT,        SSC_NUMBER,      "is_timestep_load_fractions","Use turbine load fraction for each timestep instead of block dispatch?",           "",             "",               "tou",                     "?=0",                                                       "",             "SIMULATION_PARAMETER" },
     { SSC_INPUT,        SSC_ARRAY,       "timestep_load_fractions",   "Turbine load fraction for each timestep, alternative to block dispatch",           "",             "",               "tou",                     "?",                                                         "",             "SIMULATION_PARAMETER" },
     { SSC_INPUT,        SSC_ARRAY,       "ppa_price_input",			  "PPA prices - yearly",			                                                  "$/kWh",	      "",	            "Revenue",			       "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1","",      	    "SIMULATION_PARAMETER" },
     { SSC_INPUT,        SSC_MATRIX,      "mp_energy_market_revenue",  "Energy market revenue input",                                                      "",             "Lifetime x 2[Cleared Capacity(MW),Price($/MWh)]", "Revenue", "csp_financial_model=6&is_dispatch=1",      "",             "SIMULATION_PARAMETER" },
@@ -362,7 +363,6 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_OUTPUT,       SSC_NUMBER,      "required_number_of_loops_for_SM1", "Heat loss at design",                                                      "",              "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "nLoops",                           "Number of loops in the field",                                             "",              "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "total_aperture",                   "Total field aperture area",                                                "m2",            "",               "Solar Field",    "*",                                "",                      "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "field_thermal_output",             "Design-point thermal power from the solar field",                          "MWt",           "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "fixed_land_area",                  "Fixed Land Area",                                                          "acre",          "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "total_land_area",                  "Total Land Area",                                                          "acre",          "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "total_tracking_power",             "Total Tracking Power",                                                     "MWe",           "",               "Solar Field",    "*",                                "",                      "" },
@@ -370,6 +370,10 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_OUTPUT,       SSC_MATRIX,      "D_cpnt",                           "Inner diameters of the components in each loop interconnect",              "m",             "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_MATRIX,      "L_cpnt",                           "Lengths of the components in each loop interconnect",                      "m",             "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_MATRIX,      "Type_cpnt",                        "Type of component in each loop interconnect [0=fitting | 1=pipe | 2=flex_hose]",  "Wm",     "",               "Solar Field",    "*",                                "",                      "" },
+
+    { SSC_OUTPUT,       SSC_NUMBER,      "field_thermal_output_actual",      "Design-point thermal power from the solar field limited by mass flow", "MW",           "",         "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "field_thermal_output_ideal",       "Design-point thermal power from the solar field with no limit",        "MW",           "",         "Receiver",                       "*",                                                                "",              "" },
+
 
     // Thermal Storage
     { SSC_OUTPUT,       SSC_NUMBER,      "vol_tank",                         "Total tank volume",                                                        "m3",            "",               "Thermal Storage","*",                                "",                      "" },
@@ -1155,9 +1159,14 @@ public:
                 tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC][i] = (double)p_f_turbine[i];
 
             // Load fraction by time step:
-            bool is_load_fraction_by_timestep = is_assigned("timestep_load_fractions");
-            tou_params->mc_csp_ops.mv_is_diurnal = !(is_load_fraction_by_timestep);
-            if (is_load_fraction_by_timestep) {
+            //bool is_load_fraction_by_timestep = is_assigned("timestep_load_fractions");
+            bool is_is_timestep_load_fractions_assigned = is_assigned("is_timestep_load_fractions");
+            bool is_timestep_load_fractions = false;
+            if (is_is_timestep_load_fractions_assigned) {
+                is_timestep_load_fractions = as_boolean("is_timestep_load_fractions");
+            }
+            tou_params->mc_csp_ops.mv_is_diurnal = !(is_timestep_load_fractions);
+            if (is_timestep_load_fractions) {
                 size_t N_load_fractions;
                 ssc_number_t* load_fractions = as_array("timestep_load_fractions", &N_load_fractions);
                 std::copy(load_fractions, load_fractions + N_load_fractions, std::back_inserter(tou_params->mc_csp_ops.timestep_load_fractions));
@@ -1463,7 +1472,7 @@ public:
                 ssc_number_t* sca_effs = allocate("csp_dtr_sca_calc_sca_effs", c_trough.m_csp_dtr_sca_calc_sca_effs.size());
                 for (int i = 0; i < c_trough.m_csp_dtr_sca_calc_sca_effs.size(); i++)
                     sca_effs[i] = c_trough.m_csp_dtr_sca_calc_sca_effs[i];    // []
-                assign("loop_optical_efficiency", c_trough.m_loop_optical_efficiency_des);  //[]
+                assign("loop_optical_efficiency", c_trough.m_opteff_des);  //[]
                 ssc_number_t* hce_effs = allocate("csp_dtr_hce_optical_effs", c_trough.m_csp_dtr_hce_optical_effs.size());
                 for (int i = 0; i < c_trough.m_csp_dtr_hce_optical_effs.size(); i++)
                     hce_effs[i] = c_trough.m_csp_dtr_hce_optical_effs[i];    // []
@@ -1476,7 +1485,8 @@ public:
                 assign("required_number_of_loops_for_SM1", c_trough.m_required_number_of_loops_for_SM1);
                 assign("nLoops", c_trough.m_nLoops);
                 assign("total_aperture", c_trough.m_Ap_tot);    //[m2]
-                assign("field_thermal_output", c_trough.m_q_design / 1e6); // [MWt]
+                assign("field_thermal_output_actual", c_trough.m_q_design_actual / 1e6); // [MWt]
+                assign("field_thermal_output_ideal", c_trough.m_q_design_ideal / 1e6); // [MWt]
                 assign("solar_mult", c_trough.m_solar_mult);
                 assign("fixed_land_area", c_trough.m_fixed_land_area);  //[acre]
                 assign("total_land_area", c_trough.m_total_land_area);  //[acre]
