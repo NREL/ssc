@@ -65,13 +65,26 @@ static var_info _cm_vtab_solarpilot[] = {
 	{ SSC_INPUT,        SSC_STRING,      "solar_resource_file",       "Solar weather data file",                    "",       "",         "SolarPILOT",   "?",                "LOCAL_FILE",      "" },
 
     { SSC_INPUT,        SSC_NUMBER,      "receiver_type",             "0: external (default), 1; cavity",           "",       "",         "SolarPILOT",   "?=0",              "",                "" },
-    { SSC_INPUT,        SSC_NUMBER,      "rec_height",                "External receiver height",                   "m",      "",         "SolarPILOT",   "receiver_type=0",  "",                "" },
-    { SSC_INPUT,        SSC_NUMBER,      "rec_aspect",                "External receiver aspect ratio (H/W)",       "frac",   "",         "SolarPILOT",   "receiver_type=0",  "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "rec_height",                "External receiver height",                   "m",      "",         "SolarPILOT",   "receiver_type=0|receiver_type=3",  "",     "" },
+    { SSC_INPUT,        SSC_NUMBER,      "rec_aspect",                "Receiver aspect ratio (H/W)",                "frac",   "",         "SolarPILOT",   "receiver_type=0",  "",     "" },
     { SSC_INPUT,        SSC_NUMBER,      "cav_rec_height",            "Cavity receiver height",                     "m",      "",         "SolarPILOT",   "receiver_type=1",  "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "cav_rec_width",             "Cavity receiver width",                      "m",      "",         "SolarPILOT",   "receiver_type=1",  "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "n_cav_rec_panels",          "Cavity receiver number of panels",           "",       "",         "SolarPILOT",   "receiver_type=1",  "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "cav_rec_span",              "Cavity receiver span angle",                 "deg",    "",         "SolarPILOT",   "receiver_type=1",  "",                "" },
 
+    // Free-falling particle receiver
+    { SSC_INPUT,        SSC_NUMBER,      "rec_width",                 "Aperture width - in",                                                           "m",    "",  "SolarPILOT",   "receiver_type=3",                  "",        ""},
+    { SSC_INPUT,        SSC_NUMBER,      "norm_curtain_height",       "Normalized particle curtain height",                                            "",     "",  "SolarPILOT",   "receiver_type=3",                  "",        ""},
+    { SSC_INPUT,        SSC_NUMBER,      "norm_curtain_width",        "Normalized particle curtain width",                                             "",     "",  "SolarPILOT",   "receiver_type=3",                  "",        ""},
+    { SSC_INPUT,        SSC_NUMBER,      "max_curtain_depth",         "Particle curtain entrance depth",                                               "m",    "",  "SolarPILOT",   "receiver_type=3",                  "",        ""},
+    { SSC_INPUT,        SSC_MATRIX,      "norm_heights_depths",       "Normalized troughs heights and depths, pass [[0,0]] for no curtain troughs",    "",     "",  "SolarPILOT",   "receiver_type=3",                  "",        ""},
+    { SSC_INPUT,        SSC_NUMBER,      "curtain_type",              "Flat=0;Curved=1",                                                               "",     "",  "SolarPILOT",   "receiver_type=3",                  "",        ""},
+    //{ SSC_INPUT,        SSC_NUMBER,      "curtain_radius",            "Particle curtain radius",                                                       "m",    "",  "SolarPILOT",   "receiver_type=3&curtain_type=1",   "",        ""},
+    { SSC_INPUT,        SSC_NUMBER,      "is_snout",                  "Is SNOUT enabled?",                                                             "",     "",  "SolarPILOT",   "receiver_type=3",                  "",        ""},
+    { SSC_INPUT,        SSC_NUMBER,      "snout_depth",               "Distance from aperture window to SNOUT front plane",                            "m",    "",  "SolarPILOT",   "receiver_type=3&is_snout=1",        "",        ""},
+    { SSC_INPUT,        SSC_NUMBER,      "snout_horiz_angle",         "SNOUT spanning angle defined in the aperture vertical mid-plane",               "deg",  "",  "SolarPILOT",   "receiver_type=3&is_snout=1",        "",        ""},
+    { SSC_INPUT,        SSC_NUMBER,      "snout_vert_bot_angle",      "SNOUT bottom surface angle from aperture normal",                               "deg",  "",  "SolarPILOT",   "receiver_type=3&is_snout=1",        "",        ""},
+    { SSC_INPUT,        SSC_NUMBER,      "snout_vert_top_angle",      "SNOUT top surface angle from aperture normal",                                  "deg",  "",  "SolarPILOT",   "receiver_type=3&is_snout=1",        "",        ""},
 
     { SSC_INPUT,        SSC_NUMBER,      "helio_width",               "Heliostat width",                            "m",      "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "helio_height",              "Heliostat height",                           "m",      "",         "SolarPILOT",   "*",                "",                "" },
@@ -119,13 +132,13 @@ static var_info _cm_vtab_solarpilot[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "contingency_rate",          "Contingency for cost overrun",               "%",      "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sales_tax_rate",            "Sales tax rate",                             "%",      "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sales_tax_frac",            "Percent of cost to which sales tax applies", "%",      "",         "SolarPILOT",   "*",                "",                "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cost_sf_fixed",             "Soalr field fixed cost",                     "$",      "",         "SolarPILOT",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "cost_sf_fixed",             "Solar field fixed cost",                     "$",      "",         "SolarPILOT",   "*",                "",                "" },
 
     { SSC_INPUT,        SSC_NUMBER,      "is_optimize",               "Do SolarPILOT optimization",                 "",       "",         "SolarPILOT",   "?=0",              "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "flux_max",                  "Maximum allowable flux",                     "",       "",         "SolarPILOT",   "?=1000",           "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "opt_init_step",             "Optimization initial step size",             "",       "",         "SolarPILOT",   "?=0.05",           "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "opt_max_iter",              "Max. number iteration steps",                "",       "",         "SolarPILOT",   "?=200",            "",                "" },
-    { SSC_INPUT,        SSC_NUMBER,      "opt_conv_tol",              "Optimization convergence tol",               "",       "",         "SolarPILOT",   "?=0.001",          "",                "" },
+    { SSC_INPUT,        SSC_NUMBER,      "opt_conv_tol",              "Optimization convergence tolerance",         "",       "",         "SolarPILOT",   "?=0.001",          "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "opt_algorithm",             "Optimization algorithm",                     "",       "",         "SolarPILOT",   "?=1",              "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "opt_flux_penalty",          "Optimization flux overage penalty",          "",       "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_MATRIX,      "helio_positions_in",        "Heliostat position table",                   "",       "",         "SolarPILOT",   "",                "",                "" },
@@ -143,6 +156,7 @@ static var_info _cm_vtab_solarpilot[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "rec_height_opt",            "Optimized receiver height",                  "m",      "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "rec_aspect_opt",            "Optimized receiver aspect ratio",            "-",      "",         "SolarPILOT",   "receiver_type=0",  "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "cav_rec_aper_width_opt",    "Optimized cavity receiver aperture width",   "-",      "",         "SolarPILOT",   "receiver_type=1",  "",                "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "rec_width_opt",             "Optimized receiver width",                   "m",      "",         "SolarPILOT",   "receiver_type=3",  "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "flux_max_observed",         "Maximum observed flux at design",            "kW/m2",  "",         "SolarPILOT",   "check_max_flux=1", "",                "" },
 
     { SSC_OUTPUT,       SSC_NUMBER,      "cost_rec_tot",              "Total receiver cost",                        "$",      "",         "SolarPILOT",   "*",                "",                "" },
@@ -181,12 +195,12 @@ public:
 
         // Post-process solarpilot outputs for receiver configs
         // Set outputs unique to receiver configs
-        if (rec_type == 0) {
+        if (rec_type == 0) { // external
 
             assign("rec_aspect_opt", (ssc_number_t)spi.recs.front().rec_aspect.Val());
 
         }
-        else if (rec_type == 1) {
+        else if (rec_type == 1) {   // cavity
 
             double cav_rec_height_spout, cav_radius_spout, f_offset_spout;
             cav_rec_height_spout = cav_radius_spout = f_offset_spout = std::numeric_limits<double>::quiet_NaN();
@@ -210,6 +224,9 @@ public:
             //double rec_span_in = as_double("cav_rec_span")*PI/180.0;     //[rad] convert from deg
 
             assign("cav_rec_aper_width_opt", (ssc_number_t)rec_width_calc);
+        }
+        else if (rec_type == 3) { // free-falling receiver
+            assign("rec_width_opt", (ssc_number_t)spi.recs.front().rec_width.val);
         }
 
 		assign("h_tower_opt", (ssc_number_t)spi.sf.tht.val);
@@ -269,7 +286,7 @@ public:
 				for( size_t i=0;i<nvals;i++ )
                 {
 					opteff[i * 3] = (ssc_number_t)(spi.fluxtab.azimuths[i] * 180. / pi - 180.);      //Convention is usually S=0, E<0, W>0 
-					opteff[i * 3 + 1] = (ssc_number_t)(spi.fluxtab.zeniths[i] * 180. / pi);     //Provide zenith angle
+					opteff[i * 3 + 1] = (ssc_number_t)(spi.fluxtab.zeniths[i] * 180. / pi);          //Provide zenith angle
 					opteff[i * 3 + 2] = (ssc_number_t)spi.fluxtab.efficiency[i];
                 }
 			}

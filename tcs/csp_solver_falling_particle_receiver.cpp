@@ -192,6 +192,9 @@ void C_falling_particle_receiver::init()
     m_m_dot_htf_des = m_q_rec_des / (c_htf_des * (m_T_htf_hot_des - m_T_htf_cold_des));				//[kg/s]
     m_m_dot_htf_max = m_m_dot_htf_max_frac * m_m_dot_htf_des;	                                    //[kg/s]
     m_q_dot_inc_min = m_q_rec_des * m_f_rec_min / m_eta_therm_des_est;	//[W] Minimum receiver thermal power
+    m_W_dot_pumping_tower_share = (m_m_dot_htf_des * m_h_tower * 9.8067 / m_eta_pump) / 1.e6;       // [MWe]
+    m_W_dot_pumping_rec_share = (m_m_dot_htf_des * m_curtain_height * 9.8067 / m_eta_pump) / 1.e6;  // [MWe]
+    m_W_dot_rec_pump_des_calc = m_W_dot_pumping_tower_share + m_W_dot_pumping_rec_share;
 
 
     // If no startup requirements, then receiver is always ON
