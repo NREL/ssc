@@ -1164,7 +1164,9 @@ public:
         // ********************************
         // ********************************
         C_csp_tes* storage_pointer;
-        C_csp_two_tank_tes storage;
+        C_csp_two_tank_tes storage_two_tank;
+        C_csp_NTHeatTrap_tes storage_NT;
+        if (tes_type == 0)
         {
 
             bool custom_tes_pipe_sizes = as_boolean("custom_tes_pipe_sizes");
@@ -1189,7 +1191,7 @@ public:
                 tes_diams.assign(tes_diams_val, 1);
             }
 
-            storage = C_csp_two_tank_tes(
+            storage_two_tank = C_csp_two_tank_tes(
                 c_trough.m_Fluid,
                 c_trough.m_field_fl_props,
                 as_integer("store_fluid"),
@@ -1229,21 +1231,100 @@ public:
                 as_double("DP_SGS")
             );
 
-            storage_pointer = &storage;
+            storage_pointer = &storage_two_tank;
 
             // Set storage outputs
-            storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_Q_DOT_LOSS, allocate("tank_losses", n_steps_fixed), n_steps_fixed);
-            storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HEATER, allocate("q_tes_heater", n_steps_fixed), n_steps_fixed);
-            storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_TES_T_HOT, allocate("T_tes_hot", n_steps_fixed), n_steps_fixed);
-            storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_TES_T_COLD, allocate("T_tes_cold", n_steps_fixed), n_steps_fixed);
-            storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_M_DOT_TANK_TO_TANK, allocate("m_dot_cold_tank_to_hot_tank", n_steps_fixed), n_steps_fixed);
-            storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_COLD_TANK, allocate("mass_tes_cold", n_steps_fixed), n_steps_fixed);
-            storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_HOT_TANK, allocate("mass_tes_hot", n_steps_fixed), n_steps_fixed);
-            storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HTF_PUMP, allocate("tes_htf_pump_power", n_steps_fixed), n_steps_fixed);
+            storage_two_tank.mc_reported_outputs.assign(C_csp_two_tank_tes::E_Q_DOT_LOSS, allocate("tank_losses", n_steps_fixed), n_steps_fixed);
+            storage_two_tank.mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HEATER, allocate("q_tes_heater", n_steps_fixed), n_steps_fixed);
+            storage_two_tank.mc_reported_outputs.assign(C_csp_two_tank_tes::E_TES_T_HOT, allocate("T_tes_hot", n_steps_fixed), n_steps_fixed);
+            storage_two_tank.mc_reported_outputs.assign(C_csp_two_tank_tes::E_TES_T_COLD, allocate("T_tes_cold", n_steps_fixed), n_steps_fixed);
+            storage_two_tank.mc_reported_outputs.assign(C_csp_two_tank_tes::E_M_DOT_TANK_TO_TANK, allocate("m_dot_cold_tank_to_hot_tank", n_steps_fixed), n_steps_fixed);
+            storage_two_tank.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_COLD_TANK, allocate("mass_tes_cold", n_steps_fixed), n_steps_fixed);
+            storage_two_tank.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_HOT_TANK, allocate("mass_tes_hot", n_steps_fixed), n_steps_fixed);
+            storage_two_tank.mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HTF_PUMP, allocate("tes_htf_pump_power", n_steps_fixed), n_steps_fixed);
 
             
         }
-        
+        else if (tes_type == 1)
+        {
+            bool custom_tes_pipe_sizes = as_boolean("custom_tes_pipe_sizes");
+            util::matrix_t<double> tes_lengths;
+            if (is_assigned("tes_lengths")) {
+                tes_lengths = as_matrix("tes_lengths");               //[m]
+            }
+            if (!is_assigned("tes_lengths") || tes_lengths.ncells() < 11) {
+                double vals1[11] = { 0., 90., 100., 120., 0., 30., 90., 80., 80., 120., 80. };
+                tes_lengths.assign(vals1, 11);
+            }
+            util::matrix_t<double> tes_wallthicks;
+            if (!is_assigned("tes_wallthicks"))
+            {
+                double tes_wallthicks_val[1] = { -1 };
+                tes_wallthicks.assign(tes_wallthicks_val, 1);
+            }
+            util::matrix_t<double> tes_diams;
+            if (!is_assigned("tes_diams"))
+            {
+                double tes_diams_val[1] = { -1 };
+                tes_diams.assign(tes_diams_val, 1);
+            }
+
+            storage_NT = C_csp_NTHeatTrap_tes(
+                c_trough.m_Fluid,
+                c_trough.m_field_fl_props,
+                as_integer("store_fluid"),
+                as_matrix("store_fl_props"),
+                as_double("P_ref") / as_double("eta_ref"),
+                c_trough.m_solar_mult,
+                as_double("P_ref") / as_double("eta_ref") * as_double("tshours"),
+                as_double("h_tank"),
+                as_double("u_tank"),
+                as_integer("tank_pairs"),
+                as_double("hot_tank_Thtr"),
+                as_double("hot_tank_max_heat"),
+                as_double("cold_tank_Thtr"),
+                as_double("cold_tank_max_heat"),
+                as_double("dt_hot"),
+                as_double("T_loop_in_des"),
+                as_double("T_loop_out"),
+                as_double("T_loop_out"),
+                as_double("T_loop_in_des"),
+                as_double("h_tank_min"),
+                as_double("init_hot_htf_percent"),
+                as_double("pb_pump_coef"),
+                as_boolean("tanks_in_parallel"),
+                as_double("V_tes_des"),
+                as_boolean("calc_design_pipe_vals"),
+                as_double("tes_pump_coef"),
+                as_double("eta_pump"),
+                as_boolean("has_hot_tank_bypass"),
+                as_double("T_tank_hot_inlet_min"),
+                false,
+                false,
+                as_matrix("k_tes_loss_coeffs"),
+                tes_diams,
+                tes_wallthicks,
+                tes_lengths,
+                as_double("HDR_rough"),
+                as_double("DP_SGS")
+            );
+
+            storage_pointer = &storage_NT;
+
+            // Set storage outputs
+            storage_NT.mc_reported_outputs.assign(C_csp_two_tank_tes::E_Q_DOT_LOSS, allocate("tank_losses", n_steps_fixed), n_steps_fixed);
+            storage_NT.mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HEATER, allocate("q_tes_heater", n_steps_fixed), n_steps_fixed);
+            storage_NT.mc_reported_outputs.assign(C_csp_two_tank_tes::E_TES_T_HOT, allocate("T_tes_hot", n_steps_fixed), n_steps_fixed);
+            storage_NT.mc_reported_outputs.assign(C_csp_two_tank_tes::E_TES_T_COLD, allocate("T_tes_cold", n_steps_fixed), n_steps_fixed);
+            storage_NT.mc_reported_outputs.assign(C_csp_two_tank_tes::E_M_DOT_TANK_TO_TANK, allocate("m_dot_cold_tank_to_hot_tank", n_steps_fixed), n_steps_fixed);
+            storage_NT.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_COLD_TANK, allocate("mass_tes_cold", n_steps_fixed), n_steps_fixed);
+            storage_NT.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_HOT_TANK, allocate("mass_tes_hot", n_steps_fixed), n_steps_fixed);
+            storage_NT.mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HTF_PUMP, allocate("tes_htf_pump_power", n_steps_fixed), n_steps_fixed);
+        }
+        else
+        {
+
+        }
 
 
         // ********************************
@@ -1672,27 +1753,36 @@ public:
                     d_tank_calc /*m*/, q_dot_loss_tes_des_calc /*MWt*/, dens_store_htf_at_T_ave_calc /*kg/m3*/,
                     Q_tes_des_calc /*MWt-hr*/;
 
-                //storage.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
-                //    d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
+                if (tes_type == 0)
+                {
+                    storage_two_tank.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
+                        d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
+                }
+                else if (tes_type == 1)
+                {
+                    storage_NT.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
+                        d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
+                }
+                
 
-                //double vol_min = V_tes_htf_total_calc * (storage.m_h_tank_min / storage.m_h_tank);
-                //double V_tank_hot_ini = (as_double("h_tank_min") / as_double("h_tank")) * V_tes_htf_total_calc; // m3
-                //double T_avg = (as_double("T_loop_in_des") + as_double("T_loop_out")) / 2.0;    // C
-                //double tes_htf_min_temp = storage.get_min_storage_htf_temp() - 273.15;
-                //double tes_htf_max_temp = storage.get_max_storage_htf_temp() - 273.15;
+                double vol_min = V_tes_htf_total_calc * (storage_NT.m_h_tank_min / storage_NT.m_h_tank);
+                double V_tank_hot_ini = (as_double("h_tank_min") / as_double("h_tank")) * V_tes_htf_total_calc; // m3
+                double T_avg = (as_double("T_loop_in_des") + as_double("T_loop_out")) / 2.0;    // C
+                //double tes_htf_min_temp = storage_NT.get_min_storage_htf_temp() - 273.15;
+                //double tes_htf_max_temp = storage_NT.get_max_storage_htf_temp() - 273.15;
 
-                //assign("q_tes", Q_tes_des_calc); // MWt-hr
-                //assign("tes_avail_vol", V_tes_htf_avail_calc); // m3
-                //assign("vol_tank", V_tes_htf_total_calc);   // m3
-                //assign("csp_pt_tes_tank_diameter", d_tank_calc);    // m
-                //assign("q_dot_tes_est", q_dot_loss_tes_des_calc);   // MWt
-                //assign("csp_pt_tes_htf_density", dens_store_htf_at_T_ave_calc); // kg/m3
-                //assign("is_hx", storage.get_is_hx());
-                //assign("vol_min", vol_min); // m3
-                //assign("V_tank_hot_ini", V_tank_hot_ini);   // m3
-                //assign("tes_htf_avg_temp", T_avg);  // C
-                //assign("tes_htf_min_temp", tes_htf_min_temp);
-                //assign("tes_htf_max_temp", tes_htf_max_temp);
+                assign("q_tes", Q_tes_des_calc); // MWt-hr
+                assign("tes_avail_vol", V_tes_htf_avail_calc); // m3
+                assign("vol_tank", V_tes_htf_total_calc);   // m3
+                assign("csp_pt_tes_tank_diameter", d_tank_calc);    // m
+                assign("q_dot_tes_est", q_dot_loss_tes_des_calc);   // MWt
+                assign("csp_pt_tes_htf_density", dens_store_htf_at_T_ave_calc); // kg/m3
+                assign("is_hx", 0);
+                assign("vol_min", vol_min); // m3
+                assign("V_tank_hot_ini", V_tank_hot_ini);   // m3
+                assign("tes_htf_avg_temp", T_avg);  // C
+                assign("tes_htf_min_temp", 0);
+                assign("tes_htf_max_temp", 0);
             }
 
             // Collector

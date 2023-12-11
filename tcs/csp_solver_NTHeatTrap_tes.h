@@ -57,7 +57,94 @@ public:
 		E_W_DOT_HTF_PUMP    //[MWe]
 	};
 
-	C_csp_NTHeatTrap_tes();
+
+    int m_external_fl;
+    util::matrix_t<double> m_external_fl_props;
+    int m_tes_fl;
+    util::matrix_t<double> m_tes_fl_props;
+    double m_q_dot_design;      //[MWe] Design heat rate in and out of tes
+    double m_frac_max_q_dot;    //[-] the max design heat rate as a fraction of the nominal
+    double m_Q_tes_des;         //[MWt-hr] design storage capacity
+    double m_h_tank;			//[m] tank height
+    double m_u_tank;			//[W/m^2-K]
+    int m_tank_pairs;			//[-]
+    double m_hot_tank_Thtr;		//[C] convert to K in init()
+    double m_hot_tank_max_heat;	//[MW]
+    double m_cold_tank_Thtr;	//[C] convert to K in init()
+    double m_cold_tank_max_heat;//[MW]
+    double m_dt_hot;			//[C] Temperature difference across heat exchanger - assume hot and cold deltaTs are equal
+    double m_T_cold_des;	    //[C] convert to K in init()
+    double m_T_hot_des;	        //[C] convert to K in init()
+    double m_dP_src_des;        //[bar] Total source pressure drop at design
+    double m_T_tank_hot_ini;	//[C] Initial temperature in hot storage tank
+    double m_T_tank_cold_ini;	//[C] Initial temperature in cold storage cold
+    double m_h_tank_min;		//[m] Minimum allowable HTF height in storage tank
+    double m_f_V_hot_ini;       //[%] Initial fraction of available volume that is hot
+    double m_htf_pump_coef;		//[kW/kg/s] Pumping power to move 1 kg/s of HTF through sink
+    double m_tes_pump_coef;		//[kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
+    double eta_pump;            //[-] Pump efficiency, for newer pumping calculations
+    bool tanks_in_parallel;     //[-] Whether the tanks are in series or parallel with the external system. Series means external htf must go through storage tanks.
+    bool has_hot_tank_bypass;   //[-] True if the bypass valve causes the external htf to bypass just the hot tank and enter the cold tank before flowing back to the external system.
+    double T_tank_hot_inlet_min; //[C] Minimum external htf temperature that may enter the hot tank
+    double V_tes_des;           //[m/s] Design-point velocity for sizing the diameters of the TES piping
+    bool custom_tes_p_loss;     //[-] True if the TES piping losses should be calculated using the TES pipe lengths and minor loss coeffs, false if using the pumping loss parameters
+    bool custom_tes_pipe_sizes;               //[-] True if the TES diameters and wall thicknesses parameters should be used instead of calculating them
+    util::matrix_t<double> k_tes_loss_coeffs; //[-] Combined minor loss coefficients of the fittings and valves in the collection (including bypass) and generation loops in the TES 
+    util::matrix_t<double> tes_diams;         //[m] Imported inner diameters for the TES piping as read from the modified output files
+    util::matrix_t<double> tes_wallthicks;    //[m] Imported wall thicknesses for the TES piping as read from the modified output files
+    util::matrix_t<double> tes_lengths;       //[m] Imported lengths for the TES piping as read from the modified output files
+    bool calc_design_pipe_vals;               //[-] Should the HTF state be calculated at design conditions
+    double pipe_rough;                        //[m] Pipe absolute roughness
+    double dP_discharge;                      //[bar] Pressure drop on the TES discharge side (e.g., within the steam generator)
+
+    C_csp_reported_outputs mc_reported_outputs;
+
+
+
+
+	C_csp_NTHeatTrap_tes(
+        int external_fl,
+        util::matrix_t<double> external_fl_props,
+        int tes_fl,
+        util::matrix_t<double> tes_fl_props,
+        double q_dot_design,                         // [MWt] Design heat rate in and out of tes
+        double frac_max_q_dot,                       // [-] the max design heat rate as a fraction of the nominal
+        double Q_tes_des,                            // [MWt-hr] design storage capacity
+        double h_tank,			                     // [m] tank height
+        double u_tank,			                     // [W/m^2-K]
+        int tank_pairs,			                     // [-]
+        double hot_tank_Thtr,		                 // [C] convert to K in init()
+        double hot_tank_max_heat,	                 // [MW]
+        double cold_tank_Thtr,	                     // [C] convert to K in init()
+        double cold_tank_max_heat,                   // [MW]
+        double dt_hot,			                     // [C] Temperature difference across heat exchanger - assume hot and cold deltaTs are equal
+        double T_cold_des,	                         // [C] convert to K in init()
+        double T_hot_des,	                         // [C] convert to K in init()
+        double T_tank_hot_ini,	                     // [C] Initial temperature in hot storage tank
+        double T_tank_cold_ini,	                     // [C] Initial temperature in cold storage cold
+        double h_tank_min,		                     // [m] Minimum allowable HTF height in storage tank
+        double f_V_hot_ini,                          // [%] Initial fraction of available volume that is hot
+        double htf_pump_coef,		                 // [kW/kg/s] Pumping power to move 1 kg/s of HTF through sink
+        bool tanks_in_parallel,                      // [-] Whether the tanks are in series or parallel with the external system. Series means external htf must go through storage tanks.
+        double V_tes_des = 1.85,                     // [m/s] Design-point velocity for sizing the diameters of the TES piping
+        bool calc_design_pipe_vals = true,           // [-] Should the HTF state be calculated at design conditions
+        double tes_pump_coef = std::numeric_limits<double>::quiet_NaN(),		// [kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
+        double eta_pump = std::numeric_limits<double>::quiet_NaN(),             // [-] Pump efficiency, for newer pumping calculations
+        bool has_hot_tank_bypass = false,                                       // [-] True if the bypass valve causes the external htf to bypass just the hot tank and enter the cold tank before flowing back to the external system.
+        double T_tank_hot_inlet_min = std::numeric_limits<double>::quiet_NaN(), // [C] Minimum source htf temperature that may enter the hot tank
+        bool custom_tes_p_loss = false,                                         // [-] True if the TES piping losses should be calculated using the TES pipe lengths and minor loss coeffs, false if using the pumping loss parameters
+        bool custom_tes_pipe_sizes = false,                                     // [-] True if the TES diameters and wall thicknesses parameters should be used instead of calculating them
+        util::matrix_t<double> k_tes_loss_coeffs = util::matrix_t<double>(),    // [-] Combined minor loss coefficients of the fittings and valves in the collection (including bypass) and generation loops in the TES 
+        util::matrix_t<double> tes_diams = util::matrix_t<double>(),            // [m] Imported inner diameters for the TES piping as read from the modified output files
+        util::matrix_t<double> tes_wallthicks = util::matrix_t<double>(),       // [m] Imported wall thicknesses for the TES piping as read from the modified output files
+        util::matrix_t<double> tes_lengths = util::matrix_t<double>(),          // [m] Imported lengths for the TES piping as read from the modified output files
+        double pipe_rough = std::numeric_limits<double>::quiet_NaN(),           // [m] Pipe absolute roughness
+        double dP_discharge = std::numeric_limits<double>::quiet_NaN()          // [bar] Pressure drop on the TES discharge side (e.g., within the steam generator)
+    );
+
+    C_csp_NTHeatTrap_tes();
+
+    ~C_csp_NTHeatTrap_tes() {};
 
 	virtual void init(const C_csp_tes::S_csp_tes_init_inputs init_inputs);
 
@@ -102,6 +189,9 @@ public:
 
 	virtual /*MWe*/ double pumping_power(double m_dot_sf /*kg/s*/, double m_dot_pb /*kg/s*/, double m_dot_tank /*kg/s*/,
 		double T_sf_in /*K*/, double T_sf_out /*K*/, double T_pb_in /*K*/, double T_pb_out /*K*/, bool recirculating);
+
+    void get_design_parameters(double& vol_one_temp_avail /*m3*/, double& vol_one_temp_total /*m3*/, double& d_tank /*m*/,
+        double& q_dot_loss_des /*MWt*/, double& dens_store_htf_at_T_ave /*kg/m3*/, double& Q_tes /*MWt-hr*/);
 
 };
 
