@@ -45,12 +45,12 @@ C_falling_particle_receiver::C_falling_particle_receiver(double h_tower /*m*/,
     double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
     double rec_su_delay /*hr*/, double rec_qf_delay /*-*/,
     double m_dot_htf_max_frac /*-*/, double eta_pump /*-*/,
-    double piping_loss_coefficient /*Wt/m2-K*/, double pipe_length_add /*m*/, double pipe_length_mult /*-*/,
     int field_fl, util::matrix_t<double> field_fl_props,
     int model_type /*-*/, double fixed_efficiency /*-*/, int rad_model_type /*-*/, int hadv_model_type /*-*/, double hadv_user  /*-*/,
     double ap_height /*m*/, double ap_width /*m*/, double ap_height_ratio /*-*/, double ap_width_ratio /*-*/, double ap_curtain_depth_ratio /*-*/, 
     double particle_dp /*m*/, double particle_abs /*-*/, double curtain_emis /*-*/, double dthdy /*-*/, 
     double cav_emis /*-*/, double cav_twall /*m*/, double cav_kwall /*m*/, double cav_hext /*W/m2/K*/,
+    double deltaT_transport_cold /*K*/, double deltaT_transport_hot /*K*/,
     double tauc_mult /*-*/, double hadv_mult /*-*/,
     int n_x, int n_y, int n_x_rad, int n_y_rad,
     double T_hot_target /*C*/, double csky_frac /*-*/) : C_pt_receiver(h_tower, 0.0,
@@ -59,7 +59,7 @@ C_falling_particle_receiver::C_falling_particle_receiver(double h_tower /*m*/,
         rec_su_delay, rec_qf_delay,
         m_dot_htf_max_frac, eta_pump,
         0.0, 0.0,
-        piping_loss_coefficient, pipe_length_add, pipe_length_mult,
+        0.0, 0.0, 0.0,
         field_fl, field_fl_props,
         2, 0)
 {
@@ -103,8 +103,8 @@ C_falling_particle_receiver::C_falling_particle_receiver(double h_tower /*m*/,
     m_cav_hext = cav_hext;
 
     // Particle transport thermal loss
-    m_Q_dot_transport_loss_hot =  0.0;  // TODO: Set up inputs and populate from length and loss per m
-    m_Q_dot_transport_loss_cold =  0.0;
+    m_deltaT_transport_hot = deltaT_transport_hot;
+    m_deltaT_transport_cold = deltaT_transport_cold;
 
     // Operating parameters
     m_T_particle_hot_target = T_hot_target + 273.15;   //[K] convert from C
@@ -192,6 +192,7 @@ void C_falling_particle_receiver::init()
     m_m_dot_htf_des = m_q_rec_des / (c_htf_des * (m_T_htf_hot_des - m_T_htf_cold_des));				//[kg/s]
     m_m_dot_htf_max = m_m_dot_htf_max_frac * m_m_dot_htf_des;	                                    //[kg/s]
     m_q_dot_inc_min = m_q_rec_des * m_f_rec_min / m_eta_therm_des_est;	//[W] Minimum receiver thermal power
+
 
     // If no startup requirements, then receiver is always ON
         // ... in the sense that the controller doesn't need to worry about startup
@@ -897,7 +898,7 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
     double dx = m_curtain_width / m_n_x;
 
     double Q_inc, Q_refl, Q_rad, Q_adv, Q_cond, Q_thermal, Q_imbalance;
-    double Tp_out, T_particle_prop, T_cold_in_rec, cp, particle_density, err, hadv_with_wind, Twavg, Twmax, Twf;
+    double Tp_out, T_particle_prop, T_cold_in_rec, cp, cp_cold, cp_hot, particle_density, err, hadv_with_wind, Twavg, Twmax, Twf;
     double qnetc_avg, qnetc_sol_avg, qnetw_avg, qnetw_sol_avg;
     double tauc_avg, rhoc_avg;
     double K_sum, Kinv_sum;
@@ -912,7 +913,9 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
     T_particle_prop = (m_T_htf_hot_des + T_cold_in) / 2.0; 
     particle_density = field_htfProps.dens(T_particle_prop, 1.0);
     cp = field_htfProps.Cp(T_particle_prop) * 1000.0;			        // Particle specific heat  [J/kg-K] evaluated at average of current inlet temperature and design outlet temperature
-    T_cold_in_rec = T_cold_in - m_Q_dot_transport_loss_cold / cp / soln.m_dot_tot;  // Inlet temperature to receiver accounting from loss from cold particle transport
+    cp_cold = field_htfProps.Cp(T_cold_in) * 1000.0;
+    cp_hot = field_htfProps.Cp(m_T_htf_hot_des) * 1000.0;
+    T_cold_in_rec = T_cold_in - m_deltaT_transport_cold;  // Inlet temperature to receiver accounting from loss from cold particle transport
 
     double rhow = 1.0 - m_cav_emis;
 
@@ -1324,8 +1327,10 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
         Tp_out = calculate_mass_wtd_avg_exit(mdot_per_elem, Tp);  // Mass-weighted average particle exit temperature from receiver [K]
     }
 
-    double Tp_out_after_transport = Tp_out - m_Q_dot_transport_loss_hot / cp / soln.m_dot_tot;  // Outlet temperature accounting from loss from hot particle transport
+    double Tp_out_after_transport = Tp_out - m_deltaT_transport_hot;  // Outlet temperature accounting from loss from hot particle transport
 
+    double Q_dot_transport_loss_hot = soln.m_dot_tot * cp_hot * m_deltaT_transport_hot;
+    double Q_dot_transport_loss_cold = soln.m_dot_tot * cp_cold * m_deltaT_transport_cold;
 
     if (Tp_out <= T_cold_in || Q_thermal != Q_thermal)
     {
@@ -1340,9 +1345,9 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
 	soln.Q_rad = Q_rad;
 	soln.Q_adv = Q_adv;
     soln.Q_cond = Q_cond;
-    soln.Q_transport = m_Q_dot_transport_loss_cold + m_Q_dot_transport_loss_hot;
+    soln.Q_transport = Q_dot_transport_loss_cold + Q_dot_transport_loss_hot;
     soln.eta = soln.Q_inc>0 ? soln.Q_thermal / soln.Q_inc : 0.0;
-    soln.eta_with_transport = soln.Q_inc > 0 ? (soln.Q_thermal - m_Q_dot_transport_loss_cold - m_Q_dot_transport_loss_hot) / soln.Q_inc : 0.0;
+    soln.eta_with_transport = soln.Q_inc > 0 ? (soln.Q_thermal - Q_dot_transport_loss_cold - Q_dot_transport_loss_hot) / soln.Q_inc : 0.0;
     soln.hadv = hadv_with_wind;
     soln.converged = converged;
 	soln.rec_is_off = rec_is_off;

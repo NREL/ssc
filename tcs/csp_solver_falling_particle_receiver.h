@@ -171,10 +171,8 @@ protected:
     double m_cav_hext;          // External loss coefficient [W/m2/K]   // TODO: Simplify twall, kwall, hext to an effective loss coefficient
 
     // Particle transport thermal loss
-    // TODO: Currently hard-coded to zero, update from inputs for piping loss
-    double m_Q_dot_transport_loss_hot;      // Constant thermal loss from hot particle transport to environment [W]
-    double m_Q_dot_transport_loss_cold;     // Constant thermal loss from cold particle transport to environment [W]
-
+    double m_deltaT_transport_hot;      // Constant tempearture loss from hot particle transport [K]
+    double m_deltaT_transport_cold;     // Constant tempearture loss from cold particle transport [K]
 
     // Operating parameters
     double m_T_particle_hot_target; // Target particle outlet temperature [K], converted from C in constructor
@@ -320,12 +318,12 @@ public:
         double f_rec_min /*-*/, double q_dot_rec_des /*MWt*/,
         double rec_su_delay /*hr*/, double rec_qf_delay /*-*/,
         double m_dot_htf_max_frac /*-*/, double eta_pump /*-*/,
-        double piping_loss_coefficient /*Wt/m2-K*/, double pipe_length_add /*m*/, double pipe_length_mult /*-*/,
         int field_fl, util::matrix_t<double> field_fl_props,
         int model_type /*-*/, double fixed_efficiency /*-*/, int rad_model_type /*-*/, int hadv_model_type /*-*/, double hadv_user  /*-*/,
         double ap_height /*m*/, double ap_width /*m*/, double ap_height_ratio /*-*/, double ap_width_ratio /*-*/, double ap_curtain_depth_ratio /*-*/,
         double particle_dp /*m*/, double particle_abs /*-*/, double curtain_emis /*-*/, double dthdy /*-*/,
         double cav_emis /*-*/, double cav_twall /*m*/, double cav_kwall /*m*/, double cav_hext /*W/m2/K*/,
+        double deltaT_transport_cold /*K*/, double deltaT_transport_hot /*K*/,
         double tauc_mult /*-*/, double hadv_mult /*-*/,
         int n_x, int  n_y, int n_x_rad, int n_y_rad,
         double T_hot_target /*C*/, double csky_frac /*-*/);

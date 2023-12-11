@@ -147,8 +147,6 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_INPUT,     SSC_NUMBER, "rec_qf_delay",                       "Energy-based receiver startup delay (fraction of rated thermal power)",                                                                   "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "csp.pt.rec.max_oper_frac",           "Maximum receiver mass flow rate fraction",                                                                                                "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "eta_lift",                           "Receiver particle lift efficiency",                                                                                                       "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "piping_length_mult",                 "Piping length multiplier",                                                                                                                "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "piping_length_const",                "Piping constant length",                                                                                                                  "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
 
     { SSC_INPUT,     SSC_NUMBER, "rec_clearsky_model",				   "Clearsky model: None = -1, User-defined data = 0, Meinel = 1; Hottel = 2; Allen = 3; Moon = 4",											  "",             "",                                  "Tower and Receiver",                       "?=-1",															   "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_ARRAY,  "rec_clearsky_dni",				   "User-defined clear-sky DNI",																											  "W/m2",         "",                                  "Tower and Receiver",                       "rec_clearsky_model=0",											   "",              "SIMULATION_PARAMETER"},
@@ -157,8 +155,8 @@ static var_info _cm_vtab_csp_tower_particle[] = {
 
 
     // New variables replacing deprecated variable "piping_loss". Variable currently not required so exec() can check if assigned and throw a more detailed error
-    // TODO (Janna): Update particle transport loss inputs and use in particle receiver model
-    { SSC_INPUT,     SSC_NUMBER, "piping_loss_coefficient",            "Thermal loss per meter of piping",                                                                                                        "Wt/m2-K",      "",                                  "Tower and Receiver",                       "",                                                                 "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "transport_deltaT_hot",                   "Temperature loss for hot particle transport",                                                                                            "K",      "",                                        "Tower and Receiver",                       "*",                                                                 "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "transport_deltaT_cold",                  "Temperature loss for cold particle transport",                                                                                           "K",      "",                                        "Tower and Receiver",                       "*",                                                                 "",              ""},
 
 
 
@@ -1099,12 +1097,12 @@ public:
             as_double("f_rec_min"), q_dot_rec_des,
             as_double("rec_su_delay"), as_double("rec_qf_delay"),
             as_double("csp.pt.rec.max_oper_frac"), as_double("eta_lift"),
-            as_double("piping_loss_coefficient"), as_double("piping_length_const"), as_double("piping_length_mult"),
             as_integer("rec_htf"), as_matrix("field_fl_props"),
             as_integer("rec_model_type"), user_efficiency, as_integer("rec_rad_model_type"), as_integer("rec_adv_model_type"), user_hadv,
             ap_height, ap_width, as_double("norm_curtain_height"), as_double("norm_curtain_width"), ap_curtain_depth_ratio,
             as_double("particle_dp"), as_double("particle_abs"), as_double("curtain_emis"), as_double("curtain_dthdy"),
             as_double("cav_abs"), as_double("cav_twall"), as_double("cav_kwall"), as_double("cav_hext"),
+            as_double("transport_deltaT_cold"), as_double("transport_deltaT_hot"),
             as_double("rec_tauc_mult"), as_double("rec_hadv_mult"),
             n_x, n_y, as_integer("rec_rad_nx"), as_integer("rec_rad_ny"),
             as_double("T_htf_hot_des"), as_double("rec_clearsky_fraction")
