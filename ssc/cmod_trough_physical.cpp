@@ -1209,6 +1209,7 @@ public:
                 as_double("init_hot_htf_percent"),
                 as_double("pb_pump_coef"),
                 as_boolean("tanks_in_parallel"),
+                1.0,                                            // [-] tes packed volume fraction
                 as_double("V_tes_des"),
                 as_boolean("calc_design_pipe_vals"),
                 as_double("tes_pump_coef"),
@@ -1663,10 +1664,10 @@ public:
             {
                 double V_tes_htf_avail_calc /*m3*/, V_tes_htf_total_calc /*m3*/,
                     d_tank_calc /*m*/, q_dot_loss_tes_des_calc /*MWt*/, dens_store_htf_at_T_ave_calc /*kg/m3*/,
-                    Q_tes_des_calc /*MWt-hr*/;
+                    Q_tes_des_calc /*MWt-hr*/, tes_total_mass /*kg*/;
 
                 storage.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
-                    d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
+                    d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc, tes_total_mass);
 
                 double vol_min = V_tes_htf_total_calc * (storage.m_h_tank_min / storage.m_h_tank);
                 double V_tank_hot_ini = (as_double("h_tank_min") / as_double("h_tank")) * V_tes_htf_total_calc; // m3
