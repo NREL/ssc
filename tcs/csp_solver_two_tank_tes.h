@@ -359,6 +359,8 @@ public:
 
     double get_storage_htf_cp();
 
+    bool get_is_hx();
+
 };
 
 class C_hx_cold_tes
