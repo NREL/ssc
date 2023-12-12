@@ -153,8 +153,8 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_INPUT,     SSC_NUMBER, "rec_clearsky_fraction",              "Weighting fraction on clear-sky DNI for receiver flow control",                                                                           "",             "",                                  "Tower and Receiver",                       "?=0.0",                                                            "",              "SIMULATION_PARAMETER"},
 
     // New variables replacing deprecated variable "piping_loss". Variable currently not required so exec() can check if assigned and throw a more detailed error
-    { SSC_INPUT,     SSC_NUMBER, "transport_deltaT_hot",                   "Temperature loss for hot particle transport",                                                                                            "K",      "",                                        "Tower and Receiver",                       "*",                                                                 "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "transport_deltaT_cold",                  "Temperature loss for cold particle transport",                                                                                           "K",      "",                                        "Tower and Receiver",                       "*",                                                                 "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "transport_deltaT_hot",               "Temperature loss for hot particle transport",                                                                                             "K",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "transport_deltaT_cold",              "Temperature loss for cold particle transport",                                                                                            "K",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
 
 
     // Falling particle receiver inputs for SolarPILOT that should *not* be reset during call to this cmod
@@ -421,11 +421,11 @@ static var_info _cm_vtab_csp_tower_particle[] = {
         // Receiver Performance
     { SSC_OUTPUT,    SSC_NUMBER, "q_dot_rec_des",                      "Receiver thermal output at design",                                                                                                       "MWt",         "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     //{ SSC_OUTPUT,    SSC_NUMBER, "eta_rec_thermal_des",                "Receiver estimated thermal efficiency at design",                                                                                         "",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
-    //{ SSC_OUTPUT,    SSC_NUMBER, "W_dot_rec_pump_des",                 "Receiver estimated pump power at design",                                                                                                 "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
-    //{ SSC_OUTPUT,    SSC_NUMBER, "W_dot_rec_pump_tower_share_des",     "Receiver estimated pump power due to tower height at design",                                                                             "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
-    //{ SSC_OUTPUT,    SSC_NUMBER, "W_dot_rec_pump_rec_share_des",       "Receiver estimated pump power due to rec tubes at design",                                                                                "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_rec_pump_des",                 "Receiver estimated pump power at design",                                                                                                 "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_rec_pump_tower_share_des",     "Receiver estimated pump power due to tower height at design",                                                                             "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_rec_pump_rec_share_des",       "Receiver estimated pump power due to rec tubes at design",                                                                                "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     //{ SSC_OUTPUT,    SSC_NUMBER, "vel_rec_htf_des",                    "Receiver estimated tube HTF velocity at design",                                                                                          "m/s",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
-    //{ SSC_OUTPUT,    SSC_NUMBER, "m_dot_htf_rec_des",                  "Receiver HTF mass flow rate at design",                                                                                                   "kg/s",        "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "m_dot_htf_rec_des",                  "Receiver HTF mass flow rate at design",                                                                                                   "kg/s",        "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "m_dot_htf_rec_max",                  "Receiver max HTF mass flow rate",                                                                                                         "kg/s",        "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     //{ SSC_OUTPUT,    SSC_NUMBER, "q_dot_piping_loss_des",              "Receiver estimated piping loss at design",                                                                                                "MWt",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
 
@@ -1788,10 +1788,8 @@ public:
         csp_solver.get_design_parameters(W_dot_bop_design, W_dot_fixed_parasitic_design);
 
                 // Calculate net system *generation* capacity including HTF lifts and system parasitics
-        double plant_net_capacity_calc = W_dot_cycle_des - W_dot_col_tracking_des - //W_dot_rec_pump_des - //TODO(Bill): This needs to be updated
+        double plant_net_capacity_calc = W_dot_cycle_des - W_dot_col_tracking_des - W_dot_rec_pump_des - 
                                         W_dot_pc_pump_des - W_dot_pc_cooling_des - W_dot_bop_design - W_dot_fixed_parasitic_design;    //[MWe]
-
-        //double plant_net_conv_calc = plant_net_capacity_calc / W_dot_cycle_des; //[-]
 
         double system_capacity = plant_net_capacity_calc * 1.E3;         //[kWe], convert from MWe
 
@@ -1829,7 +1827,7 @@ public:
 
         // Two types of TES costs models
         double tes_cost, tes_medium_cost, tes_bin_cost, tes_lift_cost, phx_lift_cost;
-        tes_cost = tes_medium_cost = tes_bin_cost = tes_lift_cost = phx_lift_cost = std::numeric_limits<double>::quiet_NaN();;
+        tes_cost = tes_medium_cost = tes_bin_cost = tes_lift_cost = phx_lift_cost = std::numeric_limits<double>::quiet_NaN();
         if (as_integer("tes_cost_model") == 0) {
             double Q_storage = as_double("P_ref") / as_double("design_eff") * as_double("tshours");
             tes_cost = N_mspt::tes_cost(Q_storage, as_double("tes_spec_cost")); //energy based method
@@ -1850,6 +1848,7 @@ public:
             string msg = util::format("'tes_cost_model' must be either 0 (energy-based) or 1 (detailed).");
             throw exec_error("csp_tower_particle", msg);
         }
+
         assign("tes_medium_cost", (ssc_number_t)tes_medium_cost);
         assign("tes_bin_cost", (ssc_number_t)tes_bin_cost);
         assign("tes_lift_cost", (ssc_number_t)tes_lift_cost);
