@@ -403,7 +403,7 @@ public:
 
         adjustment_factors haf(this, "adjust");
         if (!haf.setup())
-            throw exec_error("pvwattsv5", "failed to setup adjustment factors: " + haf.error());
+            throw exec_error("hcpv", "failed to setup adjustment factors: " + haf.error());
 
 
 

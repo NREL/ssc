@@ -517,7 +517,7 @@ public:
                 pc->m_CT = as_integer("CT");                    // cooling tech type: 1=evaporative, 2=air, 3=hybrid
                 if (pc->m_CT > 2) {
                     std::string err_msg = util::format("The specified power cycle cooling tech type, %d, does not exist"
-                        " for the ETES electric resistance heating model. Choose from 1) evaporative or 2) air\n", pb_tech_type);
+                        " for the ETES electric resistance heating model. Choose from 1) evaporative or 2) air\n", pc->m_CT);
                     log(err_msg, SSC_WARNING);
                     return;
                 }

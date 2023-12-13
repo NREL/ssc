@@ -517,7 +517,8 @@ public:
     int m_nLoops;                                   // [-] Number of loops in the field
     double m_solar_mult;		                    // [-] Solar multiple
     double m_Ap_tot;                                // Total field aperture [m2]
-    double m_q_design;		                        // [Wt] Design-point thermal power from the solar field
+    double m_q_design_actual;		                // [Wt] Design-point thermal power from the solar field limited by mass flow
+    double m_q_design_ideal;                        // [Wt] Design-point thermal power from the solar field not limited by mass flow
     double m_Ap_sm1;                                // Total required aperture, SM=1 [m2]
     double m_nLoops_sm1;                            // Required number of loops, SM=1
     double m_A_loop;                                // Aperture of a loop [m2]
@@ -531,6 +532,7 @@ public:
     double m_opt_normal;                            // Collector optical loss at normal incidence
     double m_m_dot_design;	                        // [kg/s] Total solar field mass flow rate at design
     double m_m_dot_loop_des;                        // [kg/s] LOOP design mass flow rate
+    double m_q_pb_design;                           // [Wt] Power block design input power
 
         // Steady State Design Point Outputs
     double m_dP_des_SS;                             // [bar] FIELD pressure drop at design (calculated in init (via steady_state -> On))
@@ -624,7 +626,7 @@ public:
 
     // ------------------------------------------ supplemental methods -----------------------------------------------------------
 
-    bool design_solar_mult();
+    bool design_solar_mult(double latitude = -377);
 
 
     // Classes

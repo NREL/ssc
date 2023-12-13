@@ -1789,6 +1789,10 @@ double C_csp_two_tank_tes::get_storage_htf_cp()
     return mc_store_htfProps.Cp(avg_temp);
 }
 
+bool C_csp_two_tank_tes::get_is_hx()
+{
+    return m_is_hx;
+}
 
 void two_tank_tes_sizing(HTFProperties &tes_htf_props, double Q_tes_des /*MWt-hr*/, double T_tes_hot /*K*/,
 	double T_tes_cold /*K*/, double h_min /*m*/, double h_tank /*m*/, int tank_pairs /*-*/, double u_tank /*W/m^2-K*/,

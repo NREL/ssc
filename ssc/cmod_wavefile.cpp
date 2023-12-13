@@ -58,6 +58,8 @@ static var_info _cm_wave_file_reader[] = {
 	{ SSC_OUTPUT,        SSC_STRING,      "data_source",             "Data source",                                 "",       "",                      "Weather Reader",      "use_specific_wf_wave=0",                        "",               "" },
 	{ SSC_OUTPUT,        SSC_STRING,      "notes",                   "Notes",                                       "",       "",                      "Weather Reader",      "use_specific_wf_wave=0",                        "",               "" },
     { SSC_OUTPUT,        SSC_NUMBER,      "location_id",             "Location ID",               "",       "",                      "Weather Reader",     "use_specific_wf_wave=0&wave_resource_model_choice=1",                        "",               "" },
+    { SSC_OUTPUT,        SSC_STRING,      "location_name",             "Location",               "",       "",                      "Weather Reader",     "use_specific_wf_wave=0&wave_resource_model_choice=1",                        "",               "" },
+
     { SSC_OUTPUT,        SSC_NUMBER,      "distance_to_shore_file",       "Distance to shore",               "m",       "",                      "Weather Reader",     "use_specific_wf_wave=0&wave_resource_model_choice=1",                        "",               "" },
     { SSC_OUTPUT,        SSC_NUMBER,      "water_depth_file",             "Water depth",               "m",       "",                      "Weather Reader",     "use_specific_wf_wave=0&wave_resource_model_choice=1",                        "",               "" },
 
@@ -179,6 +181,7 @@ public:
             }
             else {
                 assign("location_id", var_data(std::stod(values[1])));
+                assign("location_name", var_data(values[2]));
                 assign("distance_to_shore_file", var_data(std::stod(values[7])));
                 assign("water_depth_file", var_data(std::stod(values[18])));
                 assign("lat", var_data(std::stod(values[3])));

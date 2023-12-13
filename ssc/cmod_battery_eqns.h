@@ -84,6 +84,7 @@ static const char* Reopt_size_standalone_battery_params_doc =
 "     ++ Battery inputs ++\\n"
 "         'batt_dc_ac_efficiency': optional double [%], Battery DC to AC efficiency, 0-100\\n"
 "         'batt_ac_dc_efficiency': optional double [%], Inverter AC to battery DC efficiency, 0-100\\n"
+"         'batt_dispatch_auto_can_gridcharge: optional boolean, Whether the battery is allowed to charge from the grid. Default is True.\\n"
 "         'battery_per_kW': optional double [$/kW], Battery cost per kW\\n"
 "         'battery_per_kWh': optional double [$/kWh], Battery cost per kWh\\n"
 "         'batt_initial_SOC': optional double [%], Initial State-of-Charge, 0-100\\n"

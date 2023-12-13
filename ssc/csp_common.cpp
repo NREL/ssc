@@ -204,6 +204,7 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
         rf->rec_type.val = "Falling particle";
         rf->rec_height.val = m_cmod->as_double("rec_height");
         rf->rec_width.val = m_cmod->as_double("rec_width");
+        rf->absorptance.val = 1.0;
 
         // Curtain dimensions
         rf->norm_curtain_height.val = m_cmod->as_double("norm_curtain_height");  // [-]
@@ -519,7 +520,11 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
 
 		int nflux_x = m_cmod->as_integer("n_flux_x");
 		int nflux_y = m_cmod->as_integer("n_flux_y");
-		if(! m_sapi->CalculateFluxMaps(fluxtab, nflux_x, nflux_y, true) )
+
+        if (nflux_x < 1 || nflux_y < 1)
+            throw exec_error("solarpilot", "flux map resolution must be a positive integer");
+
+    	if(! m_sapi->CalculateFluxMaps(fluxtab, nflux_x, nflux_y, true) )
         {
             flux.aim_method.combo_select( aim_method_save );
             return false;  //simulation failed or was canceled.

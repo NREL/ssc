@@ -998,7 +998,7 @@ public:
                 assign("n_flux_x", 2);  // n_flux_x represents *per panel* the number subsurfaces in x direction 
             }
             else {
-                throw exec_error("tcsmolten_salt", "receiver_type must be 1 (external) or 0 (cavity)");
+                throw exec_error("tcsmolten_salt", "receiver_type must be 0 (external) or 1 (cavity)");
             }
 
             if ((field_model_type == 0 || field_model_type == 1) && sim_type == 1) // Auto-design. Generate a new system (is_optimize = true) or field layout
