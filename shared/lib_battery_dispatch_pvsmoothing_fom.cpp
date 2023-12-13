@@ -286,6 +286,13 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
             // calculate desired(unconstrained) battery power
             battery_power_terminal = out_power - pv_power; // positive is power leaving battery(discharging)
 
+            // If grid charging is not allowed, restrict charging to PV output power
+            if (!m_batteryPower->canGridCharge && battery_power_terminal < 0) {
+                if (std::abs(battery_power_terminal) > std::abs(pv_power)) {
+                    battery_power_terminal = -1.0 * pv_power;
+                }
+            }
+
             // adjust battery power to factor in battery constraints
             // check SOC limit - reduce battery power if either soc exceeds either soc_min or soc_max
             // check full

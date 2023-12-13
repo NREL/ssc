@@ -44,8 +44,8 @@ class CMBatteryEqns_cmod_battery_eqns : public ::testing::Test {
 
 public:
 
-    ssc_data_t data;
-    ssc_module_t mod;
+    ssc_data_t data = NULL;
+    ssc_module_t mod = NULL;
     std::string params_str;
     double m_error_tolerance_hi = 0.1;
     double m_error_tolerance_lo = 0.0001;
@@ -60,7 +60,9 @@ public:
 
     void TearDown() override {
         ssc_data_free(data);
-        ssc_module_free(mod);
+        if (mod != NULL) {
+            ssc_module_free(mod);
+        }
     }
 
 };

@@ -50,11 +50,14 @@ void save_cf(compute_module *cm, util::matrix_t<double>& mat, int cf_line, int n
 void save_cf(int cf_line, int nyears, const std::string& name, util::matrix_t<double> cf, compute_module* cm); //LCOS version
 
 extern var_info vtab_lcos_inputs[]; //LCOS var table
+extern var_info vtab_update_tech_outputs[];
 
 void lcos_calc(compute_module* cm, util::matrix_t<double> cf, int nyears, double nom_discount_rate, double inflation_rate, double lcoe_real, double total_cost, double real_discount_rate, int grid_charging_cost_version); //LCOS function
 
 // Prepend the 0 to relevant outputs
 void update_battery_outputs(compute_module* cm, size_t nyears);
+// Prepend the 0 to relevant outputs
+void update_fuelcell_outputs(compute_module* cm, size_t nyears);
 
 class dispatch_calculations
 {
@@ -65,6 +68,7 @@ private:
 	util::matrix_t<double> m_cf;
 	std::vector<double> m_degradation;
 	std::vector<double> m_hourly_energy;
+    std::vector<double> m_dispatch_tod_factors;
 	int m_nyears;
 	bool m_timestep;
 	ssc_number_t *m_gen; // Time series power
@@ -138,6 +142,10 @@ public:
     void check_npv(compute_module* cm, ssc_number_t& npv_metric);
     void check_debt_percentage(compute_module* cm, ssc_number_t& debt_percentage);
 };
+
+
+
+
 
 
 /*

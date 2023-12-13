@@ -274,6 +274,7 @@ bool compute_module::evaluate() {
 }
 
 bool compute_module::verify(const std::string &phase, int check_var_type) {
+    bool ret = true;
     std::vector<var_info *>::iterator it;
     for (it = m_varlist.begin(); it != m_varlist.end(); ++it) {
         var_info *vi = *it;
@@ -286,7 +287,7 @@ bool compute_module::verify(const std::string &phase, int check_var_type) {
                 if (!dat) {
                     log(phase + ": variable '" + std::string(vi->name) + "' (" + std::string(vi->label) +
                         ") required but not assigned");
-                    return false;
+                    ret = false;
                 } else if (dat->type != vi->data_type) {
                     // ssc issue 906 - required only inputs!
                     if ((vi->data_type == SSC_ARRAY) && (dat->type == SSC_NUMBER)) {
@@ -297,21 +298,32 @@ bool compute_module::verify(const std::string &phase, int check_var_type) {
                     else { 
                         log(phase + ": variable '" + std::string(vi->name) + "' (" + var_data::type_name(dat->type) +
                             ") of wrong type, " + var_data::type_name(vi->data_type) + " required.");
-                        return false;
+                        ret = false;
                     }
                 }
+                if (!ret)
+                    log(vi->meta);
 
                 // now check constraints on it
                 std::string fail_text;
                 if (!check_constraints(vi->name, fail_text)) {
                     log(fail_text, SSC_ERROR);
-                    return false;
+                    ret =  false;
+                }
+            }
+            else { // SAM issue 1184 - if variable present check constraints even if not required - can check type. too.
+                if (var_data* dat = lookup(vi->name)) {
+                    std::string fail_text;
+                    if (!check_constraints(vi->name, fail_text)) {
+                        log(std::string(vi->name) + ":" + fail_text, SSC_ERROR);
+                        ret = false;
+                    }
                 }
             }
         }
     }
 
-    return true;
+    return ret;
 }
 
 void compute_module::add_var_info(var_info vi[]) {
@@ -943,6 +955,10 @@ size_t compute_module::check_timestep_seconds(double t_start, double t_end, doub
     return steps;
 }
 
+/*this function accumulates a timeseries array of information into a monthly array
+  the timeseries array must be year one only! cannot be lifetime length.
+  if you are using a lifetime array, use the function accumulate_monthly_for_year instead.
+  scale input is optional to scale between units. to scale from kW to kWh, use dt_hour (i.e. 0.25 for 15-min data) as the "scale" */
 ssc_number_t *
 compute_module::accumulate_monthly(const std::string &ts_var, const std::string &monthly_var, double scale) {
 
@@ -973,7 +989,9 @@ compute_module::accumulate_monthly(const std::string &ts_var, const std::string 
 
     return monthly;
 }
-
+/* this function accumulates monthly values for a specified "year" from a lifetime timeseries value (ts_var).
+   year is an optional input set by default to year 1.
+   scale input is optional to scale between units. to scale from kW to kWh, use dt_hour (i.e. 0.25 for 15-min data) as the "scale" */
 ssc_number_t *
 compute_module::accumulate_monthly_for_year(const std::string &ts_var, const std::string &monthly_var, double scale,
                                             size_t step_per_hour, size_t year) {
@@ -981,7 +999,7 @@ compute_module::accumulate_monthly_for_year(const std::string &ts_var, const std
     size_t count = 0;
     ssc_number_t *ts = as_array(ts_var, &count);
 
-    size_t annual_values = step_per_hour * 8760;
+    size_t annual_values = step_per_hour * 8760; //number of values in one year
 
     if (!ts || step_per_hour < 1 || step_per_hour > 60 || year * step_per_hour * 8760 > count)
         throw exec_error("generic",
@@ -991,7 +1009,7 @@ compute_module::accumulate_monthly_for_year(const std::string &ts_var, const std
 
     ssc_number_t *monthly = allocate(monthly_var, 12);
 
-    size_t c = (year - 1) * annual_values;
+    size_t c = (year - 1) * annual_values; //this will get you to the correct starting index in the timeseries array for the specified year
     for (int m = 0; m < 12; m++) // each month
     {
         monthly[m] = 0;

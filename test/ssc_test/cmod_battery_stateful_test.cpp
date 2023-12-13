@@ -437,3 +437,28 @@ TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, TestReplacementByCapa
     EXPECT_EQ(vt->as_vector_ssc_number_t("indices_replaced")[1], 2);
     EXPECT_EQ(vt->as_number("q_relative"), 100);
 }
+
+
+
+TEST_F(CMBatteryStatefulIntegration_cmod_battery_stateful, ssc_1023) {
+    double dt_hour = 1.0 / 60;
+    ssc_number_t power, soc, current, temp;
+
+    CreateLMOLTOssc1023Model(dt_hour);
+
+    for (size_t i = 0; i < 50; i++) {
+        ssc_data_set_number(data, "input_power", -0.1);
+        ssc_module_exec(mod, data);
+        ssc_data_get_number(data, "P", &power);
+        ssc_data_get_number(data, "SOC", &soc);
+        ssc_data_get_number(data, "I", &current);
+        ssc_data_get_number(data, "T_batt", &temp);
+        // uncomment following to check all iterations
+        //std::cout << i << ": Power=" << power << ", SOC=" << soc << ", I=" << current << ", T_Batt=" << temp << "\n";
+    }
+    EXPECT_NEAR(power, -0.1, 1e-4);
+    EXPECT_NEAR(soc, 20.8265, 1e-4);
+    EXPECT_NEAR(current, -0.495549, 1e-6);
+    EXPECT_NEAR(temp, 20, 1e-4);
+}
+

@@ -55,11 +55,15 @@ static var_info vtab_utility_rate5[] = {
 
 	// input from user as kW and output as kW
 	{ SSC_INOUT, SSC_ARRAY, "load", "Electricity load (year 1)", "kW", "", "Load", "", "", "" },
+
+    // Optional input, only provided by battery cases
+    { SSC_INPUT, SSC_ARRAY, "grid_outage", "Grid outage in this time step", "0/1", "0=GridAvailable,1=GridUnavailable,Length=load", "Load",    "",                       "",                               "" },
+
 	//  output as kWh - same as load (kW) for hourly simulations
 	{ SSC_OUTPUT, SSC_ARRAY, "bill_load", "Bill load (year 1)", "kWh", "", "Load", "*", "", "" },
 
     { SSC_INPUT, SSC_NUMBER, "inflation_rate", "Inflation rate", "%", "", "Lifetime", "*", "MIN=-99", "" },
-	{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "%", "", "System Output", "*", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "degradation", "Annual energy degradation", "%", "", "System Output", "system_use_lifetime_output=0", "", "" },
 	{ SSC_INPUT, SSC_ARRAY, "load_escalation", "Annual load escalation", "%/year", "", "Load", "?=0", "", "" },
 
 	// outputs
@@ -84,7 +88,7 @@ static var_info vtab_utility_rate5[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_system_to_load",    "Electricity from system to load (year 1 hourly)",     "kWh", "",                      "",             "*",                         "",                   "" },
 
 // lifetime load (optional for lifetime analysis)
-	{ SSC_OUTPUT, SSC_ARRAY, "lifetime_load", "Lifetime electricity load", "kW", "", "Time Series", "system_use_lifetime_output=1", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "lifetime_load", "Lifetime electricity load", "kW", "", "Time Series", "?", "", "" },
 
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_tofromgrid",         "Electricity to/from grid peak (year 1 hourly)", "kW",  "",                      "Time Series",             "*",                         "",                   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_p_system_to_load",         "Electricity peak from system to load (year 1 hourly)", "kW",  "",                      "Time Series",             "*",                         "",                   "" },
@@ -546,6 +550,11 @@ public:
 		}
 //		ssc_number_t ts_hour_load = 1.0f / step_per_hour_load;
 
+        std::vector<bool> grid_outage(m_num_rec_yearly, false);
+        if (is_assigned("grid_outage")) {
+            grid_outage = as_vector_bool("grid_outage");
+        }
+
 		// prepare timestep arrays for load and grid values
 		std::vector<ssc_number_t>
 			e_sys_cy(m_num_rec_yearly), p_sys_cy(m_num_rec_yearly),
@@ -833,7 +842,9 @@ public:
         util::matrix_t<ssc_number_t> &monthly_tou_demand_charge_wo_sys = allocate_matrix("monthly_tou_demand_charge_wo_sys", 13, tou_periods);
 
 		// lifetime hourly load
-		ssc_number_t *lifetime_load = allocate("lifetime_load", nrec_gen);
+        ssc_number_t* lifetime_load;
+        if (as_integer("system_use_lifetime_output") == 1) 
+		    lifetime_load = allocate("lifetime_load", nrec_gen);
 
 		/*
 		0=Single meter with monthly rollover credits in kWh
@@ -935,35 +946,53 @@ public:
 				e_load_cy[j] = p_load[j] * load_scale[i] * ts_hour_gen;
 				p_load_cy[j] = p_load[j] * load_scale[i];
 
-
-				// update e_sys per year if lifetime output
-				if ((as_integer("system_use_lifetime_output") == 1) && ( idx < nrec_gen ))
-				{
-//					e_sys[j] = p_sys[j] = 0.0;
-//					ts_power = (idx < nrec_gen) ? pgen[idx] : 0;
-//					e_sys[j] = ts_power * ts_hour_gen;
-//					p_sys[j] = ((ts_power > p_sys[j]) ? ts_power : p_sys[j]);
-					e_sys_cy[j] = pgen[idx] * ts_hour_gen;
-					p_sys_cy[j] = pgen[idx];
-					// until lifetime load fully implemented
-					// report lifetime load in kW and not kWh
-					lifetime_load[idx] = -e_load_cy[j] / ts_hour_gen;
-					idx++;
-				}
-				else
-				{
-					e_sys_cy[j] = pgen[j] * ts_hour_gen;
-					p_sys_cy[j] = pgen[j];
-				}
-				e_sys_cy[j] *= sys_scale[i];
-				p_sys_cy[j] *= sys_scale[i];
-				// calculate e_grid value (e_sys + e_load)
+                if (grid_outage[j]) {
+                    // update e_sys per year if lifetime output
+                    if ((as_integer("system_use_lifetime_output") == 1) && (idx < nrec_gen))
+                    {
+                        e_sys_cy[j] = 0.0;
+                        p_sys_cy[j] = 0.0;
+                        // until lifetime load fully implemented
+                        // report lifetime load in kW and not kWh
+                        lifetime_load[idx] = 0.0;
+                        idx++;
+                    }
+                    else
+                    {
+                        e_sys_cy[j] = 0.0;
+                        p_sys_cy[j] = 0.0;
+                    }
+                }
+                else {
+                    // update e_sys per year if lifetime output
+                    if ((as_integer("system_use_lifetime_output") == 1) && (idx < nrec_gen))
+                    {
+                        //					e_sys[j] = p_sys[j] = 0.0;
+                        //					ts_power = (idx < nrec_gen) ? pgen[idx] : 0;
+                        //					e_sys[j] = ts_power * ts_hour_gen;
+                        //					p_sys[j] = ((ts_power > p_sys[j]) ? ts_power : p_sys[j]);
+                        e_sys_cy[j] = pgen[idx] * ts_hour_gen;
+                        p_sys_cy[j] = pgen[idx];
+                        // until lifetime load fully implemented
+                        // report lifetime load in kW and not kWh
+                        lifetime_load[idx] = -e_load_cy[j] / ts_hour_gen;
+                        idx++;
+                    }
+                    else
+                    {
+                        e_sys_cy[j] = pgen[j] * ts_hour_gen;
+                        p_sys_cy[j] = pgen[j];
+                    }
+                }
+                e_sys_cy[j] *= sys_scale[i];
+                p_sys_cy[j] *= sys_scale[i];
+                // calculate e_grid value (e_sys + e_load)
 //				e_sys_cy[j] = e_sys[j] * sys_scale[i];
 //				p_sys_cy[j] = p_sys[j] * sys_scale[i];
-				// note: load is assumed to have negative sign
-				e_grid_cy[j] = e_sys_cy[j] + e_load_cy[j];
-				p_grid_cy[j] = p_sys_cy[j] + p_load_cy[j];
-			}
+                // note: load is assumed to have negative sign
+                e_grid_cy[j] = e_sys_cy[j] + e_load_cy[j];
+                p_grid_cy[j] = p_sys_cy[j] + p_load_cy[j];
+            }
 
 
 			// now calculate revenue without solar system (using load only)

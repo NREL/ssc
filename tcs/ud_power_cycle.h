@@ -89,6 +89,12 @@ private:
 	// member string for exception messages
 	std::string m_error_msg;
 
+    // does udpc represent sco2 and require regression model?
+    bool m_is_sco2_regr;
+    bool m_is_sco2_design_set;
+    double m_T_htf_cold_des_sco2_regr;
+    double m_deltaT_HTF_des;
+
 	double get_interpolated_ND_output(int i_ME /*M.E. table index*/, double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/);
 
 	double m_T_htf_ref;		//[C] Reference (design) HTF inlet temperature
@@ -115,13 +121,29 @@ private:
 	std::vector<double> m_ME_m_dot_htf_low;		//[-]
 	std::vector<double> m_ME_m_dot_htf_high;	//[-]
 
+    // Save vectors of independent variable parametric value (also stored in Linear_Interp objects)
+    std::vector<double> mv_T_htf_unique;
+    std::vector<double> mv_m_dot_unique;
+    std::vector<double> mv_T_amb_unique;    
+
+    double get_W_dot_gross_ND_interp(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/);
+
+    double get_Q_dot_HTF_ND_interp(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/);
+
+    double get_W_dot_cooling_ND_interp(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/);
+
+    double get_m_dot_water_ND_interp(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/);
+
+    void get_sco2_regr_max_ND_q_dot(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_max_ND /*-*/,
+        double& delta_T_HTF_OD /*C*/, double& m_dot_htf_ND_max /*-*/, double& q_dot_htf_ND_max /*-*/);
+
 public:
 
-	C_ud_power_cycle(){};
+    C_ud_power_cycle();
 
 	~C_ud_power_cycle(){};
 
-    void init(const util::matrix_t<double>& udpc_table,
+    void init(bool is_sco2_regr, const util::matrix_t<double>& udpc_table,
         int& n_T_htf_pars, int& n_T_amb_pars, int& n_m_dot_pars,
         double& T_htf_ref_calc /*C*/, double& T_htf_low_calc /*C*/, double& T_htf_high_calc /*C*/,
         double& T_amb_ref_calc /*C*/, double& T_amb_low_calc /*C*/, double& T_amb_high_calc /*C*/,
@@ -129,13 +151,29 @@ public:
         std::vector<double>& Y_at_T_htf_ref, std::vector<double>& Y_at_T_amb_ref,
         std::vector<double>& Y_at_m_dot_htf_ND_ref, std::vector<double>& Y_avg_at_refs);
 
-	double get_W_dot_gross_ND( double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/);
+    void set_is_sco2_regr(bool is_sco2_regr);
 
-	double get_Q_dot_HTF_ND(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/);
+    void set_sco2_design_for_sco2_regr(double T_htf_hot_des /*C*/, double T_htf_cold_des /*C*/);
 
-	double get_W_dot_cooling_ND(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/);
+    double get_W_dot_gross_nd(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/, double max_frac /*-*/);
 
-	double get_m_dot_water_ND(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/);	
+    double get_Q_dot_HTF_nd(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/, double max_frac /*-*/);
+
+    double get_W_dot_cooling_nd(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/, double max_frac /*-*/);
+
+    double get_m_dot_water_nd(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/, double max_frac /*-*/);
+
+    void get_max_m_dot_and_W_dot_ND(double T_htf_hot /*C*/, double T_amb /*C*/,
+                    double max_frac /*-*/, double cutoff_frac /*-*/,
+                    double& m_dot_HTF_ND_max, double& W_dot_gross_ND_max);
+
+    void udpc_sco2_regr_off_design(double T_htf_hot /*C*/, double T_amb /*C*/, double m_dot_htf_ND /*-*/,
+        double m_dot_max_ND,
+        double& W_dot_gross_ND, double& q_dot_ND, double& W_dot_cooling_ND, double& m_dot_water_ND);
+
+    void get_ind_var_params(std::vector<double>& v_T_htf_unique, std::vector<double>& v_m_dot_unique,
+        std::vector<double>& v_T_amb_unique);
+
 };
 
 class C_od_pc_function
@@ -228,6 +266,8 @@ namespace N_udpc_common
 
     int split_ind_tbl(const util::matrix_t<double>& combined, util::matrix_t<double>& T_htf_ind,
         util::matrix_t<double>& m_dot_ind, util::matrix_t<double>& T_amb_ind,
+        std::vector<double>& v_T_htf_unique, std::vector<double>& v_m_dot_unique,
+        std::vector<double>& v_T_amb_unique,
         int& n_T_htf_pars, int& n_T_amb_pars, int& n_m_dot_pars,
         double& m_dot_low, double& m_dot_des, double& m_dot_high,
         double& T_htf_low, double& T_htf_des, double& T_htf_high,

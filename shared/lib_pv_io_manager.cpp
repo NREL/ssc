@@ -211,6 +211,7 @@ Irradiance_IO::Irradiance_IO(compute_module* cm, std::string cmName)
 
 void Irradiance_IO::checkWeatherFile(compute_module* cm, std::string cmName)
 {
+    size_t num_alb_errors = 0;
     for (size_t idx = 0; idx < numberOfWeatherFileRecords; idx++)
     {
         if (!weatherDataProvider->read(&weatherRecord))
@@ -275,11 +276,13 @@ void Irradiance_IO::checkWeatherFile(compute_module* cm, std::string cmName)
         }
         if (useWeatherFileAlbedo && (weatherRecord.alb <= 0 || weatherRecord.alb >= 1))
         {
-            cm->log(util::format("Out of range albedo %lg at time [y:%d m:%d d:%d h:%d minute:%lg], using monthly value",
-                weatherRecord.alb, weatherRecord.year, weatherRecord.month, weatherRecord.day, weatherRecord.hour, weatherRecord.minute), SSC_WARNING, (float)idx);
+            num_alb_errors++;
             weatherRecord.alb = 0;
         }
     }
+    if (num_alb_errors > 0)
+        cm->log(util::format("Weather file albedo has %d invalid values, using monthly value", (int)num_alb_errors), SSC_WARNING);
+
     weatherDataProvider->rewind();
 }
 
@@ -292,6 +295,8 @@ void Irradiance_IO::AllocateOutputs(compute_module* cm)
     p_weatherFileGHI = cm->allocate("gh", numberOfWeatherFileRecords);
     p_weatherFileDNI = cm->allocate("dn", numberOfWeatherFileRecords);
     p_weatherFileDHI = cm->allocate("df", numberOfWeatherFileRecords);
+    p_weatherFilePOA.push_back(cm->allocate("wfpoa", numberOfWeatherFileRecords));
+
     p_sunPositionTime = cm->allocate("sunpos_hour", numberOfWeatherFileRecords);
     p_weatherFileWindSpeed = cm->allocate("wspd", numberOfWeatherFileRecords);
     p_weatherFileAmbientTemp = cm->allocate("tdry", numberOfWeatherFileRecords);
@@ -353,6 +358,8 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
         nModulesPerString = cm->as_integer(prefix + "modules_per_string");
         mpptInput = cm->as_integer(prefix + "mppt_input");
         trackMode = cm->as_integer(prefix + "track_mode");
+        useCustomRotAngles = cm->as_boolean(prefix + "use_custom_rot_angles");
+        useCustomCellTemp = cm->as_boolean(prefix + "use_custom_cell_temp");
         tiltEqualLatitude = 0;
         if (cm->is_assigned(prefix + "tilt_eq_lat")) tiltEqualLatitude = cm->as_boolean(prefix + "tilt_eq_lat");
 
@@ -371,6 +378,35 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
                 if (monthlyTiltDegrees[i] < 0.0) throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " monthly tilt angles cannot be negative.");
             }
         }
+        
+        /* Insert checks for custom tracker rotation angles here*/
+        if (useCustomRotAngles == 1) {
+            if (cm->is_assigned(prefix + "custom_rot_angles_array")) {
+                customRotAngles = cm->as_vector_double(prefix + "custom_rot_angles_array");
+                for (int i = 0; i < customRotAngles.size(); i++) {
+                    if (customRotAngles[i] > 90.0 || customRotAngles[i] < -90.0) throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " custom tracker rotation angles must be between -90 and 90 degrees.");
+                }
+            }
+            else {
+                throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " custom tracker rotation angles required but not assigned.");
+            }
+        }
+        
+        
+
+        /* Insert checks for using custom cell temperature array*/
+        if (useCustomCellTemp == 1) {
+            if (cm->is_assigned(prefix + "custom_cell_temp_array")) {
+                customCellTempArray = cm->as_vector_double(prefix + "custom_cell_temp_array");
+                    for (int i = 0; i < customCellTempArray.size(); i++) {
+                        if (customCellTempArray[i] > 100.0) throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " custom cell temperature cannot be greater than 100 degrees Celsius.");
+                    }
+            }
+            else {
+                throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " custom cell temperatures required but not assigned.");
+            }
+        }
+        
         //azimuth required for fixed tilt, single axis, and seasonal tilt- can't check for this in variable table so check here
         azimuthDegrees = std::numeric_limits<double>::quiet_NaN();
         if (trackMode == irrad::FIXED_TILT || trackMode == irrad::SINGLE_AXIS || trackMode == irrad::SEASONAL_TILT)
@@ -637,7 +673,7 @@ void PVSystem_IO::SetupPOAInput()
 
 
                 if (tms[2] > 0) {
-                    incidence(Subarrays[nn]->trackMode, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, sun[1], sun[0], Subarrays[nn]->backtrackingEnabled, Subarrays[nn]->groundCoverageRatio, Subarrays[nn]->slopeTilt, Subarrays[nn]->slopeAzm, false, 0.0, angle);
+                    incidence(Subarrays[nn]->trackMode, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, sun[1], sun[0], Subarrays[nn]->backtrackingEnabled, Subarrays[nn]->groundCoverageRatio, Subarrays[nn]->slopeTilt, Subarrays[nn]->slopeAzm, false, 0.0, false, 0.0, angle);
                 }
                 else {
                     angle[0] = -999;
@@ -673,6 +709,12 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO* 
     }
 
     numberOfInverters = cm->as_integer("inverter_count");
+    
+    dcNameplate = cm->as_double("system_capacity");
+    numberOfInvertersClipping = dcNameplate / (Inverter->ratedACOutput / 1000);
+    if (numberOfInvertersClipping == 0.0) numberOfInvertersClipping = 1;
+    
+
     ratedACOutput = Inverter->ratedACOutput * numberOfInverters;
     acDerate = 1 - cm->as_double("acwiring_loss") / 100;
     acLossPercent = (1 - acDerate) * 100;
@@ -684,7 +726,7 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO* 
     enableSnowModel = cm->as_boolean("en_snow_model");
 
     // The shared inverter of the PV array and a tightly-coupled DC connected battery
-    std::unique_ptr<SharedInverter> tmpSharedInverter(new SharedInverter(Inverter->inverterType, numberOfInverters, &Inverter->sandiaInverter, &Inverter->partloadInverter, &Inverter->ondInverter));
+    std::unique_ptr<SharedInverter> tmpSharedInverter(new SharedInverter(Inverter->inverterType, numberOfInverters, &Inverter->sandiaInverter, &Inverter->partloadInverter, &Inverter->ondInverter, numberOfInvertersClipping));
     m_sharedInverter = std::move(tmpSharedInverter);
 
     // Register shared inverter with inverter_IO
@@ -854,6 +896,11 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
             p_derateSelfShading.push_back(cm->allocate(prefix + "ss_derate", numberOfWeatherFileRecords));
             p_derateSelfShadingDiffuse.push_back(cm->allocate(prefix + "ss_diffuse_derate", numberOfWeatherFileRecords));
             p_derateSelfShadingReflected.push_back(cm->allocate(prefix + "ss_reflected_derate", numberOfWeatherFileRecords));
+            p_DNIIndex.push_back(cm->allocate(prefix + "dni_index", numberOfWeatherFileRecords));
+            p_poaBeamFrontCS.push_back(cm->allocate(prefix + "poa_beam_front_cs", numberOfWeatherFileRecords));
+            p_poaDiffuseFrontCS.push_back(cm->allocate(prefix + "poa_diffuse_front_cs", numberOfWeatherFileRecords));
+            p_poaGroundFrontCS.push_back(cm->allocate(prefix + "poa_ground_front_cs", numberOfWeatherFileRecords));
+            p_poaRearCS.push_back(cm->allocate(prefix + "poa_rear_cs", numberOfWeatherFileRecords));
 
             if (enableSnowModel) {
                 p_snowLoss.push_back(cm->allocate(prefix + "snow_loss", numberOfWeatherFileRecords));
@@ -916,12 +963,20 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
 
     p_inverterACOutputPreLoss = cm->allocate("ac_gross", numberOfWeatherFileRecords);
     p_acWiringLoss = cm->allocate("ac_wiring_loss", numberOfWeatherFileRecords);
+    p_ClippingPotential = cm->allocate("clipping_potential", numberOfWeatherFileRecords);
+    p_CPBin = cm->allocate("clipping_potential_bin", numberOfWeatherFileRecords);
+    p_DNIIndexBin = cm->allocate("dni_index_bin", numberOfWeatherFileRecords);
+
     p_transmissionLoss = cm->allocate("ac_transmission_loss", numberOfWeatherFileRecords);
     p_acPerfAdjLoss = cm->allocate("ac_perf_adj_loss", numberOfWeatherFileRecords);
     p_acLifetimeLoss = cm->allocate("ac_lifetime_loss", numberOfWeatherFileRecords);
     p_dcLifetimeLoss = cm->allocate("dc_lifetime_loss", numberOfWeatherFileRecords);
     p_systemDCPower = cm->allocate("dc_net", numberOfLifetimeRecords);
     p_systemACPower = cm->allocate("gen", numberOfLifetimeRecords);
+
+    p_systemDCPowerCS = cm->allocate("dc_net_clearsky", numberOfLifetimeRecords);
+    p_subhourlyClippingLoss = cm->allocate("subhourly_clipping_loss", numberOfLifetimeRecords);
+    p_subhourlyClippingLossFactor = cm->allocate("subhourly_clipping_loss_factor", numberOfLifetimeRecords);
 
     if (Simulation->useLifetimeOutput)
     {
@@ -1200,6 +1255,8 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
 
         selfShadingFillFactor = sandiaModel.Vmp0 * sandiaModel.Imp0 / sandiaModel.Voc0 / sandiaModel.Isc0;
         voltageMaxPower = sandiaModel.Vmp0;
+
+        groundClearanceHeight = 1.0; //No input as there is no bifacial option for Sandia module model
 
         if (sandiaModel.fd == 0) {
             isConcentratingPV = true;

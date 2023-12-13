@@ -168,6 +168,8 @@ private:
 
 	double Interpolate(int YT, int XT, double X, double Z = std::numeric_limits<double>::quiet_NaN());
 
+    double Calculate_T_htf_cold_Converge_Cp(double q_dot_htf /*kWt*/, double T_htf_hot /*K*/, double m_dot_htf /*kg/s*/);
+
 	// Isopentane
 	double T_sat4(double P/*Bar*/) 
 	{
@@ -247,9 +249,12 @@ public:
 		util::matrix_t<double> m_pc_fl_props;
         double DP_SGS;              //[bar] pressure drop within the steam generator system
 
+        bool m_is_calc_htf_pump_coef;   //[-] Default false, use m_htf_pump_coef
+        double m_W_dot_htf_pump_target; //[MWe]
 
 		// Steam Rankine or User-Defined
 		bool m_is_user_defined_pc;				//[-] True: user-defined power cycle, False: Built-in Rankine Cycle model
+        bool m_is_udpc_sco2_regr;               //[-] False: default, base udpc interpolation, True: use sco2 heuristic regression
 
 			// Parameters that have different SSCINPUT names for Rankine Cycle and User Defined Cycle
 		double m_dT_cw_ref;			//[C] design temp difference between cooling water inlet/outlet
@@ -279,12 +284,16 @@ public:
 				m_q_sby_frac = m_P_boil_des = m_startup_time = m_startup_frac = m_T_approach = m_T_ITD_des =
 				m_P_cond_ratio = m_pb_bd_frac = m_P_cond_min = m_htf_pump_coef = std::numeric_limits<double>::quiet_NaN();
 
+            m_W_dot_htf_pump_target = std::numeric_limits<double>::quiet_NaN();
+
 			m_pc_fl = m_CT = m_tech_type = m_n_pl_inc = -1;
+            m_is_calc_htf_pump_coef = false;
 
 			// Initialize parameters for user-defined power cycle
 			m_is_user_defined_pc = false;
+            m_is_udpc_sco2_regr = false;
 				
-				m_W_dot_cooling_des = m_m_dot_water_des = std::numeric_limits<double>::quiet_NaN();
+			m_W_dot_cooling_des = m_m_dot_water_des = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -339,6 +348,15 @@ public:
         double& T_amb_ref_calc /*C*/, double& T_amb_low_calc /*C*/, double& T_amb_high_calc /*C*/,
         double& m_dot_htf_ND_ref_calc, double& m_dot_htf_ND_low_calc /*-*/, double& m_dot_htf_ND_high_calc /*-*/,
         double& W_dot_gross_ND_des, double& Q_dot_HTF_ND_des, double& W_dot_cooling_ND_des, double& m_dot_water_ND_des);
+
+    double get_design_input_cooling_power()
+    {
+        // For the UDPC model, the calculated design value can be different
+        // than the input design value due to the UDPC data not = 1 at the design independent variables
+
+        // This will return NaN if not using the UDPC model
+        return ms_params.m_W_dot_cooling_des;   //[MWe]
+    }
 };
 
 

@@ -151,8 +151,8 @@ void pvsamv1_pv_defaults(ssc_data_t& data) {
 	ssc_data_set_number(data, "subarray1_nmody", 2);
 	ssc_data_set_number(data, "subarray1_backtrack", 0);
 	ssc_data_set_number(data, "subarray2_enable", 0);
-	ssc_data_set_number(data, "subarray2_modules_per_string", 0);
-	ssc_data_set_number(data, "subarray2_nstrings", 0);
+	ssc_data_set_number(data, "subarray2_modules_per_string", 1);
+	ssc_data_set_number(data, "subarray2_nstrings", 1);
 	ssc_data_set_number(data, "subarray2_mppt_input", 1);
 	ssc_data_set_number(data, "subarray2_tilt", 20);
 	ssc_data_set_number(data, "subarray2_tilt_eq_lat", 0);
@@ -170,8 +170,8 @@ void pvsamv1_pv_defaults(ssc_data_t& data) {
 	ssc_data_set_number(data, "subarray2_nmody", 2);
 	ssc_data_set_number(data, "subarray2_backtrack", 0);
 	ssc_data_set_number(data, "subarray3_enable", 0);
-	ssc_data_set_number(data, "subarray3_modules_per_string", 0);
-	ssc_data_set_number(data, "subarray3_nstrings", 0);
+	ssc_data_set_number(data, "subarray3_modules_per_string", 1);
+	ssc_data_set_number(data, "subarray3_nstrings", 1);
 	ssc_data_set_number(data, "subarray3_mppt_input", 1);
 	ssc_data_set_number(data, "subarray3_tilt", 20);
 	ssc_data_set_number(data, "subarray3_tilt_eq_lat", 0);
@@ -189,8 +189,8 @@ void pvsamv1_pv_defaults(ssc_data_t& data) {
 	ssc_data_set_number(data, "subarray3_nmody", 2);
 	ssc_data_set_number(data, "subarray3_backtrack", 0);
 	ssc_data_set_number(data, "subarray4_enable", 0);
-	ssc_data_set_number(data, "subarray4_modules_per_string", 0);
-	ssc_data_set_number(data, "subarray4_nstrings", 0);
+	ssc_data_set_number(data, "subarray4_modules_per_string", 1);
+	ssc_data_set_number(data, "subarray4_nstrings", 1);
 	ssc_data_set_number(data, "subarray4_mppt_input", 1);
 	ssc_data_set_number(data, "subarray4_tilt", 20);
 	ssc_data_set_number(data, "subarray4_tilt_eq_lat", 0);
@@ -401,11 +401,23 @@ void pvsamv1_pv_defaults(ssc_data_t& data) {
 
 void pvsamv1_battery_defaults(ssc_data_t& data) {
 	ssc_data_set_number(data, "en_batt", 1);
-	ssc_data_set_number(data, "adjust:constant", 0);
-	ssc_data_set_number(data, "dc_adjust:constant", 0);
-	set_array(data, "dc_adjust:hourly", dc_adjust_hourly, 8760);
-	ssc_number_t p_dc_adjust_periods[3] = { 0, 0, 0 };
-	ssc_data_set_matrix(data, "dc_adjust:periods", p_dc_adjust_periods, 1, 3);
+	
+    ssc_data_set_number(data, "adjust_constant", 0.0);
+
+
+    // Setup DC Adjust Inputs
+    set_array(data, "dc_adjust_hourly", dc_adjust_hourly, 8760);
+    int n_len_dc_adjust_hourly = -1;
+    ssc_number_t* p_dc_adjust_hourly = ssc_data_get_array(data, "dc_adjust_hourly", &n_len_dc_adjust_hourly);
+    ssc_number_t p_dc_adjust_periods[3] = { 0, 0, 0 };
+
+    
+    ssc_data_set_number(data, "dc_adjust_constant", 0.0);
+    ssc_data_set_number(data, "dc_adjust_en_periods", 1);
+    ssc_data_set_matrix(data, "dc_adjust_periods", p_dc_adjust_periods, 1, 3);
+    ssc_data_set_number(data, "dc_adjust_en_timeindex", 0);
+    ssc_data_set_array(data, "dc_adjust_timeindex", p_dc_adjust_hourly, 8760);
+
 	ssc_data_set_number(data, "batt_chem", 1);
 	ssc_data_set_number(data, "inv_snl_eff_cec", 97.586860656738281);
 	ssc_data_set_number(data, "inv_pd_eff", 95);
@@ -785,15 +797,8 @@ void singleowner_defaults(ssc_data_t& data) {
 	ssc_data_set_number(data, "pbi_oth_for_ds", 0);
 	ssc_data_set_number(data, "loan_moratorium", 0);
 	ssc_data_set_number(data, "system_use_recapitalization", 0);
-	ssc_data_set_number(data, "dispatch_factor1", 1);
-	ssc_data_set_number(data, "dispatch_factor2", 1.5);
-	ssc_data_set_number(data, "dispatch_factor3", 1);
-	ssc_data_set_number(data, "dispatch_factor4", 1);
-	ssc_data_set_number(data, "dispatch_factor5", 1);
-	ssc_data_set_number(data, "dispatch_factor6", 1);
-	ssc_data_set_number(data, "dispatch_factor7", 1);
-	ssc_data_set_number(data, "dispatch_factor8", 1);
-	ssc_data_set_number(data, "dispatch_factor9", 1);
+    ssc_number_t p_dispatch_tod_factors[9] = { 1, 1.5, 1, 1, 1, 1, 1, 1, 1 };
+    ssc_data_set_array(data, "dispatch_tod_factors", p_dispatch_tod_factors, 9);
 	ssc_data_set_number(data, "total_installed_cost", 22868070);
 	ssc_data_set_number(data, "salvage_percentage", 0);
 	ssc_data_set_number(data, "construction_financing_cost", 457361.40625);
@@ -921,8 +926,8 @@ void commercial_multiarray_default(ssc_data_t& data) {
 	ssc_data_set_number(data, "subarray2_nmody", 2);
 	ssc_data_set_number(data, "subarray2_backtrack", 0);
 	ssc_data_set_number(data, "subarray3_enable", 0);
-	ssc_data_set_number(data, "subarray3_modules_per_string", 0);
-	ssc_data_set_number(data, "subarray3_nstrings", 0);
+	ssc_data_set_number(data, "subarray3_modules_per_string", 1);
+	ssc_data_set_number(data, "subarray3_nstrings", 1);
 	ssc_data_set_number(data, "subarray3_mppt_input", 1);
 	ssc_data_set_number(data, "subarray3_tilt", 20);
 	ssc_data_set_number(data, "subarray3_tilt_eq_lat", 0);
@@ -940,8 +945,8 @@ void commercial_multiarray_default(ssc_data_t& data) {
 	ssc_data_set_number(data, "subarray3_nmody", 2);
 	ssc_data_set_number(data, "subarray3_backtrack", 0);
 	ssc_data_set_number(data, "subarray4_enable", 0);
-	ssc_data_set_number(data, "subarray4_modules_per_string", 0);
-	ssc_data_set_number(data, "subarray4_nstrings", 0);
+	ssc_data_set_number(data, "subarray4_modules_per_string", 1);
+	ssc_data_set_number(data, "subarray4_nstrings", 1);
 	ssc_data_set_number(data, "subarray4_mppt_input", 1);
 	ssc_data_set_number(data, "subarray4_tilt", 20);
 	ssc_data_set_number(data, "subarray4_tilt_eq_lat", 0);
@@ -1150,12 +1155,24 @@ void commercial_multiarray_default(ssc_data_t& data) {
 	ssc_data_set_matrix(data, "inv_tdc_plc", p_inv_tdc_plc, 1, 3);
 	ssc_data_set_number(data, "en_batt", 1);
 	set_array(data, "load", load_profile_path, 8760);
-	ssc_data_set_number(data, "adjust:constant", 0);
-	ssc_data_set_number(data, "dc_adjust:constant", 0);
-	set_array(data, "dc_adjust:hourly", dc_adjust_hourly, 8760);
-	ssc_number_t p_dc_adjust_periods[3] = { 0, 0, 0 };
-	ssc_data_set_matrix(data, "dc_adjust:periods", p_dc_adjust_periods, 1, 3);
-	ssc_data_set_number(data, "batt_chem", 1);
+
+    ssc_data_set_number(data, "adjust_constant", 0.0);
+
+    // Setup DC Adjust Inputs
+    set_array(data, "dc_adjust_hourly", dc_adjust_hourly, 8760);
+    int n_len_dc_adjust_hourly = -1;
+    ssc_number_t* p_dc_adjust_hourly = ssc_data_get_array(data, "dc_adjust_hourly", &n_len_dc_adjust_hourly);
+    ssc_number_t p_dc_adjust_periods[3] = { 0, 0, 0 };
+
+    ssc_data_set_number(data, "dc_adjust_constant", 0.0);
+    ssc_data_set_number(data, "dc_adjust_en_periods", 1);
+    ssc_data_set_matrix(data, "dc_adjust_periods", p_dc_adjust_periods, 1, 3);
+    ssc_data_set_number(data, "dc_adjust_en_timeindex", 0);
+    ssc_data_set_array(data, "dc_adjust_timeindex", p_dc_adjust_hourly, 8760);
+
+
+
+    ssc_data_set_number(data, "batt_chem", 1);
 	ssc_data_set_number(data, "inv_snl_eff_cec", 98.228355407714844);
 	ssc_data_set_number(data, "inv_pd_eff", 95);
 	ssc_data_set_number(data, "inv_cec_cg_eff_cec", 96.636390686035156);

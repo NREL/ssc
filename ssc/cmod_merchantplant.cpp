@@ -626,7 +626,8 @@ extern var_info
 	vtab_financial_grid[],
 	vtab_fuelcell_replacement_cost[],
     vtab_lcos_inputs[],
-	vtab_battery_replacement_cost[];
+    vtab_update_tech_outputs[],
+    vtab_battery_replacement_cost[];
 
 enum {
 	CF_energy_net,
@@ -877,7 +878,8 @@ public:
 		add_var_info(vtab_financial_capacity_payments);
         add_var_info(vtab_lcos_inputs);
 		add_var_info(vtab_financial_grid);
-	}
+        add_var_info(vtab_update_tech_outputs);
+    }
 
 	void exec( )
 	{
@@ -1031,12 +1033,11 @@ public:
 		std::vector<double> fuel_use;
 		if ((as_integer("system_use_lifetime_output") == 1) && is_assigned("annual_fuel_usage_lifetime")) {
 			fuel_use = as_vector_double("annual_fuel_usage_lifetime");
-			if (fuel_use.size() != (size_t)(nyears + 1)) {
-				throw exec_error("merchantplant", util::format("fuel usage years (%d) not equal to analysis period years (%d).", (int)fuel_use.size()-1, nyears));
+			if (fuel_use.size() != (size_t)(nyears )) {
+				throw exec_error("merchantplant", util::format("fuel usage years (%d) not equal to analysis period years (%d).", (int)fuel_use.size(), nyears));
 			}
 		}
 		else {
-			fuel_use.push_back(0.);
 			for (size_t y = 0; y < (size_t)(nyears); y++) {
 				fuel_use.push_back(year1_fuel_use);
 			}
@@ -1083,12 +1084,8 @@ public:
         int add_om_num_types = as_integer("add_om_num_types");
         ssc_number_t nameplate1 = 0;
         ssc_number_t nameplate2 = 0;
-        std::vector<double> battery_discharged;
-        std::vector<double> fuelcell_discharged;
-        for (int i = 0; i <= nyears; i++) {
-            battery_discharged.push_back(0);
-            fuelcell_discharged.push_back(0);
-        }
+        std::vector<double> battery_discharged(nyears,0);
+        std::vector<double> fuelcell_discharged(nyears,0);
 
         if (add_om_num_types > 0) //PV Battery
         {
@@ -1099,15 +1096,27 @@ public:
             if (as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1)
                 battery_discharged = as_vector_double("batt_annual_discharge_energy");
         }
-        if (add_om_num_types > 1) // PV Battery Fuel Cell
+        if (battery_discharged.size() == 1) { // ssc #992
+            double first_val = battery_discharged[0];
+            battery_discharged.resize(nyears, first_val);
+        }
+        if (battery_discharged.size() != nyears)
+            throw exec_error("merchantplant", util::format("battery_discharged size (%d) incorrect",(int)battery_discharged.size()));
+
+        if (add_om_num_types > 1)
         {
-            escal_or_annual(CF_om_fixed2_expense, nyears, "om_fuelcell_fixed_cost", inflation_rate, 1.0, false, as_double("om_fixed_escal") * 0.01);
-            escal_or_annual(CF_om_production2_expense, nyears, "om_fuelcell_variable_cost", inflation_rate, 0.001, false, as_double("om_production_escal") * 0.01);
-            escal_or_annual(CF_om_capacity2_expense, nyears, "om_fuelcell_capacity_cost", inflation_rate, 1.0, false, as_double("om_capacity_escal") * 0.01);
+            escal_or_annual(CF_om_fixed2_expense, nyears, "om_fuelcell_fixed_cost", inflation_rate, 1.0, false, as_double("om_fixed_escal")*0.01);
+            escal_or_annual(CF_om_production2_expense, nyears, "om_fuelcell_variable_cost", inflation_rate, 0.001, false, as_double("om_production_escal")*0.01);
+            escal_or_annual(CF_om_capacity2_expense, nyears, "om_fuelcell_capacity_cost", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01);
             nameplate2 = as_number("om_fuelcell_nameplate");
             fuelcell_discharged = as_vector_double("fuelcell_annual_energy_discharged");
         }
-
+        if (fuelcell_discharged.size()== 1) { // ssc #992
+            double first_val = fuelcell_discharged[0];
+            fuelcell_discharged.resize(nyears, first_val);
+         }
+        if (fuelcell_discharged.size() != nyears)
+            throw exec_error("merchantplant", util::format("fuelcell_discharged size (%d) incorrect",(int)fuelcell_discharged.size()));
 
         // battery cost - replacement from lifetime analysis
         if ((as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1) && (as_integer("batt_replacement_option") > 0))
@@ -1392,11 +1401,11 @@ public:
             cf.at(CF_om_capacity_expense, i) *= nameplate;
 			cf.at(CF_om_capacity1_expense, i) *= nameplate1;
 			cf.at(CF_om_capacity2_expense, i) *= nameplate2;
-			cf.at(CF_om_fuel_expense,i) *= fuel_use[i];
+			cf.at(CF_om_fuel_expense,i) *= fuel_use[i-1];
 
             //Battery Production OM Costs
             cf.at(CF_om_production1_expense, i) *= battery_discharged[i - 1]; //$/MWh * 0.001 MWh/kWh * kWh = $
-            cf.at(CF_om_production2_expense, i) *= fuelcell_discharged[i];
+            cf.at(CF_om_production2_expense, i) *= fuelcell_discharged[i-1];
 
 			cf.at(CF_om_opt_fuel_1_expense,i) *= om_opt_fuel_1_usage;
 			cf.at(CF_om_opt_fuel_2_expense,i) *= om_opt_fuel_2_usage;
@@ -2731,7 +2740,7 @@ public:
 			if (i==0) cf.at(CF_project_investing_activities,i) += purchase_of_property;
 
 			cf.at(CF_project_financing_activities,i) = -cf.at(CF_debt_payment_principal,i);
-			if (i==0) cf.at(CF_project_financing_activities,i) += issuance_of_equity + size_of_debt + ibi_total + cbi_total;
+            if (i == 0) cf.at(CF_project_financing_activities, i) += issuance_of_equity + size_of_debt;
 
 			cf.at(CF_pretax_cashflow,i) = cf.at(CF_project_operating_activities,i) + cf.at(CF_project_investing_activities,i) + cf.at(CF_project_financing_activities,i);
 
@@ -2961,6 +2970,8 @@ public:
     if (as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1) {
         update_battery_outputs(this, nyears);
     }
+    update_fuelcell_outputs(this, nyears);
+
 
 	// DSCR calculations
 	for (i = 0; i <= nyears; i++)

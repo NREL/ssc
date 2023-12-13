@@ -173,7 +173,7 @@ UtilityRateForecast::UtilityRateForecast(rate_data* util_rate, size_t stepsPerHo
 	dt_hour = 1.0f / stepsPerHour;
 	last_step = 0;
     last_month_init = -1;
-	rate = std::shared_ptr<rate_data>(new rate_data(*util_rate));
+	rate = std::unique_ptr<rate_data>(new rate_data(*util_rate));
 	m_monthly_load_forecast = monthly_load_forecast;
 	m_monthly_gen_forecast = monthly_gen_forecast;
 	m_monthly_avg_load_forecast = monthly_avg_load_forecast;
@@ -182,21 +182,22 @@ UtilityRateForecast::UtilityRateForecast(rate_data* util_rate, size_t stepsPerHo
 }
 
 UtilityRateForecast::UtilityRateForecast(UtilityRateForecast& tmp) :
-	steps_per_hour(tmp.steps_per_hour),
-	dt_hour(tmp.dt_hour),
-	last_step(tmp.last_step),
-	m_monthly_load_forecast(tmp.m_monthly_load_forecast),
-	m_monthly_gen_forecast(tmp.m_monthly_gen_forecast),
-	m_monthly_avg_load_forecast(tmp.m_monthly_avg_load_forecast),
-    m_peaks_forecast(tmp.m_peaks_forecast),
-    current_composite_buy_rates(tmp.current_composite_buy_rates),
-    current_composite_sell_rates(tmp.current_composite_sell_rates),
-    next_composite_buy_rates(tmp.next_composite_buy_rates),
-    next_composite_sell_rates(tmp.next_composite_sell_rates),
-    last_month_init(tmp.last_month_init),
-    nyears(tmp.nyears)
+current_composite_sell_rates(tmp.current_composite_sell_rates),
+current_composite_buy_rates(tmp.current_composite_buy_rates),
+next_composite_sell_rates(tmp.next_composite_sell_rates),
+next_composite_buy_rates(tmp.next_composite_buy_rates),
+steps_per_hour(tmp.steps_per_hour),
+dt_hour(tmp.dt_hour),
+last_step(tmp.last_step),
+last_month_init(tmp.last_month_init),
+nyears(tmp.nyears),
+m_monthly_load_forecast(tmp.m_monthly_load_forecast),
+m_monthly_gen_forecast(tmp.m_monthly_gen_forecast),
+m_monthly_avg_load_forecast(tmp.m_monthly_avg_load_forecast),
+m_peaks_forecast(tmp.m_peaks_forecast)
 {
-    rate = std::shared_ptr<rate_data>(new rate_data(*tmp.rate));
+//    rate = std::shared_ptr<rate_data>(new rate_data(*tmp.rate));
+    rate = std::make_shared<rate_data>(*tmp.rate);
 }
 
 UtilityRateForecast::~UtilityRateForecast() {}
@@ -353,7 +354,7 @@ void UtilityRateForecast::initializeMonth(int month, size_t year)
 
         }
         else { // Standard demand charges
-            // Ignore any peak charges lower than the average gross load - this prevents the price signal from showing demand charges on the first hour of each month when the load is not really a peak
+            // Ignore any peak charges lower than the average gross load - this prevents the retail rate forcast from showing demand charges on the first hour of each month when the load is not really a peak
             double avg_load = m_monthly_avg_load_forecast[year * 12 + month];
             curr_month.dc_flat_peak = avg_load;
             for (int period = 0; period < (int)curr_month.dc_periods.size(); period++)

@@ -62,14 +62,20 @@ static var_info _cm_vtab_sco2_csp_system[] = {
                                                        "4) f_N_mc (=1 use design, <0, frac_des = abs(input),"
                                                        "5) f_N_pc (=1 use design, <0, frac_des = abs(input),"
                                                        "6) PHX_f_dP (=1 use design, <0 = abs(input)", "", "", "", "",  "", "" },
-    { SSC_INPUT,  SSC_MATRIX,  "od_max_htf_m_dot",     "Columns: T_htf_C, T_amb_C, f_N_rc (=1 use design, <0, frac_des = abs(input), f_N_mc (=1 use design, <0, frac_des = abs(input), PHX_f_dP (=1 use design, <0 = abs(input), Rows: cases", "", "", "", "",  "", "" },
+    { SSC_INPUT,  SSC_MATRIX,  "od_max_htf_m_dot",     "Columns: 0) T_htf_C, 1) T_amb_C,"
+                                                       "2) f_N_rc (=1 use design, <0, frac_des = abs(input),"
+                                                       "3) f_N_mc (=1 use design, <0, frac_des = abs(input),"
+                                                       "4) PHX_f_dP (=1 use design, <0 = abs(input), Rows: cases", "", "", "", "",  "", "" },
 	{ SSC_INPUT,  SSC_MATRIX,  "od_set_control",       "Columns: 0) T_htf_C, 1) m_dot_htf_ND, 2) T_amb_C,"
                                                        " 3) P_LP_in_MPa, 4) T_mc_in_C, 5) T_pc_in_C,"
                                                        " 6) f_N_rc (=1 use design, <0, frac_des = abs(input),"
                                                        " 7) f_N_mc (=1 use design, <0, frac_des = abs(input),"
                                                        " 8) f_N_pc (=1 use design, =0 optimize, <0, frac_des = abs(input)),"
                                                        " 9) PHX_f_dP (=1 use design, <0 = abs(input), Rows: cases", "", "", "", "", "", "" },
-    { SSC_INPUT,  SSC_ARRAY,   "od_generate_udpc",     "True/False, f_N_rc (=1 use design, =0 optimize, <0, frac_des = abs(input), f_N_mc (=1 use design, =0 optimize, <0, frac_des = abs(input), PHX_f_dP (=1 use design, <0 = abs(input)", "", "", "", "",  "", "" },
+    { SSC_INPUT,  SSC_ARRAY,   "od_generate_udpc",     "Columns 0) True/False,"
+                                                       "1) f_N_rc (=1 use design, =0 optimize, <0, frac_des = abs(input),"
+                                                       "2) f_N_mc (=1 use design, =0 optimize, <0, frac_des = abs(input),"
+                                                       "3) PHX_f_dP (=1 use design, <0 = abs(input)", "", "", "", "",  "", "" },
     { SSC_INPUT,  SSC_NUMBER,  "is_gen_od_polynomials","Generate off-design polynomials for Generic CSP models? 1 = Yes, 0 = No", "", "", "",  "?=0",     "",       "" },
 
 	// ** Off-Design Outputs **
@@ -324,7 +330,11 @@ public:
 
 	void exec() override
 	{
-		C_sco2_phx_air_cooler c_sco2_cycle;
+        // Uncomment following 2 lines to write cmod to lk script
+        //FILE* fp = fopen("sco2_cmod_to_lk.lk", "w");
+        //write_cmod_to_lk_script(fp, m_vartab);
+
+        C_sco2_phx_air_cooler c_sco2_cycle;
 
 		int sco2_des_err = sco2_design_cmod_common(this, c_sco2_cycle);
 		if (sco2_des_err != 0)
@@ -728,7 +738,8 @@ public:
         }
 		
 		int n_od_runs = (int)od_cases.nrows();
-		allocate_ssc_outputs(n_od_runs, n_mc_stages, n_rc_stages, n_pc_stages, true);
+        int n_od_outputs = 14;
+		allocate_ssc_outputs(n_od_runs, n_mc_stages, n_rc_stages, n_pc_stages, true, n_od_outputs);
 		C_sco2_phx_air_cooler::S_od_par s_sco2_od_par;
 
 		// For try/catch below
@@ -1305,31 +1316,35 @@ public:
 
 				p_mc_cooler_in_isen_deltah_to_P_mc_out_od[n_run] = (ssc_number_t)-deltah_isen_od;		//[kJ/kg]
 
-                // Columns(11) : 0) HTF Temp[C], 1) HTF ND mass flow[-], 2) Ambient Temp[C], 3) ND Power, 4) ND Heat, 5) ND Fan Power, 6) ND Water
+                // Columns(14) : 0) HTF Temp[C], 1) HTF ND mass flow[-], 2) Ambient Temp[C], 3) ND Power, 4) ND Heat, 5) ND Fan Power, 6) ND Water
                 //               ...... 7) ND PHX deltaT, 8) ND P_co2_PHX_in, 9) ND m_dot_co2_PHX, 10) ND P_co2_turb_in
+                //               ...... 11) ND W_dot_net 12) ND eta_net, 13) T_htf_cold_diff / deltaT_des
                 // 5/12/2022 generate udpc table for all off-design simulations
                 //               the order won't necessarily match what the UDPC model wants,
                 //               but at least normalized values are available to post-process
                 //if (is_od_generate_udpc_assigned)
                 //{
-                    pm_udpc_table[n_run * 11 + 0] = (ssc_number_t)p_T_htf_hot_od[n_run];      //[C]
-                    pm_udpc_table[n_run * 11 + 1] = (ssc_number_t)p_m_dot_htf_fracs[n_run];   //[-]
-                    pm_udpc_table[n_run * 11 + 2] = (ssc_number_t)p_T_amb_od[n_run];          //[C]
-                    pm_udpc_table[n_run * 11 + 3] = (ssc_number_t)(p_W_dot_net_od[n_run] / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_W_dot_net*1.E-3));  //[-] 
-                    pm_udpc_table[n_run * 11 + 4] = (ssc_number_t)(p_Q_dot_od[n_run] / (c_sco2_cycle.get_design_solved()->ms_phx_des_solved.m_Q_dot_design*1.E-3));  //[-]
-                    pm_udpc_table[n_run * 11 + 5] = (ssc_number_t)(p_cooler_tot_W_dot_fan_od[n_run] / as_double("cooler_tot_W_dot_fan"));   //[-]
-                    pm_udpc_table[n_run * 11 + 6] = (ssc_number_t) 0.0;
+                    pm_udpc_table[n_run * n_od_outputs + 0] = (ssc_number_t)p_T_htf_hot_od[n_run];      //[C]
+                    pm_udpc_table[n_run * n_od_outputs + 1] = (ssc_number_t)p_m_dot_htf_fracs[n_run];   //[-]
+                    pm_udpc_table[n_run * n_od_outputs + 2] = (ssc_number_t)p_T_amb_od[n_run];          //[C]
+                    pm_udpc_table[n_run * n_od_outputs + 3] = (ssc_number_t)(p_W_dot_net_od[n_run] / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_W_dot_net*1.E-3));  //[-] 
+                    pm_udpc_table[n_run * n_od_outputs + 4] = (ssc_number_t)(p_Q_dot_od[n_run] / (c_sco2_cycle.get_design_solved()->ms_phx_des_solved.m_Q_dot_design*1.E-3));  //[-]
+                    pm_udpc_table[n_run * n_od_outputs + 5] = (ssc_number_t)(p_cooler_tot_W_dot_fan_od[n_run] / as_double("cooler_tot_W_dot_fan"));   //[-]
+                    pm_udpc_table[n_run * n_od_outputs + 6] = (ssc_number_t) 0.0;
                     if (T_t_in_mode == 0)    // Model input is HTF hot temperature
                     {
-                        pm_udpc_table[n_run * 11 + 7] = (ssc_number_t)((p_deltaT_HTF_PHX_od[n_run])/(T_htf_hot_des - T_htf_PHX_out_des));
+                        pm_udpc_table[n_run * n_od_outputs + 7] = (ssc_number_t)((p_deltaT_HTF_PHX_od[n_run])/(T_htf_hot_des - T_htf_PHX_out_des));
                     }
                     else if (T_t_in_mode == 1)  // Model input is CO2 turbine inlet temperature
                     {
-                        pm_udpc_table[n_run * 11 + 7] = (ssc_number_t)((p_T_co2_PHX_out_od[n_run]-p_T_co2_PHX_in_od[n_run]) / (T_t_in_des - T_co2_PHX_in_des));
+                        pm_udpc_table[n_run * n_od_outputs + 7] = (ssc_number_t)((p_T_co2_PHX_out_od[n_run]-p_T_co2_PHX_in_od[n_run]) / (T_t_in_des - T_co2_PHX_in_des));
                     }
-                    pm_udpc_table[n_run * 11 + 8] = (ssc_number_t)((p_P_co2_PHX_in_od[n_run]) / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::HTR_HP_OUT] * 1.E-3));
-                    pm_udpc_table[n_run * 11 + 9] = (ssc_number_t)((p_t_m_dot_od[n_run]) / c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_m_dot_t);
-                    pm_udpc_table[n_run * 11 + 10] = (ssc_number_t)((p_t_P_in_od[n_run]) / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::TURB_IN] * 1.E-3));
+                    pm_udpc_table[n_run * n_od_outputs + 8] = (ssc_number_t)((p_P_co2_PHX_in_od[n_run]) / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::HTR_HP_OUT] * 1.E-3));
+                    pm_udpc_table[n_run * n_od_outputs + 9] = (ssc_number_t)((p_t_m_dot_od[n_run]) / c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_m_dot_t);
+                    pm_udpc_table[n_run * n_od_outputs + 10] = (ssc_number_t)((p_t_P_in_od[n_run]) / (c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::TURB_IN] * 1.E-3));
+                    pm_udpc_table[n_run * n_od_outputs + 11] = (ssc_number_t)(p_W_dot_net_less_cooling_od[n_run] / (as_double("W_dot_net_less_cooling")));  //[-]
+                    pm_udpc_table[n_run * n_od_outputs + 12] = (ssc_number_t)(p_eta_thermal_net_less_cooling_od[n_run]/(as_double("eta_thermal_net_less_cooling_des")));
+                    pm_udpc_table[n_run * n_od_outputs + 13] = (ssc_number_t)(1.0 - (T_htf_PHX_out_des - p_T_htf_cold_od[n_run]) / (T_htf_hot_des - T_htf_PHX_out_des));     //[-]
                 //}
                 // Energy Balance Checks
                 double diff_m_dot, diff_E_cycle, diff_Q_LTR, diff_Q_HTR;
@@ -1467,17 +1482,20 @@ public:
                 // Columns(7) : HTF Temp[C], HTF ND mass flow[-], Ambient Temp[C], ND Power, ND Heat, ND Fan Power, ND Water
                 if (is_od_generate_udpc_assigned)
                 {
-                    pm_udpc_table[n_run * 11 + 0] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-                    pm_udpc_table[n_run * 11 + 1] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-                    pm_udpc_table[n_run * 11 + 2] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-                    pm_udpc_table[n_run * 11 + 3] = std::numeric_limits<ssc_number_t>::quiet_NaN(); 
-                    pm_udpc_table[n_run * 11 + 4] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-                    pm_udpc_table[n_run * 11 + 5] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-                    pm_udpc_table[n_run * 11 + 6] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-                    pm_udpc_table[n_run * 11 + 7] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-                    pm_udpc_table[n_run * 11 + 8] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-                    pm_udpc_table[n_run * 11 + 9] = std::numeric_limits<ssc_number_t>::quiet_NaN();
-                    pm_udpc_table[n_run * 11 + 10] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * n_od_outputs + 0] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * n_od_outputs + 1] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * n_od_outputs + 2] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * n_od_outputs + 3] = std::numeric_limits<ssc_number_t>::quiet_NaN(); 
+                    pm_udpc_table[n_run * n_od_outputs + 4] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * n_od_outputs + 5] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * n_od_outputs + 6] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * n_od_outputs + 7] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * n_od_outputs + 8] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * n_od_outputs + 9] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * n_od_outputs + 10] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * n_od_outputs + 11] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * n_od_outputs + 12] = std::numeric_limits<ssc_number_t>::quiet_NaN();
+                    pm_udpc_table[n_run * n_od_outputs + 13] = std::numeric_limits<ssc_number_t>::quiet_NaN();
                 }
 			}
 
@@ -1492,7 +1510,7 @@ public:
 		
 	}
 
-	void allocate_ssc_outputs(int n_od_runs, int n_mc_stages, int n_rc_stages, int n_pc_stages, bool is_udpc_table)
+	void allocate_ssc_outputs(int n_od_runs, int n_mc_stages, int n_rc_stages, int n_pc_stages, bool is_udpc_table, int n_od_outputs)
 	{
 		// Off-design parameters
 		p_m_dot_htf_fracs = allocate("m_dot_htf_fracs", n_od_runs);
@@ -1609,7 +1627,7 @@ public:
         // UDPC Table
         if (is_udpc_table)
         {
-            pm_udpc_table = allocate("udpc_table", n_od_runs, 11);
+            pm_udpc_table = allocate("udpc_table", n_od_runs, n_od_outputs);
         }
 		// Solver Metrics
 		p_od_code = allocate("od_code", n_od_runs);

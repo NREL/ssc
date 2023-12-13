@@ -157,13 +157,21 @@ static var_info _cm_vtab_pvwattsv8[] = {
         { SSC_INPUT,        SSC_NUMBER,      "xfmr_nll",                       "GSU transformer no load loss (iron core)",    "%(ac)",     "",                                             "System Design",      "?=0.0",                   "",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "xfmr_ll",                        "GSU transformer load loss (resistive)",       "%(ac)",     "",                                             "System Design",      "?=0.0",                   "",                              "" },
 
-        { SSC_INPUT,        SSC_MATRIX,      "shading:timestep",               "Time step beam shading loss",                 "%",         "",                                             "System Design",      "?",                        "",                             "" },
-        { SSC_INPUT,        SSC_MATRIX,      "shading:mxh",                    "Month x Hour beam shading loss",              "%",         "",                                             "System Design",      "?",                        "",                             "" },
-        { SSC_INPUT,        SSC_MATRIX,      "shading:azal",                   "Azimuth x altitude beam shading loss",        "%",         "",                                             "System Design",      "?",                        "",                             "" },
-        { SSC_INPUT,        SSC_NUMBER,      "shading:diff",                   "Diffuse shading loss",                        "%",         "",                                             "System Design",      "?",                        "",                             "" },
+//         { SSC_INPUT,        SSC_TABLE,      "shading",               "Shading loss table",                 "",         "",                                             "System Design",      "?",                        "",                             "" },
+        {SSC_INPUT, SSC_NUMBER,   "shading_en_string_option",           "Enable shading string option",             "0/1",    "0=false,1=true",                    "Shading",                                               "?=0",                                  "BOOLEAN",                    "" },
+        {SSC_INPUT, SSC_NUMBER,   "shading_string_option",      "Shading string option",                   "",       "0=shadingdb,1=average,2=maximum,3=minimum",  "Shading",                                               "?=-1",                               "INTEGER,MIN=-1,MAX=4","" },
+        {SSC_INPUT, SSC_NUMBER,   "shading_en_timestep",         "Enable timestep beam shading losses",          "0/1",    "0=false,1=true",                       "Shading",                                               "?=0",                                  "BOOLEAN",                    "" },
+        {SSC_INPUT, SSC_MATRIX,   "shading_timestep",           "Timestep beam shading losses",            "%",      "",                                           "Shading",                                               "?",                                  "",                    "" },
+        {SSC_INPUT, SSC_NUMBER,   "shading_en_mxh",               "Enable month x Hour beam shading losses",  "0/1",    "0=false,1=true",                          "Shading",                                               "?=0",                                  "BOOLEAN",                    "" },
+        {SSC_INPUT, SSC_MATRIX,   "shading_mxh",                "Month x Hour beam shading losses",        "%",      "",                                           "Shading",                                               "?",                                  "",                    "" },
+        {SSC_INPUT, SSC_NUMBER,   "shading_en_azal",               "Enable azimuth x altitude beam shading losses",          "0/1",    "0=false,1=true",           "Shading",                                               "?=0",                                  "BOOLEAN",                    "" },
+        {SSC_INPUT, SSC_MATRIX,   "shading_azal",               "Azimuth x altitude beam shading losses",  "%",      "",                                           "Shading",                                               "?",                                  "",                    "" },
+        {SSC_INPUT, SSC_NUMBER,   "shading_en_diff",               "Enable diffuse shading loss",          "0/1",    "0=false,1=true",                             "Shading",                                               "?=0",                                  "BOOLEAN",                    "" },
+        {SSC_INPUT, SSC_NUMBER,   "shading_diff",               "Diffuse shading loss",                    "%",      "",                                           "Shading",                                               "?",                                  "",                    "" },
+
 
         { SSC_INPUT,        SSC_NUMBER,      "batt_simple_enable",             "Enable Battery",                              "0/1",       "",                                             "System Design",     "?=0",                     "BOOLEAN",                        "" },
-
+       
         /* outputs */
         { SSC_OUTPUT,       SSC_ARRAY,       "gh",                             "Weather file global horizontal irradiance",                "W/m2",      "",                                             "Time Series",      "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "dn",                             "Weather file beam irradiance",                             "W/m2",      "",											   "Time Series",      "*",                       "",                          "" },
@@ -302,6 +310,7 @@ public:
         add_var_info(_cm_vtab_pvwattsv8);
         add_var_info(vtab_adjustment_factors);
         add_var_info(vtab_technology_outputs);
+        add_var_info(vtab_hybrid_tech_om);
 
 
         ld.add("poa_nominal", true);
@@ -591,12 +600,15 @@ public:
             break;
         }
 
-        //throw a warning if tilt is > 0 for a tracking system, since this is a very uncommon configuration but an easy mistake to make
+        // warning if tilt is > 0 for a tracking system becaues this is a very uncommon configuration but an easy mistake to make
         if ((pv.type == ONE_AXIS || pv.type == ONE_AXIS_BACKTRACKING) && pv.tilt > 0)
             log(util::format("The tilt angle is %f degrees with one-axis tracking. Large one-axis tracking arrays typically have a tilt angle of zero.", pv.tilt), SSC_WARNING);
 
         if (!(pv.type == FIXED_RACK || pv.type == FIXED_ROOF) && module.bifaciality > 0.0)
             log("The bifacial model is designed for fixed arrays and may not produce reliable results for tracking arrays.", SSC_WARNING);
+
+        if (pv.type == FIXED_ROOF && module.bifaciality > 0.0)
+            log("The Fixed Roof Mount array type is not appropriate for bifacial modules because it assumes there is no space between the back of the array and the roof surface.", SSC_WARNING);
 
         pv.gcr = as_double("gcr");
         if (pv.gcr < 0.01 || pv.gcr >= 1.0)
@@ -658,8 +670,9 @@ public:
 
         // read all the shading input data and calculate the hourly factors for use subsequently
         // timeseries beam shading factors cannot be used with non-annual data
-        if (is_assigned("shading:timestep") && !wdprov->annualSimulation())
-            throw exec_error("pvwattsv8", "Timeseries beam shading inputs cannot be used for a simulation period that is not continuous over one or more years.");
+        if (is_assigned("shading_en_timestep") && as_boolean("shading_en_timestep") && !wdprov->annualSimulation())
+            //        if (is_assigned("shading:timestep") && !wdprov->annualSimulation())
+                throw exec_error("pvwattsv8", "Timeseries beam shading inputs cannot be used for a simulation period that is not continuous over one or more years.");
         shading_factor_calculator shad;
         if (!shad.setup(this, ""))
             throw exec_error("pvwattsv8", shad.get_error());
@@ -839,16 +852,8 @@ public:
                 {
                     if ((std::isfinite(wf.alb) && (wf.alb > 0 && wf.alb < 1)))
                         alb = wf.alb;
-                    else if (n_alb_errs < 5) // display warning up to 5 times
-                    {
-                        log(util::format("Weather file albedo is not valid. "
-                            "Using default albedo value of %f (snow) or %f (no snow). "
-                            "This warning only appears for the first five instances of this error. "
-                            "[year:%d month:%d day:%d hour:%d minute:%lg]. ",
-                            as_double("albedo_default_snow"), as_double("albedo_default"),
-                            wf.year, wf.month, wf.day, wf.hour, wf.minute), SSC_NOTICE);
+                    else
                         n_alb_errs++;
-                    }
                 }
                 else
                 {
@@ -1369,6 +1374,9 @@ public:
 
                 idx_life++;
             }
+
+            if (n_alb_errs > 0)
+                log(util::format("Weather file albedo has %d invalid values, using monthly value", (int)n_alb_errs), SSC_WARNING);
 
             wdprov->rewind();
         }

@@ -66,6 +66,10 @@ extern var_info vtab_forecast_price_signal[];
 extern var_info vtab_resilience_outputs[];
 extern var_info vtab_utility_rate_common[];
 
+// hybrids
+extern var_info vtab_hybrid_tech_om[];
+extern var_info vtab_hybrid_fin_om[];
+
 bool calculate_p50p90(compute_module *cm);
 
 void calculate_resilience_outputs(compute_module *cm, std::unique_ptr<resilience_runner> &resilience);
@@ -84,6 +88,7 @@ public:
 	adjustment_factors(compute_module *cm, const std::string &prefix);
 	bool setup(int nsteps=8760, int analysis_period=1);
 	ssc_number_t operator()(size_t time);
+    size_t size();
 	std::string error() { return m_error; }
 };
 
@@ -99,21 +104,6 @@ public:
 	ssc_number_t operator()(size_t time);
 	std::string error() { return m_error; }
 };
-
-
-class sf_adjustment_factors
-{
-	compute_module *m_cm;
-	std::vector<ssc_number_t> m_factors;
-	std::string m_error;
-public:
-	sf_adjustment_factors(compute_module *cm);
-	bool setup(int nsteps=8760);
-    int size();
-	ssc_number_t operator()(size_t time);
-	std::string error() { return m_error; }
-};
-
 
 class shading_factor_calculator
 {

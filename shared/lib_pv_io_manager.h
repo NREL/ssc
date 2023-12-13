@@ -283,6 +283,8 @@ struct PVSystem_IO
 
 	size_t numberOfSubarrays;
 	size_t numberOfInverters;
+    double numberOfInvertersClipping;
+    double dcNameplate;
 
 	Irradiance_IO * Irradiance;
 	Simulation_IO * Simulation;
@@ -345,6 +347,12 @@ struct PVSystem_IO
 	std::vector<ssc_number_t *> p_shadeDBShadeFraction;
     std::vector<ssc_number_t *> p_poaRearSpatial;
     std::vector<ssc_number_t *> p_groundRear;
+
+    std::vector<ssc_number_t*> p_poaBeamFrontCS;
+    std::vector<ssc_number_t*> p_poaDiffuseFrontCS;
+    std::vector<ssc_number_t*> p_poaGroundFrontCS;
+    std::vector<ssc_number_t*> p_poaRearCS;
+    std::vector<ssc_number_t*> p_DNIIndex;
 
 	// MPPT level outputs
 	std::vector<ssc_number_t *> p_mpptVoltage; /// An output vector containing input DC voltage in V to each mppt input
@@ -409,7 +417,15 @@ struct PVSystem_IO
     ssc_number_t *p_dcLifetimeLoss; // kWdc
 
 	ssc_number_t *p_systemDCPower; // kWdc
+    ssc_number_t* p_systemDCPowerCS; // kWdc
 	ssc_number_t *p_systemACPower; // kWac
+
+    ssc_number_t *p_subhourlyClippingLoss;
+    ssc_number_t* p_subhourlyClippingLossFactor;
+    ssc_number_t* p_ClippingPotential;
+    //ssc_number_t* p_DNIIndex;
+    ssc_number_t* p_CPBin;
+    ssc_number_t* p_DNIIndexBin;
 };
 
 /**
@@ -453,6 +469,10 @@ public:
     double slopeTilt;                   // Angle of sloped terrain [degrees]
     double slopeAzm;                    // azimuth of sloped terrain relative to tracker azimuth [degrees]
 	double tiltDegrees;					// The surface tilt [degrees]
+    flag useCustomRotAngles;           // Use custom timeseries rotation angles
+    std::vector<double> customRotAngles; //Custom timeseries rotation angles [degrees]
+    flag useCustomCellTemp;
+    std::vector<double> customCellTempArray;
 	double azimuthDegrees;				// The surface azimuth [degrees]
 	int trackMode;						// The tracking mode [0 = fixed, 1 = single-axis tracking, 2 = two-axis tracking, 3 = azimuth-axis tracking, 4 = seasonal-tilt
 	double trackerRotationLimitDegrees; // The rotational limit of the tracker [degrees]
@@ -493,6 +513,10 @@ public:
 		double poaBeamFront;	/// POA due to beam irradiance on the front of the subarray [W/m2]
 		double poaDiffuseFront; /// POA due to diffuse irradiance on the front of the subarray [W/m2]
 		double poaGroundFront;  /// POA due to ground reflection on the front of the subarray [W/m2]
+        double poaBeamFrontCS;	/// POA due to clearsky beam irradiance on the front of the subarray [W/m2]
+        double poaDiffuseFrontCS; /// POA due to clearsky diffuse irradiance on the front of the subarray [W/m2]
+        double poaGroundFrontCS;  /// POA due to clearsky ground reflection on the front of the subarray [W/m2]
+        double poaRearCS;       /// POA total clearsky irradiance on the back of the subarray if bifacial modules [W/m2]
 		double poaRear;			/// POA total irradiance on the back of the subarray if bifacial modules [W/m2]
 		double poaTotal;		/// POA total of front and rear side of array [W/m2]
 		bool sunUp;				/// Flag indicating whether the sun is up or not
@@ -507,6 +531,7 @@ public:
 
 	//calculated- subarray power
 	double dcPowerSubarray; /// DC power for this subarray [W]
+    double dcPowerSubarrayCS;
 
 };
 
@@ -567,7 +592,7 @@ public:
 	double temperatureCellCelcius; /// The weighted moving average  cell temperature of the module [C]
 	double temperatureCellCelciusSS; /// The SS average cell temperature of the module [C]
 	double angleOfIncidenceModifier; /// The angle of incidence modifier on the total poa front-side irradiance [0-1]
-
+    double dcPowerWCS;
 };
 
 

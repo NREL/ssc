@@ -774,6 +774,7 @@ C_air_cooled_condenser::C_air_cooled_condenser(int tech_type /*-*/, double P_con
 
     // Calculate design point for condenser map adjustment
     m_T_map_des_norm = m_T_amb_des / T_map_des;     //[-]
+
     if (m_T_map_des_norm >= T_map_min_norm) {
         m_P_map_des_norm = PvsQT(1, m_T_map_des_norm);
     }
@@ -797,6 +798,7 @@ void C_air_cooled_condenser::off_design(double T_amb /*K*/, double q_dot_reject 
     double T = T_amb / T_map_des;
 
     double P_cond_bar;
+
     if (T >= T_map_min_norm) {                             // If T is less than 0.9, then fit is not valid
         double Q = q_dot_reject / m_q_dot_reject_des;
         double P = PvsQT(Q, T);
@@ -807,6 +809,7 @@ void C_air_cooled_condenser::off_design(double T_amb /*K*/, double q_dot_reject 
     }
 
     water_state wp;
+
     if ((P_cond_bar < m_P_cond_min_bar) && (m_tech_type != 4)) // No lower limit on Isopentane
     {
         for (size_t i = 2; i <= m_n_pl_inc; i++)
@@ -840,6 +843,7 @@ void C_air_cooled_condenser::off_design(double T_amb /*K*/, double q_dot_reject 
 
     // These temperature calculations are for the isentropic expansion across the fan, not accounting for heat gain in the ACC
     double T_fan_in_K = T_amb;                                         // [K] Fan inlet temperature
+
     double T_fan_out_C = T_fan_in_K * pow(m_P_cond_ratio_des, (R / m_c_air)) - 273.15;  // [C] Fan outlet temperature
     double dT_fan = T_fan_out_C - (T_fan_in_K - 273.5);                           // [C] Temperature increase in fan
 
@@ -1993,8 +1997,8 @@ double alpha_5, alpha_6, C, Cp_5, Cp_56, Cp_6, k_5, k_56, k_6, m, mu_5, mu_56, m
 double Evacuated_Receiver::FQ_COND_BRACKET(double T_3, double T_6, double P_6, double v_6, int /*hn*/, int /*hv*/){
 	//           units                    ( K ,  K , bar, m/s)
 	
-	double P_brac, D_brac, A_CS_brac, k_brac, T_base, T_brac, T_brac6, mu_brac6, rho_brac6, 
-			Cp_brac6, k_brac6, nu_brac6, Alpha_brac6, Beta_brac6, Ra_Dbrac, Pr_brac6, Nu_bar, h_brac6,
+	double P_brac, D_brac, A_CS_brac, T_base, T_brac, T_brac6, mu_brac6, rho_brac6, 
+			Cp_brac6, nu_brac6, Alpha_brac6, Beta_brac6, Ra_Dbrac, Pr_brac6, Nu_bar, h_brac6,
 			mu_brac, mu_6, rho_6, rho_brac, k_6, Cp_brac, nu_6, Cp_6, Nu_brac, Alpha_brac,
 			Re_Dbrac, Pr_brac, Pr_6, n, C, m, L_HCE, alpha_6;
 
@@ -2009,7 +2013,7 @@ double Evacuated_Receiver::FQ_COND_BRACKET(double T_3, double T_6, double P_6, d
 	A_CS_brac = 0.00016129;  //[m**2]
 
 	// conduction coefficient for carbon steel at 600 K
-	k_brac = 48.0;  //[W/m-K]
+	double k_brac_steel = 48.0;  //[W/m-K]
 
 	// effective bracket base temperature
 	T_base = T_3 - 10.0;  //[C]
@@ -2026,7 +2030,7 @@ double Evacuated_Receiver::FQ_COND_BRACKET(double T_3, double T_6, double P_6, d
 		mu_brac6 = m_airProps.visc(T_brac6);  //[N-s/m**2]
 		rho_brac6 = m_airProps.dens(T_brac6, P_6);  //[kg/m**3]
 		Cp_brac6 = m_airProps.Cp(T_brac6)*1000.;  //[J/kg-K]
-		k_brac6 = m_airProps.cond(T_brac6);  //[W/m-K]
+		double k_brac6 = m_airProps.cond(T_brac6);  //[W/m-K]
 		nu_brac6 = mu_brac6 / rho_brac6;  //[m**2/s]
 		Alpha_brac6 = k_brac6 / (Cp_brac6 * rho_brac6);  //[m**2/s]
 		Beta_brac6 =  1.0 / T_brac6;  //[1/K]
@@ -2048,9 +2052,9 @@ double Evacuated_Receiver::FQ_COND_BRACKET(double T_3, double T_6, double P_6, d
 		mu_6 = m_airProps.visc(T_6);  //[N-s/m**2]
 		rho_6 = m_airProps.dens(T_6, P_6);  //[kg/m**3]
 		rho_brac = m_airProps.dens(T_brac, P_6);  //[kg/m**3]
-		k_brac = m_airProps.cond(T_brac);  //[W/m-K]
+		double k_brac = m_airProps.cond(T_brac);  //[W/m-K]
 		k_6 = m_airProps.cond(T_6);  //[W/m-K]
-		k_brac6 = m_airProps.cond(T_brac6);  //[W/m-K]
+		double k_brac6 = m_airProps.cond(T_brac6);  //[W/m-K]
 		Cp_brac = m_airProps.Cp(T_brac)*1000.;  //[J/kg-K]
 		Cp_6 = m_airProps.Cp(T_6)*1000.;  //[J/kg-K]
 		nu_6 = mu_6 / rho_6;  //[m**2/s]
@@ -2106,7 +2110,7 @@ double Evacuated_Receiver::FQ_COND_BRACKET(double T_3, double T_6, double P_6, d
 
 	// estimated conduction heat loss through HCE support brackets / HCE length 
 	L_HCE = 4.06;  //[m]
-	return sqrt(h_brac6 * P_brac * k_brac * A_CS_brac) * (T_base - T_6)/L_HCE;  //[W/m]
+	return sqrt(h_brac6 * P_brac * k_brac_steel * A_CS_brac) * (T_base - T_6)/L_HCE;  //[W/m]
 
 }
 

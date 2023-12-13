@@ -258,151 +258,6 @@ solarpos(int year, int month, int day, int hour, double minute, double lat, doub
     sunn[8] = hextra;
 }
 
-const double L_TERMS[6][64][3] = //Terms used for the calculation of the Earth heliocentric longitude (L)
-        {
-                {
-                        {175347046.0,    0,     0},
-                        {3341656.0, 4.6692568, 6283.07585},
-                        {34894.0, 4.6261, 12566.1517},
-                        {3497.0, 2.7441, 5753.3849},
-                        {3418.0, 2.8289, 3.5231},
-                        {3136.0, 3.6277, 77713.7715},
-                        {2676.0, 4.4181, 7860.4194},
-                        {2343.0, 6.1352, 3930.2097},
-                        {1324.0, 0.7425, 11506.7698},
-                        {1273.0, 2.0371, 529.691},
-                        {1199.0, 1.1096, 1577.3435},
-                        {990, 5.233, 5884.927},
-                        {902, 2.045, 26.298},
-                        {857, 3.508, 398.149},
-                        {780, 1.179, 5223.694},
-                        {753, 2.533, 5507.553},
-                        {505, 4.583, 18849.228},
-                        {492, 4.205, 775.523},
-                        {357, 2.92, 0.067},
-                        {317, 5.849, 11790.629},
-                        {284, 1.899, 796.298},
-                        {271, 0.315, 10977.079},
-                        {243, 0.345, 5486.778},
-                        {206, 4.806, 2544.314},
-                        {205, 1.869, 5573.143},
-                        {202, 2.458, 6069.777},
-                        {156, 0.833, 213.299},
-                        {132, 3.411, 2942.463},
-                        {126, 1.083, 20.775},
-                        {115, 0.645, 0.98},
-                        {103, 0.636, 4694.003},
-                        {102, 0.976, 15720.839},
-                        {102, 4.267, 7.114},
-                        {99, 6.21, 2146.17},
-                        {98, 0.68, 155.42},
-                        {86, 5.98, 161000.69},
-                        {85, 1.3, 6275.96},
-                        {85, 3.67, 71430.7},
-                        {80, 1.81, 17260.15},
-                        {79, 3.04, 12036.46},
-                        {75, 1.76, 5088.63},
-                        {74, 3.5, 3154.69},
-                        {74, 4.68, 801.82},
-                        {70, 0.83, 9437.76},
-                        {62, 3.98, 8827.39},
-                        {61, 1.82, 7084.9},
-                        {57, 2.78, 6286.6},
-                        {56, 4.39, 14143.5},
-                        {56, 3.47, 6279.55},
-                        {52, 0.19, 12139.55},
-                        {52, 1.33, 1748.02},
-                        {51, 0.28, 5856.48},
-                        {49, 0.49, 1194.45},
-                        {41, 5.37, 8429.24},
-                        {41, 2.4, 19651.05},
-                        {39, 6.17, 10447.39},
-                        {37, 6.04, 10213.29},
-                        {37, 2.57, 1059.38},
-                        {36, 1.71, 2352.87},
-                        {36, 1.78, 6812.77},
-                        {33, 0.59, 17789.85},
-                        {30, 0.44, 83996.85},
-                        {30, 2.74, 1349.87},
-                        {25, 3.16, 4690.48}
-                },
-                {
-                        {628331966747.0, 0,     0},
-                        {206059.0,  2.678235,  6283.07585},
-                        {4303.0,  2.6351, 12566.1517},
-                        {425.0,  1.59,   3.523},
-                        {119.0,  5.796,  26.298},
-                        {109.0,  2.966,  1577.344},
-                        {93,     2.59,   18849.23},
-                        {72,     1.14,   529.69},
-                        {68,     1.87,   398.15},
-                        {67,     4.41,   5507.55},
-                        {59,     2.89,   5223.69},
-                        {56,  2.17,  155.42},
-                        {45,  0.4,   796.3},
-                        {36,  0.47,  775.52},
-                        {29,  2.65,  7.11},
-                        {21,  5.34,  0.98},
-                        {19,  1.85,  5486.78},
-                        {19,  4.97,  213.3},
-                        {17,  2.99, 6275.96},
-                        {16,  0.03,  2544.31},
-                        {16,  1.43,  2146.17},
-                        {15,  1.21,  10977.08},
-                        {12,  2.83,  1748.02},
-                        {12,  3.26,  5088.63},
-                        {12,  5.27,  1194.45},
-                        {12,  2.08,  4694},
-                        {11,  0.77,  553.57},
-                        {10,  1.3,   6286.6},
-                        {10,  4.24,  1349.87},
-                        {9,   2.7,   242.73},
-                        {9,   5.64,  951.72},
-                        {8,   5.3,   2352.87},
-                        {6,   2.65,  9437.76},
-                        {6,  4.67, 4690.48}
-                },
-                {
-                        {52919.0,        0,     0},
-                        {8720.0,    1.0721,    6283.0758},
-                        {309.0,   0.867,  12566.152},
-                        {27,     0.05,   3.52},
-                        {16,     5.19,   26.3},
-                        {16,     3.68,   155.42},
-                        {10,     0.76,   18849.23},
-                        {9,      2.06,   77713.77},
-                        {7,      0.83,   775.52},
-                        {5,      4.66,   1577.34},
-                        {4,      1.03,   7.11},
-                        {4,   3.44,  5573.14},
-                        {3,   5.14,  796.3},
-                        {3,   6.05,  5507.55},
-                        {3,   1.19,  242.73},
-                        {3,   6.12,  529.69},
-                        {3,   0.31,  398.15},
-                        {3,   2.28,  553.57},
-                        {2,   4.38, 5223.69},
-                        {2,   3.75,  0.98}
-                },
-                {
-                        {289.0,          5.844, 6283.076},
-                        {35,        0,         0},
-                        {17,      5.49,   12566.15},
-                        {3,      5.2,    155.42},
-                        {1,      4.72,   3.52},
-                        {1,      5.3,    18849.23},
-                        {1,      5.97,   242.73}
-                },
-                {
-                        {114.0,          3.142, 0},
-                        {8,         4.13,      6283.08},
-                        {1,       3.84,   12566.15}
-                },
-                {
-                        {1,              3.14,  0}
-                }
-        };
-
 const double B_TERMS[2][5][3] = //Terms used for the calculation of the Earth heliocentric latitude (B)
         {
                 {
@@ -417,212 +272,6 @@ const double B_TERMS[2][5][3] = //Terms used for the calculation of the Earth he
                         {6,     1.73,  5223.69}
                 }
         };
-
-const double R_TERMS[5][40][3] = //Terms used for the calculation of the Earth radius vector (R)
-        {
-                {
-                        {100013989.0, 0,       0},
-                        {1670700.0, 3.0984635, 6283.07585},
-                        {13956.0, 3.05525, 12566.1517},
-                        {3084.0, 5.1985, 77713.7715},
-                        {1628.0, 1.1739, 5753.3849},
-                        {1576.0, 2.8469, 7860.4194},
-                        {925.0, 5.453, 11506.77},
-                        {542.0, 4.564, 3930.21},
-                        {472.0, 3.661, 5884.927},
-                        {346.0, 0.964, 5507.553},
-                        {329.0, 5.9, 5223.694},
-                        {307.0, 0.299, 5573.143},
-                        {243.0, 4.273, 11790.629},
-                        {212.0, 5.847, 1577.344},
-                        {186.0, 5.022, 10977.079},
-                        {175.0, 3.012, 18849.228},
-                        {110.0, 5.055, 5486.778},
-                        {98, 0.89, 6069.78},
-                        {86, 5.69, 15720.84},
-                        {86, 1.27, 161000.69},
-                        {65, 0.27, 17260.15},
-                        {63, 0.92, 529.69},
-                        {57, 2.01, 83996.85},
-                        {56, 5.24, 71430.7},
-                        {49, 3.25, 2544.31},
-                        {47, 2.58, 775.52},
-                        {45, 5.54, 9437.76},
-                        {43, 6.01, 6275.96},
-                        {39, 5.36, 4694},
-                        {38, 2.39, 8827.39},
-                        {37, 0.83, 19651.05},
-                        {37, 4.9, 12139.55},
-                        {36, 1.67, 12036.46},
-                        {35, 1.84, 2942.46},
-                        {33, 0.24, 7084.9},
-                        {32, 0.18, 5088.63},
-                        {32, 1.78, 398.15},
-                        {28, 1.21, 6286.6},
-                        {28, 1.9, 6279.55},
-                        {26, 4.59, 10447.39}
-                },
-                {
-                        {103019.0,    1.10749, 6283.07585},
-                        {1721.0,    1.0644,    12566.1517},
-                        {702.0,   3.142,   0},
-                        {32,     1.02,   18849.23},
-                        {31,     2.84,   5507.55},
-                        {25,     1.32,   5223.69},
-                        {18,    1.42,  1577.34},
-                        {10,    5.91,  10977.08},
-                        {9,     1.42,  6275.96},
-                        {9,     0.27,  5486.78}
-                },
-                {
-                        {4359.0,      5.7846,  6283.0758},
-                        {124.0,     5.579,     12566.152},
-                        {12,      3.14,    0},
-                        {9,      3.63,   77713.77},
-                        {6,      1.87,   5573.14},
-                        {3,      5.47,   18849.23}
-                },
-                {
-                        {145.0,       4.273,   6283.076},
-                        {7,         3.92,      12566.15}
-                },
-                {
-                        {4,           2.56,    6283.08}
-                }
-        };
-
-const int Y_TERMS[63][5] = //Coefficients for sin terms for calculation of nutation in longitude and obliquity
-        {
-                {0,  0,  0,  0,  1},
-                {-2, 0,  0,  2,  2},
-                {0,  0,  0,  2,  2},
-                {0,  0,  0,  0,  2},
-                {0,  1,  0,  0,  0},
-                {0,  0,  1,  0,  0},
-                {-2, 1,  0,  2,  2},
-                {0,  0,  0,  2,  1},
-                {0,  0,  1,  2,  2},
-                {-2, -1, 0,  2,  2},
-                {-2, 0,  1,  0,  0},
-                {-2, 0,  0,  2,  1},
-                {0,  0,  -1, 2,  2},
-                {2,  0,  0,  0,  0},
-                {0,  0,  1,  0,  1},
-                {2,  0,  -1, 2,  2},
-                {0,  0,  -1, 0,  1},
-                {0,  0,  1,  2,  1},
-                {-2, 0,  2,  0,  0},
-                {0,  0,  -2, 2,  1},
-                {2,  0,  0,  2,  2},
-                {0,  0,  2,  2,  2},
-                {0,  0,  2,  0,  0},
-                {-2, 0,  1,  2,  2},
-                {0,  0,  0,  2,  0},
-                {-2, 0,  0,  2,  0},
-                {0,  0,  -1, 2,  1},
-                {0,  2,  0,  0,  0},
-                {2,  0,  -1, 0,  1},
-                {-2, 2,  0,  2,  2},
-                {0,  1,  0,  0,  1},
-                {-2, 0,  1,  0,  1},
-                {0,  -1, 0,  0,  1},
-                {0,  0,  2,  -2, 0},
-                {2,  0,  -1, 2,  1},
-                {2,  0,  1,  2,  2},
-                {0,  1,  0,  2,  2},
-                {-2, 1,  1,  0,  0},
-                {0,  -1, 0,  2,  2},
-                {2,  0,  0,  2,  1},
-                {2,  0,  1,  0,  0},
-                {-2, 0,  2,  2,  2},
-                {-2, 0,  1,  2,  1},
-                {2,  0,  -2, 0,  1},
-                {2,  0,  0,  0,  1},
-                {0,  -1, 1,  0,  0},
-                {-2, -1, 0,  2,  1},
-                {-2, 0,  0,  0,  1},
-                {0,  0,  2,  2,  1},
-                {-2, 0,  2,  0,  1},
-                {-2, 1,  0,  2,  1},
-                {0,  0,  1,  -2, 0},
-                {-1, 0,  1,  0,  0},
-                {-2, 1,  0,  0,  0},
-                {1,  0,  0,  0,  0},
-                {0,  0,  1,  2,  0},
-                {0,  0,  -2, 2,  2},
-                {-1, -1, 1,  0,  0},
-                {0,  1,  1,  0,  0},
-                {0,  -1, 1,  2,  2},
-                {2,  -1, -1, 2,  2},
-                {0,  0,  3,  2,  2},
-                {2,  -1, 0,  2,  2},
-        };
-
-const double PE_TERMS[63][4] = { //Periodic terms for the nutation in longitude and obliquity
-        {-171996, -174.2, 92025, 8.9},
-        {-13187,  -1.6,   5736,  -3.1},
-        {-2274,   -0.2,   977,   -0.5},
-        {2062,    0.2,    -895,  0.5},
-        {1426,    -3.4,   54,    -0.1},
-        {712,     0.1,    -7,    0},
-        {-517,    1.2,    224,   -0.6},
-        {-386,    -0.4,   200,   0},
-        {-301,    0,      129,   -0.1},
-        {217,     -0.5,   -95,   0.3},
-        {-158,    0,      0,     0},
-        {129,     0.1,    -70,   0},
-        {123,     0,      -53,   0},
-        {63,      0,      0,     0},
-        {63,      0.1,    -33,   0},
-        {-59,     0,      26,    0},
-        {-58,     -0.1,   32,    0},
-        {-51,     0,      27,    0},
-        {48,      0,      0,     0},
-        {46,      0,      -24,   0},
-        {-38,     0,      16,    0},
-        {-31,     0,      13,    0},
-        {29,      0,      0,     0},
-        {29,      0,      -12,   0},
-        {26,      0,      0,     0},
-        {-22,     0,      0,     0},
-        {21,      0,      -10,   0},
-        {17,      -0.1,   0,     0},
-        {16,      0,      -8,    0},
-        {-16,     0.1,    7,     0},
-        {-15,     0,      9,     0},
-        {-13,     0,      7,     0},
-        {-12,     0,      6,     0},
-        {11,      0,      0,     0},
-        {-10,     0,      5,     0},
-        {-8,      0,      3,     0},
-        {7,       0,      -3,    0},
-        {-7,      0,      0,     0},
-        {-7,      0,      3,     0},
-        {-7,      0,      3,     0},
-        {6,       0,      0,     0},
-        {6,       0,      -3,    0},
-        {6,       0,      -3,    0},
-        {-6,      0,      3,     0},
-        {-6,      0,      3,     0},
-        {5,       0,      0,     0},
-        {-5,      0,      3,     0},
-        {-5,      0,      3,     0},
-        {-5,      0,      3,     0},
-        {4,       0,      0,     0},
-        {4,       0,      0,     0},
-        {4,       0,      0,     0},
-        {-4,      0,      0,     0},
-        {-4,      0,      0,     0},
-        {-4,      0,      0,     0},
-        {3,       0,      0,     0},
-        {-3,      0,      0,     0},
-        {-3,      0,      0,     0},
-        {-3,      0,      0,     0},
-        {-3,      0,      0,     0},
-        {-3,      0,      0,     0},
-        {-3,      0,      0,     0},
-        {-3,      0,      0,     0},
-};
 
 double limit_degrees(double degrees) //Limit angle values to degrees within 0-360°
 {
@@ -764,18 +413,35 @@ double earth_values(double term_sum[], int count,
     return sum;
 }
 
-double earth_heliocentric_longitude(double jme) //Earth heliocentric longitude (degrees)
+double earth_heliocentric_longitude(double j_star_tt, double jme) //Earth heliocentric longitude (degrees)
 {
-    const int L_COUNT = 6;
-    const int l_subcount[6] = {64, 34, 20, 7, 3, 1};
-    double sum[6];
-    int i;
+    const double LGS_terms[10][3] = { {1.0 / 365.261278, 3.401508e-2 , 1.600780},
+        {1.0 / 182.632412, 3.486440e-4, 1.662976},
+        {1.0 / 29.530634, 3.136227e-5, -1.195905},
+        {1.0 / 399.529850, 3.578979e-5, -1.042052},
+        {1.0 / 291.956812, 2.676185e-5, 2.012613 },
+        {1.0 / 583.598201, 2.333925e-5, -2.867714},
+        {1.0 / 4652.629372, 1.221214e-5, 1.225038},
+        {1.0 / 1450.236684, 1.217941e-5, -0.828601},
+        {1.0 / 199.459709, 1.343914e-5, -3.108253},
+        {1.0 / 365.355291, 8.499475e-4, -2.353709}
+    };
 
-    for (i = 0; i < L_COUNT; i++)
-        sum[i] = earth_periodic_term_summation(L_TERMS[i], l_subcount[i], jme);
-
-    double earth_helio_longitude = limit_degrees(RTOD * (earth_values(sum, 6, jme)));
-    return earth_helio_longitude;
+    
+    double rho_L_k = 0;
+    double f_L_k = 0;
+    double phi_L_k = 0;
+    double a_L = 1.0 / 58.130101;
+    double b_L = 1.742145;
+    double LG2 = a_L * j_star_tt + b_L;
+    for (int i = 0; i < 10; i++) {
+        rho_L_k = LGS_terms[i][1];
+        f_L_k = LGS_terms[i][0];
+        phi_L_k = LGS_terms[i][2];
+        LG2 += rho_L_k * cos(2.0 * M_PI * f_L_k * j_star_tt - phi_L_k);
+    }
+    double LG2_final = limit_degrees(RTOD * LG2);
+    return LG2_final;
 
 }
 
@@ -794,19 +460,16 @@ double earth_heliocentric_latitude(double jme) //Earth heliocentric latitude (de
 
 }
 
-double earth_radius_vector(double jme) //Earth radius vector (Astronomical Units (AU))
+double earth_radius_vector(double j_star_tt, double jme) //Earth radius vector (Astronomical Units (AU))
 {
-    const int R_COUNT = 5;
-    int r_subcount[5] = {40, 10, 6, 2, 1};
-    double sum[R_COUNT];
-    int i;
+    double a_R = 0;
+    double b_R = 1.000140;
+    double f_R = 1.0 / 365.254902;
+    double rho_R = 0.016704;
+    double phi_R = -3.091159;
 
-    for (i = 0; i < R_COUNT; i++)
-        sum[i] = earth_periodic_term_summation(R_TERMS[i], r_subcount[i], jme);
-
-    double earth_rad_vector = earth_values(sum, R_COUNT, jme);
-    return earth_rad_vector;
-
+    double R_SG2 = rho_R * cos(2.0 * M_PI * f_R * j_star_tt - phi_R) + a_R * j_star_tt + b_R;
+    return R_SG2;
 }
 
 double geocentric_longitude(double l) //geocentric longitude (degrees)
@@ -855,30 +518,15 @@ double ascending_longitude_moon(
     return ascending_long_moon;
 }
 
-double xy_term_summation(int i, double x[5]) {
-    int j;
-    double sum = 0;
-
-    for (j = 0; j < 5; j++)
-        sum += x[j] * Y_TERMS[i][j];
-
-    return sum;
-}
-
-void nutation_longitude_and_obliquity(double jce, double x[5],
+void nutation_longitude_and_obliquity(double j_star_tt, double jce, double x[5],
                                       double delta_values[2]) //nutation in longitude and obliquity (both degrees)
 {
-    int i;
-    double xy_term_sum, sum_psi = 0, sum_epsilon = 0;
-
-    for (i = 0; i < 63; i++) {
-        xy_term_sum = DTOR * (xy_term_summation(i, x));
-        sum_psi += (PE_TERMS[i][0] + jce * PE_TERMS[i][1]) * sin(xy_term_sum);
-        sum_epsilon += (PE_TERMS[i][2] + jce * PE_TERMS[i][3]) * cos(xy_term_sum);
-    }
-
-    delta_values[0] = sum_psi / 36000000.0; //del_psi
-    delta_values[1] = sum_epsilon / 36000000.0; //del_epsilon
+    double f_psi = 1.0 / 6791.164405;
+    double rho_psi = 8.329092e-5;
+    double phi_psi = -2.052757;
+    double del_psi = RTOD * rho_psi * cos(2.0 * M_PI * f_psi * j_star_tt - phi_psi);
+    delta_values[0] = del_psi;
+    //delta_values[1] = sum_epsilon / 36000000.0; //del_epsilon
 }
 
 double ecliptic_mean_obliquity(double jme) //mean obliquity of the ecliptic (arc seconds)
@@ -898,15 +546,20 @@ double ecliptic_mean_obliquity(double jme) //mean obliquity of the ecliptic (arc
     return eclip_mean_obliquity;
 }
 
-double ecliptic_true_obliquity(double delta_epsilon, double epsilon0) //true obliquity of the ecliptic (degrees)
+double ecliptic_true_obliquity(double j_star_tt) //true obliquity of the ecliptic (degrees)
 {
-    double eclip_true_obliquity = delta_epsilon + epsilon0 / 3600.0;
-    return eclip_true_obliquity;
+    double a_eps = -6.216374e-9;
+    double b_eps = 4.091383e-1;
+    double f_eps = 1.0 / 6791.164405;
+    double rho_eps = 4.456183e-5;
+    double phi_eps = 2.660352;
+    double eclip_true_obliquity = rho_eps * cos(2.0 * M_PI * f_eps * j_star_tt - phi_eps) + a_eps * j_star_tt + b_eps;
+    return RTOD * eclip_true_obliquity;
 }
 
 double aberration_correction(double r) //aberration correction (degrees)
 {
-    double delta_tau = -20.4898 / (3600.0 * r);
+    double delta_tau = -9.933735e-5; //rad
     return delta_tau;
 }
 
@@ -916,15 +569,17 @@ double apparent_sun_longitude(double theta, double delta_psi, double delta_tau) 
     return lambda;
 }
 
-double greenwich_mean_sidereal_time(double jd, double jc) //greenwich mean sidereal time (degrees)
+double greenwich_mean_sidereal_time(double j_star_ut, double jd, double jc) //greenwich mean sidereal time (degrees)
 {
-    double nu0 = limit_degrees(280.46061837 + 360.98564736629 * (jd - 2451545.0) +
+    double nu0_old = limit_degrees(280.46061837 + 360.98564736629 * (jd - 2451545.0) +
                                jc * jc * (0.000387933 - jc / 38710000.0));
-    return nu0;
+                               
+    //double nu0 = limit_degrees(RTOD * (6.3000388 * j_star_ut + 1.742079));
+    double nu0 = limit_degrees(RTOD * (6.3000388 * (j_star_ut-2) + 1.742079));
+    return nu0_old;
 }
 
-double
-greenwich_sidereal_time(double nu0, double delta_psi, double epsilon) //greenwich apparent sidereal time (degrees)
+double greenwich_sidereal_time(double nu0, double delta_psi, double epsilon) //greenwich apparent sidereal time (degrees)
 {
     return nu0 + delta_psi * cos(DTOR * (epsilon));
 }
@@ -956,7 +611,7 @@ double observer_hour_angle(double nu, double longitude, double alpha_deg) //obse
 
 double sun_equatorial_horizontal_parallax(double r) //sun equatorial horizontal parallax of the sun (degrees)
 {
-    double xi = 8.794 / (3600.0 * r);
+    double xi = 4.263521e-5;
     return xi;
 }
 
@@ -972,14 +627,8 @@ void right_ascension_parallax_and_topocentric_dec(double latitude, double elevat
     double u = atan(0.99664719 * tan(lat_rad));
     double y = 0.99664719 * sin(u) + elevation * sin(lat_rad) / 6378140.0;
     double x = cos(u) + elevation * cos(lat_rad) / 6378140.0;
-
-    delta_alpha_rad = atan2(-x * sin(xi_rad) * sin(h_rad),
-                            cos(delta_rad) - x * sin(xi_rad) * cos(h_rad));
-
-    delta_alpha_prime[0] = RTOD * (atan2((sin(delta_rad) - y * sin(xi_rad)) * cos(delta_alpha_rad),
-                                         cos(delta_rad) - x * sin(xi_rad) * cos(h_rad)));
-
-    delta_alpha_prime[1] = RTOD * (delta_alpha_rad);
+    delta_alpha_prime[1] = RTOD * -x * (sin(h_rad) / cos(delta_rad)) * xi_rad;
+    delta_alpha_prime[0] = RTOD * (delta_rad + (x * cos(h_rad) * sin(delta_rad) - y * cos(delta_rad)) * xi_rad);
 }
 
 double topocentric_right_ascension(double alpha_deg, double delta_alpha) //topocentric sun right ascension (degrees)
@@ -1009,9 +658,10 @@ double atmospheric_refraction_correction(double pressure, double temperature,
 {
     double del_e = 0;
     double SUN_RADIUS = 0.26667;
-    if (e0 >= -1 * (SUN_RADIUS + atmos_refract))
+    if (e0 >= -1 * (SUN_RADIUS + atmos_refract)) {
         del_e = (pressure / 1010.0) * (283.0 / (273.0 + temperature)) *
-                1.02 / (60.0 * tan(DTOR * (e0 + 10.3 / (e0 + 5.11))));
+            1.02 / (60.0 * tan(DTOR * (e0 + 10.3 / (e0 + 5.11))));
+    }
 
     return del_e;
 }
@@ -1163,9 +813,11 @@ calculate_spa(double jd, double lat, double lng, double alt, double pressure, do
 
     //Calculate the Earth heliocentric longitude latitude, and radius vector (L, B, and R) (3.2)
     // Heliocentric - Earth position is calculated with respect to the center of the sun
-    double l = earth_heliocentric_longitude(jme); //L0-L5 values listed beginning line ?, L limited to 0-360°
+    double j_star_tt = jde - 2444239.5;
+    double j_star_ut = jd - 2444239.5;
+    double l = earth_heliocentric_longitude(j_star_tt, jme); //L0-L5 values listed beginning line ?, L limited to 0-360°
     double b = earth_heliocentric_latitude(jme); // B0-B1 values listed beginning line ?, B limited to 0-360°
-    double r = earth_radius_vector(jme); // R0-R4 valeus listed beginning line ?,  R in Astronomical Units (AU)
+    double r = earth_radius_vector(j_star_tt, jme); // R0-R4 valeus listed beginning line ?,  R in Astronomical Units (AU)
     needed_values[1] = 1 / (r * r); //
 
     //Calculate the geocentric longitude and latitude (theta and beta) (3.3)
@@ -1182,14 +834,14 @@ calculate_spa(double jd, double lat, double lng, double alt, double pressure, do
     x[4] = ascending_longitude_moon(jce); // degrees
 
     double delta_values[2]; // allocate storage for nutation in longitude (del_psi) and nutation in obliquity (del_epsilon)
-    nutation_longitude_and_obliquity(jce, x, delta_values);
+    nutation_longitude_and_obliquity(j_star_tt, jce, x, delta_values);
     double del_psi = delta_values[0]; //store value for use in further spa calculations
     needed_values[2] = del_psi; //pass del_psi value to sunrise sunset calculations
     double del_epsilon = delta_values[1]; //store value for use in further spa calculations
 
     //Calculate the true obliquity of the ecliptic, epsilon (3.5)
     double epsilon0 = ecliptic_mean_obliquity(jme); //mean obliquity of the ecliptic (arc seconds)
-    double epsilon = ecliptic_true_obliquity(del_epsilon, epsilon0); //true obliquity of the ecliptic (degrees)
+    double epsilon = ecliptic_true_obliquity(j_star_tt); //true obliquity of the ecliptic (degrees)
     needed_values[3] = epsilon;
 
     //Calculate the aberration correction (3.6)
@@ -1199,7 +851,7 @@ calculate_spa(double jd, double lat, double lng, double alt, double pressure, do
     double lamda = apparent_sun_longitude(theta, del_psi, del_tau); // degrees
 
     //Calculate the apparent sidereal time at Greenwich at any given time (3.8)
-    double nu0 = greenwich_mean_sidereal_time(jd, jc); //degrees
+    double nu0 = greenwich_mean_sidereal_time(j_star_ut, jd, jc); //degrees
     double nu = greenwich_sidereal_time(nu0, del_psi, epsilon); // degrees
     needed_values[4] = nu;
 
@@ -1233,6 +885,8 @@ calculate_spa(double jd, double lat, double lng, double alt, double pressure, do
     double atmos_refract = 0.5667; // atmospheric refraction for check if sun is below horizon
     double del_e = atmospheric_refraction_correction(pressure, temp, atmos_refract,
                                                      e0); // atmospheric refraction correction in degrees, returns 0 if sun is below horizon
+    if (std::isnan(del_e)) del_e = 0;
+
     double e = topocentric_elevation_angle_corrected(e0,
                                                      del_e); // Topocentric elevation angle corrected for refraction (degrees)
     needed_values[6] = e; // Pass topocentric elevation angle as an output of solarpos_spa (degrees)
@@ -1488,7 +1142,7 @@ solarpos_spa(int year, int month, int day, int hour, double minute, double secon
 
 void incidence(int mode, double tilt, double sazm, double rlim, double zen,
                double azm, bool en_backtrack, double gcr, double slope_tilt, double slope_azm,
-               bool force_to_stow, double stow_angle_deg, double angle[5]) {
+               bool force_to_stow, double stow_angle_deg, bool useCustomAngle, double customAngle, double angle[5]) {
     /*
     Calculate panel orientation, angle of incidence with beam radiation, and
     tracker rotation angles (where applicable).
@@ -1568,6 +1222,11 @@ void incidence(int mode, double tilt, double sazm, double rlim, double zen,
 
                 btdiff = (backtracking_rotation - rot); // log the difference (radians)
                 rot = backtracking_rotation;
+            }
+
+            /*Check if custom tracker rotation angles enabled, apply timeseries value*/
+            if (useCustomAngle) {
+                rot = customAngle * DTOR; //overwrite rotation angle with input from array
             }
 
             /* Find tilt angle for the tracking surface */
@@ -1824,8 +1483,10 @@ int poaDecomp(double, double angle[], double sun[], double alb, poaDecompReq *pA
                                      dnTmp, dfTmp, ghTmp, poaTmp);
             }
         }
-
-        avgKtp /= count;
+        // fails when count = 0;
+        //avgKtp /= count;
+        if (count > 0)
+            avgKtp /= count;
 
         //Calculate Kt
         double am = Min(15.25, 1.0 / (cos(sun[1]) + 0.15 * (pow(93.9 - sun[1] * 180 / M_PI, -1.253)))); // air mass
@@ -1855,8 +1516,7 @@ int poaDecomp(double, double angle[], double sun[], double alb, poaDecompReq *pA
         gh = 0;
         errorcode = 42;
     }
-    if (df <
-        0) //check for df before gh because gh is only calculated using dn and df, so is least likely to be the actual culprit
+    if (df < 0) //check for df before gh because gh is only calculated using dn and df, so is least likely to be the actual culprit
     {
         df = 0;
         errorcode = 41;
@@ -2037,6 +1697,48 @@ perez(double, double dn, double df, double alb, double inc, double tilt, double 
     }
 }
 
+void ineichen(double clearsky_results[3], double apparent_zenith, int month, int day, double pressure = 101325.0, double linke_turbidity = 1.0, double altitude = 0.0, double dni_extra = 1364.0, bool perez_enhancement = false) {
+    double cos_zenith = Max(cosd(apparent_zenith), 0);
+    double tl = linke_turbidity;
+
+    double fh1 = exp(-altitude / 8000.0);
+    double fh2 = exp(-altitude / 1250.0);
+    double cg1 = 5.09e-5 * altitude + 0.868;
+    double cg2 = 3.92e-5 * altitude + 0.0387;
+
+    //double am = Min(15.25, 1.0 / (cosd(apparent_zenith) + 0.15 * (pow(93.9 - apparent_zenith, -1.253)))); // air mass
+    double am = Min(15.25, 1.0 / (cosd(apparent_zenith) + 0.50572 * (pow(6.07995 + (90 - apparent_zenith), -1.6364)))); // air mass kastenyoung1989 pvlib
+    //am = 1.5;
+    double abs_am = am * pressure / 101325.0;
+
+    double ghi = exp(-cg2 * abs_am * (fh1 + fh2 * (tl - 1)));
+    if (perez_enhancement) ghi *= exp(0.01 * pow(abs_am, 1.8));
+
+    double Gon = 1367 * (1 + 0.033 * cos(360.0 / 365.0 * day_of_year(month, day) * M_PI /
+        180));
+
+    if (dni_extra != 0) Gon = dni_extra;
+
+    ghi = cg1 * Gon * cos_zenith * tl / tl * Max(ghi, 0);
+
+    double b = 0.664 + 0.163 / fh1;
+
+    double bnci = b * exp(-0.09 * abs_am * (tl - 1));
+    bnci = Gon * Max(bnci, 0);
+
+    double bnci_2 = ((1 - (0.1 - 0.2 * exp(-tl)) / (0.1 + 0.882 / fh1)) / cos_zenith);
+    bnci_2 = ghi * Min(Max(bnci_2, 0), 1e20);
+
+    double dni = Min(bnci, bnci_2);
+
+    double dhi = ghi - dni * cos_zenith;
+    clearsky_results[0] = ghi;
+    clearsky_results[1] = dni;
+    clearsky_results[2] = dhi;
+    return;
+}
+
+
 void irrad::setup() {
     year = month = day = hour = -999;
     minute = delt = latitudeDegrees = longitudeDegrees = timezone = -999;
@@ -2060,6 +1762,12 @@ void irrad::setup() {
 
     calculatedDirectNormal = directNormal;
     calculatedDiffuseHorizontal = 0.0;
+    poaRearGroundReflected = 0.;
+    poaRearDirectDiffuse = 0.;
+    poaRearRowReflections = 0.;
+    poaRearSelfShaded = 0.;
+    useCustomRotAngles = 0.;
+
 }
 
 irrad::irrad() {
@@ -2074,7 +1782,7 @@ irrad::irrad(weather_record wf, weather_header hdr,
              double groundCoverageRatioIn, double slopeTiltIn, double slopeAzmIn, std::vector<double> monthlyTiltDegrees,
              std::vector<double> userSpecifiedAlbedo,
              poaDecompReq *poaAllIn,
-             bool useSpatialAlbedos, const util::matrix_t<double>* userSpecifiedSpatialAlbedos) :
+             bool useSpatialAlbedos, const util::matrix_t<double>* userSpecifiedSpatialAlbedos, bool enableSubhourlyClipping, bool useCustomRotAngles, double customRotAngle) :
         skyModel(skyModelIn), radiationMode(radiationModeIn), trackingMode(trackModeIn),
         enableBacktrack(backtrackingEnabled), forceToStow(forceToStowIn),
         delt(dtHour), tiltDegrees(tiltDegreesIn), surfaceAzimuthDegrees(azimuthDegreesIn),
@@ -2100,6 +1808,10 @@ irrad::irrad(weather_record wf, weather_header hdr,
     set_location(hdr.lat, hdr.lon, hdr.tz);
     set_optional(hdr.elev, wf.pres, wf.tdry);
     set_sky_model(skyModel, albedo, albedoSpatial);
+
+    set_subhourly_clipping(enableSubhourlyClipping);
+
+    set_custom_rot_angles(useCustomRotAngles, customRotAngle);
 
     if (radiationMode == irrad::DN_DF) set_beam_diffuse(wf.dn, wf.df);
     else if (radiationMode == irrad::DN_GH) set_global_beam(wf.gh, wf.dn);
@@ -2193,8 +1905,23 @@ void irrad::get_poa(double *beam, double *skydiff, double *gnddiff,
     if (horizon != 0) *horizon = diffuseIrradianceFront[2];
 }
 
+void irrad::get_poa_clearsky(double* beam, double* skydiff, double* gnddiff,
+    double* isotrop, double* circum, double* horizon) {
+    if (beam != 0) *beam = planeOfArrayIrradianceFrontCS[0];
+    if (skydiff != 0) *skydiff = planeOfArrayIrradianceFrontCS[1];
+    if (gnddiff != 0) *gnddiff = planeOfArrayIrradianceFrontCS[2];
+    if (isotrop != 0) *isotrop = diffuseIrradianceFrontCS[0];
+    if (circum != 0) *circum = diffuseIrradianceFrontCS[1];
+    if (horizon != 0) *horizon = diffuseIrradianceFrontCS[2];
+}
+
+
 double irrad::get_poa_rear() {
     return planeOfArrayIrradianceRearAverage;
+}
+
+double irrad::get_poa_rear_clearsky() {
+    return planeOfArrayIrradianceRearAverageCS;
 }
 
 std::vector<double> irrad::get_poa_rear_spatial() {
@@ -2253,6 +1980,12 @@ void irrad::get_irrad(double *ghi, double *dni, double *dhi) {
     *dhi = diffuseHorizontal;
 }
 
+void irrad::get_clearsky_irrad(double* ghi_cs, double* dni_cs, double* dhi_cs) {
+    *ghi_cs = clearskyIrradiance[0];
+    *dni_cs = clearskyIrradiance[1];
+    *dhi_cs = clearskyIrradiance[2];
+}
+
 void irrad::set_time(int y, int m, int d, int h, double min, double delt_hr) {
     this->year = y;
     this->month = m;
@@ -2276,6 +2009,17 @@ void irrad::set_optional(double elev, double pres, double t_amb) //defaults of 0
         this->pressure = pres;
     if (!std::isnan(tamb))
         this->tamb = t_amb;
+}
+
+void irrad::set_subhourly_clipping(bool enable)
+{
+    if (enable) this->enableSubhourlyClipping = true;
+}
+
+void irrad::set_custom_rot_angles(bool enable, double angle)
+{
+    this->useCustomRotAngles = enable;
+    this->customRotAngle = angle;
 }
 
 void irrad::set_sky_model(int sm, double alb, const std::vector<double> &albSpatial) {
@@ -2448,9 +2192,17 @@ int irrad::calc() {
         timeStepSunPosition[2] = 0;
     }
 
+    //clearsky
+    if (enableSubhourlyClipping) {
+        ineichen(clearskyIrradiance, RTOD * sunAnglesRadians[1], month, day, pressure * 100.0, 1.0, elevation, 0, true);
+    }
+
 
     planeOfArrayIrradianceFront[0] = planeOfArrayIrradianceFront[1] = planeOfArrayIrradianceFront[2] = 0;
+    planeOfArrayIrradianceFrontCS[0] = planeOfArrayIrradianceFrontCS[1] = planeOfArrayIrradianceFrontCS[2] = 0;
     diffuseIrradianceFront[0] = diffuseIrradianceFront[1] = diffuseIrradianceFront[2] = 0;
+    diffuseIrradianceFrontCS[0] = diffuseIrradianceFrontCS[1] = diffuseIrradianceFrontCS[2] = 0;
+
     surfaceAnglesRadians[0] = surfaceAnglesRadians[1] = surfaceAnglesRadians[2] = surfaceAnglesRadians[3] = surfaceAnglesRadians[4] = 0;
 
     // do irradiance calculations if sun is up
@@ -2458,7 +2210,7 @@ int irrad::calc() {
         // compute incidence angles onto fixed or tracking surface
         incidence(trackingMode, tiltDegrees, surfaceAzimuthDegrees, rotationLimitDegrees, sunAnglesRadians[1],
                   sunAnglesRadians[0],
-                  enableBacktrack, groundCoverageRatio, slopeTilt, slopeAzm, forceToStow, stowAngleDegrees, surfaceAnglesRadians);
+                  enableBacktrack, groundCoverageRatio, slopeTilt, slopeAzm, forceToStow, stowAngleDegrees, useCustomRotAngles, customRotAngle, surfaceAnglesRadians);
         if (radiationMode < irrad::POA_R) {
             double hextra = sunAnglesRadians[8];
             double hbeam = directNormal *
@@ -2515,13 +2267,54 @@ int irrad::calc() {
                           diffuseIrradianceFront);
                     break;
             }
+
+            if (enableSubhourlyClipping) {
+                switch (skyModel) {
+                    case 0:
+                        isotropic(hextra, clearskyIrradiance[1], clearskyIrradiance[2], albedo,
+                            surfaceAnglesRadians[0], surfaceAnglesRadians[1], sunAnglesRadians[1],
+                            planeOfArrayIrradianceFrontCS, diffuseIrradianceFrontCS);
+                        break;
+                    case 1:
+                        hdkr(hextra, clearskyIrradiance[1], clearskyIrradiance[2], albedo, surfaceAnglesRadians[0],
+                            surfaceAnglesRadians[1], sunAnglesRadians[1], planeOfArrayIrradianceFrontCS,
+                            diffuseIrradianceFrontCS);
+                        break;
+                    default:
+                        perez(hextra, clearskyIrradiance[1], clearskyIrradiance[2], albedo, surfaceAnglesRadians[0],
+                            surfaceAnglesRadians[1], sunAnglesRadians[1], planeOfArrayIrradianceFrontCS,
+                            diffuseIrradianceFrontCS);
+                        break;
+                }
+            }
         }
         else { // Sev 2015/09/11 - perform a POA decomp.
             int errorcode = poaDecomp(weatherFilePOA, surfaceAnglesRadians, sunAnglesRadians, albedo, poaAll,
                                       directNormal, diffuseHorizontal, globalHorizontal, planeOfArrayIrradianceFront,
                                       diffuseIrradianceFront);
+            if (enableSubhourlyClipping) {
+                double hextra = sunAnglesRadians[8];
+                switch (skyModel) {
+                case 0:
+                    isotropic(hextra, clearskyIrradiance[1], clearskyIrradiance[2], albedo,
+                        surfaceAnglesRadians[0], surfaceAnglesRadians[1], sunAnglesRadians[1],
+                        planeOfArrayIrradianceFrontCS, diffuseIrradianceFrontCS);
+                    break;
+                case 1:
+                    hdkr(hextra, clearskyIrradiance[1], clearskyIrradiance[2], albedo, surfaceAnglesRadians[0],
+                        surfaceAnglesRadians[1], sunAnglesRadians[1], planeOfArrayIrradianceFrontCS,
+                        diffuseIrradianceFrontCS);
+                    break;
+                default:
+                    perez(hextra, clearskyIrradiance[1], clearskyIrradiance[2], albedo, surfaceAnglesRadians[0],
+                        surfaceAnglesRadians[1], sunAnglesRadians[1], planeOfArrayIrradianceFrontCS,
+                        diffuseIrradianceFrontCS);
+                    break;
+                }
+            }
             calculatedDirectNormal = directNormal;
             calculatedDiffuseHorizontal = diffuseHorizontal;
+            
             return errorcode; //this will return 0 if successful, otherwise 40, 41, or 42 if calculated decomposed dni, dhi, or ghi are negative
         }
     }
@@ -2584,11 +2377,19 @@ int irrad::calc_rear_side(double transmissionFactor, double groundClearanceHeigh
         // Calculate the irradiance on the back of the PV module
         std::vector<double> rearIrradiancePerCellrow;
         double rearAverageIrradiance = 0;
+        std::vector<double> rearIrradiancePerCellrowCS;
+        double rearAverageIrradianceCS = 0;
         getBackSurfaceIrradiances(pvBackShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows,
                                   horizontalLength, rearGroundGHI, frontGroundGHI, frontReflected,
                                   rearIrradiancePerCellrow, rearAverageIrradiance);
+        getBackSurfaceIrradiancesCS(pvBackShadeFraction, rowToRow, verticalHeight, clearanceGround, distanceBetweenRows,
+            horizontalLength, rearGroundGHI, frontGroundGHI, frontReflected,
+            rearIrradiancePerCellrowCS, rearAverageIrradianceCS);
         planeOfArrayIrradianceRearAverage = rearAverageIrradiance;
         planeOfArrayIrradianceRearSpatial = rearIrradiancePerCellrow;
+
+        planeOfArrayIrradianceRearAverageCS = rearAverageIrradianceCS;
+        planeOfArrayIrradianceRearSpatialCS = rearIrradiancePerCellrowCS;
     }
     else {
         groundIrradianceSpatial.assign(groundIrradOutputRes, 0.);
@@ -2832,7 +2633,7 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
     // Calculate irradiance components for a 90 degree tilt to get horizon brightening
     double angleTmp[5] = {0, 0, 0, 0, 0};            // ([0] = incidence angle, [1] = tilt)
     incidence(0, 90.0, 180.0, 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack,
-              this->groundCoverageRatio, this->slopeTilt, this->slopeAzm, this->forceToStow, this->stowAngleDegrees, angleTmp);
+              this->groundCoverageRatio, this->slopeTilt, this->slopeAzm, this->forceToStow, this->stowAngleDegrees, this->useCustomRotAngles, this->customRotAngle, angleTmp);
     perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, angleTmp[0], angleTmp[1], solarZenithRadians,
           poa, diffc);
     double horizonDiffuse = diffc[2];
@@ -2968,7 +2769,7 @@ void irrad::getFrontSurfaceIrradiances(double pvFrontShadeFraction, double rowTo
         // Calculate and add direct and circumsolar irradiance components
         incidence(0, tiltRadians * RTOD, surfaceAzimuthRadians * RTOD, 45.0, solarZenithRadians, solarAzimuthRadians,
                   this->enableBacktrack, this->groundCoverageRatio, this->slopeTilt, this->slopeAzm, 
-                  this->forceToStow, this->stowAngleDegrees, surfaceAnglesRadians);
+                  this->forceToStow, this->stowAngleDegrees, this->useCustomRotAngles, this->customRotAngle, surfaceAnglesRadians);
         perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, surfaceAnglesRadians[0],
               surfaceAnglesRadians[1], solarZenithRadians, poa, diffc);
 
@@ -3013,7 +2814,7 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
     // Calculate components for a 90 degree tilt to get horizon brightening
     double surfaceAnglesRadians90[5] = {0, 0, 0, 0, 0};
     incidence(0, 90.0, 180.0, 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack,
-              this->groundCoverageRatio, this->slopeTilt, this->slopeAzm, this->forceToStow, this->stowAngleDegrees, surfaceAnglesRadians90);
+              this->groundCoverageRatio, this->slopeTilt, this->slopeAzm, this->forceToStow, this->stowAngleDegrees, this->useCustomRotAngles, this->customRotAngle, surfaceAnglesRadians90);
     perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, surfaceAnglesRadians90[0],
           surfaceAnglesRadians90[1], solarZenithRadians, planeOfArrayIrradianceRear, diffuseIrradianceRear);
     double horizonDiffuse = diffuseIrradianceRear[2];
@@ -3213,9 +3014,270 @@ void irrad::getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRo
         // Calculate and add direct and circumsolar irradiance components
         incidence(0, 180.0 - tiltRadians * RTOD, (surfaceAzimuthRadians * RTOD - 180.0), 45.0, solarZenithRadians,
                   solarAzimuthRadians, this->enableBacktrack,
-                  this->groundCoverageRatio, this->slopeTilt, this->slopeAzm, this->forceToStow, this->stowAngleDegrees, surfaceAnglesRadians);
+                  this->groundCoverageRatio, this->slopeTilt, this->slopeAzm, this->forceToStow, this->stowAngleDegrees, this->useCustomRotAngles, this->customRotAngle, surfaceAnglesRadians);
         perez(0, calculatedDirectNormal, calculatedDiffuseHorizontal, albedo, surfaceAnglesRadians[0],
               surfaceAnglesRadians[1], solarZenithRadians, planeOfArrayIrradianceRear, diffuseIrradianceRear);
+
+        double rear_direct_circumsolar = planeOfArrayIrradianceRear[0] + diffuseIrradianceRear[1];
+        rearDirectDiffuse[i] += rear_direct_circumsolar;
+
+        double cellShade = pvBackShadeFraction * cellRows - i;
+
+        // Fully shaded if >1, no shade if < 0, otherwise fractionally shaded
+        if (cellShade > 1.0) {
+            cellShade = 1.0;
+        }
+        else if (cellShade < 0.0) {
+            cellShade = 0.0;
+        }
+
+        // Cell not shaded entirely and incidence angle < 90 degrees
+        rearSelfShaded.push_back(0);
+        if (cellShade < 1.0 && surfaceAnglesRadians[0] < M_PI / 2.0) {
+            double iamMod = iamSjerpsKoomen(n2, surfaceAnglesRadians[0]);
+            rearIrradiance[i] += (1.0 - cellShade) * rear_direct_circumsolar * iamMod;                        // ** (1 - Rear self shading loss) * (Rear direct and diffuse (circumsolar only)), through glass loss
+            rearSelfShaded[i] = cellShade * rear_direct_circumsolar * iamMod;
+        }
+
+        rearAverageIrradiance += rearIrradiance[i] / cellRows;
+        poaRearDirectDiffuse += rearDirectDiffuse[i] / cellRows;
+        poaRearRowReflections += rearRowReflections[i] / cellRows;
+        poaRearSelfShaded += rearSelfShaded[i] / cellRows;
+        poaRearGroundReflected += rearGroundReflected[i] / cellRows;
+        double xy = 1.;
+    }
+
+    // Flip the row rear spatial irradiance if tracking after solar noon (because the tilt range = [0, 90] degrees, therefore the tilt convention flips at solar noon)
+    if (trackingMode == 1 && surfaceAnglesRadians[3] > 0.) {
+        std::reverse(rearIrradiance.begin(), rearIrradiance.end());
+    }
+}
+
+void irrad::getBackSurfaceIrradiancesCS(double pvBackShadeFraction, double rowToRow, double verticalHeight,
+    double clearanceGround, double, double horizontalLength,
+    std::vector<double> rearGroundGHI, std::vector<double> frontGroundGHI,
+    std::vector<double> frontReflected, std::vector<double>& rearIrradiance,
+    double& rearAverageIrradiance) {
+    // front surface assumed to be glass
+    double n2 = 1.526;
+
+    size_t intervals = 100;
+    double solarAzimuthRadians = sunAnglesRadians[0];
+    double solarZenithRadians = sunAnglesRadians[1];
+    double tiltRadians = surfaceAnglesRadians[1];
+    double surfaceAzimuthRadians = surfaceAnglesRadians[2];
+
+    // Calculate diffuse isotropic irradiance for a horizontal surface
+    perez(0, clearskyIrradiance[1], clearskyIrradiance[2], albedo, solarZenithRadians, 0, solarZenithRadians,
+        planeOfArrayIrradianceRear, diffuseIrradianceRear);
+    double isotropicSkyDiffuse = diffuseIrradianceRear[0];
+
+    // Calculate components for a 90 degree tilt to get horizon brightening
+    double surfaceAnglesRadians90[5] = { 0, 0, 0, 0, 0 };
+    incidence(0, 90.0, 180.0, 45.0, solarZenithRadians, solarAzimuthRadians, this->enableBacktrack,
+        this->groundCoverageRatio, this->slopeTilt, this->slopeAzm, this->forceToStow, this->stowAngleDegrees, this->useCustomRotAngles, this->customRotAngle, surfaceAnglesRadians90);
+    perez(0, clearskyIrradiance[1], clearskyIrradiance[2], albedo, surfaceAnglesRadians90[0],
+        surfaceAnglesRadians90[1], solarZenithRadians, planeOfArrayIrradianceRear, diffuseIrradianceRear);
+    double horizonDiffuse = diffuseIrradianceRear[2];
+
+    // Calculate x,y coordinates of bottom and top edges of PV row in back of desired PV row so that portions of sky and ground viewed by the
+    // PV cell may be determined. Origin of x-y axis is the ground point below the lower front edge of the desired PV row. The row in back of
+    // the desired row is in the positive x direction.
+    double PbotX = rowToRow;                         // x value for point on bottom edge of PV module/panel of row in back of (in PV panel slope lengths)
+    double PbotY = clearanceGround;                  // y value for point on bottom edge of PV module/panel of row in back of (in PV panel slope lengths)
+    double PtopX = rowToRow +
+        horizontalLength;      // x value for point on top edge of PV module/panel of row in back of (in PV panel slope lengths)
+    double PtopY = verticalHeight +
+        clearanceGround; // y value for point on top edge of PV module/panel of row in back of (in PV panel slope lengths)
+
+// Calculate diffuse and direct component irradiances for each cell row (assuming 6 rows)
+    std::vector<double> rearDirectDiffuse;              // the direct and sky diffuse irradiance incident on the rear for each cell row, before losses (shading, soiling, etc.)
+    poaRearDirectDiffuse = 0.;                          // the average direct and sky diffuse irradiance incident on the rear, before losses (shading, soiling, etc.)
+    std::vector<double> rearRowReflections;             // the reflected irradiance from the rear row on the rear of each cell row
+    poaRearRowReflections = 0.;                         // the average reflected irradiance from the rear row on the rear
+    std::vector<double> rearGroundReflected;            // the ground reflected irradiance onto the rear of each cell row, considering view factor
+    poaRearGroundReflected = 0.;                        // the average ground reflected irradiance onto the rear, considering view factor
+    std::vector<double> rearSelfShaded;                 // the direct and circumsolar shaded from being incident on the rear, for each cell
+    poaRearSelfShaded = 0.;                             // the average direct and circumsolar shaded from being incident on the rear
+    size_t cellRows = poaRearIrradRes;
+    for (size_t i = 0; i != cellRows; i++) {
+        // Calculate diffuse irradiances and reflected amounts for each cell row over its field of view of 180 degrees,
+        // beginning with the angle providing the upper most view of the sky (j=0)
+        double PcellX = horizontalLength * (i + 0.5) /
+            ((double)cellRows);                   // x value for location of PV cell with OFFSET FOR SARA REFERENCE CELLS     4/26/2016
+        double PcellY = clearanceGround + verticalHeight * (i + 0.5) /
+            ((double)cellRows); // y value for location of PV cell with OFFSET FOR SARA REFERENCE CELLS     4/26/2016
+        double elevationAngleUp = atan((PtopY - PcellY) / (PtopX -
+            PcellX));          // Elevation angle up from PV cell to top of PV module/panel, radians
+        double elevationAngleDown = atan((PcellY - PbotY) / (PbotX -
+            PcellX));        // Elevation angle down from PV cell to bottom of PV module/panel, radians
+        size_t iStopIso = (size_t)round((tiltRadians - elevationAngleUp) /
+            DTOR);                               // Last whole degree in arc range that sees sky, first is 0
+        size_t iHorBright = (size_t)round(fmax(0.0, 6.0 - elevationAngleUp /
+            DTOR));                       // Number of whole degrees for which horizon brightening occurs
+        size_t iStartGrd = (size_t)round((tiltRadians + elevationAngleDown) /
+            DTOR);                          // First whole degree in arc range that sees ground, last is 180
+
+        rearIrradiance.push_back(0);
+        rearDirectDiffuse.push_back(0);
+        for (size_t j = 0; j != iStopIso; j++) {
+            double rear_isotropic_horizon_diffuse = 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * isotropicSkyDiffuse;
+            if ((iStopIso - j) <= iHorBright) {
+                rear_isotropic_horizon_diffuse += 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] *
+                    horizonDiffuse / (0.5 * (cos(84 * DTOR) - cos(90 * DTOR)));
+            }
+            rearIrradiance[i] += rear_isotropic_horizon_diffuse;
+            rearDirectDiffuse[i] += rear_isotropic_horizon_diffuse;
+        }
+
+        // Add reflections from PV module front surfaces
+        rearRowReflections.push_back(0);
+        for (size_t j = iStopIso; j < iStartGrd; j++) {
+            double diagonalDistance = (PbotX - PcellX) / cos(elevationAngleDown);
+            double startAlpha = -(double)(j - iStopIso) * DTOR + elevationAngleUp + elevationAngleDown;
+            double stopAlpha = -(double)(j + 1 - iStopIso) * DTOR + elevationAngleUp + elevationAngleDown;
+            double m = diagonalDistance * sin(startAlpha);
+            double theta = M_PI - elevationAngleDown - (M_PI / 2.0 - startAlpha) - tiltRadians;
+            double projectedX2 = m / cos(theta);
+
+            m = diagonalDistance * sin(stopAlpha);
+            theta = M_PI - elevationAngleDown - (M_PI / 2.0 - stopAlpha) - tiltRadians;
+            double projectedX1 = m / cos(theta);
+            projectedX1 = fmax(0.0, projectedX1);
+
+            double PVreflectedIrradiance = 0.0;
+            double deltaCell = 1.0 / cellRows;
+            double tolerance = 0.0001;
+            for (size_t k = 0; k < cellRows; k++) {
+                double cellBottom = k * deltaCell;
+                double cellTop = (k + 1) * deltaCell;
+                double cellLengthSeen = 0.0;
+
+                if (cellBottom >= projectedX1 - tolerance && cellTop <= projectedX2 + tolerance) {
+                    cellLengthSeen = cellTop - cellBottom;
+                }
+                else if (cellBottom <= projectedX1 + tolerance && cellTop >= projectedX2 - tolerance) {
+                    cellLengthSeen = projectedX2 - projectedX1;
+                }
+                else if (cellBottom >= projectedX1 - tolerance && projectedX2 > cellBottom - tolerance &&
+                    cellTop >= projectedX2 - tolerance) {
+                    cellLengthSeen = projectedX2 - cellBottom;
+                }
+                else if (cellBottom <= projectedX1 + tolerance && projectedX1 < cellTop + tolerance &&
+                    cellTop <= projectedX2 + tolerance) {
+                    cellLengthSeen = cellTop - projectedX1;
+                }
+
+                PVreflectedIrradiance += cellLengthSeen * frontReflected[k];
+            }
+            PVreflectedIrradiance /= projectedX2 - projectedX1;
+            double rear_row_reflections = 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] *
+                PVreflectedIrradiance;                                                                             // ** Rear row reflected, through glass
+            rearIrradiance[i] += rear_row_reflections;
+            rearRowReflections[i] += rear_row_reflections;
+        }
+
+
+        // Add ground reflected component
+        std::vector<double> albedoAligned;
+        if (trackingMode == 0 || trackingMode == 1 || trackingMode == 4) {          // 0=fixed, 1=one-axis, 4=seasonal tilt
+            // subdivide spatial albedos to match ground GHI length and align reference point at front of row
+            albedoAligned = divideAndAlignAlbedos(albedoSpatial, intervals, trackingMode == 1, horizontalLength, rowToRow, surfaceAnglesRadians[3]);
+        }
+        else {
+            double average_albedo = std::accumulate(albedoSpatial.begin(), albedoSpatial.end(), 0.) / albedoSpatial.size();
+            albedoAligned.assign(intervals, average_albedo);
+        }
+
+        rearGroundReflected.push_back(0);
+        for (size_t j = iStartGrd; j < 180; j++) {
+            double startElevationDown = (double)(j - iStartGrd) * DTOR + elevationAngleDown;
+            double stopElevationDown = (double)(j + 1 - iStartGrd) * DTOR + elevationAngleDown;
+            double projectedX2 = PcellX + PcellY / tan(startElevationDown);
+            double projectedX1 = PcellX + PcellY / tan(stopElevationDown);
+            double actualGroundGHI = 0.0;
+            double reflectedGroundGHI = 0.0;
+
+            if (std::abs(projectedX1 - projectedX2) > 0.99 * rowToRow) {
+                // Use average value if projection approximates the rtr
+                actualGroundGHI = std::accumulate(rearGroundGHI.begin(), rearGroundGHI.end(), 0.) / rearGroundGHI.size();
+                reflectedGroundGHI = actualGroundGHI * std::accumulate(albedoAligned.begin(), albedoAligned.end(), 0.) / albedoAligned.size();
+            }
+            else {
+                projectedX1 = intervals * projectedX1 / rowToRow;
+                projectedX2 = intervals * projectedX2 / rowToRow;
+
+                // offset so array indexed are less than number of intervals
+                while (projectedX1 >= intervals || projectedX2 >= intervals) {
+                    projectedX1 -= intervals;
+                    projectedX2 -= intervals;
+                }
+                while (projectedX1 < -(int)intervals || projectedX2 < -(int)intervals) {
+                    projectedX1 += intervals;
+                    projectedX2 += intervals;
+                }
+                int index1 = std::min(static_cast<int>(intervals - 1), static_cast<int>(projectedX1 + intervals) - (int)intervals);
+                int index2 = std::min(static_cast<int>(intervals - 1), static_cast<int>(projectedX2 + intervals) - (int)intervals);
+
+                if (index1 == index2) {
+                    if (index1 < 0) {
+                        actualGroundGHI = frontGroundGHI[index1 + 100];
+                        reflectedGroundGHI = frontGroundGHI[index1 + 100] * albedoAligned[index1 + 100];
+                    }
+                    else {
+                        actualGroundGHI = rearGroundGHI[index1];
+                        reflectedGroundGHI = rearGroundGHI[index1] * albedoAligned[index1];
+                    }
+                }
+                else {
+                    // Sum irradiances on the ground if projects are in different groundGHI elements
+                    for (int k = index1; k <= index2; k++) {
+                        if (k == index1) {
+                            if (k < 0) {
+                                actualGroundGHI += frontGroundGHI[k + intervals] * (k + 1.0 - projectedX1);
+                                reflectedGroundGHI += frontGroundGHI[k + intervals] * (k + 1.0 - projectedX1) * albedoAligned[k + intervals];
+                            }
+                            else {
+                                actualGroundGHI += rearGroundGHI[k] * (k + 1.0 - projectedX1);
+                                reflectedGroundGHI += rearGroundGHI[k] * (k + 1.0 - projectedX1) * albedoAligned[k];
+                            }
+                        }
+                        else if (k == index2) {
+                            if (k < 0) {
+                                actualGroundGHI += frontGroundGHI[k + intervals] * (projectedX2 - k);
+                                reflectedGroundGHI += frontGroundGHI[k + intervals] * (projectedX2 - k) * albedoAligned[k + intervals];
+                            }
+                            else {
+                                actualGroundGHI += rearGroundGHI[k] * (projectedX2 - k);
+                                reflectedGroundGHI += rearGroundGHI[k] * (projectedX2 - k) * albedoAligned[k];
+                            }
+                        }
+                        else {
+                            if (k < 0) {
+                                actualGroundGHI += frontGroundGHI[k + 100];
+                                reflectedGroundGHI += frontGroundGHI[k + 100] * albedoAligned[k + 100];
+                            }
+                            else {
+                                actualGroundGHI += rearGroundGHI[k];
+                                reflectedGroundGHI += rearGroundGHI[k] * albedoAligned[k];
+                            }
+                        }
+                    }
+                    // Irradiance on the ground in the 1-degree field of view
+                    actualGroundGHI /= projectedX2 - projectedX1;
+                    reflectedGroundGHI /= projectedX2 - projectedX1;
+                }
+            }
+            double rear_ground_reflected = 0.5 * (cos(j * DTOR) - cos((j + 1) * DTOR)) * MarionAOICorrectionFactorsGlass[j] * reflectedGroundGHI;          // ** Ground reflected, through glass ("View factor to rear row")
+            rearIrradiance[i] += rear_ground_reflected;
+            rearGroundReflected[i] += rear_ground_reflected;
+        }
+        // Calculate and add direct and circumsolar irradiance components
+        incidence(0, 180.0 - tiltRadians * RTOD, (surfaceAzimuthRadians * RTOD - 180.0), 45.0, solarZenithRadians,
+            solarAzimuthRadians, this->enableBacktrack,
+            this->groundCoverageRatio, this->slopeTilt, this->slopeAzm, this->forceToStow, this->stowAngleDegrees, this->useCustomRotAngles, this->customRotAngle, surfaceAnglesRadians);
+        perez(0, clearskyIrradiance[1], clearskyIrradiance[2], albedo, surfaceAnglesRadians[0],
+            surfaceAnglesRadians[1], solarZenithRadians, planeOfArrayIrradianceRear, diffuseIrradianceRear);
 
         double rear_direct_circumsolar = planeOfArrayIrradianceRear[0] + diffuseIrradianceRear[1];
         rearDirectDiffuse[i] += rear_direct_circumsolar;

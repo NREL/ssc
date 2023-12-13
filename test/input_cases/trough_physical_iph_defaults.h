@@ -263,8 +263,7 @@ ssc_data_t trough_physical_iph_defaults()
     ssc_data_set_matrix(data, "sf_hdr_wallthicks", p_sf_hdr_wallthicks, 1, 1);
     ssc_number_t p_sf_hdr_lengths[1] = { -1 };
     ssc_data_set_matrix(data, "sf_hdr_lengths", p_sf_hdr_lengths, 1, 1);
-    ssc_data_set_number(data, "adjust:constant", 4);
-    ssc_data_set_number(data, "use_solar_mult_or_aperture_area", -1);
+    //ssc_data_set_number(data, "use_solar_mult_or_aperture_area", -1);
     ssc_data_set_number(data, "specified_solar_multiple", 2.5);
     ssc_data_set_number(data, "specified_total_aperture", -1);
     ssc_data_set_number(data, "non_solar_field_land_area_multiplier", 1.1);
@@ -272,6 +271,61 @@ ssc_data_t trough_physical_iph_defaults()
     ssc_data_set_number(data, "disp_wlim_maxspec", 10.e37);
     ssc_number_t p_trough_loop_control[13] = { 4, 1, 1, 4, 1, 1, 3, 1, 1, 2, 1, 1, 1 };
     ssc_data_set_array(data, "trough_loop_control", p_trough_loop_control, 13);
+
+    ssc_data_set_number(data, "adjust_constant", 4.0);
+
+    // TMB 11-29-2023 Added design point inputs
+    //std::vector<double> trough_loop_vals = { 8, 1, 1, 8, 1, 1, 7, 1, 1, 6, 1, 1, 5, 1, 1, 4, 1, 1, 3, 1, 1, 2, 1, 1, 1 };
+    //ssc_data_set_matrix(data, "trough_loop_control", &trough_loop_vals[0], trough_loop_vals.size(), 1);
+
+    ssc_data_set_number(data, "use_solar_mult_or_aperture_area", 0);
+    //ssc_data_set_number(data, "specified_solar_mult", 2);
+    ssc_data_set_number(data, "P_ref", 111e6);
+    ssc_data_set_number(data, "eta_ref", 0.356);
+    //ssc_data_set_number(data, "non_solar_field_land_area_multiplier", 1.4);
+
+    ssc_data_set_number(data, "rec_su_delay", 0.2);
+    ssc_data_set_number(data, "rec_qf_delay", 0.25);
+    ssc_data_set_number(data, "p_start", 0.021);
+    ssc_data_set_number(data, "store_fluid", 31);
+
+    ssc_number_t store_fl_props[77] = { 20, 4.1799999999999997, 999, 0.001, 9.9999999999999995e-07, 0.58699999999999997, 85.299999999999997, 40, 4.1799999999999997, 993, 0.00065300000000000004, 6.5799999999999999e-07, 0.61799999999999999, 169, 60, 4.1799999999999997, 984, 0.00046700000000000002, 4.75e-07, 0.64200000000000002, 252, 80, 4.1900000000000004, 972, 0.00035500000000000001, 3.65e-07, 0.65700000000000003, 336, 100, 4.21, 959, 0.00028200000000000002, 2.9400000000000001e-07, 0.66600000000000004, 420, 120, 4.25, 944, 0.000233, 2.4600000000000001e-07, 0.67000000000000004, 505, 140, 4.2800000000000002, 927, 0.00019699999999999999, 2.1199999999999999e-07, 0.67000000000000004, 590, 160, 4.3399999999999999, 908, 0.00017100000000000001, 1.8799999999999999e-07, 0.66700000000000004, 676, 180, 4.4000000000000004, 887, 0.00014999999999999999, 1.6899999999999999e-07, 0.66100000000000003, 764, 200, 4.4900000000000002, 865, 0.000134, 1.55e-07, 0.65100000000000002, 852, 220, 4.5800000000000001, 842, 0.000118, 1.4100000000000001e-07, 0.64100000000000001, 941 };
+    ssc_data_set_matrix(data, "store_fl_props", store_fl_props, 11, 7);
+
+    ssc_data_set_number(data, "dt_hot", 5);
+    ssc_data_set_number(data, "has_hot_tank_bypass", 1);
+    ssc_data_set_number(data, "T_tank_hot_inlet_min", 400);
+    ssc_data_set_number(data, "tes_pump_coef", 0.15);
+    ssc_data_set_number(data, "V_tes_des", 1.85);
+
+    ssc_data_set_number(data, "custom_tes_p_loss", 0);
+    ssc_data_set_number(data, "custom_tes_pipe_sizes", 0);
+
+    std::vector<double> k_tes_loss_coeffs_vec = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    ssc_data_set_matrix(data, "k_tes_loss_coeffs", &k_tes_loss_coeffs_vec[0], k_tes_loss_coeffs_vec.size(), 1);
+
+    ssc_data_set_number(data, "const_per_interest_rate1", 0);
+    ssc_data_set_number(data, "const_per_interest_rate2", 0);
+    ssc_data_set_number(data, "const_per_interest_rate3", 0);
+    ssc_data_set_number(data, "const_per_interest_rate4", 0);
+    ssc_data_set_number(data, "const_per_interest_rate5", 0);
+    ssc_data_set_number(data, "const_per_months1", 0);
+    ssc_data_set_number(data, "const_per_months2", 0);
+    ssc_data_set_number(data, "const_per_months3", 0);
+    ssc_data_set_number(data, "const_per_months4", 0);
+    ssc_data_set_number(data, "const_per_months5", 0);
+    ssc_data_set_number(data, "const_per_percent1", 0);
+    ssc_data_set_number(data, "const_per_percent2", 0);
+    ssc_data_set_number(data, "const_per_percent3", 0);
+    ssc_data_set_number(data, "const_per_percent4", 0);
+    ssc_data_set_number(data, "const_per_percent5", 0);
+    ssc_data_set_number(data, "const_per_upfront_rate1", 0);
+    ssc_data_set_number(data, "const_per_upfront_rate2", 0);
+    ssc_data_set_number(data, "const_per_upfront_rate3", 0);
+    ssc_data_set_number(data, "const_per_upfront_rate4", 0);
+    ssc_data_set_number(data, "const_per_upfront_rate5", 0);
+
+    ssc_data_set_number(data, "csp_financial_model", 8);
 
     return data;
 }

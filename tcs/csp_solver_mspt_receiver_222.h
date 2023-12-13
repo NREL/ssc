@@ -121,6 +121,9 @@ protected:
     double m_T_salt_hot_target; //[K], converted from C in constructor
     double m_csky_frac;         //[-]
 
+    bool m_is_calc_od_tube;     //[-]
+    double m_W_dot_rec_target;    //[-]
+
     // Hardcoded parameters
     double m_tol_od;            //[-]
     double m_eta_therm_des_est; //[-]
@@ -170,6 +173,19 @@ private:
 
 	// track number of calls per timestep, reset = -1 in converged() call
 	int m_ncall;
+     
+    class C_MEQ__calc_OD_des_for_W_dot_pump_rec : public C_monotonic_equation
+    {
+    private:
+        C_mspt_receiver_222* mpc_rec;
+
+    public:
+
+        C_MEQ__calc_OD_des_for_W_dot_pump_rec(C_mspt_receiver_222* pc_rec);
+
+        virtual int operator()(double OD /*m*/, double* W_dot_pump_des /*MWe*/) override;
+
+    };
 
     class C_MEQ__q_dot_des : public C_monotonic_equation
     {
@@ -248,7 +264,8 @@ public:
         int night_recirc /*-*/,
         int n_panels /*-*/, double d_rec /*m*/, double h_rec /*m*/,
         int flow_type /*-*/, int crossover_shift /*-*/, double hl_ffact /*-*/,
-        double T_salt_hot_target /*C*/, double csky_frac /*-*/);
+        double T_salt_hot_target /*C*/, double csky_frac /*-*/,
+        bool is_calc_od_tube /*-*/, double W_dot_rec_target /*MWe*/);
 
 	~C_mspt_receiver_222(){};
 

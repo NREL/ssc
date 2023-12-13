@@ -209,7 +209,7 @@ void ensure_outputs_line_up(ssc_data_t& data) {
     }
 };
 
-TEST(URDBv7_cmod_utilityrate5_eqns, ElectricityRates_format_as_URDBv7){
+TEST(URDBv7_cmod_utilityrate5_eqns, ElectricityRates_format_as_URDBv8){
     auto data = new var_table;
 
     ssc_number_t p_ur_ec_sched_weekday[288] ={ 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 4, 4, 4, 4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 4, 4, 4, 4 };
@@ -237,7 +237,7 @@ TEST(URDBv7_cmod_utilityrate5_eqns, ElectricityRates_format_as_URDBv7){
     ssc_number_t p_ur_dc_flat_mat[52] ={0, 1, 100, 4, 0, 2, 1e+38, 6.46, 1, 1, 1e+38, 6.46, 2, 1, 1e+38, 6.46, 3, 1, 1e+38, 6.46, 4, 1, 1e+38, 13.87, 5, 1, 1e+38, 13.87, 6, 1, 1e+38, 13.87, 7, 1, 1e+38, 13.87, 8, 1, 1e+38, 13.87, 9, 1, 1e+38, 13.87, 10, 1, 1e+38, 6.46, 11, 1, 1e+38, 6.46};
     ssc_data_set_matrix( data, "ur_dc_flat_mat", p_ur_dc_flat_mat, 13, 4 );
 
-    ElectricityRates_format_as_URDBv7(data);
+    ElectricityRates_format_as_URDBv8(data);
 
     auto urdb_data = data->lookup("urdb_data")->table;
     auto rules = urdb_data.lookup("dgrules")->str;

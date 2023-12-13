@@ -74,6 +74,7 @@ static void geothermal_singleowner_default(ssc_data_t &data)
     ssc_data_set_number(data, "dt_prod_well", 0.0);
     ssc_data_set_number(data, "prod_well_choice", 0);
 	ssc_data_set_number(data, "wet_bulb_temp", 15);
+    ssc_data_set_number(data, "use_weather_file_conditions", 0);
 	ssc_data_set_number(data, "ambient_pressure", 14.699999809265137);
 	ssc_data_set_number(data, "well_flow_rate", 110);
 	ssc_data_set_number(data, "pump_efficiency", 67.5);
@@ -85,13 +86,20 @@ static void geothermal_singleowner_default(ssc_data_t &data)
     ssc_data_set_number(data, "inj_casing_size", 11.5);
     ssc_data_set_number(data, "geotherm.cost.inj_cost_curve_welltype", 0);
     ssc_data_set_number(data, "geotherm.cost.prod_cost_curve_welltype", 0);
+    ssc_data_set_number(data, "geotherm.cost.inj_cost_curve_welldiam", 0);
+    ssc_data_set_number(data, "geotherm.cost.prod_cost_curve_welldiam", 0);
 	ssc_data_set_number(data, "design_temp", 200);
 	ssc_data_set_number(data, "specify_pump_work", 0);
 	ssc_data_set_number(data, "rock_thermal_conductivity", 259200);
 	ssc_data_set_number(data, "rock_specific_heat", 950);
 	ssc_data_set_number(data, "rock_density", 2600);
 	ssc_data_set_number(data, "reservoir_pressure_change_type", 0);
-	ssc_data_set_number(data, "reservoir_pressure_change", 0.40000000596046448);
+	ssc_data_set_number(data, "reservoir_pressure_change", 1000.0 / 0.40000000596046448);
+    ssc_data_set_number(data, "injectivity_index", 3000);
+    ssc_data_set_number(data, "exploration_wells_production", 0);
+    ssc_data_set_number(data, "drilling_success_rate", 75);
+    ssc_data_set_number(data, "stim_success_rate", 0);
+    ssc_data_set_number(data, "failed_prod_flow_ratio", 0.3);
 	ssc_data_set_number(data, "reservoir_width", 500);
 	ssc_data_set_number(data, "reservoir_height", 100);
 	ssc_data_set_number(data, "reservoir_permeability", 0.05000000074505806);
@@ -130,7 +138,8 @@ static void geothermal_singleowner_default(ssc_data_t &data)
 	ssc_data_set_number(data, "hc_ctl8", 0);
 	ssc_data_set_number(data, "hc_ctl9", 0);
 	ssc_data_set_string(data, "hybrid_dispatch_schedule", "111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111");
-	ssc_data_set_number(data, "adjust:constant", 0);
+
+    ssc_data_set_number(data, "adjust_constant", 0.0);
 
 	ssc_data_set_number(data, "enable_interconnection_limit", 0);
 	set_array(data, "grid_curtailment", geothermal_curtailment_path, 8760);
@@ -288,15 +297,8 @@ static void geothermal_singleowner_default(ssc_data_t &data)
 	ssc_data_set_number(data, "system_use_lifetime_output", 1);
 	ssc_data_set_number(data, "ppa_multiplier_model", 0);
 	set_array(data, "dispatch_factors_ts", geothermal_dispatch_path, 8760);
-	ssc_data_set_number(data, "dispatch_factor1", 1);
-	ssc_data_set_number(data, "dispatch_factor2", 1);
-	ssc_data_set_number(data, "dispatch_factor3", 1);
-	ssc_data_set_number(data, "dispatch_factor4", 1);
-	ssc_data_set_number(data, "dispatch_factor5", 1);
-	ssc_data_set_number(data, "dispatch_factor6", 1);
-	ssc_data_set_number(data, "dispatch_factor7", 1);
-	ssc_data_set_number(data, "dispatch_factor8", 1);
-	ssc_data_set_number(data, "dispatch_factor9", 1);
+    ssc_number_t p_dispatch_tod_factors[9] = { 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+    ssc_data_set_array(data, "dispatch_tod_factors", p_dispatch_tod_factors, 9);
 	ssc_number_t p_dispatch_sched_weekday[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 	ssc_data_set_matrix(data, "dispatch_sched_weekday", p_dispatch_sched_weekday, 12, 24);
 	ssc_number_t p_dispatch_sched_weekend[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };

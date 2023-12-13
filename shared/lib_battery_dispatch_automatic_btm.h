@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_utility_rate.h"
 
 /*
- * Data for price signal dispatch (FORECAST) to compare dispatch plans in the cost_based_target_power function
+ * Data for retail rate dispatch to compare dispatch plans in the cost_based_target_power function
  */
 struct dispatch_plan
 {
@@ -95,7 +95,8 @@ public:
         bool chargeOnlySystemExceedLoad,
         bool dischargeOnlyLoadExceedSystem,
         bool behindTheMeterDischargeToGrid,
-        double SOC_min_outage
+        double SOC_min_outage,
+        int load_forecast_mode
 		);
 
 	~dispatch_automatic_behind_the_meter_t() override {};
@@ -153,7 +154,7 @@ protected:
     void target_power(double E_max, size_t idx, FILE* p = NULL, bool debug = false);
     void apply_target_power(size_t day_index);
 
-    /*! Functions used by price signal dispatch */
+    /*! Functions used by retail rate dispatch */
     double compute_costs(size_t idx, size_t year, size_t hour_of_year, FILE* p = NULL, bool debug = false); // Initial computation of no-dispatch costs, assigned hourly to grid points
     void cost_based_target_power(size_t idx, size_t year, size_t hour_of_year, double no_dispatch_cost, double E_max, FILE* p = NULL, const bool debug = false); // Optimizing loop, runs twelve possible dispatch scenarios
     void plan_dispatch_for_cost(dispatch_plan& plan, size_t idx, double E_max, double startingEnergy); // Generates each dispatch plan (input argument)
@@ -165,6 +166,9 @@ protected:
 
 	/*! Full time-series of loads [kW] */
 	double_vec _P_load_ac;
+
+    /*! Forecast mode for loads (look ahead, look behind, custom) */
+    int _load_forecast_mode;
 
 	/*! Full time-series of target power [kW] */
 	double_vec _P_target_input;

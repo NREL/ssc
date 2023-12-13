@@ -71,7 +71,7 @@ private:
 
 	double m_V_total;			//[m^3] Total volume for *one temperature* tank
 	double m_V_active;			//[m^3] active volume of *one temperature* tank (either cold or hot)
-	double m_V_inactive;		//[m^3] INactive volume of *one temperature* tank (either cold or hot)
+	double m_V_inactive;		//[m^3] Inactive volume of *one temperature* tank (either cold or hot)
 	double m_UA;				//[W/K] Tank loss conductance
 
 	double m_T_htr;				//[K] Tank heater set point
@@ -97,10 +97,6 @@ public:
 	C_storage_tank();
 
 	double calc_mass_at_prev();
-
-    double calc_cp_at_prev();
-
-    double calc_enth_at_prev();
 
     double get_m_UA();
 
@@ -350,6 +346,18 @@ public:
 
     void get_design_parameters(double& vol_one_temp_avail /*m3*/, double& vol_one_temp_total /*m3*/, double& d_tank /*m*/,
         double& q_dot_loss_des /*MWt*/, double& dens_store_htf_at_T_ave /*kg/m3*/, double& Q_tes /*MWt-hr*/);
+
+
+    double get_max_storage_htf_temp();
+
+    double get_min_storage_htf_temp();
+
+    double get_storage_htf_density();
+
+    double get_storage_htf_cp();
+
+    bool get_is_hx();
+
 };
 
 class C_hx_cold_tes

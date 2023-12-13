@@ -154,7 +154,7 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
     // ***********************************************************************
     // Design-point calculations before initializing Rankine or UDPC model
         // Calculate design point HTF mass flow rate
-    m_cp_htf_design = mc_pc_htfProps.Cp(physics::CelciusToKelvin((ms_params.m_T_htf_hot_ref + ms_params.m_T_htf_cold_ref) / 2.0));		//[kJ/kg-K]
+    m_cp_htf_design = mc_pc_htfProps.Cp_ave(physics::CelciusToKelvin(ms_params.m_T_htf_hot_ref), physics::CelciusToKelvin(ms_params.m_T_htf_cold_ref));	//[kJ/kg-K]
 
     ms_params.m_P_ref *= 1000.0;		//[kW] convert from MW
     m_q_dot_design = ms_params.m_P_ref / 1000.0 / ms_params.m_eta_ref;	//[MWt]
@@ -162,6 +162,12 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
     m_m_dot_design = m_q_dot_design * 1000.0 / (m_cp_htf_design * ((ms_params.m_T_htf_hot_ref - ms_params.m_T_htf_cold_ref))) * 3600.0;		//[kg/hr]
     m_m_dot_min = ms_params.m_cycle_cutoff_frac * m_m_dot_design;		//[kg/hr]
     m_m_dot_max = ms_params.m_cycle_max_frac * m_m_dot_design;		    //[kg/hr]
+
+    // Option to calculate pump coef for a target design HTF pumping power
+    if (ms_params.m_is_calc_htf_pump_coef) {
+        ms_params.m_htf_pump_coef = ms_params.m_W_dot_htf_pump_target*1.E3 / (m_m_dot_design/3600.0);
+    }
+
     m_W_dot_htf_pump_des = m_m_dot_design*(ms_params.m_htf_pump_coef/3.6E6);    //[MWe] HTF pumping power, convert from [kW/kg/s]*[kg/hr]
 
     // Startup energy
@@ -606,21 +612,23 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
         }
         
         std::vector<double> Y_at_T_htf_ref, Y_at_T_amb_ref, Y_at_m_dot_htf_ND_ref, Y_avg_at_refs;
-        mc_user_defined_pc.init(ms_params.mc_combined_ind,
+        mc_user_defined_pc.init(ms_params.m_is_udpc_sco2_regr, ms_params.mc_combined_ind,
             m_n_T_htf_pars, m_n_T_amb_pars, m_n_m_dot_pars,
             m_T_htf_ref_udpc_calc, m_T_htf_low_udpc_calc, m_T_htf_high_udpc_calc,
             m_T_amb_ref_udpc_calc, m_T_amb_low_udpc_calc, m_T_amb_high_udpc_calc,
             m_m_dot_htf_ref_udpc_calc, m_m_dot_htf_low_udpc_calc, m_m_dot_htf_high_udpc_calc,
             Y_at_T_htf_ref, Y_at_T_amb_ref, Y_at_m_dot_htf_ND_ref, Y_avg_at_refs);
 
+        mc_user_defined_pc.set_sco2_design_for_sco2_regr(ms_params.m_T_htf_hot_ref, ms_params.m_T_htf_cold_ref);
+
         // Set design point ambient temperature to value calculated from UDPC table
         ms_params.m_T_amb_des = m_T_amb_ref_udpc_calc;        //[C]
 
         // Get UDPC Y values at *MSPT* design values
-        m_W_dot_gross_ND_des = mc_user_defined_pc.get_W_dot_gross_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);
-        m_Q_dot_HTF_ND_des = mc_user_defined_pc.get_Q_dot_HTF_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);
-        m_W_dot_cooling_ND_des = mc_user_defined_pc.get_W_dot_cooling_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);
-        m_m_dot_water_ND_des = mc_user_defined_pc.get_m_dot_water_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);
+        m_W_dot_gross_ND_des = mc_user_defined_pc.get_W_dot_gross_nd(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0, ms_params.m_cycle_max_frac);
+        m_Q_dot_HTF_ND_des = mc_user_defined_pc.get_Q_dot_HTF_nd(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0, ms_params.m_cycle_max_frac);
+        m_W_dot_cooling_ND_des = mc_user_defined_pc.get_W_dot_cooling_nd(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0, ms_params.m_cycle_max_frac);
+        m_m_dot_water_ND_des = mc_user_defined_pc.get_m_dot_water_nd(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0, ms_params.m_cycle_max_frac);
 
         double W_dot_gross_des_UDPC = ms_params.m_P_ref * m_W_dot_gross_ND_des * 1.E-3;   //[MWe]
         double q_dot_des_UDPC = m_q_dot_design * m_Q_dot_HTF_ND_des;              //[MWt]
@@ -630,6 +638,7 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
         // Calculate other important design values
         double eta_des_UDPDC = W_dot_gross_des_UDPC / q_dot_des_UDPC;		//[-]
         double T_htf_cold_des_UDPC = ms_params.m_T_htf_hot_ref - q_dot_des_UDPC / (m_m_dot_design / 3600.0 * m_cp_htf_design / 1.E3);		//[MJ/s * hr/kg * s/hr * kg-K/kJ * MJ/kJ] = C/K
+
 
 #ifdef _MSC_VER
 #define MySnprintf _snprintf
@@ -759,13 +768,13 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
     else {
 
         // Get ND performance at off-design / part-load conditions
-        P_cycle_des_calc = ms_params.m_P_ref * mc_user_defined_pc.get_W_dot_gross_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);	//[kW]
+        P_cycle_des_calc = ms_params.m_P_ref * mc_user_defined_pc.get_W_dot_gross_nd(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0, ms_params.m_cycle_max_frac);	//[kW]
 
-        double q_dot_htf_des_calc = m_q_dot_design * mc_user_defined_pc.get_Q_dot_HTF_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);		//[MWt]
+        double q_dot_htf_des_calc = m_q_dot_design * mc_user_defined_pc.get_Q_dot_HTF_nd(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0, ms_params.m_cycle_max_frac);		//[MWt]
 
-        m_W_dot_cooling_des = ms_params.m_W_dot_cooling_des * mc_user_defined_pc.get_W_dot_cooling_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);	//[MWe]
+        m_W_dot_cooling_des = ms_params.m_W_dot_cooling_des * mc_user_defined_pc.get_W_dot_cooling_nd(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0, ms_params.m_cycle_max_frac);	//[MWe]
 
-        m_dot_makeup_des_calc = ms_params.m_m_dot_water_des * mc_user_defined_pc.get_m_dot_water_ND(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0);	//[kg/hr]
+        m_dot_makeup_des_calc = ms_params.m_m_dot_water_des * mc_user_defined_pc.get_m_dot_water_nd(ms_params.m_T_htf_hot_ref, ms_params.m_T_amb_des, 1.0, ms_params.m_cycle_max_frac);	//[kg/hr]
 
         eta_des_calc = P_cycle_des_calc / 1.E3 / q_dot_htf_des_calc;		//[-]
 
@@ -908,30 +917,9 @@ void C_pc_Rankine_indirect_224::get_max_power_output_operation_constraints(doubl
 		W_dot_ND_max = m_dot_HTF_ND_max;
 		return;
 	}
-	else
-	{
-		// Calculate non-dimensional mass flow rate relative to design point
-		m_dot_HTF_ND_max = ms_params.m_cycle_max_frac;		//[-] Use max mass flow rate
-
-		// Get ND performance at off-design ambient temperature
-		W_dot_ND_max = mc_user_defined_pc.get_W_dot_gross_ND
-			(ms_params.m_T_htf_hot_ref,
-			T_amb,
-			m_dot_HTF_ND_max);	//[-]
-
-		if (W_dot_ND_max >= m_dot_HTF_ND_max)
-		{
-			return;
-		}
-
-		// set m_dot_ND to P_cycle_ND
-		m_dot_HTF_ND_max = W_dot_ND_max;
-
-		// Get ND performance at off-design ambient temperature
-		W_dot_ND_max = mc_user_defined_pc.get_W_dot_gross_ND
-			(ms_params.m_T_htf_hot_ref,
-			T_amb,
-			m_dot_HTF_ND_max);	//[-]
+    else{
+        mc_user_defined_pc.get_max_m_dot_and_W_dot_ND(ms_params.m_T_htf_hot_ref, T_amb,
+            ms_params.m_cycle_max_frac, ms_params.m_cycle_cutoff_frac, m_dot_HTF_ND_max, W_dot_ND_max);
 
 		return;
 	}
@@ -972,23 +960,23 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_TPH(double T_degC, double P_
 		double m_dot_htf_ND = 1.0;		//[-] Use design point mass flow rate
 
 		// Get ND performance at off-design ambient temperature
-		double P_cycle = ms_params.m_P_ref*mc_user_defined_pc.get_W_dot_gross_ND
+		double P_cycle = ms_params.m_P_ref*mc_user_defined_pc.get_W_dot_gross_nd
 			(ms_params.m_T_htf_hot_ref,
 			T_degC,
-			m_dot_htf_ND);	//[kWe]
+			m_dot_htf_ND, ms_params.m_cycle_max_frac);	//[kWe]
 
-		double q_dot_htf = m_q_dot_design*mc_user_defined_pc.get_Q_dot_HTF_ND
+		double q_dot_htf = m_q_dot_design*mc_user_defined_pc.get_Q_dot_HTF_nd
 			(ms_params.m_T_htf_hot_ref,
 			T_degC,
-			m_dot_htf_ND);	//[MWt]
+			m_dot_htf_ND, ms_params.m_cycle_max_frac);	//[MWt]
 
 		eta = P_cycle / 1.E3 / q_dot_htf;
 
         if( w_dot_condenser != 0 )
-            *w_dot_condenser = mc_user_defined_pc.get_W_dot_cooling_ND(
+            *w_dot_condenser = mc_user_defined_pc.get_W_dot_cooling_nd(
                     ms_params.m_T_htf_hot_ref,
                     T_degC,
-                    m_dot_htf_ND )
+                    m_dot_htf_ND, ms_params.m_cycle_max_frac)
                     *ms_params.m_W_dot_cooling_des;
 	}
 
@@ -1004,7 +992,7 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_load(double load_frac, doubl
 
 	if( !ms_params.m_is_user_defined_pc )
 	{
-		double cp = mc_pc_htfProps.Cp( (ms_params.m_T_htf_cold_ref + ms_params.m_T_htf_hot_ref)/2. +273.15);  //kJ/kg-K
+        double cp = mc_pc_htfProps.Cp_ave(physics::CelciusToKelvin(ms_params.m_T_htf_cold_ref), physics::CelciusToKelvin(ms_params.m_T_htf_hot_ref));  //kJ/kg-K
 
 		//calculate mass flow    [kg/hr]
 		double mdot = ms_params.m_P_ref /* kW */ / ( ms_params.m_eta_ref * cp * (ms_params.m_T_htf_hot_ref - ms_params.m_T_htf_cold_ref) ) *3600.;
@@ -1032,23 +1020,23 @@ double C_pc_Rankine_indirect_224::get_efficiency_at_load(double load_frac, doubl
 		double m_dot_htf_ND = load_frac;		//[-] Use design point mass flow rate
 
 		// Get ND performance at off-design ambient temperature
-		double P_cycle = ms_params.m_P_ref*mc_user_defined_pc.get_W_dot_gross_ND
+		double P_cycle = ms_params.m_P_ref*mc_user_defined_pc.get_W_dot_gross_nd
 			(ms_params.m_T_htf_hot_ref,
 			ms_params.m_T_amb_des,
-			m_dot_htf_ND);	//[kWe]
+			m_dot_htf_ND, ms_params.m_cycle_max_frac);	//[kWe]
 
-		double q_dot_htf = m_q_dot_design*mc_user_defined_pc.get_Q_dot_HTF_ND
+		double q_dot_htf = m_q_dot_design*mc_user_defined_pc.get_Q_dot_HTF_nd
 			(ms_params.m_T_htf_hot_ref,
 			ms_params.m_T_amb_des,
-			m_dot_htf_ND);	//[MWt]
+			m_dot_htf_ND, ms_params.m_cycle_max_frac);	//[MWt]
 
 		eta = P_cycle / 1.E3 / q_dot_htf;
 
         if( w_dot_condenser != 0 )
-            *w_dot_condenser = mc_user_defined_pc.get_W_dot_cooling_ND(
+            *w_dot_condenser = mc_user_defined_pc.get_W_dot_cooling_nd(
                     ms_params.m_T_htf_hot_ref,
                     ms_params.m_T_amb_des,
-                    m_dot_htf_ND )
+                    m_dot_htf_ND, ms_params.m_cycle_max_frac)
                     *ms_params.m_W_dot_cooling_des;
 	}
 
@@ -1166,8 +1154,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 	{
 	case STARTUP:
 		{
-			double c_htf = mc_pc_htfProps.Cp(physics::CelciusToKelvin((T_htf_hot + ms_params.m_T_htf_cold_ref) / 2.0));		//[kJ/kg-K]
-
+            double c_htf = mc_pc_htfProps.Cp_ave(physics::CelciusToKelvin(ms_params.m_T_htf_cold_ref), physics::CelciusToKelvin(T_htf_hot)); //[kJ/kg-K]
 			double time_required_su_energy = m_startup_energy_remain_prev / (m_dot_htf*c_htf*(T_htf_hot - ms_params.m_T_htf_cold_ref)/3600.0);	//[hr]
 			double time_required_su_ramping = m_startup_time_remain_prev;	//[hr]
 
@@ -1373,13 +1360,13 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			double m_dot_htf_ND = m_dot_htf / m_m_dot_design;         //[-]
 
 			// Get ND performance at off-design / part-load conditions
-			P_cycle = ms_params.m_P_ref*mc_user_defined_pc.get_W_dot_gross_ND(T_htf_hot, T_db - 273.15, m_dot_htf_ND);	//[kW]
+			P_cycle = ms_params.m_P_ref*mc_user_defined_pc.get_W_dot_gross_nd(T_htf_hot, T_db - 273.15, m_dot_htf_ND, ms_params.m_cycle_max_frac);	//[kW]
 
-			q_dot_htf = m_q_dot_design*mc_user_defined_pc.get_Q_dot_HTF_ND(T_htf_hot, T_db - 273.15, m_dot_htf_ND);		//[MWt]
+			q_dot_htf = m_q_dot_design*mc_user_defined_pc.get_Q_dot_HTF_nd(T_htf_hot, T_db - 273.15, m_dot_htf_ND, ms_params.m_cycle_max_frac);		//[MWt]
 
-			W_cool_par = ms_params.m_W_dot_cooling_des*mc_user_defined_pc.get_W_dot_cooling_ND(T_htf_hot, T_db - 273.15, m_dot_htf_ND);	//[MW]
+			W_cool_par = ms_params.m_W_dot_cooling_des*mc_user_defined_pc.get_W_dot_cooling_nd(T_htf_hot, T_db - 273.15, m_dot_htf_ND, ms_params.m_cycle_max_frac);	//[MW]
 
-			m_dot_water_cooling = ms_params.m_m_dot_water_des*mc_user_defined_pc.get_m_dot_water_ND(T_htf_hot, T_db - 273.15, m_dot_htf_ND);	//[kg/hr]
+			m_dot_water_cooling = ms_params.m_m_dot_water_des*mc_user_defined_pc.get_m_dot_water_nd(T_htf_hot, T_db - 273.15, m_dot_htf_ND, ms_params.m_cycle_max_frac);	//[kg/hr]
 
 			// Check power cycle outputs to be sure that they are reasonable. If not, return zeros
 			if( ((eta > 1.0) || (eta < 0.0)) || ((T_htf_cold > T_htf_hot) || (T_htf_cold < ms_params.m_T_htf_cold_ref - 100.0)) )
@@ -1399,8 +1386,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 				// Calculate other important metrics
 				eta = P_cycle / 1.E3 / q_dot_htf;		//[-]
 
-				// Want to iterate to fine more accurate cp_htf?
-				T_htf_cold = T_htf_hot - q_dot_htf / (m_dot_htf / 3600.0*m_cp_htf_design / 1.E3);		//[MJ/s * hr/kg * s/hr * kg-K/kJ * MJ/kJ] = C/K
+                T_htf_cold = Calculate_T_htf_cold_Converge_Cp(q_dot_htf * 1.E3, physics::CelciusToKelvin(T_htf_hot), m_dot_htf / 3600.0) - 273.15; //[K] -> [C]
 
 				was_method_successful = true;
 			}
@@ -1428,8 +1414,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 
 	case STANDBY:
 		{
-			double c_htf = mc_pc_htfProps.Cp(physics::CelciusToKelvin((T_htf_hot + ms_params.m_T_htf_cold_ref) / 2.0));	//[kJ/kg-K]
-			// double c_htf = specheat(m_pbp.HTF, physics::CelciusToKelvin((m_pbi.T_htf_hot + m_pbp.T_htf_cold_ref)/2.0), 1.0);
+            double c_htf = mc_pc_htfProps.Cp_ave(physics::CelciusToKelvin(ms_params.m_T_htf_cold_ref), physics::CelciusToKelvin(T_htf_hot)); //[kJ/kg-K]
 			double q_tot = ms_params.m_P_ref / ms_params.m_eta_ref;
 
 			// Calculate the actual q_sby_needed from the reference flows
@@ -1574,7 +1559,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 		//     simultaneously with the required startup time. If the timestep is less than the required startup time
 		//     scale the mass flow rate appropriately
 
-		double c_htf = mc_pc_htfProps.Cp(physics::CelciusToKelvin((T_htf_hot + ms_params.m_T_htf_cold_ref) / 2.0));		//[kJ/kg-K]
+        double c_htf = mc_pc_htfProps.Cp_ave(physics::CelciusToKelvin(ms_params.m_T_htf_cold_ref), physics::CelciusToKelvin(T_htf_hot)); //[kJ/kg-K]
 
 			// Maximum thermal power to power cycle based on heat input constraint parameters:
 		double q_dot_to_pc_max_q_constraint = ms_params.m_cycle_max_frac * ms_params.m_P_ref / ms_params.m_eta_ref;	//[kWt]
@@ -1731,7 +1716,7 @@ void C_pc_Rankine_indirect_224::call(const C_csp_weatherreader::S_outputs &weath
 			m_startup_time_remain_calc = fmax(m_startup_time_remain_prev - step_hrs, 0.0);
 			m_startup_energy_remain_calc = fmax(m_startup_energy_remain_prev - startup_e_used, 0.0);
 
-			double c_htf = mc_pc_htfProps.Cp(physics::CelciusToKelvin((T_htf_hot + ms_params.m_T_htf_cold_ref) / 2.0));		//[kJ/kg-K]
+            double c_htf = mc_pc_htfProps.Cp_ave(physics::CelciusToKelvin(ms_params.m_T_htf_cold_ref), physics::CelciusToKelvin(T_htf_hot)); //[kJ/kg-K]
 			// If still starting up, then all of energy input going to startup
 			if(m_startup_time_remain_calc + m_startup_energy_remain_calc > 0.0)
 			{
@@ -2034,11 +2019,6 @@ void C_pc_Rankine_indirect_224::RankineCycle_V2(double T_db /*K*/, double T_wb /
     double P_cond_min = ms_params.m_P_cond_min;
 
     water_state wp;
-
-    // Calculate the specific heat before converting to Kelvin
-    double c_htf_ref = mc_pc_htfProps.Cp(physics::CelciusToKelvin((T_htf_hot_ref + T_htf_cold_ref) / 2.0));
-    double c_htf = mc_pc_htfProps.Cp(physics::CelciusToKelvin((T_htf_hot + T_htf_cold_ref) / 2.0)); //[kJ/kg-k]
-
     // Convert units
     // **Temperatures from Celcius to Kelvin
     T_htf_hot = physics::CelciusToKelvin(T_htf_hot);			//[K]
@@ -2139,8 +2119,7 @@ void C_pc_Rankine_indirect_224::RankineCycle_V2(double T_db /*K*/, double T_wb /
 
     // Final performance calcs
     double q_dot_cycle = P_cycle / eta;
-
-    T_htf_cold = T_htf_hot - q_dot_cycle / (m_dot_htf * c_htf);     //[K]
+    T_htf_cold = Calculate_T_htf_cold_Converge_Cp(q_dot_cycle, T_htf_hot, m_dot_htf); //[K]
     m_dot_demand = fmax(m_dot_htf_ND * m_dot_htf_ref, 0.00001);     //[kg/s]
 
     // Finally, convert to output units/names
@@ -2286,3 +2265,32 @@ double C_pc_Rankine_indirect_224::Interpolate(int YT, int XT, double X, double Z
 
 } // Interpolate
 
+double C_pc_Rankine_indirect_224::Calculate_T_htf_cold_Converge_Cp(double q_dot_htf /*kWt*/, double T_htf_hot /*K*/, double m_dot_htf /*kg/s*/)
+{
+    double alpha = 0.3;
+    int iter = 0;
+    double T_htf_cold = physics::CelciusToKelvin(ms_params.m_T_htf_cold_ref);
+    double c_htf, T_error = 1.0, T_htf_cold_prev;
+    while (fabs(T_error) > 1e-4 && iter < 30) {
+        // TODO: set up C_monotonic_equation? and C_monotonic_eq_solver?
+        T_htf_cold_prev = T_htf_cold;
+        try {
+            c_htf = mc_pc_htfProps.Cp_ave(T_htf_cold, T_htf_hot);       //[kJ/kg-K]
+        }
+        catch (C_csp_exception) {
+            // Recover T_htf_cold or T_htf_hot is < 0
+            T_error = 1;
+            break;
+        }
+        T_htf_cold = T_htf_hot - q_dot_htf / (m_dot_htf * c_htf);   //[kJ/s * s/kg * kg-K/kJ] = C/K
+        T_htf_cold = T_htf_cold * alpha + T_htf_cold_prev * (1 - alpha);
+        T_error = (T_htf_cold - T_htf_cold_prev) / T_htf_cold_prev;
+        iter++;
+    }
+    if (fabs(T_error) > 1e-4) {
+        // Divergent - Use the initial iteration and deal with error
+        c_htf = mc_pc_htfProps.Cp_ave(physics::CelciusToKelvin(ms_params.m_T_htf_cold_ref), T_htf_hot);       //[kJ/kg-K]
+        T_htf_cold = T_htf_hot - q_dot_htf / (m_dot_htf * c_htf);   //[kJ/s * s/kg * kg-K/kJ] = C/K
+    }
+    return T_htf_cold; //[K]
+}
