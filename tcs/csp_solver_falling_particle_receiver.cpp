@@ -238,6 +238,19 @@ void C_falling_particle_receiver::init()
     m_soln_cache_csky.resize(m_n_max_stored_solns);
 
     m_ncall = -1;
+
+    // Calculate design point performance
+    double vwind = 0.0;
+    double wdir = 0.0;
+    design_point_steady_state(vwind, wdir, m_eta_thermal_des_calc, m_W_dot_lift_des_calc, m_Q_dot_transport_des_calc, m_q_dot_loss_per_m2_des_calc, m_tauc_avg_des_calc);
+    m_W_dot_rec_pump_des_calc = m_W_dot_lift_des_calc*1e-6;  // Using salt receiver parent class variable in MWe
+    m_Q_dot_piping_loss = m_Q_dot_transport_des_calc;        // Using salt receiver parent class variable in W
+    m_W_dot_pumping_tower_share = std::numeric_limits<double>::quiet_NaN();
+    m_W_dot_pumping_rec_share = std::numeric_limits<double>::quiet_NaN();
+    m_rec_pump_coef = std::numeric_limits<double>::quiet_NaN();
+    m_vel_htf_des = std::numeric_limits<double>::quiet_NaN();
+
+
     return;
 }
 
@@ -295,6 +308,12 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
     if (input_operation_mode < C_csp_collector_receiver::OFF || input_operation_mode > C_csp_collector_receiver::STEADY_STATE) {
         error_msg = util::format("Input operation mode must be either [0,1,2], but value is %d", input_operation_mode);
         throw(C_csp_exception(error_msg, "Falling particle receiver timestep performance call"));
+    }
+
+    // Check that wind direction is defined
+    if (wind_direc != wind_direc) 
+    {
+        throw(C_csp_exception("Wind direction is not defined", "Falling particle receiver timestep performance call"));
     }
 
     // Check resolution of flux map input compared to resolution of the particle curtain discretization
@@ -592,7 +611,7 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
     }
 
     // Particle lift power
-    W_lift = m_dot_tot * (m_h_tower + m_curtain_height) * 9.8067 / m_eta_pump;
+    W_lift = calculate_lift_power(m_dot_tot); 
 
     if (rec_is_off)
     {
@@ -650,88 +669,6 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
     ms_outputs = outputs;
 }
 
-/*
-C_falling_particle_receiver::C_MEQ__q_dot_des::C_MEQ__q_dot_des(C_falling_particle_receiver* pc_rec)
-{
-    mpc_rec = pc_rec;
-
-    m_flux_map_input.resize_fill(1, mpc_rec->m_n_panels, std::numeric_limits<double>::quiet_NaN());
-
-    // Member constants
-    m_min_to_max_flux_ratio = 0.45; //[-]
-    m_step = 3600.0;        //[s]
-    m_plant_defocus = 1.0;   //[-]
-    m_input_operation_mode = C_csp_collector_receiver::STEADY_STATE;
-}
-*/
-
-/*
-int C_falling_particle_receiver::C_MEQ__q_dot_des::operator()(double flux_max, double *q_dot_des MWt) //([kW/m2], [MWt])
-{
-    double min_panel_flux = m_min_to_max_flux_ratio * flux_max;
-    double max_less_min = flux_max - min_panel_flux;
-
-    for (int i = 0; i < mpc_rec->m_n_panels; i++) {
-        m_flux_map_input(0, i) = max_less_min * sind(i / (double)(mpc_rec->m_n_panels - 1) * 180) + min_panel_flux;
-    }
-
-    mpc_rec->call(m_step,
-        mpc_rec->m_P_amb_des, mpc_rec->m_T_amb_des, mpc_rec->m_T_sky_des,
-        1.0,
-
-        mpc_rec->m_v_wind_10_des,
-        m_plant_defocus,
-        &m_flux_map_input, m_input_operation_mode,
-        mpc_rec->m_T_htf_cold_des);
-
-    *q_dot_des = mpc_rec->ms_outputs.m_Q_thermal;   //[MWt]
-
-    return 0;
-}
-*/
-
-
-/*
-void C_falling_particle_receiver::design_point_steady_state(double& eta_thermal_des_calc,
-    double& W_dot_rec_pump_des_calc, //[MWe]
-    double& W_dot_rec_pump__tower_only,  double& W_dot_rec_pump__rec_only,  // [MWe], [MWe]
-    double& rec_pump_coef, double& vel_htf_des)  //[MWe/MWt], [m/s]
-{
-
-    C_MEQ__q_dot_des c_qot_des_eq(this);
-    C_monotonic_eq_solver c_q_dot_des_solver(c_qot_des_eq);
-
-    c_q_dot_des_solver.settings(1.E-3, 5, 0.1, 10000, true);
-    double tol_solved = std::numeric_limits<double>::quiet_NaN();
-    double max_flux_solved = std::numeric_limits<double>::quiet_NaN();
-    int iter_solved = -1;
-    int q_dot_des_code = 0;
-    try{
-        q_dot_des_code = c_q_dot_des_solver.solve(775.0, 700.0, m_q_rec_des*1.E-6, max_flux_solved, tol_solved, iter_solved);
-    }
-    catch (C_csp_exception) {
-
-        eta_thermal_des_calc = std::numeric_limits<double>::quiet_NaN();
-        W_dot_rec_pump_des_calc = std::numeric_limits<double>::quiet_NaN();
-        rec_pump_coef = std::numeric_limits<double>::quiet_NaN();
-
-        return;
-    }
-
-    eta_thermal_des_calc = ms_outputs.m_eta_therm;       //[-]
-    W_dot_rec_pump_des_calc = ms_outputs.m_W_dot_pump;   //[MWe]
-    W_dot_rec_pump__tower_only = W_dot_rec_pump_des_calc * ms_outputs.m_ratio_dP_tower_to_rec;  //[MWe]
-    W_dot_rec_pump__rec_only = W_dot_rec_pump_des_calc - W_dot_rec_pump__tower_only;               //[MWe]
-
-    // Should q term include piping losses?
-    rec_pump_coef = W_dot_rec_pump_des_calc / ms_outputs.m_Q_thermal;    //[MWe/MWt]
-
-    vel_htf_des = ms_outputs.m_vel_htf;       //[m/s]
-    return;
-}
-*/
-
-
 
 void C_falling_particle_receiver::off(const C_csp_weatherreader::S_outputs &weather,
 	const C_csp_solver_htf_1state &htf_state_in,
@@ -784,6 +721,11 @@ double C_falling_particle_receiver::area_proj()
     return m_ap_area; //[m^2] aperture area of the receiver
 }
 
+double C_falling_particle_receiver::calculate_lift_power(double m_dot_tot)
+{
+    return m_dot_tot * (m_h_tower + m_curtain_height) * 9.8067 / m_eta_pump;  //[W]
+}
+
 
 void C_falling_particle_receiver::converged()
 {
@@ -795,7 +737,7 @@ void C_falling_particle_receiver::converged()
 	if( m_mode == C_csp_collector_receiver::STEADY_STATE )
 	{
 		throw(C_csp_exception("Receiver should only be run at STEADY STATE mode for estimating output. It must be run at a different mode before exiting a timestep",
-			"MSPT receiver converged method"));
+			"Falling particle receiver converged method"));
     }
 
     if (m_mode == C_csp_collector_receiver::OFF)
@@ -818,6 +760,62 @@ void C_falling_particle_receiver::converged()
 
     ms_outputs = outputs;
 }
+
+
+
+
+void C_falling_particle_receiver::design_point_steady_state(double v_wind_10, double wind_direc, double& eta_thermal, double& W_lift, double &Q_transport_loss, double& q_dot_loss_per_m2_ap, double& tauc_avg)
+{
+
+    eta_thermal = std::numeric_limits<double>::quiet_NaN();
+    W_lift = std::numeric_limits<double>::quiet_NaN();
+    Q_transport_loss = std::numeric_limits<double>::quiet_NaN();
+    q_dot_loss_per_m2_ap = std::numeric_limits<double>::quiet_NaN();
+    tauc_avg = std::numeric_limits<double>::quiet_NaN();
+
+    s_steady_state_soln soln_des;
+    soln_des.T_amb = m_T_amb_des;
+    soln_des.T_sky = m_T_sky_des;
+    soln_des.p_amb = m_P_amb_des;
+    soln_des.v_wind_10 = v_wind_10;
+    soln_des.wind_dir = wind_direc;
+    soln_des.T_particle_cold_in = m_T_htf_cold_des;
+    soln_des.rec_is_off = false;
+
+    // Solve for incident power needed to achieve design point thermal power to particles (assuming uniform solar flux on the curtain)
+    double q_dot_inc_avg, Qtot, tol;
+    q_dot_inc_avg = m_q_rec_des / 0.85 / m_curtain_area;  // Initial guess for average incident solar flux on curtain [W/m2]  
+    tol = 1e-2;
+
+    for (int j = 0; j < 10; j++)
+    {
+        soln_des.q_dot_inc.resize_fill(m_n_y, m_n_x, q_dot_inc_avg);
+        solve_for_mass_flow(soln_des);
+        
+        if (soln_des.eta_with_transport < 1e-6) // Thermal model failed to solve
+            break;
+
+        Qtot = soln_des.Q_thermal - soln_des.Q_transport;
+        if (fabs(Qtot - m_q_rec_des)/m_q_rec_des < tol)
+        {
+            eta_thermal = soln_des.eta;
+            q_dot_loss_per_m2_ap = (soln_des.Q_inc - soln_des.Q_thermal) / m_ap_area;
+            W_lift = calculate_lift_power(soln_des.m_dot_tot);
+            Q_transport_loss = soln_des.Q_transport;
+            tauc_avg = soln_des.tauc_avg;
+            break;
+        }
+        q_dot_inc_avg = (m_q_rec_des / soln_des.eta_with_transport) / m_curtain_area;
+    }
+
+    return;
+}
+
+double C_falling_particle_receiver::scale_wind_speed(double v_wind_10)
+{
+    return log((m_h_tower + m_curtain_height / 2) / 0.003) / log(10.0 / 0.003) * v_wind_10;
+}
+
 
 
 int C_falling_particle_receiver::use_previous_solution(const s_steady_state_soln& soln, const std::vector<s_steady_state_soln>& stored_solns)
@@ -896,7 +894,7 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
     double T_sky = soln.T_sky;
     double T_cold_in = soln.T_particle_cold_in;
 
-    double v_wind = log((m_h_tower + m_curtain_height / 2) / 0.003) / log(10.0 / 0.003) * v_wind_10;
+    double v_wind = scale_wind_speed(v_wind_10);  // Wind speed at receiver height
     double dy = m_curtain_height / (m_n_y - 1);
     double dx = m_curtain_width / m_n_x;
 
@@ -940,37 +938,7 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
     }
     else if (m_model_type == 1 || m_model_type == 2) // Receiver efficiency correlations from Sandia (https://www.osti.gov/biblio/1890267, page 43)
     {
-        // TODO: Check/warn about bounds where the correlation is valid?
-        double q, theta, val, eta;
-        double A, B, C, D, E, F, G, H;
-        if (m_model_type == 1)  // Free-falling particle receiver
-        {
-            A = 0.848109;
-            B = 0.249759;
-            C = -1.0115660;
-            D = -7.942869e-5;
-            E = -1.4575091E-07;
-            F = 5.5;
-            G = 7.5;
-            H = 5000.;
-        }
-        else if (m_model_type == 2)  // Multistage particle receiver
-        {
-            A = 0.9351;
-            B = -0.0560;
-            C = -0.5519;
-            D = -6.4055e-5;
-            E = -3.1344e-6;
-            F = 5.0;
-            G = 9.1;
-            H = 5000.;
-        }
-
-        q = exp(-Q_inc * 1.e-6 / m_ap_area);
-        val = 180 - fabs(180 - wdir);
-        theta = pow(val, F) * exp(-val / G) / H;
-        eta = A + B*q + C*pow(q, 2) + D*q*v_wind*theta + E*pow(v_wind, 2)*theta;
-        eta = fmax(eta, 0.0);
+        double eta = sandia_efficiency_correlation(m_model_type == 2, Q_inc, v_wind, wdir);
         Q_thermal = eta*Q_inc;
         Tp_out = T_cold_in_rec + Q_thermal / (soln.m_dot_tot * cp);
         converged = true;
@@ -1379,6 +1347,8 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
     double T_particle_prop = (m_T_particle_hot_target + soln.T_particle_cold_in) / 2.0; // Temperature for particle property evaluation [K].  
     double cp = field_htfProps.Cp(T_particle_prop) * 1000.0;   //[J/kg-K]
 
+    double T_cold_in_rec = soln.T_particle_cold_in - m_deltaT_transport_cold;    // Temperature at the receiver inlet (after cold particle transport)
+    double T_target_out_rec = m_T_particle_hot_target + m_deltaT_transport_hot;  // Temperature at the receiver exit (before hot particle transport)
 
     double err = -999.9;				//[-] Relative outlet temperature error
     double tol = 1.0e-4;
@@ -1396,7 +1366,7 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
 	{
         double Qinc = sum_over_rows_and_cols(soln.q_dot_inc, true) * m_curtain_elem_area;  // Total solar power incident on curtain [W]
         double eta_guess = m_model_type == 0 ? m_fixed_efficiency : 0.85;
-        m_dot_guess = eta_guess * Qinc / (cp * (m_T_particle_hot_target - soln.T_particle_cold_in));	//[kg/s] Particle mass flow rate
+        m_dot_guess = eta_guess * Qinc / (cp * (T_target_out_rec - T_cold_in_rec));	//[kg/s] Particle mass flow rate
 	}
 
 
@@ -1435,12 +1405,12 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
 		calculate_steady_state_soln(soln, tol, init_from_existing, 50);   // Solve steady state thermal model
 		err = (soln.T_particle_hot - m_T_particle_hot_target) / m_T_particle_hot_target;
         mflow_history.at(qq) = soln.m_dot_tot;
-        Tout_history.at(qq) = soln.T_particle_hot;
-        eta_history.at(qq) = soln.eta_with_transport;
+        Tout_history.at(qq) = soln.T_particle_hot_rec;   // Outlet temperature from receiver (before hot particle transport)
+        eta_history.at(qq) = soln.eta;
         converged_history.at(qq) = soln.converged;
 
         init_from_existing = false;
-        if (qq>0 && !soln.rec_is_off && std::abs(soln.T_particle_hot - Tout_history.at(qq - 1)) < 20)  
+        if (qq>0 && !soln.rec_is_off && std::abs(soln.T_particle_hot_rec - Tout_history.at(qq - 1)) < 20)  
             init_from_existing = true;
       
 
@@ -1457,7 +1427,7 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
                 s_steady_state_soln soln_candidate = soln;  // Store the current solution as a possible candidate solution
                 soln.m_dot_tot = (1 - 0.015) * soln.m_dot_tot; // If this is the higher mass flow solution than a decrease in mass flow should increase outlet temperature
                 calculate_steady_state_soln(soln, tol, true, 50);
-                bool is_correct_soln = (soln.T_particle_hot > soln_candidate.T_particle_hot);
+                bool is_correct_soln = (soln.T_particle_hot_rec > soln_candidate.T_particle_hot_rec);
                 soln = soln_candidate;
                 if (is_correct_soln)
                 {
@@ -1477,7 +1447,7 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
 
         //--- Update mass flow bounds
         // If outlet temperature is above the target this is always a lower bound for mass flow 
-        if (soln.T_particle_hot > m_T_particle_hot_target) 
+        if (soln.T_particle_hot_rec > T_target_out_rec)
         {
             lower_bound = soln.m_dot_tot;
             is_lower_bound_above_Ttarget = true;  
@@ -1491,23 +1461,23 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
                 if (converged_history.at(i))
                 {
                     // Any given point with exit temperature below the target is a lower bound if another point has been sampled with higher mass flow and a higher outlet T
-                    if (soln.m_dot_tot < mflow_history.at(i) && soln.T_particle_hot < Tout_history.at(i))
+                    if (soln.m_dot_tot < mflow_history.at(i) && soln.T_particle_hot_rec < Tout_history.at(i))
                     {
                         lower_bound = soln.m_dot_tot;
                     }
-                    if (Tout_history.at(i) < m_T_particle_hot_target && mflow_history.at(i) < soln.m_dot_tot && Tout_history.at(i) < soln.T_particle_hot)
+                    if (Tout_history.at(i) < T_target_out_rec && mflow_history.at(i) < soln.m_dot_tot && Tout_history.at(i) < soln.T_particle_hot_rec)
                     {
                         lower_bound = fmax(lower_bound, mflow_history.at(i));
                     }
 
                     // Any given point with exit temperature below the target is an upper bound if another point has been sampled with lower mass flow and higher outlet temperature 
-                    if (soln.m_dot_tot > mflow_history.at(i) && soln.T_particle_hot < Tout_history.at(i))
+                    if (soln.m_dot_tot > mflow_history.at(i) && soln.T_particle_hot_rec < Tout_history.at(i))
                     {
                         upper_bound = soln.m_dot_tot;
-                        upper_bound_eta = soln.eta_with_transport;
+                        upper_bound_eta = soln.eta;
                         is_upper_bound = true;
                     }
-                    if (Tout_history.at(i) < m_T_particle_hot_target && mflow_history.at(i) > soln.m_dot_tot && Tout_history.at(i) < soln.T_particle_hot)
+                    if (Tout_history.at(i) < T_target_out_rec && mflow_history.at(i) > soln.m_dot_tot && Tout_history.at(i) < soln.T_particle_hot_rec)
                     {
                         upper_bound = min(upper_bound, mflow_history.at(i));
                         upper_bound_eta = min(upper_bound_eta, eta_history.at(i));
@@ -1520,7 +1490,7 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
 
 
         //--- Next solution guess
-        m_dot_guess_new = (soln.Q_thermal - soln.Q_transport) / (cp * (m_T_particle_hot_target - soln.T_particle_cold_in));			//[kg/s]
+        m_dot_guess_new = soln.Q_thermal / (cp * (T_target_out_rec - T_cold_in_rec));			//[kg/s]
         if (is_upper_bound && (m_dot_guess_new < lower_bound || m_dot_guess_new > upper_bound))  // New guess is out of bounds and lower/upper bounds are both defined
             m_dot_guess_new = 0.5 * (lower_bound + upper_bound);
         else if (m_dot_guess_new < lower_bound)  // New guess is below lower bound with no defined upper bound
@@ -1553,8 +1523,8 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
         // This assumes that the efficiency (Q_thermal / Q_inc) increases monotonically with mass flow for fixed solar incidence and ambient conditions
         if (allow_Tmax_stopping && lower_bound > 0.001)
         {
-            Tout_max = soln.T_particle_cold_in + (upper_bound_eta * soln.Q_inc) / (cp * lower_bound);
-            if (Tout_max < m_T_particle_hot_target-0.01)
+            Tout_max = T_cold_in_rec + (upper_bound_eta * soln.Q_inc) / (cp * lower_bound);
+            if (Tout_max < T_target_out_rec -0.01)
             {
                 soln.rec_is_off = true;
                 break;
@@ -1672,7 +1642,43 @@ void C_falling_particle_receiver::solve_for_defocus_given_flow(s_steady_state_so
 	return;
 }
 
+double C_falling_particle_receiver::sandia_efficiency_correlation(bool is_multistage, double Q_inc, double v_wind, double wind_direc)
+{
+    // Receiver efficiency correlations from Sandia (https://www.osti.gov/biblio/1890267, page 43)
+    // TODO: Check/warn about bounds where the correlation is valid?
+    double q, theta, val, eta;
+    double A, B, C, D, E, F, G, H;
+    if (! is_multistage) // Free-falling particle receiver
+    {
+        A = 0.848109;
+        B = 0.249759;
+        C = -1.0115660;
+        D = -7.942869e-5;
+        E = -1.4575091E-07;
+        F = 5.5;
+        G = 7.5;
+        H = 5000.;
+    }
+    else  // Multistage particle receiver
+    {
+        A = 0.9351;
+        B = -0.0560;
+        C = -0.5519;
+        D = -6.4055e-5;
+        E = -3.1344e-6;
+        F = 5.0;
+        G = 9.1;
+        H = 5000.;
+    }
 
+    q = exp(-Q_inc * 1.e-6 / m_ap_area);
+    val = 180 - fabs(180 - wind_direc);
+    theta = pow(val, F) * exp(-val / G) / H;
+    eta = A + B * q + C * pow(q, 2) + D * q * v_wind * theta + E * pow(v_wind, 2) * theta;
+    eta = fmax(eta, 0.0);
+    return eta;
+
+}
 
 // Solve mass and momentum balances for particle velocity, curtain thickness, particle volume fraction
 void C_falling_particle_receiver::solve_particle_flow(util::matrix_t<double>& mdot_per_elem, util::matrix_t<double>& phip, util::matrix_t<double>& vel, util::matrix_t<double>& th)
@@ -2314,4 +2320,31 @@ util::matrix_t<double> C_falling_particle_receiver::matrix_addition(util::matrix
         }
     }
     return m3;
+}
+
+
+
+
+double C_falling_particle_receiver::estimate_thermal_efficiency(const C_csp_weatherreader::S_outputs& weather, double q_inc)
+{
+    // q_inc in MWt
+    double eta, v_wind, wdir;
+    v_wind = scale_wind_speed(weather.m_wspd);  // Wind speed at receiver height
+    wdir = weather.m_wdir;
+
+    if (m_model_type == 0) // Fixed user-defined receiver efficiency
+    {
+        return m_fixed_efficiency;
+    }
+    else if (m_model_type == 1 || m_model_type == 2) // Receiver efficiency correlations from Sandia (https://www.osti.gov/biblio/1890267, page 43)
+    {
+        eta = 0.0;
+        if (q_inc > 0.0)
+            eta = sandia_efficiency_correlation(m_model_type == 2, q_inc * 1e6, v_wind, wdir);
+        return eta;
+    }
+    else if (m_model_type == 3)        // Quasi-2D physics-based receiver model
+    {
+        throw(C_csp_exception("Estimated thermal efficiency is not set up for particle receiver with quasi-2D model", "Falling particle receiver"));
+    }
 }
