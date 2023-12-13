@@ -357,8 +357,14 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_INPUT,     SSC_NUMBER, "csp.pt.cost.plm.fixed",              "PLM fixed",                                                                                                                               "$",            "",                                  "System Costs",                             "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "csp.pt.sf.fixed_land_area",          "Fixed land area",                                                                                                                         "acre",         "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "csp.pt.sf.land_overhead_factor",     "Land overhead factor",                                                                                                                    "",             "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
-    { SSC_INPUT,     SSC_ARRAY,  "om_fixed",                           "Fixed O&M annual amount",                                                                                                                 "$/year",       "",                                  "System Costs",                             "?=[0]",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "frac_rec_flow_lost",                 "Fraction of receiver flow lost",                                                                                                          "kg/kg",        "",                                  "System Costs",                             "*",                                                                "",              ""},
+
+    // O&M - use "INOUT" so SAM shows in outputs
+        // Array (years) input for Single Owner
+    { SSC_INOUT,     SSC_ARRAY,  "om_fixed",                           "Fixed O&M annual amount",                                                                                                                 "$/year",       "",                                  "System Costs",                             "?=[0]",                                                            "",              "SIMULATION_PARAMETER" },
+        // LCOE
+    { SSC_INOUT,     SSC_NUMBER, "fixed_operating_cost",               "Annual fixed operating cost",                                                                                                              "$",           "",                                  "Simple LCOE",                              "sim_type=1&csp_financial_model=7",                                 "",              "SIMULATION_PARAMETER" },
+
 
         // Construction financing inputs/outputs (SSC variable table from cmod_cb_construction_financing)
     { SSC_INPUT,     SSC_NUMBER, "const_per_interest_rate1",           "Interest rate, loan 1",                                                                                                                   "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              ""},
@@ -666,6 +672,8 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_OUTPUT,    SSC_ARRAY,  "gen",                                "Total electric power to grid with available derate",                                                                                      "kWe",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
 
     // Annual single-value outputs
+    { SSC_OUTPUT,    SSC_NUMBER, "cost_particle_loss_year1",           "Cost of replacement particles in year 1",                                                                                                 "$",            "",                                  "",                                         "sim_type=1",                                                       "",              ""},
+
     { SSC_OUTPUT,    SSC_NUMBER, "annual_energy",                      "Annual total electric power to grid",                                                                                                     "kWhe",         "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "annual_W_cycle_gross",               "Electrical source - power cycle gross output",                                                                                            "kWhe",         "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "annual_W_cooling_tower",             "Total of condenser operation parasitics",                                                                                                 "kWhe",         "",                                  "PC",                                       "sim_type=1",                                                       "",              ""},
@@ -693,6 +701,11 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "avg_suboptimal_rel_mip_gap",         "Average suboptimal relative MIP gap",                                                                                                     "%",            "",                                  "",                                         "sim_type=1",                                                       "",              ""},
 
     { SSC_OUTPUT,    SSC_NUMBER, "sim_cpu_run_time",                   "Simulation duration clock time",                                                                                                         "s",             "",                                  "",                                         "sim_type=1",                                                       "",              ""},
+
+    // 12.13.23 twn: for now, need these to defined here to pass downstream to LCOE model
+    { SSC_OUTPUT,    SSC_NUMBER, "annual_electricity_consumption",     "Annual electricity consumption w/ avail derate",                                                                                         "kWe-hr",        "",                                 "Post-process",                              "sim_type=1",                                                       "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "electricity_rate",                   "Cost of electricity used to operate pumps and trackers",                                                                                 "$/kWe-hr",      "",                                 "Post-process",                              "sim_type=1",                                                       "",              "" },
+
 
     var_info_invalid };
 
@@ -1435,9 +1448,9 @@ public:
                     tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
                 }
             }
-            else if (csp_financial_model == 8) {        // No Financial Model
+            else if (csp_financial_model == 7 || csp_financial_model == 8) {        // No Financial Model
                 if (is_dispatch) {
-                    throw exec_error("csp_tower_particle", "Can't select dispatch optimization if No Financial model");
+                    throw exec_error("csp_tower_particle", "Can't select dispatch optimization if LCOE or No Financial model");
                 }
                 else { // if no dispatch optimization, don't need an input pricing schedule
                     // If electricity pricing data is not available, then dispatch to a uniform schedule
@@ -2116,12 +2129,27 @@ public:
         assign("annual_eta_rec", (ssc_number_t)(1.0 - (as_number("annual_q_rec_thermal_loss") + as_number("annual_q_rec_reflection_loss"))/ as_number("annual_q_rec_inc")));
 
         // Update fixed O&M based on receiver throughput
-        ssc_number_t* om_fixed = as_array("om_fixed", &count);
         double particles_lost_per_year = as_double("frac_rec_flow_lost") * as_number("annual_rec_mass_throughput");
         assign("particles_lost_per_year", (ssc_number_t)particles_lost_per_year);
         double om_particle_cost = as_double("tes_cost_per_mass") * particles_lost_per_year;
-        for (size_t i = 0; i < count; i++) {
-            om_fixed[i] += om_particle_cost;
+        assign("cost_particle_loss_year1", om_particle_cost);
+
+        if (csp_financial_model < 6) {
+            ssc_number_t* om_fixed = as_array("om_fixed", &count);
+
+            for (size_t i = 0; i < count; i++) {
+                om_fixed[i] += om_particle_cost;
+            }
+        }
+        else if (csp_financial_model == 7) {
+            double fixed_operating_cost_in = as_double("fixed_operating_cost");
+            assign("fixed_operating_cost", fixed_operating_cost_in + om_particle_cost);
+        }
+
+        // 12.13.23 twn: Hardcode values that LCOE model want. Can remove these when/if LCOE model is straightened out
+        assign("annual_electricity_consumption", 0.0);
+        if (!is_assigned("electricity_rate")) {
+            assign("electricity_rate", 0.0);
         }
 
         //Annual dispatch outputs
