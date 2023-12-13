@@ -307,6 +307,12 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
         throw(C_csp_exception(error_msg, "Falling particle receiver timestep performance call"));
     }
 
+    // Check that wind direction is defined
+    if (wind_direc != wind_direc) 
+    {
+        throw(C_csp_exception("Wind direction is not defined", "Falling particle receiver timestep performance call"));
+    }
+
     // Check resolution of flux map input compared to resolution of the particle curtain discretization
     // TODO: Generalize to allow different resolution
     int n_flux_y = (int)flux_map_input->nrows();
@@ -728,7 +734,7 @@ void C_falling_particle_receiver::converged()
 	if( m_mode == C_csp_collector_receiver::STEADY_STATE )
 	{
 		throw(C_csp_exception("Receiver should only be run at STEADY STATE mode for estimating output. It must be run at a different mode before exiting a timestep",
-			"MSPT receiver converged method"));
+			"Falling particle receiver converged method"));
     }
 
     if (m_mode == C_csp_collector_receiver::OFF)
@@ -800,6 +806,11 @@ void C_falling_particle_receiver::design_point_steady_state(double v_wind_10, do
     }
 
     return;
+}
+
+double C_falling_particle_receiver::scale_wind_speed(double v_wind_10)
+{
+    return log((m_h_tower + m_curtain_height / 2) / 0.003) / log(10.0 / 0.003) * v_wind_10;
 }
 
 
@@ -880,7 +891,7 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
     double T_sky = soln.T_sky;
     double T_cold_in = soln.T_particle_cold_in;
 
-    double v_wind = log((m_h_tower + m_curtain_height / 2) / 0.003) / log(10.0 / 0.003) * v_wind_10;
+    double v_wind = scale_wind_speed(v_wind_10);  // Wind speed at receiver height
     double dy = m_curtain_height / (m_n_y - 1);
     double dx = m_curtain_width / m_n_x;
 
@@ -924,37 +935,7 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
     }
     else if (m_model_type == 1 || m_model_type == 2) // Receiver efficiency correlations from Sandia (https://www.osti.gov/biblio/1890267, page 43)
     {
-        // TODO: Check/warn about bounds where the correlation is valid?
-        double q, theta, val, eta;
-        double A, B, C, D, E, F, G, H;
-        if (m_model_type == 1)  // Free-falling particle receiver
-        {
-            A = 0.848109;
-            B = 0.249759;
-            C = -1.0115660;
-            D = -7.942869e-5;
-            E = -1.4575091E-07;
-            F = 5.5;
-            G = 7.5;
-            H = 5000.;
-        }
-        else if (m_model_type == 2)  // Multistage particle receiver
-        {
-            A = 0.9351;
-            B = -0.0560;
-            C = -0.5519;
-            D = -6.4055e-5;
-            E = -3.1344e-6;
-            F = 5.0;
-            G = 9.1;
-            H = 5000.;
-        }
-
-        q = exp(-Q_inc * 1.e-6 / m_ap_area);
-        val = 180 - fabs(180 - wdir);
-        theta = pow(val, F) * exp(-val / G) / H;
-        eta = A + B*q + C*pow(q, 2) + D*q*v_wind*theta + E*pow(v_wind, 2)*theta;
-        eta = fmax(eta, 0.0);
+        double eta = sandia_efficiency_correlation(m_model_type == 2, Q_inc, v_wind, wdir);
         Q_thermal = eta*Q_inc;
         Tp_out = T_cold_in_rec + Q_thermal / (soln.m_dot_tot * cp);
         converged = true;
@@ -1658,7 +1639,43 @@ void C_falling_particle_receiver::solve_for_defocus_given_flow(s_steady_state_so
 	return;
 }
 
+double C_falling_particle_receiver::sandia_efficiency_correlation(bool is_multistage, double Q_inc, double v_wind, double wind_direc)
+{
+    // Receiver efficiency correlations from Sandia (https://www.osti.gov/biblio/1890267, page 43)
+    // TODO: Check/warn about bounds where the correlation is valid?
+    double q, theta, val, eta;
+    double A, B, C, D, E, F, G, H;
+    if (! is_multistage) // Free-falling particle receiver
+    {
+        A = 0.848109;
+        B = 0.249759;
+        C = -1.0115660;
+        D = -7.942869e-5;
+        E = -1.4575091E-07;
+        F = 5.5;
+        G = 7.5;
+        H = 5000.;
+    }
+    else  // Multistage particle receiver
+    {
+        A = 0.9351;
+        B = -0.0560;
+        C = -0.5519;
+        D = -6.4055e-5;
+        E = -3.1344e-6;
+        F = 5.0;
+        G = 9.1;
+        H = 5000.;
+    }
 
+    q = exp(-Q_inc * 1.e-6 / m_ap_area);
+    val = 180 - fabs(180 - wind_direc);
+    theta = pow(val, F) * exp(-val / G) / H;
+    eta = A + B * q + C * pow(q, 2) + D * q * v_wind * theta + E * pow(v_wind, 2) * theta;
+    eta = fmax(eta, 0.0);
+    return eta;
+
+}
 
 // Solve mass and momentum balances for particle velocity, curtain thickness, particle volume fraction
 void C_falling_particle_receiver::solve_particle_flow(util::matrix_t<double>& mdot_per_elem, util::matrix_t<double>& phip, util::matrix_t<double>& vel, util::matrix_t<double>& th)
@@ -2300,4 +2317,31 @@ util::matrix_t<double> C_falling_particle_receiver::matrix_addition(util::matrix
         }
     }
     return m3;
+}
+
+
+
+
+double C_falling_particle_receiver::estimate_thermal_efficiency(const C_csp_weatherreader::S_outputs& weather, double q_inc)
+{
+    // q_inc in MWt
+    double eta, v_wind, wdir;
+    v_wind = scale_wind_speed(weather.m_wspd);  // Wind speed at receiver height
+    wdir = weather.m_wdir;
+
+    if (m_model_type == 0) // Fixed user-defined receiver efficiency
+    {
+        return m_fixed_efficiency;
+    }
+    else if (m_model_type == 1 || m_model_type == 2) // Receiver efficiency correlations from Sandia (https://www.osti.gov/biblio/1890267, page 43)
+    {
+        eta = 0.0;
+        if (q_inc > 0.0)
+            eta = sandia_efficiency_correlation(m_model_type == 2, q_inc * 1e6, v_wind, wdir);
+        return eta;
+    }
+    else if (m_model_type == 3)        // Quasi-2D physics-based receiver model
+    {
+        throw(C_csp_exception("Estimated thermal efficiency is not set up for particle receiver with quasi-2D model", "Falling particle receiver"));
+    }
 }

@@ -258,8 +258,8 @@ private:
 protected:
 
     void design_point_steady_state(double v_wind_10, double wind_direc, double& eta_thermal, double& W_lift, double& Q_transport_loss, double& q_dot_loss_per_m2_ap, double& tauc_avg);
-
     double calculate_lift_power(double m_dot_tot);
+    double scale_wind_speed(double v_wind_10);
 
     int use_previous_solution(const s_steady_state_soln& soln, const std::vector<s_steady_state_soln>& stored_solns);
     util::matrix_t<double> calculate_flux_profiles(double flux_sum /*W/m2*/, double dni_scale /*-*/, double plant_defocus /*-*/,
@@ -268,6 +268,8 @@ protected:
     void solve_for_mass_flow(s_steady_state_soln& soln);
     void solve_for_mass_flow_and_defocus(s_steady_state_soln& soln, double m_dot_htf_max, const util::matrix_t<double>* flux_map_input);
     void solve_for_defocus_given_flow(s_steady_state_soln& soln, const util::matrix_t<double>* flux_map_input);
+
+    double sandia_efficiency_correlation(bool is_multistage, double Q_inc, double v_wind, double wind_direc);
 
     void solve_particle_flow(util::matrix_t<double>& mdot_per_elem, util::matrix_t<double>& phip, util::matrix_t<double>& vel, util::matrix_t<double>& th);
 
@@ -350,7 +352,7 @@ public:
 
     void overwrite_startup_requirements_to_on();
 
-    
+    double estimate_thermal_efficiency(const C_csp_weatherreader::S_outputs& weather, double q_inc);
 
 };
 

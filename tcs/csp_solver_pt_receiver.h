@@ -155,7 +155,7 @@ public:
 
     virtual double area_proj() = 0; //[m^2]
 
-    double estimate_thermal_efficiency(const C_csp_weatherreader::S_outputs& weather, double q_inc);
+    virtual double estimate_thermal_efficiency(const C_csp_weatherreader::S_outputs& weather, double q_inc);
 
     double get_min_power_delivery(); //[MWt]
 
