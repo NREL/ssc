@@ -1704,8 +1704,8 @@ public:
             rec_pump_coef_des, rec_vel_htf_des, m_dot_htf_rec_des, m_dot_htf_rec_max, q_dot_piping_loss_des);
         assign("q_dot_rec_des", q_dot_rec_des);                 //[MWt]
         assign("eta_rec_thermal_des", eta_rec_thermal_des);     //[-]
-        assign("P_tower_lift_des", W_dot_rec_lift_des);       //[MWe]
-        assign("Q_transport_loss_des", q_dot_piping_loss_des); //MWt
+        assign("P_tower_lift_des", W_dot_rec_lift_des);         //[MWe]
+        assign("Q_transport_loss_des", q_dot_piping_loss_des);  //[MWt]
         assign("m_dot_htf_rec_des", m_dot_htf_rec_des);         //[kg/s]
         assign("m_dot_htf_rec_max", m_dot_htf_rec_max);         //[kg/s]
 

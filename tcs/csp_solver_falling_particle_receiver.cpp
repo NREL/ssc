@@ -192,10 +192,6 @@ void C_falling_particle_receiver::init()
     m_m_dot_htf_des = m_q_rec_des / (c_htf_des * (m_T_htf_hot_des - m_T_htf_cold_des));				//[kg/s]
     m_m_dot_htf_max = m_m_dot_htf_max_frac * m_m_dot_htf_des;	                                    //[kg/s]
     m_q_dot_inc_min = m_q_rec_des * m_f_rec_min / m_eta_therm_des_est;	//[W] Minimum receiver thermal power
-    m_W_dot_pumping_tower_share = (m_m_dot_htf_des * m_h_tower * 9.8067 / m_eta_pump) / 1.e6;       // [MWe]
-    m_W_dot_pumping_rec_share = (m_m_dot_htf_des * m_curtain_height * 9.8067 / m_eta_pump) / 1.e6;  // [MWe]
-    m_W_dot_rec_pump_des_calc = m_W_dot_pumping_tower_share + m_W_dot_pumping_rec_share;
-
 
     // If no startup requirements, then receiver is always ON
         // ... in the sense that the controller doesn't need to worry about startup
@@ -785,9 +781,9 @@ void C_falling_particle_receiver::design_point_steady_state(double v_wind_10, do
     // Solve for incident power needed to achieve design point thermal power to particles (assuming uniform solar flux on the curtain)
     double q_dot_inc_avg, Qtot, tol;
     q_dot_inc_avg = m_q_rec_des / 0.85 / m_curtain_area;  // Initial guess for average incident solar flux on curtain [W/m2]  
-    tol = 1e-2;
+    tol = 1e-6;
 
-    for (int j = 0; j < 10; j++)
+    for (int j = 0; j < 20; j++)
     {
         soln_des.q_dot_inc.resize_fill(m_n_y, m_n_x, q_dot_inc_avg);
         solve_for_mass_flow(soln_des);
@@ -1300,8 +1296,8 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
 
     double Tp_out_after_transport = Tp_out - m_deltaT_transport_hot;  // Outlet temperature accounting from loss from hot particle transport
 
-    double Q_dot_transport_loss_hot = soln.m_dot_tot * cp_hot * m_deltaT_transport_hot;
-    double Q_dot_transport_loss_cold = soln.m_dot_tot * cp_cold * m_deltaT_transport_cold;
+    double Q_dot_transport_loss_hot = soln.m_dot_tot * cp * m_deltaT_transport_hot;
+    double Q_dot_transport_loss_cold = soln.m_dot_tot * cp * m_deltaT_transport_cold;
 
     if (Tp_out <= T_cold_in || Q_thermal != Q_thermal)
     {
