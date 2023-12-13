@@ -187,13 +187,11 @@ protected:
     int m_n_y_rad;          // Number of curtain and back-wall y-element groups for the radiation model (only used if m_model_type == 3 and m_rad_model_type == 1)
 
 
-
     //--- Hard-coded parameters
     double m_tol_od;            //[-]
     double m_eta_therm_des_est; //[-]
     bool m_include_back_wall_convection;    // Include convective heat transfer to back wall (assuming air velocity is the same as the local particle velocity)
     bool m_include_wall_axial_conduction;   // Include axial conduction in the back wall
-
     bool m_invert_matrices;
 
 
@@ -213,14 +211,19 @@ protected:
     util::matrix_t<double> m_vf;            // View factor matrix
     double m_vf_curtain_ap_avg;             // Average view factor between curtain and aperture
 
+    //--- Calculated design point performance
+    double m_W_dot_lift_des_calc;         // Particle lift parasitic load (W)
+    double m_Q_dot_transport_des_calc;    // 
+    double m_q_dot_loss_per_m2_des_calc;  // Receiver loss per aperture area (W/m2)
+    double m_tauc_avg_des_calc;           // Average curtain transparency
 
-    // State variables
+    //--- State variables
     double m_E_su;              //[W-hr] startup energy
     double m_E_su_prev;         //[W-hr] startup energy
     double m_t_su;              //[hr] startup time
     double m_t_su_prev;         //[hr] startup time requirement
 
-    // Stored solutions
+    //--- Stored solutions
     int m_n_max_stored_solns;
     int m_stored_soln_idx;
     std::vector<s_steady_state_soln> m_soln_cache;
@@ -254,12 +257,9 @@ private:
 
 protected:
 
-    void init_mspt_common();
+    void design_point_steady_state(double v_wind_10, double wind_direc, double& eta_thermal, double& W_lift, double& Q_transport_loss, double& q_dot_loss_per_m2_ap, double& tauc_avg);
 
-    void design_point_steady_state(double& eta_thermal_des_calc /*-*/,
-        double& W_dot_rec_pump_des_calc /*MWe*/,
-        double& W_dot_rec_pump__tower_only /*MWe*/, double& W_dot_rec_pump__rec_only /*MWe*/,
-        double& rec_pump_coef /*MWe/MWt*/, double& vel_htf_des /*m/s*/);
+    double calculate_lift_power(double m_dot_tot);
 
     int use_previous_solution(const s_steady_state_soln& soln, const std::vector<s_steady_state_soln>& stored_solns);
     util::matrix_t<double> calculate_flux_profiles(double flux_sum /*W/m2*/, double dni_scale /*-*/, double plant_defocus /*-*/,
@@ -343,10 +343,6 @@ public:
 		const C_csp_solver_sim_info &sim_info) override;
 
 	virtual void converged() override;
-
-    void calc_pump_performance(double rho_f, double mdot /*kg/s*/, double ffact, double& PresDrop_calc /*MPa*/, double& WdotPump_calc /*W*/);
-
-    void calc_pump_performance(double rho_f, double mdot /*kg/s*/, double ffact, double& PresDrop_calc /*MPa*/, double& WdotPump_calc /*W*/, double& ratio_dP_tower_to_rec /*-*/);
 
     double get_pumping_parasitic_coef() override;
 

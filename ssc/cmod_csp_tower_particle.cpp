@@ -423,14 +423,11 @@ static var_info _cm_vtab_csp_tower_particle[] = {
 
         // Receiver Performance
     { SSC_OUTPUT,    SSC_NUMBER, "q_dot_rec_des",                      "Receiver thermal output at design",                                                                                                       "MWt",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
-    //{ SSC_OUTPUT,    SSC_NUMBER, "eta_rec_thermal_des",                "Receiver estimated thermal efficiency at design",                                                                                         "",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
-    //{ SSC_OUTPUT,    SSC_NUMBER, "W_dot_rec_pump_des",                 "Receiver estimated pump power at design",                                                                                                 "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
-    //{ SSC_OUTPUT,    SSC_NUMBER, "W_dot_rec_pump_tower_share_des",     "Receiver estimated pump power due to tower height at design",                                                                             "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
-    //{ SSC_OUTPUT,    SSC_NUMBER, "W_dot_rec_pump_rec_share_des",       "Receiver estimated pump power due to rec tubes at design",                                                                                "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
-    //{ SSC_OUTPUT,    SSC_NUMBER, "vel_rec_htf_des",                    "Receiver estimated tube HTF velocity at design",                                                                                          "m/s",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
-    //{ SSC_OUTPUT,    SSC_NUMBER, "m_dot_htf_rec_des",                  "Receiver HTF mass flow rate at design",                                                                                                   "kg/s",        "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "eta_rec_thermal_des",                "Receiver estimated thermal efficiency at design",                                                                                         "",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "P_tower_lift_des",                   "Receiver and tower estimated particle lift power at design",                                                                              "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "Q_transport_loss_des",               "Receiver estimated particle transport losses at design",                                                                                  "MWt",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "m_dot_htf_rec_des",                  "Receiver HTF mass flow rate at design",                                                                                                   "kg/s",        "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "m_dot_htf_rec_max",                  "Receiver max HTF mass flow rate",                                                                                                         "kg/s",        "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
-    //{ SSC_OUTPUT,    SSC_NUMBER, "q_dot_piping_loss_des",              "Receiver estimated piping loss at design",                                                                                                "MWt",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
 
         // Heater
     { SSC_OUTPUT,    SSC_NUMBER, "q_dot_heater_des",                   "Heater design thermal power",                                                                                                             "MWt",         "",                                  "Heater",                                   "*",                                                                "",              "" },
@@ -1686,25 +1683,22 @@ public:
         assign("L_tower_piping_calc", L_tower_piping);      //[m]
 
         double eta_rec_thermal_des;     //[-]
-        double W_dot_rec_pump_des;      //[MWe]
-        double W_dot_rec_pump_tower_share_des;  //[MWe]
-        double W_dot_rec_pump_rec_share_des;    //[MWe]
-        double rec_pump_coef_des;       //[MWe/MWt]
-        double rec_vel_htf_des;         //[m/s]
+        double W_dot_rec_lift_des;      //[MWe]
         double m_dot_htf_rec_des;       //[kg/s]
-        double q_dot_piping_loss_des;   //[MWt]
         double m_dot_htf_rec_max;       //[kg/s]
+        double W_dot_rec_pump_tower_share_des; // Undefined for particle receiver
+        double W_dot_rec_pump_rec_share_des;   // Undefined for particle receiver
+        double rec_pump_coef_des;              // Undefined for particle receiver
+        double rec_vel_htf_des;                // Undefined for particle receiver
+        double q_dot_piping_loss_des;
         receiver->get_design_performance(eta_rec_thermal_des,
-            W_dot_rec_pump_des, W_dot_rec_pump_tower_share_des, W_dot_rec_pump_rec_share_des,
+            W_dot_rec_lift_des, W_dot_rec_pump_tower_share_des, W_dot_rec_pump_rec_share_des,
             rec_pump_coef_des, rec_vel_htf_des, m_dot_htf_rec_des, m_dot_htf_rec_max, q_dot_piping_loss_des);
         assign("q_dot_rec_des", q_dot_rec_des);                 //[MWt]
         assign("eta_rec_thermal_des", eta_rec_thermal_des);     //[-]
-        assign("W_dot_rec_pump_des", W_dot_rec_pump_des);       //[MWe]
-        assign("W_dot_rec_pump_tower_share_des", W_dot_rec_pump_tower_share_des);     //[MWe]
-        assign("W_dot_rec_pump_rec_share_des", W_dot_rec_pump_rec_share_des);       //[MWe]
-        assign("vel_rec_htf_des", rec_vel_htf_des);             //[m/s]
+        assign("P_tower_lift_des", W_dot_rec_lift_des);       //[MWe]
+        assign("Q_transport_loss_des", q_dot_piping_loss_des); //MWt
         assign("m_dot_htf_rec_des", m_dot_htf_rec_des);         //[kg/s]
-        assign("q_dot_piping_loss_des", q_dot_piping_loss_des); //[MWt]
         assign("m_dot_htf_rec_max", m_dot_htf_rec_max);         //[kg/s]
 
             // *************************
