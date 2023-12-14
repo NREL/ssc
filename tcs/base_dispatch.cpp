@@ -335,7 +335,7 @@ void base_dispatch_opt::set_lp_solve_outputs(lprec* lp)
         lp_outputs.rel_mip_gap = get_mip_gap(lp, FALSE);
 
     // Set suboptimal state flag
-    if ((lp_outputs.solve_state == SUBOPTIMAL) & (solver_params.is_abort_flag)) {
+    if ((lp_outputs.solve_state == SUBOPTIMAL) && (solver_params.is_abort_flag)) {
         if (lp_outputs.solve_iter > solver_params.max_bb_iter) {
             lp_outputs.subopt_flag = INTERATION;    // stop due to iteration count
         }

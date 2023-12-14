@@ -405,7 +405,7 @@ static void calculate_parameters(csp_dispatch_opt *optinst, unordered_map<std::s
             optinst->params.wnet_lim_min.at(t) =  wmin - max_parasitic;
             if( t < nt-1 )
             {
-                double delta_rec_startup = (std::min)(1., (std::max)(optinst->params.e_rec_startup / (std::max)(optinst->params.q_sfavail_expected.at(t + 1)*pars["delta"], 1.), optinst->params.dt_rec_startup / pars["delta"]));
+                double delta_rec_startup = (std::min)(1., (std::max)(optinst->params.e_rec_startup / (std::max)(optinst->params.q_sfavail_expected.at(t + 1)*pars["delta"], 1.), (std::max)(optinst->params.dt_rec_startup / pars["delta"], 1.e-6)));
                 optinst->params.delta_rs.at(t) = delta_rec_startup;
             }
         }
@@ -737,7 +737,7 @@ bool csp_dispatch_opt::optimize()
                 }
 
                 // Receiver startup only during solar positive periods
-                // TODO: This relies on presolve to remove variables (might want to great a special set of solar hours)
+                // TODO: This relies on presolve to remove variables (might want to get a special set of solar hours)
                 // yrsu[t] <= 0 when Qin[t] = 0
                 {
                     i = 0;
