@@ -670,7 +670,7 @@ public:
         int csp_financial_model = as_integer("csp_financial_model");
 
         // temporary
-        int tes_type = 1;
+        int tes_type = 0;
 
         // *****************************************************
         // Check deprecated variables

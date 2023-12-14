@@ -4,7 +4,8 @@
 #include "csp_solver_core.h"
 #include "csp_solver_util.h"
 #include "sam_csp_util.h"
-#include "csp_solver_two_tank_tes.h"
+#include "csp_solver_tes_core.h"
+//#include "csp_solver_two_tank_tes.h"
 
 class C_csp_NTHeatTrap_tes : public C_csp_tes
 {
@@ -12,8 +13,6 @@ private:
 
 	HTFProperties mc_external_htfProps;		// Instance of HTFProperties class for external HTF
 	HTFProperties mc_store_htfProps;		// Instance of HTFProperties class for storage HTF
-
-	C_hx_two_tank_tes mc_hx;
 
 	C_storage_tank mc_cold_tank;			// Instance of storage tank class for the cold tank
 	C_storage_tank mc_hot_tank;				// Instance of storage tank class for the hot tank	
@@ -192,6 +191,18 @@ public:
 
     void get_design_parameters(double& vol_one_temp_avail /*m3*/, double& vol_one_temp_total /*m3*/, double& d_tank /*m*/,
         double& q_dot_loss_des /*MWt*/, double& dens_store_htf_at_T_ave /*kg/m3*/, double& Q_tes /*MWt-hr*/);
+
+    bool charge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/,
+        double T_htf_hot_in, double& T_htf_cold_out /*K*/,
+        double& q_dot_heater /*MWe*/, double& m_dot /*kg/s*/, double& W_dot_rhtf_pump /*MWe*/,
+        double& q_dot_loss /*MWt*/, double& q_dot_dc_to_htf /*MWt*/, double& q_dot_ch_from_htf /*MWt*/,
+        double& T_hot_ave /*K*/, double& T_cold_ave /*K*/, double& T_hot_final /*K*/, double& T_cold_final /*K*/);
+
+    bool discharge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/,
+        double T_htf_cold_in, double& T_htf_hot_out /*K*/,
+        double& q_dot_heater /*MWe*/, double& m_dot /*kg/s*/, double& W_dot_rhtf_pump /*MWe*/,
+        double& q_dot_loss /*MWt*/, double& q_dot_dc_to_htf /*MWt*/, double& q_dot_ch_from_htf /*MWt*/,
+        double& T_hot_ave /*K*/, double& T_cold_ave /*K*/, double& T_hot_final /*K*/, double& T_cold_final /*K*/);
 
 };
 
