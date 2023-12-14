@@ -102,6 +102,8 @@ private:
 
 	double m_m_dot_tes_des_over_m_dot_external_des;	//[-]
 
+
+    // Used for config with hx
 	double get_tes_m_dot(double m_dot_external /*kg/s*/);	//[kg/s]
 
 	double get_external_m_dot(double m_dot_tes /*kg/s*/);	//[kg/s]
@@ -212,13 +214,6 @@ public:
 
     double pipe_vol_tot;	                     //[m^3]
     util::matrix_t<double> pipe_v_dot_rel;       //[-]
-    util::matrix_t<double> pipe_diams;           //[m^3]
-    util::matrix_t<double> pipe_wall_thk;        //[m]
-    util::matrix_t<double> pipe_lengths;         //[m]
-    util::matrix_t<double> pipe_m_dot_des;       //[kg/s]
-    util::matrix_t<double> pipe_vel_des;         //[m/s]
-    util::matrix_t<double> pipe_T_des;           //[C]
-    util::matrix_t<double> pipe_P_des;           //[bar]
     double P_in_des;                             //[bar] Pressure at the inlet to the TES, at the external system side
     
 	virtual bool does_tes_exist();
@@ -268,6 +263,7 @@ public:
 
 	virtual void converged();
 
+    // Missing (not used?)
     void get_final_from_converged(double& f_V_hot /*-*/, double& T_hot_tank /*K*/, double& T_cold_tank /*K*/);
 
 	virtual void write_output_intervals(double report_time_start,
@@ -285,7 +281,6 @@ public:
     void get_design_parameters(double& vol_one_temp_avail /*m3*/, double& vol_one_temp_total /*m3*/, double& d_tank /*m*/,
         double& q_dot_loss_des /*MWt*/, double& dens_store_htf_at_T_ave /*kg/m3*/, double& Q_tes /*MWt-hr*/);
 
-
     double get_max_storage_htf_temp();
 
     double get_min_storage_htf_temp();
@@ -294,6 +289,7 @@ public:
 
     double get_storage_htf_cp();
 
+    // Missing
     bool get_is_hx();
 
 };

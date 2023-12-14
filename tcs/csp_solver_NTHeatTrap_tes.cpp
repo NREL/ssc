@@ -700,7 +700,35 @@ void C_csp_NTHeatTrap_tes::assign(int index, double* p_reporting_ts_array, size_
 double /*MWe*/ C_csp_NTHeatTrap_tes::pumping_power(double m_dot_sf /*kg/s*/, double m_dot_pb /*kg/s*/, double m_dot_tank /*kg/s*/,
     double T_sf_in /*K*/, double T_sf_out /*K*/, double T_pb_in /*K*/, double T_pb_out /*K*/, bool recirculating)
 {
-    return 0;
+    double htf_pump_power = 0.;
+    double rho_sf, rho_pb;
+    double DP_col, DP_gen;
+    double tes_pump_coef = this->m_tes_pump_coef;
+    double pb_pump_coef = this->m_htf_pump_coef;
+    double eta_pump = this->eta_pump;
+
+    if (this->custom_tes_p_loss) {
+        double rho_sf, rho_pb;
+        double DP_col, DP_gen;
+        this->pressure_drops(m_dot_sf, m_dot_pb, T_sf_in, T_sf_out, T_pb_in, T_pb_out, recirculating,
+            DP_col, DP_gen);
+        rho_sf = this->mc_external_htfProps.dens((T_sf_in + T_sf_out) / 2., 8e5);
+        rho_pb = this->mc_external_htfProps.dens((T_pb_in + T_pb_out) / 2., 1e5);
+        htf_pump_power = (DP_col * m_dot_sf / (rho_sf * eta_pump) + DP_gen * m_dot_pb / (rho_pb * eta_pump)) / 1e6;   //[MW]
+    }
+    else {    // original methods
+
+        htf_pump_power = 0.0;	//[MWe]
+        //if (this->tanks_in_parallel) {
+        //    htf_pump_power = pb_pump_coef * (fabs(m_dot_pb - m_dot_sf) + m_dot_pb) / 1000.0;	//[MW]
+        //}
+        //else {
+        //    htf_pump_power = pb_pump_coef * m_dot_pb / 1000.0;	//[MW]
+        //}
+        
+    }
+
+    return htf_pump_power;
 }
 
 
@@ -857,4 +885,80 @@ bool C_csp_NTHeatTrap_tes::discharge(double timestep /*s*/, double T_amb /*K*/, 
     q_dot_dc_to_htf = m_dot_htf_in * cp_htf_ave * (T_htf_hot_out - T_htf_cold_in) / 1000.0;		//[MWt]
 
     return true;
+}
+
+int C_csp_NTHeatTrap_tes::pressure_drops(double m_dot_sf, double m_dot_pb,
+    double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating,
+    double& P_drop_col, double& P_drop_gen)
+{
+    const std::size_t num_sections = 11;          // total number of col. + gen. sections
+    const std::size_t bypass_section = 4;         // bypass section index
+    const std::size_t gen_first_section = 5;      // first generation section index in combined col. gen. loops
+    const double P_hi = 17 / 1.e-5;               // downstream SF pump pressure [Pa]
+    const double P_lo = 1 / 1.e-5;                // atmospheric pressure [Pa]
+    double P, T, rho, v_dot, vel;                 // htf properties
+    double Area;                                  // cross-sectional pipe area
+    double v_dot_src, v_dot_sink;                 // source and sink vol. flow rates
+    double k;                                     // effective minor loss coefficient
+    double Re, ff;
+    double v_dot_ref;
+    double dP_discharge;
+    std::vector<double> P_drops(num_sections, 0.0);
+
+    util::matrix_t<double> L = this->tes_lengths;
+    util::matrix_t<double> D = this->pipe_diams;
+    util::matrix_t<double> k_coeffs = this->k_tes_loss_coeffs;
+    util::matrix_t<double> v_dot_rel = this->pipe_v_dot_rel;
+    m_dot_pb > 0 ? dP_discharge = this->dP_discharge * 1.e5 : dP_discharge = 0.;
+    v_dot_src = m_dot_sf / this->mc_external_htfProps.dens((T_sf_in + T_sf_out) / 2, (P_hi + P_lo) / 2);
+    v_dot_sink = m_dot_pb / this->mc_external_htfProps.dens((T_pb_in + T_pb_out) / 2, P_lo);
+
+    for (std::size_t i = 0; i < num_sections; i++) {
+        if (L.at(i) > 0 && D.at(i) > 0) {
+            (i > 0 && i < 3) ? P = P_hi : P = P_lo;
+            if (i < 3) T = T_sf_in;                                                       // 0, 1, 2
+            if (i == 3 || i == 4) T = T_sf_out;                                           // 3, 4
+            if (i >= gen_first_section && i < gen_first_section + 4) T = T_pb_in;         // 5, 6, 7, 8
+            if (i == gen_first_section + 4) T = (T_pb_in + T_pb_out) / 2.;                // 9
+            if (i == gen_first_section + 5) T = T_pb_out;                                 // 10
+            i < gen_first_section ? v_dot_ref = v_dot_src : v_dot_ref = v_dot_sink;
+            v_dot = v_dot_rel.at(i) * v_dot_ref;
+            Area = CSP::pi * pow(D.at(i), 2) / 4.;
+            vel = v_dot / Area;
+            rho = this->mc_external_htfProps.dens(T, P);
+            Re = this->mc_external_htfProps.Re(T, P, vel, D.at(i));
+            ff = CSP::FrictionFactor(this->pipe_rough / D.at(i), Re);
+            if (i != bypass_section || recirculating) {
+                P_drops.at(i) += CSP::MajorPressureDrop(vel, rho, ff, L.at(i), D.at(i));
+                P_drops.at(i) += CSP::MinorPressureDrop(vel, rho, k_coeffs.at(i));
+            }
+        }
+    }
+
+    P_drop_col = std::accumulate(P_drops.begin(), P_drops.begin() + gen_first_section, 0.0);
+    P_drop_gen = dP_discharge + std::accumulate(P_drops.begin() + gen_first_section, P_drops.end(), 0.0);
+
+    return 0;
+}
+
+double C_csp_NTHeatTrap_tes::get_min_storage_htf_temp()
+{
+    return mc_store_htfProps.min_temp();
+}
+
+double C_csp_NTHeatTrap_tes::get_max_storage_htf_temp()
+{
+    return mc_store_htfProps.max_temp();
+}
+
+double C_csp_NTHeatTrap_tes::get_storage_htf_density()
+{
+    double avg_temp = (m_T_cold_des + m_T_hot_des) / 2.0;
+    return mc_store_htfProps.dens(avg_temp, 0);
+}
+
+double C_csp_NTHeatTrap_tes::get_storage_htf_cp()
+{
+    double avg_temp = (m_T_cold_des + m_T_hot_des) / 2.0;
+    return mc_store_htfProps.Cp(avg_temp);
 }

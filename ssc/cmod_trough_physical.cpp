@@ -670,7 +670,7 @@ public:
         int csp_financial_model = as_integer("csp_financial_model");
 
         // temporary
-        int tes_type = 0;
+        int tes_type = 1;
 
         // *****************************************************
         // Check deprecated variables
@@ -2182,20 +2182,20 @@ public:
         ssc_number_t *p_pipe_loop_P_dsn = allocate("pipe_loop_P_dsn", c_trough.m_P_loop_dsn.size());
         std::copy(c_trough.m_P_loop_dsn.begin(), c_trough.m_P_loop_dsn.end(), p_pipe_loop_P_dsn);
 
-        //ssc_number_t *p_pipe_tes_diams = allocate("pipe_tes_diams", storage.pipe_diams.ncells());
-        //std::copy(storage.pipe_diams.data(), storage.pipe_diams.data() + storage.pipe_diams.ncells(), p_pipe_tes_diams);
-        //ssc_number_t *p_pipe_tes_wallthk = allocate("pipe_tes_wallthk", storage.pipe_wall_thk.ncells());
-        //std::copy(storage.pipe_wall_thk.data(), storage.pipe_wall_thk.data() + storage.pipe_wall_thk.ncells(), p_pipe_tes_wallthk);
-        //ssc_number_t* p_pipe_tes_lengths = allocate("pipe_tes_lengths", storage.pipe_lengths.ncells());
-        //std::copy(storage.pipe_lengths.data(), storage.pipe_lengths.data() + storage.pipe_lengths.ncells(), p_pipe_tes_lengths);
-        //ssc_number_t *p_pipe_tes_mdot_dsn = allocate("pipe_tes_mdot_dsn", storage.pipe_m_dot_des.ncells());
-        //std::copy(storage.pipe_m_dot_des.data(), storage.pipe_m_dot_des.data() + storage.pipe_m_dot_des.ncells(), p_pipe_tes_mdot_dsn);
-        //ssc_number_t *p_pipe_tes_vel_dsn = allocate("pipe_tes_vel_dsn", storage.pipe_vel_des.ncells());
-        //std::copy(storage.pipe_vel_des.data(), storage.pipe_vel_des.data() + storage.pipe_vel_des.ncells(), p_pipe_tes_vel_dsn);
-        //ssc_number_t *p_pipe_tes_T_dsn = allocate("pipe_tes_T_dsn", storage.pipe_T_des.ncells());
-        //std::copy(storage.pipe_T_des.data(), storage.pipe_T_des.data() + storage.pipe_T_des.ncells(), p_pipe_tes_T_dsn);
-        //ssc_number_t *p_pipe_tes_P_dsn = allocate("pipe_tes_P_dsn", storage.pipe_P_des.ncells());
-        //std::copy(storage.pipe_P_des.data(), storage.pipe_P_des.data() + storage.pipe_P_des.ncells(), p_pipe_tes_P_dsn);
+        ssc_number_t *p_pipe_tes_diams = allocate("pipe_tes_diams", storage_pointer->pipe_diams.ncells());
+        std::copy(storage_pointer->pipe_diams.data(), storage_pointer->pipe_diams.data() + storage_pointer->pipe_diams.ncells(), p_pipe_tes_diams);
+        ssc_number_t *p_pipe_tes_wallthk = allocate("pipe_tes_wallthk", storage_pointer->pipe_wall_thk.ncells());
+        std::copy(storage_pointer->pipe_wall_thk.data(), storage_pointer->pipe_wall_thk.data() + storage_pointer->pipe_wall_thk.ncells(), p_pipe_tes_wallthk);
+        ssc_number_t* p_pipe_tes_lengths = allocate("pipe_tes_lengths", storage_pointer->pipe_lengths.ncells());
+        std::copy(storage_pointer->pipe_lengths.data(), storage_pointer->pipe_lengths.data() + storage_pointer->pipe_lengths.ncells(), p_pipe_tes_lengths);
+        ssc_number_t *p_pipe_tes_mdot_dsn = allocate("pipe_tes_mdot_dsn", storage_pointer->pipe_m_dot_des.ncells());
+        std::copy(storage_pointer->pipe_m_dot_des.data(), storage_pointer->pipe_m_dot_des.data() + storage_pointer->pipe_m_dot_des.ncells(), p_pipe_tes_mdot_dsn);
+        ssc_number_t *p_pipe_tes_vel_dsn = allocate("pipe_tes_vel_dsn", storage_pointer->pipe_vel_des.ncells());
+        std::copy(storage_pointer->pipe_vel_des.data(), storage_pointer->pipe_vel_des.data() + storage_pointer->pipe_vel_des.ncells(), p_pipe_tes_vel_dsn);
+        ssc_number_t *p_pipe_tes_T_dsn = allocate("pipe_tes_T_dsn", storage_pointer->pipe_T_des.ncells());
+        std::copy(storage_pointer->pipe_T_des.data(), storage_pointer->pipe_T_des.data() + storage_pointer->pipe_T_des.ncells(), p_pipe_tes_T_dsn);
+        ssc_number_t *p_pipe_tes_P_dsn = allocate("pipe_tes_P_dsn", storage_pointer->pipe_P_des.ncells());
+        std::copy(storage_pointer->pipe_P_des.data(), storage_pointer->pipe_P_des.data() + storage_pointer->pipe_P_des.ncells(), p_pipe_tes_P_dsn);
 
 
         // Monthly outputs

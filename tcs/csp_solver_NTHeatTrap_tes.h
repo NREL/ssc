@@ -1,3 +1,35 @@
+/*
+BSD 3-Clause License
+
+Copyright (c) Alliance for Sustainable Energy, LLC. See also https://github.com/NREL/ssc/blob/develop/LICENSE
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #ifndef __csp_solver_NTHeatTrap_tes_
 #define __csp_solver_NTHeatTrap_tes_
 
@@ -5,7 +37,6 @@
 #include "csp_solver_util.h"
 #include "sam_csp_util.h"
 #include "csp_solver_tes_core.h"
-//#include "csp_solver_two_tank_tes.h"
 
 class C_csp_NTHeatTrap_tes : public C_csp_tes
 {
@@ -61,32 +92,32 @@ public:
     util::matrix_t<double> m_external_fl_props;
     int m_tes_fl;
     util::matrix_t<double> m_tes_fl_props;
-    double m_q_dot_design;      //[MWe] Design heat rate in and out of tes
-    double m_frac_max_q_dot;    //[-] the max design heat rate as a fraction of the nominal
-    double m_Q_tes_des;         //[MWt-hr] design storage capacity
-    double m_h_tank;			//[m] tank height
-    double m_u_tank;			//[W/m^2-K]
-    int m_tank_pairs;			//[-]
-    double m_hot_tank_Thtr;		//[C] convert to K in init()
-    double m_hot_tank_max_heat;	//[MW]
-    double m_cold_tank_Thtr;	//[C] convert to K in init()
-    double m_cold_tank_max_heat;//[MW]
-    double m_dt_hot;			//[C] Temperature difference across heat exchanger - assume hot and cold deltaTs are equal
-    double m_T_cold_des;	    //[C] convert to K in init()
-    double m_T_hot_des;	        //[C] convert to K in init()
-    double m_dP_src_des;        //[bar] Total source pressure drop at design
-    double m_T_tank_hot_ini;	//[C] Initial temperature in hot storage tank
-    double m_T_tank_cold_ini;	//[C] Initial temperature in cold storage cold
-    double m_h_tank_min;		//[m] Minimum allowable HTF height in storage tank
-    double m_f_V_hot_ini;       //[%] Initial fraction of available volume that is hot
-    double m_htf_pump_coef;		//[kW/kg/s] Pumping power to move 1 kg/s of HTF through sink
-    double m_tes_pump_coef;		//[kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
-    double eta_pump;            //[-] Pump efficiency, for newer pumping calculations
-    bool tanks_in_parallel;     //[-] Whether the tanks are in series or parallel with the external system. Series means external htf must go through storage tanks.
-    bool has_hot_tank_bypass;   //[-] True if the bypass valve causes the external htf to bypass just the hot tank and enter the cold tank before flowing back to the external system.
-    double T_tank_hot_inlet_min; //[C] Minimum external htf temperature that may enter the hot tank
-    double V_tes_des;           //[m/s] Design-point velocity for sizing the diameters of the TES piping
-    bool custom_tes_p_loss;     //[-] True if the TES piping losses should be calculated using the TES pipe lengths and minor loss coeffs, false if using the pumping loss parameters
+    double m_q_dot_design;                    //[MWe] Design heat rate in and out of tes
+    double m_frac_max_q_dot;                  //[-] the max design heat rate as a fraction of the nominal
+    double m_Q_tes_des;                       //[MWt-hr] design storage capacity
+    double m_h_tank;			              //[m] tank height
+    double m_u_tank;			              //[W/m^2-K]
+    int m_tank_pairs;			              //[-]
+    double m_hot_tank_Thtr;		              //[C] convert to K in init()
+    double m_hot_tank_max_heat;	              //[MW]
+    double m_cold_tank_Thtr;	              //[C] convert to K in init()
+    double m_cold_tank_max_heat;              //[MW]
+    double m_dt_hot;			              //[C] Temperature difference across heat exchanger - assume hot and cold deltaTs are equal
+    double m_T_cold_des;	                  //[C] convert to K in init()
+    double m_T_hot_des;	                      //[C] convert to K in init()
+    double m_dP_src_des;                      //[bar] Total source pressure drop at design
+    double m_T_tank_hot_ini;	              //[C] Initial temperature in hot storage tank
+    double m_T_tank_cold_ini;	              //[C] Initial temperature in cold storage cold
+    double m_h_tank_min;		              //[m] Minimum allowable HTF height in storage tank
+    double m_f_V_hot_ini;                     //[%] Initial fraction of available volume that is hot
+    double m_htf_pump_coef;		              //[kW/kg/s] Pumping power to move 1 kg/s of HTF through sink
+    double m_tes_pump_coef;		              //[kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
+    double eta_pump;                          //[-] Pump efficiency, for newer pumping calculations
+    bool tanks_in_parallel;                   //[-] Whether the tanks are in series or parallel with the external system. Series means external htf must go through storage tanks.
+    bool has_hot_tank_bypass;                 //[-] True if the bypass valve causes the external htf to bypass just the hot tank and enter the cold tank before flowing back to the external system.
+    double T_tank_hot_inlet_min;              //[C] Minimum external htf temperature that may enter the hot tank
+    double V_tes_des;                         //[m/s] Design-point velocity for sizing the diameters of the TES piping
+    bool custom_tes_p_loss;                   //[-] True if the TES piping losses should be calculated using the TES pipe lengths and minor loss coeffs, false if using the pumping loss parameters
     bool custom_tes_pipe_sizes;               //[-] True if the TES diameters and wall thicknesses parameters should be used instead of calculating them
     util::matrix_t<double> k_tes_loss_coeffs; //[-] Combined minor loss coefficients of the fittings and valves in the collection (including bypass) and generation loops in the TES 
     util::matrix_t<double> tes_diams;         //[m] Imported inner diameters for the TES piping as read from the modified output files
@@ -98,7 +129,9 @@ public:
 
     C_csp_reported_outputs mc_reported_outputs;
 
-
+    double pipe_vol_tot;	                     //[m^3]
+    util::matrix_t<double> pipe_v_dot_rel;       //[-]
+    double P_in_des;                             //[bar] Pressure at the inlet to the TES, at the external system side
 
 
 	C_csp_NTHeatTrap_tes(
@@ -203,6 +236,18 @@ public:
         double& q_dot_heater /*MWe*/, double& m_dot /*kg/s*/, double& W_dot_rhtf_pump /*MWe*/,
         double& q_dot_loss /*MWt*/, double& q_dot_dc_to_htf /*MWt*/, double& q_dot_ch_from_htf /*MWt*/,
         double& T_hot_ave /*K*/, double& T_cold_ave /*K*/, double& T_hot_final /*K*/, double& T_cold_final /*K*/);
+
+    int pressure_drops(double m_dot_sf, double m_dot_pb,
+        double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating,
+        double& P_drop_col, double& P_drop_gen);
+
+    double get_max_storage_htf_temp();
+
+    double get_min_storage_htf_temp();
+
+    double get_storage_htf_density();
+
+    double get_storage_htf_cp();
 
 };
 

@@ -671,6 +671,15 @@ public:
 
 	~C_csp_tes(){};
 
+    // Fields added TMB 12.14.2023 shared by storage classes, in cmods
+    util::matrix_t<double> pipe_diams;           //[m^3]
+    util::matrix_t<double> pipe_wall_thk;        //[m]
+    util::matrix_t<double> pipe_lengths;         //[m]
+    util::matrix_t<double> pipe_m_dot_des;       //[kg/s]
+    util::matrix_t<double> pipe_vel_des;         //[m/s]
+    util::matrix_t<double> pipe_T_des;           //[C]
+    util::matrix_t<double> pipe_P_des;           //[bar]
+
     struct S_csp_tes_init_inputs
     {
         double T_to_cr_at_des;		    //[K]
