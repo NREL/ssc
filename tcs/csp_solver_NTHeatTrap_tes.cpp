@@ -686,15 +686,30 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
 
 void C_csp_NTHeatTrap_tes::converged()
 {
+    mc_cold_tank.converged();
+    mc_hot_tank.converged();
+    //mc_hx.converged();
+
+    // Set reported sink converged values
+    mc_reported_outputs.value(E_HOT_TANK_HTF_PERC_FINAL, mc_hot_tank.get_mass_avail() / m_mass_total_active * 100.0);
+
+    mc_reported_outputs.set_timestep_outputs();
+
+    // The max charge and discharge flow rates should be set at the beginning of each timestep
+    //   during the q_dot_xx_avail_est calls
+    // m_m_dot_tes_dc_max = m_m_dot_tes_ch_max = std::numeric_limits<double>::quiet_NaN();
 }
 
 void C_csp_NTHeatTrap_tes::write_output_intervals(double report_time_start,
     const std::vector<double>& v_temp_ts_time_end, double report_time_end)
 {
+    mc_reported_outputs.send_to_reporting_ts_array(report_time_start,
+        v_temp_ts_time_end, report_time_end);
 }
 
 void C_csp_NTHeatTrap_tes::assign(int index, double* p_reporting_ts_array, size_t n_reporting_ts_array)
 {
+    mc_reported_outputs.assign(index, p_reporting_ts_array, n_reporting_ts_array);
 }
 
 double /*MWe*/ C_csp_NTHeatTrap_tes::pumping_power(double m_dot_sf /*kg/s*/, double m_dot_pb /*kg/s*/, double m_dot_tank /*kg/s*/,
