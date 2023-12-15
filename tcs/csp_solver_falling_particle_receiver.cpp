@@ -1271,7 +1271,10 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
                 soln.T_back_wall = Twnew;
                 soln.T_front_wall = Twfnew;
                 soln.T_back_wall_avg = Twavg;
-                soln.T_back_wall_max = Twmax; 
+                soln.T_back_wall_max = Twmax;
+                Tp = Tpnew;
+                Tw = Twnew;
+                Twf = Twfnew;
                 break;
             }
 
