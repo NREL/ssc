@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "sam_csp_util.h"
 #include "csp_solver_tes_core.h"
 
-class C_storage_tank_NT
+class C_storage_tank_dynamic_NT
 {
 private:
     HTFProperties mc_htf;
@@ -66,9 +66,30 @@ private:
     double m_T_calc;		    //[K] Temperature of storage fluid in tank
     double m_m_calc;		    //[kg] Mass of storage fluid in tank
 
+
+    // Added TMB 12.15.2023
+    double m_radius;   //[m]
+    double m_length_total;  //[m]
+    double m_wall_thickness;    //[m]
+
+
+    double m_wall_dens; // [kg/m3]
+
+
+    double m_volume_total; //[m3]
+
+
+    // Added surface area of tank wall as piston moves
+    double calc_SA_rate(double mdot_htf /*kg/s*/, double T_htf /*K*/);
+
+    // Added mass flow of tank wall as piston moves
+    double calc_mdot_expansion(double piston_rate /*m/s*/);
+
+    double calc_tank_wall_volume(double fluid_mass /*kg*/, double T_htf /*K*/);
+
 public:
 
-    C_storage_tank_NT();
+    C_storage_tank_dynamic_NT();
 
     double calc_mass_at_prev();
 
@@ -88,18 +109,22 @@ public:
         double h_tank /*m*/, double h_min /*m*/, double u_tank /*W/m2-K*/,
         double tank_pairs /*-*/, double T_htr /*K*/, double max_q_htr /*MWt*/,
         double V_ini /*m3*/, double T_ini /*K*/,
-        double T_design /*K*/);
+        double T_design /*K*/,
+        double length_total /*m*/, double wall_thickness /*m*/, double wall_dens /*kg/m3*/);
 
     double m_dot_available(double f_unavail, double timestep);
 
     void energy_balance(double timestep /*s*/, double m_dot_in /*kg/s*/, double m_dot_out /*kg/s*/,
         double T_in /*K*/, double T_amb /*K*/,
+        double T_tank_in, /*K*/
         double& T_ave /*K*/, double& q_heater /*MW*/, double& q_dot_loss /*MW*/);
 
     void energy_balance_constant_mass(double timestep /*s*/, double m_dot_in, double T_in /*K*/, double T_amb /*K*/,
         double& T_ave /*K*/, double& q_heater /*MW*/, double& q_dot_loss /*MW*/);
 
     void converged();
+
+    
 };
 
 class C_csp_cold_tes_NT
@@ -113,8 +138,8 @@ private:
 
     //Storage_HX mc_hx_storage;				// Instance of Storage_HX class for heat exchanger between storage and field HTFs
 
-    C_storage_tank_NT mc_cold_tank_NT;			// Instance of storage tank class for the cold tank
-    C_storage_tank_NT mc_hot_tank_NT;				// Instance of storage tank class for the hot tank	
+    C_storage_tank_dynamic_NT mc_cold_tank_NT;			// Instance of storage tank class for the cold tank
+    C_storage_tank_dynamic_NT mc_hot_tank_NT;				// Instance of storage tank class for the hot tank	
 
     // member string for exception messages
     std::string error_msg;
@@ -203,6 +228,8 @@ public:
         int m_ctes_type;			//2= two tank (this model) 3=three node (other model)
         double m_dot_cw_cold;		//[kg/sec]	Mass flow of storage water between cold storage and radiative field HX.
         double m_lat;           //Latitude [degrees]
+
+
 
         S_params()
         {
@@ -298,8 +325,8 @@ private:
 	HTFProperties mc_external_htfProps;		// Instance of HTFProperties class for external HTF
 	HTFProperties mc_store_htfProps;		// Instance of HTFProperties class for storage HTF
 
-	C_storage_tank_NT mc_cold_tank_NT;			// Instance of storage tank class for the cold tank
-	C_storage_tank_NT mc_hot_tank_NT;				// Instance of storage tank class for the hot tank	
+    C_storage_tank_dynamic_NT mc_cold_tank_NT;			// Instance of storage tank class for the cold tank
+    C_storage_tank_dynamic_NT mc_hot_tank_NT;				// Instance of storage tank class for the hot tank	
 
 	// member string for exception messages
 	std::string error_msg;
@@ -501,7 +528,6 @@ public:
     double get_storage_htf_density();
 
     double get_storage_htf_cp();
-
 };
 
 
