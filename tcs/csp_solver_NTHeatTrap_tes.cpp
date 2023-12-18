@@ -265,7 +265,7 @@ void C_storage_tank_dynamic_NT::energy_balance(double timestep /*s*/, double m_d
     double m_prev_total = m_m_prev + m_tank_prev;
 
     // Tank is either expanding or contracting
-    if (diff_m_dot != 0.0)
+    if (diff_m_dot_total != 0.0)
     {
         // NEW
         // m_dot_in (NOW wall mass in and fluid mass in)
@@ -315,7 +315,6 @@ void C_storage_tank_dynamic_NT::energy_balance(double timestep /*s*/, double m_d
         if (timestep < 1.e-6)
             T_ave = a_coef / b_coef + (m_T_prev - a_coef / b_coef) * pow(std::max((timestep * c_coef / m_prev_total + 1.0), 0.0), -b_coef / c_coef);  // Limiting expression for small time step	
         q_dot_loss = m_UA * (T_ave - T_amb) / 1.E6;		//[MW]
-
     }
 
     // Tank is stagnant
@@ -358,7 +357,6 @@ void C_storage_tank_dynamic_NT::energy_balance(double timestep /*s*/, double m_d
             T_ave = c_coef / b_coef + (m_T_prev - c_coef / b_coef) * exp(-b_coef * timestep);  // Limiting expression for small time step	
         q_dot_loss = m_UA * (T_ave - T_amb) / 1.E6;		//[MW]
     }
-
 
     if (tank_is_empty) {
         // set to actual values
@@ -1669,6 +1667,8 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
 
             T_sink_htf_in_hot = (m_dot_tes_dc * T_htf_tes_hot + m_dot_cr_to_cv_hot * T_cr_out_hot) / m_dot_cv_hot_to_sink;   //[K]
         }
+
+
     }
     else // Serial tank operation
     {
@@ -1958,6 +1958,7 @@ bool C_csp_NTHeatTrap_tes::charge(double timestep /*s*/, double T_amb /*K*/, dou
     // Calculate thermal power to HTF
     double cp_htf_ave = mc_external_htfProps.Cp_ave(T_htf_cold_out, T_htf_hot_in);		//[kJ/kg-K]
     q_dot_ch_from_htf = m_dot_htf_in * cp_htf_ave * (T_htf_hot_in - T_htf_cold_out) / 1000.0;		//[MWt]
+
 
     return true;
 

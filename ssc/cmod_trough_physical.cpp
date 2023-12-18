@@ -669,8 +669,7 @@ public:
         int sim_type = as_integer("sim_type");
         int csp_financial_model = as_integer("csp_financial_model");
 
-        // temporary
-        int tes_type = 1;
+        int tes_type = as_integer("tes_type");
 
         // *****************************************************
         // Check deprecated variables
