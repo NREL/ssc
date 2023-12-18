@@ -783,7 +783,7 @@ void C_falling_particle_receiver::design_point_steady_state(double v_wind_10, do
     q_dot_inc_avg = m_q_rec_des / 0.85 / m_curtain_area;  // Initial guess for average incident solar flux on curtain [W/m2]  
     tol = 1e-6;
 
-    for (int j = 0; j < 20; j++)
+    for (int j = 0; j < 40; j++)
     {
         soln_des.q_dot_inc.resize_fill(m_n_y, m_n_x, q_dot_inc_avg);
         solve_for_mass_flow(soln_des);
