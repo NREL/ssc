@@ -310,9 +310,10 @@ void cm_windpower::exec()
         newMaxTurbines = as_integer("max_turbine_override");
         wpc.SetMaxTurbines(newMaxTurbines);
     }
+    /* Try turning this off and see what happens (Matt)
 	if (wpc.nTurbines > wpc.GetMaxTurbines())
 		throw exec_error("windpower", util::format("the wind model is only configured to handle up to %d turbines.", wpc.GetMaxTurbines()));
-
+    */
 	// create adjustment factors and losses - set them up initially here for the Weibull distribution method, rewrite them later with nrec for the time series method
 	adjustment_factors haf(this, "adjust");
 	if (!haf.setup())

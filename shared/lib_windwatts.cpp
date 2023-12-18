@@ -138,13 +138,13 @@ windPowerCalculator::windPowerUsingResource(double windSpeed, double windDirDeg,
         errDetails = "Wake model not initialized.";
         return 0;
     }
-
+    /*
     if ((nTurbines > MAX_WIND_TURBINES) || (nTurbines < 1))
 	{
 		errDetails = "The number of wind turbines was greater than the maximum allowed in the wake model.";
 		return 0;
 	}
-
+    */
 	size_t i, j;
 	//unsigned char wt_id[MAX_WIND_TURBINES], wid; // unsigned char has 256 limit
     size_t wid;
@@ -369,13 +369,13 @@ bool windPowerCalculator::windPowerUsingDistribution(std::vector<std::vector<dou
         errDetails = "Wake model not initialized.";
         return false;
     }
-
+    /*
     if ((nTurbines > MAX_WIND_TURBINES) || (nTurbines < 1))
     {
         errDetails = "The number of wind turbines was greater than the maximum allowed in the wake model.";
         return false;
     }
-
+    */
     size_t i, j;
     //unsigned char wt_id[MAX_WIND_TURBINES], wid; // unsigned char has 256 limit
     size_t wid;
