@@ -515,7 +515,7 @@ var_info_invalid
 
 var_info vtab_adjustment_factors[] = {
 { SSC_INPUT,SSC_NUMBER  , "adjust_constant"                      , "Constant loss adjustment"                                       , "%",
-"'adjust' and 'constant' separated by _ instead of : after SAM 2022.12.21",                                      "Adjustment Factors"   , "*"              , "MAX=100"               , ""},
+"'adjust' and 'constant' separated by _ instead of : after SAM 2022.12.21",                                      "Adjustment Factors"   , "?=0"              , "MAX=100"               , ""},
 { SSC_INPUT, SSC_NUMBER,     "adjust_en_timeindex"        , "Enable lifetime adjustment factors",     "0/1",
 "'adjust' and 'en_timeindex' separated by _ instead of : after SAM 2022.12.21",                      "Adjustment Factors",      "?=0",                       "BOOLEAN",                                         "" },
 { SSC_INPUT, SSC_NUMBER,     "adjust_en_periods"        , "Enable period-based adjustment factors",     "0/1",
@@ -534,7 +534,7 @@ var_info_invalid };
 
 var_info vtab_dc_adjustment_factors[] = {
 { SSC_INPUT,SSC_NUMBER  , "dc_adjust_constant"                   , "DC Constant loss adjustment"                                    , "%",
-"'dc_adjust' and 'constant' separated by _ instead of : after SAM 2022.12.21"                                      , "Adjustment Factors"   , "*"               , "MAX=100"               , ""},
+"'dc_adjust' and 'constant' separated by _ instead of : after SAM 2022.12.21"                                      , "Adjustment Factors"   , "?=0"               , "MAX=100"               , ""},
 { SSC_INPUT, SSC_NUMBER,     "dc_adjust_en_timeindex"        , "Enable lifetime adjustment factors",     "0/1",      "",                      "Adjustment Factors",      "?=0",                       "BOOLEAN",                                         "" },
 { SSC_INPUT, SSC_NUMBER,     "dc_adjust_en_periods"        , "Enable period-based adjustment factors",     "0/1",      "",                      "Adjustment Factors",      "?=0",                       "BOOLEAN",                                         "" },
 /* removed from UI but still used in scripts
@@ -549,7 +549,7 @@ var_info_invalid };
 
 var_info vtab_sf_adjustment_factors[] = {
 { SSC_INPUT,SSC_NUMBER  , "sf_adjust_constant"                   , "SF Constant loss adjustment"                                    , "%",
-"'sf_adjust' and 'constant' separated by _ instead of : after SAM 2022.12.21"                                      , "Adjustment Factors"   , "*"              , "MAX=100"               , ""},
+"'sf_adjust' and 'constant' separated by _ instead of : after SAM 2022.12.21"                                      , "Adjustment Factors"   , "?=0"              , "MAX=100"               , ""},
 { SSC_INPUT, SSC_NUMBER,     "sf_adjust_en_timeindex"        , "Enable lifetime adjustment factors",     "0/1",      "",                      "Adjustment Factors",      "?=0",                       "BOOLEAN",                                         "" },
 { SSC_INPUT, SSC_NUMBER,     "sf_adjust_en_periods"        , "Enable period-based adjustment factors",     "0/1",      "",                      "Adjustment Factors",      "?=0",                       "BOOLEAN",                                         "" },
 /* removed from UI but still used in scripts
