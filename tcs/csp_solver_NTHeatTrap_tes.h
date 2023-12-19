@@ -76,7 +76,7 @@ private:
 
 
 
-    double m_volume_total; //[m3]
+    double m_volume_combined; //[m3]
 
 
     // Added surface area of tank wall as piston moves
@@ -107,12 +107,16 @@ public:
 
     double get_mass_avail();    //[kg]
 
+    double get_fluid_vol(); // m3
+
+    double get_radius();    // m
+
     void init(HTFProperties htf_class_in, double V_tank /*m3*/,
         double h_tank /*m*/, double h_min /*m*/, double u_tank /*W/m2-K*/,
         double tank_pairs /*-*/, double T_htr /*K*/, double max_q_htr /*MWt*/,
         double V_ini /*m3*/, double T_ini /*K*/,
         double T_design /*K*/,
-        double length_total /*m*/,
+        double V_combined_tanks /*m3*/,
         double tank_wall_cp,            // [J/kg-K] Tank wall specific heat
         double tank_wall_dens,          // [kg/m3] Tank wall density
         double tank_wall_thick         // [m] Tank wall thickness)
@@ -177,13 +181,18 @@ private:
 
 	double m_m_dot_tes_des_over_m_dot_external_des;	//[-]
 
-
+    // Added for NT
     double m_tank_wall_cp;      //[J/kg-K]
     double m_tank_wall_dens;    //[kg/m3]
     double m_tank_wall_thick;   //[m]
     double m_piston_percent;    //[%]
     double m_piston_location;   //[m] Piston distance from left side
 
+    // Added for NT, calc in init
+    double m_radius;        //[m] radius of tank
+    double m_length_total;  //[m] Total length of tank (two tanks combined)
+
+    void calc_piston_location(double& piston_loc, double& piston_frac);
 
 public:
 
@@ -197,7 +206,15 @@ public:
 		E_MASS_COLD_TANK,	//[kg] Mass in cold tank at end of timestep
 		E_MASS_HOT_TANK,		//[kg] Mass in hot tank at end of timestep
 		E_HOT_TANK_HTF_PERC_FINAL,   //[%] Final percent fill of available hot tank mass
-		E_W_DOT_HTF_PUMP    //[MWe]
+		E_W_DOT_HTF_PUMP,    //[MWe]
+
+        // NT Only Outputs
+        E_VOL_COLD,
+        E_VOL_HOT,
+        E_VOL_TOT,
+        E_PIST_LOC,
+        E_PIST_FRAC,
+        E_COLD_FRAC
 	};
 
 

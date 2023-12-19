@@ -413,7 +413,6 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,       SSC_NUMBER,      "tes_htf_min_temp",                 "Minimum storage htf temp",                                                 "C",             "",               "Power Cycle",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "tes_htf_max_temp",                 "Maximum storage htf temp",                                                 "C",             "",               "Power Cycle",    "*",                                "",                      "" },
 
-
     // Collector
     { SSC_OUTPUT,       SSC_MATRIX,      "csp_dtr_sca_ap_lengths",           "Length of single module",                                                  "m",             "",               "Collector",      "?=0",                              "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "csp_dtr_sca_calc_zenith",          "Calculated zenith",                                                        "degree",        "",               "Collector",      "?=0",                              "",                      "" },
@@ -563,6 +562,14 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_cycle_to_field",      "Mass flow: cycle to field",                                                        "kg/s",         "",               "TES",            "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "m_dot_cold_tank_to_hot_tank", "Mass flow: cold tank to hot tank",                                               "kg/s",         "",               "TES",            "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_htf_pump_power",         "TES HTF pump power",                                                              "MWe",          "",               "TES",            "sim_type=1",                       "",                      "" },
+
+    // NT TES
+    { SSC_OUTPUT,       SSC_ARRAY,       "vol_tes_cold",              "TES cold fluid volume",                                                            "m3",           "",               "TES",            "sim_type=1&tes_type=1",            "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "vol_tes_hot",               "TES hot fluid volume",                                                             "m3" ,          "",               "TES",            "sim_type=1&tes_type=1",            "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "vol_tes_tot",               "TES total fluid volume",                                                           "m3",           "",               "TES",            "sim_type=1&tes_type=1",            "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_piston_loc",            "TES Piston Distance from left (cold) side",                                        "m",            "",               "TES",            "sim_type=1&tes_type=1",            "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_piston_frac",           "TES Piston fraction of cold distance over total",                                  "",             "",               "TES",            "sim_type=1&tes_type=1",            "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_cold_vol_frac",         "TES Volume fraction of cold over total",                                           "",             "",               "TES",            "sim_type=1&tes_type=1",            "",                      "" },
 
 
     //{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_tes_dc",              "TES discharge mass flow rate",                                                     "kg/s",         "",               "TES",            "*",                       "",                      "" },
@@ -1325,14 +1332,21 @@ public:
             storage_pointer = &storage_NT;
 
             // Set storage outputs
-            storage_NT.mc_reported_outputs.assign(C_csp_two_tank_tes::E_Q_DOT_LOSS, allocate("tank_losses", n_steps_fixed), n_steps_fixed);
-            storage_NT.mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HEATER, allocate("q_tes_heater", n_steps_fixed), n_steps_fixed);
-            storage_NT.mc_reported_outputs.assign(C_csp_two_tank_tes::E_TES_T_HOT, allocate("T_tes_hot", n_steps_fixed), n_steps_fixed);
-            storage_NT.mc_reported_outputs.assign(C_csp_two_tank_tes::E_TES_T_COLD, allocate("T_tes_cold", n_steps_fixed), n_steps_fixed);
-            storage_NT.mc_reported_outputs.assign(C_csp_two_tank_tes::E_M_DOT_TANK_TO_TANK, allocate("m_dot_cold_tank_to_hot_tank", n_steps_fixed), n_steps_fixed);
-            storage_NT.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_COLD_TANK, allocate("mass_tes_cold", n_steps_fixed), n_steps_fixed);
-            storage_NT.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_HOT_TANK, allocate("mass_tes_hot", n_steps_fixed), n_steps_fixed);
-            storage_NT.mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HTF_PUMP, allocate("tes_htf_pump_power", n_steps_fixed), n_steps_fixed);
+            storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_Q_DOT_LOSS, allocate("tank_losses", n_steps_fixed), n_steps_fixed);
+            storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_W_DOT_HEATER, allocate("q_tes_heater", n_steps_fixed), n_steps_fixed);
+            storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_TES_T_HOT, allocate("T_tes_hot", n_steps_fixed), n_steps_fixed);
+            storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_TES_T_COLD, allocate("T_tes_cold", n_steps_fixed), n_steps_fixed);
+            storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_M_DOT_TANK_TO_TANK, allocate("m_dot_cold_tank_to_hot_tank", n_steps_fixed), n_steps_fixed);
+            storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_MASS_COLD_TANK, allocate("mass_tes_cold", n_steps_fixed), n_steps_fixed);
+            storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_MASS_HOT_TANK, allocate("mass_tes_hot", n_steps_fixed), n_steps_fixed);
+            storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_W_DOT_HTF_PUMP, allocate("tes_htf_pump_power", n_steps_fixed), n_steps_fixed);
+
+            storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_VOL_COLD, allocate("vol_tes_cold", n_steps_fixed), n_steps_fixed);
+            storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_VOL_HOT, allocate("vol_tes_hot", n_steps_fixed), n_steps_fixed);
+            storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_VOL_TOT, allocate("vol_tes_tot", n_steps_fixed), n_steps_fixed);
+            storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_PIST_LOC, allocate("tes_piston_loc", n_steps_fixed), n_steps_fixed);
+            storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_PIST_FRAC, allocate("tes_piston_frac", n_steps_fixed), n_steps_fixed);
+            storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_COLD_FRAC, allocate("tes_cold_vol_frac", n_steps_fixed), n_steps_fixed);
         }
         else
         {

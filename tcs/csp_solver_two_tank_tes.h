@@ -423,7 +423,7 @@ public:
 		E_MASS_COLD_TANK,	//[kg] Mass in cold tank at end of timestep
 		E_MASS_HOT_TANK,		//[kg] Mass in hot tank at end of timestep
         E_HOT_TANK_HTF_PERC_FINAL,   //[%] Final percent fill of available hot tank mass
-        E_W_DOT_HTF_PUMP    //[MWe]
+        E_W_DOT_HTF_PUMP,    //[MWe]
 	};
 
 	C_csp_two_tank_tes(
