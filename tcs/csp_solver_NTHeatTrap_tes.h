@@ -68,10 +68,12 @@ private:
     // Added TMB 12.15.2023
     double m_radius;   //[m]
     double m_length_total;  //[m]
-    double m_wall_thickness;    //[m]
-    double m_u_tank;  // [W/m2-K]
 
-    double m_wall_dens; // [kg/m3]
+    double m_tank_wall_cp;           //[J/kgK]
+    double m_tank_wall_dens;         //[kg/m3]
+    double m_tank_wall_thick;        //[m]
+    double m_u_tank;                 //[W/m2-K]
+
 
 
     double m_volume_total; //[m3]
@@ -110,7 +112,11 @@ public:
         double tank_pairs /*-*/, double T_htr /*K*/, double max_q_htr /*MWt*/,
         double V_ini /*m3*/, double T_ini /*K*/,
         double T_design /*K*/,
-        double length_total /*m*/, double wall_thickness /*m*/, double wall_dens /*kg/m3*/);
+        double length_total /*m*/,
+        double tank_wall_cp,            // [J/kg-K] Tank wall specific heat
+        double tank_wall_dens,          // [kg/m3] Tank wall density
+        double tank_wall_thick         // [m] Tank wall thickness)
+        );
 
     double m_dot_available(double f_unavail, double timestep);
 
@@ -172,6 +178,9 @@ private:
 	double m_m_dot_tes_des_over_m_dot_external_des;	//[-]
 
 
+    double m_tank_wall_cp;      //[J/kg-K]
+    double m_tank_wall_dens;    //[kg/m3]
+    double m_tank_wall_thick;   //[m]
     double m_piston_percent;    //[%]
     double m_piston_location;   //[m] Piston distance from left side
 
@@ -262,6 +271,11 @@ public:
         double f_V_hot_ini,                          // [%] Initial fraction of available volume that is hot
         double htf_pump_coef,		                 // [kW/kg/s] Pumping power to move 1 kg/s of HTF through sink
         bool tanks_in_parallel,                      // [-] Whether the tanks are in series or parallel with the external system. Series means external htf must go through storage tanks.
+
+        double tank_wall_cp,                         // [J/kg-K] Tank wall specific heat
+        double tank_wall_dens,                       // [kg/m3] Tank wall density
+        double tank_wall_thick = 0,                  // [m] Tank wall thickness
+
         double V_tes_des = 1.85,                     // [m/s] Design-point velocity for sizing the diameters of the TES piping
         bool calc_design_pipe_vals = true,           // [-] Should the HTF state be calculated at design conditions
         double tes_pump_coef = std::numeric_limits<double>::quiet_NaN(),		// [kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop

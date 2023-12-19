@@ -211,6 +211,13 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "h_tank_min",                "Minimum allowable HTF height in storage tank",                                     "m",            "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "init_hot_htf_percent",      "Initial fraction of avail. vol that is hot",                                       "%",            "",               "TES",            "*",                       "",                      "" },
 
+
+    // TES Norwich HeatTrap
+    { SSC_INPUT,        SSC_NUMBER,      "tes_tank_thick",            "Tank wall thickness (used for Norwich HeatTrap)",                                  "m",            "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_tank_cp",               "Tank wall cp (used for Norwich HeatTrap)",                                         "kJ/kg-K",      "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_tank_dens",             "Tank wall thickness (used for Norwich HeatTrap)",                                  "kg/m3",        "",               "TES",            "tes_type=1",              "",                      "" },
+
+
     // TOU
     { SSC_INPUT,        SSC_MATRIX,      "weekday_schedule",          "12x24 CSP operation Time-of-Use Weekday schedule",                                 "-",            "",               "tou",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "weekend_schedule",          "12x24 CSP operation Time-of-Use Weekend schedule",                                 "-",            "",               "tou",            "*",                       "",                      "" },
@@ -1268,6 +1275,10 @@ public:
                 tes_diams.assign(tes_diams_val, 1);
             }
 
+            //double tes_tankthick = as_double("tes_tankthick");
+            //double tes_tankcp = 1200;   // J/kg K
+            //double tes_tankdens = 8000; // kg/m3
+
             storage_NT = C_csp_NTHeatTrap_tes(
                 c_trough.m_Fluid,
                 c_trough.m_field_fl_props,
@@ -1292,6 +1303,9 @@ public:
                 as_double("init_hot_htf_percent"),
                 as_double("pb_pump_coef"),
                 as_boolean("tanks_in_parallel"),
+                as_double("tes_tank_cp") * 1000, // convert to J/kgK
+                as_double("tes_tank_dens"),
+                as_double("tes_tank_thick"),
                 as_double("V_tes_des"),
                 as_boolean("calc_design_pipe_vals"),
                 as_double("tes_pump_coef"),

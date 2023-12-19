@@ -64,8 +64,11 @@ void C_storage_tank_dynamic_NT::init(HTFProperties htf_class_in, double V_tank /
     double tank_pairs /*-*/, double T_htr /*K*/, double max_q_htr /*MWt*/,
     double V_ini /*m3*/, double T_ini /*K*/,
     double T_design /*K*/,
-    double length_total /*m*/, double wall_thickness /*m*/,
-    double wall_dens /*kg/m3*/)
+    double length_total /*m*/,
+    double tank_wall_cp,            // [J/kg-K] Tank wall specific heat
+    double tank_wall_dens,          // [kg/m3] Tank wall density
+    double tank_wall_thick         // [m] Tank wall thickness)
+    )
 {
     mc_htf = htf_class_in;
 
@@ -89,8 +92,9 @@ void C_storage_tank_dynamic_NT::init(HTFProperties htf_class_in, double V_tank /
 
     m_radius = diameter / 2.0;  // [m] radius
     m_length_total = length_total;  // [m] length of total tank (contains both hot and cold 'tanks')
-    m_wall_thickness = wall_thickness; // [m] tank wall thickness
-    m_wall_dens = wall_dens;
+    m_tank_wall_thick = tank_wall_thick; // [m] tank wall thickness
+    m_tank_wall_dens = tank_wall_dens;  //[kg/m3]
+    m_tank_wall_cp = tank_wall_cp;      //[J/kgK]
 
     m_volume_total = CSP::pi * std::pow(m_radius, 2.0) * m_length_total;    // [m3] Volume of total tank
 
@@ -230,12 +234,9 @@ void C_storage_tank_dynamic_NT::energy_balance(double timestep /*s*/, double m_d
 
     // Get Wall Mass at beginning and end of timestep
     double vol_tank_prev = calc_tank_wall_volume(m_m_prev, m_T_prev);
-    double m_tank_prev = rho * vol_tank_prev;
+    double mass_tank_prev = rho * vol_tank_prev;
     double vol_tank_end = calc_tank_wall_volume(m_m_calc, m_T_prev);
-    double m_tank_end = rho * vol_tank_end;
-
-    // TMB 12.15.2023 need to account for tank mass
-    double cp_tank = 1000; // [J/kg-K]
+    double mass_tank_end = rho * vol_tank_end;
 
     // Surface Area Expansion / Contraction rate
     double SA_rate = calc_SA_rate(diff_m_dot, m_T_prev);
@@ -256,8 +257,8 @@ void C_storage_tank_dynamic_NT::energy_balance(double timestep /*s*/, double m_d
         mdot_out_tank = std::abs(mdot_tank);
     }
 
-    double m_total = m_tank_end + m_m_calc;
-    double cp_weighted = (cp * m_m_calc + cp_tank * m_tank_end) / m_total;
+    double m_total = mass_tank_end + m_m_calc;
+    double cp_weighted = (cp * m_m_calc + m_tank_wall_cp * mass_tank_end) / m_total;
 
     double mdot_in_total = m_dot_in + mdot_in_tank;
     double T_in_weighted = 0;
@@ -267,7 +268,7 @@ void C_storage_tank_dynamic_NT::energy_balance(double timestep /*s*/, double m_d
     double mdot_out_total = m_dot_out + mdot_out_tank;
     double diff_m_dot_total = mdot_in_total - mdot_out_total;
 
-    double m_prev_total = m_m_prev + m_tank_prev;
+    double m_prev_total = m_m_prev + mass_tank_prev;
 
     // Calculate UA value
     double SA_calc = calc_SA(m_V_calc);
@@ -687,19 +688,19 @@ double C_storage_tank_dynamic_NT::calc_SA_rate(double mdot_htf /*kg/s*/, double 
 
 double C_storage_tank_dynamic_NT::calc_mdot_expansion(double piston_rate /*m/s*/)
 {
-    double A_outer = CSP::pi * std::pow(m_radius + m_wall_thickness, 2.0);
+    double A_outer = CSP::pi * std::pow(m_radius + m_tank_wall_thick, 2.0);
     double A_inner = CSP::pi * std::pow(m_radius, 2.0);
 
     double A_cross_section = A_outer - A_inner;
     double volume_expansion_rate = A_cross_section * piston_rate;
-    double mdot_rate = volume_expansion_rate * m_wall_dens;
+    double mdot_rate = volume_expansion_rate * m_tank_wall_dens;
 
     return mdot_rate;
 }
 
 double C_storage_tank_dynamic_NT::calc_tank_wall_volume(double fluid_mass /*kg*/, double T_htf /*K*/)
 {
-    double A_outer = CSP::pi * std::pow(m_radius + m_wall_thickness, 2.0);
+    double A_outer = CSP::pi * std::pow(m_radius + m_tank_wall_thick, 2.0);
     double A_inner = CSP::pi * std::pow(m_radius, 2.0);
     double A_cross_section = A_outer - A_inner;
 
@@ -743,6 +744,9 @@ C_csp_NTHeatTrap_tes::C_csp_NTHeatTrap_tes(
     double f_V_hot_ini,                          // [%] Initial fraction of available volume that is hot
     double htf_pump_coef,		                 // [kW/kg/s] Pumping power to move 1 kg/s of HTF through sink
     bool tanks_in_parallel,                      // [-] Whether the tanks are in series or parallel with the external system. Series means external htf must go through storage tanks.
+    double tank_wall_cp,                         // [J/kg-K] Tank wall specific heat
+    double tank_wall_dens,                       // [kg/m3] Tank wall density
+    double tank_wall_thick,                      // [m] Tank wall thickness
     double V_tes_des,                            // [m/s] Design-point velocity for sizing the diameters of the TES piping
     bool calc_design_pipe_vals,                  // [-] Should the HTF state be calculated at design conditions
     double tes_pump_coef,		                 // [kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
@@ -764,7 +768,9 @@ C_csp_NTHeatTrap_tes::C_csp_NTHeatTrap_tes(
         m_u_tank(u_tank), m_tank_pairs(tank_pairs), m_hot_tank_Thtr(hot_tank_Thtr), m_hot_tank_max_heat(hot_tank_max_heat),
         m_cold_tank_Thtr(cold_tank_Thtr), m_cold_tank_max_heat(cold_tank_max_heat), m_dt_hot(dt_hot), m_T_cold_des(T_cold_des),
         m_T_hot_des(T_hot_des), m_T_tank_hot_ini(T_tank_hot_ini), m_T_tank_cold_ini(T_tank_cold_ini),
-        m_h_tank_min(h_tank_min), m_f_V_hot_ini(f_V_hot_ini), m_htf_pump_coef(htf_pump_coef), tanks_in_parallel(tanks_in_parallel),
+        m_h_tank_min(h_tank_min), m_f_V_hot_ini(f_V_hot_ini), m_htf_pump_coef(htf_pump_coef),
+        tanks_in_parallel(tanks_in_parallel),
+        m_tank_wall_cp(tank_wall_cp), m_tank_wall_dens(tank_wall_dens), m_tank_wall_thick(tank_wall_thick),
         V_tes_des(V_tes_des), calc_design_pipe_vals(calc_design_pipe_vals), m_tes_pump_coef(tes_pump_coef),
         eta_pump(eta_pump), has_hot_tank_bypass(has_hot_tank_bypass), T_tank_hot_inlet_min(T_tank_hot_inlet_min),
         custom_tes_p_loss(custom_tes_p_loss), custom_tes_pipe_sizes(custom_tes_pipe_sizes), k_tes_loss_coeffs(k_tes_loss_coeffs),
@@ -940,18 +946,16 @@ void C_csp_NTHeatTrap_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inpu
 
     // TMB 12.15.2023 Calculate Total Length
     double length_total = m_h_tank + m_h_tank;
-    double wall_thickness = 0.0; //[m]
-    double wall_dens = 8e3; //[kg/m3]
 
     // Initialize cold and hot tanks
             // Hot tank
     mc_hot_tank_NT.init(mc_store_htfProps, m_vol_tank, m_h_tank, m_h_tank_min,
         m_u_tank, m_tank_pairs, m_hot_tank_Thtr, m_hot_tank_max_heat,
-        V_hot_ini, T_hot_ini, T_tes_hot_des, length_total, wall_thickness, wall_dens);
+        V_hot_ini, T_hot_ini, T_tes_hot_des, length_total, m_tank_wall_cp, m_tank_wall_dens, m_tank_wall_thick);
     // Cold tank
     mc_cold_tank_NT.init(mc_store_htfProps, m_vol_tank, m_h_tank, m_h_tank_min,
         m_u_tank, m_tank_pairs, m_cold_tank_Thtr, m_cold_tank_max_heat,
-        V_cold_ini, T_cold_ini, T_tes_cold_des, length_total, wall_thickness, wall_dens);
+        V_cold_ini, T_cold_ini, T_tes_cold_des, length_total, m_tank_wall_cp, m_tank_wall_dens, m_tank_wall_thick);
 
 
 }
@@ -1032,18 +1036,16 @@ void C_csp_NTHeatTrap_tes::reset_storage_to_initial_state()
 
     // TMB 12.15.2023 Calculate Total Length
     double length_total = m_h_tank + m_h_tank;
-    double wall_thickness = 0.0; //[m]
-    double wall_dens = 8e3; //[kg/m3]
 
     // Initialize cold and hot tanks
     // Hot tank
     mc_hot_tank_NT.init(mc_store_htfProps, m_vol_tank, m_h_tank, m_h_tank_min,
         m_u_tank, m_tank_pairs, m_hot_tank_Thtr, m_hot_tank_max_heat,
-        V_hot_ini, T_hot_ini, m_T_hot_des, length_total, wall_thickness, wall_dens);
+        V_hot_ini, T_hot_ini, m_T_hot_des, length_total, m_tank_wall_cp, m_tank_wall_dens, m_tank_wall_thick);
     // Cold tank
     mc_cold_tank_NT.init(mc_store_htfProps, m_vol_tank, m_h_tank, m_h_tank_min,
         m_u_tank, m_tank_pairs, m_cold_tank_Thtr, m_cold_tank_max_heat,
-        V_cold_ini, T_cold_ini, m_T_cold_des, length_total, wall_thickness, wall_dens);
+        V_cold_ini, T_cold_ini, m_T_cold_des, length_total, m_tank_wall_cp, m_tank_wall_dens, m_tank_wall_thick);
 }
 
 void C_csp_NTHeatTrap_tes::discharge_avail_est(double T_cold_K, double step_s,
