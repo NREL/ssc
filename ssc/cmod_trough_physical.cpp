@@ -260,7 +260,6 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "gross_net_conversion_factor", "Estimated gross to net conversion factor",                                       "",             "",               "system",         "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "water_usage_per_wash",      "Water usage per wash",                                                             "L/m2_aper",    "",               "system",         "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "washing_frequency",         "Mirror washing frequency",                                                         "-/year",       "",               "system",         "*",                       "",                      "" },
-    //{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",           "Nameplate capacity",                                                               "kW",           "",               "system",         "*",                       "",                      "" },
 
     // Newly added
     { SSC_INPUT,        SSC_NUMBER,      "calc_design_pipe_vals",     "Calculate temps and pressures at design conditions for runners and headers",       "none",         "",               "solar_field",    "*",                       "",                      "" },
@@ -352,6 +351,12 @@ static var_info _cm_vtab_trough_physical[] = {
     // *************************************************************************************************
     //    OUTPUTS
     // *************************************************************************************************
+
+    // System capacity required by downstream financial model
+    { SSC_OUTPUT,    SSC_NUMBER, "system_capacity",                    "System capacity",                                                                                                                         "kWe",          "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "cp_system_nameplate",                 "System capacity for capacity payments",                                                                                                   "MWe",          "",                                  "System Costs",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "cp_battery_nameplate",                "Battery nameplate",                                                                                                                       "MWe",          "",                                  "System Costs",                             "*",                                                                "",              "" },
+
 
     // Design Point Outputs
     { SSC_OUTPUT,       SSC_NUMBER,      "q_dot_cycle_des",                  "Cycle thermal power at design",                                            "MWt",           "",               "Power Cycle",    "*",                                "",                      "" },
@@ -2165,6 +2170,9 @@ public:
         double nameplate = system_capacity;     //[kWe]
         if (nameplate > 0.0)
             kWh_per_kW = ae / nameplate;
+        assign("system_capacity", system_capacity);
+        assign("cp_system_nameplate", system_capacity * 1.E-3); //[MWe]
+        assign("cp_battery_nameplate", 0.0);             //[MWe]
 
         assign("capacity_factor", (ssc_number_t)(kWh_per_kW / ((double)n_steps_fixed / (double)steps_per_hour)*100.));
         assign("kwh_per_kw", (ssc_number_t)kWh_per_kW);
