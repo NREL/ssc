@@ -115,6 +115,11 @@ double C_storage_tank::get_mass_avail()
     return std::max(m_m_prev - m_mass_inactive, 0.0);		//[kg]
 }
 
+double C_storage_tank::get_fluid_vol()
+{
+    return m_V_calc;
+}
+
 double C_storage_tank::m_dot_available(double f_unavail, double timestep)
 {
     //double rho = mc_htf.dens(m_T_prev, 1.0);		//[kg/m^3]
@@ -1331,7 +1336,8 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_two_tank_tes::E_MASS_COLD_TANK, C_csp_reported_outputs::TS_LAST},			//[kg] Mass in cold tank at end of timestep		
 	{C_csp_two_tank_tes::E_MASS_HOT_TANK, C_csp_reported_outputs::TS_LAST},				//[kg] Mass in hot tank at end of timestep
     {C_csp_two_tank_tes::E_HOT_TANK_HTF_PERC_FINAL, C_csp_reported_outputs::TS_LAST},	//[%] Final percent fill of available hot tank mass
-    {C_csp_two_tank_tes::E_W_DOT_HTF_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[MWe] 
+    {C_csp_two_tank_tes::E_W_DOT_HTF_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[MWe]
+    {C_csp_two_tank_tes::E_VOL_TOT, C_csp_reported_outputs::TS_LAST},	//[MWe] 
 
 	csp_info_invalid
 };
@@ -2100,6 +2106,8 @@ int C_csp_two_tank_tes::solve_tes_off_design(double timestep /*s*/, double  T_am
                             T_cr_in_cold, T_cr_out_hot, T_sink_htf_in_hot, T_sink_out_cold,
                             false);     //[-] C_MEQ__m_dot_tes will not send cr_m_dot to TES if recirculating
 
+    double vol_total = mc_cold_tank.get_fluid_vol() + mc_hot_tank.get_fluid_vol();
+
     s_outputs.m_q_heater = q_dot_heater;
     s_outputs.m_W_dot_elec_in_tot = W_dot_htf_pump;             //[MWe]
 
@@ -2126,6 +2134,7 @@ int C_csp_two_tank_tes::solve_tes_off_design(double timestep /*s*/, double  T_am
     mc_reported_outputs.value(E_MASS_COLD_TANK, mc_cold_tank.get_m_m_calc());		//[kg]
     mc_reported_outputs.value(E_MASS_HOT_TANK, mc_hot_tank.get_m_m_calc());			//[kg]
     mc_reported_outputs.value(E_W_DOT_HTF_PUMP, W_dot_htf_pump);    //[MWe]
+    mc_reported_outputs.value(E_VOL_TOT, vol_total);    //[m3]
 
     return 0;
 }

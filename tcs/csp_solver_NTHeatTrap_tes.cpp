@@ -953,6 +953,8 @@ void C_csp_NTHeatTrap_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inpu
     m_mass_total_active = m_Q_tes_des * 3600.0 / (cp_ave / 1000.0 * (T_tes_hot_des - T_tes_cold_des));  //[kg] Total HTF mass at design point inlet/outlet T
     double V_inactive = m_vol_tank - m_V_tank_active;
 
+
+    // UPDATE INITIAL MASS
     double rho_hot_des = mc_store_htfProps.dens(T_tes_hot_des, 1.0);
     double rho_cold_des = mc_store_htfProps.dens(T_tes_cold_des, 1.0);
     double rho_hot = mc_store_htfProps.dens(m_T_tank_hot_ini, 1.0);
@@ -1107,6 +1109,7 @@ void C_csp_NTHeatTrap_tes::charge_avail_est(double T_hot_K, double step_s,
 {
     double f_ch_storage = 0.0;	// for now, hardcode such that storage always completely charges
 
+    // This is amount of cold mass in tank (available for use - i.e., not dead space volume)
     double m_dot_tank_charge_avail = mc_cold_tank_NT.m_dot_available(f_ch_storage, step_s);	//[kg/s]
 
     double T_cold_ini = mc_cold_tank_NT.get_m_T_prev();	//[K]
@@ -1517,6 +1520,10 @@ bool C_csp_NTHeatTrap_tes::charge(double timestep /*s*/, double T_amb /*K*/, dou
     // 1) Mass flow rate of HTF into TES system (equal to that exiting the system)
     // 2) Temperature of HTF into TES system. If no heat exchanger, this temperature
     //	   is of the HTF directly entering the hot tank
+
+    // DEBUG
+    double piston_loc, piston_frac;
+    calc_piston_location(piston_loc, piston_frac);
 
     double q_dot_ch_est, m_dot_tes_ch_max, T_cold_to_src_est;
     q_dot_ch_est = m_dot_tes_ch_max = T_cold_to_src_est = std::numeric_limits<double>::quiet_NaN();

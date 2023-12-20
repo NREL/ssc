@@ -566,7 +566,7 @@ static var_info _cm_vtab_trough_physical[] = {
     // NT TES
     { SSC_OUTPUT,       SSC_ARRAY,       "vol_tes_cold",              "TES cold fluid volume",                                                            "m3",           "",               "TES",            "sim_type=1&tes_type=1",            "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "vol_tes_hot",               "TES hot fluid volume",                                                             "m3" ,          "",               "TES",            "sim_type=1&tes_type=1",            "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "vol_tes_tot",               "TES total fluid volume",                                                           "m3",           "",               "TES",            "sim_type=1&tes_type=1",            "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "vol_tes_tot",               "TES total fluid volume",                                                           "m3",           "",               "TES",            "sim_type=1",            "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_piston_loc",            "TES Piston Distance from left (cold) side",                                        "m",            "",               "TES",            "sim_type=1&tes_type=1",            "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_piston_frac",           "TES Piston fraction of cold distance over total",                                  "",             "",               "TES",            "sim_type=1&tes_type=1",            "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_cold_vol_frac",         "TES Volume fraction of cold over total",                                           "",             "",               "TES",            "sim_type=1&tes_type=1",            "",                      "" },
@@ -1255,7 +1255,7 @@ public:
             storage_two_tank.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_COLD_TANK, allocate("mass_tes_cold", n_steps_fixed), n_steps_fixed);
             storage_two_tank.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_HOT_TANK, allocate("mass_tes_hot", n_steps_fixed), n_steps_fixed);
             storage_two_tank.mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HTF_PUMP, allocate("tes_htf_pump_power", n_steps_fixed), n_steps_fixed);
-
+            storage_two_tank.mc_reported_outputs.assign(C_csp_two_tank_tes::E_VOL_TOT, allocate("vol_tes_tot", n_steps_fixed), n_steps_fixed);
             
         }
         else if (tes_type == 1)
