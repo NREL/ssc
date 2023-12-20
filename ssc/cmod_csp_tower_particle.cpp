@@ -439,7 +439,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
         // Power Cycle
     { SSC_OUTPUT,    SSC_NUMBER, "m_dot_htf_cycle_des",                "PC HTF mass flow rate at design",                                                                                                         "kg/s",        "",                                  "Power Cycle",                              "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "q_dot_cycle_des",                    "PC thermal input at design",                                                                                                              "MWt",         "",                                  "Power Cycle",                              "*",                                                                "",              ""},
-    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_cycle_pump_des",               "PC HTF pump power at design",                                                                                                             "MWe",         "",                                  "Power Cycle",                              "*",                                                                "",              ""},
+    { SSC_OUTPUT,    SSC_NUMBER, "W_dot_cycle_lift_des",               "PC HTF lift power at design",                                                                                                             "MWe",         "",                                  "Power Cycle",                              "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "W_dot_cycle_cooling_des",            "PC cooling power at design",                                                                                                              "MWe",         "",                                  "Power Cycle",                              "*",                                                                "",              ""},
         // UDPC
     { SSC_OUTPUT,    SSC_NUMBER, "n_T_htf_pars_calc",                  "UDPC number of HTF parametric values",                                                                                                     "",            "",                                  "UDPC Design Calc",                        "*",                                                                "",              ""},      
@@ -589,7 +589,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
 
         // Thermal energy storage outputs
     { SSC_OUTPUT,    SSC_ARRAY,  "tank_losses",                        "TES thermal losses",                                                                                                                      "MWt",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
-    { SSC_OUTPUT,    SSC_ARRAY,  "q_heater",                           "TES freeze protection power",                                                                                                             "MWe",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
+    { SSC_OUTPUT,    SSC_ARRAY,  "q_heater",                           "TES bin heater power",                                                                                                             "MWe",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "T_tes_hot",                          "TES hot temperature",                                                                                                                     "C",            "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "T_tes_cold",                         "TES cold temperature",                                                                                                                    "C",            "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "mass_tes_cold",                      "TES cold mass (end)",                                                                                                                "kg",           "",                                  "",                                         "sim_type=1",                                                       "",              ""},
@@ -699,7 +699,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
 
     // 12.13.23 twn: for now, need these to defined here to pass downstream to LCOE model
     { SSC_OUTPUT,    SSC_NUMBER, "annual_electricity_consumption",     "Annual electricity consumption w/ avail derate",                                                                                         "kWe-hr",        "",                                 "Post-process",                              "sim_type=1",                                                       "",              "" },
-    { SSC_OUTPUT,    SSC_NUMBER, "electricity_rate",                   "Cost of electricity used to operate pumps and trackers",                                                                                 "$/kWe-hr",      "",                                 "Post-process",                              "sim_type=1",                                                       "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "electricity_rate",                   "Cost of electricity used to operate lifts and trackers",                                                                                 "$/kWe-hr",      "",                                 "Post-process",                              "sim_type=1",                                                       "",              "" },
 
 
     var_info_invalid };
@@ -979,7 +979,7 @@ public:
             pc->m_startup_time = as_double("startup_time");
             pc->m_startup_frac = as_double("startup_frac");
 
-            // Calculate power block pumping coefficient based on TES and PHX heights
+            // Calculate power block pumping coefficient based on TES and PHX heights -> used calculating lift power
             pc->m_htf_pump_coef = ((as_double("h_tank") + as_double("phx_height")) * 9.8067 / as_double("eta_lift")) / 1.e3; // Convert from W/kg/s to kW/kg/s
             pc->m_pc_fl = as_integer("rec_htf");                            // power cycle HTF is same as receiver HTF
             pc->m_pc_fl_props = as_matrix("field_fl_props");
@@ -1738,7 +1738,7 @@ public:
             // Power Cycle
         double m_dot_htf_pc_des;    //[kg/s]
         double cp_htf_pc_des;       //[kJ/kg-K]
-        double W_dot_pc_pump_des;   //[MWe]
+        double W_dot_pc_lift_des;   //[MWe]
         double W_dot_pc_cooling_des;   //[MWe]
         int n_T_htf_pars, n_T_amb_pars, n_m_dot_pars;
         n_T_htf_pars = n_T_amb_pars = n_m_dot_pars = -1;
@@ -1750,7 +1750,7 @@ public:
             m_dot_htf_ND_ref_calc = m_dot_htf_ND_low_calc = m_dot_htf_ND_high_calc =
             W_dot_gross_ND_des = Q_dot_HTF_ND_des = W_dot_cooling_ND_des = m_dot_water_ND_des = std::numeric_limits<double>::quiet_NaN();
 
-        rankine_pc.get_design_parameters(m_dot_htf_pc_des, cp_htf_pc_des, W_dot_pc_pump_des, W_dot_pc_cooling_des,
+        rankine_pc.get_design_parameters(m_dot_htf_pc_des, cp_htf_pc_des, W_dot_pc_lift_des, W_dot_pc_cooling_des,
                         n_T_htf_pars, n_T_amb_pars, n_m_dot_pars,
                         T_htf_ref_calc /*C*/, T_htf_low_calc /*C*/, T_htf_high_calc /*C*/,
                         T_amb_ref_calc /*C*/, T_amb_low_calc /*C*/, T_amb_high_calc /*C*/,
@@ -1759,7 +1759,7 @@ public:
         m_dot_htf_pc_des /= 3600.0;     // convert from kg/hr to kg/s
         assign("m_dot_htf_cycle_des", m_dot_htf_pc_des);
         assign("q_dot_cycle_des", q_dot_pc_des);
-        assign("W_dot_cycle_pump_des", W_dot_pc_pump_des);
+        assign("W_dot_cycle_lift_des", W_dot_pc_lift_des);
         assign("W_dot_cycle_cooling_des", W_dot_pc_cooling_des);
         assign("n_T_htf_pars_calc", n_T_htf_pars);
         assign("n_T_amb_pars_calc", n_T_amb_pars);
@@ -1785,7 +1785,7 @@ public:
 
                 // Calculate net system *generation* capacity including HTF lifts and system parasitics
         double plant_net_capacity_calc = W_dot_cycle_des - W_dot_col_tracking_des - W_dot_rec_lift_des -
-                                        W_dot_pc_pump_des - W_dot_pc_cooling_des - W_dot_bop_design - W_dot_fixed_parasitic_design;    //[MWe]
+                                       W_dot_pc_lift_des - W_dot_pc_cooling_des - W_dot_bop_design - W_dot_fixed_parasitic_design;    //[MWe]
 
         double system_capacity = plant_net_capacity_calc * 1.E3;         //[kWe], convert from MWe
 
