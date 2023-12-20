@@ -1853,6 +1853,12 @@ public:
             }
         }
 
+        double system_capacity = as_double("P_ref") * as_double("gross_net_conversion_factor") * 1.E3;       //[kWe]
+        double nameplate = system_capacity;     //[kWe]
+        assign("system_capacity", system_capacity);
+        assign("cp_system_nameplate", system_capacity * 1.E-3); //[MWe]
+        assign("cp_battery_nameplate", 0.0);             //[MWe]
+
         // Calculate Costs and assign outputs
         if (true)
         {
@@ -2165,14 +2171,12 @@ public:
         ssc_number_t convfactor = (pg != 0) ? 100 * ae / pg : (ssc_number_t)0.0;
         assign("conversion_factor", convfactor);
 
+        
+
         double kWh_per_kW = 0.0;
-        double system_capacity = as_double("P_ref") * as_double("gross_net_conversion_factor") *1.E3;       //[kWe]
-        double nameplate = system_capacity;     //[kWe]
         if (nameplate > 0.0)
             kWh_per_kW = ae / nameplate;
-        assign("system_capacity", system_capacity);
-        assign("cp_system_nameplate", system_capacity * 1.E-3); //[MWe]
-        assign("cp_battery_nameplate", 0.0);             //[MWe]
+        
 
         assign("capacity_factor", (ssc_number_t)(kWh_per_kW / ((double)n_steps_fixed / (double)steps_per_hour)*100.));
         assign("kwh_per_kw", (ssc_number_t)kWh_per_kW);
