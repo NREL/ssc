@@ -73,7 +73,7 @@ private:
     double m_tank_wall_dens;         //[kg/m3]
     double m_tank_wall_thick;        //[m]
     double m_u_tank;                 //[W/m2-K]
-
+    double m_nstep;                  //[]
 
 
     double m_volume_combined; //[m3]
@@ -119,7 +119,8 @@ public:
         double V_combined_tanks /*m3*/,
         double tank_wall_cp,            // [J/kg-K] Tank wall specific heat
         double tank_wall_dens,          // [kg/m3] Tank wall density
-        double tank_wall_thick         // [m] Tank wall thickness)
+        double tank_wall_thick,         // [m] Tank wall thickness)
+        double nstep                    // [] Number of time steps for energy balance iteration
         );
 
     double m_dot_available(double f_unavail, double timestep);
@@ -187,6 +188,7 @@ private:
     double m_tank_wall_thick;   //[m]
     double m_piston_percent;    //[%]
     double m_piston_location;   //[m] Piston distance from left side
+    double m_nstep;             //[] Number of time steps for energy balance iteration
 
     // Added for NT, calc in init
     double m_radius;        //[m] radius of tank
@@ -293,6 +295,7 @@ public:
         double tank_wall_cp,                         // [J/kg-K] Tank wall specific heat
         double tank_wall_dens,                       // [kg/m3] Tank wall density
         double tank_wall_thick = 0,                  // [m] Tank wall thickness
+        int nstep = 1,                               // [] Number of time steps for energy balance iteration
 
         double V_tes_des = 1.85,                     // [m/s] Design-point velocity for sizing the diameters of the TES piping
         bool calc_design_pipe_vals = true,           // [-] Should the HTF state be calculated at design conditions
