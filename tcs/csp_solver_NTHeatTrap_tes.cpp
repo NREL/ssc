@@ -45,12 +45,13 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
     {C_csp_NTHeatTrap_tes::E_HOT_TANK_HTF_PERC_FINAL, C_csp_reported_outputs::TS_LAST},	//[%] Final percent fill of available hot tank mass
     {C_csp_NTHeatTrap_tes::E_W_DOT_HTF_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[MWe] 
 
-    {C_csp_NTHeatTrap_tes::E_VOL_COLD, C_csp_reported_outputs::TS_LAST},	//[MWe]
-    {C_csp_NTHeatTrap_tes::E_VOL_HOT, C_csp_reported_outputs::TS_LAST},	//[MWe]
-    {C_csp_NTHeatTrap_tes::E_VOL_TOT, C_csp_reported_outputs::TS_LAST},	//[MWe]
-    {C_csp_NTHeatTrap_tes::E_PIST_LOC, C_csp_reported_outputs::TS_LAST},	//[MWe]
-    {C_csp_NTHeatTrap_tes::E_PIST_FRAC, C_csp_reported_outputs::TS_LAST},	//[MWe]
-    {C_csp_NTHeatTrap_tes::E_COLD_FRAC, C_csp_reported_outputs::TS_LAST},	//[MWe]
+    {C_csp_NTHeatTrap_tes::E_VOL_COLD, C_csp_reported_outputs::TS_LAST},	//[m3]
+    {C_csp_NTHeatTrap_tes::E_VOL_HOT, C_csp_reported_outputs::TS_LAST},	    //[m3]
+    {C_csp_NTHeatTrap_tes::E_VOL_TOT, C_csp_reported_outputs::TS_LAST},	    //[m3]
+    {C_csp_NTHeatTrap_tes::E_PIST_LOC, C_csp_reported_outputs::TS_LAST},	//[m]
+    {C_csp_NTHeatTrap_tes::E_PIST_FRAC, C_csp_reported_outputs::TS_LAST},	//[]
+    {C_csp_NTHeatTrap_tes::E_COLD_FRAC, C_csp_reported_outputs::TS_LAST},	//[]
+    {C_csp_NTHeatTrap_tes::E_MASS_TOT, C_csp_reported_outputs::TS_LAST},	//[kg]
 
     csp_info_invalid
 };
@@ -1386,6 +1387,7 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
     double vol_hot = mc_hot_tank_NT.get_fluid_vol();
     double vol_tot = vol_cold + vol_hot;
     double vol_tot_assigned = CSP::pi * std::pow(m_radius, 2.0) * m_length_total;
+    double mass_tot = mass_cold + mass_hot;
 
     double cold_frac = vol_cold / vol_tot;
     double piston_loc, piston_frac;
@@ -1426,6 +1428,7 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
     mc_reported_outputs.value(E_PIST_LOC, piston_loc);      //[m]
     mc_reported_outputs.value(E_PIST_FRAC, piston_frac);    //[]
     mc_reported_outputs.value(E_COLD_FRAC, cold_frac);      //[]
+    mc_reported_outputs.value(E_MASS_TOT, mass_tot);        //[kg]
 
     return 0;
 }

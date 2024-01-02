@@ -214,7 +214,8 @@ public:
         E_VOL_TOT,
         E_PIST_LOC,
         E_PIST_FRAC,
-        E_COLD_FRAC
+        E_COLD_FRAC,
+        E_MASS_TOT
 	};
 
 
