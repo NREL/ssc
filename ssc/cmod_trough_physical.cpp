@@ -668,7 +668,8 @@ public:
     }
 
     void exec( )
-    {   
+    {
+
         // Common Parameters
         bool is_dispatch = as_boolean("is_dispatch");
         int sim_type = as_integer("sim_type");
@@ -795,9 +796,24 @@ public:
         {
             // Collect Inputs
             {
+
                 c_trough.m_use_solar_mult_or_aperture_area = as_integer("use_solar_mult_or_aperture_area"); // Use specified solar mult (0) or total aperture (1)
                 c_trough.m_specified_solar_mult = as_double("specified_solar_multiple");            // User specified solar mult
                 c_trough.m_specified_total_aperture = as_double("specified_total_aperture");    //[m2] User specified total aperture
+
+                // ADDED Trough Inputs (TMB 10/06/2023) for design point calculations
+                std::vector<double> trough_loop_vec = as_vector_double("trough_loop_control");
+                c_trough.m_trough_loop_control.assign(&trough_loop_vec[0], trough_loop_vec.size());
+
+                int actual_nSCA = trough_loop_vec[0];
+                int sca = as_integer("nSCA");
+
+                // Check if trough_loop_control number of sCA's matches the nSCA input
+                if (actual_nSCA != sca)
+                {
+                    throw exec_error("trough_physical", "Mismatch nSCA");
+                }
+
                 c_trough.m_nSCA = as_integer("nSCA");                       //[-] Number of SCA's in a loop
                 c_trough.m_nHCEt = as_integer("nHCEt");                     //[-] Number of HCE types
                 c_trough.m_nColt = as_integer("nColt");                     //[-] Number of collector types
@@ -1016,11 +1032,6 @@ public:
                 c_trough.m_sf_hdr_diams = as_matrix("sf_hdr_diams");              //[m] Imported header diameters, used if custom_sf_pipe_sizes is true
                 c_trough.m_sf_hdr_wallthicks = as_matrix("sf_hdr_wallthicks");    //[m] Imported header wall thicknesses, used if custom_sf_pipe_sizes is true
                 c_trough.m_sf_hdr_lengths = as_matrix("sf_hdr_lengths");          //[m] Imported header lengths, used if custom_sf_pipe_sizes is true
-
-
-                // ADDED Trough Inputs (TMB 10/06/2023) for design point calculations
-                std::vector<double> trough_loop_vec = as_vector_double("trough_loop_control");
-                c_trough.m_trough_loop_control.assign(&trough_loop_vec[0], trough_loop_vec.size());
             }
 
             // Calculate solar multiple (needed for other component constructors)
@@ -1062,7 +1073,6 @@ public:
             }
             
         }
-        
 
         // ********************************
         // ********************************
