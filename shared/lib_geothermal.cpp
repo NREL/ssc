@@ -2322,6 +2322,7 @@ bool CGeothermalAnalyzer::RunAnalysis(bool(*update_function)(float, void*), void
 //    bool bReDrill = false;
 	unsigned int iElapsedMonths = 0, iElapsedTimeSteps = 0, iEvaluationsInMonth = 0, iElapsedHours = 0;
 	float fMonthlyPowerTotal;
+    double actualpowertotal = 0, powersalestotal = 0;
 	for (unsigned int year = 0; year < mo_geo_in.mi_ProjectLifeYears; year++)
 	{
 		mp_geo_out->maf_ReplacementsByYear[year] = 0;
@@ -2403,6 +2404,8 @@ bool CGeothermalAnalyzer::RunAnalysis(bool(*update_function)(float, void*), void
 			mp_geo_out->maf_monthly_power[iElapsedMonths] = fMonthlyPowerTotal / iEvaluationsInMonth;		// avg monthly power
 			mp_geo_out->maf_monthly_energy[iElapsedMonths] = fMonthlyPowerTotal * util::hours_in_month(month) / iEvaluationsInMonth;		// energy output in month (kWh)
 
+            actualpowertotal += mp_geo_out->maf_monthly_power[iElapsedMonths];
+            powersalestotal += ((PlantGrossPowerkW() - mp_geo_out->md_PumpWorkKW) / 1000.0) / (pow(1 + mo_geo_in.md_DiscountRate / 100.0, year + (month - 1.0) / 12.0));
 			// Is it possible and do we want to replace the reservoir in the next time step?
 			//bWantToReplaceReservoir = ( md_WorkingTemperatureC < (GetResourceTemperatureC() - geothermal::MAX_TEMPERATURE_DECLINE_C) ) ? true : false;
 			bWantToReplaceReservoir = (md_WorkingTemperatureC < (GetResourceTemperatureC() - mo_geo_in.md_MaxTempDeclineC)) ? true : false;
@@ -2419,6 +2422,10 @@ bool CGeothermalAnalyzer::RunAnalysis(bool(*update_function)(float, void*), void
             mp_geo_out->ElapsedMonths = iElapsedMonths;
 		}//months
 	}//years
+
+    double power_after_drawdown = actualpowertotal / powersalestotal;
+    double adjusted_capacity_factor = power_after_drawdown * mo_geo_in.md_CapacityFactor / 100.0;
+    mp_geo_out->AdjustedCapacityFactor = adjusted_capacity_factor;
 
 	if (!ms_ErrorString.empty()) return false;
 	return true;

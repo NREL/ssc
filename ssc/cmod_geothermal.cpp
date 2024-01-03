@@ -63,6 +63,8 @@ static var_info _cm_vtab_geothermal[] = {
     { SSC_INPUT,        SSC_NUMBER,      "geothermal_analysis_period",         "Analysis Lifetime",                            "years",          "",             "GeoHourly",        "*",                        "INTEGER",         "" },
     { SSC_INPUT,        SSC_NUMBER,      "model_choice",                       "Which model to run (0,1,2)",                   "",               "",             "GeoHourly",        "*",                        "INTEGER",         "" },
     { SSC_INPUT,        SSC_MATRIX,      "reservoir_model_inputs",                       "Reservoir temperatures over time",                   "",               "",             "GeoHourly",        "reservoir_pressure_change_type=3",                        "",         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "geothermal_capacity_factor",         "Capacity Factor",                            "%",          "",             "GeoHourly",        "*",                        "",         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "discount_rate",         "Discount Rate",                            "%",          "",             "GeoHourly",        "*",                        "",         "" },
 
     // geothermal plant and equipment									       											   				     														             
     { SSC_INPUT,        SSC_NUMBER,      "specified_pump_work_amount",         "Pump work specified by user",                  "MW",             "",             "GeoHourly",        "*",                        "",                "" },
@@ -309,6 +311,9 @@ public:
 		geo_inputs.md_TemperatureWetBulbC = as_double("wet_bulb_temp");
 		geo_inputs.md_PressureAmbientPSI = as_double("ambient_pressure" );
         geo_inputs.md_UseWeatherFileConditions = 0; //initially set to zero for UI calculations
+
+        geo_inputs.md_CapacityFactor = as_double("geothermal_capacity_factor");
+        geo_inputs.md_DiscountRate = as_double("discount_rate");
 
 		//pumping parameters
 		geo_inputs.md_ProductionFlowRateKgPerS = as_double("well_flow_rate");

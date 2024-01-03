@@ -75,6 +75,7 @@ struct SGeothermal_Inputs
         md_NumberOfWellsProdExp = md_NumberOfWellsInjDrilled = md_NumberOfWellsProdDrilled = md_FailedWells = md_StimSuccessRate = md_DrillSuccessRate = 0;
         md_FailedInjFlowRatio = md_FailedProdFlowRatio = md_InjWellFriction = md_ProdWellFriction = md_InjWellPressurePSI = md_InjectivityIndex = md_ExplorationWellsProd = 0;
         md_UseWeatherFileConditions = 0.0;
+        md_CapacityFactor = md_DiscountRate = 0.0;
 	}
 
 	calculationBasis me_cb;									// { NO_CALCULATION_BASIS, POWER_SALES, NUMBER_OF_WELLS };
@@ -152,6 +153,9 @@ struct SGeothermal_Inputs
 	double md_AdditionalPressure;							// manually enter additional psi for injection pumps
     double md_dtProdWell;                                   // degrees C, temperature loss in production well
     double md_dtProdWellChoice;                             // Constant dt prod well or Ramey model
+
+    double md_CapacityFactor;
+    double md_DiscountRate;
 
 
 	const char * mc_WeatherFileName;
@@ -252,6 +256,8 @@ struct SGeothermal_Outputs
 	double * maf_timestep_dry_bulb;
 	double * maf_timestep_wet_bulb;
 	double * maf_hourly_power;				// hourly values even if the timestep is monthly
+
+    double AdjustedCapacityFactor;
 };
 
 //******************************************************************************************************************************************************************************
@@ -294,6 +300,7 @@ private:
 	double md_WorkingTemperatureC; // current working temp of the fluid coming out of the ground
 	double md_LastProductionTemperatureC; // store the last temperature before calculating new one
 	double md_TimeOfLastReservoirReplacement; // for EGS calcs
+
 
 
 	// functions
