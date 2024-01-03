@@ -73,7 +73,6 @@ static var_info _cm_vtab_trough_physical_iph[] = {
 
     { SSC_INPUT,        SSC_NUMBER,      "q_pb_design",               "Design heat input to power block",                                                 "MWt",          "",               "System_Design",  "*",                       "",                      "" },
 
-    { SSC_INPUT,        SSC_NUMBER,      "nSCA",                      "Number of SCAs in a loop",                                                         "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "nHCEt",                     "Number of HCE types",                                                              "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "nColt",                     "Number of collector types",                                                        "none",         "constant=4",     "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "nHCEVar",                   "Number of HCE variants per type",                                                  "none",         "",               "solar_field",    "*",                       "",                      "" },
@@ -343,6 +342,7 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_OUTPUT,       SSC_NUMBER,      "cp_battery_nameplate",             "Battery nameplate",                                                        "MWt",          "",                "System Design",  "*",                                "",                      "" },
 
     // Solar Field
+    { SSC_OUTPUT,       SSC_NUMBER,      "nSCA",                             "Number of SCAs in a loop",                                                 "none",          "",               "solar_field",     "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "field_htf_min_temp",               "Minimum field htf temp",                                                   "C",             "",               "Power Cycle",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "field_htf_max_temp",               "Maximum field htf temp",                                                   "C",             "",               "Power Cycle",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "field_htf_cp_avg_des",             "Field average htf cp at design",                                           "kJ/kgK",        "",               "Solar Field",    "*",                                "",                      "" },
@@ -742,18 +742,11 @@ public:
                 c_trough.m_trough_loop_control.assign(&trough_loop_vec[0], trough_loop_vec.size());
 
                 int actual_nSCA = trough_loop_vec[0];
-                int sca = as_integer("nSCA");
-
-                // Check if trough_loop_control number of sCA's matches the nSCA input
-                if (actual_nSCA != sca)
-                {
-                    throw exec_error("trough_physical_iph", "Mismatch nSCA");
-                }
 
                 c_trough.m_use_solar_mult_or_aperture_area = as_number("use_solar_mult_or_aperture_area"); // Use specified solar mult (0) or total aperture (1)
                 c_trough.m_specified_solar_mult = as_number("specified_solar_multiple");            // User specified solar mult
                 c_trough.m_specified_total_aperture = as_number("specified_total_aperture");    //[m2] User specified total aperture
-                c_trough.m_nSCA = as_integer("nSCA");                       //[-] Number of SCA's in a loop
+                c_trough.m_nSCA = actual_nSCA;                              //[-] Number of SCA's in a loop
                 c_trough.m_nHCEt = as_integer("nHCEt");                     //[-] Number of HCE types
                 c_trough.m_nColt = as_integer("nColt");                     //[-] Number of collector types
                 c_trough.m_nHCEVar = as_integer("nHCEVar");                 //[-] Number of HCE variants per t
@@ -1469,6 +1462,7 @@ public:
 
             // Solar Field
             {
+                assign("nSCA", c_trough.m_nSCA);
                 assign("field_htf_min_temp", c_trough.m_htfProps.min_temp() - 273.15);    // [C]
                 assign("field_htf_max_temp", c_trough.m_htfProps.max_temp() - 273.15);    // [C]
                 assign("field_htf_cp_avg_des", c_trough.m_field_htf_cp_avg_des);          // [kJ/kg-K]
@@ -1595,7 +1589,7 @@ public:
 
                 util::matrix_t<ssc_number_t> csp_dtr_sca_calc_end_losses(1, 1, std::numeric_limits<double>::quiet_NaN());
                 {
-                    int nSCA = as_number("nSCA");
+                    int nSCA = c_trough.m_nSCA;
 
                     size_t n = Ave_Focal_Length.size();
 
