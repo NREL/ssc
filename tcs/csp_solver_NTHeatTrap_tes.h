@@ -75,6 +75,8 @@ private:
     double m_u_tank;                 //[W/m2-K]
     double m_nstep;                  //[]
 
+    double m_SA_prev;           //[m2] Surface area previous timestep
+    double m_SA_calc;           //[m2] Surface area current timestep
 
     double m_volume_combined; //[m3]
 
@@ -111,6 +113,8 @@ public:
 
     double get_radius();    // m
 
+    double get_SA_calc();        //m2
+
     void init(HTFProperties htf_class_in, double V_tank /*m3*/,
         double h_tank /*m*/, double h_min /*m*/, double u_tank /*W/m2-K*/,
         double tank_pairs /*-*/, double T_htr /*K*/, double max_q_htr /*MWt*/,
@@ -129,6 +133,12 @@ public:
         double T_in /*K*/, double T_amb /*K*/,
         double T_tank_in, /*K*/
         double& T_ave /*K*/, double& q_heater /*MW*/, double& q_dot_loss /*MW*/);
+
+    void energy_balance_core(double timestep /*s*/, double m_dot_in /*kg/s*/, double m_dot_out /*kg/s*/,
+        double T_in /*K*/, double T_amb /*K*/, double mass_prev_inner /*kg*/,
+        double T_tank_in, /*K*/
+        double& T_ave /*K*/, double& q_heater /*MW*/, double& q_dot_loss /*MW*/,
+        double& mass_calc_inner /*kg*/);
 
     void energy_balance_iterated(double timestep /*s*/, double m_dot_in /*kg/s*/, double m_dot_out /*kg/s*/,
         double T_in /*K*/, double T_amb /*K*/,
@@ -190,6 +200,7 @@ private:
     double m_piston_location;   //[m] Piston distance from left side
     double m_nstep;             //[] Number of time steps for energy balance iteration
 
+
     // Added for NT, calc in init
     double m_radius;        //[m] radius of tank
     double m_length_total;  //[m] Total length of tank (two tanks combined)
@@ -217,7 +228,10 @@ public:
         E_PIST_LOC,
         E_PIST_FRAC,
         E_COLD_FRAC,
-        E_MASS_TOT
+        E_MASS_TOT,
+        E_SA_COLD,
+        E_SA_HOT,
+        E_SA_TOT
 	};
 
 

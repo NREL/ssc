@@ -572,6 +572,9 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_piston_frac",           "TES piston fraction of cold distance over total",                                  "",             "",               "TES",            "sim_type=1&tes_type=1",            "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_cold_vol_frac",         "TES volume fraction of cold over total",                                           "",             "",               "TES",            "sim_type=1&tes_type=1",            "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_mass_tot",              "TES total fluid mass",                                                             "kg",           "",               "TES",            "tes_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_SA_cold",               "TES cold side surface area",                                                       "m2",           "",               "TES",            "sim_type=1&tes_type=1",            "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_SA_hot",                "TES hot side surface area",                                                        "m2",           "",               "TES",            "sim_type=1&tes_type=1",            "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_SA_tot",                "TES total surface area",                                                      "m2",           "",               "TES",            "sim_type=1&tes_type=1",            "",                      "" },
 
 
     //{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_tes_dc",              "TES discharge mass flow rate",                                                     "kg/s",         "",               "TES",            "*",                       "",                      "" },
@@ -1355,6 +1358,10 @@ public:
             storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_PIST_FRAC, allocate("tes_piston_frac", n_steps_fixed), n_steps_fixed);
             storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_COLD_FRAC, allocate("tes_cold_vol_frac", n_steps_fixed), n_steps_fixed);
             storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_MASS_TOT, allocate("tes_mass_tot", n_steps_fixed), n_steps_fixed);
+            storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_SA_COLD, allocate("tes_SA_cold", n_steps_fixed), n_steps_fixed);
+            storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_SA_HOT, allocate("tes_SA_hot", n_steps_fixed), n_steps_fixed);
+            storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_SA_TOT, allocate("tes_SA_tot", n_steps_fixed), n_steps_fixed);
+
         }
         else
         {
