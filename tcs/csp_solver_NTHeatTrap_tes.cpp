@@ -200,209 +200,6 @@ void C_storage_tank_dynamic_NT::converged()
     m_SA_prev = m_SA_calc;      //[m2]
 }
 
-void C_storage_tank_dynamic_NT::energy_balance(double timestep /*s*/, double m_dot_in /*kg/s*/, double m_dot_out /*kg/s*/,
-    double T_in /*K*/, double T_amb /*K*/,
-    double T_tank_in, /*K*/
-
-    double& T_ave /*K*/, double& q_heater /*MW*/, double& q_dot_loss /*MW*/)
-{
-    // Get properties from tank state at the end of last time step
-    double rho = mc_htf.dens(m_T_prev, 1.0);	//[kg/m^3]
-    double cp = mc_htf.Cp(m_T_prev) * 1000.0;		//[J/kg-K] spec heat, convert from kJ/kg-K
-    //double cp_in = mc_htf.Cp_ave(500+273.15, m_T_prev)*1000.0;
-
-
-    // Get Beginning volume
-    double V_prev = m_m_prev / rho;     // [m3]
-    double V_total = m_volume_combined;    // [m3]
-    double V_remain = V_total - V_prev; // [m3]
-
-    // Calculate ending volume levels
-    m_m_calc = m_m_prev + timestep * (m_dot_in - m_dot_out);	//[kg] Available mass at the end of this timestep
-    double V_end = m_m_calc / rho; // [m3]
-
-    double V_min = 0.01 * m_volume_combined;
-    double V_max = 0.99 * m_volume_combined;
-
-    double m_min, m_dot_out_adj;
-    bool tank_is_empty = false;
-
-    m_min = 0.001;                              //[kg] minimum tank mass for use in the calculations
-    if (m_m_calc < m_min) {
-        m_m_calc = m_min;
-        tank_is_empty = true;
-        m_dot_out_adj = m_dot_in - (m_min - m_m_prev) / timestep;
-    }
-    else {
-        m_dot_out_adj = m_dot_out;
-    }
-    m_V_calc = m_m_calc / rho;					//[m^3] Available volume at end of timestep (using initial temperature...)
-
-    // Check for continual empty tank
-    if (m_m_prev <= 1e-4 && tank_is_empty == true) {
-        if (m_dot_in > 0) {
-            m_T_calc = T_ave = T_in;
-        }
-        else {
-            m_T_calc = T_ave = m_T_prev;
-        }
-        q_dot_loss = m_V_calc = m_m_calc = q_heater = 0.;
-        return;
-    }
-
-    double diff_m_dot = m_dot_in - m_dot_out_adj;   //[kg/s]
-    if (diff_m_dot >= 0.0)
-    {
-        diff_m_dot = std::max(diff_m_dot, 1.E-5);
-    }
-    else
-    {
-        diff_m_dot = std::min(diff_m_dot, -1.E-5);
-    }
-
-    // Get Wall Mass at beginning and end of timestep
-    double vol_tank_prev = calc_tank_wall_volume(m_m_prev, m_T_prev);
-    double mass_tank_prev = rho * vol_tank_prev;
-    double vol_tank_end = calc_tank_wall_volume(m_m_calc, m_T_prev);
-    double mass_tank_end = rho * vol_tank_end;
-
-    // Surface Area Expansion / Contraction rate
-    double SA_rate = calc_SA_rate(diff_m_dot, m_T_prev);
-    double linear_rate = SA_rate / (CSP::pi * std::pow(m_radius, 2.0));
-    double mdot_tank = calc_mdot_expansion(linear_rate);
-
-    double mdot_in_tank = 0; // [kg/s] mass gained from expanding
-    double mdot_out_tank = 0; // [kg/s] mass lost from contracting
-
-    if (mdot_tank > 0)
-    {
-        mdot_in_tank = mdot_tank;
-        mdot_out_tank = 0;
-    }
-    else if (mdot_tank < 0)
-    {
-        mdot_in_tank = 0;
-        mdot_out_tank = std::abs(mdot_tank);
-    }
-
-    double m_total = mass_tank_end + m_m_calc;
-    double cp_weighted = (cp * m_m_calc + m_tank_wall_cp * mass_tank_end) / m_total;
-
-    double mdot_in_total = m_dot_in + mdot_in_tank;
-    double T_in_weighted = 0;
-    if(mdot_in_total > 0)
-        T_in_weighted = (T_tank_in * mdot_in_tank + T_in * m_dot_in) / mdot_in_total;
-
-    double mdot_out_total = m_dot_out + mdot_out_tank;
-    double diff_m_dot_total = mdot_in_total - mdot_out_total;
-
-    double m_prev_total = m_m_prev + mass_tank_prev;
-
-    // Calculate UA value
-    m_SA_calc = calc_SA(m_V_calc);
-    double UA_calc = m_u_tank * m_SA_calc;
-
-    // Tank is either expanding or contracting
-    if (diff_m_dot_total != 0.0)
-    {
-        // NEW
-        // m_dot_in (NOW wall mass in and fluid mass in)
-        // T_in (NOW wall temp in (from cold or hot side) and fluid Temp in)
-        // cp   (NOW weighted cp_weighted of wall and fluid)
-        // diff_m_dot   (NOW total mass difference from wall and fluid)
-        // m_m_prev (WAS previous bulk fluid mass, NOW needs to be previous bulk fluid and wall mass)
-
-        double a_coef_old = m_dot_in * T_in + UA_calc / cp * T_amb;
-        double b_coef_old = m_dot_in + UA_calc / cp;
-        double c_coef_old = diff_m_dot;
-
-        double a_coef = mdot_in_total * T_in_weighted + (UA_calc / cp_weighted) * T_amb;
-        double b_coef = mdot_in_total + UA_calc / cp_weighted;
-        double c_coef = diff_m_dot_total;
-
-        m_T_calc = a_coef / b_coef + (m_T_prev - a_coef / b_coef) * pow(std::max((timestep * c_coef / m_prev_total + 1), 0.0), -b_coef / c_coef);
-        T_ave = a_coef / b_coef + m_prev_total * (m_T_prev - a_coef / b_coef) / ((c_coef - b_coef) * timestep) * (pow(std::max((timestep * c_coef / m_prev_total + 1.0), 0.0), 1.0 - b_coef / c_coef) - 1.0);
-        if (timestep < 1.e-6)
-            T_ave = a_coef / b_coef + (m_T_prev - a_coef / b_coef) * pow(std::max((timestep * c_coef / m_prev_total + 1.0), 0.0), -b_coef / c_coef);	// Limiting expression for small time step	
-        q_dot_loss = UA_calc * (T_ave - T_amb) / 1.E6;		//[MW]
-
-        if (m_T_calc < m_T_htr)
-        {
-            q_heater = b_coef * ((m_T_htr - m_T_prev * pow(std::max((timestep * c_coef / m_prev_total + 1), 0.0), -b_coef / c_coef)) /
-                (-pow(std::max((timestep * c_coef / m_prev_total + 1), 0.0), -b_coef / c_coef) + 1)) - a_coef;
-
-            q_heater = q_heater * cp_weighted;
-
-            q_heater /= 1.E6;
-        }
-        else
-        {
-            q_heater = 0.0;
-            return;
-        }
-
-        if (q_heater > m_max_q_htr)
-        {
-            q_heater = m_max_q_htr;
-        }
-
-        a_coef += q_heater * 1.E6 / cp_weighted;
-
-        m_T_calc = a_coef / b_coef + (m_T_prev - a_coef / b_coef) * pow(std::max((timestep * c_coef / m_prev_total + 1), 0.0), -b_coef / c_coef);
-        T_ave = a_coef / b_coef + m_prev_total * (m_T_prev - a_coef / b_coef) / ((c_coef - b_coef) * timestep) * (pow(std::max((timestep * c_coef / m_prev_total + 1.0), 0.0), 1.0 - b_coef / c_coef) - 1.0);
-        if (timestep < 1.e-6)
-            T_ave = a_coef / b_coef + (m_T_prev - a_coef / b_coef) * pow(std::max((timestep * c_coef / m_prev_total + 1.0), 0.0), -b_coef / c_coef);  // Limiting expression for small time step	
-        q_dot_loss = UA_calc * (T_ave - T_amb) / 1.E6;		//[MW]
-    }
-
-    // Tank is stagnant
-    else	// No mass flow rate, tank is idle
-    {
-        // NEW
-        // cp   (NOW weighted cp_weighted of wall and fluid)
-        // m_m_prev (WAS previous bulk fluid mass, NOW needs to be previous bulk fluid and wall mass)
-
-        double b_coef = UA_calc / (cp_weighted * m_prev_total);
-        double c_coef = UA_calc / (cp_weighted * m_prev_total) * T_amb;
-
-        m_T_calc = c_coef / b_coef + (m_T_prev - c_coef / b_coef) * exp(-b_coef * timestep);
-        T_ave = c_coef / b_coef - (m_T_prev - c_coef / b_coef) / (b_coef * timestep) * (exp(-b_coef * timestep) - 1.0);
-        if (timestep < 1.e-6)
-            T_ave = c_coef / b_coef + (m_T_prev - c_coef / b_coef) * exp(-b_coef * timestep);  // Limiting expression for small time step	
-        q_dot_loss = UA_calc * (T_ave - T_amb) / 1.E6;
-
-        if (m_T_calc < m_T_htr)
-        {
-            q_heater = (b_coef * (m_T_htr - m_T_prev * exp(-b_coef * timestep)) / (-exp(-b_coef * timestep) + 1.0) - c_coef) * cp_weighted * m_prev_total;
-            q_heater /= 1.E6;	//[MW]
-        }
-        else
-        {
-            q_heater = 0.0;
-            return;
-        }
-
-        if (q_heater > m_max_q_htr)
-        {
-            q_heater = m_max_q_htr;
-        }
-
-        c_coef += q_heater * 1.E6 / (cp_weighted * m_prev_total);
-
-        m_T_calc = c_coef / b_coef + (m_T_prev - c_coef / b_coef) * exp(-b_coef * timestep);
-        T_ave = c_coef / b_coef - (m_T_prev - c_coef / b_coef) / (b_coef * timestep) * (exp(-b_coef * timestep) - 1.0);
-        if (timestep < 1.e-6)
-            T_ave = c_coef / b_coef + (m_T_prev - c_coef / b_coef) * exp(-b_coef * timestep);  // Limiting expression for small time step	
-        q_dot_loss = UA_calc * (T_ave - T_amb) / 1.E6;		//[MW]
-    }
-
-    if (tank_is_empty) {
-        // set to actual values
-        m_V_calc = 0.;
-        m_m_calc = 0.;
-    }
-}
-
 void C_storage_tank_dynamic_NT::energy_balance_core(double timestep /*s*/, double m_dot_in /*kg/s*/, double m_dot_out /*kg/s*/,
     double T_in /*K*/, double T_amb /*K*/, double mass_prev_inner /*kg*/,
     double T_tank_in /*K*/, double T_prev_inner /*K*/,
@@ -607,253 +404,7 @@ void C_storage_tank_dynamic_NT::energy_balance_core(double timestep /*s*/, doubl
     }
 }
 
-
 void C_storage_tank_dynamic_NT::energy_balance_iterated(double timestep /*s*/, double m_dot_in /*kg/s*/, double m_dot_out /*kg/s*/,
-    double T_in /*K*/, double T_amb /*K*/,
-    double T_tank_in, /*K*/
-
-    double& T_ave /*K*/, double& q_heater /*MW*/, double& q_dot_loss /*MW*/)
-{
-    // Get properties from tank state at the end of last time step
-    //double rho = mc_htf.dens(m_T_prev, 1.0);	//[kg/m^3]
-    //double cp = mc_htf.Cp(m_T_prev) * 1000.0;		//[J/kg-K] spec heat, convert from kJ/kg-K
-    //double cp_in = mc_htf.Cp_ave(500+273.15, m_T_prev)*1000.0;
-
-    // Set up inner time steps
-    double time_segments = 10;
-    double ministep = timestep / time_segments;
-
-    double mass_prev_inner_step = m_m_prev; // [kg] Mass at beginning of time step
-    double mass_calc_inner_step = 0;    // [kg] Mass at end of time step    
-    double V_calc_inner_step = 0;   // [m3] (m_V_calc) Volume at end of time step   !!!! Need to set m_V_calc after
-    double T_calc_inner_step = 0;   // [K] (m_T_calc) Temperature at end of time step !!!!
-    double T_prev_inner_step = m_T_prev;    // [K] (m_T_prev) Temperature at beginning of time step
-    double T_ave_inner_step = 0;    // [K] (m_T_ave) Average temperature over time step !!!!!!!!!!
-    //double q_dot_loss_inner_step = 0;   // [MW] Loss over step !!!!!!
-    double q_dot_loss_summed = 0;       //[MW] Total Loss over entire timestep
-    double q_heater_summed = 0;         //[MW] Total heater energy over entire timestep
-    double UA_prev_inner_step = 0;      // UA for previous timestep !!!!!!!!!!
-    double UA_inner_step = 0;           // UA for current timestep  !!!!!!!!!!
-
-
-    for (int i = 0; i < time_segments; i++)
-    {
-        double current_time = i * ministep;
-
-        // Calc Prev cp and rho
-        double cp_prev_inner_step = mc_htf.Cp(T_prev_inner_step) * 1000.0; //[J/kg-K]
-        double rho_prev_inner_step = mc_htf.dens(m_T_prev, 1.0);	//[kg/m^3]
-
-        // Get Beginning volume
-        double V_prev = mass_prev_inner_step / rho_prev_inner_step;     // [m3]
-        double V_total = m_volume_combined;    // [m3]
-        double V_remain = V_total - V_prev; // [m3]
-
-        // Calculate UA value
-        double SA_prev = calc_SA(V_prev);
-        UA_prev_inner_step = m_u_tank * SA_prev;
-
-        // Calculate ending volume levels
-        mass_calc_inner_step = mass_prev_inner_step + ministep * (m_dot_in - m_dot_out);	//[kg] Available mass at the end of this ministep
-        double V_end = mass_calc_inner_step / rho_prev_inner_step; // [m3]
-
-        double V_min = 0.01 * m_volume_combined;
-        double V_max = 0.99 * m_volume_combined;
-
-        double m_min, m_dot_out_adj;
-        bool tank_is_empty = false;
-
-        m_min = 0.001;                              //[kg] minimum tank mass for use in the calculations
-        if (mass_calc_inner_step < m_min) {
-            mass_calc_inner_step = m_min;
-            tank_is_empty = true;
-            m_dot_out_adj = m_dot_in - (m_min - mass_prev_inner_step) / ministep;
-        }
-        else {
-            m_dot_out_adj = m_dot_out;
-        }
-        V_calc_inner_step = mass_calc_inner_step / rho_prev_inner_step;					//[m^3] Available volume at end of ministep (using initial temperature...)
-
-        // UA at end of time step
-        UA_inner_step = m_u_tank * V_calc_inner_step;
-
-        // Check for continual empty tank
-        if (mass_prev_inner_step <= 1e-4 && tank_is_empty == true) {
-            if (m_dot_in > 0) {
-                T_calc_inner_step = T_ave_inner_step = T_in;
-            }
-            else {
-                T_calc_inner_step = T_ave_inner_step = T_prev_inner_step;
-            }
-            q_dot_loss_summed += V_calc_inner_step = mass_calc_inner_step = q_heater = 0.;
-            continue;
-        }
-
-        double diff_m_dot = m_dot_in - m_dot_out_adj;   //[kg/s]
-        if (diff_m_dot >= 0.0)
-        {
-            diff_m_dot = std::max(diff_m_dot, 1.E-5);
-        }
-        else
-        {
-            diff_m_dot = std::min(diff_m_dot, -1.E-5);
-        }
-
-        // Get Wall Mass at beginning and end of ministep
-        double vol_tank_prev = calc_tank_wall_volume(mass_prev_inner_step, T_prev_inner_step);
-        double m_tank_prev = rho_prev_inner_step * vol_tank_prev;
-        double vol_tank_end = calc_tank_wall_volume(mass_calc_inner_step, T_prev_inner_step);
-        double m_tank_end = rho_prev_inner_step * vol_tank_end;
-
-        // TMB 12.15.2023 need to account for tank mass
-        double cp_tank = 1000; // [J/kg-K]
-
-        // Surface Area Expansion / Contraction rate
-        double SA_rate = calc_SA_rate(diff_m_dot, T_prev_inner_step);
-        double linear_rate = SA_rate / (CSP::pi * std::pow(m_radius, 2.0));
-        double mdot_tank = calc_mdot_expansion(linear_rate);
-
-        double mdot_in_tank = 0; // [kg/s] mass gained from expanding
-        double mdot_out_tank = 0; // [kg/s] mass lost from contracting
-
-        if (mdot_tank > 0)
-        {
-            mdot_in_tank = mdot_tank;
-            mdot_out_tank = 0;
-        }
-        else if (mdot_tank < 0)
-        {
-            mdot_in_tank = 0;
-            mdot_out_tank = std::abs(mdot_tank);
-        }
-
-        double m_total = m_tank_end + mass_calc_inner_step;
-        double cp_weighted = (cp_prev_inner_step * mass_calc_inner_step + cp_tank * m_tank_end) / m_total;
-
-        double mdot_in_total = m_dot_in + mdot_in_tank;
-        double T_in_weighted = 0;
-        if (mdot_in_total > 0)
-            T_in_weighted = (T_tank_in * mdot_in_tank + T_in * m_dot_in) / mdot_in_total;
-
-        double mdot_out_total = m_dot_out + mdot_out_tank;
-        double diff_m_dot_total = mdot_in_total - mdot_out_total;
-
-        double m_prev_total = mass_prev_inner_step + m_tank_prev;
-
-        // Tank is either expanding or contracting
-        if (diff_m_dot_total != 0.0)
-        {
-            // NEW
-            // m_dot_in (NOW wall mass in and fluid mass in)
-            // T_in (NOW wall temp in (from cold or hot side) and fluid Temp in)
-            // cp_weighted   (NOW weighted cp_weighted of wall and fluid)
-            // diff_m_dot   (NOW total mass difference from wall and fluid)
-            // m_prev_inner_step (WAS previous bulk fluid mass, NOW needs to be previous bulk fluid and wall mass)
-
-            double a_coef_old = m_dot_in * T_in + UA_inner_step / cp_prev_inner_step * T_amb;
-            double b_coef_old = m_dot_in + UA_inner_step / cp_prev_inner_step;
-            double c_coef_old = diff_m_dot;
-
-            double a_coef = mdot_in_total * T_in_weighted + (UA_inner_step / cp_weighted) * T_amb;
-            double b_coef = mdot_in_total + UA_inner_step / cp_weighted;
-            double c_coef = diff_m_dot_total;
-
-            T_calc_inner_step = a_coef / b_coef + (T_prev_inner_step - a_coef / b_coef) * pow(std::max((ministep * c_coef / m_prev_total + 1), 0.0), -b_coef / c_coef);
-            T_ave_inner_step = a_coef / b_coef + m_prev_total * (T_prev_inner_step - a_coef / b_coef) / ((c_coef - b_coef) * ministep) * (pow(std::max((ministep * c_coef / m_prev_total + 1.0), 0.0), 1.0 - b_coef / c_coef) - 1.0);
-            if (ministep < 1.e-6)
-                T_ave_inner_step = a_coef / b_coef + (T_prev_inner_step - a_coef / b_coef) * pow(std::max((ministep * c_coef / m_prev_total + 1.0), 0.0), -b_coef / c_coef);	// Limiting expression for small time step	
-            q_dot_loss_summed  += UA_inner_step * (T_ave_inner_step - T_amb) / 1.E6;		//[MW]
-
-            double q_heater_innerstep = 0;
-            if (T_calc_inner_step < m_T_htr)
-            {
-                q_heater_innerstep = b_coef * ((m_T_htr - T_prev_inner_step * pow(std::max((ministep * c_coef / m_prev_total + 1), 0.0), -b_coef / c_coef)) /
-                    (-pow(std::max((ministep * c_coef / m_prev_total + 1), 0.0), -b_coef / c_coef) + 1)) - a_coef;
-
-                q_heater_innerstep = q_heater_innerstep * cp_weighted;
-
-                q_heater_innerstep /= 1.E6;
-                q_heater_summed += q_heater_innerstep;
-            }
-            else
-            {
-                q_heater_summed += 0.0;
-                continue;
-            }
-
-            if (q_heater_summed > m_max_q_htr)
-            {
-                q_heater_summed = m_max_q_htr;
-            }
-
-            a_coef += q_heater_innerstep * 1.E6 / cp_weighted;
-
-            T_calc_inner_step = a_coef / b_coef + (T_prev_inner_step - a_coef / b_coef) * pow(std::max((ministep * c_coef / m_prev_total + 1), 0.0), -b_coef / c_coef);
-            T_ave_inner_step = a_coef / b_coef + m_prev_total * (T_prev_inner_step - a_coef / b_coef) / ((c_coef - b_coef) * ministep) * (pow(std::max((ministep * c_coef / m_prev_total + 1.0), 0.0), 1.0 - b_coef / c_coef) - 1.0);
-            if (ministep < 1.e-6)
-                T_ave_inner_step = a_coef / b_coef + (T_prev_inner_step - a_coef / b_coef) * pow(std::max((ministep * c_coef / m_prev_total + 1.0), 0.0), -b_coef / c_coef);  // Limiting expression for small time step	
-            q_dot_loss_summed += UA_inner_step * (T_ave_inner_step - T_amb) / 1.E6;		//[MW]
-        }
-
-        // Tank is stagnant
-        else	// No mass flow rate, tank is idle
-        {
-            // NEW
-            // cp_inner_step   (NOW weighted cp_weighted of wall and fluid)
-            // m_prev_inner_step (WAS previous bulk fluid mass, NOW needs to be previous bulk fluid and wall mass)
-
-            double b_coef = UA_inner_step / (cp_weighted * m_prev_total);
-            double c_coef = UA_inner_step / (cp_weighted * m_prev_total) * T_amb;
-
-            T_calc_inner_step = c_coef / b_coef + (T_prev_inner_step - c_coef / b_coef) * exp(-b_coef * ministep);
-            T_ave_inner_step = c_coef / b_coef - (T_prev_inner_step - c_coef / b_coef) / (b_coef * ministep) * (exp(-b_coef * ministep) - 1.0);
-            if (ministep < 1.e-6)
-                T_ave_inner_step = c_coef / b_coef + (T_prev_inner_step - c_coef / b_coef) * exp(-b_coef * ministep);  // Limiting expression for small time step	
-            q_dot_loss_summed += UA_inner_step * (T_ave_inner_step - T_amb) / 1.E6;
-
-            if (T_calc_inner_step < m_T_htr)
-            {
-                q_heater = (b_coef * (m_T_htr - T_prev_inner_step * exp(-b_coef * ministep)) / (-exp(-b_coef * ministep) + 1.0) - c_coef) * cp_weighted * m_prev_total;
-                q_heater /= 1.E6;	//[MW]
-            }
-            else
-            {
-                q_heater = 0.0;
-                continue;
-            }
-
-            if (q_heater > m_max_q_htr)
-            {
-                q_heater = m_max_q_htr;
-            }
-
-            c_coef += q_heater * 1.E6 / (cp_weighted * m_prev_total);
-
-            T_calc_inner_step = c_coef / b_coef + (T_prev_inner_step - c_coef / b_coef) * exp(-b_coef * ministep);
-            T_ave_inner_step = c_coef / b_coef - (T_prev_inner_step - c_coef / b_coef) / (b_coef * ministep) * (exp(-b_coef * ministep) - 1.0);
-            if (ministep < 1.e-6)
-                T_ave_inner_step = c_coef / b_coef + (T_prev_inner_step - c_coef / b_coef) * exp(-b_coef * ministep);  // Limiting expression for small time step	
-            q_dot_loss_summed += UA_inner_step * (T_ave_inner_step - T_amb) / 1.E6;		//[MW]
-        }
-
-        if (tank_is_empty) {
-            // set to actual values
-            V_calc_inner_step = 0.;
-            mass_calc_inner_step = 0.;
-        }
-    }
-
-    m_m_prev = mass_calc_inner_step;
-    m_m_calc = mass_calc_inner_step;
-    m_T_calc = T_calc_inner_step;
-    m_V_calc = V_calc_inner_step;
-    T_ave = T_ave_inner_step;
-    q_heater = q_heater_summed;
-    q_dot_loss = q_dot_loss_summed;
-
-}
-
-void C_storage_tank_dynamic_NT::energy_balance_iterated2(double timestep /*s*/, double m_dot_in /*kg/s*/, double m_dot_out /*kg/s*/,
     double T_in /*K*/, double T_amb /*K*/,
     double T_tank_in, /*K*/
 
@@ -881,11 +432,6 @@ void C_storage_tank_dynamic_NT::energy_balance_iterated2(double timestep /*s*/, 
         q_heater_summed += q_heater_innerstep * (ministep / timestep);
         q_dot_loss_summed += q_dot_loss_innerstep * (ministep / timestep);
 
-        if (q_dot_loss_innerstep < 1e-4)
-        {
-            double x = 0;
-        }
-
         mass_prev_inner = mass_calc_inner;
         T_prev_inner = T_calc_inner;
     }
@@ -894,40 +440,10 @@ void C_storage_tank_dynamic_NT::energy_balance_iterated2(double timestep /*s*/, 
     q_heater = q_heater_summed;
     q_dot_loss = q_dot_loss_summed;
 
-    //if (q_dot_loss < 1e-4)
-    //{
-    //    double x = 0;
-    //}
-
     m_m_calc = mass_calc_inner;
     m_T_calc = T_calc_inner;
 }
 
-void C_storage_tank_dynamic_NT::energy_balance_constant_mass(double timestep /*s*/, double m_dot_in, double T_in /*K*/, double T_amb /*K*/,
-    double& T_ave /*K*/, double& q_heater /*MW*/, double& q_dot_loss /*MW*/)
-{
-    // Get properties from tank state at the end of last time step
-    double rho = mc_htf.dens(m_T_prev, 1.0);	//[kg/m^3]
-    double cp = mc_htf.Cp(m_T_prev) * 1000.0;		//[J/kg-K] spec heat, convert from kJ/kg-K
-
-    // Calculate ending volume levels
-    m_m_calc = m_m_prev;						//[kg] Available mass at the end of this timestep, same as previous
-    m_V_calc = m_m_calc / rho;					//[m^3] Available volume at end of timestep (using initial temperature...)		
-
-    // Calculate UA value
-    double SA_calc = calc_SA(m_V_calc);
-    double UA_calc = m_u_tank * SA_calc;
-
-    //Analytical method
-    double a_coef = m_dot_in / m_m_calc + UA_calc / (m_m_calc * cp);
-    double b_coef = m_dot_in / m_m_calc * T_in + UA_calc / (m_m_calc * cp) * T_amb;
-
-    m_T_calc = b_coef / a_coef - (b_coef / a_coef - m_T_prev) * exp(-a_coef * timestep);
-    T_ave = b_coef / a_coef - (b_coef / a_coef - m_T_prev) * exp(-a_coef * timestep / 2); //estimate of average
-
-    q_heater = 0.0;
-    return;
-}
 
 double C_storage_tank_dynamic_NT::calc_SA_rate(double mdot_htf /*kg/s*/, double T_htf /*K*/)
 {
@@ -1567,7 +1083,7 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
         double T_cold_prev = mc_cold_tank_NT.get_m_T_prev();
 
         // Call energy balance on hot tank discharge to get average outlet temperature over timestep
-        mc_hot_tank_NT.energy_balance_iterated2(timestep, m_dot_cr_to_cv_hot, m_dot_cv_hot_to_sink,
+        mc_hot_tank_NT.energy_balance_iterated(timestep, m_dot_cr_to_cv_hot, m_dot_cv_hot_to_sink,
             T_cr_out_hot, T_amb,
             T_cold_prev,
             T_sink_htf_in_hot, q_heater_hot, q_dot_loss_hot);
@@ -1579,7 +1095,7 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
 
         // Call energy balance on cold tank charge to track tank mass and temperature
         // Use mass flow and temperature downstream of sink-out and cr-to-cold-tank mixer
-        mc_cold_tank_NT.energy_balance_iterated2(timestep, m_dot_total_to_cv_cold, m_dot_cv_cold_to_cr,
+        mc_cold_tank_NT.energy_balance_iterated(timestep, m_dot_total_to_cv_cold, m_dot_cv_cold_to_cr,
             T_htf_cold_cv_in, T_amb,
             T_hot_prev,
             T_cr_in_cold, q_heater_cold, q_dot_loss_cold);
@@ -1811,14 +1327,10 @@ bool C_csp_NTHeatTrap_tes::charge(double timestep /*s*/, double T_amb /*K*/, dou
     double T_cold_prev = mc_cold_tank_NT.get_m_T_prev();
 
     // Call energy balance on cold tank discharge to get average outlet temperature over timestep
-    mc_cold_tank_NT.energy_balance_iterated2(timestep, 0.0, m_dot_tank, 0.0, T_amb, T_hot_prev, T_cold_ave, q_heater_cold, q_dot_loss_cold);
-
-    //mc_cold_tank_NT.energy_balance(timestep, 0.0, m_dot_tank, 0.0, T_amb, T_hot_prev, T_cold_ave, q_heater_cold, q_dot_loss_cold);
+    mc_cold_tank_NT.energy_balance_iterated(timestep, 0.0, m_dot_tank, 0.0, T_amb, T_hot_prev, T_cold_ave, q_heater_cold, q_dot_loss_cold);
 
     // Call energy balance on hot tank charge to track tank mass and temperature
-    mc_hot_tank_NT.energy_balance_iterated2(timestep, m_dot_tank, 0.0, T_hot_tank_in, T_amb, T_cold_prev, T_hot_ave, q_heater_hot, q_dot_loss_hot);
-
-    //mc_hot_tank_NT.energy_balance(timestep, m_dot_tank, 0.0, T_hot_tank_in, T_amb, T_cold_prev, T_hot_ave, q_heater_hot, q_dot_loss_hot);
+    mc_hot_tank_NT.energy_balance_iterated(timestep, m_dot_tank, 0.0, T_hot_tank_in, T_amb, T_cold_prev, T_hot_ave, q_heater_hot, q_dot_loss_hot);
 
     q_dot_heater = q_heater_cold + q_heater_hot;			//[MWt]
 
@@ -1892,14 +1404,10 @@ bool C_csp_NTHeatTrap_tes::discharge(double timestep /*s*/, double T_amb /*K*/, 
     double T_cold_prev = mc_cold_tank_NT.get_m_T_prev();
 
     // Call energy balance on hot tank discharge to get average outlet temperature over timestep
-    mc_hot_tank_NT.energy_balance_iterated2(timestep, 0.0, m_dot_tank, 0.0, T_amb, T_cold_prev, T_hot_ave, q_heater_hot, q_dot_loss_hot);
-
-    //mc_hot_tank_NT.energy_balance(timestep, 0.0, m_dot_tank, 0.0, T_amb, T_cold_prev, T_hot_ave, q_heater_hot, q_dot_loss_hot);
+    mc_hot_tank_NT.energy_balance_iterated(timestep, 0.0, m_dot_tank, 0.0, T_amb, T_cold_prev, T_hot_ave, q_heater_hot, q_dot_loss_hot);
 
     // Call energy balance on cold tank charge to track tank mass and temperature
-    mc_cold_tank_NT.energy_balance_iterated2(timestep, m_dot_tank, 0.0, T_cold_tank_in, T_amb, T_hot_prev, T_cold_ave, q_heater_cold, q_dot_loss_cold);
-
-    //mc_cold_tank_NT.energy_balance(timestep, m_dot_tank, 0.0, T_cold_tank_in, T_amb, T_hot_prev, T_cold_ave, q_heater_cold, q_dot_loss_cold);
+    mc_cold_tank_NT.energy_balance_iterated(timestep, m_dot_tank, 0.0, T_cold_tank_in, T_amb, T_hot_prev, T_cold_ave, q_heater_cold, q_dot_loss_cold);
 
     q_dot_heater = q_heater_cold + q_heater_hot;			//[MWt]
 
