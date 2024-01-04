@@ -136,9 +136,9 @@ public:
 
     void energy_balance_core(double timestep /*s*/, double m_dot_in /*kg/s*/, double m_dot_out /*kg/s*/,
         double T_in /*K*/, double T_amb /*K*/, double mass_prev_inner /*kg*/,
-        double T_tank_in, /*K*/
+        double T_tank_in /*K*/, double T_prev_inner /*K*/,
         double& T_ave /*K*/, double& q_heater /*MW*/, double& q_dot_loss /*MW*/,
-        double& mass_calc_inner /*kg*/);
+        double& mass_calc_inner /*kg*/, double& T_calc_inner /*K*/);
 
     void energy_balance_iterated(double timestep /*s*/, double m_dot_in /*kg/s*/, double m_dot_out /*kg/s*/,
         double T_in /*K*/, double T_amb /*K*/,
