@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "core.h"
 #include "csp_solver_two_tank_tes.h"
+#include "csp_solver_NTHeatTrap_tes.h"
 
 // Forward declarations
 double C_to_K(double T);
@@ -87,6 +88,15 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_INPUT,        SSC_NUMBER,      "HDR_rough",                 "Header pipe roughness",                                                            "m",            "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "DP_SGS",                    "Pressure drop within the steam generator",                                         "bar",          "",               "controller",     "*",                       "",                      "" },
 
+    // Added Inputs for NT System
+    { SSC_INPUT,        SSC_NUMBER,      "tes_type",                  "Standard two tank (0), HeatTrap Single Tank (1)",                                  "-",            "",               "TES",            "?=0",                     "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_tank_thick",            "Tank wall thickness (used for Norwich HeatTrap)",                                  "m",            "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_tank_cp",               "Tank wall cp (used for Norwich HeatTrap)",                                         "kJ/kg-K",      "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_tank_dens",             "Tank wall thickness (used for Norwich HeatTrap)",                                  "kg/m3",        "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_NT_nstep",              "Number of time steps for energy balance (used for Norwich HeatTrap)",              "",             "",               "TES",            "?=1",                     "",                      "" },
+
+
+
     // Outputs
     { SSC_OUTPUT,       SSC_ARRAY,       "T_src_in",                  "Temperature to heat source",                                                       "C",            "",               "TES",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "T_sink_in",                 "Temperature to heat sink or power block",                                          "C",            "",               "TES",            "*",                       "",                      "" },
@@ -105,6 +115,12 @@ public:
 
     void exec()
     {
+
+        int tes_type = as_integer("tes_type");
+
+
+
+
         util::matrix_t<double> tes_lengths;
         if (is_assigned("tes_lengths")) {
             tes_lengths = as_matrix("tes_lengths");               //[m]
@@ -113,52 +129,138 @@ public:
             double vals1[11] = { 0., 90., 100., 120., 0., 30., 90., 80., 80., 120., 80. };
             tes_lengths.assign(vals1, 11);
         }
-        C_csp_two_tank_tes tes(
-            as_integer("Fluid"),                                                // [-] field fluid identifier
-            as_matrix("field_fl_props"),                                        // [-] field fluid properties
-            as_integer("store_fluid"),                                          // [-] tes fluid identifier
-            as_matrix("store_fl_props"),                                        // [-] tes fluid properties
-            as_double("P_ref") / as_double("eta_ref"),                          // [MWt] Design heat rate in and out of tes
-            as_double("solar_mult"),                                            // [-] the max design heat rate as a fraction of the nominal
-            as_double("P_ref") / as_double("eta_ref") * as_double("tshours"),   // [MWt-hr] design storage capacity
-            as_double("h_tank"),                                                // [m] tank height
-            as_double("u_tank"),                                                // [W/m^2-K]
-            as_integer("tank_pairs"),                                           // [-]
-            as_double("hot_tank_Thtr"),                                         // [C] convert to K in init()
-            as_double("hot_tank_max_heat"),                                     // [MW]
-            as_double("cold_tank_Thtr"),                                        // [C] convert to K in init()
-            as_double("cold_tank_max_heat"),                                    // [MW]
-            as_double("dt_hot"),                                                // [C] Temperature difference across heat exchanger - assume hot and cold deltaTs are equal
-            as_double("T_loop_in_des"),                                         // [C] convert to K in init()
-            as_double("T_loop_out"),                                            // [C] convert to K in init()
-            as_double("T_loop_out"),                                            // [C] Initial temperature in hot storage tank
-            as_double("T_loop_in_des"),                                         // [C] Initial temperature in cold storage cold
-            as_double("h_tank_min"),                                            // [m] Minimum allowable HTF height in storage tank
-            as_double("init_hot_htf_percent"),                                  // [%] Initial fraction of available volume that is hot
-            as_double("pb_pump_coef"),                                          // [kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle
-            as_boolean("tanks_in_parallel"),                                    // [-] Whether the tanks are in series or parallel with the solar field. Series means field htf must go through storage tanks.
-            as_double("V_tes_des"),                                             // [m/s] Design-point velocity for sizing the diameters of the TES piping
-            as_boolean("calc_design_pipe_vals"),                                // [-] Should the HTF state be calculated at design conditions
-            as_double("tes_pump_coef"),                                         // [kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
-            as_double("eta_pump"),                                              // [-] Pump efficiency, for newer pumping calculations
-            as_boolean("has_hot_tank_bypass"),                                  // [-] True if the bypass valve causes the field htf to bypass just the hot tank and enter the cold tank before flowing back to the field.
-            as_double("T_tank_hot_inlet_min"),                                  // [C] Minimum field htf temperature that may enter the hot tank
-            as_boolean("custom_tes_p_loss"),                                    // [-] True if the TES piping losses should be calculated using the TES pipe lengths and minor loss coeffs, false if using the pumping loss parameters
-            as_boolean("custom_tes_pipe_sizes"),                                // [-] True if the TES diameters and wall thicknesses parameters should be used instead of calculating them
-            as_matrix("k_tes_loss_coeffs"),                                     // [-] Combined minor loss coefficients of the fittings and valves in the collection (including bypass) and generation loops in the TES 
-            as_matrix("tes_diams"),                                             // [m] Imported inner diameters for the TES piping as read from the modified output files
-            as_matrix("tes_wallthicks"),                                        // [m] Imported wall thicknesses for the TES piping as read from the modified output files
-            tes_lengths,                                                        // [m] Imported lengths for the TES piping as read from the modified output files
-            as_double("HDR_rough"),                                             // [m] Pipe absolute roughness
-            as_double("DP_SGS")                                                 // [bar] Pressure drop on the TES discharge side (e.g., within the steam generator)
-        );
+
+
+        C_csp_tes* storage_pointer;
+        C_csp_two_tank_tes storage_two_tank;
+        C_csp_NTHeatTrap_tes storage_NT;
+
+        double P_ref = as_double("P_ref");
+        double eta_ref = as_double("eta_ref");
+        double tshours = as_double("tshours");
+
+        if (tes_type == 0)
+        {
+            storage_two_tank = C_csp_two_tank_tes(
+                as_integer("Fluid"),                                                // [-] field fluid identifier
+                as_matrix("field_fl_props"),                                        // [-] field fluid properties
+                as_integer("store_fluid"),                                          // [-] tes fluid identifier
+                as_matrix("store_fl_props"),                                        // [-] tes fluid properties
+                as_double("P_ref") / as_double("eta_ref"),                          // [MWt] Design heat rate in and out of tes
+                as_double("solar_mult"),                                            // [-] the max design heat rate as a fraction of the nominal
+                as_double("P_ref") / as_double("eta_ref") * as_double("tshours"),   // [MWt-hr] design storage capacity
+                as_double("h_tank"),                                                // [m] tank height
+                as_double("u_tank"),                                                // [W/m^2-K]
+                as_integer("tank_pairs"),                                           // [-]
+                as_double("hot_tank_Thtr"),                                         // [C] convert to K in init()
+                as_double("hot_tank_max_heat"),                                     // [MW]
+                as_double("cold_tank_Thtr"),                                        // [C] convert to K in init()
+                as_double("cold_tank_max_heat"),                                    // [MW]
+                as_double("dt_hot"),                                                // [C] Temperature difference across heat exchanger - assume hot and cold deltaTs are equal
+                as_double("T_loop_in_des"),                                         // [C] convert to K in init()
+                as_double("T_loop_out"),                                            // [C] convert to K in init()
+                as_double("T_loop_out"),                                            // [C] Initial temperature in hot storage tank
+                as_double("T_loop_in_des"),                                         // [C] Initial temperature in cold storage cold
+                as_double("h_tank_min"),                                            // [m] Minimum allowable HTF height in storage tank
+                as_double("init_hot_htf_percent"),                                  // [%] Initial fraction of available volume that is hot
+                as_double("pb_pump_coef"),                                          // [kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle
+                as_boolean("tanks_in_parallel"),                                    // [-] Whether the tanks are in series or parallel with the solar field. Series means field htf must go through storage tanks.
+                as_double("V_tes_des"),                                             // [m/s] Design-point velocity for sizing the diameters of the TES piping
+                as_boolean("calc_design_pipe_vals"),                                // [-] Should the HTF state be calculated at design conditions
+                as_double("tes_pump_coef"),                                         // [kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
+                as_double("eta_pump"),                                              // [-] Pump efficiency, for newer pumping calculations
+                as_boolean("has_hot_tank_bypass"),                                  // [-] True if the bypass valve causes the field htf to bypass just the hot tank and enter the cold tank before flowing back to the field.
+                as_double("T_tank_hot_inlet_min"),                                  // [C] Minimum field htf temperature that may enter the hot tank
+                as_boolean("custom_tes_p_loss"),                                    // [-] True if the TES piping losses should be calculated using the TES pipe lengths and minor loss coeffs, false if using the pumping loss parameters
+                as_boolean("custom_tes_pipe_sizes"),                                // [-] True if the TES diameters and wall thicknesses parameters should be used instead of calculating them
+                as_matrix("k_tes_loss_coeffs"),                                     // [-] Combined minor loss coefficients of the fittings and valves in the collection (including bypass) and generation loops in the TES 
+                as_matrix("tes_diams"),                                             // [m] Imported inner diameters for the TES piping as read from the modified output files
+                as_matrix("tes_wallthicks"),                                        // [m] Imported wall thicknesses for the TES piping as read from the modified output files
+                tes_lengths,                                                        // [m] Imported lengths for the TES piping as read from the modified output files
+                as_double("HDR_rough"),                                             // [m] Pipe absolute roughness
+                as_double("DP_SGS")                                                 // [bar] Pressure drop on the TES discharge side (e.g., within the steam generator)
+            );
+
+            storage_pointer = &storage_two_tank;
+        }
+        else if (tes_type == 1)
+        {
+
+            int nstep = as_integer("tes_NT_nstep");
+
+            bool custom_tes_pipe_sizes = as_boolean("custom_tes_pipe_sizes");
+            util::matrix_t<double> tes_wallthicks;
+            if (!is_assigned("tes_wallthicks"))
+            {
+                double tes_wallthicks_val[1] = { -1 };
+                tes_wallthicks.assign(tes_wallthicks_val, 1);
+            }
+            util::matrix_t<double> tes_diams;
+            if (!is_assigned("tes_diams"))
+            {
+                double tes_diams_val[1] = { -1 };
+                tes_diams.assign(tes_diams_val, 1);
+            }
+
+            storage_NT = C_csp_NTHeatTrap_tes(
+                as_integer("Fluid"),
+                as_matrix("field_fl_props"),
+                as_integer("store_fluid"),
+                as_matrix("store_fl_props"),
+                as_double("P_ref") / as_double("eta_ref"),
+                as_double("solar_mult"),
+                as_double("P_ref") / as_double("eta_ref") * as_double("tshours"),
+                as_double("h_tank"),
+                as_double("u_tank"),
+                as_integer("tank_pairs"),
+                as_double("hot_tank_Thtr"),
+                as_double("hot_tank_max_heat"),
+                as_double("cold_tank_Thtr"),
+                as_double("cold_tank_max_heat"),
+                as_double("dt_hot"),
+                as_double("T_loop_in_des"),
+                as_double("T_loop_out"),
+                as_double("T_loop_out"),
+                as_double("T_loop_in_des"),
+                as_double("h_tank_min"),
+                as_double("init_hot_htf_percent"),
+                as_double("pb_pump_coef"),
+                as_boolean("tanks_in_parallel"),
+                as_double("tes_tank_cp") * 1000, // convert to J/kgK
+                as_double("tes_tank_dens"),
+                as_double("tes_tank_thick"),
+                nstep,
+                as_double("V_tes_des"),
+                as_boolean("calc_design_pipe_vals"),
+                as_double("tes_pump_coef"),
+                as_double("eta_pump"),
+                as_boolean("has_hot_tank_bypass"),
+                as_double("T_tank_hot_inlet_min"),
+                false,
+                false,
+                as_matrix("k_tes_loss_coeffs"),
+                tes_diams,
+                tes_wallthicks,
+                tes_lengths,
+                as_double("HDR_rough"),
+                as_double("DP_SGS")
+            );
+
+            storage_pointer = &storage_NT;
+        }
+        else
+        {
+            exec_error("trough_physical", "tes_type must be 0 or 1");
+        }
+
+        
 
         // Initialization   -> this is necessary to fully instantiate the TES
         C_csp_tes::S_csp_tes_init_inputs init_inputs;
         init_inputs.T_to_cr_at_des = C_to_K(as_double("T_loop_in_des"));        // [K]
         init_inputs.T_from_cr_at_des = C_to_K(as_double("T_loop_out"));         // [K]
         init_inputs.P_to_cr_at_des = 19.64;                                     // [bar]
-        tes.init(init_inputs);
+        storage_pointer->init(init_inputs);
 
         // Get inputs
         double t_step = as_double("t_step");
@@ -190,7 +292,7 @@ public:
             double mdot_src_to_cold_tank = hot_tank_bypassed.at(i) ? mdot_src.at(i) : 0.;
             double T_src_in_K, T_sink_in_K;
             C_csp_tes::S_csp_tes_outputs tes_outputs;
-            int result = tes.solve_tes_off_design(
+            int result = storage_pointer->solve_tes_off_design(
                 t_step,                         /*s*/
                 C_to_K(T_amb.at(i)),            /*K*/
                 mdot_src_to_hot_tank,           /*kg/s*/
@@ -202,13 +304,13 @@ public:
                 T_sink_in_K,                    /*K*/
                 T_src_in_K,                     /*K*/
                 tes_outputs);
-            tes.converged();
+            storage_pointer->converged();
 
             // Set outputs
             T_src_in[i] = K_to_C(T_src_in_K);
             T_sink_in[i] = K_to_C(T_sink_in_K);
-            T_tank_cold[i] = K_to_C(tes.get_cold_temp());
-            T_tank_hot[i] = K_to_C(tes.get_hot_temp());
+            T_tank_cold[i] = K_to_C(storage_pointer->get_cold_temp());
+            T_tank_hot[i] = K_to_C(storage_pointer->get_hot_temp());
         }
     }
 };
