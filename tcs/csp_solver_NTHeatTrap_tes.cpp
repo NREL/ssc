@@ -166,6 +166,11 @@ double C_storage_tank_dynamic_NT::get_fluid_vol()
     return m_V_calc;
 }
 
+double C_storage_tank_dynamic_NT::get_fluid_vol_prev()
+{
+    return m_V_prev;
+}
+
 double C_storage_tank_dynamic_NT::get_radius()
 {
     return m_radius;
@@ -1544,8 +1549,8 @@ double C_csp_NTHeatTrap_tes::get_storage_htf_cp()
 
 void C_csp_NTHeatTrap_tes::calc_piston_location(double &piston_loc, double &piston_frac)
 {
-    double vol_cold = mc_cold_tank_NT.get_fluid_vol();
-    double vol_hot = mc_hot_tank_NT.get_fluid_vol();
+    double vol_cold = mc_cold_tank_NT.get_fluid_vol_prev();
+    double vol_hot = mc_hot_tank_NT.get_fluid_vol_prev();
 
     double length_cold = vol_cold / (CSP::pi * std::pow(m_radius, 2.0));
     double length_hot = vol_hot / (CSP::pi * std::pow(m_radius, 2.0));

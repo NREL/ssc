@@ -111,6 +111,8 @@ public:
 
     double get_fluid_vol(); // m3
 
+    double get_fluid_vol_prev(); // m3
+
     double get_radius();    // m
 
     double get_SA_calc();        //m2
@@ -192,7 +194,7 @@ private:
     double m_radius;        //[m] radius of tank
     double m_length_total;  //[m] Total length of tank (two tanks combined)
 
-    void calc_piston_location(double& piston_loc, double& piston_frac);
+    
 
 public:
 
@@ -388,6 +390,8 @@ public:
     double get_storage_htf_density();
 
     double get_storage_htf_cp();
+
+    void calc_piston_location(double& piston_loc, double& piston_frac);
 };
 
 

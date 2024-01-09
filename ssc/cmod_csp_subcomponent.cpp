@@ -102,6 +102,17 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "T_sink_in",                 "Temperature to heat sink or power block",                                          "C",            "",               "TES",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "T_tank_cold",               "Temperature of cold tank (average)",                                               "C",            "",               "TES",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "T_tank_hot",                "Temperature of hot tank (average)",                                                "C",            "",               "TES",            "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "tes_diameter",              "TES Diameter",                                                                     "m",            "",               "TES",            "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "tes_radius",                "TES Radius",                                                                       "m",            "",               "TES",            "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "hot_tank_vol_frac",         "Hot tank volume fraction of total",                                                "",             "",               "TES",            "*",                       "",                      "" },
+
+
+    { SSC_OUTPUT,       SSC_ARRAY,       "piston_loc",                "Piston Location (distance from left cold side)",                                   "m",            "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "piston_frac",               "Piston Fraction (distance from left cold side)",                                   "",             "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "T_hot_calc",                "Analytical Hot Side Temperature (no losses)",                                      "C",            "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "T_cold_calc",               "Analytical Cold Side Temperature (no losses)",                                     "C",            "",               "TES",            "tes_type=1",              "",                      "" },
+
+
 
     var_info_invalid };
 
@@ -117,9 +128,6 @@ public:
     {
 
         int tes_type = as_integer("tes_type");
-
-
-
 
         util::matrix_t<double> tes_lengths;
         if (is_assigned("tes_lengths")) {
@@ -220,7 +228,7 @@ public:
                 as_double("dt_hot"),
                 as_double("T_loop_in_des"),
                 as_double("T_loop_out"),
-                as_double("T_loop_out"),
+                as_vector_double("T_src_out")[0],
                 as_double("T_loop_in_des"),
                 as_double("h_tank_min"),
                 as_double("init_hot_htf_percent"),
@@ -280,11 +288,34 @@ public:
             throw exec_error("csp_subcomponent", "Input arrays not equal in size.");
         }
 
+        // Get Design Point Outputs
+        double V_tes_htf_avail_calc /*m3*/, V_tes_htf_total_calc /*m3*/,
+            d_tank_calc /*m*/, q_dot_loss_tes_des_calc /*MWt*/, dens_store_htf_at_T_ave_calc /*kg/m3*/,
+            Q_tes_des_calc /*MWt-hr*/;
+
+        if (tes_type == 0)
+        {
+            storage_two_tank.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
+                d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
+        }
+        else if (tes_type == 1)
+        {
+            storage_NT.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
+                d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
+        }
+
         // Allocate outputs
         double* T_src_in = allocate("T_src_in", n_steps);
         double* T_sink_in = allocate("T_sink_in", n_steps);
         double* T_tank_cold = allocate("T_tank_cold", n_steps);
         double* T_tank_hot = allocate("T_tank_hot", n_steps);
+        double* hot_tank_vol_frac = allocate("hot_tank_vol_frac", n_steps);
+
+        vector<double> piston_loc_vec;
+        vector<double> piston_frac_vec;
+        vector<double> T_hot_calc_vec;
+        vector<double> T_cold_calc_vec;
+
 
         // Simulate
         for (size_t i = 0; i < n_steps; i++) {
@@ -311,7 +342,228 @@ public:
             T_sink_in[i] = K_to_C(T_sink_in_K);
             T_tank_cold[i] = K_to_C(storage_pointer->get_cold_temp());
             T_tank_hot[i] = K_to_C(storage_pointer->get_hot_temp());
+            assign("tes_diameter", d_tank_calc);
+            assign("tes_radius", d_tank_calc / 2.0);
+
+            hot_tank_vol_frac[i] = storage_pointer->get_hot_tank_vol_frac();
+
+            if (tes_type == 1)
+            {
+                double piston_location, piston_fraction;
+                storage_NT.calc_piston_location(piston_location, piston_fraction);
+
+                piston_loc_vec.push_back(piston_location);
+                piston_frac_vec.push_back(piston_fraction);
+
+
+                // Simulate Analytically
+                double mdot_hot_net = mdot_src.at(i) - mdot_sink.at(i);
+                double mdot_cold_net = -1.0 * mdot_hot_net;
+
+
+                // Hot Tank
+                double T_hot_wall_in = 0;
+                if (mdot_hot_net > 0)
+                    T_hot_wall_in = T_sink_out.at(i);
+                else
+                    T_hot_wall_in = T_src_out.at(i);
+
+                double V_hot_initial = V_tes_htf_total_calc * as_double("init_hot_htf_percent") * 0.01;
+
+                //mdot_hot_net = mdot_hot_net < 0 ? 0 : mdot_hot_net;
+
+                double T_calc_2 = simulate_TES(i, d_tank_calc / 2.0, mdot_hot_net, T_src_out.at(i), T_hot_wall_in, V_hot_initial, T_src_out.at(i));
+                T_hot_calc_vec.push_back(T_calc_2);
+
+
+                // Cold Tank
+                double T_cold_wall_in = 0;
+                if (mdot_cold_net > 0)
+                    T_cold_wall_in = T_src_out.at(i);
+                else
+                    T_cold_wall_in = T_sink_out.at(i);
+
+                double V_cold_initial = V_tes_htf_total_calc * (1.0 - (as_double("init_hot_htf_percent") * 0.01));
+
+                //mdot_cold_net = mdot_cold_net < 0 ? 0 : mdot_cold_net;
+
+                double T_cold_eq = simulate_TES(i, d_tank_calc / 2.0, mdot_cold_net, T_sink_out.at(i), T_cold_wall_in, V_cold_initial, T_sink_out.at(i));
+                T_cold_calc_vec.push_back(T_cold_eq);
+            }
         }
+
+        if (tes_type == 1)
+        {
+            set_vector("piston_loc", piston_loc_vec);
+            set_vector("piston_frac", piston_frac_vec);
+            set_vector("T_hot_calc", T_hot_calc_vec);
+            set_vector("T_cold_calc", T_cold_calc_vec);
+        }
+
+
+    }
+
+    double simulate_TES_charge(int index, double radius_inner)
+    {
+        double timestep = as_double("t_step");
+
+        // Fluid Properties
+        HTFProperties fluid_props;
+        fluid_props.SetFluid(as_integer("Fluid"));
+
+        // Energy Exchange
+        double T_fluid_in = as_vector_double("T_src_out")[index];
+        double T_cold_side = as_vector_double("T_sink_out")[index];
+        double mdot_fluid_in = as_vector_double("mdot_src")[index];
+        double T_wall_in = T_cold_side;
+
+        // Tank Dimensions
+        double wall_thickness = as_double("tes_tank_thick");            // m
+        double wall_dens = as_double("tes_tank_dens");                  // kg/m3
+        double wall_cp = as_double("tes_tank_cp") * 1e3;                // J/kg K
+
+        // Calculate Total Fluid Mass Joining System
+        double mass_fluid_in = mdot_fluid_in * timestep;
+        double rho_fluid_in = fluid_props.dens(T_fluid_in + 273.15, 1.0);           // kg/m3
+        double fluid_cp_in = fluid_props.Cp(T_fluid_in + 273.15) * 1e3;                      // J/kg K
+        double V_fluid_in = mass_fluid_in / rho_fluid_in;                           // m3
+        double L_fluid_in = V_fluid_in / (CSP::pi * std::pow(radius_inner, 2.0));   // m
+
+        // Calculate Total Wall Mass Joining System
+        double V_wall_in = L_fluid_in * CSP::pi * (std::pow(radius_inner + wall_thickness, 2.0) - std::pow(radius_inner, 2.0));
+        double mass_wall_in = wall_dens * V_wall_in;
+
+        // Calculate Energy Balance
+        double mass_total_initial = 0;  // Tank is fully discharged (no hot storage)
+        double mass_total_final = mass_fluid_in + mass_wall_in;
+        double cp_weighted_final = ((mass_fluid_in * fluid_cp_in) + (mass_wall_in * wall_cp)) / mass_total_final;   // J/kg K
+
+        double energy_wall_in = mass_wall_in * wall_cp * T_wall_in;  // J
+        double energy_fluid_in = mass_fluid_in * fluid_cp_in * T_fluid_in;   // J
+
+        double net_energy_in = energy_wall_in + energy_fluid_in;
+
+        double T_total_final = net_energy_in / (mass_total_final * cp_weighted_final);
+
+        
+        return T_total_final;
+    }
+
+    double simulate_TES_discharge(int index, double radius_inner, double T_hot_eq /*C*/)
+    {
+        double timestep = as_double("t_step");
+
+        // Fluid Properties
+        HTFProperties fluid_props;
+        fluid_props.SetFluid(as_integer("Fluid"));
+
+        // Energy Exchange
+        double T_fluid_in = as_vector_double("T_sink_out")[index];  // C (cold inlet)
+        double mdot_fluid_in = as_vector_double("mdot_sink")[index];    // C (cold mdot in)
+        double T_wall_in = T_hot_eq;    // C (hot equilibrium temp)
+
+        // Tank Dimensions
+        double wall_thickness = as_double("tes_tank_thick");            // m
+        double wall_dens = as_double("tes_tank_dens");                  // kg/m3
+        double wall_cp = as_double("tes_tank_cp") * 1e3;                // J/kg K
+
+        // Calculate Total Fluid Mass Joining System
+        double mass_fluid_in = mdot_fluid_in * timestep;
+        double rho_fluid_in = fluid_props.dens(T_fluid_in + 273.15, 1.0);           // kg/m3
+        double fluid_cp_in = fluid_props.Cp(T_fluid_in + 273.15) * 1e3;                      // J/kg K
+        double V_fluid_in = mass_fluid_in / rho_fluid_in;                           // m3
+        double L_fluid_in = V_fluid_in / (CSP::pi * std::pow(radius_inner, 2.0));   // m
+
+        // Calculate Total Wall Mass Joining System
+        double V_wall_in = L_fluid_in * CSP::pi * (std::pow(radius_inner + wall_thickness, 2.0) - std::pow(radius_inner, 2.0));
+        double mass_wall_in = wall_dens * V_wall_in;
+
+        // Calculate Energy Balance
+        double mass_total_initial = 0;  // Tank is fully discharged (no hot storage)
+        double mass_total_final = mass_fluid_in + mass_wall_in;
+        double cp_weighted_final = ((mass_fluid_in * fluid_cp_in) + (mass_wall_in * wall_cp)) / mass_total_final;   // J/kg K
+
+        double energy_wall_in = mass_wall_in * wall_cp * T_wall_in;  // J
+        double energy_fluid_in = mass_fluid_in * fluid_cp_in * T_fluid_in;   // J
+
+        double net_energy_in = energy_wall_in + energy_fluid_in;
+
+        double T_total_final = net_energy_in / (mass_total_final * cp_weighted_final);
+
+
+        return T_total_final;
+    }
+
+    double simulate_TES(int index, double radius_inner, double mdot_fluid_in, double T_fluid_in, double T_wall_in,
+                        double V_fluid_initial, double T_fluid_initial)
+    {
+        double timestep = as_double("t_step");
+
+        // Fluid Properties
+        HTFProperties fluid_props;
+        fluid_props.SetFluid(as_integer("Fluid"));
+
+        // Energy Exchange
+        //double T_fluid_in = as_vector_double("T_src_out")[index];
+        //double T_cold_side = as_vector_double("T_sink_out")[index];
+        //double mdot_fluid_in = as_vector_double("mdot_src")[index];
+        //double T_wall_in = T_cold_side;
+
+        // Tank Dimensions
+        double thickness_wall = as_double("tes_tank_thick");            // m
+        double rho_wall = as_double("tes_tank_dens");                  // kg/m3
+        double cp_wall = as_double("tes_tank_cp") * 1e3;                // J/kg K
+
+        // Calculate Total Fluid Mass Joining System
+        double mass_fluid_in = mdot_fluid_in * timestep;
+        double rho_fluid_in = fluid_props.dens(T_fluid_in + 273.15, 1.0);           // kg/m3
+        double cp_fluid_in = fluid_props.Cp(T_fluid_in + 273.15) * 1e3;                      // J/kg K
+        double V_fluid_in = mass_fluid_in / rho_fluid_in;                           // m3
+        double L_fluid_in = V_fluid_in / (CSP::pi * std::pow(radius_inner, 2.0));   // m
+
+        // Calculate Total Wall Mass Joining System
+        double V_wall_in = L_fluid_in * CSP::pi * (std::pow(radius_inner + thickness_wall, 2.0) - std::pow(radius_inner, 2.0));
+        double mass_wall_in = rho_wall * V_wall_in;
+
+        // Calculate Wall Mass
+        double rho_fluid_initial = fluid_props.dens(T_fluid_initial + 273.15, 1.0); // kg/m3
+        double mass_fluid_initial = V_fluid_initial * rho_fluid_initial;            // m3
+        double L_fluid_initial = V_fluid_initial / (CSP::pi * std::pow(radius_inner, 2.0));   // m
+        double V_wall_initial = L_fluid_initial * CSP::pi * (std::pow(radius_inner + thickness_wall, 2.0) - std::pow(radius_inner, 2.0));
+        double mass_wall_initial = rho_wall * V_wall_initial;
+        double mass_total_initial = mass_fluid_initial + mass_wall_initial;
+
+        // Calculate Initial Total Energy
+        double cp_fluid_initial = fluid_props.Cp(T_fluid_initial + 273.15) * 1e3;   // J/kg K
+        double energy_fluid_initial = mass_fluid_initial * cp_fluid_initial * T_fluid_initial;
+        double energy_wall_initial = mass_wall_initial * cp_wall * T_fluid_initial;
+        double energy_total_initial = energy_fluid_initial + energy_wall_initial;   // J
+
+        // Calculate Energy Balance
+        double mass_total_final = mass_fluid_in + mass_wall_in + mass_total_initial;
+
+        double cp_weighted_final = ((mass_fluid_in * cp_fluid_in) + (mass_wall_in * cp_wall) +
+                (mass_fluid_initial * cp_fluid_initial) + (mass_wall_initial * cp_wall)) / mass_total_final;   // J/kg K
+
+        double energy_wall_in = mass_wall_in * cp_wall * T_wall_in;  // J
+        double energy_fluid_in = mass_fluid_in * cp_fluid_in * T_fluid_in;   // J
+
+        double net_energy = energy_wall_in + energy_fluid_in + energy_total_initial;
+
+        double T_total_final = net_energy / (mass_total_final * cp_weighted_final);
+
+
+        return T_total_final;
+    }
+
+
+    template <typename T>
+    void set_vector(const std::string& name, const vector<T> vec)
+    {
+        int size = vec.size();
+        ssc_number_t* alloc_vals = allocate(name, size);
+        for (int i = 0; i < size; i++)
+            alloc_vals[i] = vec[i];    // []
     }
 };
 
