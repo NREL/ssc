@@ -74,6 +74,7 @@ private:
     double m_tank_wall_thick;        //[m]
     double m_u_tank;                 //[W/m2-K]
     double m_nstep;                  //[]
+    std::vector<double> m_piston_loss_poly;  //[] Coefficients to piston loss polynomial (0*x^0 + 1*x^1 ....)    
 
     double m_SA_prev;           //[m2] Surface area previous timestep
     double m_SA_calc;           //[m2] Surface area current timestep
@@ -90,6 +91,8 @@ private:
     double calc_tank_wall_volume(double fluid_mass /*kg*/, double T_htf /*K*/);
 
     double calc_SA(double volume /*m3*/);
+
+    double calc_leakage_fraction(double mdot);
 
 public:
 
@@ -126,7 +129,8 @@ public:
         double tank_wall_cp,            // [J/kg-K] Tank wall specific heat
         double tank_wall_dens,          // [kg/m3] Tank wall density
         double tank_wall_thick,         // [m] Tank wall thickness)
-        double nstep                    // [] Number of time steps for energy balance iteration
+        double nstep,                   // [] Number of time steps for energy balance iteration
+        std::vector<double> piston_loss_poly //[] Coefficients to piston loss polynomial
         );
 
     double m_dot_available(double f_unavail, double timestep);
@@ -134,12 +138,14 @@ public:
     void energy_balance_core(double timestep /*s*/, double m_dot_in /*kg/s*/, double m_dot_out /*kg/s*/,
         double T_in /*K*/, double T_amb /*K*/, double mass_prev_inner /*kg*/,
         double T_tank_in /*K*/, double T_prev_inner /*K*/,
+        double T_leak_in /*K*/,
         double& T_ave /*K*/, double& q_heater /*MW*/, double& q_dot_loss /*MW*/,
         double& mass_calc_inner /*kg*/, double& T_calc_inner /*K*/);
 
     void energy_balance_iterated(double timestep /*s*/, double m_dot_in /*kg/s*/, double m_dot_out /*kg/s*/,
         double T_in /*K*/, double T_amb /*K*/,
         double T_tank_in, /*K*/
+        double T_leak_in, /*K*/
         double& T_ave /*K*/, double& q_heater /*MW*/, double& q_dot_loss /*MW*/);
 
     void converged();
@@ -188,7 +194,7 @@ private:
     double m_piston_percent;    //[%]
     double m_piston_location;   //[m] Piston distance from left side
     double m_nstep;             //[] Number of time steps for energy balance iteration
-
+    std::vector<double> m_piston_loss_poly;  //[] Coefficients to piston loss polynomial (0*x^0 + 1*x^1 ....)    
 
     // Added for NT, calc in init
     double m_radius;        //[m] radius of tank
@@ -299,6 +305,7 @@ public:
         double tank_wall_dens,                       // [kg/m3] Tank wall density
         double tank_wall_thick = 0,                  // [m] Tank wall thickness
         int nstep = 1,                               // [] Number of time steps for energy balance iteration
+        std::vector<double> piston_loss_poly = {},   // [] Coefficients to piston loss polynomial (0*x^0 + 1*x^1 ....)    
 
         double V_tes_des = 1.85,                     // [m/s] Design-point velocity for sizing the diameters of the TES piping
         bool calc_design_pipe_vals = true,           // [-] Should the HTF state be calculated at design conditions

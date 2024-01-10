@@ -238,6 +238,7 @@ public:
                 as_double("tes_tank_dens"),
                 as_double("tes_tank_thick"),
                 nstep,
+                std::vector<double>(),
                 as_double("V_tes_des"),
                 as_boolean("calc_design_pipe_vals"),
                 as_double("tes_pump_coef"),
