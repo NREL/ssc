@@ -1287,6 +1287,8 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
 
     }
 
+    // Do TOTAL Energy Balance for total system here
+
     // Solve pumping power here
     double W_dot_htf_pump = pumping_power(m_dot_cr_to_cv_hot, m_dot_cv_hot_to_sink, std::abs(m_dot_cold_tank_to_hot_tank),
         T_cr_in_cold, T_cr_out_hot, T_sink_htf_in_hot, T_sink_out_cold,
@@ -1305,6 +1307,8 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
     double cold_frac = vol_cold / vol_tot;
     double piston_loc, piston_frac;
     calc_piston_location(piston_loc, piston_frac);
+
+
     
 
     s_outputs.m_q_heater = q_dot_heater;
