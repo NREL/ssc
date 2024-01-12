@@ -2628,6 +2628,14 @@ void cm_pvsamv1::exec()
         }
         assign("nominal_annual_clipping_output", nominal_annual_clipping_output);
     }
+    if (as_boolean("enable_subinterval_distribution")) {
+        for (size_t inrec = 0; inrec < nrec; inrec++) {
+            idx = inrec;
+            double dcPower_kW_max = PVSystem->p_systemDCPowerCS[idx];
+            sharedInverter->calculateACPower(dcPower_kW_max, PVSystem->p_mpptVoltage[0][idx], Irradiance->weatherRecord.tdry);
+            PVSystem->p_systemACPowerMax[idx] = sharedInverter->powerAC_kW + sharedInverter->powerClipLoss_kW;
+        }
+    }
 
     for (size_t iyear = 0; iyear < nyears; iyear++)
     {
@@ -2668,6 +2676,7 @@ void cm_pvsamv1::exec()
 
             double acpwr_gross = 0, ac_wiringloss = 0, transmissionloss = 0;
             double ac_subhourlyclipping_loss = 0;
+            double ac_subinterval_clipping_loss = 0;
             cur_load = p_load_full[idx];
 
             //set DC voltages for use in AC power calculation
@@ -2795,16 +2804,19 @@ void cm_pvsamv1::exec()
             if (as_integer("enable_subinterval_distribution") == 1) {
                 if (dcPower_kW > 0.0) {
                     double acPower_kW_max = dcPower_kW_csky;
-                    sharedInverter_clipping->calculateACPower(dcPower_kW_csky, dcVoltagePerMppt[0], Irradiance->weatherRecord.tdry);
-                    acPower_kW_max = sharedInverter_clipping->powerAC_kW + sharedInverter_clipping->powerClipLoss_kW;
+                    double acPower_kW_avg = sharedInverter->powerAC_kW + sharedInverter->powerClipLoss_kW;
+                    acpwr_gross += sharedInverter->powerClipLoss_kW; //add clipping loss back in
+                    sharedInverter->powerClipLoss_kW = 0; //set standard clipping to zero;
+                    //sharedInverter_clipping->calculateACPower(dcPower_kW_csky, dcVoltagePerMppt[0], Irradiance->weatherRecord.tdry);
+                    acPower_kW_max = std::max(PVSystem->p_systemACPowerMax[idx], acPower_kW_avg);
                     log(util::format("dcPower max is %lg", acPower_kW_max), SSC_NOTICE);
                     double alt_angle = Irradiance->p_sunAltitudeAngle[idx] * M_PI / 180;
                     if (Irradiance->p_sunAltitudeAngle[idx] < 0.001) alt_angle = 0.001 * M_PI / 180; //For negative alt angle
                     double AM = 1.0 / sin(alt_angle);
                     if (AM > 38.0) AM = 38.0;
-                    double acPower_kW_min = acPower_kW_max * 0.045 / AM; //AM?
+                    double acPower_kW_min = std::min(acPower_kW_max * 0.045 / AM, acPower_kW_avg); //AM?
                     log(util::format("dcPower min is %lg", acPower_kW_min), SSC_NOTICE);
-                    double acPower_kW_avg = sharedInverter->powerAC_kW + sharedInverter_clipping->powerClipLoss_kW;
+                    //double acPower_kW_avg = sharedInverter->powerAC_kW + sharedInverter->powerClipLoss_kW;
                     double CF = (acPower_kW_max - acPower_kW_min) > 0.0 ? (acPower_kW_avg - acPower_kW_min) / (acPower_kW_max - acPower_kW_min) : 0.0;
                     if (CF == 1.0) CF = 0.999999;
                     double n = CF / (1 - CF);
@@ -2826,7 +2838,13 @@ void cm_pvsamv1::exec()
                     log(util::format("E_clipped is %lg kW", E_clipped), SSC_NOTICE);
                     double E_remaining = (inv_ac_max - acPower_kW_max) * T + ((acPower_kW_max - acPower_kW_min) * pow(T, n + 1) / ((n + 1) * pow(T, n))) - (inv_ac_max - acPower_kW_max) * t_lm -
                         ((acPower_kW_max - acPower_kW_min) * pow(t_lm, n + 1) / ((n + 1) * pow(T, n)));
-                    double subinterval_clipping_loss = E_clipped;
+                    if (E_clipped > 0.0 && E_clipped < 1.0e38) {
+                        ac_subinterval_clipping_loss = E_clipped;
+                    }
+                    else {
+                        ac_subinterval_clipping_loss = 0.0;
+                    }
+                    /*
                     if (E_clipped > 0.0 && E_clipped < 1.0e38) {
                         for (size_t m = 0; m < PVSystem->Inverter->nMpptInputs; m++)
                         {
@@ -2841,11 +2859,12 @@ void cm_pvsamv1::exec()
                     else {
                         PVSystem->p_DistributionClippingLoss[idx] = (ssc_number_t)0;
                     }
+                    */
                 }
                 else {
-                    PVSystem->p_DistributionClippingLoss[idx] = (ssc_number_t)0;
+                    ac_subinterval_clipping_loss = (ssc_number_t)0;
                 }
-
+                
             }
             
             
@@ -2863,6 +2882,7 @@ void cm_pvsamv1::exec()
 
                 annual_ac_wiring_loss += ac_wiringloss * ts_hour;
                 annual_subhourly_clipping_loss += ac_subhourlyclipping_loss;
+                annual_distribution_clipping_loss += ac_subinterval_clipping_loss;
             }
 
             if (iyear == 0 || save_full_lifetime_variables == 1)
@@ -2874,6 +2894,7 @@ void cm_pvsamv1::exec()
                 PVSystem->p_inverterThermalLoss[idx] = (ssc_number_t)(sharedInverter->powerTempLoss_kW);
                 PVSystem->p_acWiringLoss[idx] = (ssc_number_t)(ac_wiringloss);
                 PVSystem->p_subhourlyClippingLoss[idx] = (ssc_number_t)(ac_subhourlyclipping_loss);
+                PVSystem->p_DistributionClippingLoss[idx] = (ssc_number_t)(ac_subinterval_clipping_loss);
                 
                 if (offline) {
                     PVSystem->p_inverterNightTimeLoss[idx] = 0.0;
@@ -2891,7 +2912,7 @@ void cm_pvsamv1::exec()
             PVSystem->p_systemDCPower[idx] = (ssc_number_t)(sharedInverter->powerDC_kW);
 
 			//ac losses should always be subtracted, this means you can't just multiply by the derate because at nighttime it will add power
-            PVSystem->p_systemACPower[idx] = (ssc_number_t)(acpwr_gross - ac_wiringloss - ac_subhourlyclipping_loss);
+            PVSystem->p_systemACPower[idx] = (ssc_number_t)(acpwr_gross - ac_wiringloss - ac_subhourlyclipping_loss - ac_subinterval_clipping_loss);
             // AC connected batteries will set this laster
             if (en_batt && (batt_topology == ChargeController::DC_CONNECTED)) {
                 batt->outGenWithoutBattery[idx] -= std::abs(batt->outGenWithoutBattery[idx]) * PVSystem->acLossPercent * 0.01;;

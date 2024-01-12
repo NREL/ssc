@@ -419,6 +419,7 @@ struct PVSystem_IO
 	ssc_number_t *p_systemDCPower; // kWdc
     ssc_number_t* p_systemDCPowerCS; // kWdc
 	ssc_number_t *p_systemACPower; // kWac
+    ssc_number_t* p_systemACPowerMax; //kWac
 
     ssc_number_t *p_subhourlyClippingLoss;
     ssc_number_t* p_subhourlyClippingLossFactor;
