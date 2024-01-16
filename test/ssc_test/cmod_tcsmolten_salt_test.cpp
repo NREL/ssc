@@ -162,6 +162,58 @@ NAMESPACE_TEST(csp_tower, PowerTowerCmod, CopyingVarTable) {
     ssc_data_free(data);
 }
 
+NAMESPACE_TEST(csp_tower, PowerTowerCmod, Start_Stop_Initialize_Default_NoFinancial)
+{
+    ssc_data_t defaults = tcsmolten_salt_defaults();
+    CmodUnderTest power_tower = CmodUnderTest("tcsmolten_salt", defaults);
+    int errors = power_tower.RunModule();
+    EXPECT_FALSE(errors);
+    std::vector<double> original_gen = power_tower.GetOutputVector("gen");
+    // first short run
+    power_tower.SetInput("time_start", 0);
+    power_tower.SetInput("time_stop", 3600 * 10);   // first 10 hours
+    power_tower.SetInput("vacuum_arrays", 1);
+    errors = power_tower.RunModule();
+    EXPECT_FALSE(errors);
+    std::vector<double> step1_gen = power_tower.GetOutputVector("gen");
+    double step1_gen_sum = power_tower.GetOutputSum("gen");
+
+    // second short run with restart
+    power_tower.SetInput("time_start", 3600 * 10);
+    power_tower.SetInput("time_stop", 3600 * 20);   // next 10 hours
+    power_tower.SetInput("vacuum_arrays", 1);
+    // Reset plant state
+    power_tower.SetInput("is_field_tracking_init", power_tower.GetOutputVector("is_field_tracking_final").back());
+    power_tower.SetInput("rec_op_mode_initial", power_tower.GetOutputVector("rec_op_mode_final").back());
+    power_tower.SetInput("rec_startup_time_remain_init", power_tower.GetOutputVector("rec_startup_time_remain_final").back());
+    power_tower.SetInput("rec_startup_energy_remain_init", power_tower.GetOutputVector("rec_startup_energy_remain_final").back());
+    power_tower.SetInput("pc_op_mode_initial", power_tower.GetOutputVector("pc_op_mode_final").back());
+    power_tower.SetInput("pc_startup_time_remain_init", power_tower.GetOutputVector("pc_startup_time_remain_final").back());
+    power_tower.SetInput("pc_startup_energy_remain_initial", power_tower.GetOutputVector("pc_startup_energy_remain_final").back());
+    power_tower.SetInput("T_tank_cold_init", power_tower.GetOutputVector("T_tes_cold").back());
+    power_tower.SetInput("T_tank_hot_init", power_tower.GetOutputVector("T_tes_hot").back());
+    power_tower.SetInput("tes_init_hot_htf_percent", power_tower.GetOutputVector("hot_tank_htf_percent_final").back());
+    errors = power_tower.RunModule();
+    EXPECT_FALSE(errors);
+    std::vector<double> step2_gen = power_tower.GetOutputVector("gen");
+    double step2_gen_sum = power_tower.GetOutputSum("gen");
+
+
+    if (!errors) {
+        EXPECT_GT(step1_gen_sum, 0.0);  // positive generation
+        EXPECT_GT(step2_gen_sum, 0.0);
+        // checking generation array
+        for (size_t i = 0; i < step1_gen.size() + step2_gen.size(); i++) {
+            if (i < step1_gen.size()) {
+                EXPECT_NEAR_FRAC(std::abs(original_gen[i]), std::abs(step1_gen[i]), kErrorToleranceHi);
+            }
+            else {
+                EXPECT_NEAR_FRAC(std::abs(original_gen[i]), std::abs(step2_gen[i - step1_gen.size()]), kErrorToleranceHi);
+            }
+        }
+    }
+}
+
 /// Test tcsmolten_salt with alternative condenser type: Evaporative
 /// Rest default configurations with respect to the single owner financial model
 //TEST_F(CMTcsMoltenSalt, Rankine_Evap_Condenser_SingleOwner_cmod_tcsmolten_salt) {

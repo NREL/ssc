@@ -375,6 +375,19 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_ARRAY,  "ppa_price_input",			           "PPA prices - yearly",			                                                                                                          "$/kWh",	      "",	                               "Revenue",			                       "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",      	       "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_MATRIX, "mp_energy_market_revenue",           "Energy market revenue input",                                                                                                             "",             "Lifetime x 2[Cleared Capacity(MW),Price($/MWh)]", "Revenue",                    "csp_financial_model=6&is_dispatch=1&sim_type=1",                              "",              "SIMULATION_PARAMETER"},
 
+    // Optional Component Initialization (state at start of first timestep)
+        // Heliostat field and Receiver
+    { SSC_INPUT,     SSC_NUMBER, "is_field_tracking_init",             "Is heliostat field tracking? (1 = true)",                                                                                                 "-",            "",                                  "System Control",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,     SSC_NUMBER, "rec_op_mode_initial",                "Initial receiver operating mode 0: off, 1: startup, 2: on",                                                                               "-",            "",                                  "System Control",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,     SSC_NUMBER, "rec_startup_time_remain_init",       "Initial receiver startup time remaining",                                                                                                 "hr",           "",                                  "System Control",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,     SSC_NUMBER, "rec_startup_energy_remain_init",     "Initial receiver startup energy remaining",                                                                                               "W-hr",         "",                                  "System Control",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
+        // Power cycle
+    { SSC_INPUT,     SSC_NUMBER, "pc_op_mode_initial",                 "Initial cycle operation mode 0:startup, 1:on, 2:standby, 3:off, 4:startup_controlled",                                                    "-",            "",                                  "System Control",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,     SSC_NUMBER, "pc_startup_time_remain_init",        "Initial cycle startup time remaining",                                                                                                    "hr",           "",                                  "System Control",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,     SSC_NUMBER, "pc_startup_energy_remain_initial",   "Initial cycle startup energy remaining",                                                                                                  "kwh",          "",                                  "System Control",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
+        // Thermal energy storage
+    { SSC_INPUT,     SSC_NUMBER, "T_tank_cold_init",                   "Initial cold tank temp",                                                                                                                  "C",            "",                                  "System Control",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,     SSC_NUMBER, "T_tank_hot_init",                    "Initial hot tank temp",                                                                                                                   "C",            "",                                  "System Control",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
     // Costs
     { SSC_INPUT,     SSC_NUMBER, "tower_fixed_cost",                   "Tower fixed cost",                                                                                                                        "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "tower_exp",                          "Tower cost scaling exponent",                                                                                                             "",             "",                                  "System Costs",                             "*",                                                                "",              "" },
@@ -655,7 +668,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_ARRAY,  "cycle_htf_pump_power",               "Cycle HTF pump power",                                                                                                                    "MWe",          "",                                  "",                                         "sim_type=1",                                                       "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "P_cooling_tower_tot",                "Parasitic power condenser operation",                                                                                                     "MWe",          "",                                  "",                                         "sim_type=1",                                                       "",              "" },
 
-
         // Thermal energy storage outputs
     { SSC_OUTPUT,    SSC_ARRAY,  "tank_losses",                        "TES thermal losses",                                                                                                                      "MWt",          "",                                  "",                                         "sim_type=1",                                                       "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "q_heater",                           "TES freeze protection power",                                                                                                             "MWe",          "",                                  "",                                         "sim_type=1",                                                       "",              "" },
@@ -673,7 +685,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_ARRAY,  "m_dot_field_to_cycle",               "Mass flow: field to cycle",                                                                                                               "kg/s",         "",                                  "",                                         "sim_type=1",                                                       "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "m_dot_cycle_to_field",               "Mass flow: cycle to field",                                                                                                               "kg/s",         "",                                  "",                                         "sim_type=1",                                                       "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "tes_htf_pump_power",                 "TES HTF pump power",                                                                                                                      "MWe",          "",                                  "",                                         "sim_type=1",                                                       "",              "" },
-
 
         // Parasitics outputs
     { SSC_OUTPUT,    SSC_ARRAY,  "P_fixed",                            "Parasitic power fixed load",                                                                                                              "MWe",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
@@ -772,7 +783,20 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "disp_solve_state_ann",               "Annual sum of dispatch solve state",                                                                                                      "",             "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "avg_suboptimal_rel_mip_gap",         "Average suboptimal relative MIP gap",                                                                                                     "%",            "",                                  "",                                         "sim_type=1",                                                       "",              ""},
 
-    { SSC_OUTPUT,    SSC_NUMBER, "sim_cpu_run_time",                   "Simulation duration clock time",                                                                                                         "s",             "",                                  "",                                         "sim_type=1",                                                       "",              ""},
+    { SSC_OUTPUT,    SSC_NUMBER, "sim_cpu_run_time",                   "Simulation duration clock time",                                                                                                          "s",            "",                                  "",                                         "sim_type=1",                                                       "",              ""},
+
+    // Final component states (for use in subsequent calls to this cmod as values for "Optional Component Initialization" inputs above
+        // Heliostat field and Receiver
+    { SSC_OUTPUT,    SSC_ARRAY,  "is_field_tracking_final",            "Final heliostat field operation is tracking? (1 = true)",                                                                                 "-",            "",                                  "System Control",                           "",                                                                 "",              "" },          
+    { SSC_OUTPUT,    SSC_ARRAY,  "rec_op_mode_final",                  "Final receiver operating mode 0: off, 1: startup, 2: on",                                                                                 "-",            "",                                  "System Control",                           "",                                                                 "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "rec_startup_time_remain_final",      "Final receiver startup time remaining",                                                                                                   "hr",           "",                                  "System Control",                           "",                                                                 "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "rec_startup_energy_remain_final",    "Final receiver startup energy remaining",                                                                                                 "W-hr",         "",                                  "System Control",                           "",                                                                 "",              "" },
+        // Power cycle
+    { SSC_OUTPUT,    SSC_ARRAY,  "pc_op_mode_final",                   "Final cycle operation mode 0:startup, 1:on, 2:standby, 3:off, 4:startup_controlled",                                                      "-",            "",                                  "System Control",                           "",                                                                 "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "pc_startup_time_remain_final",       "Final cycle startup time remaining",                                                                                                      "hr",           "",                                  "System Control",                           "",                                                                 "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "pc_startup_energy_remain_final",     "Final cycle startup energy remaining",                                                                                                    "kwh",          "",                                  "System Control",                           "",                                                                 "",              "" },
+        // Thermal energy storage
+    { SSC_OUTPUT,    SSC_ARRAY,  "hot_tank_htf_percent_final",         "Final percent fill of available hot tank mass",                                                                                           "%",            "",                                  "System Control",                           "",                                                                 "",              "" },
 
     var_info_invalid };
 
@@ -1404,8 +1428,7 @@ public:
         int steps_per_hour = (int)as_double("time_steps_per_hour");     //[-]
 
         //if the number of steps per hour is not provided (=-1), then assign it based on the weather file step
-        if( steps_per_hour < 0 )
-        {
+        if( steps_per_hour < 0 ) {
             double sph_d = 3600. / weather_reader.m_weather_data_provider->step_sec();
             steps_per_hour = (int)( sph_d + 1.e-5 );
             if( (double)steps_per_hour != sph_d )
@@ -1413,11 +1436,9 @@ public:
         }
 
         size_t n_steps_fixed = (size_t)steps_per_hour * 8760;   //[-]
-        if( as_boolean("vacuum_arrays") )
-        {
+        if( as_boolean("vacuum_arrays") ) {
             n_steps_fixed = steps_per_hour * (size_t)( (sim_setup.m_sim_time_end - sim_setup.m_sim_time_start)/3600. );
         }
-        //int n_steps_fixed = (int)( (sim_setup.m_sim_time_end - sim_setup.m_sim_time_start) * steps_per_hour / 3600. ) ; 
         sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;  //[s]
 
         // ***********************************************
@@ -1458,6 +1479,18 @@ public:
 
             pc->m_is_calc_htf_pump_coef = is_calc_pb_pump_coef;
             pc->m_W_dot_htf_pump_target = W_dot_htf_pump_target;    //[MWe]
+
+            // Check initialization variables
+            pc->m_operating_mode_initial = C_csp_power_cycle::OFF;
+            if (is_assigned("pc_op_mode_initial")) {
+                pc->m_operating_mode_initial = (C_csp_power_cycle::E_csp_power_cycle_modes)as_integer("pc_op_mode_initial");
+                if (is_assigned("pc_startup_time_remain_init")) {
+                    pc->m_startup_time_remain_init = as_double("pc_startup_time_remain_init");
+                }
+                if (is_assigned("pc_startup_energy_remain_initial")) {
+                    pc->m_startup_energy_remain_init = as_double("pc_startup_energy_remain_initial");
+                }
+            }
 
             if (pb_tech_type == 0)
             {
@@ -1585,8 +1618,10 @@ public:
         p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_W_DOT_COOLER, allocate("P_cooling_tower_tot", n_steps_fixed), n_steps_fixed);
         p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_P_COND, allocate("P_cond", n_steps_fixed), n_steps_fixed);
         p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_P_COND_ITER_ERR, allocate("P_cond_iter_err", n_steps_fixed), n_steps_fixed);
-
         p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_ETA_THERMAL, allocate("eta", n_steps_fixed), n_steps_fixed);
+        p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_PC_OP_MODE_FINAL, allocate("pc_op_mode_final", n_steps_fixed), n_steps_fixed);
+        p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_PC_STARTUP_TIME_REMAIN_FINAL, allocate("pc_startup_time_remain_final", n_steps_fixed), n_steps_fixed);
+        p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_PC_STARTUP_ENERGY_REMAIN_FINAL, allocate("pc_startup_energy_remain_final", n_steps_fixed), n_steps_fixed);
 
         if (pb_tech_type == 0) {
             if (rankine_pc.ms_params.m_CT == 4) {
@@ -1724,6 +1759,21 @@ public:
                     is_calc_od_tube, W_dot_rec_target
                     ));   // steady-state receiver
 
+                // Set initial state
+                if (is_assigned("rec_op_mode_initial")
+                    && is_assigned("rec_startup_energy_remain_init")
+                    && is_assigned("rec_startup_time_remain_init")) {
+                    ss_receiver->set_inital_state(
+                        (C_csp_collector_receiver::E_csp_cr_modes)as_integer("rec_op_mode_initial"),
+                        as_double("rec_startup_energy_remain_init"),
+                        as_double("rec_startup_time_remain_init"));
+                }
+                else if (is_assigned("rec_op_mode_initial")
+                    && (!is_assigned("rec_startup_energy_remain_init")
+                        || !is_assigned("rec_startup_time_remain_init"))) {
+                    throw exec_error("tcsmolten_salt", "Receiver inital mode was given but not startup time and/or energy.");
+                }
+                
                 receiver = std::move(ss_receiver);
             }
             else {
@@ -1768,9 +1818,24 @@ public:
                     as_boolean("is_rec_startup_from_T_soln"), is_enforce_min_startup
                     ));    // transient receiver
 
+                // Set initial state
+                if (is_assigned("rec_op_mode_initial")
+                    && is_assigned("rec_startup_energy_remain_init")
+                    && is_assigned("rec_startup_time_remain_init")) {
+                    trans_receiver->set_inital_state(
+                        (C_csp_collector_receiver::E_csp_cr_modes)as_integer("rec_op_mode_initial"),
+                        as_double("rec_startup_energy_remain_init"),
+                        as_double("rec_startup_time_remain_init"));
+                }
+                else if (is_assigned("rec_op_mode_initial")
+                    && (!is_assigned("rec_startup_energy_remain_init")
+                        || !is_assigned("rec_startup_time_remain_init"))) {
+                    throw exec_error("tcsmolten_salt", "Receiver inital mode was given but not startup time and/or energy.");
+                }
+
                 receiver = std::move(trans_receiver);
             }
-        }        
+        }
 
         // Test mspt_receiver initialization
         //receiver.init();
@@ -1828,6 +1893,14 @@ public:
         heliostatfield.mf_callback = ssc_cmod_solarpilot_callback;
         heliostatfield.m_cdata = (void*)this;
 
+        // Check initialization variable
+        if (is_assigned("is_field_tracking_init")) {
+            heliostatfield.ms_params.m_is_field_tracking_init = as_boolean("is_field_tracking_init");
+        }
+        else {
+            heliostatfield.ms_params.m_is_field_tracking_init = false;
+        }
+
         // Try running pt heliostat init() call just for funsies
             // What happens when no callback to reference?
         //heliostatfield.init();
@@ -1844,6 +1917,10 @@ public:
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_FIELD_Q_DOT_INC, allocate("q_sf_inc", n_steps_fixed), n_steps_fixed);
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_FIELD_ETA_OPT, allocate("eta_field", n_steps_fixed), n_steps_fixed);
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_FIELD_ADJUST, allocate("sf_adjust_out", n_steps_fixed), n_steps_fixed);
+        collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_IS_FIELD_TRACKING_FINAL, allocate("is_field_tracking_final", n_steps_fixed), n_steps_fixed);
+        collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_REC_OP_MODE_FINAL, allocate("rec_op_mode_final", n_steps_fixed), n_steps_fixed);
+        collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_REC_STARTUP_TIME_REMAIN_FINAL, allocate("rec_startup_time_remain_final", n_steps_fixed), n_steps_fixed);
+        collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_REC_STARTUP_ENERGY_REMAIN_FINAL, allocate("rec_startup_energy_remain_final", n_steps_fixed), n_steps_fixed);
 
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_REC_DEFOCUS, allocate("rec_defocus", n_steps_fixed), n_steps_fixed);
         collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_INC, allocate("q_dot_rec_inc", n_steps_fixed), n_steps_fixed);
@@ -1939,8 +2016,9 @@ public:
             0.0,                                    // MSPT assumes direct storage, so no user input here: hardcode = 0.0
             as_double("T_htf_cold_des"),
             as_double("T_htf_hot_des"),
-            as_double("T_htf_hot_des"),
-            as_double("T_htf_cold_des"),
+            // Check initialization variables
+            (is_assigned("T_tank_hot_init")) ? as_double("T_tank_hot_init") : as_double("T_htf_hot_des"),
+            (is_assigned("T_tank_cold_init")) ? as_double("T_tank_cold_init") : as_double("T_htf_cold_des"),
             as_double("h_tank_min"),
             as_double("tes_init_hot_htf_percent"),
             as_double("pb_pump_coef"),
@@ -1957,7 +2035,7 @@ public:
         storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_COLD_TANK, allocate("mass_tes_cold", n_steps_fixed), n_steps_fixed);
         storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_HOT_TANK, allocate("mass_tes_hot", n_steps_fixed), n_steps_fixed);
         storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HTF_PUMP, allocate("tes_htf_pump_power", n_steps_fixed), n_steps_fixed);
-
+        storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_HOT_TANK_HTF_PERC_FINAL, allocate("hot_tank_htf_percent_final", n_steps_fixed), n_steps_fixed);
 
 
         // TOU parameters
@@ -2880,7 +2958,7 @@ public:
 
         // 'adjustment_factors' class stores factors in hourly array, so need to index as such
         adjustment_factors haf(this, "adjust");
-        if( !haf.setup(count) )
+        if( !haf.setup(n_steps_full) )
             throw exec_error("tcsmolten_salt", "failed to setup adjustment factors: " + haf.error());
 
         ssc_number_t *p_gen = allocate("gen", count);
@@ -2891,7 +2969,10 @@ public:
             p_gen[i] = (ssc_number_t)(p_W_dot_net[i] * 1.E3 * haf(hour));           //[kWe]
             p_gensales_after_avail[i] = max(0.0, p_gen[i]);                         //[kWe]
         }
-        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
+
+        if (!as_boolean("vacuum_arrays")) {
+            ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
+        }
         accumulate_annual_for_year("gen", "annual_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed/steps_per_hour);
         accumulate_annual_for_year("gensales_after_avail", "annual_sales_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
         
@@ -2985,81 +3066,89 @@ public:
             }
         }
 
-        // Capacity factors based on highest pricing hours
         ssc_number_t* p_pricing_mult = as_array("pricing_mult", &count);
-        
-        std::vector<pair<int, double>> ppa_pairs;
-        ppa_pairs.resize(count);
-        for (size_t i = 0; i < count; i++) {
-            ppa_pairs[i].first = i;
-            ppa_pairs[i].second = p_pricing_mult[i];
-        }
-        
-        std::sort(ppa_pairs.begin(), ppa_pairs.end(), SortByDouble);
-        int n_ppa_steps = 1000;
-        
-        double total_energy_in_sub_period = 0.0;
-        for (size_t i = 0; i < n_ppa_steps; i++) {
-            size_t j = ppa_pairs[i].first;
-            total_energy_in_sub_period += p_gen[j] * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
-        }
-        
-        double total_energy_nameplate = nameplate * n_ppa_steps * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
-        
-        double cap_fac_highest_1000_ppas = 0.0;
-        if (nameplate > 0.0) {
-            cap_fac_highest_1000_ppas = total_energy_in_sub_period / total_energy_nameplate * 100.0;    //[%]        
-        }
-        
-        assign("capacity_factor_highest_1000_ppas", cap_fac_highest_1000_ppas);
-        
-        n_ppa_steps = 2000;
-        
-        total_energy_in_sub_period = 0.0;
-        for (size_t i = 0; i < n_ppa_steps; i++) {
-            size_t j = ppa_pairs[i].first;
-            total_energy_in_sub_period += p_gen[j] * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
-        }
-        
-        total_energy_nameplate = nameplate * n_ppa_steps * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
-        
-        double cap_fac_highest_2000_ppas = 0.0;
-        if (nameplate > 0.0) {
-            cap_fac_highest_2000_ppas = total_energy_in_sub_period / total_energy_nameplate * 100.0;    //[%]
-        }
-        
-        assign("capacity_factor_highest_2000_ppas", cap_fac_highest_2000_ppas);
-        
-        // **********************************************************
-        // **********************************************************
-
-        // Capacity factors based on warmest ambient temperatures
         ssc_number_t* p_tdry = as_array("tdry", &count);
+        if (!as_boolean("vacuum_arrays")) {
+            // Capacity factors based on highest pricing hours
+            std::vector<pair<int, double>> ppa_pairs;
+            ppa_pairs.resize(count);
+            for (size_t i = 0; i < count; i++) {
+                ppa_pairs[i].first = i;
+                ppa_pairs[i].second = p_pricing_mult[i];
+            }
 
-        std::vector<pair<int, double>> tdry_pairs;
-        tdry_pairs.resize(count);
-        for (size_t i = 0; i < count; i++) {
-            tdry_pairs[i].first = i;
-            tdry_pairs[i].second = p_tdry[i];
-        }
+            std::sort(ppa_pairs.begin(), ppa_pairs.end(), SortByDouble);
+            int n_ppa_steps = 1000;
 
-        std::sort(tdry_pairs.begin(), tdry_pairs.end(), SortByDouble);
-        int n_tdry_steps = 100;
+            double total_energy_in_sub_period = 0.0;
+            for (size_t i = 0; i < n_ppa_steps; i++) {
+                size_t j = ppa_pairs[i].first;
+                total_energy_in_sub_period += p_gen[j] * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
+            }
 
-        double total_energy_in_sub_period_tdry = 0.0;
-        for (size_t i = 0; i < n_tdry_steps; i++) {
-            size_t j = tdry_pairs[i].first;
-            total_energy_in_sub_period_tdry += p_gen[j] * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
+            double total_energy_nameplate = nameplate * n_ppa_steps * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
+
+            double cap_fac_highest_1000_ppas = 0.0;
+            if (nameplate > 0.0) {
+                cap_fac_highest_1000_ppas = total_energy_in_sub_period / total_energy_nameplate * 100.0;    //[%]        
+            }
+
+            assign("capacity_factor_highest_1000_ppas", cap_fac_highest_1000_ppas);
+
+            n_ppa_steps = 2000;
+
+            total_energy_in_sub_period = 0.0;
+            for (size_t i = 0; i < n_ppa_steps; i++) {
+                size_t j = ppa_pairs[i].first;
+                total_energy_in_sub_period += p_gen[j] * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
+            }
+
+            total_energy_nameplate = nameplate * n_ppa_steps * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
+
+            double cap_fac_highest_2000_ppas = 0.0;
+            if (nameplate > 0.0) {
+                cap_fac_highest_2000_ppas = total_energy_in_sub_period / total_energy_nameplate * 100.0;    //[%]
+            }
+
+            assign("capacity_factor_highest_2000_ppas", cap_fac_highest_2000_ppas);
+
+            // **********************************************************
+            // **********************************************************
+
+            // Capacity factors based on warmest ambient temperatures
+            ssc_number_t* p_tdry = as_array("tdry", &count);
+
+            std::vector<pair<int, double>> tdry_pairs;
+            tdry_pairs.resize(count);
+            for (size_t i = 0; i < count; i++) {
+                tdry_pairs[i].first = i;
+                tdry_pairs[i].second = p_tdry[i];
+            }
+
+            std::sort(tdry_pairs.begin(), tdry_pairs.end(), SortByDouble);
+            int n_tdry_steps = 100;
+
+            double total_energy_in_sub_period_tdry = 0.0;
+            for (size_t i = 0; i < n_tdry_steps; i++) {
+                size_t j = tdry_pairs[i].first;
+                total_energy_in_sub_period_tdry += p_gen[j] * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
+            }
+
+            double total_energy_nameplate_tdry = nameplate * n_tdry_steps * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
+
+            double cap_fac_warmest_100_tdrys = 0.0;
+            if (nameplate > 0.0) {
+                cap_fac_warmest_100_tdrys = total_energy_in_sub_period_tdry / total_energy_nameplate_tdry * 100.0;    //[%]        
+            }
+
+            assign("capacity_factor_warmest_100_Tambs", cap_fac_warmest_100_tdrys);
         }
-        
-        double total_energy_nameplate_tdry = nameplate * n_tdry_steps * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
-        
-        double cap_fac_warmest_100_tdrys = 0.0;
-        if (nameplate > 0.0) {
-            cap_fac_warmest_100_tdrys = total_energy_in_sub_period_tdry / total_energy_nameplate_tdry * 100.0;    //[%]        
+        else {
+            double nan_output = std::numeric_limits<double>::quiet_NaN();
+            assign("capacity_factor_highest_1000_ppas", nan_output);
+            assign("capacity_factor_highest_2000_ppas", nan_output);
+            assign("capacity_factor_warmest_100_Tambs", nan_output);
         }
-        
-        assign("capacity_factor_warmest_100_Tambs", cap_fac_warmest_100_tdrys);
         // **********************************************************
         // **********************************************************
 
