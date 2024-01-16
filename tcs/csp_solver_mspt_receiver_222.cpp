@@ -152,7 +152,6 @@ void C_mspt_receiver_222::init_mspt_common()
     m_E_su_prev = m_q_rec_des * m_rec_qf_delay;	//[W-hr] Startup energy
     m_t_su_prev = m_rec_su_delay;				//[hr] Startup time requirement
 
-    // TODO: Talk to Janna about this logic
     if (m_mode_initial == C_csp_collector_receiver::STARTUP) {
         if (std::isfinite(m_E_su_init)) {
             m_E_su_prev = std::fmin(m_q_rec_des * m_rec_qf_delay, std::fmax(0.0, m_E_su_init));
@@ -166,15 +165,12 @@ void C_mspt_receiver_222::init_mspt_common()
         m_t_su_prev = 0.0;
     }
 
-    // TODO: And this one...
-    //// If no startup requirements, then receiver is always ON
-    //    // ... in the sense that the controller doesn't need to worry about startup
-    //if (m_E_su_prev == 0.0 && m_t_su_prev == 0.0) {
-    //    m_mode_prev = C_csp_collector_receiver::OFF_NO_SU_REQ;					//[-] 0 = requires startup, 1 = starting up, 2 = running
-    //}
-    //else {
-    //    m_mode_prev = C_csp_collector_receiver::OFF;					//[-] 0 = requires startup, 1 = starting up, 2 = running
-    //}
+    // If no startup requirements, then receiver is always ON
+    // ... in the sense that the controller doesn't need to worry about startup
+    if (m_E_su_prev == 0.0 && m_t_su_prev == 0.0 && m_mode_initial == C_csp_collector_receiver::OFF) {
+        m_mode = C_csp_collector_receiver::OFF_NO_SU_REQ;
+        m_mode_prev = C_csp_collector_receiver::OFF_NO_SU_REQ;
+    }
 
     std::string flow_msg;
     if (!CSP::flow_patterns(m_n_panels, m_crossover_shift, m_flow_type, m_n_lines, m_flow_pattern, &flow_msg))
