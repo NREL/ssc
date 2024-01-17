@@ -79,7 +79,8 @@ void C_storage_tank_dynamic_NT::init(HTFProperties htf_class_in, double V_tank /
     double tank_wall_cp,            // [J/kg-K] Tank wall specific heat
     double tank_wall_dens,          // [kg/m3] Tank wall density
     double tank_wall_thick,         // [m] Tank wall thickness)
-    double nstep                    // [] Number of time steps for energy balance iteration
+    double nstep,                    // [] Number of time steps for energy balance iteration
+    std::vector<double> piston_loss_poly //[] Coefficients to piston loss polynomial
     )
 {
     mc_htf = htf_class_in;
@@ -109,6 +110,7 @@ void C_storage_tank_dynamic_NT::init(HTFProperties htf_class_in, double V_tank /
     m_tank_wall_dens = tank_wall_dens;  //[kg/m3]
     m_tank_wall_cp = tank_wall_cp;      //[J/kgK]
     m_nstep = nstep;    //[]
+    m_piston_loss_poly = piston_loss_poly;  //[]
 
     // Calculate tank conductance
     //m_UA = u_tank * (A_cs + CSP::pi * diameter * h_tank) * tank_pairs;	//[W/K]
@@ -205,65 +207,65 @@ void C_storage_tank_dynamic_NT::converged()
     m_SA_prev = m_SA_calc;      //[m2]
 }
 
-void C_storage_tank_dynamic_NT::energy_balance_core(double timestep /*s*/, double m_dot_in_before_leak /*kg/s*/, double m_dot_out_before_leak /*kg/s*/,
-    double T_in /*K*/, double T_amb /*K*/, double mass_prev_inner /*kg*/,
+void C_storage_tank_dynamic_NT::energy_balance_core(double timestep /*s*/, double mdot_fluid_in_before_leak /*kg/s*/, double mdot_fluid_out_before_leak /*kg/s*/,
+    double T_fluid_in /*K*/, double T_amb /*K*/, double mass_fluid_prev_inner /*kg*/,
     double T_tank_in /*K*/, double T_prev_inner /*K*/,
     double T_leak_in /*K*/,
     double& T_ave /*K*/, double& q_heater /*MW*/, double& q_dot_loss /*MW*/,
-    double& mass_calc_inner /*kg*/, double& T_calc_inner /*K*/)
+    double& mass_fluid_calc_inner /*kg*/, double& T_calc_inner /*K*/)
 {
     // Get properties from tank state at the end of last time step
     double rho_fluid_prev = mc_htf.dens(T_prev_inner, 1.0);	//[kg/m^3]
     double cp_fluid_prev = mc_htf.Cp(T_prev_inner) * 1000.0;		//[J/kg-K] spec heat, convert from kJ/kg-K
 
     // Calculate Leakage
-    double m_dot_leak_in;
-    double m_dot_leak_out;
+    double mdot_leak_in;
+    double mdot_leak_out;
     {
-        double leak_frac_in = calc_leakage_fraction(m_dot_leak_in);
-        double leak_frac_out = calc_leakage_fraction(m_dot_leak_in);
+        double leak_frac_in = calc_leakage_fraction(mdot_fluid_out_before_leak);
+        double leak_frac_out = calc_leakage_fraction(mdot_fluid_in_before_leak);
 
-        m_dot_leak_in = leak_frac_in * m_dot_leak_in;
-        m_dot_leak_out = leak_frac_out * m_dot_leak_out;
+        mdot_leak_in = leak_frac_in * mdot_fluid_out_before_leak;
+        mdot_leak_out = leak_frac_out * mdot_fluid_in_before_leak;
     }
 
     // Calculate Net Mass Flows
-    double m_dot_in_net = m_dot_in_before_leak + m_dot_leak_in;
-    double m_dot_out_net = m_dot_out_before_leak + m_dot_leak_out;
+    double mdot_fluid_in_net = mdot_fluid_in_before_leak + mdot_leak_in;
+    double mdot_fluid_out_net = mdot_fluid_out_before_leak + mdot_leak_out;
 
     // Get Fluid Beginning volume
-    double V_prev_inner = mass_prev_inner / rho_fluid_prev;     // [m3]
+    double V_prev_inner = mass_fluid_prev_inner / rho_fluid_prev;     // [m3]
 
     // Calculate Fluid ending volume levels
-    mass_calc_inner = mass_prev_inner + timestep * (m_dot_in_net - m_dot_out_net);	//[kg] Available mass at the end of this timestep
+    mass_fluid_calc_inner = mass_fluid_prev_inner + timestep * (mdot_fluid_in_net - mdot_fluid_out_net);	//[kg] Available mass at the end of this timestep
 
-    double m_min, m_dot_out_adj;
+    double mass_fluid_min, mdot_fluid_out_adj;
     bool tank_is_empty = false;
 
-    m_min = 0.001;                              //[kg] minimum tank mass for use in the calculations
-    if (mass_calc_inner < m_min) {
-        mass_calc_inner = m_min;
+    mass_fluid_min = 0.001;                              //[kg] minimum tank mass for use in the calculations
+    if (mass_fluid_calc_inner < mass_fluid_min) {
+        mass_fluid_calc_inner = mass_fluid_min;
         tank_is_empty = true;
-        m_dot_out_adj = m_dot_in_net - (m_min - mass_prev_inner) / timestep;
+        mdot_fluid_out_adj = mdot_fluid_in_net - (mass_fluid_min - mass_fluid_prev_inner) / timestep;
     }
     else {
-        m_dot_out_adj = m_dot_out_net;
+        mdot_fluid_out_adj = mdot_fluid_out_net;
     }
-    m_V_calc = mass_calc_inner / rho_fluid_prev;					//[m^3] Available volume at end of timestep (using initial temperature...)
+    m_V_calc = mass_fluid_calc_inner / rho_fluid_prev;					//[m^3] Available volume at end of timestep (using initial temperature...)
 
     // Check for continual empty tank
-    if (mass_prev_inner <= 1e-4 && tank_is_empty == true) {
-        if (m_dot_in_net > 0) {
-            T_calc_inner = T_ave = T_in;
+    if (mass_fluid_prev_inner <= 1e-4 && tank_is_empty == true) {
+        if (mdot_fluid_in_net > 0) {
+            T_calc_inner = T_ave = T_fluid_in;
         }
         else {
             T_calc_inner = T_ave = T_prev_inner;
         }
-        q_dot_loss = m_V_calc = mass_calc_inner = q_heater = 0.;
+        q_dot_loss = m_V_calc = mass_fluid_calc_inner = q_heater = 0.;
         return;
     }
 
-    double diff_m_dot = m_dot_in_net - m_dot_out_adj;   //[kg/s]
+    double diff_m_dot = mdot_fluid_in_net - mdot_fluid_out_adj;   //[kg/s]
     if (diff_m_dot >= 0.0)
     {
         diff_m_dot = std::max(diff_m_dot, 1.E-5);
@@ -300,42 +302,42 @@ void C_storage_tank_dynamic_NT::energy_balance_core(double timestep /*s*/, doubl
     double SA_wall_change = L_change * 2.0 * CSP::pi * (m_radius + m_tank_wall_thick);
 
 
-    double mdot_in_tank = 0; // [kg/s] mass gained from expanding
-    double mdot_out_tank = 0; // [kg/s] mass lost from contracting
+    double mdot_in_wall = 0; // [kg/s] mass gained from expanding
+    double mdot_out_wall = 0; // [kg/s] mass lost from contracting
 
     if (mdot_wall_change > 0)
     {
-        mdot_in_tank = mdot_wall_change;
-        mdot_out_tank = 0;
+        mdot_in_wall = mdot_wall_change;
+        mdot_out_wall = 0;
     }
     else if (mdot_wall_change < 0)
     {
-        mdot_in_tank = 0;
-        mdot_out_tank = std::abs(mdot_wall_change);
+        mdot_in_wall = 0;
+        mdot_out_wall = std::abs(mdot_wall_change);
     }
 
-    double mass_total_calc;
-    double cp_weighted_calc;
     double T_in_weighted;
     double cp_in_weighted;
+    double cp_out_weighted;
+    double cp_bulk_weighted_calc;
     double mdot_in_total;
     double mdot_out_total;
     // If Fluid is coming in (leak going out)
-    if((m_dot_in_before_leak - m_dot_out_before_leak) > 0)
+    if((mdot_fluid_in_before_leak - mdot_fluid_out_before_leak) > 0)
     {
         // Fluid In
-        double cp_fluid_in = mc_htf.Cp(T_in) * 1000.0; // J/kg K
-        double mass_fluid_in = m_dot_in_before_leak * timestep;
-        double T_fluid_in = T_in;
+        double cp_fluid_in = mc_htf.Cp(T_fluid_in) * 1000.0; // J/kg K
+        double mass_fluid_in = mdot_fluid_in_before_leak * timestep;
+        //double T_fluid_in = T_fluid_in;
 
         // Wall In
         double cp_wall_in = m_tank_wall_cp;
-        double mass_wall_in = mdot_in_tank * timestep;
-        double T_wall_in = T_wall_in;
+        double mass_wall_in = mdot_in_wall * timestep;
+        double T_wall_in = T_tank_in;
 
         // Stagnant Fluid
-        double cp_fluid_prev = cp_fluid_prev;
-        double mass_fluid_stagnant = mass_prev_inner - (m_dot_leak_out * timestep);
+        //double cp_fluid_prev = cp_fluid_prev;
+        double mass_fluid_stagnant = mass_fluid_prev_inner - (mdot_leak_out * timestep);
         double T_fluid_stagnant = T_prev_inner;
 
         // Stagnant Wall
@@ -346,24 +348,27 @@ void C_storage_tank_dynamic_NT::energy_balance_core(double timestep /*s*/, doubl
         // Total Inlet
         double mass_in_total = mass_fluid_in + mass_wall_in;
         mdot_in_total = mass_in_total / timestep;
-        double cp_in_weighted = ((cp_fluid_in * mass_fluid_in) +
-                                 (cp_wall_in * mass_wall_in))
-                                 / mass_in_total;
+        double mass_cp_total = (mass_fluid_in * cp_fluid_in) + (mass_wall_in * cp_wall_in);
+        cp_in_weighted = ((cp_fluid_in * mass_fluid_in) +
+                          (cp_wall_in * mass_wall_in))
+                          / mass_in_total;
 
         T_in_weighted = ((T_fluid_in * cp_fluid_in * mass_fluid_in) +
                          (T_wall_in * cp_wall_in * mass_wall_in))
-                         / (mass_in_total * cp_in_weighted);
+                         / (mass_cp_total);
 
-        // Total Output
-        mdot_out_total = m_dot_leak_out;
+        // Total Outlet
+        mdot_out_total = mdot_leak_out;
+        cp_out_weighted = cp_fluid_prev;
 
-        // Total
-        mass_total_calc = mass_fluid_in + mass_wall_in + mass_fluid_stagnant;
-        cp_weighted_calc = ((cp_fluid_in * mass_fluid_in) +
-            (cp_wall_in * mass_wall_in) +
-            (cp_fluid_prev * mass_fluid_stagnant) +
-            (cp_wall_stagnant * mass_wall_stagnant))
-            / mass_total_calc;
+        // Total Bulk at end of timestep
+        double mass_total_calc = mass_fluid_in + mass_wall_in + mass_fluid_stagnant + mass_wall_stagnant;
+        cp_bulk_weighted_calc = ((cp_fluid_in * mass_fluid_in) +
+                                 (cp_wall_in * mass_wall_in) +
+                                 (cp_fluid_prev * mass_fluid_stagnant) +
+                                 (cp_wall_stagnant * mass_wall_stagnant))
+                                 / mass_total_calc;
+
     }
 
     // If Fluid is leaving (leak coming in)
@@ -371,31 +376,43 @@ void C_storage_tank_dynamic_NT::energy_balance_core(double timestep /*s*/, doubl
     {
         // Leak In
         double cp_leak_in = mc_htf.Cp(T_leak_in) * 1000.0;   // J/kg K
-        double mass_leak_in = m_dot_leak_in * timestep;
+        double mass_leak_in = mdot_leak_in * timestep;
 
         // Stagnant Fluid
         double cp_fluid_stagnant = cp_fluid_prev;
-        double mass_fluid_stagnant = mass_calc_inner - mass_leak_in;
+        double mass_fluid_stagnant = mass_fluid_calc_inner - mass_leak_in;
 
         // Stagnant Wall
         double cp_wall_stagnant = m_tank_wall_cp;
         double mass_wall_stagnant = mass_wall_calc;
 
+        // Fluid Out
+        double mass_fluid_out = mdot_fluid_out_adj * timestep;
+        double cp_fluid_out = cp_fluid_prev;
+
+        // Wall Out
+        double mass_wall_out = mdot_out_wall * timestep;
+        double cp_wall_out = m_tank_wall_cp;
+
         // Total Inlet
         double mass_in_total = mass_leak_in;
         mdot_in_total = mass_leak_in / timestep;
-        double cp_in_weighted = cp_leak_in;
+        cp_in_weighted = cp_leak_in;
         T_in_weighted = T_leak_in;
 
         // Total Outlet
-        mdot_out_total = m_dot_out_adj;
+        double mass_out_total = mass_fluid_out + mass_wall_out;
+        mdot_out_total = mass_out_total / timestep;
+        cp_out_weighted = ((cp_fluid_out * mass_fluid_out) +
+                           (cp_wall_out * mass_wall_out))
+                           / mass_out_total;
 
-        // Total
-        mass_total_calc = mass_leak_in + mass_fluid_stagnant + mass_wall_stagnant;
-        cp_weighted_calc = ((cp_leak_in * mass_leak_in) +
-                            (cp_fluid_stagnant * mass_fluid_stagnant) +
-                            (cp_wall_stagnant * mass_wall_stagnant))
-                            / mass_total_calc;
+        // Total Bulk at end of timestep
+        double mass_total_calc = mass_leak_in + mass_fluid_stagnant + mass_wall_stagnant;
+        cp_bulk_weighted_calc = ((cp_leak_in * mass_leak_in) +
+                                 (cp_fluid_stagnant * mass_fluid_stagnant) +
+                                 (cp_wall_stagnant * mass_wall_stagnant))
+                                 / mass_total_calc;
 
     }
 
@@ -424,7 +441,7 @@ void C_storage_tank_dynamic_NT::energy_balance_core(double timestep /*s*/, doubl
     //double mdot_out_total = m_dot_out + mdot_out_tank;
     double diff_m_dot_total = mdot_in_total - mdot_out_total;
 
-    double mass_prev_total = mass_prev_inner + mass_wall_prev;
+    double mass_prev_total = mass_fluid_prev_inner + mass_wall_prev;
 
     // Calculate UA value
     double UA_calc = m_u_tank * m_SA_calc;
@@ -439,13 +456,20 @@ void C_storage_tank_dynamic_NT::energy_balance_core(double timestep /*s*/, doubl
         // diff_m_dot   (NOW total mass difference from wall and fluid)
         // m_m_prev (WAS previous bulk fluid mass, NOW needs to be previous bulk fluid and wall mass)
 
-        double a_coef_old = m_dot_in * T_in + UA_calc / cp_fluid_prev * T_amb;
-        double b_coef_old = m_dot_in + UA_calc / cp_fluid_prev;
+        double a_coef_old = (mdot_in_total - mdot_in_wall) * T_fluid_in + UA_calc / cp_fluid_prev * T_amb;
+        double b_coef_old = (mdot_in_total - mdot_in_wall) + UA_calc / cp_fluid_prev;
         double c_coef_old = diff_m_dot;
 
-        double a_coef = mdot_in_total * T_in_weighted + (UA_calc / cp_weighted) * T_amb;
-        double b_coef = mdot_in_total + UA_calc / cp_weighted;
-        double c_coef = diff_m_dot_total;
+        double a_coef_new_old = mdot_in_total * T_in_weighted + (UA_calc / cp_bulk_weighted_calc) * T_amb;
+        double b_coef_new_old = mdot_in_total + UA_calc / cp_bulk_weighted_calc;
+        double c_coef_new_old = diff_m_dot_total;
+
+        double a_coef = ((cp_in_weighted / cp_bulk_weighted_calc) * mdot_in_total * T_in_weighted)
+                        + ((UA_calc / cp_bulk_weighted_calc) * T_amb);
+        double b_coef = mdot_in_total - mdot_out_total
+                        + ((cp_out_weighted / cp_bulk_weighted_calc) * mdot_out_total)
+                        + (UA_calc / cp_bulk_weighted_calc);
+        double c_coef = mdot_in_total - mdot_out_total;
 
         T_calc_inner = a_coef / b_coef + (T_prev_inner - a_coef / b_coef) * pow(std::max((timestep * c_coef / mass_prev_total + 1), 0.0), -b_coef / c_coef);
         T_ave = a_coef / b_coef + mass_prev_total * (T_prev_inner - a_coef / b_coef) / ((c_coef - b_coef) * timestep) * (pow(std::max((timestep * c_coef / mass_prev_total + 1.0), 0.0), 1.0 - b_coef / c_coef) - 1.0);
@@ -455,10 +479,10 @@ void C_storage_tank_dynamic_NT::energy_balance_core(double timestep /*s*/, doubl
 
         //******* DEBUG
 
-        double T_calc_inner_old = a_coef_old / b_coef_old + (T_prev_inner - a_coef_old / b_coef_old) * pow(std::max((timestep * c_coef_old / mass_prev_total + 1), 0.0), -b_coef_old / c_coef_old);
-        double T_ave_old = a_coef_old / b_coef_old + mass_prev_total * (T_prev_inner - a_coef_old / b_coef_old) / ((c_coef_old - b_coef_old) * timestep) * (pow(std::max((timestep * c_coef_old / mass_prev_total + 1.0), 0.0), 1.0 - b_coef_old / c_coef_old) - 1.0);
+        double T_calc_inner_old = a_coef_old / b_coef_old + (T_prev_inner - a_coef_old / b_coef_old) * pow(std::max((timestep * c_coef_old / mass_fluid_prev_inner + 1), 0.0), -b_coef_old / c_coef_old);
+        double T_ave_old = a_coef_old / b_coef_old + mass_fluid_prev_inner * (T_prev_inner - a_coef_old / b_coef_old) / ((c_coef_old - b_coef_old) * timestep) * (pow(std::max((timestep * c_coef_old / mass_fluid_prev_inner + 1.0), 0.0), 1.0 - b_coef_old / c_coef_old) - 1.0);
         if (timestep < 1.e-6)
-            T_ave_old = a_coef_old / b_coef_old + (T_prev_inner - a_coef_old / b_coef_old) * pow(std::max((timestep * c_coef_old / mass_prev_total + 1.0), 0.0), -b_coef_old / c_coef_old);	// Limiting expression for small time step	
+            T_ave_old = a_coef_old / b_coef_old + (T_prev_inner - a_coef_old / b_coef_old) * pow(std::max((timestep * c_coef_old / mass_fluid_prev_inner + 1.0), 0.0), -b_coef_old / c_coef_old);	// Limiting expression for small time step	
         double q_dot_loss_old = UA_calc * (T_ave_old - T_amb) / 1.E6;		//[MW]
 
         //************
@@ -469,7 +493,7 @@ void C_storage_tank_dynamic_NT::energy_balance_core(double timestep /*s*/, doubl
             q_heater = b_coef * ((m_T_htr - T_prev_inner * pow(std::max((timestep * c_coef / mass_prev_total + 1), 0.0), -b_coef / c_coef)) /
                 (-pow(std::max((timestep * c_coef / mass_prev_total + 1), 0.0), -b_coef / c_coef) + 1)) - a_coef;
 
-            q_heater = q_heater * cp_weighted;
+            q_heater = q_heater * cp_bulk_weighted_calc;
 
             q_heater /= 1.E6;
         }
@@ -484,7 +508,7 @@ void C_storage_tank_dynamic_NT::energy_balance_core(double timestep /*s*/, doubl
             q_heater = m_max_q_htr;
         }
 
-        a_coef += q_heater * 1.E6 / cp_weighted;
+        a_coef += q_heater * 1.E6 / cp_bulk_weighted_calc;
 
         T_calc_inner = a_coef / b_coef + (T_prev_inner - a_coef / b_coef) * pow(std::max((timestep * c_coef / mass_prev_total + 1), 0.0), -b_coef / c_coef);
         T_ave = a_coef / b_coef + mass_prev_total * (T_prev_inner - a_coef / b_coef) / ((c_coef - b_coef) * timestep) * (pow(std::max((timestep * c_coef / mass_prev_total + 1.0), 0.0), 1.0 - b_coef / c_coef) - 1.0);
@@ -500,8 +524,8 @@ void C_storage_tank_dynamic_NT::energy_balance_core(double timestep /*s*/, doubl
         // cp   (NOW weighted cp_weighted of wall and fluid)
         // m_m_prev (WAS previous bulk fluid mass, NOW needs to be previous bulk fluid and wall mass)
 
-        double b_coef = UA_calc / (cp_weighted * mass_prev_total);
-        double c_coef = UA_calc / (cp_weighted * mass_prev_total) * T_amb;
+        double b_coef = UA_calc / (cp_bulk_weighted_calc * mass_prev_total);
+        double c_coef = UA_calc / (cp_bulk_weighted_calc * mass_prev_total) * T_amb;
 
         T_calc_inner = c_coef / b_coef + (T_prev_inner - c_coef / b_coef) * exp(-b_coef * timestep);
         T_ave = c_coef / b_coef - (T_prev_inner - c_coef / b_coef) / (b_coef * timestep) * (exp(-b_coef * timestep) - 1.0);
@@ -511,7 +535,7 @@ void C_storage_tank_dynamic_NT::energy_balance_core(double timestep /*s*/, doubl
 
         if (T_calc_inner < m_T_htr)
         {
-            q_heater = (b_coef * (m_T_htr - T_prev_inner * exp(-b_coef * timestep)) / (-exp(-b_coef * timestep) + 1.0) - c_coef) * cp_weighted * mass_prev_total;
+            q_heater = (b_coef * (m_T_htr - T_prev_inner * exp(-b_coef * timestep)) / (-exp(-b_coef * timestep) + 1.0) - c_coef) * cp_bulk_weighted_calc * mass_prev_total;
             q_heater /= 1.E6;	//[MW]
         }
         else
@@ -525,7 +549,7 @@ void C_storage_tank_dynamic_NT::energy_balance_core(double timestep /*s*/, doubl
             q_heater = m_max_q_htr;
         }
 
-        c_coef += q_heater * 1.E6 / (cp_weighted * mass_prev_total);
+        c_coef += q_heater * 1.E6 / (cp_bulk_weighted_calc * mass_prev_total);
 
         T_calc_inner = c_coef / b_coef + (T_prev_inner - c_coef / b_coef) * exp(-b_coef * timestep);
         T_ave = c_coef / b_coef - (T_prev_inner - c_coef / b_coef) / (b_coef * timestep) * (exp(-b_coef * timestep) - 1.0);
@@ -537,7 +561,7 @@ void C_storage_tank_dynamic_NT::energy_balance_core(double timestep /*s*/, doubl
     if (tank_is_empty) {
         // set to actual values
         m_V_calc = 0.;
-        mass_calc_inner = 0.;
+        mass_fluid_calc_inner = 0.;
     }
 }
 
@@ -638,6 +662,8 @@ double C_storage_tank_dynamic_NT::calc_leakage_fraction(double mdot)
         frac += m_piston_loss_poly[i] * std::pow(mdot, i);
     }
 
+    frac *= 0.01;   // Convert from % to fraction
+
     return frac;
 }
 
@@ -696,6 +722,7 @@ C_csp_NTHeatTrap_tes::C_csp_NTHeatTrap_tes(
         m_h_tank_min(h_tank_min), m_f_V_hot_ini(f_V_hot_ini), m_htf_pump_coef(htf_pump_coef),
         tanks_in_parallel(tanks_in_parallel),
         m_tank_wall_cp(tank_wall_cp), m_tank_wall_dens(tank_wall_dens), m_tank_wall_thick(tank_wall_thick), m_nstep(nstep),
+        m_piston_loss_poly(piston_loss_poly),
         V_tes_des(V_tes_des), calc_design_pipe_vals(calc_design_pipe_vals), m_tes_pump_coef(tes_pump_coef),
         eta_pump(eta_pump), has_hot_tank_bypass(has_hot_tank_bypass), T_tank_hot_inlet_min(T_tank_hot_inlet_min),
         custom_tes_p_loss(custom_tes_p_loss), custom_tes_pipe_sizes(custom_tes_pipe_sizes), k_tes_loss_coeffs(k_tes_loss_coeffs),
@@ -879,11 +906,11 @@ void C_csp_NTHeatTrap_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inpu
             // Hot tank
     mc_hot_tank_NT.init(mc_store_htfProps, m_vol_tank, m_h_tank, m_h_tank_min,
         m_u_tank, m_tank_pairs, m_hot_tank_Thtr, m_hot_tank_max_heat,
-        V_hot_ini, T_hot_ini, T_tes_hot_des, volume_combined, m_tank_wall_cp, m_tank_wall_dens, m_tank_wall_thick, m_nstep);
+        V_hot_ini, T_hot_ini, T_tes_hot_des, volume_combined, m_tank_wall_cp, m_tank_wall_dens, m_tank_wall_thick, m_nstep, m_piston_loss_poly);
     // Cold tank
     mc_cold_tank_NT.init(mc_store_htfProps, m_vol_tank, m_h_tank, m_h_tank_min,
         m_u_tank, m_tank_pairs, m_cold_tank_Thtr, m_cold_tank_max_heat,
-        V_cold_ini, T_cold_ini, T_tes_cold_des, volume_combined, m_tank_wall_cp, m_tank_wall_dens, m_tank_wall_thick, m_nstep);
+        V_cold_ini, T_cold_ini, T_tes_cold_des, volume_combined, m_tank_wall_cp, m_tank_wall_dens, m_tank_wall_thick, m_nstep, m_piston_loss_poly);
 
     double hot_radius = mc_hot_tank_NT.get_radius();
     double cold_radius = mc_cold_tank_NT.get_radius();
@@ -978,11 +1005,11 @@ void C_csp_NTHeatTrap_tes::reset_storage_to_initial_state()
     // Hot tank
     mc_hot_tank_NT.init(mc_store_htfProps, m_vol_tank, m_h_tank, m_h_tank_min,
         m_u_tank, m_tank_pairs, m_hot_tank_Thtr, m_hot_tank_max_heat,
-        V_hot_ini, T_hot_ini, m_T_hot_des, volume_combined, m_tank_wall_cp, m_tank_wall_dens, m_tank_wall_thick, m_nstep);
+        V_hot_ini, T_hot_ini, m_T_hot_des, volume_combined, m_tank_wall_cp, m_tank_wall_dens, m_tank_wall_thick, m_nstep, m_piston_loss_poly);
     // Cold tank
     mc_cold_tank_NT.init(mc_store_htfProps, m_vol_tank, m_h_tank, m_h_tank_min,
         m_u_tank, m_tank_pairs, m_cold_tank_Thtr, m_cold_tank_max_heat,
-        V_cold_ini, T_cold_ini, m_T_cold_des, volume_combined, m_tank_wall_cp, m_tank_wall_dens, m_tank_wall_thick, m_nstep);
+        V_cold_ini, T_cold_ini, m_T_cold_des, volume_combined, m_tank_wall_cp, m_tank_wall_dens, m_tank_wall_thick, m_nstep, m_piston_loss_poly);
 }
 
 void C_csp_NTHeatTrap_tes::discharge_avail_est(double T_cold_K, double step_s,
@@ -1234,7 +1261,7 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
         // Call energy balance on hot tank discharge to get average outlet temperature over timestep
         mc_hot_tank_NT.energy_balance_iterated(timestep, m_dot_cr_to_cv_hot, m_dot_cv_hot_to_sink,
             T_cr_out_hot, T_amb,
-            T_cold_prev,
+            T_cold_prev, T_cold_prev,
             T_sink_htf_in_hot, q_heater_hot, q_dot_loss_hot);
 
         /*mc_hot_tank_NT.energy_balance(timestep, m_dot_cr_to_cv_hot, m_dot_cv_hot_to_sink,
@@ -1246,7 +1273,7 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
         // Use mass flow and temperature downstream of sink-out and cr-to-cold-tank mixer
         mc_cold_tank_NT.energy_balance_iterated(timestep, m_dot_total_to_cv_cold, m_dot_cv_cold_to_cr,
             T_htf_cold_cv_in, T_amb,
-            T_hot_prev,
+            T_hot_prev, T_hot_prev,
             T_cr_in_cold, q_heater_cold, q_dot_loss_cold);
 
         /*mc_cold_tank_NT.energy_balance(timestep, m_dot_total_to_cv_cold, m_dot_cv_cold_to_cr,
@@ -1480,10 +1507,10 @@ bool C_csp_NTHeatTrap_tes::charge(double timestep /*s*/, double T_amb /*K*/, dou
     double T_cold_prev = mc_cold_tank_NT.get_m_T_prev();
 
     // Call energy balance on cold tank discharge to get average outlet temperature over timestep
-    mc_cold_tank_NT.energy_balance_iterated(timestep, 0.0, m_dot_tank, 0.0, T_amb, T_hot_prev, T_cold_ave, q_heater_cold, q_dot_loss_cold);
+    mc_cold_tank_NT.energy_balance_iterated(timestep, 0.0, m_dot_tank, 0.0, T_amb, T_hot_prev, T_hot_prev, T_cold_ave, q_heater_cold, q_dot_loss_cold);
 
     // Call energy balance on hot tank charge to track tank mass and temperature
-    mc_hot_tank_NT.energy_balance_iterated(timestep, m_dot_tank, 0.0, T_hot_tank_in, T_amb, T_cold_prev, T_hot_ave, q_heater_hot, q_dot_loss_hot);
+    mc_hot_tank_NT.energy_balance_iterated(timestep, m_dot_tank, 0.0, T_hot_tank_in, T_amb, T_cold_prev, T_cold_prev, T_hot_ave, q_heater_hot, q_dot_loss_hot);
 
     q_dot_heater = q_heater_cold + q_heater_hot;			//[MWt]
 
@@ -1557,10 +1584,10 @@ bool C_csp_NTHeatTrap_tes::discharge(double timestep /*s*/, double T_amb /*K*/, 
     double T_cold_prev = mc_cold_tank_NT.get_m_T_prev();
 
     // Call energy balance on hot tank discharge to get average outlet temperature over timestep
-    mc_hot_tank_NT.energy_balance_iterated(timestep, 0.0, m_dot_tank, 0.0, T_amb, T_cold_prev, T_hot_ave, q_heater_hot, q_dot_loss_hot);
+    mc_hot_tank_NT.energy_balance_iterated(timestep, 0.0, m_dot_tank, 0.0, T_amb, T_cold_prev, T_cold_prev, T_hot_ave, q_heater_hot, q_dot_loss_hot);
 
     // Call energy balance on cold tank charge to track tank mass and temperature
-    mc_cold_tank_NT.energy_balance_iterated(timestep, m_dot_tank, 0.0, T_cold_tank_in, T_amb, T_hot_prev, T_cold_ave, q_heater_cold, q_dot_loss_cold);
+    mc_cold_tank_NT.energy_balance_iterated(timestep, m_dot_tank, 0.0, T_cold_tank_in, T_amb, T_hot_prev, T_hot_prev, T_cold_ave, q_heater_cold, q_dot_loss_cold);
 
     q_dot_heater = q_heater_cold + q_heater_hot;			//[MWt]
 
