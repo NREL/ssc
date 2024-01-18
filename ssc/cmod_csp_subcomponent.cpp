@@ -94,6 +94,7 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_INPUT,        SSC_NUMBER,      "tes_tank_cp",               "Tank wall cp (used for Norwich HeatTrap)",                                         "kJ/kg-K",      "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tes_tank_dens",             "Tank wall thickness (used for Norwich HeatTrap)",                                  "kg/m3",        "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tes_NT_nstep",              "Number of time steps for energy balance (used for Norwich HeatTrap)",              "",             "",               "TES",            "?=1",                     "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "tes_NT_piston_loss_poly",   "Polynomial coefficients describing piston heat loss function (f(kg/s)=%)",         "",             "",               "TES",            "tes_type=1",              "",                      "" },
 
 
 
@@ -238,7 +239,7 @@ public:
                 as_double("tes_tank_dens"),
                 as_double("tes_tank_thick"),
                 nstep,
-                std::vector<double>(),
+                as_vector_double("tes_NT_piston_loss_poly"),
                 as_double("V_tes_des"),
                 as_boolean("calc_design_pipe_vals"),
                 as_double("tes_pump_coef"),
@@ -259,7 +260,7 @@ public:
         }
         else
         {
-            exec_error("trough_physical", "tes_type must be 0 or 1");
+            throw exec_error("trough_physical", "tes_type must be 0 or 1");
         }
 
         
