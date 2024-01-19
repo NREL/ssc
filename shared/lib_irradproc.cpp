@@ -2193,6 +2193,7 @@ int irrad::calc() {
     }
 
     //clearsky
+    //Walker boulder 3.44 
     ineichen(clearskyIrradiance, RTOD * sunAnglesRadians[1], month, day, pressure * 100.0, 1.0, elevation, 0, true);
 
 
