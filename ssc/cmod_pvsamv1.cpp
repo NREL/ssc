@@ -1971,7 +1971,12 @@ void cm_pvsamv1::exec()
                     PVSystem->p_poaDiffuseFrontCS[nn][idx] = (ssc_number_t)(ignddiff_csky);
                     PVSystem->p_poaRearCS[nn][idx] = (ssc_number_t)(ipoa_rear_after_losses_cs[nn]);
                     if (dni_cs != 0) {
-                        PVSystem->p_DNIIndex[nn][idx] = (ssc_number_t)(Irradiance->p_weatherFileDNI[idx] / dni_cs);
+                        if (!isnan(Irradiance->p_weatherFileDNI[idx])) {
+                            PVSystem->p_DNIIndex[nn][idx] = (ssc_number_t)(Irradiance->p_weatherFileDNI[idx] / dni_cs);
+                        }
+                        else {
+                            PVSystem->p_DNIIndex[nn][idx] = (ssc_number_t)(Irradiance->p_IrradianceCalculated[2][idx] / dni_cs);
+                        }
                     }
                     else {
                         PVSystem->p_DNIIndex[nn][idx] = 0;
