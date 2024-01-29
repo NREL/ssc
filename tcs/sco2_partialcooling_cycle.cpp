@@ -308,8 +308,11 @@ int C_PartialCooling_Cycle::design_core()
 	{
 		double phx_deltaT = m_temp_last[TURB_IN] - m_temp_last[HTR_HP_OUT];
 		double under_min_deltaT = std::max(0.0, ms_des_par.m_min_phx_deltaT - phx_deltaT);
-		double eta_deltaT_scale = std::exp(-under_min_deltaT);
-		m_objective_metric_last = m_eta_thermal_calc_last * eta_deltaT_scale;
+		//double eta_deltaT_scale = std::exp(-under_min_deltaT);
+        //m_objective_metric_last = m_eta_thermal_calc_last * eta_deltaT_scale;
+
+        double percent_err = under_min_deltaT / ms_des_par.m_min_phx_deltaT;
+        m_objective_metric_last = m_eta_thermal_calc_last - percent_err;
 	}
 	else
 	{
@@ -891,6 +894,7 @@ int C_PartialCooling_Cycle::opt_design_core()
 		opt_des_cycle.set_upper_bounds(ub);
 		opt_des_cycle.set_initial_step(scale);
 		opt_des_cycle.set_xtol_rel(ms_opt_des_par.m_des_opt_tol);
+        opt_des_cycle.set_maxeval(10);
 
 		// set max objective function
 		opt_des_cycle.set_max_objective(nlopt_cb_opt_partialcooling_des, this);

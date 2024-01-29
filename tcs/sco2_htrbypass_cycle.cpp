@@ -1088,6 +1088,7 @@ void C_HTRBypass_Cycle::opt_design_core(int& error_code)
         opt_des_cycle.set_upper_bounds(ub);
         opt_des_cycle.set_initial_step(scale);
         opt_des_cycle.set_xtol_rel(ms_opt_des_par.m_des_opt_tol);
+        opt_des_cycle.set_maxeval(10);
 
         // Set max objective function
         opt_des_cycle.set_max_objective(nlopt_cb_opt_htr_bypass_des, this);		// Calls wrapper/callback that calls 'design_point_eta', which optimizes design point eta through repeated calls to 'design'
