@@ -465,12 +465,12 @@ void C_storage_tank_dynamic_NT::energy_balance_core(double timestep /*s*/, doubl
         double b_coef = mdot_in_total + UA_calc / cp_bulk_weighted_calc;
         double c_coef = diff_m_dot_total;
 
-        //double a_coef = ((cp_in_weighted / cp_bulk_weighted_calc) * mdot_in_total * T_in_weighted)
-        //                + ((UA_calc / cp_bulk_weighted_calc) * T_amb);
-        //double b_coef = mdot_in_total - mdot_out_total
-        //                + ((cp_out_weighted / cp_bulk_weighted_calc) * mdot_out_total)
-        //                + (UA_calc / cp_bulk_weighted_calc);
-        //double c_coef = mdot_in_total - mdot_out_total;
+        /*double a_coef = ((cp_in_weighted / cp_bulk_weighted_calc) * mdot_in_total * T_in_weighted)
+                        + ((UA_calc / cp_bulk_weighted_calc) * T_amb);
+        double b_coef = mdot_in_total - mdot_out_total
+                        + ((cp_out_weighted / cp_bulk_weighted_calc) * mdot_out_total)
+                        + (UA_calc / cp_bulk_weighted_calc);
+        double c_coef = mdot_in_total - mdot_out_total;*/
 
 
         T_calc_inner = a_coef / b_coef;
@@ -642,6 +642,7 @@ void C_storage_tank_dynamic_NT::energy_balance_iterated(double timestep /*s*/, d
     double T_prev_inner = m_T_prev;
     double T_calc_inner = 0;
 
+    // Run Energy Balance
     for (int i = 0; i < m_nstep; i++)
     {
         double q_heater_innerstep, q_dot_loss_innerstep;
