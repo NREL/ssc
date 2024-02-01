@@ -1417,7 +1417,7 @@ public:
 
             if (sim_type == 1)
             {
-                if (csp_financial_model > 0 && csp_financial_model < 5) {   // Single Owner financial models
+                if ((csp_financial_model > 0 && csp_financial_model < 5)) {   // Single Owner financial models
 
                     // Get first year base ppa price
                     bool is_ppa_price_input_assigned = is_assigned("ppa_price_input");
@@ -1496,7 +1496,7 @@ public:
                         }
                     }
                 }
-                else if (csp_financial_model == 5) {    // Commercial
+                else if (csp_financial_model == 5 || csp_financial_model == 9) {    // Commercial
                     if (is_dispatch) {
                         throw exec_error("trough_physical", "\nDispatch optimization current not enabled for the Commercial financial model\n");
                         // need to add pricing lookup for Commercial financial model
@@ -1505,6 +1505,9 @@ public:
                         tou_params->mc_pricing.mv_is_diurnal = false;
 
                         tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
+
+                        // TMB 2024.01.31 Set en_electricity_rates to 'on'
+                        assign("en_electricity_rates", 1);
                     }
                 }
                 else if (csp_financial_model == 6) {     // use 'mp_energy_market_revenue' -> from Merchant Plant model

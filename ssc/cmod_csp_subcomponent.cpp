@@ -130,6 +130,13 @@ public:
 
         int tes_type = as_integer("tes_type");
 
+        double thick = as_double("tes_tank_thick");
+        double_vec hot = as_vector_double("T_src_out");
+        double_vec cold = as_vector_double("T_sink_out");
+        double hot_des = as_double("T_loop_out");
+        double cold_des = as_double("T_loop_in_des");
+        
+
         util::matrix_t<double> tes_lengths;
         if (is_assigned("tes_lengths")) {
             tes_lengths = as_matrix("tes_lengths");               //[m]
