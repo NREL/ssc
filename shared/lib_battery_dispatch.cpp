@@ -924,6 +924,7 @@ battery_metrics_t::battery_metrics_t(double dt_hour)
     _average_efficiency = 100.;
     _average_roundtrip_efficiency = 100.;
     _pv_charge_percent = 0.;
+    _grid_charge_percent = 0.;
 
     // annual metrics
     _e_charge_from_pv_annual = 0.;
@@ -938,6 +939,7 @@ battery_metrics_t::battery_metrics_t(double dt_hour)
 double battery_metrics_t::average_battery_conversion_efficiency() { return _average_efficiency; }
 double battery_metrics_t::average_battery_roundtrip_efficiency() { return _average_roundtrip_efficiency; }
 double battery_metrics_t::pv_charge_percent() { return _pv_charge_percent; }
+double battery_metrics_t::grid_charge_percent() { return _grid_charge_percent; }
 double battery_metrics_t::energy_pv_charge_annual() { return _e_charge_from_pv_annual; }
 double battery_metrics_t::energy_grid_charge_annual() { return _e_charge_from_grid_annual; }
 double battery_metrics_t::energy_charge_annual() { return _e_charge_annual; }
@@ -996,6 +998,7 @@ void battery_metrics_t::accumulate_battery_charge_components(double P_tofrom_bat
     _average_efficiency = 100. * (_e_discharge_accumulated / _e_charge_accumulated);
     _average_roundtrip_efficiency = 100. * (_e_discharge_accumulated / (_e_charge_accumulated + _e_loss_system));
     _pv_charge_percent = 100. * (_e_charge_from_pv / _e_charge_accumulated);
+    _grid_charge_percent = 100. * (_e_charge_from_grid / _e_charge_accumulated);
 }
 void battery_metrics_t::accumulate_grid_annual(double P_tofrom_grid)
 {
