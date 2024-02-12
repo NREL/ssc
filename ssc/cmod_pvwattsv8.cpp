@@ -151,6 +151,7 @@ static var_info _cm_vtab_pvwattsv8[] = {
         { SSC_INPUT,        SSC_NUMBER,      "wind_stow_angle",                "Tracker angle for wind stow",                 "degrees",       "",                                             "System Design",      "?=30.0",                  "",                              "" },
 
         { SSC_INPUT,        SSC_NUMBER,      "en_snowloss",                    "Enable snow loss model",                      "0/1",       "",                                             "System Design",      "?=0",                     "BOOLEAN",                       "" },
+        { SSC_INPUT,        SSC_NUMBER,     "snow_slide_coefficient",		"Snow Slide Coefficient",			"",					"",					"System Design", "?=1.97",           "",                             "" },
 
         { SSC_INPUT,        SSC_NUMBER,      "inv_eff",                        "Inverter efficiency at rated power",          "%",         "",                                             "System Design",      "?=96",                    "MIN=90,MAX=99.5",               "" },
 
@@ -657,7 +658,7 @@ public:
             // if tracking mode is 1-axis tracking,
             // don't need to limit tilt angles
             if (snowmodel.setup(pv.nmody,
-                (float)pv.tilt,
+                (float)pv.tilt, as_double("snow_slide_coefficient"),
                 pv.type == FIXED_RACK || pv.type == FIXED_ROOF)) {
 
                 if (!snowmodel.good) {
