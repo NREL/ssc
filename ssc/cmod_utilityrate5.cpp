@@ -918,8 +918,7 @@ public:
 		idx = 0;
 		for (i=0;i<nyears;i++)
 		{
-            lifetime_load[idx] = 0;
-			if (i > 0) {
+ 			if (i > 0) {
 				last_month_w_sys = rate.m_month[11];
 				last_excess_energy_w_sys = monthly_cumulative_excess_energy_w_sys[11];
 				last_excess_dollars_w_sys = monthly_cumulative_excess_dollars_w_sys[11];
