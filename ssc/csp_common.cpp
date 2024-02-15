@@ -784,7 +784,6 @@ var_info vtab_sco2_design[] = {
 	{ SSC_INPUT,  SSC_NUMBER,  "is_P_high_fixed",      "1 = Yes (=P_high_limit), 0 = No, optimized (default)",                   "",           "High temperature recuperator",    "Heat Exchanger Design",      "?=0",   "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "is_PR_fixed",          "0 = No, >0 = fixed pressure ratio at input <0 = fixed LP at abs(input)",                      "High temperature recuperator",           "",    "Heat Exchanger Design",      "?=0",   "",       "" },
     { SSC_INPUT,  SSC_NUMBER,  "is_IP_fixed",          "partial cooling config: 0 = No, >0 = fixed HP-IP pressure ratio at input, <0 = fixed IP at abs(input)","","High temperature recuperator","Heat Exchanger Design","?=0", "",       "" },
-    { SSC_INPUT,  SSC_NUMBER,  "is_bypass_ok",         "1 = Yes, 0 = No Bypass, < 0 = fix bp_frac to abs(input)","",  "High temperature recuperator",    "Heat Exchanger Design",      "?=1",   "",       "" },
 
     { SSC_INPUT,  SSC_NUMBER,  "des_objective",        "[2] = hit min phx deltat then max eta, [else] max eta",  "",           "High temperature recuperator",    "Heat Exchanger Design",      "?=0",   "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "min_phx_deltaT",       "Minimum design temperature difference across PHX",       "C",          "High temperature recuperator",    "Heat Exchanger Design",      "?=0",   "",       "" },
@@ -814,9 +813,12 @@ var_info vtab_sco2_design[] = {
 
 
     // HTR Bypass Design
-    { SSC_INPUT,  SSC_NUMBER,  "T_htf_bypass_out",     "HTF design Bypass Outlet Temperature",                   "C",          "",    "System Design",      "cycle_config=3",     "",       "" },
-    { SSC_INPUT,  SSC_NUMBER,  "deltaT_bypass",        "sco2 Bypass Outlet Temp - HTR_HP_OUT Temp",              "C",          "",    "System Design",      "cycle_config=3",     "",       "" },
+    { SSC_INPUT,  SSC_NUMBER,  "is_bypass_ok",         "1 = Yes, 0 = No Bypass, < 0 = fix bp_frac to abs(input)","",  "High temperature recuperator",    "Heat Exchanger Design",      "?=1",   "",       "" },
+    { SSC_INPUT,  SSC_NUMBER,  "T_bypass_target",      "HTR BP Cycle Target Temperature",                       "C",          "",    "System Design",      "cycle_config=3",     "",       "" },
+    { SSC_INPUT,  SSC_NUMBER,  "T_target_is_HTF",      "Target Temperature is HTF (1) or cold sco2 at BP",      "",           "",    "System Design",      "?=1",     "",       "" },
+    { SSC_INPUT,  SSC_NUMBER,  "deltaT_bypass",        "sco2 Bypass Outlet Temp - HTR_HP_OUT Temp",             "C",          "",    "System Design",      "cycle_config=3",     "",       "" },
     { SSC_INPUT,  SSC_NUMBER,  "set_HTF_mdot",         "For HTR Bypass ONLY, 0 = calculate HTF mdot (need to set dT_PHX_cold_approach), > 0 = HTF mdot kg/s",   "kg/s",       "",    "System Design",      "?=0",     "",       "" },
+
 
     // DEBUG
     //{ SSC_OUTPUT,  SSC_STRING,  "debug_string",        "output string used for debug",              "C",          "",    "System Design",      "cycle_config=3",     "",       "" },
@@ -1255,7 +1257,8 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
     // Bypass Configuration Parameters
     if (s_sco2_des_par.m_cycle_config == 3)
     {
-        s_sco2_des_par.m_T_htf_bypass_out = cm->as_double("T_htf_bypass_out") + 273.15; // [C] Convert to C
+        s_sco2_des_par.m_T_bypass_target = cm->as_double("T_bypass_target") + 273.15; // [K] Convert to K
+        s_sco2_des_par.m_T_target_is_HTF = cm->as_integer("T_target_is_HTF");
         s_sco2_des_par.m_deltaT_bypass = cm->as_double("deltaT_bypass"); // [delta C]
         s_sco2_des_par.m_set_HTF_mdot = cm->as_double("set_HTF_mdot"); // [kg/s] For HTR Bypass ONLY, 0 = calculate HTF mdot (need to set dT_PHX_cold_approach), > 0 = HTF mdot
 

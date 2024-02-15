@@ -232,7 +232,8 @@ private:
     double m_m_dot_HTF;                 // kg/s
     double m_Q_dot_BP;
     double m_T_HTF_PHX_inlet;
-    double m_T_HTF_BP_outlet_target;
+    double m_T_target;
+    int m_T_target_is_HTF;
     double m_T_HTF_BP_outlet_calc;
     double m_T_HTF_PHX_out;
     double m_dT_BP;                     // BYPASS_OUT - HTR_HP_OUT
@@ -240,7 +241,7 @@ private:
     double m_Q_dot_total;
     double m_HTF_BP_cold_approach;
     double m_HTF_PHX_cold_approach;
-    bool is_htf_set = false;
+    bool is_bp_par_set = false;
     double m_W_dot_air_cooler;
     double m_Q_dot_air_cooler;
     C_HX_co2_to_htf c_phx;
@@ -267,6 +268,8 @@ private:
     // Added
     int solve_HTR(double T_HTR_LP_OUT_guess, double* diff_T_HTR_LP_out);
     int solve_LTR(double T_LTR_LP_OUT_guess, double* diff_T_LTR_LP_out);
+    double calc_penalty(double target, double calc, double span);
+
 
     std::string make_result_csv_string();
 
@@ -318,16 +321,9 @@ public:
         
     }
 
-    /// <summary>
-    /// Set HTF parameters
-    /// </summary>
-    /// <param name="T_htf_phx_in">K</param>
-    /// <param name="T_htf_bp_out_target">K</param>
-    /// <param name="cp_htf">kJ/kg K</param>
-    /// <param name="dT_bp">K</param>
-    /// <param name="htf_phx_cold_approach">K</param>
-    /// <param name="set_HTF_mdot">K</param>
-    void set_htf_par(double T_htf_phx_in, double T_htf_bp_out_target, double cp_htf, double dT_bp, double htf_phx_cold_approach, double set_HTF_mdot);
+    // Set Bypass Specific Parameters
+    void set_bp_par(double T_htf_phx_in, double T_target, double cp_htf, double dT_bp, double htf_phx_cold_approach, double set_HTF_mdot,
+                    int T_target_is_HTF);
 
 
 

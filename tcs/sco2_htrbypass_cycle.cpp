@@ -44,7 +44,7 @@ void C_HTRBypass_Cycle::design_core(int& error_code)
 {
 
     // Check if HTF parameters were set
-    if (is_htf_set == false)
+    if (is_bp_par_set == false)
     {
         error_code = 560;
         return;
@@ -70,7 +70,7 @@ void C_HTRBypass_Cycle::design_core(int& error_code)
         opt_des_cycle.set_upper_bounds(ub);
         opt_des_cycle.set_initial_step(0.01);
         opt_des_cycle.set_xtol_rel(0.1);
-        opt_des_cycle.set_maxeval(50);
+        //opt_des_cycle.set_maxeval(50);
 
         // Set max objective function
         std::vector<double> x;
@@ -632,14 +632,29 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
 
         if (ms_des_par.m_des_objective_type == 2)
         {
-            double target_bp_out = m_T_HTF_BP_outlet_target;
-            double calc_bp_out = m_T_HTF_BP_outlet_calc;
+            double temp_calc = 0;
+            double span = 0;
+
+            if (m_T_target_is_HTF == 0)
+            {
+                temp_calc = m_temp_last[MIXER_OUT];
+                span = m_temp_last[TURB_IN] - m_T_target;
+            }
+            else
+            {
+                temp_calc = m_T_HTF_BP_outlet_calc;
+                span = m_T_HTF_PHX_inlet - m_T_target;
+            }
+
+            /*double target_bp_out = m_T_target;
 
             double temp_err = std::abs(calc_bp_out - target_bp_out);
             double temp_span = m_T_HTF_PHX_inlet - m_T_HTF_BP_outlet_target;
-            double percent_err = temp_err / temp_span;
+            double percent_err = temp_err / temp_span;*/
 
-            m_objective_metric_last = m_eta_thermal_calc_last - percent_err;
+            double penalty = calc_penalty(m_T_target, temp_calc, span);
+
+            m_objective_metric_last = m_eta_thermal_calc_last - penalty;
         }
         else
         {
@@ -873,12 +888,20 @@ int C_HTRBypass_Cycle::solve_LTR(double T_LTR_LP_OUT_guess, double* diff_T_LTR_L
     return 0;
 }
 
+double C_HTRBypass_Cycle::calc_penalty(double target, double calc, double span)
+{
+    double percent_error = std::abs(target - calc) / span;
+    double penalty = 10.0 * (100.0 * sigmoid(percent_error) - 0.5);
+
+    return penalty;
+}
+
 std::string C_HTRBypass_Cycle::make_result_csv_string()
 {
     std::string value_string;
     std::vector<double> value_vec;
 
-    value_vec.push_back(this->m_T_HTF_BP_outlet_target);
+    value_vec.push_back(this->m_T_target);
     value_vec.push_back(this->m_T_HTF_BP_outlet_calc);
     value_vec.push_back(this->m_T_HTF_PHX_inlet);
     value_vec.push_back(this->m_T_HTF_PHX_inlet - this->m_T_HTF_BP_outlet_calc);
@@ -988,10 +1011,21 @@ int C_HTRBypass_Cycle::C_mono_htr_bypass_BP_des::operator()(double bp_frac_guess
     this->m_htr_bypass_cycle->ms_des_par.m_bypass_frac = bp_frac_guess;
     this->m_htr_bypass_cycle->design_core_standard(error_code);
 
-    double target_bp_out = this->m_htr_bypass_cycle->m_T_HTF_BP_outlet_target;
-    double calc_bp_out = this->m_htr_bypass_cycle->m_T_HTF_BP_outlet_calc;
+    if (this->m_htr_bypass_cycle->m_T_target_is_HTF == 0)
+    {
+        double target_out = this->m_htr_bypass_cycle->m_T_target;
+        double calc_sco2_out = this->m_htr_bypass_cycle->m_temp_last[MIXER_OUT];
+        *diff_T_BP_HTF_out = calc_sco2_out - target_out;
+    }
+    else
+    {
+        double target_bp_out = this->m_htr_bypass_cycle->m_T_target;
+        double calc_bp_out = this->m_htr_bypass_cycle->m_T_HTF_BP_outlet_calc;
+        *diff_T_BP_HTF_out = calc_bp_out - target_bp_out;
+    }
+    
 
-    *diff_T_BP_HTF_out = calc_bp_out - target_bp_out;
+    
 
 
     return error_code;
@@ -1088,7 +1122,7 @@ void C_HTRBypass_Cycle::opt_design_core(int& error_code)
         opt_des_cycle.set_upper_bounds(ub);
         opt_des_cycle.set_initial_step(scale);
         opt_des_cycle.set_xtol_rel(ms_opt_des_par.m_des_opt_tol);
-        opt_des_cycle.set_maxeval(10);
+        opt_des_cycle.set_maxeval(50);
 
         // Set max objective function
         opt_des_cycle.set_max_objective(nlopt_cb_opt_htr_bypass_des, this);		// Calls wrapper/callback that calls 'design_point_eta', which optimizes design point eta through repeated calls to 'design'
@@ -1288,6 +1322,9 @@ void C_HTRBypass_Cycle::auto_opt_design_core(int& error_code)
     {
         // Bypass Fraction
         ms_opt_des_par.m_fixed_bypass_frac = true;
+
+        // Ensure thermal efficiency is initialized to negative value
+        m_objective_metric_full_auto_opt = -100000000000;
 
         // Hard coded Bypass Fraction, but other variables optimize to hit the correct temperature
         if (ms_auto_opt_des_par.m_is_bypass_ok <= 0)
@@ -1499,16 +1536,18 @@ void C_HTRBypass_Cycle::finalize_design(int& error_code)
 
 // Public Methods
 
-void C_HTRBypass_Cycle::set_htf_par(double T_htf_phx_in, double T_htf_bp_out_target, double cp_htf, double dT_bp, double htf_phx_cold_approach, double set_HTF_mdot)
+void C_HTRBypass_Cycle::set_bp_par(double T_htf_phx_in, double T_target, double cp_htf, double dT_bp, double htf_phx_cold_approach, double set_HTF_mdot,
+                                   int T_target_is_HTF)
 {
     m_T_HTF_PHX_inlet = T_htf_phx_in;  // K
-    m_T_HTF_BP_outlet_target = T_htf_bp_out_target;  // K
+    m_T_target = T_target; // K
+    m_T_target_is_HTF = T_target_is_HTF;
     m_cp_HTF = cp_htf;  // kJ/kg K
     m_dT_BP = dT_bp;
     m_HTF_PHX_cold_approach = htf_phx_cold_approach;
     m_set_HTF_mdot = set_HTF_mdot;
 
-    is_htf_set = true;
+    is_bp_par_set = true;
 }
 
 void C_HTRBypass_Cycle::design(S_design_parameters& des_par_in, int& error_code)
@@ -1649,14 +1688,29 @@ double C_HTRBypass_Cycle::design_cycle_return_objective_metric(const std::vector
         double penalty = 0;
         if (ms_opt_des_par.m_fixed_bypass_frac == false || ms_opt_des_par.m_des_objective_type == 2)
         {
-            double target_bp_out = m_T_HTF_BP_outlet_target;
+            double temp_calc = 0;
+            double span = 0;
+
+            if (m_T_target_is_HTF == 0)
+            {
+                temp_calc = m_temp_last[MIXER_OUT];
+                span = m_temp_last[TURB_IN] - m_T_target;
+            }
+            else
+            {
+                temp_calc = m_T_HTF_BP_outlet_calc;
+                span = m_T_HTF_PHX_inlet - m_T_target;
+            }
+
+            /*double target_bp_out = m_T_HTF_BP_outlet_target;
             double calc_bp_out = m_T_HTF_BP_outlet_calc;
 
             double temp_err = std::abs(calc_bp_out - target_bp_out);
             double temp_span = m_T_HTF_PHX_inlet - m_T_HTF_BP_outlet_target;
             double percent_err = temp_err / temp_span;
 
-            penalty = 10.0 * (sigmoid(percent_err) - 0.5);
+            penalty = 10.0 * (100.0 * sigmoid(percent_err) - 0.5);*/
+            penalty = calc_penalty(m_T_target, temp_calc, span);
         }
         
         objective_metric = eff - penalty;
@@ -1683,14 +1737,28 @@ double C_HTRBypass_Cycle::design_bypass_frac_return_objective_metric(const std::
     double objective_metric = -10000000000.0;
     if (error_code == 0)
     {
-        double eff = m_eta_thermal_calc_last;
+        double temp_calc = 0;
+        double span = 0;
+
+        if (m_T_target_is_HTF == 0)
+        {
+            temp_calc = m_temp_last[MIXER_OUT];
+            span = m_temp_last[TURB_IN] - m_T_target;
+        }
+        else
+        {
+            temp_calc = m_T_HTF_BP_outlet_calc;
+            span = m_T_HTF_PHX_inlet - m_T_target;
+        }
+
+        /*double eff = m_eta_thermal_calc_last;
 
         double target_bp_out = m_T_HTF_BP_outlet_target;
         double calc_bp_out = m_T_HTF_BP_outlet_calc;
 
         double temp_err = std::abs(calc_bp_out - target_bp_out);
         double temp_span = m_T_HTF_PHX_inlet - m_T_HTF_BP_outlet_target;
-        double percent_err = temp_err / temp_span;
+        double percent_err = temp_err / temp_span;*/
 
         //double penalty = std::pow(percent_err, 2.0);
 
@@ -1698,7 +1766,7 @@ double C_HTRBypass_Cycle::design_bypass_frac_return_objective_metric(const std::
         //objective_metric = -temp_err;
 
         // Adjust sigmoid
-        objective_metric = 1 - sigmoid(temp_err);
+        objective_metric = calc_penalty(m_T_target, temp_calc, span);
 
         if (objective_metric > m_objective_metric_bypass_frac_opt)
         {
@@ -1737,14 +1805,30 @@ double C_HTRBypass_Cycle::design_bypass_frac_free_var_return_objective_metric(co
             double penalty = 0;
             if (ms_opt_des_par.m_fixed_bypass_frac == false || ms_opt_des_par.m_des_objective_type == 2)
             {
-                double target_bp_out = m_T_HTF_BP_outlet_target;
+                double temp_calc = 0;
+                double span = 0;
+
+                if (m_T_target_is_HTF == 0)
+                {
+                    temp_calc = m_temp_last[MIXER_OUT];
+                    span = m_temp_last[TURB_IN] - m_T_target;
+                }
+                else
+                {
+                    temp_calc = m_T_HTF_BP_outlet_calc;
+                    span = m_T_HTF_PHX_inlet - m_T_target;
+                }
+
+                /*double target_bp_out = m_T_HTF_BP_outlet_target;
                 double calc_bp_out = m_T_HTF_BP_outlet_calc;
 
                 double temp_err = std::abs(calc_bp_out - target_bp_out);
                 double temp_span = m_T_HTF_PHX_inlet - m_T_HTF_BP_outlet_target;
                 double percent_err = temp_err / temp_span;
 
-                penalty = 10.0 * (sigmoid(percent_err) - 0.5);
+                penalty = 10.0 * (100.0 * sigmoid(percent_err) - 0.5);*/
+
+                penalty = calc_penalty(m_T_target, temp_calc, span);
             }
 
             objective_metric = eff - penalty;

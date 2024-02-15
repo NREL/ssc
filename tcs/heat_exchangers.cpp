@@ -1521,11 +1521,13 @@ void NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA_enth(int hot_fl_code /*-*/,
 			throw(C_csp_exception("Off-design heat exchanger method failed"));
 		}
 
-		//if (!(od_hx_code == C_monotonic_eq_solver::CONVERGED || od_hx_code == C_monotonic_eq_solver::SLOPE_POS_NO_POS_ERR || od_hx_code == C_monotonic_eq_solver::SLOPE_POS_BOTH_ERRS))
-		//{
-		//	throw(C_csp_exception("Off-design heat exchanger method failed"));
-		//}
+		/*if (!(od_hx_code == C_monotonic_eq_solver::CONVERGED || od_hx_code == C_monotonic_eq_solver::SLOPE_POS_NO_POS_ERR || od_hx_code == C_monotonic_eq_solver::SLOPE_POS_BOTH_ERRS))
+		{
+			throw(C_csp_exception("Off-design heat exchanger method failed"));
+		}*/
+
 	}
+
 	else if (test_code == 0 && diff_UA_max_eff <= 0.0)  // UA_max_eff <= UA_target)
 	{
 		// At maximum allowable heat transfer, the calculated UA is less than target
