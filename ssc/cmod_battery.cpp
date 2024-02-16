@@ -1335,7 +1335,10 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
          if (batt_vars->ec_rate_defined) {
             util_rate_data = new rate_data();
             rate_setup::setup(&vt, (int)step_per_year, batt_vars->analysis_period, *util_rate_data, "cmod_battery");
-        }
+         }
+         else if (batt_vars->batt_dispatch == dispatch_t::RETAIL_RATE) {
+             throw exec_error("Battery", "Cannot select retail rate dispatch without providing utility rate data.");
+         }
         dispatch_model = new dispatch_automatic_behind_the_meter_t(battery_model, dt_hr, batt_vars->batt_minimum_SOC, batt_vars->batt_maximum_SOC,
             batt_vars->batt_current_choice, batt_vars->batt_current_charge_max, batt_vars->batt_current_discharge_max,
             batt_vars->batt_power_charge_max_kwdc, batt_vars->batt_power_discharge_max_kwdc,
@@ -2102,13 +2105,23 @@ void battstor::calculate_monthly_and_annual_outputs(compute_module& cm)
 
         if (batt_vars->batt_dispatch == dispatch_t::SELF_CONSUMPTION)
         {
+            std::vector<double> crit_load_unmet;
+            if (cm.is_assigned("crit_load_unmet")) {
+                crit_load_unmet = cm.as_vector_double("crit_load_unmet");
+            }
+
             //calculate all outputs for number of timesteps the load is met by the system, using grid_to_load == 0 as a qualification
             //better to parse the grid_to_load timeseries once here for all outputs, than to create a new timeseries variable for whether load is met by system
             outTimestepsLoadMetBySystemYear1 = 0.0;
             outTimestepsLoadMetBySystemLifetime = 0.0;
             for (size_t i = 0; i < total_steps; i++)
             {
-                if (outGridToLoad[i] == 0.0)
+                double crit_load_unmet_i = 0.0;
+                if (i < crit_load_unmet.size()) {
+                    crit_load_unmet_i = crit_load_unmet[i];
+                }
+                
+                if (outGridToLoad[i] == 0.0 && crit_load_unmet_i == 0.0)
                 {
                     outTimestepsLoadMetBySystemLifetime++;
                     if (i < step_per_year) outTimestepsLoadMetBySystemYear1++;

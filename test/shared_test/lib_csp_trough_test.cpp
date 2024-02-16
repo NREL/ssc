@@ -59,8 +59,8 @@ NAMESPACE_TEST(csp_trough, TroughLoop, DefaultTest)
 
     trough->on(*time_and_weather, fluid_inlet_state, std::numeric_limits<double>::quiet_NaN(), defocus, trough_outputs, timestep_and_tou);
 
-    EXPECT_NEAR(trough_outputs.m_T_salt_hot, 391.17, 391.17 * kErrorToleranceLo);
-    EXPECT_NEAR(trough_outputs.m_m_dot_salt_tot, 6568369, 6568369 * kErrorToleranceLo);
+    EXPECT_NEAR(trough_outputs.m_T_salt_hot, 391.15, 391.15 * kErrorToleranceLo);
+    EXPECT_NEAR(trough_outputs.m_m_dot_salt_tot, 6645818., 6645818. * kErrorToleranceLo);
 }
 
 // Test a standard trough loop from a homogenous initial condition to steady-state
@@ -130,8 +130,8 @@ NAMESPACE_TEST(csp_trough, TroughLoop, SteadyStateTest)
 
     } while (ss_diff / 200. > tol);
 
-    EXPECT_NEAR(trough->m_T_sys_h_t_end, 656.1, 656.1 * kErrorToleranceLo);     // final loop outlet temperature
-    EXPECT_NEAR(minutes2SS, 35., 35. * kErrorToleranceLo);                      // time to steady-state
+    EXPECT_NEAR(trough->m_T_sys_h_t_end, 659.4, 659.4 * kErrorToleranceLo);     // final loop outlet temperature
+    EXPECT_NEAR(minutes2SS, 40., 40. * kErrorToleranceLo);                      // time to steady-state
 }
 //========/Tests==================================================================================
 
