@@ -108,6 +108,8 @@ public:
 
     double get_m_m_calc();
 
+    double get_m_m_prev();
+
     double get_vol_frac();
 
     double get_mass_avail();    //[kg]
@@ -119,6 +121,8 @@ public:
     double get_radius();    // m
 
     double get_SA_calc();        //m2
+
+    double calc_mass_wall(double T_fluid, double mass_fluid);   // kg
 
     void init(HTFProperties htf_class_in, double V_tank /*m3*/,
         double h_tank /*m*/, double h_min /*m*/, double u_tank /*W/m2-K*/,
@@ -226,7 +230,8 @@ public:
         E_MASS_TOT,
         E_SA_COLD,
         E_SA_HOT,
-        E_SA_TOT
+        E_SA_TOT,
+        E_ERROR
 	};
 
 

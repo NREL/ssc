@@ -55,6 +55,7 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
     {C_csp_NTHeatTrap_tes::E_SA_COLD, C_csp_reported_outputs::TS_LAST},	//[kg]
     {C_csp_NTHeatTrap_tes::E_SA_HOT, C_csp_reported_outputs::TS_LAST},	//[kg]
     {C_csp_NTHeatTrap_tes::E_SA_TOT, C_csp_reported_outputs::TS_LAST},	//[kg]
+    {C_csp_NTHeatTrap_tes::E_ERROR, C_csp_reported_outputs::TS_LAST},   //[MJ]
 
     csp_info_invalid
 };
@@ -148,9 +149,14 @@ double C_storage_tank_dynamic_NT::get_m_T_calc()
     return m_T_calc;
 }
 
-double C_storage_tank_dynamic_NT::get_m_m_calc() //ARD new getter for current mass 
+double C_storage_tank_dynamic_NT::get_m_m_calc() // Get Current FLUID mass
 {
     return m_m_calc;    //[kg]
+}
+
+double C_storage_tank_dynamic_NT::get_m_m_prev() // Get Previous FLUID mass
+{
+    return m_m_prev;    //[kg]
 }
 
 double C_storage_tank_dynamic_NT::get_vol_frac()
@@ -181,6 +187,20 @@ double C_storage_tank_dynamic_NT::get_radius()
 double C_storage_tank_dynamic_NT::get_SA_calc()
 {
     return m_SA_calc;
+}
+
+double C_storage_tank_dynamic_NT::calc_mass_wall(double T_fluid, double mass_fluid)
+{
+    double rho_fluid = mc_htf.dens(T_fluid, 0); // kg/m3
+    double V_fluid = mass_fluid / rho_fluid;    // m3
+    double Ac_fluid = CSP::pi * std::pow(m_radius, 2.0);    // m2
+    double L_fluid = V_fluid / Ac_fluid;        // m
+
+    double Ac_wall = (CSP::pi * std::pow(m_radius + m_tank_wall_thick, 2.0)) - (CSP::pi * std::pow(m_radius, 2.0));
+    double V_wall = L_fluid * Ac_wall;
+    double mass_wall = V_wall * m_tank_wall_dens;
+
+    return mass_wall;
 }
 
 double C_storage_tank_dynamic_NT::m_dot_available(double f_unavail, double timestep)
@@ -1388,17 +1408,122 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
 
     }
 
-    // Do TOTAL Energy Balance for total system here
+    // TOTAL Energy Balance for total system here
+    double energy_balance_error;
     {
-        // Inlet temperature, cp, mass flow at every timestep
-        // OUtlet temperature, cp, mass flow at every timestep
-        // Heat Loss
-        double Q_in = q_dot_ch_from_htf * timestep; // MJ
-        double Q_out = q_dot_dc_to_htf * timestep;  // MJ
-        double Q_loss = q_dot_loss * timestep;      // MJ
+        // Positive is Charge, Negative is Discharge
+        double mdot_net = m_dot_cr_to_cv_hot - m_dot_cv_hot_to_sink;
+        double mdot_charge = std::max(0.0, mdot_net);          // kg/s
+        double mdot_discharge = std::max(0.0, -1.0 * mdot_net);       // kg/s
 
-        //double Q_initial = mc_cold_tank_NT.get_m_T_prev() * mc_cold_tank_NT.
+        // Cold Fluid Energy In (if Discharging)
+        double Q_cold_in;   // MJ
+        {
+            double T_cold_in = T_sink_out_cold;                 // K
+            double mdot_cold_in = mdot_discharge;       // kg/s
+            double cp_cold_in = mc_external_htfProps.Cp(T_cold_in) * 1e-3;  // MJ/kg K
 
+            Q_cold_in = T_cold_in * mdot_cold_in * cp_cold_in * timestep;   // MJ
+        }
+
+        // Hot Fluid Energy In (if Charging)
+        double Q_hot_in;    // MJ
+        {
+            double T_hot_in = T_cr_out_hot;                     // K
+            double mdot_hot_in = mdot_charge;          // kg/s
+            double cp_hot_in = mc_external_htfProps.Cp(T_hot_in) * 1e-3;  // MJ/kg K
+
+            Q_hot_in = T_hot_in * mdot_hot_in * cp_hot_in * timestep;   // MJ
+        }
+
+        // Cold Fluid Energy Out (if Charging)
+        double Q_cold_out; // MJ
+        {
+            double T_cold_out = T_cold_ave; // K
+            double mdot_cold_out = mdot_charge;          // kg/s
+            double cp_cold_out = mc_external_htfProps.Cp(T_cold_out) * 1e-3;    // MJ/kg K
+
+            Q_cold_out = T_cold_out * mdot_cold_out * cp_cold_out * timestep;  // MJ
+        }
+
+        // Hot Fluid Energy Out (if Discharging)
+        double Q_hot_out; // MJ
+        {
+            double T_hot_out = T_hot_ave;   // K
+            double mdot_hot_out = mdot_discharge;   // kg/s
+            double cp_hot_out = mc_external_htfProps.Cp(T_hot_out) * 1e-3;  // MJ/kg K
+
+            Q_hot_out = T_hot_out * mdot_hot_out * cp_hot_out * timestep;   // MJ
+        }
+
+        // Q Loss (to environment)
+        double Q_loss = q_dot_loss * timestep;  // MJ
+
+        // Q Heater (Input energy)
+        double Q_heater = q_dot_heater * timestep; // MJ
+
+        // Cold Side Energy Change
+        double dQ_cold; // MJ
+        {
+            // Initial Energy
+            double T_cold_prev = mc_cold_tank_NT.get_m_T_prev();    // K
+            double mass_fluid_cold_prev = mc_cold_tank_NT.get_m_m_prev();   // kg
+            double mass_wall_cold_prev = mc_cold_tank_NT.calc_mass_wall(T_cold_prev, mass_fluid_cold_prev); // kg
+            double cp_cold_fluid_prev = mc_external_htfProps.Cp(T_cold_prev) * 1e-3;   // MJ/kg K
+
+            double Q_cold_fluid_prev = T_cold_prev * mass_fluid_cold_prev * cp_cold_fluid_prev; // MJ
+            double Q_cold_wall_prev = T_cold_prev * mass_wall_cold_prev * m_tank_wall_cp * 1e-6;    // MJ
+
+            // Final Energy
+            double T_cold = T_cold_final;
+            double mass_fluid_cold_final = mc_cold_tank_NT.get_m_m_calc();   // kg
+            double mass_wall_cold_final = mc_cold_tank_NT.calc_mass_wall(T_cold, mass_fluid_cold_final); // kg
+            double cp_cold_fluid_final = mc_external_htfProps.Cp(T_cold) * 1e-3;   // MJ/kg K
+
+            double Q_cold_fluid_final = T_cold * mass_fluid_cold_final * cp_cold_fluid_final; // MJ
+            double Q_cold_wall_final = T_cold * mass_wall_cold_final * m_tank_wall_cp * 1e-6;    // MJ
+
+            dQ_cold = (Q_cold_fluid_final + Q_cold_wall_final) - (Q_cold_fluid_prev + Q_cold_wall_prev);   // MJ
+        }
+
+        // Hot Side Energy Change
+        double dQ_hot; // MJ
+        {
+            // Initial Energy
+            double T_hot_prev = mc_hot_tank_NT.get_m_T_prev();    // K
+            double mass_fluid_hot_prev = mc_hot_tank_NT.get_m_m_prev();   // kg
+            double mass_wall_hot_prev = mc_hot_tank_NT.calc_mass_wall(T_hot_prev, mass_fluid_hot_prev); // kg
+            double cp_hot_fluid_prev = mc_external_htfProps.Cp(T_hot_prev) * 1e-3;   // MJ/kg K
+
+            double Q_hot_fluid_prev = T_hot_prev * mass_fluid_hot_prev * cp_hot_fluid_prev; // MJ
+            double Q_hot_wall_prev = T_hot_prev * mass_wall_hot_prev * m_tank_wall_cp * 1e-6;    // MJ
+
+            // Final Energy
+            double T_hot = T_hot_final;
+            double mass_fluid_hot_final = mc_hot_tank_NT.get_m_m_calc();   // kg
+            double mass_wall_hot_final = mc_hot_tank_NT.calc_mass_wall(T_hot, mass_fluid_hot_final); // kg
+            double cp_hot_fluid_final = mc_external_htfProps.Cp(T_hot) * 1e-3;   // MJ/kg K
+
+            double Q_hot_fluid_final = T_hot * mass_fluid_hot_final * cp_hot_fluid_final; // MJ
+            double Q_hot_wall_final = T_hot * mass_wall_hot_final * m_tank_wall_cp * 1e-6;    // MJ
+
+            dQ_hot = (Q_hot_fluid_final + Q_hot_wall_final) - (Q_hot_fluid_prev + Q_hot_wall_prev);   // MJ
+        }
+
+        // Energy In
+        double Q_in_sum = Q_cold_in + Q_hot_in + Q_heater;  // MJ
+
+        // Energy Out
+        double Q_out_sum = Q_cold_out + Q_hot_out + Q_loss; // MJ
+
+        // Net Energy
+        double Q_net = Q_in_sum - Q_out_sum;    // MJ
+
+        // Change in Energy
+        double dQ_total = dQ_cold + dQ_hot; // MJ
+
+        // Balance
+        energy_balance_error = dQ_total - Q_net; // MJ (should be zero)
 
     }
 
@@ -1465,6 +1590,7 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
     mc_reported_outputs.value(E_SA_COLD, mc_cold_tank_NT.get_SA_calc());    //[m2]
     mc_reported_outputs.value(E_SA_HOT, mc_hot_tank_NT.get_SA_calc());    //[m2]
     mc_reported_outputs.value(E_SA_TOT, mc_cold_tank_NT.get_SA_calc() + mc_hot_tank_NT.get_SA_calc());    //[m2]
+    mc_reported_outputs.value(E_ERROR, energy_balance_error); //[MJ]
 
     return 0;
 }
