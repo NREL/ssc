@@ -186,15 +186,15 @@ TEST_F(CmodHybridTest, GenericPVWattsWindFuelCellBatteryHybrid_SingleOwner) {
         auto revenue = ssc_data_get_array(hybrid_outputs, "cf_total_revenue", &len);
         auto om_expenses = ssc_data_get_array(hybrid_outputs, "cf_operating_expenses", &len);
 
-        EXPECT_NEAR(genericannualenergy, 756864000, 1);
-        EXPECT_NEAR(pvannualenergy, 211907359, 1);
-        EXPECT_NEAR(windannualenergy, 818888286, 1);
-        EXPECT_NEAR(battannualenergy, 1780823936, 1);
+        EXPECT_NEAR(genericannualenergy, 756864000., 1);
+        EXPECT_NEAR(pvannualenergy, 211907359., 1);
+        EXPECT_NEAR(windannualenergy, 818888286., 1);
+        EXPECT_NEAR(battannualenergy, 1780823936., 1);
         
-        EXPECT_NEAR(om_expenses[1], 155867774, 1);
-        EXPECT_NEAR(revenue[1], 86930659, 1);
-        EXPECT_NEAR(ebitda[1], -68937115, 1);
-        EXPECT_NEAR(npv, -3230348080, 1);
+        EXPECT_NEAR(om_expenses[1], 155867774., 1);
+        EXPECT_NEAR(revenue[1], 86930659., 1);
+        EXPECT_NEAR(ebitda[1], -68937115., 1);
+        EXPECT_NEAR(npv, -3230348080., 1);
     }
     ssc_data_free(dat);
     dat = nullptr;
