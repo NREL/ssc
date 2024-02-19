@@ -422,10 +422,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, LossAdjustmentNonLifetime) {
     ssc_data_set_array(data, "adjust_timeindex", timeindex_subhourly, 17520);
 
     pvsam_errors = run_module(data, "pvsamv1");
-    ssc_data_get_number(data, "annual_energy", &annual_energy);
-    EXPECT_NEAR(annual_energy, 8833.8, m_error_tolerance_hi);
-    ssc_data_get_number(data, "kwh_per_kw", &kwh_per_kw);
-    EXPECT_NEAR(kwh_per_kw, 1883, m_error_tolerance_hi) << "Energy yield"; // Same as 1 year because year 2 has 0 production
+    EXPECT_TRUE(pvsam_errors); //this should throw an error because we are not allowing losses at a more granular timestep than weather
 }
 
 
@@ -1271,15 +1268,63 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, reopt_sizing) {
     ASSERT_TRUE(vd->is_assigned("reopt_scenario"));
     auto site = vd->lookup("reopt_scenario");
 
-    site = site->table.lookup("Scenario");
-    assert(site->table.lookup("time_steps_per_hour")->num == 1);
+    auto settings = site->table.lookup("Settings");
+    assert(settings->table.lookup("time_steps_per_hour")->num == 1);
 
-    site = site->table.lookup("Site");
-    std::vector<std::string> sections = { "ElectricTariff", "LoadProfile", "Financial", "Storage", "Wind", "PV" };
+    std::vector<std::string> sections = { "ElectricTariff", "ElectricLoad", "Financial", "ElectricStorage", "PV" };
     for (const auto& s : sections)
         ASSERT_TRUE(site->table.is_assigned(s));
 }
 
+TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, reopt_sizing_w_outage) {
+    ssc_data_clear(data);
+    pvsamv1_with_residential_default(data);
+    utility_rate5_default(data);
+    belpe_default(data);
+    ssc_data_set_number(data, "lat", 30);
+    ssc_data_set_number(data, "lon", -30);
+    ssc_number_t gen[8760] = { 0 };
+    ssc_data_set_array(data, "gen", gen, 8760);
+
+    ssc_number_t grid_outage[8760] = { 0 };
+
+    for (int i = 6; i < 24; i++) {
+        if (i > 6 && i < 9) {
+            grid_outage[i] = 1;
+        }
+        else if (i > 17 && i < 24) {
+            grid_outage[i] = 1;
+        }
+    }
+    ssc_data_set_array(data, "grid_outage", grid_outage, 8760);
+    ssc_data_set_number(data, "size_for_grid_outage", 1);
+
+    Reopt_size_battery_params(data);
+
+    auto vd = static_cast<var_table*>(data);
+    ASSERT_TRUE(vd->is_assigned("reopt_scenario"));
+    auto site = vd->lookup("reopt_scenario");
+
+    auto settings = site->table.lookup("Settings");
+    assert(settings->table.lookup("time_steps_per_hour")->num == 1);
+
+    std::vector<std::string> sections = { "ElectricTariff", "ElectricLoad", "Financial", "ElectricStorage", "PV", "ElectricUtility"};
+    for (const auto& s : sections)
+        ASSERT_TRUE(site->table.is_assigned(s));
+
+    auto reopt_utility = site->table.lookup("ElectricUtility");
+    var_table* utility_table = &reopt_utility->table;
+
+    std::vector<int> outage_start_times = utility_table->as_vector_integer("outage_start_time_steps");
+    ASSERT_EQ(outage_start_times.size(), 2);
+    ASSERT_EQ(outage_start_times[0], 8);
+    ASSERT_EQ(outage_start_times[1], 19);
+
+    std::vector<int> outage_durations = utility_table->as_vector_integer("outage_durations");
+    ASSERT_EQ(outage_durations.size(), 2);
+    ASSERT_EQ(outage_durations[0], 2);
+    ASSERT_EQ(outage_durations[1], 6);
+}
 
 /// Integration test for lifetime vs year 1 outputs in SAM
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, lifetime_outputs)

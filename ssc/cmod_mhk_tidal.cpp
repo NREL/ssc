@@ -239,17 +239,17 @@ public:
             int power_bin = 0;
             //Find velocity bin of power array
             for (int i = 0; i < number_records; i++) {
-                if (tidal_velocity[i] > tidal_power_curve.at(tidal_power_curve.nrows() - 1, 0)) {
+                if (tidal_velocity[i] >= tidal_power_curve.at(tidal_power_curve.nrows() - 1, 0)) {
                         power_bin = tidal_power_curve.nrows() - 1;
                         continue;
                 }
-                else if (tidal_velocity[i] < tidal_power_curve.at(0, 0)) {
+                else if (tidal_velocity[i] <= tidal_power_curve.at(0, 0)) {
                         power_bin = 0;
                         continue;
                 }
                 else {
                     for (int j = 1; j < tidal_power_curve.nrows(); j++) {
-                        if (tidal_velocity[i] - tidal_power_curve.at(j - 1, 0) > 0 && tidal_velocity[i] - tidal_power_curve.at(j, 0) < 0) {
+                        if (tidal_velocity[i] - tidal_power_curve.at(j - 1, 0) > 0 && tidal_velocity[i] - tidal_power_curve.at(j, 0) <= 0) {
                             power_bin = j;
                         }
         

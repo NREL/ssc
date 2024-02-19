@@ -90,9 +90,6 @@ public:
 	C_csp_reported_outputs mc_reported_outputs;
 
 private:
-
-	// Member classes
-	HTFProperties m_htfProps, m_airProps;
 	
 	// Hardcoded constants
 	double m_d2r, m_r2d, m_mtoinch;
@@ -108,15 +105,13 @@ private:
 	int m_n_r_iam_matrix;	//[-] Number of rows in the IAM matrix
 	double m_v_hot;			//[m^3] Hot piping volume
 	double m_v_cold;		//[m^3] Cold piping volume
-	double m_Ap_tot;		//[m^2] Total field aperture area
 	int	m_nfsec;			//[-] Number of field sections
 	int	m_nhdrsec;			//[-] Number of header sections
 	int	m_nrunsec;			//[-] Number of unique runner diameters
 	double m_L_tot;			//[m] Total length of collectors in a loop
-	double m_opteff_des;	//[-] Design-point optical efficieny (theta = 0) from the solar field
+	
 	double m_m_dot_design;	//[kg/s] Total solar field mass flow rate at design
 	double m_m_dot_loop_des;//[kg/s] LOOP design mass flow rate
-	double m_q_design;		//[Wt] Design-point thermal power from the solar field
 	double m_W_dot_sca_tracking_nom;		//[MWe] Tracking parasitics when trough is on sun
 
 	std::vector<double> m_L_actSCA;	//[m] Lengths of each SCA
@@ -320,52 +315,52 @@ public:
 	// Class to save messages for up stream classes
 	// C_csp_messages mc_csp_messages;
 
+    // Member classes
+    HTFProperties m_htfProps, m_airProps;
+
 	//parameters and inputs
-	int m_nSCA;				//[-] Number of SCA's in a loop
-	int m_nHCEt;			//[-] Number of HCE types
-	int m_nColt;			//[-] Number of collector types
-	int m_nHCEVar;			//[-] Number of HCE variants per type
-	int m_nLoops;			//[-] Number of loops in the field
-	int m_FieldConfig;		//[-] Number of subfield headers
-	bool m_include_fixed_power_block_runner;	//[-] True: model 50[m] of runner sized for full mass flow rate
-	double m_L_power_block_piping;	//[m] Length of piping (full mass flow) through heat sink (if applicable)
-	double m_eta_pump;		//[-] HTF pump efficiency
-	double m_HDR_rough;		//[m] Header pipe roughness
-	double m_theta_stow;	//[deg] stow angle
-	double m_theta_dep;		//[deg] deploy angle
-	double m_Row_Distance;	//[m] Spacing between rows (centerline to centerline)
-	double m_T_startup;		//[C] The required temperature (converted to K in init) of the system before the power block can be switched on
-	double m_m_dot_htfmin;	//[kg/s] Minimum loop HTF flow rate
-	double m_m_dot_htfmax;	//[kg/s] Maximum loop HTF flow rate
-	double m_T_loop_in_des;	//[C] Design loop inlet temperature, converted to K in init
-	double m_T_loop_out_des;//[C] Target loop outlet temperature, converted to K in init
-	int m_Fluid;			//[-] Field HTF fluid number
+	int m_nSCA = std::numeric_limits<double>::quiet_NaN();				//[-] Number of SCA's in a loop
+	int m_nHCEt = std::numeric_limits<double>::quiet_NaN();			//[-] Number of HCE types
+	int m_nColt = std::numeric_limits<double>::quiet_NaN();				//[-] Number of collector types
+	int m_nHCEVar = std::numeric_limits<double>::quiet_NaN();			//[-] Number of HCE variants per type
+	int m_FieldConfig = std::numeric_limits<double>::quiet_NaN();		//[-] Number of subfield headers
+	bool m_include_fixed_power_block_runner = std::numeric_limits<double>::quiet_NaN();	//[-] True: model 50[m] of runner sized for full mass flow rate
+	double m_L_power_block_piping = std::numeric_limits<double>::quiet_NaN();	//[m] Length of piping (full mass flow) through heat sink (if applicable)
+	double m_eta_pump = std::numeric_limits<double>::quiet_NaN();		//[-] HTF pump efficiency
+	double m_HDR_rough = std::numeric_limits<double>::quiet_NaN();		//[m] Header pipe roughness
+	double m_theta_stow = std::numeric_limits<double>::quiet_NaN();	//[deg] stow angle
+	double m_theta_dep = std::numeric_limits<double>::quiet_NaN();		//[deg] deploy angle
+	double m_Row_Distance = std::numeric_limits<double>::quiet_NaN();	//[m] Spacing between rows (centerline to centerline)
+	double m_T_startup = std::numeric_limits<double>::quiet_NaN();		//[C] The required temperature (converted to K in init) of the system before the power block can be switched on
+	double m_T_loop_in_des = std::numeric_limits<double>::quiet_NaN();	//[C] Design loop inlet temperature, converted to K in init
+	double m_T_loop_out_des = std::numeric_limits<double>::quiet_NaN();//[C] Target loop outlet temperature, converted to K in init
+	int m_Fluid = std::numeric_limits<double>::quiet_NaN();			//[-] Field HTF fluid number
 	
-	double m_T_fp;			//[C] Freeze protection temperature (heat trace activation temperature), convert to K in init
-	double m_I_bn_des;		//[W/m^2] Solar irradiation at design
-    double m_V_hdr_cold_max;    //[m/s] Maximum HTF velocity in the cold header at design
-    double m_V_hdr_cold_min;    //[m/s] Minimum HTF velocity in the cold header at design
-    double m_V_hdr_hot_max;     //[m/s] Maximum HTF velocity in the hot header at design
-    double m_V_hdr_hot_min;     //[m/s] Minimum HTF velocity in the hot header at design
-    double m_V_hdr_max;		//[m/s] Maximum HTF velocity in the header at design
-	double m_V_hdr_min;		//[m/s] Minimum HTF velocity in the header at design
-	double m_Pipe_hl_coef;	//[W/m2-K] Loss coefficient from the header, runner pipe, and non-HCE piping
-	double m_SCA_drives_elec;	//[W/SCA] Tracking power, in Watts per SCA drive
-	int m_fthrok;			//[-] Flag to allow partial defocusing of the collectors
-	int m_fthrctrl;			//[-] Defocusing strategy
-	double m_ColTilt;		//[deg] Collector tilt angle (0 is horizontal, 90deg is vertical)
-	double m_ColAz;			//[deg] Collector azimuth angle
-	double m_wind_stow_speed;//[m/s] Wind speed at and above which the collectors will be stowed
+	double m_T_fp = std::numeric_limits<double>::quiet_NaN();			//[C] Freeze protection temperature (heat trace activation temperature), convert to K in init
+	double m_I_bn_des = std::numeric_limits<double>::quiet_NaN();		//[W/m^2] Solar irradiation at design
+    double m_V_hdr_cold_max = std::numeric_limits<double>::quiet_NaN();    //[m/s] Maximum HTF velocity in the cold header at design
+    double m_V_hdr_cold_min = std::numeric_limits<double>::quiet_NaN();    //[m/s] Minimum HTF velocity in the cold header at design
+    double m_V_hdr_hot_max = std::numeric_limits<double>::quiet_NaN();     //[m/s] Maximum HTF velocity in the hot header at design
+    double m_V_hdr_hot_min = std::numeric_limits<double>::quiet_NaN();     //[m/s] Minimum HTF velocity in the hot header at design
+    double m_V_hdr_max = std::numeric_limits<double>::quiet_NaN();		//[m/s] Maximum HTF velocity in the header at design
+	double m_V_hdr_min = std::numeric_limits<double>::quiet_NaN();		//[m/s] Minimum HTF velocity in the header at design
+	double m_Pipe_hl_coef = std::numeric_limits<double>::quiet_NaN();	//[W/m2-K] Loss coefficient from the header, runner pipe, and non-HCE piping
+	double m_SCA_drives_elec = std::numeric_limits<double>::quiet_NaN();	//[W/SCA] Tracking power, in Watts per SCA drive
+	int m_fthrok = std::numeric_limits<double>::quiet_NaN();			//[-] Flag to allow partial defocusing of the collectors
+	int m_fthrctrl = std::numeric_limits<double>::quiet_NaN();			//[-] Defocusing strategy
+	double m_ColTilt = std::numeric_limits<double>::quiet_NaN();		//[deg] Collector tilt angle (0 is horizontal, 90deg is vertical)
+	double m_ColAz = std::numeric_limits<double>::quiet_NaN();			//[deg] Collector azimuth angle
+	double m_wind_stow_speed = std::numeric_limits<double>::quiet_NaN();//[m/s] Wind speed at and above which the collectors will be stowed
 
-	int m_accept_mode;		//[-] Acceptance testing mode? (1=yes, 0=no)
-	bool m_accept_init;		//[-] In acceptance testing mode - require steady-state startup
-	int m_accept_loc;		//[-] In acceptance testing mode - temperature sensor location (1=hx,2=loop)
-	bool m_is_using_input_gen;
+	int m_accept_mode = std::numeric_limits<double>::quiet_NaN();		//[-] Acceptance testing mode? (1=yes, 0=no)
+	bool m_accept_init = std::numeric_limits<double>::quiet_NaN();		//[-] In acceptance testing mode - require steady-state startup
+	int m_accept_loc = std::numeric_limits<double>::quiet_NaN();		//[-] In acceptance testing mode - temperature sensor location (1=hx,2=loop)
+	bool m_is_using_input_gen = std::numeric_limits<double>::quiet_NaN();
 
-	double m_solar_mult;		//[-] Solar multiple 
-	double m_mc_bal_hot_per_MW;		//[kWht/K-MWt] The heat capacity per MWt design of the balance of plant on the hot side
-	double m_mc_bal_cold_per_MW;	//[kWht/K-MWt] The heat capacity per MWt design of the balance of plant on the cold side
-	double m_mc_bal_sca;		//[Wht/K-m] Non-HTF heat capacity associated with each SCA - per meter basis
+	
+	double m_mc_bal_hot_per_MW = std::numeric_limits<double>::quiet_NaN();		//[kWht/K-MWt] The heat capacity per MWt design of the balance of plant on the hot side
+	double m_mc_bal_cold_per_MW = std::numeric_limits<double>::quiet_NaN();	//[kWht/K-MWt] The heat capacity per MWt design of the balance of plant on the cold side
+	double m_mc_bal_sca = std::numeric_limits<double>::quiet_NaN();		//[Wht/K-m] Non-HTF heat capacity associated with each SCA - per meter basis
 
 	std::vector<double> m_W_aperture;	//[m] The collector aperture width (Total structural area.. used for shadowing)
 	std::vector<double> m_A_aperture;	//[m^2] Reflective aperture area of the collector
@@ -380,37 +375,37 @@ public:
 	std::vector<double> m_ColperSCA;	//[-] The number of individual collector sections in an SCA
 	std::vector<double> m_Distance_SCA; //[m] Piping distance between SCA's in the field
 	
-	std::vector<int> m_SCADefocusArray; //[-] Order in which the SCA's should be defocused
+	
 
 	util::matrix_t<double> m_field_fl_props;	//[-] User-defined field HTF properties
 
-	util::matrix_t<double> m_HCE_FieldFrac,  //[-] Fraction of the field occupied by this HCE type
-	m_D_2, 									 //[m] Inner absorber tube diameter
-	m_D_3, 									 //[m] Outer absorber tube diameter
-	m_D_4, 									 //[m] Inner glass envelope diameter
-	m_D_5, 									 //[m] Outer glass envelope diameter
-	m_D_p, 									 //[m] Diameter of the absorber flow plug (optional)
-	m_Flow_type, 							 //[-] Flow type through the absorber
-	m_Rough, 								 //[m] Roughness of the internal surface
-	m_alpha_env, 							 //[-] Envelope absorptance
+    util::matrix_t<double> m_HCE_FieldFrac,  //[-] Fraction of the field occupied by this HCE type
+    m_D_2, 									 //[m] Inner absorber tube diameter
+    m_D_3, 									 //[m] Outer absorber tube diameter
+    m_D_4, 									 //[m] Inner glass envelope diameter
+    m_D_5, 									 //[m] Outer glass envelope diameter
+    m_D_p, 									 //[m] Diameter of the absorber flow plug (optional)
+    m_Flow_type, 							 //[-] Flow type through the absorber
+    m_Rough, 								 //[m] Roughness of the internal surface
+    m_alpha_env, 							 //[-] Envelope absorptance
+
+    //[-] Emittance vs. temperature profile for each receiver type and variation
+    m_epsilon_3_11, m_epsilon_3_12, m_epsilon_3_13, m_epsilon_3_14,
+    m_epsilon_3_21, m_epsilon_3_22, m_epsilon_3_23, m_epsilon_3_24,
+    m_epsilon_3_31, m_epsilon_3_32, m_epsilon_3_33, m_epsilon_3_34,
+    m_epsilon_3_41, m_epsilon_3_42, m_epsilon_3_43, m_epsilon_3_44,
+
+    m_alpha_abs,             //[-] Absorber absorptance
+    m_Tau_envelope, 		 //[-] Envelope transmittance
+    m_EPSILON_4, 			 //[-] Inner glass envelope emissivities
+    m_EPSILON_5,			 //[-] Outer glass envelope emissivities
+    m_P_a, 					 //[torr] Annulus gas pressure				 
+    m_AnnulusGas, 			 //[-] Annulus gas type (1=air, 26=Ar, 27=H2)
+    m_AbsorberMaterial, 	 //[-] Absorber material type
+    m_Shadowing, 			 //[-] Receiver bellows shadowing loss factor
+    m_Dirt_HCE, 			 //[-] Loss due to dirt on the receiver envelope
+    m_Design_loss; 			 //[-] Receiver heat loss at design
 	
-	//[-] Emittance vs. temperature profile for each receiver type and variation
-	m_epsilon_3_11, m_epsilon_3_12,	m_epsilon_3_13, m_epsilon_3_14, 
-	m_epsilon_3_21, m_epsilon_3_22, m_epsilon_3_23, m_epsilon_3_24, 
-	m_epsilon_3_31, m_epsilon_3_32, m_epsilon_3_33,	m_epsilon_3_34,
-	m_epsilon_3_41, m_epsilon_3_42, m_epsilon_3_43, m_epsilon_3_44, 
-	
-	m_alpha_abs,             //[-] Absorber absorptance
-	m_Tau_envelope, 		 //[-] Envelope transmittance
-	m_EPSILON_4, 			 //[-] Inner glass envelope emissivities
-	m_EPSILON_5,			 //[-] Outer glass envelope emissivities
-	m_P_a, 					 //[torr] Annulus gas pressure				 
-	m_AnnulusGas, 			 //[-] Annulus gas type (1=air, 26=Ar, 27=H2)
-	m_AbsorberMaterial, 	 //[-] Absorber material type
-	m_Shadowing, 			 //[-] Receiver bellows shadowing loss factor
-	m_Dirt_HCE, 			 //[-] Loss due to dirt on the receiver envelope
-	m_Design_loss, 			 //[-] Receiver heat loss at design
-	m_SCAInfoArray;          //[-] Receiver (,1) and collector (,2) type for each assembly in loop
     
     double m_rec_su_delay;   //[hr] Fixed startup delay time for the receiver
     double m_rec_qf_delay;   //[-] Energy-based receiver startup delay (fraction of rated thermal power)
@@ -420,20 +415,16 @@ public:
 	
 	util::matrix_t<bool> m_GlazingIntact;		  //[-] Glazing intact (broken glass) flag {1=true, else=false}
 
-    bool m_calc_design_pipe_vals;                 //[-] Should the HTF state be calculated at design conditions
-    double m_L_rnr_pb;                            //[m] Length of hot or cold runner pipe around the power block
-    double m_N_max_hdr_diams;                     //[-] Maximum number of allowed diameters in each of the hot and cold headers
-    double m_L_rnr_per_xpan;                      //[m] Threshold length of straight runner pipe without an expansion loop
-    double m_L_xpan_hdr;                          //[m] Combined length in meters of the two perpendicular segments of a header expansion loop
-    double m_L_xpan_rnr;                          //[m] Combined length in meters of the two perpendicular segments of a runner expansion loop
-    double m_Min_rnr_xpans;                       //[-] Minimum number of expansion loops per single-diameter runner section
-    double m_northsouth_field_sep;                //[m] Shortest north/south distance between SCAs in different subfields
-    double m_N_hdr_per_xpan;                      //[-] Number of collector loops per header expansion loops. 1 = expansion loop between every collector loop
-    double m_offset_xpan_hdr;                     //[-] Location of first header expansion loop. 1 = after first collector loop
-    util::matrix_t<double> m_K_cpnt;              //[-] Minor loss coefficients of the components in each loop interconnect
-    util::matrix_t<double> m_D_cpnt;              //[m] Inner diameters of the components in each loop interconnect
-    util::matrix_t<double> m_L_cpnt;              //[m] Lengths of the components in each loop interconnect
-    util::matrix_t<double> m_Type_cpnt;           //[-] Type of component in each loop interconnect [0=fitting | 1=pipe | 2=flex_hose]
+    bool m_calc_design_pipe_vals = std::numeric_limits<double>::quiet_NaN();                 //[-] Should the HTF state be calculated at design conditions
+    double m_L_rnr_pb = std::numeric_limits<double>::quiet_NaN();                            //[m] Length of hot or cold runner pipe around the power block
+    double m_N_max_hdr_diams = std::numeric_limits<double>::quiet_NaN();                     //[-] Maximum number of allowed diameters in each of the hot and cold headers
+    double m_L_rnr_per_xpan = std::numeric_limits<double>::quiet_NaN();                      //[m] Threshold length of straight runner pipe without an expansion loop
+    double m_L_xpan_hdr = std::numeric_limits<double>::quiet_NaN();                          //[m] Combined length in meters of the two perpendicular segments of a header expansion loop
+    double m_L_xpan_rnr = std::numeric_limits<double>::quiet_NaN();                          //[m] Combined length in meters of the two perpendicular segments of a runner expansion loop
+    double m_Min_rnr_xpans = std::numeric_limits<double>::quiet_NaN();                       //[-] Minimum number of expansion loops per single-diameter runner section
+    double m_northsouth_field_sep = std::numeric_limits<double>::quiet_NaN();                //[m] Shortest north/south distance between SCAs in different subfields
+    double m_N_hdr_per_xpan = std::numeric_limits<double>::quiet_NaN();                      //[-] Number of collector loops per header expansion loops. 1 = expansion loop between every collector loop
+    double m_offset_xpan_hdr = std::numeric_limits<double>::quiet_NaN();                     //[-] Location of first header expansion loop. 1 = after first collector loop
     util::matrix_t<double> m_rough_cpnt;
     util::matrix_t<double> m_u_cpnt;
     util::matrix_t<double> m_mc_cpnt;
@@ -455,7 +446,7 @@ public:
     std::vector<double> m_T_rnr_dsn;              //[C]    Temperature entering runner sections at design
     std::vector<double> m_P_rnr_dsn;              //[bar]  Gauge pessure in runner sections at design
     std::vector<double> m_T_rnr;                  //[K]    Temperature entering runner sections
-    double m_T_field_out;                         //[K]    Temperature exiting last runner, and thus exiting field
+    double m_T_field_out = std::numeric_limits<double>::quiet_NaN();                         //[K]    Temperature exiting last runner, and thus exiting field
     std::vector<double> m_P_rnr;                  //[Pa ]  Gauge pessure in runner sections
                                                   
     std::vector<double> m_D_hdr;	              //[m]    Diameters of header sections
@@ -477,6 +468,47 @@ public:
     std::vector<double> m_P_loop;                 //[Pa]   Gauge pessure in loop sections
 
     vector<interconnect> m_interconnects;
+
+    // Design Point Inputs
+    int m_use_solar_mult_or_aperture_area = std::numeric_limits<double>::quiet_NaN();         // Use specified solar mult (0) or total aperture (1)
+    double m_specified_solar_mult = std::numeric_limits<double>::quiet_NaN();                  // User specified solar mult
+    double m_specified_total_aperture = std::numeric_limits<double>::quiet_NaN();              //[m2] User specified total aperture
+    bool m_is_solar_mult_designed = false;          // Flag for whether solar multiple has been calculated
+    util::matrix_t<double> m_trough_loop_control;
+    double m_P_ref = std::numeric_limits<double>::quiet_NaN();                                 //[W] Design Turbine Net Output
+    double m_eta_ref = std::numeric_limits<double>::quiet_NaN();                               //[] Design Cycle Thermal Efficiency
+    double m_non_solar_field_land_area_multiplier = std::numeric_limits<double>::quiet_NaN();  //[]
+
+    // Design Point Outputs
+    double m_field_htf_cp_avg_des = std::numeric_limits<double>::quiet_NaN();                  //[kJ/kg-K] Field average htf cp value at design
+    double m_single_loop_aperture = std::numeric_limits<double>::quiet_NaN();                  //[m2] Aperture of single loop
+    double m_min_inner_diameter = std::numeric_limits<double>::quiet_NaN();                    //[m] Min inner diameter
+    std::vector<double> m_HCE_heat_loss_des;        //[W/m]
+    double m_HCE_heat_loss_loop_des = std::numeric_limits<double>::quiet_NaN();                //[W/m] Loop Heat Loss from HCE at Design
+    std::vector<double> m_csp_dtr_sca_calc_sca_effs; // SCA optical efficiencies at design
+    std::vector<double> m_csp_dtr_hce_optical_effs;  // HCE optical efficiencies at design
+    util::matrix_t<double> m_SCAInfoArray;          //[-] Receiver (,1) and collector (,2) type for each assembly in loop
+    std::vector<int> m_SCADefocusArray;             //[-] Order in which the SCA's should be defocused
+    double m_m_dot_htfmin = std::numeric_limits<double>::quiet_NaN();	                        //[kg/s] Minimum loop HTF flow rate
+    double m_m_dot_htfmax = std::numeric_limits<double>::quiet_NaN();	                        //[kg/s] Maximum loop HTF flow rate
+    double m_max_field_flow_velocity = std::numeric_limits<double>::quiet_NaN();               //[m/s] Maximum Field Flow Velocity
+    double m_min_field_flow_velocity = std::numeric_limits<double>::quiet_NaN();               //[m/s] Minimum Field Flow Velocity
+    double m_total_loop_conversion_efficiency_des = std::numeric_limits<double>::quiet_NaN();  //[] Total Loop Conversion Efficiency at Design
+    double m_total_required_aperture_for_SM1 = std::numeric_limits<double>::quiet_NaN();       //[m2] Aperture required for solar mult = 1
+    double m_solar_mult = std::numeric_limits<double>::quiet_NaN();		                    //[-] Solar multiple 
+    double m_q_design_actual = std::numeric_limits<double>::quiet_NaN();		                        //[Wt] Design-point thermal power from the solar field
+    double m_q_design_ideal = std::numeric_limits<double>::quiet_NaN();
+    double m_q_pb_design = std::numeric_limits<double>::quiet_NaN();                           //[Wt] Power cycle thermal input at design
+    double m_required_number_of_loops_for_SM1 = std::numeric_limits<double>::quiet_NaN();      //[] Required number of loops for solar mult = 1
+    int m_nLoops = std::numeric_limits<double>::quiet_NaN();			                        //[-] Number of loops in the field
+    double m_Ap_tot = std::numeric_limits<double>::quiet_NaN();		                        //[m^2] Total field aperture area
+    util::matrix_t<double> m_K_cpnt;                //[-] Minor loss coefficients of the components in each loop interconnect
+    util::matrix_t<double> m_D_cpnt;                //[m] Inner diameters of the components in each loop interconnect
+    util::matrix_t<double> m_L_cpnt;                //[m] Lengths of the components in each loop interconnect
+    util::matrix_t<double> m_Type_cpnt;             //[-] Type of component in each loop interconnect [0=fitting | 1=pipe | 2=flex_hose]
+    double m_fixed_land_area = std::numeric_limits<double>::quiet_NaN();                       //[acre] Fixed Land Area
+    double m_total_land_area = std::numeric_limits<double>::quiet_NaN();                       //[acre] Total Land Area
+    double m_opteff_des = std::numeric_limits<double>::quiet_NaN();	                           //[-] Design-point optical efficieny (theta = 0) from the solar field
 
 	// **************************************************************************
 	// **************************************************************************
@@ -551,6 +583,8 @@ public:
 	virtual double get_collector_area();
 
 	// ------------------------------------------ supplemental methods -----------------------------------------------------------
+    bool design_solar_mult();
+
 	class E_piping_config
 	{
 		public:

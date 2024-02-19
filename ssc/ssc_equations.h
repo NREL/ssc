@@ -130,36 +130,36 @@ static ssc_equation_entry ssc_equation_table [] = {
 
         // CSP
 
-        // Do not add SSC equations for MSPT, ETES, or PTES
+        // Do not add SSC equations for MSPT, ETES, Trough, or PTES
         // These technologies handle calculated variables through their compute modules
 
         // Physical Trough:
-        {"Physical_Trough_System_Design_Equations", Physical_Trough_System_Design_Equations,
-            "Trough_physical", Physical_Trough_System_Design_Equations_doc,
-            true, false},
-        {"Physical_Trough_Solar_Field_Equations", Physical_Trough_Solar_Field_Equations,
-            "Trough_physical", Physical_Trough_Solar_Field_Equations_doc,
-            true, false},
-        {"Physical_Trough_Collector_Type_Equations", Physical_Trough_Collector_Type_Equations,
-            "Trough_physical", Physical_Trough_Collector_Type_Equations_doc,
-            true, false},
-        {"Physical_Trough_System_Control_Equations", Physical_Trough_System_Control_Equations,
-            "Trough_physical", Physical_Trough_System_Control_Equations_doc,
-            true, false},
+        //{"Physical_Trough_System_Design_Equations", Physical_Trough_System_Design_Equations,
+        //    "Trough_physical", Physical_Trough_System_Design_Equations_doc,
+        //    true, false},
+        //{"Physical_Trough_Solar_Field_Equations", Physical_Trough_Solar_Field_Equations,
+        //    "Trough_physical", Physical_Trough_Solar_Field_Equations_doc,
+        //    true, false},
+        //{"Physical_Trough_Collector_Type_Equations", Physical_Trough_Collector_Type_Equations,
+        //    "Trough_physical", Physical_Trough_Collector_Type_Equations_doc,
+        //    true, false},
+        //{"Physical_Trough_System_Control_Equations", Physical_Trough_System_Control_Equations,
+        //    "Trough_physical", Physical_Trough_System_Control_Equations_doc,
+        //    true, false},
 
         // Trough IPH
-        {"Physical_Trough_Solar_Field_Equations", Physical_Trough_Solar_Field_Equations,
-            "Trough_physical_process_heat", Physical_Trough_Solar_Field_Equations_doc,
-            true, false},
-        {"Physical_Trough_Collector_Type_Equations", Physical_Trough_Collector_Type_Equations,
-            "Trough_physical_process_heat", Physical_Trough_Collector_Type_Equations_doc,
-            true, false},
-        {"Physical_Trough_Collector_Type_UI_Only_Equations", Physical_Trough_Collector_Type_UI_Only_Equations,
-            "Trough_physical_process_heat", Physical_Trough_Collector_Type_UI_Only_Equations_doc,
-            false, false},
-        {"Physical_Trough_System_Control_Equations", Physical_Trough_System_Control_Equations,
-            "Trough_physical_process_heat", Physical_Trough_System_Control_Equations_doc,
-            true, false},
+        //{"Physical_Trough_Solar_Field_Equations", Physical_Trough_Solar_Field_Equations,
+        //    "Trough_physical_process_heat", Physical_Trough_Solar_Field_Equations_doc,
+        //    true, false},
+        //{"Physical_Trough_Collector_Type_Equations", Physical_Trough_Collector_Type_Equations,
+        //    "Trough_physical_process_heat", Physical_Trough_Collector_Type_Equations_doc,
+        //    true, false},
+        //{"Physical_Trough_Collector_Type_UI_Only_Equations", Physical_Trough_Collector_Type_UI_Only_Equations,
+        //    "Trough_physical_process_heat", Physical_Trough_Collector_Type_UI_Only_Equations_doc,
+        //    false, false},
+        //{"Physical_Trough_System_Control_Equations", Physical_Trough_System_Control_Equations,
+        //    "Trough_physical_process_heat", Physical_Trough_System_Control_Equations_doc,
+        //    true, false},
 
 
         // Single owner
@@ -168,7 +168,7 @@ static ssc_equation_entry ssc_equation_table [] = {
             true, false},
 
         // Utility Rate
-        {"ElectricityRates_format_as_URDBv7", ElectricityRates_format_as_URDBv8,
+        {"ElectricityRates_format_as_URDBv8", ElectricityRates_format_as_URDBv8,
             "UtilityRate5", ElectricityRates_format_as_URDBv8_doc,
             false, true},
 
