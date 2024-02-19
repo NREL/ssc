@@ -554,6 +554,14 @@ public:
         if (is_assigned("grid_outage")) {
             grid_outage = as_vector_bool("grid_outage");
         }
+        if (grid_outage.size() != m_num_rec_yearly) {
+            // throw error - causing sam issue 1676
+            // set to first value or false
+            bool bVal = false;
+            if (grid_outage.size() > 0)
+                bVal = grid_outage[0];
+            grid_outage.resize(m_num_rec_yearly, bVal);
+        }
 
 		// prepare timestep arrays for load and grid values
 		std::vector<ssc_number_t>
@@ -910,7 +918,7 @@ public:
 		idx = 0;
 		for (i=0;i<nyears;i++)
 		{
-			if (i > 0) {
+ 			if (i > 0) {
 				last_month_w_sys = rate.m_month[11];
 				last_excess_energy_w_sys = monthly_cumulative_excess_energy_w_sys[11];
 				last_excess_dollars_w_sys = monthly_cumulative_excess_dollars_w_sys[11];

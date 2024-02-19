@@ -2105,13 +2105,23 @@ void battstor::calculate_monthly_and_annual_outputs(compute_module& cm)
 
         if (batt_vars->batt_dispatch == dispatch_t::SELF_CONSUMPTION)
         {
+            std::vector<double> crit_load_unmet;
+            if (cm.is_assigned("crit_load_unmet")) {
+                crit_load_unmet = cm.as_vector_double("crit_load_unmet");
+            }
+
             //calculate all outputs for number of timesteps the load is met by the system, using grid_to_load == 0 as a qualification
             //better to parse the grid_to_load timeseries once here for all outputs, than to create a new timeseries variable for whether load is met by system
             outTimestepsLoadMetBySystemYear1 = 0.0;
             outTimestepsLoadMetBySystemLifetime = 0.0;
             for (size_t i = 0; i < total_steps; i++)
             {
-                if (outGridToLoad[i] == 0.0)
+                double crit_load_unmet_i = 0.0;
+                if (i < crit_load_unmet.size()) {
+                    crit_load_unmet_i = crit_load_unmet[i];
+                }
+                
+                if (outGridToLoad[i] == 0.0 && crit_load_unmet_i == 0.0)
                 {
                     outTimestepsLoadMetBySystemLifetime++;
                     if (i < step_per_year) outTimestepsLoadMetBySystemYear1++;
