@@ -231,7 +231,8 @@ public:
         E_SA_COLD,
         E_SA_HOT,
         E_SA_TOT,
-        E_ERROR
+        E_ERROR,
+        E_ERROR_PERCENT
 	};
 
 

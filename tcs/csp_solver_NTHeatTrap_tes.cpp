@@ -56,7 +56,7 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
     {C_csp_NTHeatTrap_tes::E_SA_HOT, C_csp_reported_outputs::TS_LAST},	//[kg]
     {C_csp_NTHeatTrap_tes::E_SA_TOT, C_csp_reported_outputs::TS_LAST},	//[kg]
     {C_csp_NTHeatTrap_tes::E_ERROR, C_csp_reported_outputs::TS_LAST},   //[MJ]
-
+    {C_csp_NTHeatTrap_tes::E_ERROR_PERCENT, C_csp_reported_outputs::TS_LAST},   //[%]
     csp_info_invalid
 };
 
@@ -1410,6 +1410,7 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
 
     // TOTAL Energy Balance for total system here
     double energy_balance_error;
+    double energy_balance_error_percent; // Percent error of total internal energy change
     {
         // Positive is Charge, Negative is Discharge
         double mdot_net = m_dot_cr_to_cv_hot - m_dot_cv_hot_to_sink;
@@ -1524,7 +1525,15 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
 
         // Balance
         energy_balance_error = dQ_total - Q_net; // MJ (should be zero)
+        if (std::abs(dQ_total) >= 0.1)
+            energy_balance_error_percent = (energy_balance_error / dQ_total) * 100.0;
+        else
+            energy_balance_error_percent = 0;
 
+        if (std::abs(energy_balance_error) > 100)
+        {
+            int asdfag = 0;
+        }
     }
 
 
@@ -1591,6 +1600,7 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
     mc_reported_outputs.value(E_SA_HOT, mc_hot_tank_NT.get_SA_calc());    //[m2]
     mc_reported_outputs.value(E_SA_TOT, mc_cold_tank_NT.get_SA_calc() + mc_hot_tank_NT.get_SA_calc());    //[m2]
     mc_reported_outputs.value(E_ERROR, energy_balance_error); //[MJ]
+    mc_reported_outputs.value(E_ERROR_PERCENT, energy_balance_error_percent); //[%]
 
     return 0;
 }
