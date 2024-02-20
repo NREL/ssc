@@ -975,7 +975,7 @@ var_info vtab_hybrid_tech_om_inputs[] = {
     { SSC_INPUT,   SSC_ARRAY,      "om_fuelcell_variable_cost",    "Fuel cell production-based O&M amount", "$/MWh",   "" ,                 "HybridTech",            "abt:fuelcell_unit_max_power",             "",             ""},
     { SSC_INPUT,   SSC_ARRAY,      "om_fuelcell_capacity_cost",    "Fuel cell capacity-based O&M amount",   "$/kWcap", "" ,                 "HybridTech",            "abt:fuelcell_unit_max_power",             "",             ""},
     { SSC_INPUT,   SSC_ARRAY,	   "om_fuel_cost",                 "Fuel cost",                             "$/MMBtu", "",                  "HybridTech",            "abt:fuelcell_unit_max_power",             "",             "" },
-    { SSC_INPUT,   SSC_ARRAY,      "degradation",                  "Annual AC degradation",                 "%",       "",                  "HybridTech",            "abt:system_use_lifetime_output",                 "",             "" },
+    { SSC_INPUT,   SSC_ARRAY,      "degradation",                  "Annual AC degradation",                 "%",       "",                  "HybridTech",            "na:fuelcell_unit_max_power",                 "",             "" },
 var_info_invalid };
 
 // for o and m cost outputs calculated in cmod_hybrid
