@@ -85,6 +85,10 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 
 
 
-
-
 #endif
+
+extern var_info vtab_sco2_helper[];
+
+int sco2_helper_core(compute_module* cm);
+
+

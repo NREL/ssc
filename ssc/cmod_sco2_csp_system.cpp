@@ -1738,3 +1738,7 @@ public:
 };
 
 DEFINE_MODULE_ENTRY(sco2_comp_curves, "Calls sCO2 auto-design cycle function", 1)
+
+
+
+
