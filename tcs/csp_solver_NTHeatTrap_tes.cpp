@@ -664,6 +664,7 @@ void C_storage_tank_dynamic_NT::energy_balance_iterated(double timestep /*s*/, d
 
     double T_prev_inner = m_T_prev;
     double T_calc_inner = 0;
+    double T_ave_weighted = 0;
 
     double q_dot_out_inner = 0;
     double q_dot_out_summed = 0;
@@ -683,9 +684,10 @@ void C_storage_tank_dynamic_NT::energy_balance_iterated(double timestep /*s*/, d
 
         mass_prev_inner = mass_calc_inner;
         T_prev_inner = T_calc_inner;
+        T_ave_weighted += T_ave_innerstep * (ministep / timestep);
     }
 
-    T_ave = T_ave_innerstep;
+    T_ave = T_ave_weighted;
     q_heater = q_heater_summed;
     q_dot_loss = q_dot_loss_summed;
     q_dot_out = q_dot_out_summed;
