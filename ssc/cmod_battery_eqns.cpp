@@ -258,6 +258,7 @@ bool Reopt_size_standalone_battery_params(ssc_data_t data) {
             }
         }
         reopt_load.assign("critical_loads_kw", var_data(&vec[0], vec_size));
+        reopt_load.assign("year", 2018); // recent common year starting on Monday
     }
 
     reopt_settings.assign_match_case("time_steps_per_hour", var_data((int)(sim_len / 8760)));
