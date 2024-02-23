@@ -41,7 +41,7 @@ public:
     {
         // Time dependent parameters
         std::vector<double> sell_price;          //[- or $/MWh] Price factor indicating market value of generated energy
-        std::vector<double> w_lim;		        //[kWe] Limit on net electricity production
+        std::vector<double> w_lim;		         //[kWe] Limit on net electricity production
         std::vector<double> q_sfavail_expected;  //Expected available solar field energy
         std::vector<double> eta_pb_expected;     //Expected power cycle conversion efficiency (normalized)
         std::vector<double> w_condf_expected;    //Expected condenser loss coefficient
@@ -180,20 +180,19 @@ public:
 
     struct s_outputs
     {
-        //TODO: add units
-        std::vector<bool> rec_operation;         //receiver startup ok?
-        std::vector<bool> pb_operation;          //power block startup ok?
-        std::vector<bool> pb_standby;            //power block standby ok?
-        std::vector<double> q_pb_target;         //optimized energy generation (less startup loss)
-        std::vector<double> q_pb_standby;        //standby energy allowed
-        std::vector<double> q_sf_expected;       //Expected solar field energy generation
-        std::vector<double> tes_charge_expected; //Expected thermal energy storage charge state
-        std::vector<double> q_pb_startup;        //thermal power going to startup
-        std::vector<double> q_rec_startup;       //thermal power going to startup
-        std::vector<double> w_pb_target;         //optimized electricity generation
+        std::vector<bool> rec_operation;         // [-] Receiver startup ok?
+        std::vector<bool> pb_operation;          // [-] Power block startup ok?
+        std::vector<bool> pb_standby;            // [-] Power block standby ok?
+        std::vector<double> q_pb_target;         // [MWt] Optimized energy generation (less startup loss)
+        std::vector<double> q_pb_standby;        // [MWt] standby energy allowed
+        std::vector<double> q_sf_expected;       // [MWt] Expected solar field energy generation
+        std::vector<double> tes_charge_expected; // [MWht] Expected thermal energy storage charge state
+        std::vector<double> q_pb_startup;        // [MWt] Thermal power going to startup
+        std::vector<double> q_rec_startup;       // [MWt] Thermal Power going to startup
+        std::vector<double> w_pb_target;         // [MWe] Optimized electricity generation
 
-        std::vector<bool> htr_operation;       //is heater allowed to operate
-        std::vector<double> q_eh_target;         //heater target thermal power
+        std::vector<bool> htr_operation;         // [-] is heater allowed to operate
+        std::vector<double> q_eh_target;         // [MWt] Heater target thermal power
 
         void clear() {
             rec_operation.clear();

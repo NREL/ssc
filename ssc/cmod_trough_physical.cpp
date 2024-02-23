@@ -226,6 +226,15 @@ static var_info _cm_vtab_trough_physical[] = {
        // Thermal energy storage
     { SSC_INPUT,        SSC_NUMBER,      "T_tank_cold_init",          "Initial cold tank fluid temperature",                                              "C",            "",              "System Control",  "",                        "",                      "SIMULATION_PARAMETER" },
     { SSC_INPUT,        SSC_NUMBER,      "T_tank_hot_init",           "Initial hot tank fluid temperate",                                                 "C",            "",              "System Control",  "",                        "",                      "SIMULATION_PARAMETER" },
+    { SSC_INPUT,        SSC_NUMBER,      "is_dispatch_targets",       "Run solution from user-specified dispatch targets?",                               "-",            "",              "System Control",  "?=0",                     "",                      "SIMULATION_PARAMETER" },
+    { SSC_INPUT,        SSC_ARRAY,       "q_pc_target_su_in",         "User-provided target thermal power to PC",                                         "MWt",          "",              "System Control",  "is_dispatch_targets=1",   "",                      "SIMULATION_PARAMETER" },
+    { SSC_INPUT,        SSC_ARRAY,       "q_pc_target_on_in",         "User-provided target thermal power to PC",                                         "MWt",          "",              "System Control",  "is_dispatch_targets=1",   "",                      "SIMULATION_PARAMETER" },
+    { SSC_INPUT,        SSC_ARRAY,       "q_pc_max_in",               "User-provided max thermal power to PC",                                            "MWt",          "",              "System Control",  "is_dispatch_targets=1",   "",                      "SIMULATION_PARAMETER" },
+    { SSC_INPUT,        SSC_ARRAY,       "is_rec_su_allowed_in",      "User-provided is receiver startup allowed?",                                       "-",            "",              "System Control",  "is_dispatch_targets=1",   "",                      "SIMULATION_PARAMETER" },
+    //{ SSC_INPUT,        SSC_ARRAY,       "is_rec_sb_allowed_in",      "User-provided is receiver standby allowed?",                                       "-",            "",              "System Control",  "?=0",                     "",                      "SIMULATION_PARAMETER" },
+    { SSC_INPUT,        SSC_ARRAY,       "is_pc_su_allowed_in",       "User-provided is power cycle startup allowed?",                                    "-",            "",              "System Control",  "is_dispatch_targets=1",   "",                      "SIMULATION_PARAMETER" },
+    { SSC_INPUT,        SSC_ARRAY,       "is_pc_sb_allowed_in",       "User-provided is power cycle standby allowed?",                                    "-",            "",              "System Control",  "is_dispatch_targets=1",   "",                      "SIMULATION_PARAMETER" },
+
     // TOU
     { SSC_INPUT,        SSC_MATRIX,      "weekday_schedule",          "12x24 CSP operation Time-of-Use Weekday schedule",                                 "-",            "",               "tou",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "weekend_schedule",          "12x24 CSP operation Time-of-Use Weekend schedule",                                 "-",            "",               "tou",            "*",                       "",                      "" },
@@ -1335,12 +1344,59 @@ public:
             }
 
             tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = as_boolean("is_tod_pc_target_also_pc_max");
-            tou.mc_dispatch_params.m_is_block_dispatch = !as_boolean("is_dispatch");      //mw
+            tou.mc_dispatch_params.m_is_block_dispatch = !(as_boolean("is_dispatch") || as_boolean("is_dispatch_targets"));
             tou.mc_dispatch_params.m_use_rule_1 = true;
             tou.mc_dispatch_params.m_standby_off_buffer = 2.0;
             tou.mc_dispatch_params.m_use_rule_2 = false;
             tou.mc_dispatch_params.m_q_dot_rec_des_mult = -1.23;
             tou.mc_dispatch_params.m_f_q_dot_pc_overwrite = -1.23;
+
+            // User-specified dispatch targets (specified at weather-file resolution)
+            bool is_dispatch_targets = as_boolean("is_dispatch_targets");
+            if (is_dispatch_targets && is_dispatch) {
+                log("Both 'is_dispatch' and 'is_dispatch_targets' were set to true. Plant dispatch will be optimized and all user-specified dispatch target arrays will be ignored", SSC_WARNING);
+                is_dispatch_targets = false;
+            }
+            tou.mc_dispatch_params.m_is_dispatch_targets = is_dispatch_targets;
+            if (is_dispatch_targets) {
+                int n_expect = (int)ceil((sim_setup.m_sim_time_end - sim_setup.m_sim_time_start) / 3600. * steps_per_hour);
+
+                size_t inputs_len = 0;
+                ssc_number_t* q_pc_target_su_in = as_array("q_pc_target_su_in", &inputs_len);
+                if (inputs_len != n_expect) throw exec_error("tcsmolten_salt", "The length of dispatch target q_pc_target_su_in array does not match the value expected from the simulation start time, end time, and time steps per hour");
+
+                ssc_number_t* q_pc_target_on_in = as_array("q_pc_target_on_in", &inputs_len);
+                if (inputs_len != n_expect) throw exec_error("tcsmolten_salt", "The length of dispatch target q_pc_target_on_in array does not match the value expected from the simulation start time, end time, and time steps per hour");
+
+                ssc_number_t* q_pb_max = as_array("q_pc_max_in", &inputs_len);
+                if (inputs_len != n_expect) throw exec_error("tcsmolten_salt", "The length of dispatch target q_pc_max_in array does not match the value expected from the simulation start time, end time, and time steps per hour");
+
+                ssc_number_t* is_rec_su_allowed_in = as_array("is_rec_su_allowed_in", &inputs_len);
+                if (inputs_len != n_expect) throw exec_error("tcsmolten_salt", "The length of dispatch target is_rec_su_allowed_in array does not match the value expected from the simulation start time, end time, and time steps per hour");
+
+                ssc_number_t* is_pc_su_allowed_in = as_array("is_pc_su_allowed_in", &inputs_len);
+                if (inputs_len != n_expect) throw exec_error("tcsmolten_salt", "The length of dispatch target is_pc_su_allowed_in array does not match the value expected from the simulation start time, end time, and time steps per hour");
+
+                ssc_number_t* is_pc_sb_allowed_in = as_array("is_pc_sb_allowed_in", &inputs_len);
+                if (inputs_len != n_expect) throw exec_error("tcsmolten_salt", "The length of dispatch target is_pc_sb_allowed_in array does not match the value expected from the simulation start time, end time, and time steps per hour");
+
+                tou.mc_dispatch_params.m_q_pc_target_su_in.resize(inputs_len);
+                tou.mc_dispatch_params.m_q_pc_target_on_in.resize(inputs_len);
+                tou.mc_dispatch_params.m_q_pc_max_in.resize(inputs_len);
+                tou.mc_dispatch_params.m_is_rec_su_allowed_in.resize(inputs_len);
+                tou.mc_dispatch_params.m_is_pc_su_allowed_in.resize(inputs_len);
+                tou.mc_dispatch_params.m_is_pc_sb_allowed_in.resize(inputs_len);
+
+                for (int i = 0; i < inputs_len; i++) {
+                    tou.mc_dispatch_params.m_q_pc_target_su_in.at(i) = q_pc_target_su_in[i];
+                    tou.mc_dispatch_params.m_q_pc_target_on_in.at(i) = q_pc_target_on_in[i];
+                    tou.mc_dispatch_params.m_q_pc_max_in.at(i) = q_pb_max[i];
+                    tou.mc_dispatch_params.m_is_rec_su_allowed_in.at(i) = (bool)is_rec_su_allowed_in[i];
+                    tou.mc_dispatch_params.m_is_pc_su_allowed_in.at(i) = (bool)is_pc_su_allowed_in[i];
+                    tou.mc_dispatch_params.m_is_pc_sb_allowed_in.at(i) = (bool)is_pc_sb_allowed_in[i];
+
+                }
+            }
 
             size_t n_f_turbine = 0;
             ssc_number_t* p_f_turbine = as_array("f_turb_tou_periods", &n_f_turbine);
@@ -2183,6 +2239,12 @@ public:
         // Monthly outputs
         if (!as_boolean("vacuum_arrays")) {
             accumulate_monthly_for_year("gen", "monthly_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1);
+        }
+        else {
+            ssc_number_t* month_gen = allocate("monthly_energy", 12);
+            for (int i = 0; i < 12; i++) {
+                month_gen[i] = 0.0;
+            }
         }
 
         // Annual outputs
