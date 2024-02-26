@@ -896,6 +896,7 @@ public:
         //capacity_factor = annual_energy / (device_rated_capacity * number_devices * number_hours);
 		
 		//Assigning values to outputs:
+        if (is_annual)
 		assign("annual_energy", var_data((ssc_number_t)annual_energy));
 		assign("average_power", var_data((ssc_number_t)device_average_power));
 		assign("capacity_factor", var_data((ssc_number_t)capacity_factor * 100));
