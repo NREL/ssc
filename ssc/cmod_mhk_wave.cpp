@@ -606,7 +606,7 @@ public:
             }
             size_t hour_step = 1.0;
             if (is_annual) {
-                size_t hour_step = number_hours / number_records;
+                hour_step = number_hours / number_records;
             }
             
             ssc_number_t sig_wave_height_index = 0;
