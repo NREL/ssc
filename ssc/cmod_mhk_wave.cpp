@@ -83,7 +83,7 @@ static var_info _cm_vtab_mhk_wave[] = {
 
 
 	{ SSC_OUTPUT,			SSC_NUMBER,			"device_average_power",					"Average power production of a single device",											"kW",			"",				"MHKWave",			"*",						"",							"" },
-	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production of array",											"kWh",			"",				"MHKWave",			"*",						"",							"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production of array",											"kWh",			"",				"MHKWave",			"",						"",							"" },
     { SSC_OUTPUT,           SSC_ARRAY,          "energy_hourly_kWh",                        "Energy production of array",                                            "kWh",          "", "Time Series",          "wave_resource_model_choice=1",                        "",          "" },
     { SSC_OUTPUT,           SSC_ARRAY,          "energy_hourly_kW",                        "Power output of array",                                            "kW",          "", "Time Series",          "wave_resource_model_choice=1",                        "",          "" },
 
@@ -470,7 +470,7 @@ public:
 
 
         }
-
+        bool is_annual = true;
         if (wave_resource_model_choice==1) { //Time series wave resource option
             size_t number_records = 2920;//Initialize number of records to 2920 (3 hour annual dataset)
             size_t number_hours = 8760; //Initialize number of hours to 8760 (hours in annual dataset)
@@ -481,7 +481,7 @@ public:
             std::vector<int> day;
             std::vector<int> hour;
             std::vector<int> minute;
-            bool is_annual = true;
+            
 
             if (is_assigned("significant_wave_height") && is_assigned("energy_period")) { //Check if wave height and period variables are assigned
                 //number_records = as_integer("number_records");
@@ -896,8 +896,9 @@ public:
         //capacity_factor = annual_energy / (device_rated_capacity * number_devices * number_hours);
 		
 		//Assigning values to outputs:
-        if (is_annual)
-		assign("annual_energy", var_data((ssc_number_t)annual_energy));
+        if (is_annual) {
+            assign("annual_energy", var_data((ssc_number_t)annual_energy));
+        }
 		assign("average_power", var_data((ssc_number_t)device_average_power));
 		assign("capacity_factor", var_data((ssc_number_t)capacity_factor * 100));
 		assign("device_average_power", var_data((ssc_number_t)device_average_power));
