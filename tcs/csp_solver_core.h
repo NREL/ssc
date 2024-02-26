@@ -256,6 +256,9 @@ public:
         std::vector<bool> m_is_rec_su_allowed_in;
         std::vector<bool> m_is_pc_su_allowed_in;
         std::vector<bool> m_is_pc_sb_allowed_in;
+        // electric heater control
+        std::vector<double> m_q_dot_elec_to_PAR_HTR_in;
+        std::vector<bool> m_is_PAR_HTR_allowed_in;
 
         S_csp_tou_params()
         {

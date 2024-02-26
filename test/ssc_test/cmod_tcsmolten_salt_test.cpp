@@ -234,6 +234,8 @@ NAMESPACE_TEST(csp_tower, PowerTowerCmod, Dispatch_Targets_Default_NoFinancial) 
     std::vector<ssc_number_t> is_rec_su_allowed_in(len_window);
     std::vector<ssc_number_t> is_pc_su_allowed_in(len_window);
     std::vector<ssc_number_t> is_pc_sb_allowed_in(len_window);
+    std::vector<ssc_number_t> q_dot_elec_to_PAR_HTR_in(len_window);
+    std::vector<ssc_number_t> is_PAR_HTR_allowed_in(len_window);
 
     std::fill(q_pc_target_su_in.begin(), q_pc_target_su_in.end(), 0.0);
     std::fill(q_pc_target_on_in.begin(), q_pc_target_on_in.end(), 0.0);
@@ -241,6 +243,8 @@ NAMESPACE_TEST(csp_tower, PowerTowerCmod, Dispatch_Targets_Default_NoFinancial) 
     std::fill(is_rec_su_allowed_in.begin(), is_rec_su_allowed_in.end(), 1);
     std::fill(is_pc_su_allowed_in.begin(), is_pc_su_allowed_in.end(), 0);
     std::fill(is_pc_sb_allowed_in.begin(), is_pc_sb_allowed_in.end(), 0);
+    std::fill(q_dot_elec_to_PAR_HTR_in.begin(), q_dot_elec_to_PAR_HTR_in.end(), 0.0);
+    std::fill(is_PAR_HTR_allowed_in.begin(), is_PAR_HTR_allowed_in.end(), 0);
 
     // Modify schedules
     // Cycle start and operation
@@ -266,6 +270,14 @@ NAMESPACE_TEST(csp_tower, PowerTowerCmod, Dispatch_Targets_Default_NoFinancial) 
         is_rec_su_allowed_in[i] = 0.0;
     }
 
+    // Heater
+    int heater_start = 1;
+    int heater_duration = 3;
+    for (int i = heater_start; i < heater_start + heater_duration; i++) {
+        q_dot_elec_to_PAR_HTR_in[i] = 200.0;
+        is_PAR_HTR_allowed_in[i] = 1.0;
+    }
+
     // Set dispatch targets
     power_tower.SetInput("is_dispatch_targets", true);
     power_tower.SetInput("q_pc_target_su_in", &q_pc_target_su_in[0], q_pc_target_su_in.size());
@@ -275,8 +287,23 @@ NAMESPACE_TEST(csp_tower, PowerTowerCmod, Dispatch_Targets_Default_NoFinancial) 
     power_tower.SetInput("is_pc_su_allowed_in", &is_pc_su_allowed_in[0], is_pc_su_allowed_in.size());
     power_tower.SetInput("is_pc_sb_allowed_in", &is_pc_sb_allowed_in[0], is_pc_sb_allowed_in.size());
 
+    // Heater signal
+    power_tower.SetInput("q_dot_elec_to_PAR_HTR_in", &q_dot_elec_to_PAR_HTR_in[0], q_dot_elec_to_PAR_HTR_in.size());
+    power_tower.SetInput("is_PAR_HTR_allowed_in", &is_PAR_HTR_allowed_in[0], is_PAR_HTR_allowed_in.size());
+
+    // Set up heater
+    power_tower.SetInput("is_parallel_htr", true);
+    power_tower.SetInput("heater_mult", 1.0);
+    power_tower.SetInput("heater_efficiency", 100.0);
+    power_tower.SetInput("f_q_dot_des_allowable_su", 1.0);
+    power_tower.SetInput("hrs_startup_at_max_rate", 0.25);
+    power_tower.SetInput("f_q_dot_heater_min", 0.25);
+    power_tower.SetInput("disp_hsu_cost_rel", 0.015);
+    power_tower.SetInput("heater_spec_cost", 104.0);
+    power_tower.SetInput("allow_heater_no_dispatch_opt", 1.0);
+
     // Run the model
-    power_tower.SetInput("tes_init_hot_htf_percent", 50.0);
+    power_tower.SetInput("tes_init_hot_htf_percent", 20.0); //50.0
     power_tower.SetInput("time_start", 0);
     power_tower.SetInput("time_stop", 3600 * len_window);   // only run the window length
     power_tower.SetInput("vacuum_arrays", 1);
@@ -288,6 +315,8 @@ NAMESPACE_TEST(csp_tower, PowerTowerCmod, Dispatch_Targets_Default_NoFinancial) 
     std::vector<double> rec_heat_output = power_tower.GetOutputVector("Q_thermal");
     std::vector<double> cycle_heat = power_tower.GetOutputVector("q_pb");
     std::vector<double> cycle_su_heat = power_tower.GetOutputVector("q_pc_startup");
+    std::vector<double> w_dot_heater = power_tower.GetOutputVector("W_dot_heater");
+    std::vector<double> q_dot_heater_to_htf = power_tower.GetOutputVector("q_dot_heater_to_htf");
         
     for (int i = 0; i < q_pc_target_on_in.size(); i++) {
         // Check Power cycle operations
@@ -302,6 +331,8 @@ NAMESPACE_TEST(csp_tower, PowerTowerCmod, Dispatch_Targets_Default_NoFinancial) 
         if (is_rec_su_allowed_in[i] == 0.0) {
             EXPECT_EQ(rec_heat_output[i], 0.0); // receiver shutdown
         }
+        // Check Heater operations
+        EXPECT_NEAR_FRAC(q_dot_heater_to_htf[i], q_dot_elec_to_PAR_HTR_in[i], kErrorToleranceHi);
     }
 
     // For Debugging
@@ -312,7 +343,9 @@ NAMESPACE_TEST(csp_tower, PowerTowerCmod, Dispatch_Targets_Default_NoFinancial) 
             << setw(10) << "pc su ht" << "\t"
             << setw(10) << "pc targets" << "\t"
             << setw(10) << "rec output" << "\t"
-            << setw(10) << "rec sign" << std::endl;
+            << setw(10) << "rec sign" << "\t"
+            << setw(10) << "heater qdot" << "\t"
+            << setw(10) << "heater sign" << std::endl;
         for (int i = 0; i < gen.size(); i++) {
             std::cout << right << setw(2) << i << ": \t"
                 << setw(10) << gen[i] << "\t"
@@ -320,7 +353,9 @@ NAMESPACE_TEST(csp_tower, PowerTowerCmod, Dispatch_Targets_Default_NoFinancial) 
                 << setw(10) << cycle_su_heat[i] << "\t"
                 << setw(10) << q_pc_target_on_in[i] << "\t"
                 << setw(10) << rec_heat_output[i] << "\t"
-                << setw(10) << is_rec_su_allowed_in[i] << std::endl;
+                << setw(10) << is_rec_su_allowed_in[i] << "\t"
+                << setw(10) << q_dot_heater_to_htf[i] << "\t"
+                << setw(10) << q_dot_elec_to_PAR_HTR_in[i] << std::endl;
         }
         EXPECT_FALSE(true); //needed to make the test fail for output
     }

@@ -388,6 +388,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
         // Thermal energy storage
     { SSC_INPUT,     SSC_NUMBER, "T_tank_cold_init",                   "Initial cold tank temp",                                                                                                                  "C",            "",                                  "System Control",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
     { SSC_INPUT,     SSC_NUMBER, "T_tank_hot_init",                    "Initial hot tank temp",                                                                                                                   "C",            "",                                  "System Control",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
+        // Input Dispatch Targets
     { SSC_INPUT,     SSC_NUMBER, "is_dispatch_targets",                "Run solution from user-specified dispatch targets?",                                                                                      "-",            "",                                  "System Control",                           "?=0",                                                              "",              "SIMULATION_PARAMETER" },
     { SSC_INPUT,     SSC_ARRAY,  "q_pc_target_su_in",                  "User-provided target thermal power to PC",                                                                                                "MWt",          "",                                  "System Control",                           "is_dispatch_targets=1",                                            "",              "SIMULATION_PARAMETER" },
     { SSC_INPUT,     SSC_ARRAY,  "q_pc_target_on_in",                  "User-provided target thermal power to PC",                                                                                                "MWt",          "",                                  "System Control",                           "is_dispatch_targets=1",                                            "",              "SIMULATION_PARAMETER" },
@@ -395,6 +396,9 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_ARRAY,  "is_rec_su_allowed_in",               "User-provided is receiver startup allowed?",                                                                                              "-",            "",                                  "System Control",                           "is_dispatch_targets=1",                                            "",              "SIMULATION_PARAMETER" },
     { SSC_INPUT,     SSC_ARRAY,  "is_pc_su_allowed_in",                "User-provided is power cycle startup allowed?",                                                                                           "-",            "",                                  "System Control",                           "is_dispatch_targets=1",                                            "",              "SIMULATION_PARAMETER" },
     { SSC_INPUT,     SSC_ARRAY,  "is_pc_sb_allowed_in",                "User-provided is power cycle standby allowed?",                                                                                           "-",            "",                                  "System Control",                           "is_dispatch_targets=1",                                            "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,     SSC_ARRAY,  "q_dot_elec_to_PAR_HTR_in",           "User-provided electrical power to parallel heater",                                                                                       "-",            "",                                  "System Control",                           "is_dispatch_targets=1&is_parallel_htr=1",                                            "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,     SSC_ARRAY,  "is_PAR_HTR_allowed_in",              "User-provided is electrical heater operation allowed?",                                                                                   "-",            "",                                  "System Control",                           "is_dispatch_targets=1&is_parallel_htr=1",                                            "",              "SIMULATION_PARAMETER" },
+
     // Costs
     { SSC_INPUT,     SSC_NUMBER, "tower_fixed_cost",                   "Tower fixed cost",                                                                                                                        "$",            "",                                  "System Costs",                             "*",                                                                "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "tower_exp",                          "Tower cost scaling exponent",                                                                                                             "",             "",                                  "System Costs",                             "*",                                                                "",              "" },
@@ -2111,6 +2115,14 @@ public:
             ssc_number_t* is_pc_sb_allowed_in = as_array("is_pc_sb_allowed_in", &inputs_len);
             if (inputs_len != n_expect) throw exec_error("tcsmolten_salt", "The length of dispatch target is_pc_sb_allowed_in array does not match the value expected from the simulation start time, end time, and time steps per hour");
 
+            ssc_number_t *q_dot_elec_to_PAR_HTR_in, *is_PAR_HTR_allowed_in;
+            if (is_parallel_heater) {
+                q_dot_elec_to_PAR_HTR_in = as_array("q_dot_elec_to_PAR_HTR_in", &inputs_len);
+                if (inputs_len != n_expect) throw exec_error("tcsmolten_salt", "The length of dispatch target q_dot_elec_to_PAR_HTR_in array does not match the value expected from the simulation start time, end time, and time steps per hour");
+
+                is_PAR_HTR_allowed_in = as_array("is_PAR_HTR_allowed_in", &inputs_len);
+                if (inputs_len != n_expect) throw exec_error("tcsmolten_salt", "The length of dispatch target is_PAR_HTR_allowed_in array does not match the value expected from the simulation start time, end time, and time steps per hour");
+            }
 
             tou.mc_dispatch_params.m_q_pc_target_su_in.resize(inputs_len);
             tou.mc_dispatch_params.m_q_pc_target_on_in.resize(inputs_len);
@@ -2118,8 +2130,9 @@ public:
             tou.mc_dispatch_params.m_is_rec_su_allowed_in.resize(inputs_len);
             tou.mc_dispatch_params.m_is_pc_su_allowed_in.resize(inputs_len);
             tou.mc_dispatch_params.m_is_pc_sb_allowed_in.resize(inputs_len);
-            //tou.mc_dispatch_params.m_is_rec_sb_allowed_in.resize(inputs_len);
-            //tou.mc_dispatch_params.m_is_ignore_elec_heat_dur_off.resize(inputs_len);
+
+            tou.mc_dispatch_params.m_q_dot_elec_to_PAR_HTR_in.resize(inputs_len);
+            tou.mc_dispatch_params.m_is_PAR_HTR_allowed_in.resize(inputs_len);
 
             for (int i = 0; i < inputs_len; i++) {
                 tou.mc_dispatch_params.m_q_pc_target_su_in.at(i) = q_pc_target_su_in[i];
@@ -2129,6 +2142,14 @@ public:
                 tou.mc_dispatch_params.m_is_pc_su_allowed_in.at(i) = (bool)is_pc_su_allowed_in[i];
                 tou.mc_dispatch_params.m_is_pc_sb_allowed_in.at(i) = (bool)is_pc_sb_allowed_in[i];
 
+                if (is_parallel_heater) {
+                    tou.mc_dispatch_params.m_q_dot_elec_to_PAR_HTR_in.at(i) = q_dot_elec_to_PAR_HTR_in[i];
+                    tou.mc_dispatch_params.m_is_PAR_HTR_allowed_in.at(i) = (bool)is_PAR_HTR_allowed_in[i];
+                }
+                else {
+                    tou.mc_dispatch_params.m_q_dot_elec_to_PAR_HTR_in.at(i) = 0.0;
+                    tou.mc_dispatch_params.m_is_PAR_HTR_allowed_in.at(i) = false;
+                }
             }
         }
 

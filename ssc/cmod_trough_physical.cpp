@@ -1368,22 +1368,22 @@ public:
 
                 size_t inputs_len = 0;
                 ssc_number_t* q_pc_target_su_in = as_array("q_pc_target_su_in", &inputs_len);
-                if (inputs_len != n_expect) throw exec_error("tcsmolten_salt", "The length of dispatch target q_pc_target_su_in array does not match the value expected from the simulation start time, end time, and time steps per hour");
+                if (inputs_len != n_expect) throw exec_error("trough_physical", "The length of dispatch target q_pc_target_su_in array does not match the value expected from the simulation start time, end time, and time steps per hour");
 
                 ssc_number_t* q_pc_target_on_in = as_array("q_pc_target_on_in", &inputs_len);
-                if (inputs_len != n_expect) throw exec_error("tcsmolten_salt", "The length of dispatch target q_pc_target_on_in array does not match the value expected from the simulation start time, end time, and time steps per hour");
+                if (inputs_len != n_expect) throw exec_error("trough_physical", "The length of dispatch target q_pc_target_on_in array does not match the value expected from the simulation start time, end time, and time steps per hour");
 
                 ssc_number_t* q_pb_max = as_array("q_pc_max_in", &inputs_len);
-                if (inputs_len != n_expect) throw exec_error("tcsmolten_salt", "The length of dispatch target q_pc_max_in array does not match the value expected from the simulation start time, end time, and time steps per hour");
+                if (inputs_len != n_expect) throw exec_error("trough_physical", "The length of dispatch target q_pc_max_in array does not match the value expected from the simulation start time, end time, and time steps per hour");
 
                 ssc_number_t* is_rec_su_allowed_in = as_array("is_rec_su_allowed_in", &inputs_len);
-                if (inputs_len != n_expect) throw exec_error("tcsmolten_salt", "The length of dispatch target is_rec_su_allowed_in array does not match the value expected from the simulation start time, end time, and time steps per hour");
+                if (inputs_len != n_expect) throw exec_error("trough_physical", "The length of dispatch target is_rec_su_allowed_in array does not match the value expected from the simulation start time, end time, and time steps per hour");
 
                 ssc_number_t* is_pc_su_allowed_in = as_array("is_pc_su_allowed_in", &inputs_len);
-                if (inputs_len != n_expect) throw exec_error("tcsmolten_salt", "The length of dispatch target is_pc_su_allowed_in array does not match the value expected from the simulation start time, end time, and time steps per hour");
+                if (inputs_len != n_expect) throw exec_error("trough_physical", "The length of dispatch target is_pc_su_allowed_in array does not match the value expected from the simulation start time, end time, and time steps per hour");
 
                 ssc_number_t* is_pc_sb_allowed_in = as_array("is_pc_sb_allowed_in", &inputs_len);
-                if (inputs_len != n_expect) throw exec_error("tcsmolten_salt", "The length of dispatch target is_pc_sb_allowed_in array does not match the value expected from the simulation start time, end time, and time steps per hour");
+                if (inputs_len != n_expect) throw exec_error("trough_physical", "The length of dispatch target is_pc_sb_allowed_in array does not match the value expected from the simulation start time, end time, and time steps per hour");
 
                 tou.mc_dispatch_params.m_q_pc_target_su_in.resize(inputs_len);
                 tou.mc_dispatch_params.m_q_pc_target_on_in.resize(inputs_len);
@@ -1392,6 +1392,9 @@ public:
                 tou.mc_dispatch_params.m_is_pc_su_allowed_in.resize(inputs_len);
                 tou.mc_dispatch_params.m_is_pc_sb_allowed_in.resize(inputs_len);
 
+                tou.mc_dispatch_params.m_q_dot_elec_to_PAR_HTR_in.resize(inputs_len);
+                tou.mc_dispatch_params.m_is_PAR_HTR_allowed_in.resize(inputs_len);
+
                 for (int i = 0; i < inputs_len; i++) {
                     tou.mc_dispatch_params.m_q_pc_target_su_in.at(i) = q_pc_target_su_in[i];
                     tou.mc_dispatch_params.m_q_pc_target_on_in.at(i) = q_pc_target_on_in[i];
@@ -1399,6 +1402,10 @@ public:
                     tou.mc_dispatch_params.m_is_rec_su_allowed_in.at(i) = (bool)is_rec_su_allowed_in[i];
                     tou.mc_dispatch_params.m_is_pc_su_allowed_in.at(i) = (bool)is_pc_su_allowed_in[i];
                     tou.mc_dispatch_params.m_is_pc_sb_allowed_in.at(i) = (bool)is_pc_sb_allowed_in[i];
+
+                    // no electric heater option
+                    tou.mc_dispatch_params.m_q_dot_elec_to_PAR_HTR_in.at(i) = 0.0;
+                    tou.mc_dispatch_params.m_is_PAR_HTR_allowed_in.at(i) = false;
 
                 }
             }
