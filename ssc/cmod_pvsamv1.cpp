@@ -1536,7 +1536,7 @@ void cm_pvsamv1::exec()
                     Irradiance->dtHour, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, 0.0, Subarrays[nn]->groundCoverageRatio, Subarrays[nn]->slopeTilt, Subarrays[nn]->slopeAzm,
                     Subarrays[nn]->monthlyTiltDegrees, Irradiance->userSpecifiedMonthlyAlbedo,
                     Subarrays[nn]->poa.poaAll.get(),
-                    Irradiance->useSpatialAlbedos, &Irradiance->userSpecifiedMonthlySpatialAlbedos, (as_boolean("enable_subhourly_clipping") || as_boolean("enable_subinterval_distribution")));
+                    Irradiance->useSpatialAlbedos, &Irradiance->userSpecifiedMonthlySpatialAlbedos, (as_boolean("enable_subhourly_clipping") || as_boolean("enable_subinterval_distribution")), Subarrays[nn]->useCustomRotAngles, custom_rot);
 
                 int code = irr.calc();
 

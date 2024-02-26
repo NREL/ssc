@@ -1142,8 +1142,8 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, UseCustomAngles) {
     EXPECT_FALSE(pvsam_errors);
     ssc_number_t annualEnergy;
     int n1;
-    ssc_number_t* subarray1_cell_temp = ssc_data_get_array(data, "subarray1_axisrot", &n1);
-    EXPECT_NEAR(subarray1_cell_temp[11], -24.8588, 0.001);
+    ssc_number_t* subarray1_axis_rot = ssc_data_get_array(data, "subarray1_axisrot", &n1);
+    EXPECT_NEAR(subarray1_axis_rot[11], -24.8588, 0.001);
     ssc_data_get_number(data, "annual_energy", &annualEnergy);
     EXPECT_NEAR(annualEnergy, 11516, 1.0);
 
@@ -1168,7 +1168,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, DistributionClippingMethod) {
     //check answers for subhourly clipping annual loss
     ssc_number_t distribution_clipping_loss;
     ssc_data_get_number(data, "annual_distribution_clipping_loss", &distribution_clipping_loss);
-    EXPECT_NEAR(distribution_clipping_loss, 327.222952, m_error_tolerance_lo);
+    EXPECT_NEAR(distribution_clipping_loss, 137.421662, m_error_tolerance_lo);
 }
 
 /// Test PVSAMv1 with all defaults and no-financial model- look at MPPT input 1 voltage at night
