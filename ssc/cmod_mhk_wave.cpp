@@ -481,6 +481,7 @@ public:
             std::vector<int> day;
             std::vector<int> hour;
             std::vector<int> minute;
+            bool is_annual = true;
 
             if (is_assigned("significant_wave_height") && is_assigned("energy_period")) { //Check if wave height and period variables are assigned
                 //number_records = as_integer("number_records");
@@ -488,7 +489,8 @@ public:
                 wave_height_input = as_vector_double("significant_wave_height");
                 wave_period_input = as_vector_double("energy_period");
                 number_records = wave_height_input.size();
-                number_hours = number_records * 3;
+                number_hours = 8760; //always a full year of data for UI calls
+                if (fmod(number_records, 2920) != 0) is_annual = false;
                 year = as_vector_integer("year");
                 month = as_vector_integer("month");
                 day = as_vector_integer("day");
@@ -498,7 +500,8 @@ public:
             }
             else if (!is_assigned("significant_wave_height") && !is_assigned("energy_period") && is_assigned("wave_resource_data")) { //Check if height and period variables are assigned in wave resource table data
                 number_records = wave_dp->num_records();
-                number_hours = number_records * 3; //always 3 hour data from wave api calls
+                number_hours = 8760; //always 3 hour data from wave api calls
+                if (fmod(number_records, 2920) != 0) is_annual = false;
                 wave_height_input = wave_dp->wave_heights();
                 if (wave_height_input.empty()) {
                     throw exec_error("mhk_wave", wave_dp->error());
@@ -581,7 +584,7 @@ public:
                 sys_degradation.push_back(1); // single year mode - degradation handled in financial models.
             }
             ssc_number_t* energy_hourly_kWh = allocate("energy_hourly_kWh", number_records_gen);
-            ssc_number_t* energy_hourly_kW = allocate("energy_hourly_kW", number_records_gen * 3); //8760 of kW values
+            ssc_number_t* energy_hourly_kW = allocate("energy_hourly_kW", 8760); //8760 of kW values
             ssc_number_t* energy_hourly_gen = allocate("gen", number_records_gen);
             ssc_number_t* sig_wave_height_index_mat = allocate("sig_wave_height_index_mat", number_records);
             ssc_number_t* sig_wave_height_data = allocate("sig_wave_height_data", number_records);
@@ -601,7 +604,11 @@ public:
                 days_in_month = { 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366 };
                 days_in_year = 367;
             }
-            size_t hour_step = number_hours / number_records;
+            size_t hour_step = 1.0;
+            if (is_annual) {
+                size_t hour_step = number_hours / number_records;
+            }
+            
             ssc_number_t sig_wave_height_index = 0;
             ssc_number_t energy_period_index = 0;
             

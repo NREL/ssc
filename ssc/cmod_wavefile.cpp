@@ -56,8 +56,8 @@ static var_info _cm_wave_file_reader[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,      "tz",                      "Time zone",                                   "",       "",                      "Weather Reader",      "",                        "",               "" },
 	{ SSC_OUTPUT,        SSC_STRING,      "data_source",             "Data source",                                 "",       "",                      "Weather Reader",      "",                        "",               "" },
 	{ SSC_OUTPUT,        SSC_STRING,      "notes",                   "Notes",                                       "",       "",                      "Weather Reader",      "",                        "",               "" },
-    { SSC_OUTPUT,        SSC_NUMBER,      "location_id",             "Location ID",               "",       "",                      "Weather Reader",     "wave_resource_model_choice=1",                        "",               "" },
-    { SSC_OUTPUT,        SSC_STRING,      "location_name",             "Location",               "",       "",                      "Weather Reader",     "wave_resource_model_choice=1",                        "",               "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "location_id",             "Location ID",               "",       "",                      "Weather Reader",     "",                        "",               "" },
+    { SSC_OUTPUT,        SSC_STRING,      "location_name",             "Location",               "",       "",                      "Weather Reader",     "",                        "",               "" },
 
     { SSC_OUTPUT,        SSC_NUMBER,      "distance_to_shore_file",       "Distance to shore",               "m",       "",                      "Weather Reader",     "?",                        "",               "" },
     { SSC_OUTPUT,        SSC_NUMBER,      "water_depth_file",             "Water depth",               "m",       "",                      "Weather Reader",     "?",                        "",               "" },
@@ -227,9 +227,13 @@ public:
                 {
                     assign("water_depth_file", var_data(std::stod(value)));
                 }
-                else if (name == "id" || name == "location" || name == "location id" || name == "station" || name == "station id" || name == "wban" || name == "wban#" || name == "site")
+                else if (name == "id" || name == "jurisdiction" || name == "station id" || name == "wban" || name == "wban#" || name == "site")
                 {
-                    assign("location_id", var_data(value));
+                    assign("location_name", var_data(value));
+                }
+                else if (name == "location" || name == "location id")
+                {
+                    assign("location_id", var_data(std::stod(value)));
                 }
 
                 else if (name == "source" || name == "src" || name == "data source")
