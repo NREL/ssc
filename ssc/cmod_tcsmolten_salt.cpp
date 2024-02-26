@@ -680,8 +680,8 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_ARRAY,  "q_heater",                           "TES freeze protection power",                                                                                                             "MWe",          "",                                  "",                                         "sim_type=1",                                                       "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "T_tes_hot",                          "TES hot temperature",                                                                                                                     "C",            "",                                  "",                                         "sim_type=1",                                                       "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "T_tes_cold",                         "TES cold temperature",                                                                                                                    "C",            "",                                  "",                                         "sim_type=1",                                                       "",              "" },
-    { SSC_OUTPUT,   SSC_ARRAY,   "mass_tes_cold",                      "TES cold tank mass (end)",                                                                                                                "kg",           "",                                  "",                                         "sim_type=1",                                                       "",              "" },
-    { SSC_OUTPUT,   SSC_ARRAY,   "mass_tes_hot",                       "TES hot tank mass (end)",                                                                                                                 "kg",           "",                                  "",                                         "sim_type=1",                                                       "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "mass_tes_cold",                      "TES cold tank mass (end)",                                                                                                                "kg",           "",                                  "",                                         "sim_type=1",                                                       "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "mass_tes_hot",                       "TES hot tank mass (end)",                                                                                                                 "kg",           "",                                  "",                                         "sim_type=1",                                                       "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "q_dc_tes",                           "TES discharge thermal power",                                                                                                             "MWt",          "",                                  "",                                         "sim_type=1",                                                       "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "q_ch_tes",                           "TES charge thermal power",                                                                                                                "MWt",          "",                                  "",                                         "sim_type=1",                                                       "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "e_ch_tes",                           "TES charge state",                                                                                                                        "MWht",         "",                                  "",                                         "sim_type=1",                                                       "",              "" },
@@ -804,6 +804,9 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_ARRAY,  "pc_startup_energy_remain_final",     "Final cycle startup energy remaining",                                                                                                    "kwh",          "",                                  "System Control",                           "",                                                                 "",              "" },
         // Thermal energy storage
     { SSC_OUTPUT,    SSC_ARRAY,  "hot_tank_htf_percent_final",         "Final percent fill of available hot tank mass",                                                                                           "%",            "",                                  "System Control",                           "",                                                                 "",              "" },
+        // Cycle off-design perfomance tables - for external controls
+    { SSC_OUTPUT,    SSC_MATRIX, "cycle_eff_load_table",               "Cycle efficiency vs. thermal load",                                                                                                       "",             "",                                  "",                                         "sim_type=1",                                                       "",              "COL_LABEL=THERMLOAD_EFFICIENCY,ROW_LABEL=NO_ROW_LABEL" },
+    { SSC_OUTPUT,    SSC_MATRIX, "cycle_Tdb_table",                    "Normalized cycle efficiency and condenser power vs. ambient temperature",                                                                 "",             "",                                  "",                                         "sim_type=1",                                                       "",              "COL_LABEL=AMBTEMP_EFF_CONDPOW,ROW_LABEL=NO_ROW_LABEL" },
 
     var_info_invalid };
 
@@ -3123,6 +3126,37 @@ public:
             }
         }
 
+        // Cycle off-design performance tables for use with dispatch optimization models solved outside of ssc
+        // Mimics calculations in dispatch.params.eff_table_load and dispatch.params.eff_table_Tdb in csp_solver_core,
+        // but repeating here to allow for more load points that could be needed for nonlinear dispatch model formulation
+        // TODO: This should be moved out of the cmod and into the C_csp_power_cycle class
+        int neff = 10;
+        ssc_number_t* table_load_efficiency = allocate("cycle_eff_load_table", neff, 2);
+        double q_min = p_csp_power_cycle->get_min_thermal_power();
+        double q_max = p_csp_power_cycle->get_max_thermal_power();
+        double q_des = as_double("P_ref") / as_double("design_eff");
+        for (int i = 0; i < neff; i++)
+        {
+            double x = q_min + (q_max - q_min) / (double)(neff - 1) * i;
+            double xf = x / q_des;
+            double eta = p_csp_power_cycle->get_efficiency_at_load(xf);
+            table_load_efficiency[2 * i] = x;  //MWt
+            table_load_efficiency[2 * i + 1] = eta;
+        }
+
+        int neffT = 40;
+        ssc_number_t* table_Tdb_eff_wcond = allocate("cycle_Tdb_table", neffT, 3);
+        for (int i = 0; i < neffT; i++)
+        {
+            double T = -10. + 60. / (double)(neffT - 1) * i; // C
+            double wcond;
+            double norm_eta = p_csp_power_cycle->get_efficiency_at_TPH(T, 1., 30., &wcond) / as_double("design_eff");
+            table_Tdb_eff_wcond[3 * i] = T;
+            table_Tdb_eff_wcond[3 * i + 1] = norm_eta;
+            table_Tdb_eff_wcond[3 * i + 2] = wcond / as_double("P_ref");  //fraction of rated gross gen
+        }
+
+        // Calculating the Capacity factor of the highest priced 1000 and 2000 hours
         ssc_number_t* p_pricing_mult = as_array("pricing_mult", &count);
         ssc_number_t* p_tdry = as_array("tdry", &count);
         if (!as_boolean("vacuum_arrays")) {
