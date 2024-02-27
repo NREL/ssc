@@ -54,15 +54,14 @@ public:
 
     void ssc_module_exec_with_error(ssc_module_t module, var_table& input, std::string compute_module) {
         if (!ssc_module_exec(module, static_cast<ssc_data_t>(&input))) {
-            std::string str = std::string(compute_module) + " execution error.\n";
+            std::string str = std::string(compute_module) + " execution error. ";
             int idx = 0;
             int type = -1;
             while (const char* msg = ssc_module_log(module, idx++, &type, nullptr))
             {
                 if (/*/(type == SSC_NOTICE) || */(type == SSC_WARNING) || (type == SSC_ERROR)) {
-                    str += "\t";
                     str += std::string(msg);
-                    str += "\n\n";
+                    str += "\t";
                 }
             }
             ssc_module_free(module);
@@ -123,7 +122,7 @@ public:
             bool ts_adj = false; // keep track of whether time step is adjusted for log messages
 
             // get financial inputs common to all technologies and copy into each tech's input tables
-            var_data* financial_compute_modules = input_table->table.lookup("Hybrid");
+            var_data* financial_compute_modules = input_table->table.lookup("hybrid");
             int analysisPeriod = (int)financial_compute_modules->table.lookup("analysis_period")->num;
             ssc_number_t inflation_rate = financial_compute_modules->table.lookup("inflation_rate")->num * 0.01;
             ssc_number_t sales_tax_rate = financial_compute_modules->table.lookup("sales_tax_rate")->num * 0.01;
@@ -240,7 +239,7 @@ public:
                     escal_or_annual(input, pOMLandLease, analysisPeriod, "om_land_lease", inflation_rate, total_land_area, false, input.as_double("om_land_lease_escal") * 0.01);
                 }
                 // optional fossil fuel costs
-                if (compute_module_inputs->table.lookup("om_fuel_cost")) {
+                if (compute_module_inputs->table.lookup("system_heat_rate")) {
                     ssc_number_t* pOMFuelCost = ((var_table*)compute_module_outputs)->allocate("cf_om_fuel_cost", analysisPeriod + 1);
                     ssc_number_t system_heat_rate = compute_module_inputs->table.lookup("system_heat_rate")->num;
                     ssc_number_t year1_fuel_use = ((var_table*)compute_module_outputs)->as_double("annual_fuel_usage"); // kWht
@@ -315,7 +314,7 @@ public:
 
                 ssc_module_t module = ssc_module_create(compute_module.c_str());
                 class compute_module* cmod = static_cast<class compute_module*>(module);
-                cmod->add_var_info(vtab_hybrid_tech_om_inputs);
+                ssc_module_hybridize(module);
 
                 ssc_number_t system_capacity = compute_module_inputs->table.lookup("fuelcell_unit_max_power")->num;
                 system_capacity *= compute_module_inputs->table.lookup("fuelcell_number_of_units")->num;
@@ -430,15 +429,23 @@ public:
                 hybridTotalInstalledCost += compute_module_inputs->table.lookup("total_installed_cost")->num;
 
                 // copy over required dispatch variables from hybrid
+                if (financial_compute_modules->table.is_assigned("dispatch_sched_weekday"))
                 compute_module_inputs->table.assign("dispatch_sched_weekday", *financial_compute_modules->table.lookup("dispatch_sched_weekday"));
+                if (financial_compute_modules->table.is_assigned("dispatch_sched_weekday"))
                 compute_module_inputs->table.assign("dispatch_sched_weekend", *financial_compute_modules->table.lookup("dispatch_sched_weekend"));
+                if (financial_compute_modules->table.is_assigned("dispatch_tod_factors"))
                 compute_module_inputs->table.assign("dispatch_tod_factors", *financial_compute_modules->table.lookup("dispatch_tod_factors"));
+                if (financial_compute_modules->table.is_assigned("grid_interconnection_limit_kwac"))
                 compute_module_inputs->table.assign("grid_interconnection_limit_kwac", *financial_compute_modules->table.lookup("grid_interconnection_limit_kwac"));
+                if (financial_compute_modules->table.is_assigned("ppa_escalation"))
                 compute_module_inputs->table.assign("ppa_escalation", *financial_compute_modules->table.lookup("ppa_escalation"));
+                if (financial_compute_modules->table.is_assigned("ppa_multiplier_model"))
                 compute_module_inputs->table.assign("ppa_multiplier_model", *financial_compute_modules->table.lookup("ppa_multiplier_model"));
+                if (financial_compute_modules->table.is_assigned("ppa_price_input"))
                 compute_module_inputs->table.assign("ppa_price_input", *financial_compute_modules->table.lookup("ppa_price_input"));
 
                 ssc_module_t module = ssc_module_create(compute_module.c_str());
+                ssc_module_hybridize(module);
 
                 var_table& input = compute_module_inputs->table;
 

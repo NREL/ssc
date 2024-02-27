@@ -335,6 +335,15 @@ void compute_module::add_var_info(var_info vi[]) {
     }
 }
 
+void compute_module::add_var_info(var_info* vi[]) {
+    int i = 0;
+    while (vi[i] != NULL && vi[i]->data_type != SSC_INVALID
+           && vi[i]->name != NULL ) {
+        m_varlist.push_back(vi[i]);
+        i++;
+    }
+}
+
 void compute_module::remove_var_info(var_info vi[]) {
     int i = 0;
     while (vi[i].data_type != SSC_INVALID

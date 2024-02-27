@@ -65,19 +65,39 @@ TEST_F(CmodHybridTest, PVWattsv8WindBatterySingleOwner) {
     EXPECT_FALSE(errors);
     if (!errors)
     {
-        ssc_number_t pvannualenergy, windannualenergy, npv;
+        int len;
+
+        ssc_number_t pvannualenergy, windannualenergy, battannualenergy, npv;
         auto outputs = ssc_data_get_table(dat, "output");
+        auto inputs = ssc_data_get_table(dat, "input");
 
         auto pv_outputs = ssc_data_get_table(outputs, "pvwattsv8");
+        auto pv_inputs = ssc_data_get_table(inputs, "pvwattsv8");
         ssc_data_get_number(pv_outputs, "annual_energy", &pvannualenergy);
         EXPECT_NEAR(pvannualenergy, 25970, 25970 * 0.01);
 
         auto wind_outputs = ssc_data_get_table(outputs, "windpower");
+        auto wind_inputs = ssc_data_get_table(inputs, "windpower");
         ssc_data_get_number(wind_outputs, "annual_energy", &windannualenergy);
         EXPECT_NEAR(windannualenergy, 5927, 5927 * 0.01);
 
+        auto batt_outputs = ssc_data_get_table(outputs, "battery");
+        auto batt_inputs = ssc_data_get_table(inputs, "battery");
+        ssc_data_get_number(batt_outputs, "annual_energy", &battannualenergy);
+        EXPECT_NEAR(battannualenergy, 31893, 31893 * 0.01);
+
         auto hybrid_outputs = ssc_data_get_table(outputs, "Hybrid");
+
+        ssc_number_t value;
+
+        auto ebitda = ssc_data_get_array(hybrid_outputs, "cf_ebitda", &len);
+        auto revenue = ssc_data_get_array(hybrid_outputs, "cf_total_revenue", &len);
+        auto om_expenses = ssc_data_get_array(hybrid_outputs, "cf_operating_expenses", &len);
         ssc_data_get_number(hybrid_outputs, "project_return_aftertax_npv", &npv);
+
+        EXPECT_NEAR(om_expenses[1], 2527, 1);
+        EXPECT_NEAR(revenue[1], 3189, 1);
+        EXPECT_NEAR(ebitda[1], 662, 1);
         EXPECT_NEAR(npv, -61506, 61506 * 0.001);
     }
     ssc_data_free(dat);

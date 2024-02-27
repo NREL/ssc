@@ -208,7 +208,7 @@ public:
 	virtual bool on_extproc_output( const std::string & ) { return false; }
 
     void add_var_info(var_info vi[]);
-
+    void add_var_info(var_info* vi[]);
 
 protected:
 
