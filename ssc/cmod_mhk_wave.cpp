@@ -686,9 +686,14 @@ public:
                     energy_hourly_gen[y * number_records + i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index_mat[i]), size_t(energy_period_index_mat[i]))) * (1 - total_loss / 100) * sys_degradation[y] * number_devices; //Store in gen to use in heatmap output (probably don't need two variables)
                     //energy_hourly_gen[i*3+1] = energy_hourly[i]; //Store in gen to use in heatmap output (probably don't need two variables)
                     //energy_hourly_gen[i*3+2] = energy_hourly[i]; //Store in gen to use in heatmap output (probably don't need two variables)
-                    energy_hourly_kW[y * (number_records * 3) + (i * 3)] = energy_hourly_gen[y * number_records + i];
-                    energy_hourly_kW[y * (number_records * 3) + (i * 3) + 1] = energy_hourly_gen[y * number_records + i];
-                    energy_hourly_kW[y * (number_records * 3) + (i * 3) + 2] = energy_hourly_gen[y * number_records + i];
+                    if (number_records == 2920) {
+                        energy_hourly_kW[y * (number_records * 3) + (i * 3)] = energy_hourly_gen[y * number_records + i];
+                        energy_hourly_kW[y * (number_records * 3) + (i * 3) + 1] = energy_hourly_gen[y * number_records + i];
+                        energy_hourly_kW[y * (number_records * 3) + (i * 3) + 2] = energy_hourly_gen[y * number_records + i];
+                    }
+                    else {
+                        energy_hourly_kW[y * (number_records)+i] = energy_hourly_gen[y * number_records + i];
+                    }
                     //iday = floor(double(i * 3) / 24); //Calculate day of year
                     if (y == 0) {
                         if (month[i] == 1)
