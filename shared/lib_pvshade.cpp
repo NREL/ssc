@@ -201,6 +201,7 @@ void diffuse_reduce(
 
     // sky diffuse reduction
     Fskydiff = skydiffderates.lookup(stilt);
+    Fskydiff = fmin(Fskydiff, 1.0);
     reduced_skydiff = Fskydiff * poa_sky;
 
 	double solalt = 90 - solzen;
