@@ -551,6 +551,7 @@ public:
             size_t nyears = 1;
             std::vector<ssc_number_t> sys_degradation;
             size_t number_records_gen = number_records;
+            if (number_records == 2920) number_records_gen *= 3.0;
 
             
             /*
@@ -584,7 +585,7 @@ public:
                 sys_degradation.push_back(1); // single year mode - degradation handled in financial models.
             }
             ssc_number_t* energy_hourly_kWh = allocate("energy_hourly_kWh", number_records_gen);
-            ssc_number_t* energy_hourly_kW = allocate("energy_hourly_kW", 8760); //8760 of kW values
+            ssc_number_t* energy_hourly_kW = allocate("energy_hourly_kW", number_records_gen); //8760 of kW values
             ssc_number_t* energy_hourly_gen = allocate("gen", number_records_gen);
             ssc_number_t* sig_wave_height_index_mat = allocate("sig_wave_height_index_mat", number_records);
             ssc_number_t* sig_wave_height_data = allocate("sig_wave_height_data", number_records);
