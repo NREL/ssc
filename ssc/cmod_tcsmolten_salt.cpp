@@ -1047,25 +1047,21 @@ public:
                 // If called from a script.... then maybe?
                 // So.. maybe add optional input like "is_layout_field_in_design_only" and default to False?
 
-                if (field_model_type == 0)
-                {
+                if (field_model_type == 0) {
                     assign("is_optimize", 1);
                     is_optimize = true;
                 }
 
                 assign("calc_fluxmaps", 1);
-
                 spi.run(weather_reader.m_weather_data_provider);
 
-                if (is_optimize)
-                {
+                if (is_optimize) {
                     //Optimization iteration history
                     vector<vector<double> > steps;
                     vector<double> obj, flux;
                     spi.getOptimizationSimulationHistory(steps, obj, flux);
                     size_t nr = steps.size();
-                    if (nr > 0)
-                    {
+                    if (nr > 0) {
                         size_t nc = steps.front().size() + 2;
                         ssc_number_t* ssc_hist = allocate("opt_history", nr, nc);
                         for (size_t i = 0; i < nr; i++) {
@@ -1342,7 +1338,7 @@ public:
             helio_pos.resize(N_hel, 2);
             for (int i = 0; i < N_hel; i++) {
                 helio_pos(i, 0) = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.x;
-                helio_pos(i, 0) = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.y;
+                helio_pos(i, 1) = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.y;
             }
 
             THT = spi.sf.tht.val;
