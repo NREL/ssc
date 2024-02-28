@@ -658,7 +658,7 @@ public:
             // if tracking mode is 1-axis tracking,
             // don't need to limit tilt angles
             if (snowmodel.setup(pv.nmody,
-                (float)pv.tilt, as_double("snow_slide_coefficient"),
+                (float)pv.tilt, ,
                 pv.type == FIXED_RACK || pv.type == FIXED_ROOF)) {
 
                 if (!snowmodel.good) {
