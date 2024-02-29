@@ -39,6 +39,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_util.h"
 #include "cmod_windpower.h"
 
+enum wakeModelOptions { SIMPLE, PARK, EDDYVISCOSITY, CONSTANTVALUE };
+
 static var_info _cm_vtab_windpower[] = {
 	// VARTYPE     DATATYPE     NAME                                    LABEL                                        UNITS     META    GROUP                                REQUIRED_IF                       CONSTRAINTS                                          UI_HINTS
 	{ SSC_INPUT  , SSC_NUMBER , "wind_resource_model_choice"         , "Hourly, Weibull or Distribution model"    , "0/1/2"   ,""                                    , "Resource"                             , "*"                                               , "INTEGER"                                         , "" } ,
@@ -384,16 +386,16 @@ void cm_windpower::exec()
     // create wakeModel
     std::shared_ptr<wakeModelBase> wakeModel(nullptr);
     int wakeModelChoice = as_integer("wind_farm_wake_model");
-    if (wakeModelChoice == 0)
+    if (wakeModelChoice == SIMPLE)
         wakeModel = std::make_shared<simpleWakeModel>(simpleWakeModel(wpc.nTurbines, &wt));
-    else if (wakeModelChoice == 1)
+    else if (wakeModelChoice == PARK)
         wakeModel = std::make_shared<parkWakeModel>(parkWakeModel(wpc.nTurbines, &wt));
-    else if (wakeModelChoice == 2)
+    else if (wakeModelChoice == EDDYVISCOSITY)
     {
         wpc.turbulenceIntensity *= 100;
         wakeModel = std::make_shared<eddyViscosityWakeModel>(eddyViscosityWakeModel(wpc.nTurbines, &wt, as_double("wind_resource_turbulence_coeff")));
     }
-    else if (wakeModelChoice == 3)
+    else if (wakeModelChoice == CONSTANTVALUE)
     {
         wake_int_loss_percent = as_double("wake_int_loss");
         wakeModel = std::make_shared<constantWakeModel>(constantWakeModel(wpc.nTurbines, &wt, (100. - wake_int_loss_percent)/100.));
@@ -412,7 +414,7 @@ void cm_windpower::exec()
             throw exec_error("windpower", wpc.GetErrorDetails());
         }
 
-        if (wakeModelChoice != 3)
+        if (wakeModelChoice != CONSTANTVALUE)
             wake_int_loss_percent = (1. - farmPower / farmPowerGross) * 100.;
 
         int nstep = 8760;
@@ -652,7 +654,7 @@ void cm_windpower::exec()
     assign("wind_speed_average", wsp_avg);
 
 	// internal wake loss is calculated during simulation rather than provided
-	if (wakeModelChoice != 3){
+	if (wakeModelChoice != CONSTANTVALUE){
         wake_int_loss_percent = (1. - annual_after_wake_loss/annual_gross) * 100.;
 	}
 
