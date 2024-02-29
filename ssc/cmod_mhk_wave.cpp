@@ -472,8 +472,8 @@ public:
         }
         bool is_annual = true;
         if (wave_resource_model_choice==1) { //Time series wave resource option
-            size_t number_records = 2920;//Initialize number of records to 2920 (3 hour annual dataset)
-            size_t number_hours = 8760; //Initialize number of hours to 8760 (hours in annual dataset)
+            double number_records = 2920;//Initialize number of records to 2920 (3 hour annual dataset)
+            double number_hours = 8760; //Initialize number of hours to 8760 (hours in annual dataset)
             std::vector<double> wave_height_input;
             std::vector<double> wave_period_input;
             std::vector<int> year;
@@ -605,7 +605,7 @@ public:
                 days_in_month = { 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366 };
                 days_in_year = 367;
             }
-            size_t hour_step = 1.0;
+            double hour_step = 1.0;
             if (is_annual) {
                 hour_step = number_hours / number_records;
             }
@@ -613,7 +613,7 @@ public:
             ssc_number_t sig_wave_height_index = 0;
             ssc_number_t energy_period_index = 0;
             
-            ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 9, days_in_year); //Annual energy distribution 24 hr (3 hour time step) x 365 days for Summary page heatmap
+            ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 24 / std::ceil(hour_step) + 1.0, days_in_year); //Annual energy distribution 24 hr (3 hour time step) x 365 days for Summary page heatmap
             for (size_t j = 0; j < (size_t)wave_power_matrix.nrows(); j++) { //Build row and column labels of height x period energy distribution matrix
                 p_annual_energy_dist[size_t(j) * 22] = (ssc_number_t)wave_power_matrix.at(j, 0);
             }
@@ -621,8 +621,9 @@ public:
                 p_annual_energy_dist[size_t(m)] = (ssc_number_t)wave_power_matrix.at(0, m);
             }
             for (size_t m = 0; m < days_in_year; m++) { //Build row and column lables for time energy distribution matrix
-                for (size_t h = 0; h < 9; h++) {
-                    p_annual_energy_dist_time[h * days_in_year] = (ssc_number_t)3 * (h - 1);
+                for (size_t h = 0; h < 24 / std::ceil(hour_step) + 1.0; h++) {
+                    size_t h_index = h * std::ceil(hour_step); 
+                    p_annual_energy_dist_time[h * days_in_year] = h_index - std::ceil(hour_step);
                     p_annual_energy_dist_time[m] = (ssc_number_t)m;
                 }
             }
@@ -680,19 +681,19 @@ public:
                             throw exec_error("mhk_wave", "The device power calculated from the wave height and wave period exceeds the maximum power matrix value at index" + to_string(i) + ". Please check the wave conditions.");
                     }
                 
-                    energy_hourly_kWh[y * number_records + i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index))) * hour_step * (1 - total_loss / 100) * sys_degradation[y] * number_devices;
+                    energy_hourly_kWh[y * size_t(number_records) + i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index))) * hour_step * (1 - total_loss / 100) * sys_degradation[y] * number_devices;
                     if (y == 0)
                         p_annual_energy_dist[size_t(sig_wave_height_index_mat[i]) * 22 + size_t(energy_period_index_mat[i])] += energy_hourly_kWh[i]; //Add energy for given time step to height x period distribution matrix at specified grid point
-                    energy_hourly_gen[y * number_records + i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index_mat[i]), size_t(energy_period_index_mat[i]))) * (1 - total_loss / 100) * sys_degradation[y] * number_devices; //Store in gen to use in heatmap output (probably don't need two variables)
+                    energy_hourly_gen[y * size_t(number_records) + i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index_mat[i]), size_t(energy_period_index_mat[i]))) * (1 - total_loss / 100) * sys_degradation[y] * number_devices; //Store in gen to use in heatmap output (probably don't need two variables)
                     //energy_hourly_gen[i*3+1] = energy_hourly[i]; //Store in gen to use in heatmap output (probably don't need two variables)
                     //energy_hourly_gen[i*3+2] = energy_hourly[i]; //Store in gen to use in heatmap output (probably don't need two variables)
                     if (number_records == 2920) {
-                        energy_hourly_kW[y * (number_records * 3) + (i * 3)] = energy_hourly_gen[y * number_records + i];
-                        energy_hourly_kW[y * (number_records * 3) + (i * 3) + 1] = energy_hourly_gen[y * number_records + i];
-                        energy_hourly_kW[y * (number_records * 3) + (i * 3) + 2] = energy_hourly_gen[y * number_records + i];
+                        energy_hourly_kW[y * size_t(number_records * 3) + (i * 3)] = energy_hourly_gen[y * size_t(number_records) + i];
+                        energy_hourly_kW[y * size_t(number_records * 3) + (i * 3) + 1] = energy_hourly_gen[y * size_t(number_records) + i];
+                        energy_hourly_kW[y * size_t(number_records * 3) + (i * 3) + 2] = energy_hourly_gen[y * size_t(number_records) + i];
                     }
                     else {
-                        energy_hourly_kW[y * (number_records)+i] = energy_hourly_gen[y * number_records + i];
+                        energy_hourly_kW[y * size_t(number_records)+i] = energy_hourly_gen[y * size_t(number_records) + i];
                     }
                     //iday = floor(double(i * 3) / 24); //Calculate day of year
                     if (y == 0) {
@@ -703,9 +704,9 @@ public:
                         //ihour = fmod(i * 3, 24); //Calculate hour of day
                         ihour = hour[i];
                         for (size_t d = 0; d < days_in_year; d++) {
-                            for (size_t h = 0; h < 9; h++) {
-                                if (iday == d && ihour == size_t(3 * (h - 1))) {
-                                    p_annual_energy_dist_time[h * days_in_year + d] += energy_hourly_kWh[i]; //Add energy for time step to time distribution matrix at day and hour of current timestep
+                            for (size_t h = 0; h < 24 / std::ceil(hour_step) + 1.0; h++) {
+                                if (iday == d && ihour == std::ceil(hour_step) * h) {
+                                    p_annual_energy_dist_time[(h+1) * days_in_year + d] += energy_hourly_kWh[i]; //Add energy for time step to time distribution matrix at day and hour of current timestep
                                     break; //Get out of loop once day and hour match is found
                                 }
                             }

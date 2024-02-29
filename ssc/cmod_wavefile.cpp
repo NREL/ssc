@@ -316,7 +316,7 @@ public:
             for (size_t m = 0; m < 22; m++) {
                 mat[m] = m - 0.5;
             }
-            ssc_number_t* month = allocate("month", numberRecords);
+            ssc_number_t* p_month = allocate("month", numberRecords);
             std::vector<ssc_number_t> timecheck(numberRecords);
             timecheck[0] = 0;
             ssc_number_t* wave_heights = allocate("significant_wave_height", numberRecords);
@@ -325,7 +325,7 @@ public:
                 getline(ifs, buf);
                 values.clear();
                 values = split(buf);
-                
+                /*
                 if (r == 0) {
                     //value_0 = split(buf);
                     hour0 = (ssc_number_t)std::stod(values[hour_index]);
@@ -341,11 +341,12 @@ public:
                     if (timecheck[r] - timecheck[r - 1] != hourdiff && timecheck[r] != 0) {
                         throw exec_error("wave_file_reader", "Time steps are nonuniform");
                     }
-                }
+                }*/
                 p_year[r] = (ssc_number_t)std::stod(values[year_index]);
                 p_hour[r] = (ssc_number_t)std::stod(values[hour_index]);
                 p_day[r] = (ssc_number_t)std::stod(values[day_index]);
                 p_minute[r] = (ssc_number_t)std::stod(values[minute_index]);
+                p_month[r] = (ssc_number_t)std::stod(values[month_index]);
                 wave_heights[r] = (ssc_number_t)std::stod(values[height_index]);
                 wave_periods[r] = (ssc_number_t)std::stod(values[period_index]);
 
