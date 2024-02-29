@@ -1330,12 +1330,14 @@ SSCEXPORT ssc_bool_t ssc_module_hybridize(ssc_module_t p_mod)
     for (size_t i=0; i<35; i++){
         if (vtab_oandm_hybrid[i].var_type == SSC_INVALID)
             break;
-
+        std::string name = std::string(vtab_oandm_hybrid[i].name);
         std::string meta = std::string(vtab_oandm_hybrid[i].meta);
         if (!meta.size()){
             // if no meta description on variable, apply it to all technologies
-            vtab_oandm_hybrid_tech[copy_counter] = &vtab_oandm_hybrid[i];
-            copy_counter++;
+            if (!cmod->has_info(name)) {
+                vtab_oandm_hybrid_tech[copy_counter] = &vtab_oandm_hybrid[i];
+                copy_counter++;
+            }
             continue;
         }
 
@@ -1359,8 +1361,10 @@ SSCEXPORT ssc_bool_t ssc_module_hybridize(ssc_module_t p_mod)
                 }
             }
             if (!restricted) {
-                vtab_oandm_hybrid_tech[copy_counter] = &vtab_oandm_hybrid[i];
-                copy_counter++;
+                if (!cmod->has_info(name)){
+                    vtab_oandm_hybrid_tech[copy_counter] = &vtab_oandm_hybrid[i];
+                    copy_counter++;
+                }
                 continue;
             }
         }
@@ -1368,8 +1372,10 @@ SSCEXPORT ssc_bool_t ssc_module_hybridize(ssc_module_t p_mod)
             // apply allowlist
             for (std::string token:tokens){
                 if (cmod_name == token){
-                    vtab_oandm_hybrid_tech[copy_counter] = &vtab_oandm_hybrid[i];
-                    copy_counter++;
+                    if (!cmod->has_info(name)){
+                        vtab_oandm_hybrid_tech[copy_counter] = &vtab_oandm_hybrid[i];
+                        copy_counter++;
+                    }
                     break;
                 }
             }

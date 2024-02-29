@@ -189,7 +189,8 @@ public:
 	void clear_log();
 	log_item *log(int index);
 	var_info *info(int index);
-
+	bool has_info(const std::string &name);
+	
     virtual bool compute( handler_interface *handler, var_table *data );
 
 

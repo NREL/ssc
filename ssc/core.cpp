@@ -396,6 +396,23 @@ compute_module::log_item *compute_module::log(int index) {
         return NULL;
 }
 
+bool compute_module::has_info(const std::string &name) {
+    // if there is an info lookup table, use it
+    if (m_infomap != NULL) {
+        unordered_map<std::string, var_info *>::iterator pos = m_infomap->find(name);
+        if (pos != m_infomap->end())
+            return true;
+    }
+
+    // otherwise search
+    std::vector<var_info *>::iterator it;
+    for (it = m_varlist.begin(); it != m_varlist.end(); ++it) {
+        if ((*it)->name == name)
+            return true;
+    }
+    return false;
+}
+
 var_info *compute_module::info(int index) {
     if (index >= 0 && index < (int) m_varlist.size())
         return m_varlist[index];

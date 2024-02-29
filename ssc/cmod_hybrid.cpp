@@ -242,7 +242,7 @@ public:
                     escal_or_annual(input, pOMLandLease, analysisPeriod, "om_land_lease", inflation_rate, total_land_area, false, input.as_double("om_land_lease_escal") * 0.01);
                 }
                 // optional fossil fuel costs
-                if (compute_module_inputs->table.lookup("system_heat_rate")) {
+                if (compute_module_inputs->table.lookup("om_fuel_cost") && compute_module_inputs->table.lookup("system_heat_rate") && compute_module_inputs->table.lookup("annual_fuel_usage")) {
                     ssc_number_t* pOMFuelCost = ((var_table*)compute_module_outputs)->allocate("cf_om_fuel_cost", analysisPeriod + 1);
                     ssc_number_t system_heat_rate = compute_module_inputs->table.lookup("system_heat_rate")->num;
                     ssc_number_t year1_fuel_use = ((var_table*)compute_module_outputs)->as_double("annual_fuel_usage"); // kWht
