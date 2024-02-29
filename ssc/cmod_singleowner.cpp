@@ -3171,8 +3171,6 @@ public:
 	if ((size_of_debt + size_of_equity) > 0)
 		debt_fraction = size_of_debt / (size_of_debt + size_of_equity);
 
-
-
 	double wacc = 0.0;
 	wacc = (1.0 - debt_fraction)*analysis_period_irr + debt_fraction*term_int_rate*(1.0 - cf.at(CF_effective_tax_frac, 1));
 
