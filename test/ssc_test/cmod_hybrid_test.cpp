@@ -219,3 +219,54 @@ TEST_F(CmodHybridTest, GenericPVWattsWindFuelCellBatteryHybrid_SingleOwner) {
     ssc_data_free(dat);
     dat = nullptr;
 }
+
+
+// Code generator testing
+
+TEST_F(CmodHybridTest, CodeGeneratorPVWattsv8WindBatterySingleOwner) {
+
+    char file_path[256];
+    int nfc1 = sprintf(file_path, "%s/test/input_json/hybrids/codegenerator/PVWatts_Wind_Battery_Hybrid_Single_Owner.json", SSCDIR);
+    std::ifstream file(file_path);
+    std::ostringstream tmp;
+    tmp << file.rdbuf();
+    file.close();
+    ssc_data_t dat = json_to_ssc_data(tmp.str().c_str());
+    tmp.str("");
+
+    auto table = ssc_data_get_table(dat, "input");
+    auto pv_table = ssc_data_get_table(table, "pvwattsv8");
+    char solar_resource_path[256];
+    sprintf(solar_resource_path, "%s/test/input_cases/general_data/phoenix_az_33.450495_-111.983688_psmv3_60_tmy.csv", std::getenv("SSCDIR"));
+    ssc_data_set_string(pv_table, "solar_resource_file", solar_resource_path);
+
+    auto wind_table = ssc_data_get_table(table, "windpower");
+    char wind_resource_path[256];
+    sprintf(wind_resource_path, "%s/test/input_cases/general_data/AZ Eastern-Rolling Hills.srw", std::getenv("SSCDIR"));
+    ssc_data_set_string(wind_table, "wind_resource_filename", wind_resource_path);
+
+    int errors = run_module(dat, "hybrid");
+
+    EXPECT_FALSE(errors);
+    if (!errors)
+    {
+        ssc_number_t pvannualenergy, windannualenergy, npv;
+        auto outputs = ssc_data_get_table(dat, "output");
+
+        auto pv_outputs = ssc_data_get_table(outputs, "pvwattsv8");
+        ssc_data_get_number(pv_outputs, "annual_energy", &pvannualenergy);
+        EXPECT_NEAR(pvannualenergy, 211907456, 211907456 * 0.01);
+
+        auto wind_outputs = ssc_data_get_table(outputs, "windpower");
+        ssc_data_get_number(wind_outputs, "annual_energy", &windannualenergy);
+        EXPECT_NEAR(windannualenergy, 366975552, 366975552 * 0.01);
+
+        auto hybrid_outputs = ssc_data_get_table(outputs, "Hybrid");
+        ssc_data_get_number(hybrid_outputs, "project_return_aftertax_npv", &npv);
+        EXPECT_NEAR(npv, -291370144, 291370144 * 0.001);
+    }
+    ssc_data_free(dat);
+    dat = nullptr;
+}
+
+
