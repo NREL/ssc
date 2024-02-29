@@ -125,7 +125,10 @@ public:
             var_data* financial_compute_modules = input_table->table.lookup("hybrid");
             int analysisPeriod = (int)financial_compute_modules->table.lookup("analysis_period")->num;
             ssc_number_t inflation_rate = financial_compute_modules->table.lookup("inflation_rate")->num * 0.01;
-            ssc_number_t sales_tax_rate = financial_compute_modules->table.lookup("sales_tax_rate")->num * 0.01;
+            ssc_number_t sales_tax_rate = 0;
+            if (financial_compute_modules->table.is_assigned("sales_tax_rate")){
+                sales_tax_rate = financial_compute_modules->table.lookup("sales_tax_rate")->num * 0.01;
+            }
 
             for (size_t i = 0; i < vec_cms.size(); i++) {
                 std::string computemodulename = vec_cms[i].str;
