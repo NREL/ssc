@@ -3338,7 +3338,7 @@ var_info vtab_lcos_inputs[] = {
     { SSC_INPUT, SSC_MATRIX, "net_billing_credits_ym", "Net billing credit", "$", "", "Charges by Month", "", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
 
     // fix for running financial compute modules tests
-    { SSC_INOUT,       SSC_ARRAY,       "gen_purchases",                              "Electricity from grid",                                    "kW",      "",                       "System Output",       "",                           "",                              "" },
+    { SSC_INOUT,       SSC_ARRAY,       "gen_purchases",                              "Electricity from grid to system",                         "kW",      "",                       "System Output",       "",                           "",                              "" },
     { SSC_INPUT,        SSC_ARRAY,      "rate_escalation",          "Annual electricity rate escalation",   "%/year",   "",                      "Electricity Rates",       "",              "",                             "" },
 
     
