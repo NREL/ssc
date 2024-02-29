@@ -1134,7 +1134,6 @@ void cm_pvsamv1::exec()
     double ref_area_m2 = Subarrays[0]->Module->referenceArea;
     double module_watts_stc = Subarrays[0]->Module->moduleWattsSTC;
     SharedInverter* sharedInverter = PVSystem->m_sharedInverter.get();
-    SharedInverter* sharedInverter_clipping = PVSystem->m_sharedInverter.get();
 
     
 
@@ -2622,6 +2621,10 @@ void cm_pvsamv1::exec()
     double annual_distribution_clipping_loss = 0;
     util::matrix_t<double> sub_clipping_matrix(21, 21);
     if (as_boolean("enable_subhourly_clipping")) {
+        //check that both clipping models are not enabled
+        if (as_boolean("enable_subinterval_distribution")) {
+            throw exec_error("pvsamv1", "The Allen and Walker methods cannot be used at the same time. Please set either enable_subhourly_clipping or enable_subinterval_distribution to 0.");
+        }
         if (is_assigned("subhourly_clipping_matrix")) {
             sub_clipping_matrix = as_matrix("subhourly_clipping_matrix");
         }
@@ -2638,6 +2641,11 @@ void cm_pvsamv1::exec()
         assign("nominal_annual_clipping_output", nominal_annual_clipping_output);
     }
     if (as_boolean("enable_subinterval_distribution")) {
+        //check that both clipping models are not enabled
+        if (as_boolean("enable_subhourly_clipping")) {
+            throw exec_error("pvsamv1", "The Allen and Walker methods cannot be used at the same time. Please set either enable_subhourly_clipping or enable_subinterval_distribution to 0.");
+        }
+
         for (size_t inrec = 0; inrec < nrec; inrec++) {
             idx = inrec;
             double dcPower_kW_max = PVSystem->p_systemDCPowerCS[idx];
@@ -2816,35 +2824,24 @@ void cm_pvsamv1::exec()
                     double acPower_kW_avg = sharedInverter->powerAC_kW + sharedInverter->powerClipLoss_kW;
                     acpwr_gross += sharedInverter->powerClipLoss_kW; //add clipping loss back in
                     sharedInverter->powerClipLoss_kW = 0; //set standard clipping to zero;
-                    //sharedInverter_clipping->calculateACPower(dcPower_kW_csky, dcVoltagePerMppt[0], Irradiance->weatherRecord.tdry);
                     acPower_kW_max = std::max(PVSystem->p_systemACPowerMax[idx], acPower_kW_avg);
-                    log(util::format("dcPower max is %lg", acPower_kW_max), SSC_NOTICE);
                     double alt_angle = Irradiance->p_sunAltitudeAngle[idx] * M_PI / 180;
                     if (Irradiance->p_sunAltitudeAngle[idx] < 0.001) alt_angle = 0.001 * M_PI / 180; //For negative alt angle
                     double AM = 1.0 / sin(alt_angle);
                     if (AM > 38.0) AM = 38.0;
                     double acPower_kW_min = std::min(acPower_kW_max * 0.045 / AM, acPower_kW_avg); //AM?
-                    log(util::format("dcPower min is %lg", acPower_kW_min), SSC_NOTICE);
                     //double acPower_kW_avg = sharedInverter->powerAC_kW + sharedInverter->powerClipLoss_kW;
                     double CF = (acPower_kW_max - acPower_kW_min) > 0.0 ? (acPower_kW_avg - acPower_kW_min) / (acPower_kW_max - acPower_kW_min) : 0.0;
                     if (CF == 1.0) CF = 0.999999;
                     double n = CF / (1 - CF);
-                    log(util::format("n is %lg", n), SSC_NOTICE);
-                    int inverter_count = as_integer("inverter_count");
-                    //int inverter_count = 99;
-                    //sharedInverter->calculateACPower(dcPower_kW_csky, dcVoltagePerMppt[0], Irradiance->weatherRecord.tdry, as_boolean("enable_subhourly_clipping"));
                     double inv_ac_max = sharedInverter->getACNameplateCapacitykW();
-                    //log(util::format("Inverter DC Max is %lg kW", inv_dc_max), SSC_NOTICE);
                     double T = 1.0;
                     double log_test = (acPower_kW_max - inv_ac_max) > 0.0 ? (1.0 - (inv_ac_max - acPower_kW_min) / (acPower_kW_max - acPower_kW_min)) : 0.0;
-                    log(util::format("log_test is %lg", log_test), SSC_NOTICE);
                     ssc_number_t t_lm = 0.0;
                     if (log_test > 0.0 && n > 0.0) {
                         t_lm = T * std::exp(std::log(1.0 - (inv_ac_max - acPower_kW_min) / (acPower_kW_max - acPower_kW_min)) / n); //fraction of hours
                     }
-                    log(util::format("t_lm is %lg", t_lm), SSC_NOTICE);
                     double E_clipped = acPower_kW_max * t_lm - ((acPower_kW_max - acPower_kW_min) * pow(t_lm, n + 1) / ((n + 1) * pow(T, n))) - inv_ac_max * t_lm;
-                    log(util::format("E_clipped is %lg kW", E_clipped), SSC_NOTICE);
                     double E_remaining = (inv_ac_max - acPower_kW_max) * T + ((acPower_kW_max - acPower_kW_min) * pow(T, n + 1) / ((n + 1) * pow(T, n))) - (inv_ac_max - acPower_kW_max) * t_lm -
                         ((acPower_kW_max - acPower_kW_min) * pow(t_lm, n + 1) / ((n + 1) * pow(T, n)));
                     if (E_clipped > 0.0 && E_clipped < 1.0e38) {
@@ -2853,22 +2850,6 @@ void cm_pvsamv1::exec()
                     else {
                         ac_subinterval_clipping_loss = 0.0;
                     }
-                    /*
-                    if (E_clipped > 0.0 && E_clipped < 1.0e38) {
-                        for (size_t m = 0; m < PVSystem->Inverter->nMpptInputs; m++)
-                        {
-                            dcPowerNetPerMppt_kW[m] -= E_clipped * dcPowerNetPerMppt_kW[m] / dcPower_kW;
-                        }
-                        dcPower_kW -= E_clipped;
-                        PVSystem->p_DistributionClippingLoss[idx] = (ssc_number_t)E_clipped;
-                        if (iyear == 0) {
-                            annual_distribution_clipping_loss += E_clipped;
-                        }
-                    }
-                    else {
-                        PVSystem->p_DistributionClippingLoss[idx] = (ssc_number_t)0;
-                    }
-                    */
                 }
                 else {
                     ac_subinterval_clipping_loss = (ssc_number_t)0;
@@ -2902,8 +2883,12 @@ void cm_pvsamv1::exec()
                 PVSystem->p_inverterPowerConsumptionLoss[idx] = (ssc_number_t)(sharedInverter->powerConsumptionLoss_kW);
                 PVSystem->p_inverterThermalLoss[idx] = (ssc_number_t)(sharedInverter->powerTempLoss_kW);
                 PVSystem->p_acWiringLoss[idx] = (ssc_number_t)(ac_wiringloss);
-                PVSystem->p_subhourlyClippingLoss[idx] = (ssc_number_t)(ac_subhourlyclipping_loss);
-                PVSystem->p_DistributionClippingLoss[idx] = (ssc_number_t)(ac_subinterval_clipping_loss);
+                if (as_boolean("enable_subhourly_clipping")) {
+                    PVSystem->p_subhourlyClippingLoss[idx] = (ssc_number_t)(ac_subhourlyclipping_loss);
+                }
+                if (as_boolean("enable_subinterval_distribution")) {
+                    PVSystem->p_DistributionClippingLoss[idx] = (ssc_number_t)(ac_subinterval_clipping_loss);
+                }
                 
                 if (offline) {
                     PVSystem->p_inverterNightTimeLoss[idx] = 0.0;

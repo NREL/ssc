@@ -976,10 +976,12 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
     p_systemACPowerMax = cm->allocate("ac_csky_max", numberOfLifetimeRecords);
 
     p_systemDCPowerCS = cm->allocate("dc_net_clearsky", numberOfLifetimeRecords);
-    p_subhourlyClippingLoss = cm->allocate("subhourly_clipping_loss", numberOfLifetimeRecords);
-    //p_subhourlyClippingLossFactor = cm->allocate("subhourly_clipping_loss_factor", numberOfLifetimeRecords);
-
-    p_DistributionClippingLoss = cm->allocate("distribution_clipping_loss", numberOfLifetimeRecords);
+    if (cm->as_boolean("enable_subhourly_clipping")) {
+        p_subhourlyClippingLoss = cm->allocate("subhourly_clipping_loss", numberOfLifetimeRecords);
+    }
+    if (cm->as_boolean("enable_subinterval_distribution")) {
+        p_DistributionClippingLoss = cm->allocate("distribution_clipping_loss", numberOfLifetimeRecords);
+    }
 
     if (Simulation->useLifetimeOutput)
     {
