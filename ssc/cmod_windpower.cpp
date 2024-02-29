@@ -94,32 +94,39 @@ static var_info _cm_vtab_windpower[] = {
 
 
         // OUTPUTS ----------------------------------------------------------------------------annual_energy
-	{ SSC_OUTPUT , SSC_ARRAY  , "turbine_output_by_windspeed_bin"    , "Turbine output by wind speed bin"         , "kW"      ,""                                    , "Power Curve"                      ,"" , "LENGTH_EQUAL=wind_turbine_powercurve_windspeeds" , "" } ,
-	{ SSC_OUTPUT , SSC_ARRAY  , "wind_direction"                     , "Wind direction"                           , "degrees"     ,""                                    , "Time Series"                          , "wind_resource_model_choice=0"                    , ""                                                , "" } ,
+    // weather data outputs
+    { SSC_OUTPUT , SSC_ARRAY  , "turbine_output_by_windspeed_bin"    , "Turbine output by wind speed bin"         , "kW"      ,""                                    , "Power Curve"                          ,""                                                 , "LENGTH_EQUAL=wind_turbine_powercurve_windspeeds" , "" } ,
+	{ SSC_OUTPUT , SSC_ARRAY  , "wind_direction"                     , "Wind direction"                           , "degrees" ,""                                    , "Time Series"                          , "wind_resource_model_choice=0"                    , ""                                                , "" } ,
     { SSC_OUTPUT , SSC_ARRAY  , "wind_speed"                         , "Wind speed"                               , "m/s"     ,""                                    , "Time Series"                          , "wind_resource_model_choice=0"                    , ""                                                , "" } ,
 	{ SSC_OUTPUT , SSC_ARRAY  , "temp"                               , "Air temperature"                          , "'C"      ,""                                    , "Time Series"                          , "wind_resource_model_choice=0"                    , ""                                                , "" } ,
 	{ SSC_OUTPUT , SSC_ARRAY  , "pressure"                           , "Pressure"                                 , "atm"     ,""                                    , "Time Series"                          , "wind_resource_model_choice=0"                    , ""                                                , "" } ,
 
     // pass through weather file header data to outputs
-    { SSC_OUTPUT , SSC_NUMBER  , "lat"                               , "Latitude"                                 , "degrees"     ,""                                     , "Location"                          , "wind_resource_model_choice=0"                    , ""                                                , "" } ,
-    { SSC_OUTPUT , SSC_NUMBER  , "lon"                               , "Longitude"                                , "degrees"      ,""                                    , "Location"                          , "wind_resource_model_choice=0"                    , ""                                                , "" } ,
-    { SSC_OUTPUT , SSC_NUMBER  , "elev"                              , "Site elevation"                           , "m"     ,""                                      , "Location"                          , "wind_resource_model_choice=0"                    , ""                                                , "" } ,
-    { SSC_OUTPUT , SSC_NUMBER  , "year"                              , "Year"                                     , ""     ,""                                       , "Location"                          , "wind_resource_model_choice=0"                    , ""                                                , "" } ,
+    { SSC_OUTPUT , SSC_NUMBER  , "lat"                               , "Latitude"                                 , "degrees" ,""                                    , "Location"                             , "wind_resource_model_choice=0"                    , ""                                                , "" } ,
+    { SSC_OUTPUT , SSC_NUMBER  , "lon"                               , "Longitude"                                , "degrees" ,""                                    , "Location"                             , "wind_resource_model_choice=0"                    , ""                                                , "" } ,
+    { SSC_OUTPUT , SSC_NUMBER  , "elev"                              , "Site elevation"                           , "m"       ,""                                    , "Location"                             , "wind_resource_model_choice=0"                    , ""                                                , "" } ,
+    { SSC_OUTPUT , SSC_NUMBER  , "year"                              , "Year"                                     , ""        ,""                                    , "Location"                             , "wind_resource_model_choice=0"                    , ""                                                , "" } ,
 
-	{ SSC_OUTPUT , SSC_ARRAY  , "monthly_energy"                     , "Monthly Energy Gross"                           , "kWh"     ,""                                    , "Monthly"                              , "*"                                               , "LENGTH=12"                                       , "" } ,
+    // timeseries outputs
+    { SSC_OUTPUT , SSC_ARRAY   , "timeseries_wake_loss_kW"           , "Wake loss at each timestep in kW"         , "kW"      ,""                                    , "Time Series"                          , ""                                                , ""                                                , "" } ,
+    { SSC_OUTPUT , SSC_ARRAY   , "timeseries_wake_loss_percent"      , "Wake loss at each timestep percent"       , "%"       ,""                                    , "Time Series"                          , ""                                                , ""                                                , "" } ,
+
+    // monthly and annual outputs
+	{ SSC_OUTPUT , SSC_ARRAY  , "monthly_energy"                     , "Monthly Energy Gross"                     , "kWh"     ,""                                    , "Monthly"                              , "*"                                               , "LENGTH=12"                                       , "" } ,
 	{ SSC_OUTPUT , SSC_NUMBER , "annual_energy"                      , "Annual Energy"                            , "kWh"     ,""                                    , "Annual"                               , "*"                                               , ""                                                , "" } ,
 	{ SSC_OUTPUT , SSC_NUMBER , "annual_gross_energy"                , "Annual Gross Energy"                      , "kWh"     ,""                                    , "Annual"                               , "*"                                               , ""                                                , "" } ,
 	{ SSC_OUTPUT , SSC_NUMBER , "capacity_factor"                    , "Capacity factor"                          , "%"       ,""                                    , "Annual"                               , "*"                                               , ""                                                , "" } ,
 	{ SSC_OUTPUT , SSC_NUMBER , "kwh_per_kw"                         , "First year kWh/kW"                        , "kWh/kW"  ,""                                    , "Annual"                               , "*"                                               , ""                                                , "" } ,
     { SSC_OUTPUT , SSC_NUMBER , "wind_speed_average"                 , "Average Wind speed"                       , "m/s"     ,""                                    , "Annual"                               , ""                                                , ""                                                , "" } ,
 
+    // loss outputs
     { SSC_OUTPUT , SSC_NUMBER , "avail_losses"                       , "Availability losses"                      , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
     { SSC_OUTPUT , SSC_NUMBER , "elec_losses"                        , "Electrical losses"                        , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
     { SSC_OUTPUT , SSC_NUMBER , "env_losses"                         , "Environmental losses"                     , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
     { SSC_OUTPUT , SSC_NUMBER , "ops_losses"                         , "Operational losses"                       , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
     { SSC_OUTPUT , SSC_NUMBER , "turb_losses"                        , "Turbine losses"                           , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
-    { SSC_OUTPUT , SSC_NUMBER , "wake_losses"                        , "Wake losses"                              , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
-
+    { SSC_OUTPUT , SSC_NUMBER , "annual_wake_loss_percent"           , "Annual wake loss percentage"              , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
+    { SSC_OUTPUT , SSC_NUMBER , "annual_wake_loss_kWh"                , "Annual wake loss"                        , "kWh"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
     { SSC_OUTPUT , SSC_NUMBER , "cutoff_losses"                      , "Low temp and Icing Cutoff losses"         , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
 	var_info_invalid };
 
@@ -233,7 +240,7 @@ cm_windpower::cm_windpower(){
 }
 
 // wind PRUF loss framework. Can replace numerical loss percentages by calculated losses in future model
-void calculate_losses(compute_module *cm, double wake_int_loss_percent) {
+void calculate_losses(compute_module *cm, double annual_wake_int_loss_percent) {
     double avail_loss_percent = 1. - ( 100. - cm->as_double("avail_bop_loss"))/100. * (100. - cm->as_double("avail_grid_loss"))/100.
             * ( 100. - cm->as_double("avail_turb_loss"))/100.;
     double elec_loss_percent = 1. - ( 100. - cm->as_double("elec_eff_loss"))/100. * ( 100. - cm->as_double("elec_parasitic_loss"))/100.;
@@ -245,13 +252,13 @@ void calculate_losses(compute_module *cm, double wake_int_loss_percent) {
     double turb_loss_percent = 1. - ( 100. - cm->as_double("turb_generic_loss"))/100. * ( 100. - cm->as_double("turb_hysteresis_loss"))/100.
                                * ( 100. - cm->as_double("turb_perf_loss"))/100. * ( 100. - cm->as_double("turb_specific_loss"))/100.;
     double wake_loss_percent = 1. - ( 100. - cm->as_double("wake_ext_loss"))/100. * ( 100. - cm->as_double("wake_future_loss"))/100.
-                                * (100. - wake_int_loss_percent) / 100.;
+                                * (100. - annual_wake_int_loss_percent) / 100.;
     cm->assign("avail_losses", avail_loss_percent * 100.);
     cm->assign("elec_losses", elec_loss_percent * 100.);
     cm->assign("env_losses", env_loss_percent * 100.);
     cm->assign("ops_losses", ops_loss_percent * 100.);
     cm->assign("turb_losses", turb_loss_percent * 100.);
-    cm->assign("wake_losses", wake_loss_percent * 100.);
+    cm->assign("annual_wake_loss_percent", wake_loss_percent * 100.);
 }
 
 double get_fixed_losses(compute_module* cm){
@@ -325,7 +332,7 @@ void cm_windpower::exec()
     if (lossMultiplier > 1 || lossMultiplier < 0){
         throw exec_error("windpower", "Total percent losses must be between 0 and 100.");
     }
-    double wake_int_loss_percent = 0.;
+    double annual_wake_int_loss_percent = 0.;
 
 	bool lowTempCutoff = as_boolean("en_low_temp_cutoff");
 	double lowTempCutoffValue = lowTempCutoff ? as_double("low_temp_cutoff") : -1;
@@ -351,8 +358,8 @@ void cm_windpower::exec()
 		double turbine_kw = wpc.windPowerUsingWeibull(weibull_k, avg_speed, ref_height, &turbine_outkW[0]);
 		ssc_number_t gross_energy = turbine_kw * wpc.nTurbines;
 
-        wake_int_loss_percent = is_assigned("wake_int_loss") ? as_double("wake_int_loss") : 0.;
-		turbine_kw = turbine_kw * lossMultiplier * (1. - wake_int_loss_percent/100.);
+        annual_wake_int_loss_percent = is_assigned("wake_int_loss") ? as_double("wake_int_loss") : 0.;
+		turbine_kw = turbine_kw * lossMultiplier * (1. - annual_wake_int_loss_percent/100.);
 
 		int nstep = 8760;
 		ssc_number_t farm_kw = (ssc_number_t)turbine_kw * wpc.nTurbines / (ssc_number_t)nstep;
@@ -379,7 +386,7 @@ void cm_windpower::exec()
 		assign("annual_gross_energy", gross_energy);
 		assign("wind_speed", avg_speed);
         calculate_p50p90(this);
-        calculate_losses(this, wake_int_loss_percent);
+        calculate_losses(this, annual_wake_int_loss_percent);
 		return;
 	}
 
@@ -397,8 +404,8 @@ void cm_windpower::exec()
     }
     else if (wakeModelChoice == CONSTANTVALUE)
     {
-        wake_int_loss_percent = as_double("wake_int_loss");
-        wakeModel = std::make_shared<constantWakeModel>(constantWakeModel(wpc.nTurbines, &wt, (100. - wake_int_loss_percent)/100.));
+        annual_wake_int_loss_percent = as_double("wake_int_loss");
+        wakeModel = std::make_shared<constantWakeModel>(constantWakeModel(wpc.nTurbines, &wt, (100. - annual_wake_int_loss_percent)/100.));
     }
     else{
         throw exec_error("windpower", util::format("wind_farm_wake_model must be 0, 1, 2 or 3."));
@@ -415,7 +422,7 @@ void cm_windpower::exec()
         }
 
         if (wakeModelChoice != CONSTANTVALUE)
-            wake_int_loss_percent = (1. - farmPower / farmPowerGross) * 100.;
+            annual_wake_int_loss_percent = (1. - farmPower / farmPowerGross) * 100.;
 
         int nstep = 8760;
         ssc_number_t farm_kw = farmPower / (ssc_number_t)nstep;
@@ -446,7 +453,7 @@ void cm_windpower::exec()
         assign("annual_gross_energy", farmPowerGross);
         assign("wind_speed_average", avg_speed);
         calculate_p50p90(this);
-        calculate_losses(this, wake_int_loss_percent);
+        calculate_losses(this, annual_wake_int_loss_percent);
         return;
     }
 
@@ -510,6 +517,8 @@ void cm_windpower::exec()
 
 	// allocate output data
 	ssc_number_t *farmpwr = allocate("gen", nstep);
+    ssc_number_t* wakeLosskW = allocate("timeseries_wake_loss_kW", nstep);
+    ssc_number_t* wakeLossPercent = allocate("timeseries_wake_loss_percent", nstep);
 	ssc_number_t *wspd = allocate("wind_speed", nstep);
 	ssc_number_t *wdir = allocate("wind_direction", nstep);
 	ssc_number_t *air_temp = allocate("temp", nstep);
@@ -604,8 +613,13 @@ void cm_windpower::exec()
                     &DistCross[0]))
 				throw exec_error("windpower", util::format("error in wind calculation at time %d, details: %s", i, wpc.GetErrorDetails().c_str()));
 
-			annual_gross += gross_farmp;
-			annual_after_wake_loss += farmp;
+            //wake loss calculations need to happen before other losses are applied
+            annual_gross += gross_farmp; //i don't think this works for subhourly data????????????????
+			annual_after_wake_loss += farmp;       
+            wakeLosskW[i] = gross_farmp - farmp;          
+            if (gross_farmp == 0.0) wakeLossPercent[i] = 0.0;
+            else wakeLossPercent[i] = wakeLosskW[i] / gross_farmp * 100.0;
+
 			farmp *= lossMultiplier;
 			// apply and track cutoff losses
 			withoutCutOffLosses += farmp * haf(hr);
@@ -655,11 +669,12 @@ void cm_windpower::exec()
 
 	// internal wake loss is calculated during simulation rather than provided
 	if (wakeModelChoice != CONSTANTVALUE){
-        wake_int_loss_percent = (1. - annual_after_wake_loss/annual_gross) * 100.;
+        annual_wake_int_loss_percent = (1. - annual_after_wake_loss/annual_gross) * 100.;
+        assign("annual_wake_loss_kWh", var_data((ssc_number_t)(annual_gross - annual_after_wake_loss)));
 	}
 
 	calculate_p50p90(this);
-    calculate_losses(this, wake_int_loss_percent);
+    calculate_losses(this, annual_wake_int_loss_percent);
 } // exec
 
 DEFINE_MODULE_ENTRY(windpower, "Utility scale wind farm model (adapted from TRNSYS code by P.Quinlan and openWind software by AWS Truepower)", 2);
