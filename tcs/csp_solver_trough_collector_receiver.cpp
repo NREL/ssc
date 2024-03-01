@@ -2882,7 +2882,8 @@ void C_csp_trough_collector_receiver::estimates(const C_csp_weatherreader::S_out
 	{
 		if( weather.m_beam > 1.0 )
 		{
-			est_out.m_q_startup_avail = 1.0;	//[MWt] Trough is recirculating, so going into startup isn't significantly different than OFF
+            double opt_eff_approx = calculate_optical_efficiency(weather, sim_info);
+            est_out.m_q_startup_avail = max(get_collector_area() * opt_eff_approx * weather.m_beam * 1e-6, 1.0); //[MWt] Trough is recirculating, so going into startup isn't significantly different than OFF
 		}
 		else
 		{
