@@ -1111,7 +1111,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     }
 
     if (batt_vars->T_room.size() != nrec) {
-        throw exec_error("battery", "Length of battery environment temperature batt_room_temperature_celsius must equal number of weather file and/or electric load data records.");
+        throw exec_error("battery", util::format("Length of battery environment temperature batt_room_temperature_celsius must equal number of weather file and/or electric load data records: %d records or %d-minute time steps.", nrec, 60/(nrec/8760)));
     }
 
     if (batt_vars->batt_life_model == lifetime_params::NMC) {
