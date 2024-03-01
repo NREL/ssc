@@ -2411,7 +2411,7 @@ public:
                     // recalculate debt size with constrained dscr
                     size_of_debt = 0.0;
                     for (i = 0; i <= nyears; i++) {
-                        if (dscr != 0)
+                        if (dscr > 0)
                             cf.at(CF_debt_size, i) = cf.at(CF_pv_cash_for_ds, i) / dscr;
                         else
                             cf.at(CF_debt_size, i) = 0.0; // default behavior of initialization of cash flow line items
@@ -3170,8 +3170,6 @@ public:
 	//	if (cost_installed > 0) debt_fraction = size_of_debt / cost_installed;
 	if ((size_of_debt + size_of_equity) > 0)
 		debt_fraction = size_of_debt / (size_of_debt + size_of_equity);
-
-
 
 	double wacc = 0.0;
 	wacc = (1.0 - debt_fraction)*analysis_period_irr + debt_fraction*term_int_rate*(1.0 - cf.at(CF_effective_tax_frac, 1));
