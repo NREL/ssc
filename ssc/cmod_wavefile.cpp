@@ -141,6 +141,7 @@ public:
             throw exec_error("wave_file_reader", "Number of header column labels does not match number of values. There are " + std::to_string(ncols) + "keys and " + std::to_string(ncols1) + "values.");
         }
         if (as_integer("wave_resource_model_choice") == 0) {
+            if (values.size() < 13) throw exec_error("wave_file_reader", "The JPD file is missing header information and cannot be read.");
             assign("name", var_data(values[0]));
             assign("city", var_data(values[1]));
             assign("state", var_data(values[2]));
@@ -260,6 +261,7 @@ public:
                 numberRecords_mat++;
             }
             //if (numberRecords < 2920) throw exec_error("wave_file_reader", "Number of records in the wave file must = 2920 (8760 h / 3 h interval)");
+            if (numberRecords == 0) throw exec_error("wave_file_reader", "No data found in file: " + file);
             if ((8760 % numberRecords != 0)) {
                 if ((numberRecords % 8760 != 0)) //check for subhourly
                     throw exec_error("wave_file_reader", "Invalid number of entries in wave resource file: " + file);
