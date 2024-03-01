@@ -3316,8 +3316,12 @@ void cm_pvsamv1::exec()
         // ac losses
 
         assign("annual_ac_wiring_loss", var_data((ssc_number_t)annual_ac_wiring_loss));
-        assign("annual_subhourly_clipping_loss", var_data((ssc_number_t)annual_subhourly_clipping_loss));
-        assign("annual_distribution_clipping_loss", var_data((ssc_number_t)annual_distribution_clipping_loss));
+        if (as_boolean("enable_subhourly_clipping")) {
+            assign("annual_subhourly_clipping_loss", var_data((ssc_number_t)annual_subhourly_clipping_loss));
+        }
+        if (as_boolean("enable_subinterval_distribution")) {
+            assign("annual_distribution_clipping_loss", var_data((ssc_number_t)annual_distribution_clipping_loss));
+        }
 
         assign("annual_transmission_loss", var_data((ssc_number_t)annual_transmission_loss));
 
@@ -3429,7 +3433,9 @@ void cm_pvsamv1::exec()
 
         percent = 0.;
         if (annual_dc_gross > 0) percent = 100 * annual_distribution_clipping_loss / annual_dc_gross;
-        assign("annual_distribution_clipping_loss_percent", var_data((ssc_number_t)percent));
+        if (as_boolean("enable_subinterval_distribution")) {
+            assign("annual_distribution_clipping_loss_percent", var_data((ssc_number_t)percent));
+        }
 
 
         //annual_dc_net
@@ -3468,7 +3474,9 @@ void cm_pvsamv1::exec()
         sys_output -= annual_ac_battery_loss;
 
         if (annual_ac_gross > 0) percent = 100.0 * annual_subhourly_clipping_loss / annual_ac_gross;
-        assign("annual_subhourly_clipping_loss_percent", var_data((ssc_number_t)percent));
+        if (as_boolean("enable_subhourly_clipping")) {
+            assign("annual_subhourly_clipping_loss_percent", var_data((ssc_number_t)percent));
+        }
         sys_output -= annual_subhourly_clipping_loss;
 
         percent = 0.;
