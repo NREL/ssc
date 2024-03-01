@@ -505,7 +505,7 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
             if (trackMode == irrad::SEASONAL_TILT)
                 throw exec_error(cmName, "Time-series tilt input may not be used with the snow model at this time: subarray " + util::to_string((int)(subarrayNumber)));
             // if tracking mode is 1-axis tracking, don't need to limit tilt angles
-            if (snowModel.setup(selfShadingInputs.nmody, (float)tiltDegrees, (trackMode != irrad::SINGLE_AXIS))) {
+            if (snowModel.setup(selfShadingInputs.nmody, (float)tiltDegrees, cm->as_double("snow_slide_coefficient"), (trackMode != irrad::SINGLE_AXIS))) {
                 if (!snowModel.good) {
                     cm->log(snowModel.msg, SSC_ERROR);
                 }
