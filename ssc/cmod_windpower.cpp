@@ -532,10 +532,10 @@ void cm_windpower::exec()
 	ssc_number_t *monthly = allocate("monthly_energy", 12);
 	for (int i = 0; i < 12; i++)
 		monthly[i] = 0.0f;
-	double annual = 0.0;
-	double annual_gross = 0.0;
-	double withoutCutOffLosses = 0.0;
-	double annual_after_wake_loss = 0.0;
+	double annual = 0.0; //final annual energy in kWh
+	double annual_gross = 0.0; //annual energy before any losses in kWh
+	double withoutCutOffLosses = 0.0; //annual energy without low temperature/icing cutoff losses applied in kWh
+	double annual_after_wake_loss = 0.0; //annual energy after wake losses but before other losses in kWh
 
 	// compute power output at i-th timestep
 	int i = 0;
@@ -614,15 +614,15 @@ void cm_windpower::exec()
 				throw exec_error("windpower", util::format("error in wind calculation at time %d, details: %s", i, wpc.GetErrorDetails().c_str()));
 
             //wake loss calculations need to happen before other losses are applied
-            annual_gross += gross_farmp; //i don't think this works for subhourly data????????????????
-			annual_after_wake_loss += farmp;       
+            annual_gross += gross_farmp / (ssc_number_t)steps_per_hour;
+			annual_after_wake_loss += farmp / (ssc_number_t)steps_per_hour;       
             wakeLosskW[i] = gross_farmp - farmp;          
             if (gross_farmp == 0.0) wakeLossPercent[i] = 0.0;
             else wakeLossPercent[i] = wakeLosskW[i] / gross_farmp * 100.0;
 
 			farmp *= lossMultiplier;
 			// apply and track cutoff losses
-			withoutCutOffLosses += farmp * haf(hr);
+			withoutCutOffLosses += farmp * haf(hr) / (ssc_number_t)steps_per_hour;
 			if (lowTempCutoff){
 				if (temp < lowTempCutoffValue) farmp = 0.0;
 			}
