@@ -491,7 +491,7 @@ var_info vtab_debt[] = {
 { SSC_INPUT,        SSC_NUMBER,     "term_int_rate",                          "Term financing interest rate",		                            "%",	 "",					  "Financial Parameters",             "?=8.5",                   "MIN=0,MAX=100",      			"" },
 { SSC_INPUT,        SSC_NUMBER,     "dscr",						              "Debt service coverage ratio",		                            "",	     "",				      "Financial Parameters",             "?=1.5",					"MIN=0",      			        "" },
 { SSC_INPUT,        SSC_NUMBER,     "dscr_limit_debt_fraction",				  "Limit debt fraction",		                            "0/1",	     "",				      "Financial Parameters",             "?=0",					"BOOLEAN",      			        "" },
-{ SSC_INPUT,        SSC_NUMBER,     "dscr_maximum_debt_fraction",			  "Maximum debt fraction",		                            "%",	     "",				      "Financial Parameters",             "?=100",					"MIN=0",      			        "" },
+{ SSC_INPUT,        SSC_NUMBER,     "dscr_maximum_debt_fraction",			  "Maximum debt fraction",		                            "%",	     "",				      "Financial Parameters",             "?=100",					"POSITIVE",      			        "" },
 { SSC_INPUT,        SSC_NUMBER,     "dscr_reserve_months",		              "Debt service reserve account",		                            "months P&I","",			      "Financial Parameters",             "?=6",					    "MIN=0",      			        "" },
 /* Debt fraction input option */
 { SSC_INPUT, SSC_NUMBER, "debt_percent", "Debt percent", "%", "", "Financial Parameters", "?=50", "MIN=0,MAX=100", "" },
