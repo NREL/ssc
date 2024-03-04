@@ -98,6 +98,11 @@ C_pt_receiver::C_pt_receiver(double h_tower /*m*/, double epsilon /*-*/,
     m_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
     m_mode_prev = C_csp_collector_receiver::E_csp_cr_modes::OFF;
 
+    m_E_su = std::numeric_limits<double>::quiet_NaN();
+    m_E_su_prev = std::numeric_limits<double>::quiet_NaN();
+    m_t_su = std::numeric_limits<double>::quiet_NaN();
+    m_t_su_prev = std::numeric_limits<double>::quiet_NaN();
+
 	error_msg = "";
 }
 
@@ -177,6 +182,14 @@ double C_pt_receiver::get_startup_time()
 double C_pt_receiver::get_startup_energy()
 {
     return m_rec_qf_delay * m_q_rec_des * 1.e-6;  // MWh
+}
+
+void C_pt_receiver::get_converged_values(C_csp_collector_receiver::E_csp_cr_modes& m_mode_final,
+    double& E_su_final, double& t_su_final)
+{
+    m_mode_final = m_mode_prev;
+    E_su_final = m_E_su_prev;
+    t_su_final = m_t_su_prev;
 }
 
 double C_pt_receiver::estimate_thermal_efficiency(const C_csp_weatherreader::S_outputs& weather, double q_inc)
