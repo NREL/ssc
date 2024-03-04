@@ -1455,6 +1455,8 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
 
         is_PAR_HTR_allowed = mc_tou.mc_dispatch_params.m_is_PAR_HTR_allowed_in.at(p);
         q_dot_elec_to_PAR_HTR = mc_tou.mc_dispatch_params.m_q_dot_elec_to_PAR_HTR_in.at(p);
+        q_dot_elec_to_CR_heat = 0.0;
+
     }
     // Run dispatch optimization?
     else if (mc_dispatch.solver_params.dispatch_optimize) {
