@@ -428,7 +428,8 @@ public:
                 std::string& compute_module = batteries[0];
                 var_data* compute_module_inputs = input_table->table.lookup(compute_module);
 
-                hybridSystemCapacity += compute_module_inputs->table.lookup("batt_computed_bank_capacity")->num; // TODO: check capacity definitions for batteries and hybrid systems
+                ssc_number_t system_capacity = compute_module_inputs->table.lookup("batt_power_discharge_max_kwac")->num;
+                hybridSystemCapacity += system_capacity; // TODO: check capacity definitions for batteries and hybrid systems
                 hybridTotalInstalledCost += compute_module_inputs->table.lookup("total_installed_cost")->num;
 
                 // copy over required dispatch variables from hybrid
