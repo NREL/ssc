@@ -39,9 +39,747 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "fmin.h"
 
 
+// ********************************************************************************** C_sco2_htrbp_core CORE MODEL
+
+int C_sco2_htrbp_core::Solve()
+{
+    InitializeSolve();
+    m_error_code = -1;
+
+    // Apply scaling to the turbomachinery here
+    {
+        m_mc_ms.m_r_W_dot_scale = m_inputs.m_W_dot_net_design / 10.E3;	//[-]
+        m_rc_ms.m_r_W_dot_scale = m_mc_ms.m_r_W_dot_scale;			//[-]
+        m_t.m_r_W_dot_scale = m_mc_ms.m_r_W_dot_scale;				//[-]
+    }
+
+    // Initialize Recuperators
+    {
+        // LTR
+        mc_LT_recup.initialize(m_inputs.m_LTR_N_sub_hxrs, m_inputs.m_LTR_od_UA_target_type);
+        // HTR
+        mc_HT_recup.initialize(m_inputs.m_HTR_N_sub_hxrs, m_inputs.m_HTR_od_UA_target_type);
+    }
+
+    // Initialize a few variables
+    {
+        m_temp[C_sco2_cycle_core::MC_IN] = m_inputs.m_T_mc_in;     //[K]
+        m_pres[C_sco2_cycle_core::MC_IN] = m_inputs.m_P_mc_in;
+        m_pres[C_sco2_cycle_core::MC_OUT] = m_inputs.m_P_mc_out;
+        m_temp[C_sco2_cycle_core::TURB_IN] = m_inputs.m_T_t_in; //[K]
+    }
+
+    // Apply pressure drops to heat exchangers, fully defining the pressures at all states
+    {
+        if (m_inputs.m_DP_LTR[0] < 0.0)
+            m_pres[C_sco2_cycle_core::LTR_HP_OUT] = m_pres[C_sco2_cycle_core::MC_OUT] - m_pres[C_sco2_cycle_core::MC_OUT] * std::abs(m_inputs.m_DP_LTR[0]);		// relative pressure drop specified for LT recuperator (cold stream)
+        else
+            m_pres[C_sco2_cycle_core::LTR_HP_OUT] = m_pres[C_sco2_cycle_core::MC_OUT] - m_inputs.m_DP_LTR[0];				// absolute pressure drop specified for LT recuperator (cold stream)
+
+        if ((m_inputs.m_LTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA && m_inputs.m_LTR_UA < 1.0E-12)
+            || (m_inputs.m_LTR_target_code == NS_HX_counterflow_eqs::TARGET_UA && m_inputs.m_LTR_UA < 1.0E-12)
+            || (m_inputs.m_LTR_target_code == NS_HX_counterflow_eqs::TARGET_MIN_DT && m_inputs.m_LTR_min_dT < 1.0E-12)
+            || (m_inputs.m_LTR_target_code == NS_HX_counterflow_eqs::TARGET_EFFECTIVENESS && m_inputs.m_LTR_eff_target < 1.0E-12))
+            m_pres[C_sco2_cycle_core::LTR_HP_OUT] = m_pres[C_sco2_cycle_core::MC_OUT];			// If there is no LT recuperator, there is no pressure drop
+
+        m_pres[C_sco2_cycle_core::MIXER_OUT] = m_pres[C_sco2_cycle_core::LTR_HP_OUT];			// Assume no pressure drop in mixing valve
+        m_pres[C_sco2_cycle_core::RC_OUT] = m_pres[C_sco2_cycle_core::LTR_HP_OUT];				// Assume no pressure drop in mixing valve
+
+        if (m_inputs.m_DP_HTR[0] < 0.0)
+            m_pres[C_sco2_cycle_core::HTR_HP_OUT] = m_pres[C_sco2_cycle_core::MIXER_OUT]
+            - m_pres[C_sco2_cycle_core::MIXER_OUT] * std::abs(m_inputs.m_DP_HTR[0]);	// relative pressure drop specified for HT recuperator (cold stream)
+        else
+            m_pres[C_sco2_cycle_core::HTR_HP_OUT] = m_pres[C_sco2_cycle_core::MIXER_OUT] - m_inputs.m_DP_HTR[0];				// absolute pressure drop specified for HT recuperator (cold stream)
+
+        if ((m_inputs.m_HTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA && m_inputs.m_HTR_UA < 1.0E-12)
+            || (m_inputs.m_HTR_target_code == NS_HX_counterflow_eqs::TARGET_UA && m_inputs.m_HTR_UA < 1.0E-12)
+            || (m_inputs.m_HTR_target_code == NS_HX_counterflow_eqs::TARGET_MIN_DT && m_inputs.m_HTR_min_dT < 1.0E-12)
+            || (m_inputs.m_HTR_target_code == NS_HX_counterflow_eqs::TARGET_EFFECTIVENESS && m_inputs.m_HTR_eff_target < 1.0E-12))
+            m_pres[C_sco2_cycle_core::HTR_HP_OUT] = m_pres[C_sco2_cycle_core::MIXER_OUT];		// If there is no HT recuperator, there is no pressure drop
+
+        if (m_inputs.m_DP_PHX[0] < 0.0)
+            m_pres[C_sco2_cycle_core::TURB_IN] = m_pres[C_sco2_cycle_core::HTR_HP_OUT] - m_pres[C_sco2_cycle_core::HTR_HP_OUT] * std::abs(m_inputs.m_DP_PHX[0]);	// relative pressure drop specified for PHX
+        else
+            m_pres[C_sco2_cycle_core::TURB_IN] = m_pres[C_sco2_cycle_core::HTR_HP_OUT] - m_inputs.m_DP_PHX[0];									// absolute pressure drop specified for PHX
+
+        if (m_inputs.m_DP_PC_main[1] < 0.0)
+            m_pres[C_sco2_cycle_core::LTR_LP_OUT] = m_pres[C_sco2_cycle_core::MC_IN] / (1.0 - std::abs(m_inputs.m_DP_PC_main[1]));					// relative pressure drop specified for precooler: P1=P9-P9*rel_DP => P1=P9*(1-rel_DP)
+        else
+            m_pres[C_sco2_cycle_core::LTR_LP_OUT] = m_pres[C_sco2_cycle_core::MC_IN] + m_inputs.m_DP_PC_main[1];
+
+        if (m_inputs.m_DP_LTR[1] < 0.0)
+            m_pres[C_sco2_cycle_core::HTR_LP_OUT] = m_pres[C_sco2_cycle_core::LTR_LP_OUT] / (1.0 - std::abs(m_inputs.m_DP_LTR[1]));	// relative pressure drop specified for LT recuperator (hot stream)
+        else
+            m_pres[C_sco2_cycle_core::HTR_LP_OUT] = m_pres[C_sco2_cycle_core::LTR_LP_OUT] + m_inputs.m_DP_LTR[1];					// absolute pressure drop specified for LT recuperator (hot stream)
+
+        if ((m_inputs.m_LTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA && m_inputs.m_LTR_UA < 1.0E-12)
+            || (m_inputs.m_LTR_target_code == NS_HX_counterflow_eqs::TARGET_UA && m_inputs.m_LTR_UA < 1.0E-12)
+            || (m_inputs.m_LTR_target_code == NS_HX_counterflow_eqs::TARGET_MIN_DT && m_inputs.m_LTR_min_dT < 1.0E-12)
+            || (m_inputs.m_LTR_target_code == NS_HX_counterflow_eqs::TARGET_EFFECTIVENESS && m_inputs.m_LTR_eff_target < 1.0E-12))
+            m_pres[C_sco2_cycle_core::HTR_LP_OUT] = m_pres[C_sco2_cycle_core::LTR_LP_OUT];			// if there is no LT recuperator, there is no pressure drop
+
+        if (m_inputs.m_DP_HTR[1] < 0.0)
+            m_pres[C_sco2_cycle_core::TURB_OUT] = m_pres[C_sco2_cycle_core::HTR_LP_OUT] / (1.0 - std::abs(m_inputs.m_DP_HTR[1]));	// relative pressure drop specified for HT recuperator (hot stream)
+        else
+            m_pres[C_sco2_cycle_core::TURB_OUT] = m_pres[C_sco2_cycle_core::HTR_LP_OUT] + m_inputs.m_DP_HTR[1];				// absolute pressure drop specified for HT recuperator (hot stream)
+
+        if ((m_inputs.m_HTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA && m_inputs.m_HTR_UA < 1.0E-12)
+            || (m_inputs.m_HTR_target_code == NS_HX_counterflow_eqs::TARGET_UA && m_inputs.m_HTR_UA < 1.0E-12)
+            || (m_inputs.m_HTR_target_code == NS_HX_counterflow_eqs::TARGET_MIN_DT && m_inputs.m_HTR_min_dT < 1.0E-12)
+            || (m_inputs.m_HTR_target_code == NS_HX_counterflow_eqs::TARGET_EFFECTIVENESS && m_inputs.m_HTR_eff_target < 1.0E-12))
+            m_pres[C_sco2_cycle_core::TURB_OUT] = m_pres[C_sco2_cycle_core::HTR_LP_OUT];		// if there is no HT recuperator, there is no pressure drop
+
+
+        // Added pressures
+        m_pres[C_sco2_cycle_core::BYPASS_OUT] = m_pres[C_sco2_cycle_core::HTR_HP_OUT];
+        m_pres[C_sco2_cycle_core::MIXER2_OUT] = m_pres[C_sco2_cycle_core::HTR_HP_OUT];
+
+
+    }
+
+    // Determine equivalent isentropic efficiencies for main compressor and turbine, if necessary.
+    double eta_mc_isen = std::numeric_limits<double>::quiet_NaN();
+    double eta_t_isen = std::numeric_limits<double>::quiet_NaN();
+    {
+        if (m_inputs.m_eta_mc < 0.0)
+        {
+            int poly_error_code = 0;
+
+            isen_eta_from_poly_eta(m_temp[C_sco2_cycle_core::MC_IN], m_pres[C_sco2_cycle_core::MC_IN], m_pres[C_sco2_cycle_core::MC_OUT], std::abs(m_inputs.m_eta_mc),
+                true, poly_error_code, eta_mc_isen);
+
+            if (poly_error_code != 0)
+            {
+                m_error_code = poly_error_code;
+                return m_error_code;
+            }
+        }
+        else
+            eta_mc_isen = m_inputs.m_eta_mc;
+
+        if (m_inputs.m_eta_t < 0.0)
+        {
+            int poly_error_code = 0;
+
+            isen_eta_from_poly_eta(m_temp[C_sco2_cycle_core::TURB_IN], m_pres[C_sco2_cycle_core::TURB_IN], m_pres[C_sco2_cycle_core::TURB_OUT], std::abs(m_inputs.m_eta_t),
+                false, poly_error_code, eta_t_isen);
+
+            if (poly_error_code != 0)
+            {
+                m_error_code = poly_error_code;
+                return m_error_code;
+            }
+        }
+        else
+            eta_t_isen = m_inputs.m_eta_t;
+    }
+
+    // Determine the outlet state and specific work for the main compressor and turbine.
+
+    // Main compressor
+    m_w_mc = std::numeric_limits<double>::quiet_NaN();
+    {
+        int comp_error_code = 0;
+
+        calculate_turbomachinery_outlet_1(m_temp[C_sco2_cycle_core::MC_IN], m_pres[C_sco2_cycle_core::MC_IN], m_pres[C_sco2_cycle_core::MC_OUT], eta_mc_isen, true,
+            comp_error_code, m_enth[C_sco2_cycle_core::MC_IN], m_entr[C_sco2_cycle_core::MC_IN], m_dens[C_sco2_cycle_core::MC_IN], m_temp[C_sco2_cycle_core::MC_OUT],
+            m_enth[C_sco2_cycle_core::MC_OUT], m_entr[C_sco2_cycle_core::MC_OUT], m_dens[C_sco2_cycle_core::MC_OUT], m_w_mc);
+
+        if (comp_error_code != 0)
+        {
+            m_error_code = comp_error_code;
+            return m_error_code;
+        }
+    }
+
+    // Turbine
+    m_w_t = std::numeric_limits<double>::quiet_NaN();
+    {
+        int turbine_error_code = 0;
+
+        calculate_turbomachinery_outlet_1(m_temp[C_sco2_cycle_core::TURB_IN], m_pres[C_sco2_cycle_core::TURB_IN], m_pres[C_sco2_cycle_core::TURB_OUT], eta_t_isen, false,
+            turbine_error_code, m_enth[C_sco2_cycle_core::TURB_IN], m_entr[C_sco2_cycle_core::TURB_IN], m_dens[C_sco2_cycle_core::TURB_IN], m_temp[C_sco2_cycle_core::TURB_OUT],
+            m_enth[C_sco2_cycle_core::TURB_OUT], m_entr[C_sco2_cycle_core::TURB_OUT], m_dens[C_sco2_cycle_core::TURB_OUT], m_w_t);
+
+        if (turbine_error_code != 0)
+        {
+            m_error_code = turbine_error_code;
+            return m_error_code;
+        }
+    }
+
+    // Check that this cycle can produce power
+    m_w_rc = std::numeric_limits<double>::quiet_NaN();
+    {
+        double eta_rc_isen = std::numeric_limits<double>::quiet_NaN();
+
+        if (m_inputs.m_recomp_frac >= 1.E-12)
+        {
+            if (m_inputs.m_eta_rc < 0.0)		// need to convert polytropic efficiency to isentropic efficiency
+            {
+                int rc_error_code = 0;
+
+                isen_eta_from_poly_eta(m_temp[C_sco2_cycle_core::MC_OUT], m_pres[C_sco2_cycle_core::LTR_LP_OUT], m_pres[C_sco2_cycle_core::RC_OUT], std::abs(m_inputs.m_eta_rc),
+                    true, rc_error_code, eta_rc_isen);
+
+                if (rc_error_code != 0)
+                {
+                    m_error_code = rc_error_code;
+                    return m_error_code;
+                }
+            }
+            else
+                eta_rc_isen = m_inputs.m_eta_rc;
+
+            int rc_error_code = 0;
+
+            calculate_turbomachinery_outlet_1(m_temp[C_sco2_cycle_core::MC_OUT], m_pres[C_sco2_cycle_core::LTR_LP_OUT], m_pres[C_sco2_cycle_core::RC_OUT], eta_rc_isen,
+                true, rc_error_code, m_w_rc);
+
+            if (rc_error_code != 0)
+            {
+                m_error_code = rc_error_code;
+                return m_error_code;
+            }
+        }
+        else
+            m_w_rc = 0.0;
+
+        if (m_w_mc + m_w_rc + m_w_t <= 0.0)	// positive net power is impossible; return an error
+        {
+            m_error_code = 25;
+            return m_error_code;
+        }
+    }
+
+    // Solve the recuperators
+    {
+        C_mono_htrbp_core_HTR_des HTR_des_eq(this);
+        C_monotonic_eq_solver HTR_des_solver(HTR_des_eq);
+
+        {
+            double T_HTR_LP_out_lower = m_temp[C_sco2_cycle_core::MC_OUT];		//[K] Coldest possible temperature
+            double T_HTR_LP_out_upper = m_temp[C_sco2_cycle_core::TURB_OUT];		//[K] Hottest possible temperature
+
+            double T_HTR_LP_out_guess_lower = std::min(T_HTR_LP_out_upper - 2.0, std::max(T_HTR_LP_out_lower + 15.0, 220.0 + 273.15));	//[K] There is nothing special about these guesses...
+            double T_HTR_LP_out_guess_upper = std::min(T_HTR_LP_out_guess_lower + 20.0, T_HTR_LP_out_upper - 1.0);	//[K] There is nothing special about these guesses, either...
+
+            HTR_des_solver.settings(m_inputs.m_des_tol * m_temp[C_sco2_cycle_core::MC_IN], 1000, T_HTR_LP_out_lower, T_HTR_LP_out_upper, false);
+
+            double T_HTR_LP_out_solved, tol_T_HTR_LP_out_solved;
+            T_HTR_LP_out_solved = tol_T_HTR_LP_out_solved = std::numeric_limits<double>::quiet_NaN();
+            int iter_T_HTR_LP_out = -1;
+
+            int T_HTR_LP_out_code = HTR_des_solver.solve(T_HTR_LP_out_guess_lower, T_HTR_LP_out_guess_upper, 0,
+                T_HTR_LP_out_solved, tol_T_HTR_LP_out_solved, iter_T_HTR_LP_out);
+
+            if (T_HTR_LP_out_code != C_monotonic_eq_solver::CONVERGED)
+            {
+                m_error_code = 35;
+                return m_error_code;
+            }
+
+            double test = 0;
+            solve_HTR(T_HTR_LP_out_solved, &test);
+        }
+
+    }
+
+    // State 5 can now be fully defined
+    {
+        // Check if there is flow through HTR_HP
+        if (m_m_dot_htr_hp <= 1e-12)
+            m_enth[C_sco2_cycle_core::HTR_HP_OUT] = m_enth[C_sco2_cycle_core::MIXER_OUT];
+        else
+            m_enth[C_sco2_cycle_core::HTR_HP_OUT] = m_enth[C_sco2_cycle_core::MIXER_OUT] + m_Q_dot_HT / m_m_dot_htr_hp;						// Energy balance on cold stream of high-temp recuperator
+
+        int prop_error_code = CO2_PH(m_pres[C_sco2_cycle_core::HTR_HP_OUT], m_enth[C_sco2_cycle_core::HTR_HP_OUT], &m_co2_props);
+        if (prop_error_code != 0)
+        {
+            m_error_code = prop_error_code;
+            return m_error_code;
+        }
+        m_temp[C_sco2_cycle_core::HTR_HP_OUT] = m_co2_props.temp;
+        m_entr[C_sco2_cycle_core::HTR_HP_OUT] = m_co2_props.entr;
+        m_dens[C_sco2_cycle_core::HTR_HP_OUT] = m_co2_props.dens;
+    }
+
+    // Calculate total work and heat metrics
+    {
+        // Work
+        m_W_dot_mc = m_w_mc * m_m_dot_mc;		//[kWe]
+        m_W_dot_rc = m_w_rc * m_m_dot_rc;		//[kWe]
+        m_W_dot_t = m_w_t * m_m_dot_t;		//[kWe]
+        m_W_dot_net = m_W_dot_mc + m_W_dot_rc + m_W_dot_t;
+
+        // Air Cooler (heat rejection unit)
+        m_W_dot_air_cooler = m_inputs.m_frac_fan_power * m_W_dot_net;
+        m_Q_dot_air_cooler = m_m_dot_mc * (m_enth[C_sco2_cycle_core::LTR_LP_OUT] - m_enth[C_sco2_cycle_core::MC_IN]);
+
+        // Total Heat Entering sco2
+        m_Q_dot_total = m_W_dot_net + m_Q_dot_air_cooler;
+
+        // LTR
+        m_Q_dot_LTR_LP = m_m_dot_t * (m_enth[C_sco2_cycle_core::HTR_LP_OUT] - m_enth[C_sco2_cycle_core::LTR_LP_OUT]);
+        m_Q_dot_LTR_HP = m_m_dot_mc * (m_enth[C_sco2_cycle_core::LTR_HP_OUT] - m_enth[C_sco2_cycle_core::MC_OUT]);
+
+        // LTR
+        m_Q_dot_HTR_LP = m_m_dot_t * (m_enth[C_sco2_cycle_core::TURB_OUT] - m_enth[C_sco2_cycle_core::HTR_LP_OUT]);
+        m_Q_dot_HTR_HP = m_m_dot_htr_hp * (m_enth[C_sco2_cycle_core::HTR_HP_OUT] - m_enth[C_sco2_cycle_core::MIXER_OUT]);
+    }
+
+    // Calculate Bypass Energy
+    {
+        // Set Bypass Temp based on HTR_HP_OUT
+        m_temp[C_sco2_cycle_core::BYPASS_OUT] = m_temp[C_sco2_cycle_core::HTR_HP_OUT] + m_inputs.m_dT_BP;
+
+        // Calculate BYPASS_OUT properties
+        int prop_error_code = CO2_TP(this->m_temp[C_sco2_cycle_core::BYPASS_OUT], this->m_pres[C_sco2_cycle_core::BYPASS_OUT], &this->m_co2_props);
+        if (prop_error_code != 0)
+        {
+            m_error_code = -1;
+            return m_error_code;
+        }
+        this->m_enth[C_sco2_cycle_core::BYPASS_OUT] = this->m_co2_props.enth;
+        this->m_entr[C_sco2_cycle_core::BYPASS_OUT] = this->m_co2_props.entr;
+        this->m_dens[C_sco2_cycle_core::BYPASS_OUT] = this->m_co2_props.dens;
+
+        // Calculate Heat Transfer in Bypass
+        m_Q_dot_BP = m_m_dot_bp * (m_enth[C_sco2_cycle_core::BYPASS_OUT] - m_enth[C_sco2_cycle_core::MIXER_OUT]);
+    }
+
+    // Simulate Mixer 2
+    {
+        // If Bypass and HTR have flow
+        if (m_inputs.m_bypass_frac >= 1e-12 && m_inputs.m_bypass_frac <= (1.0 - 1e-12))
+        {
+            m_enth[C_sco2_cycle_core::MIXER2_OUT] = (1.0 - m_inputs.m_bypass_frac) * m_enth[C_sco2_cycle_core::HTR_HP_OUT] +
+                m_inputs.m_bypass_frac * m_enth[C_sco2_cycle_core::BYPASS_OUT];	//[C_sco2_cycle_core::kJ/kg]
+
+            int prop_error_code = CO2_PH(m_pres[C_sco2_cycle_core::MIXER2_OUT], m_enth[C_sco2_cycle_core::MIXER2_OUT], &m_co2_props);
+            if (prop_error_code != 0)
+            {
+                m_error_code = -1;
+                return m_error_code;
+            }
+            m_temp[C_sco2_cycle_core::MIXER2_OUT] = m_co2_props.temp;		//[C_sco2_cycle_core::K]
+            m_entr[C_sco2_cycle_core::MIXER2_OUT] = m_co2_props.entr;		//[C_sco2_cycle_core::kJ/kg-K]
+            m_dens[C_sco2_cycle_core::MIXER2_OUT] = m_co2_props.dens;		//[C_sco2_cycle_core::kg/m^3]
+
+        }
+        // Flow only through HTR
+        else if (m_inputs.m_bypass_frac <= (1.0 - 1e-12))
+        {
+            m_temp[C_sco2_cycle_core::MIXER2_OUT] = m_temp[C_sco2_cycle_core::HTR_HP_OUT];		//[C_sco2_cycle_core::K]
+            m_enth[C_sco2_cycle_core::MIXER2_OUT] = m_enth[C_sco2_cycle_core::HTR_HP_OUT];		//[C_sco2_cycle_core::kJ/kg]
+            m_entr[C_sco2_cycle_core::MIXER2_OUT] = m_entr[C_sco2_cycle_core::HTR_HP_OUT];		//[C_sco2_cycle_core::kJ/kg-K]
+            m_dens[C_sco2_cycle_core::MIXER2_OUT] = m_dens[C_sco2_cycle_core::HTR_HP_OUT];		//[C_sco2_cycle_core::kg/m^3]
+        }
+        // Flow only through Bypass
+        else
+        {
+            m_temp[C_sco2_cycle_core::MIXER2_OUT] = m_temp[C_sco2_cycle_core::BYPASS_OUT];		//[C_sco2_cycle_core::K]
+            m_enth[C_sco2_cycle_core::MIXER2_OUT] = m_enth[C_sco2_cycle_core::BYPASS_OUT];		//[C_sco2_cycle_core::kJ/kg]
+            m_entr[C_sco2_cycle_core::MIXER2_OUT] = m_entr[C_sco2_cycle_core::BYPASS_OUT];		//[C_sco2_cycle_core::kJ/kg-K]
+            m_dens[C_sco2_cycle_core::MIXER2_OUT] = m_dens[C_sco2_cycle_core::BYPASS_OUT];		//[C_sco2_cycle_core::kg/m^3]
+        }
+    }
+
+    // Calculate PHX Heat Transfer
+    {
+        m_Q_dot_PHX = m_m_dot_t * (m_enth[C_sco2_cycle_core::TURB_IN] - m_enth[C_sco2_cycle_core::MIXER2_OUT]);
+    }
+
+    // Back Calculate and Check values
+    {
+        // Bypass Temps
+        double bp_temp_in = m_temp[C_sco2_cycle_core::MIXER_OUT];
+        double bp_temp_out = m_temp[C_sco2_cycle_core::BYPASS_OUT];
+
+        double real_q_dot_total = m_W_dot_t + m_Q_dot_air_cooler;
+
+        double qSum = m_Q_dot_total;
+        double qSum_calc = m_Q_dot_BP + m_Q_dot_PHX;
+
+        int x = 0;
+    }
+
+    // HTF
+    {
+        // Check if HTF mdot is already assigned
+        if (m_inputs.m_set_HTF_mdot > 0)
+        {
+            // Mdot is Set
+            m_m_dot_HTF = m_inputs.m_set_HTF_mdot;
+
+            // Calculate PHX HTF Outlet Temperature
+            m_T_HTF_PHX_out = m_inputs.m_T_HTF_PHX_inlet - m_Q_dot_PHX / (m_m_dot_HTF * m_inputs.m_cp_HTF);
+
+            // Back Calculate PHX cold approach
+            m_HTF_PHX_cold_approach = m_T_HTF_PHX_out - m_temp[C_sco2_cycle_core::MIXER2_OUT];
+        }
+        else
+        {
+            // Use HTF Bypass cold approach to calculate PHX outlet Temperature
+            m_T_HTF_PHX_out = m_HTF_PHX_cold_approach + m_temp[C_sco2_cycle_core::MIXER2_OUT];
+
+            // Calculate HTF mdot
+            m_m_dot_HTF = m_Q_dot_PHX / ((m_inputs.m_T_HTF_PHX_inlet - m_T_HTF_PHX_out) * m_inputs.m_cp_HTF);
+        }
+
+        // Calculate Bypass Out Temperature
+        m_T_HTF_BP_outlet = m_T_HTF_PHX_out - (m_Q_dot_BP / (m_m_dot_HTF * m_inputs.m_cp_HTF));
+
+        // Calculate HTF Bypass Cold Approach
+        m_HTF_BP_cold_approach = m_T_HTF_BP_outlet - m_temp[C_sco2_cycle_core::MIXER_OUT];
+
+    }
+
+    // Define Heat Exchangers and Air Cooler
+    {
+        // PHX
+        C_HeatExchanger::S_design_parameters PHX_des_par;
+        PHX_des_par.m_DP_design[0] = m_pres[C_sco2_cycle_core::MIXER2_OUT] - m_pres[C_sco2_cycle_core::TURB_IN];
+        PHX_des_par.m_DP_design[1] = 0.0;
+        PHX_des_par.m_m_dot_design[0] = m_m_dot_t;
+        PHX_des_par.m_m_dot_design[1] = 0.0;
+        PHX_des_par.m_Q_dot_design = m_m_dot_t * (m_enth[C_sco2_cycle_core::TURB_IN] - m_enth[C_sco2_cycle_core::MIXER2_OUT]);
+        m_PHX.initialize(PHX_des_par);
+
+        // BPX
+        C_HeatExchanger::S_design_parameters BPX_des_par;
+        BPX_des_par.m_DP_design[0] = m_pres[C_sco2_cycle_core::MIXER_OUT] - m_pres[C_sco2_cycle_core::BYPASS_OUT];
+        BPX_des_par.m_DP_design[1] = 0.0;
+        BPX_des_par.m_m_dot_design[0] = m_m_dot_bp;
+        BPX_des_par.m_m_dot_design[1] = 0.0;
+        BPX_des_par.m_Q_dot_design = m_m_dot_bp * (m_enth[C_sco2_cycle_core::BYPASS_OUT] - m_enth[C_sco2_cycle_core::MIXER_OUT]);
+        m_BPX.initialize(BPX_des_par);
+
+        // Design air cooler
+        // Structure for design parameters that are dependent on cycle design solution
+        C_CO2_to_air_cooler::S_des_par_cycle_dep s_air_cooler_des_par_dep;
+        // Set air cooler design parameters that are dependent on the cycle design solution
+        s_air_cooler_des_par_dep.m_T_hot_in_des = m_temp[C_sco2_cycle_core::C_sco2_cycle_core::LTR_LP_OUT];		//[K]
+        s_air_cooler_des_par_dep.m_P_hot_in_des = m_pres[C_sco2_cycle_core::C_sco2_cycle_core::LTR_LP_OUT];		//[kPa]
+        s_air_cooler_des_par_dep.m_m_dot_total = m_m_dot_mc;		//[kg/s]
+
+        // This pressure drop is currently uncoupled from the cycle design
+        double cooler_deltaP = m_pres[C_sco2_cycle_core::C_sco2_cycle_core::LTR_LP_OUT] - m_pres[C_sco2_cycle_core::C_sco2_cycle_core::MC_IN];	//[kPa]
+        if (cooler_deltaP == 0.0)
+            s_air_cooler_des_par_dep.m_delta_P_des = m_inputs.m_deltaP_cooler_frac * m_pres[C_sco2_cycle_core::C_sco2_cycle_core::LTR_LP_OUT];	//[kPa]
+        else
+            s_air_cooler_des_par_dep.m_delta_P_des = cooler_deltaP;	//[kPa]
+
+        s_air_cooler_des_par_dep.m_T_hot_out_des = m_temp[C_sco2_cycle_core::C_sco2_cycle_core::MC_IN];			//[K]
+        s_air_cooler_des_par_dep.m_W_dot_fan_des = m_W_dot_air_cooler / 1000.0;	//[MWe]
+        // Structure for design parameters that are independent of cycle design solution
+        C_CO2_to_air_cooler::S_des_par_ind s_air_cooler_des_par_ind;
+        s_air_cooler_des_par_ind.m_T_amb_des = m_inputs.m_T_amb_des;		//[K]
+        s_air_cooler_des_par_ind.m_elev = m_inputs.m_elevation;			//[m]
+        s_air_cooler_des_par_ind.m_eta_fan = m_inputs.m_eta_fan;          //[-]
+        s_air_cooler_des_par_ind.m_N_nodes_pass = m_inputs.m_N_nodes_pass;    //[-]
+
+    }
+
+    // Calculate Thermal Efficiency
+    {
+        m_eta_thermal = m_W_dot_net / m_Q_dot_total;
+    }
+
+    m_error_code = 0;
+    return m_error_code;
+}
+
+int C_sco2_htrbp_core::C_mono_htrbp_core_HTR_des::operator()(double T_HTR_LP_OUT_guess /*K*/, double* diff_T_HTR_LP_out)
+{
+    return m_htr_bypass_cycle->solve_HTR(T_HTR_LP_OUT_guess, diff_T_HTR_LP_out);
+}
+
+int C_sco2_htrbp_core::C_mono_htrbp_core_LTR_des::operator()(double T_LTR_LP_OUT_guess /*K*/, double* diff_T_LTR_LP_out)
+{
+    return m_htr_bypass_cycle->solve_LTR(T_LTR_LP_OUT_guess, diff_T_LTR_LP_out);
+}
+
+int C_sco2_htrbp_core::solve_HTR(double T_HTR_LP_OUT_guess, double* diff_T_HTR_LP_out)
+{
+    m_w_rc = m_m_dot_t = m_m_dot_rc = m_m_dot_mc = m_Q_dot_LT = m_Q_dot_HT = std::numeric_limits<double>::quiet_NaN();
+
+    // Set temperature guess
+    m_temp[C_sco2_cycle_core::HTR_LP_OUT] = T_HTR_LP_OUT_guess;		//[K]	
+
+    // Solve HTR_LP_OUT properties
+    {
+        int prop_error_code = CO2_TP(this->m_temp[C_sco2_cycle_core::HTR_LP_OUT], this->m_pres[C_sco2_cycle_core::HTR_LP_OUT], &this->m_co2_props);
+        if (prop_error_code != 0)
+        {
+            *diff_T_HTR_LP_out = std::numeric_limits<double>::quiet_NaN();
+            return prop_error_code;
+        }
+        this->m_enth[C_sco2_cycle_core::HTR_LP_OUT] = this->m_co2_props.enth;
+        this->m_entr[C_sco2_cycle_core::HTR_LP_OUT] = this->m_co2_props.entr;
+        this->m_dens[C_sco2_cycle_core::HTR_LP_OUT] = this->m_co2_props.dens;
+    }
+
+    // Solve for the LTR solution
+    {
+        double T_LTR_LP_out_lower = this->m_temp[C_sco2_cycle_core::MC_OUT];		//[K] Coldest possible outlet temperature
+        double T_LTR_LP_out_upper = this->m_temp[C_sco2_cycle_core::HTR_LP_OUT];	//[K] Hottest possible outlet temperature
+
+        double T_LTR_LP_out_guess_upper = std::min(T_LTR_LP_out_upper, T_LTR_LP_out_lower + 15.0);	//[K] There is nothing special about using 15 here...
+        double T_LTR_LP_out_guess_lower = std::min(T_LTR_LP_out_guess_upper * 0.99, T_LTR_LP_out_lower + 2.0);	//[K] There is nothing special about using 2 here...
+
+        C_mono_htrbp_core_LTR_des LTR_des_eq(this);
+        C_monotonic_eq_solver LTR_des_solver(LTR_des_eq);
+
+        LTR_des_solver.settings(this->m_inputs.m_des_tol * this->m_temp[C_sco2_cycle_core::MC_IN], 1000, T_LTR_LP_out_lower,
+            T_LTR_LP_out_upper, false);
+
+        double T_LTR_LP_out_solved = std::numeric_limits<double>::quiet_NaN();
+        double tol_T_LTR_LP_out_solved = std::numeric_limits<double>::quiet_NaN();
+        int iter_T_LTR_LP_out = -1;
+
+        int T_LTR_LP_out_code = LTR_des_solver.solve(T_LTR_LP_out_guess_lower, T_LTR_LP_out_guess_upper, 0, T_LTR_LP_out_solved,
+            tol_T_LTR_LP_out_solved, iter_T_LTR_LP_out);
+
+        if (T_LTR_LP_out_code != C_monotonic_eq_solver::CONVERGED)
+        {
+            return 31;
+        }
+    }
+
+    // Know LTR performance so we can calculate the HP outlet (Energy balance on LTR HP stream)
+    {
+        this->m_enth[C_sco2_cycle_core::LTR_HP_OUT] = this->m_enth[C_sco2_cycle_core::MC_OUT] + m_Q_dot_LT / m_m_dot_mc;		//[kJ/kg]
+        int prop_error_code = CO2_PH(this->m_pres[C_sco2_cycle_core::LTR_HP_OUT], this->m_enth[C_sco2_cycle_core::LTR_HP_OUT], &this->m_co2_props);
+        if (prop_error_code != 0)
+        {
+            *diff_T_HTR_LP_out = std::numeric_limits<double>::quiet_NaN();
+            return prop_error_code;
+        }
+        this->m_temp[C_sco2_cycle_core::LTR_HP_OUT] = this->m_co2_props.temp;	//[K]
+        this->m_entr[C_sco2_cycle_core::LTR_HP_OUT] = this->m_co2_props.entr;	//[kJ/kg-K]
+        this->m_dens[C_sco2_cycle_core::LTR_HP_OUT] = this->m_co2_props.dens;	//[kg/m^3]	
+    }
+
+    // Simulate the Mixer
+    if (this->m_inputs.m_recomp_frac >= 1.E-12)
+    {
+        this->m_enth[C_sco2_cycle_core::MIXER_OUT] = (1.0 - this->m_inputs.m_recomp_frac) * this->m_enth[C_sco2_cycle_core::LTR_HP_OUT]
+            + this->m_inputs.m_recomp_frac * this->m_enth[C_sco2_cycle_core::RC_OUT];	//[kJ/kg]
+        int prop_error_code = CO2_PH(this->m_pres[C_sco2_cycle_core::MIXER_OUT], this->m_enth[C_sco2_cycle_core::MIXER_OUT], &this->m_co2_props);
+        if (prop_error_code != 0)
+        {
+            *diff_T_HTR_LP_out = std::numeric_limits<double>::quiet_NaN();
+            return prop_error_code;
+        }
+        this->m_temp[C_sco2_cycle_core::MIXER_OUT] = this->m_co2_props.temp;		//[K]
+        this->m_entr[C_sco2_cycle_core::MIXER_OUT] = this->m_co2_props.entr;		//[kJ/kg-K]
+        this->m_dens[C_sco2_cycle_core::MIXER_OUT] = this->m_co2_props.dens;		//[kg/m^3]
+    }
+    else
+    {	// No recompressor, so no mixing required, and HTR HP inlet = LTR HP outlet
+        this->m_temp[C_sco2_cycle_core::MIXER_OUT] = this->m_temp[C_sco2_cycle_core::LTR_HP_OUT];		//[K]
+        this->m_enth[C_sco2_cycle_core::MIXER_OUT] = this->m_enth[C_sco2_cycle_core::LTR_HP_OUT];		//[kJ/kg]
+        this->m_entr[C_sco2_cycle_core::MIXER_OUT] = this->m_entr[C_sco2_cycle_core::LTR_HP_OUT];		//[kJ/kg-K]
+        this->m_dens[C_sco2_cycle_core::MIXER_OUT] = this->m_dens[C_sco2_cycle_core::LTR_HP_OUT];		//[kg/m^3]
+    }
+
+    // Solve Mass Flow rates for HTR_HP_OUT and Bypass
+    {
+        m_m_dot_bp = m_inputs.m_bypass_frac * m_m_dot_t;
+        m_m_dot_htr_hp = m_m_dot_t - m_m_dot_bp;
+    }
+
+    // Find the design solution of the HTR
+    double T_HTR_LP_out_calc = std::numeric_limits<double>::quiet_NaN();
+    {
+        // If there is no flow through HTR HP side
+        if (m_m_dot_htr_hp < 1e-12)
+        {
+            m_Q_dot_HT = 0;
+            T_HTR_LP_out_calc = m_temp[C_sco2_cycle_core::TURB_OUT];
+        }
+
+        // If there is flow through HTR HP side
+        else
+        {
+            this->mc_HT_recup.design_for_target__calc_outlet(this->m_inputs.m_HTR_target_code,
+                this->m_inputs.m_HTR_UA, this->m_inputs.m_HTR_min_dT, this->m_inputs.m_HTR_eff_target,
+                this->m_inputs.m_HTR_eff_max,
+                this->m_temp[C_sco2_cycle_core::MIXER_OUT], this->m_pres[C_sco2_cycle_core::MIXER_OUT], m_m_dot_htr_hp, this->m_pres[C_sco2_cycle_core::HTR_HP_OUT],
+                this->m_temp[C_sco2_cycle_core::TURB_OUT], this->m_pres[C_sco2_cycle_core::TURB_OUT], m_m_dot_t, this->m_pres[C_sco2_cycle_core::HTR_LP_OUT],
+                this->m_inputs.m_des_tol,
+                m_Q_dot_HT, this->m_temp[C_sco2_cycle_core::HTR_HP_OUT], T_HTR_LP_out_calc);
+        }
+
+    }
+
+    *diff_T_HTR_LP_out = T_HTR_LP_out_calc - T_HTR_LP_OUT_guess;
+
+    return 0;
+}
+
+int C_sco2_htrbp_core::solve_LTR(double T_LTR_LP_OUT_guess, double* diff_T_LTR_LP_out)
+{
+    m_w_rc = m_m_dot_t = m_m_dot_rc = m_m_dot_mc = m_Q_dot_LT = m_Q_dot_HT = std::numeric_limits<double>::quiet_NaN();
+
+    // Set LTR_LP_OUT guess
+    this->m_temp[C_sco2_cycle_core::LTR_LP_OUT] = T_LTR_LP_OUT_guess;
+
+    // First, solve the recompressor model as necessary
+    if (this->m_inputs.m_recomp_frac >= 1.E-12)
+    {
+        double eta_rc_isen = std::numeric_limits<double>::quiet_NaN();
+
+        if (this->m_inputs.m_eta_rc < 0.0)		// recalculate isen. efficiency of recompressor because inlet temp changes
+        {
+            int rc_error_code = 0;
+            isen_eta_from_poly_eta(this->m_temp[C_sco2_cycle_core::LTR_LP_OUT], this->m_pres[C_sco2_cycle_core::LTR_LP_OUT],
+                this->m_pres[C_sco2_cycle_core::RC_OUT], std::abs(this->m_inputs.m_eta_rc), true,
+                rc_error_code, eta_rc_isen);
+
+            if (rc_error_code != 0)
+            {
+                *diff_T_LTR_LP_out = std::numeric_limits<double>::quiet_NaN();
+                return rc_error_code;
+            }
+        }
+        else
+        {
+            eta_rc_isen = this->m_inputs.m_eta_rc;
+        }
+
+        int rc_error_code = 0;
+
+        calculate_turbomachinery_outlet_1(this->m_temp[C_sco2_cycle_core::LTR_LP_OUT], this->m_pres[C_sco2_cycle_core::LTR_LP_OUT], this->m_pres[C_sco2_cycle_core::RC_OUT], eta_rc_isen, true, rc_error_code,
+            this->m_enth[C_sco2_cycle_core::LTR_LP_OUT], this->m_entr[C_sco2_cycle_core::LTR_LP_OUT], this->m_dens[C_sco2_cycle_core::LTR_LP_OUT], this->m_temp[C_sco2_cycle_core::RC_OUT], this->m_enth[C_sco2_cycle_core::RC_OUT],
+            this->m_entr[C_sco2_cycle_core::RC_OUT], this->m_dens[C_sco2_cycle_core::RC_OUT], m_w_rc);
+
+        if (rc_error_code != 0)
+        {
+            *diff_T_LTR_LP_out = std::numeric_limits<double>::quiet_NaN();
+            return rc_error_code;
+        }
+    }
+    else
+    {
+        m_w_rc = 0.0;		// no recompressor
+        int prop_error_code = CO2_TP(this->m_temp[C_sco2_cycle_core::LTR_LP_OUT], this->m_pres[C_sco2_cycle_core::LTR_LP_OUT], &this->m_co2_props);
+        if (prop_error_code != 0)
+        {
+            *diff_T_LTR_LP_out = std::numeric_limits<double>::quiet_NaN();
+            return prop_error_code;
+        }
+        this->m_enth[C_sco2_cycle_core::LTR_LP_OUT] = this->m_co2_props.enth;
+        this->m_entr[C_sco2_cycle_core::LTR_LP_OUT] = this->m_co2_props.entr;
+        this->m_dens[C_sco2_cycle_core::LTR_LP_OUT] = this->m_co2_props.dens;
+        this->m_temp[C_sco2_cycle_core::RC_OUT] = this->m_temp[C_sco2_cycle_core::LTR_LP_OUT];
+        this->m_enth[C_sco2_cycle_core::RC_OUT] = this->m_enth[C_sco2_cycle_core::LTR_LP_OUT];
+        this->m_entr[C_sco2_cycle_core::RC_OUT] = this->m_entr[C_sco2_cycle_core::LTR_LP_OUT];
+        this->m_dens[C_sco2_cycle_core::RC_OUT] = this->m_dens[C_sco2_cycle_core::LTR_LP_OUT];
+    }
+
+    // Solve Mass Flow Rates
+    {
+        m_m_dot_t = this->m_inputs.m_W_dot_net_design / ((m_w_mc * (1.0 - this->m_inputs.m_recomp_frac) +
+            m_w_rc * this->m_inputs.m_recomp_frac + m_w_t) * this->m_inputs.m_eta_generator);		//[C_sco2_cycle_core::kg/s]
+
+        m_m_dot_rc = m_m_dot_t * this->m_inputs.m_recomp_frac;		//[C_sco2_cycle_core::kg/s]
+        m_m_dot_mc = m_m_dot_t - m_m_dot_rc;
+    }
+
+    // Solve LTR
+    *diff_T_LTR_LP_out = std::numeric_limits<double>::quiet_NaN();
+    double T_LTR_LP_out_calc = std::numeric_limits<double>::quiet_NaN();
+    {
+        this->mc_LT_recup.design_for_target__calc_outlet(this->m_inputs.m_LTR_target_code,
+            this->m_inputs.m_LTR_UA, this->m_inputs.m_LTR_min_dT, this->m_inputs.m_LTR_eff_target,
+            this->m_inputs.m_LTR_eff_max,
+            this->m_temp[C_sco2_cycle_core::MC_OUT], this->m_pres[C_sco2_cycle_core::MC_OUT], m_m_dot_mc, this->m_pres[C_sco2_cycle_core::LTR_HP_OUT],
+            this->m_temp[C_sco2_cycle_core::HTR_LP_OUT], this->m_pres[C_sco2_cycle_core::HTR_LP_OUT], m_m_dot_t, this->m_pres[C_sco2_cycle_core::LTR_LP_OUT],
+            this->m_inputs.m_des_tol,
+            m_Q_dot_LT, this->m_temp[C_sco2_cycle_core::LTR_HP_OUT], T_LTR_LP_out_calc);
+
+    }
+
+    *diff_T_LTR_LP_out = T_LTR_LP_out_calc - T_LTR_LP_OUT_guess;
+
+    return 0;
+}
+
+void C_sco2_htrbp_core::InitializeSolve()
+{
+    m_temp.resize(C_sco2_cycle_core::END_SCO2_STATES);
+    std::fill(m_temp.begin(), m_temp.end(), std::numeric_limits<double>::quiet_NaN());
+    m_pres = m_enth = m_entr = m_dens = m_temp;
+}
+
+
+
+
+
+// ********************************************************************************** END C_sco2_htrbp_core
 
 void C_HTRBypass_Cycle::design_core(int& error_code)
 {
+    // DEBUG
+    {
+        S_sco2_htrbp_in core_inputs;
+        core_inputs.m_dT_BP = m_dT_BP;
+        core_inputs.m_P_mc_in = ms_des_par.m_P_mc_in;
+        core_inputs.m_P_mc_out = ms_des_par.m_P_mc_out;
+        core_inputs.m_LTR_target_code = ms_des_par.m_LTR_target_code;
+        core_inputs.m_LTR_UA = ms_des_par.m_LTR_UA;
+        core_inputs.m_LTR_min_dT = ms_des_par.m_LTR_min_dT;
+        core_inputs.m_LTR_eff_target = ms_des_par.m_LTR_eff_target;
+        core_inputs.m_LTR_eff_max = ms_des_par.m_LTR_eff_max;
+        core_inputs.m_LTR_N_sub_hxrs = m_LTR_N_sub_hxrs;
+        core_inputs.m_LTR_od_UA_target_type = ms_des_par.m_LTR_od_UA_target_type;
+
+        core_inputs.m_HTR_target_code = ms_des_par.m_HTR_target_code;
+        core_inputs.m_HTR_UA = ms_des_par.m_HTR_UA;
+        core_inputs.m_HTR_min_dT = ms_des_par.m_HTR_min_dT;
+        core_inputs.m_HTR_eff_target = ms_des_par.m_HTR_eff_target;
+        core_inputs.m_HTR_eff_max = ms_des_par.m_HTR_eff_max;
+        core_inputs.m_HTR_N_sub_hxrs = m_HTR_N_sub_hxrs;
+        core_inputs.m_HTR_od_UA_target_type = ms_des_par.m_HTR_od_UA_target_type;
+
+        core_inputs.m_recomp_frac = ms_des_par.m_recomp_frac;
+        core_inputs.m_bypass_frac = ms_des_par.m_bypass_frac;
+        core_inputs.m_des_tol = ms_des_par.m_des_tol;
+        core_inputs.m_is_des_air_cooler = ms_des_par.m_is_des_air_cooler;
+
+        core_inputs.m_W_dot_net_design = m_W_dot_net;
+        core_inputs.m_T_mc_in = m_T_mc_in;
+        core_inputs.m_T_t_in = m_T_t_in;
+        core_inputs.m_DP_LTR = m_DP_LTR;
+        core_inputs.m_DP_HTR = m_DP_HTR;
+        core_inputs.m_DP_PC_main = m_DP_PC_main;
+        core_inputs.m_DP_PHX = m_DP_PHX;
+        core_inputs.m_eta_mc = m_eta_mc;
+        core_inputs.m_eta_t = m_eta_t;
+        core_inputs.m_eta_rc = m_eta_rc;
+        core_inputs.m_eta_generator = m_eta_generator;
+        core_inputs.m_frac_fan_power = m_frac_fan_power;
+        core_inputs.m_set_HTF_mdot = m_set_HTF_mdot;
+        core_inputs.m_cp_HTF = m_cp_HTF;
+        core_inputs.m_T_HTF_PHX_inlet = m_T_HTF_PHX_inlet;
+        core_inputs.m_eta_fan = m_eta_fan;
+        core_inputs.m_deltaP_cooler_frac = m_deltaP_cooler_frac;
+        core_inputs.m_T_amb_des = m_T_amb_des;
+        core_inputs.m_elevation = m_elevation;
+        core_inputs.m_N_nodes_pass = m_N_nodes_pass;
+
+
+        C_sco2_htrbp_core sco2_core;
+        sco2_core.SetInputs(core_inputs);
+        int err = sco2_core.Solve();
+
+    }
+    
+    
+
+
 
     // Check if HTF parameters were set
     if (is_bp_par_set == false)
@@ -663,7 +1401,6 @@ void C_HTRBypass_Cycle::design_core_standard(int& error_code)
     }
 
 }
-
 
 int C_HTRBypass_Cycle::solve_HTR(double T_HTR_LP_OUT_guess, double* diff_T_HTR_LP_out)
 {

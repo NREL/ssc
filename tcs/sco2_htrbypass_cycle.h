@@ -45,6 +45,199 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "nlopt.hpp"
 #include "nlopt_callbacks.h"
 
+// Defines sco2 htr bypass input variables (no optimized variables)
+struct S_sco2_htrbp_in
+{
+
+    double m_P_mc_in;					//[kPa] Compressor inlet pressure
+    double m_P_mc_out;					//[kPa] Compressor outlet pressure
+
+    // LTR thermal design
+    int m_LTR_target_code;              //[-] 1 = UA, 2 = min dT, 3 = effectiveness
+    double m_LTR_UA;					//[kW/K] target LTR conductance
+    double m_LTR_min_dT;                //[K] target LTR minimum temperature difference
+    double m_LTR_eff_target;            //[-] target LTR effectiveness
+    double m_LTR_eff_max;				//[-] Maximum allowable effectiveness in LT recuperator
+    NS_HX_counterflow_eqs::E_UA_target_type m_LTR_od_UA_target_type;
+    int m_LTR_N_sub_hxrs;               //[-] Number of sub-hxs to use in hx model
+
+    // HTR thermal design
+    int m_HTR_target_code;              //[-] 1 = UA, 2 = min dT, 3 = effectiveness
+    double m_HTR_UA;					//[kW/K] target HTR conductance
+    double m_HTR_min_dT;                //[K] target HTR min temperature difference
+    double m_HTR_eff_target;            //[-] target HTR effectiveness
+    double m_HTR_eff_max;				//[-] Maximum allowable effectiveness in HT recuperator
+    NS_HX_counterflow_eqs::E_UA_target_type m_HTR_od_UA_target_type;
+    int m_HTR_N_sub_hxrs;               //[-] Number of sub-hxs to use in hx model
+
+    double m_recomp_frac;				//[-] Fraction of flow that bypasses the precooler and the main compressor at the design point
+    double m_bypass_frac;                   //[-] Fraction of flow that bypasses the HTR and passes through the Bypass HX 
+    double m_des_tol;						//[-] Convergence tolerance
+
+    // Air cooler parameters
+    bool m_is_des_air_cooler;		//[-] False will skip physical air cooler design. UA will not be available for cost models.
+
+
+    // Added
+    double m_W_dot_net_design;          //[kWe] Target net cycle power
+    double m_T_mc_in;                   //[K] Compressor inlet temperature
+    double m_T_t_in;			        //[K] Turbine inlet temperature
+    double m_dT_BP;                     // [delta K/C] BYPASS_OUT - HTR_HP_OUT
+    std::vector<double> m_DP_LTR;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+    std::vector<double> m_DP_HTR;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+    std::vector<double> m_DP_PC_main;	//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+    std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+    double m_eta_mc;			        //[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
+    double m_eta_t;				        //[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
+    double m_eta_rc;		            //[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
+    double m_eta_generator;             //[-] Mechanical-to-electrical efficiency of generator
+    double m_frac_fan_power;            //[-] Fraction of total cycle power 'S_des_par_cycle_dep.m_W_dot_fan_des' consumed by air fan
+    double m_set_HTF_mdot;              //[kg/s] > 0 set HTF mass flow, <= 0 use bypass approach temp to calculate HTF mdot
+    double m_cp_HTF;                    //[kJ/kg K] HTF specific heat
+    double m_T_HTF_PHX_inlet;           //[K] HTF Inlet Temperature
+    double m_eta_fan;                   //[-] Fan isentropic efficiency
+    double m_deltaP_cooler_frac;        //[-] Fraction of high side (of cycle, i.e. comp outlet) pressure that is allowed as pressure drop to design the ACC
+    double m_T_amb_des;		            //[K] Design point ambient temperature
+    double m_elevation;			        //[m] Elevation (used to calculate ambient pressure)
+    int m_N_nodes_pass;                 //[-] Number of nodes per pass
+
+
+    S_sco2_htrbp_in()
+    {
+        m_P_mc_in = m_P_mc_out =
+            m_LTR_UA = m_LTR_min_dT = m_LTR_eff_target = m_LTR_eff_max =
+            m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max =
+            m_recomp_frac =
+            m_bypass_frac =
+            m_des_tol =
+            m_W_dot_net_design =
+            m_T_mc_in =
+            m_T_t_in =
+            m_eta_mc =
+            m_eta_t =
+            m_eta_rc =
+            m_eta_generator =
+            m_frac_fan_power =
+            m_set_HTF_mdot =
+            m_cp_HTF =
+            m_T_HTF_PHX_inlet =
+            m_eta_fan =
+            m_deltaP_cooler_frac =
+            m_T_amb_des =
+            m_elevation =
+            m_dT_BP =
+            std::numeric_limits<double>::quiet_NaN();
+
+        m_N_nodes_pass = 0;
+
+        // Recuperator design target codes
+        m_LTR_target_code = 1;      // default to target conductance
+        m_LTR_od_UA_target_type = NS_HX_counterflow_eqs::E_UA_target_type::E_calc_UA;
+        m_HTR_target_code = 1;      // default to target conductance
+        m_HTR_od_UA_target_type = NS_HX_counterflow_eqs::E_UA_target_type::E_calc_UA;
+
+
+        // Air cooler default
+        m_is_des_air_cooler = true;
+
+    }
+
+
+};
+
+// Defines sco2 htr bypass output variables (no optimized variables)
+//struct S_sco2_htrbp_out
+//{
+//    int m_error_code;
+//    double m_eta_thermal; // Thermal Efficiency
+//
+//    S_sco2_htrbp_out()
+//    {
+//        m_error_code = m_eta_thermal
+//            = std::numeric_limits<double>::quiet_NaN();
+//    }
+//};
+
+
+
+// This class is purely for solving the cycle
+// No optimization
+class C_sco2_htrbp_core
+{
+private:
+    CO2_state m_co2_props;
+
+    class C_mono_htrbp_core_HTR_des : public C_monotonic_equation
+    {
+    private:
+        C_sco2_htrbp_core* m_htr_bypass_cycle;
+
+    public:
+        C_mono_htrbp_core_HTR_des(C_sco2_htrbp_core* htr_bypass_cycle)
+        {
+            m_htr_bypass_cycle = htr_bypass_cycle;
+        }
+
+        virtual int operator()(double T_HTR_LP_OUT_guess /*K*/, double* diff_T_HTR_LP_out /*K*/);
+    };
+
+    class C_mono_htrbp_core_LTR_des : public C_monotonic_equation
+    {
+    private:
+        C_sco2_htrbp_core* m_htr_bypass_cycle;
+
+    public:
+        C_mono_htrbp_core_LTR_des(C_sco2_htrbp_core* htr_bypass_cycle)
+        {
+            m_htr_bypass_cycle = htr_bypass_cycle;
+        }
+
+        virtual int operator()(double T_LTR_LP_OUT_guess /*K*/, double* diff_T_LTR_LP_out /*K*/);
+    };
+
+    int solve_HTR(double T_HTR_LP_OUT_guess, double* diff_T_HTR_LP_out);
+    int solve_LTR(double T_LTR_LP_OUT_guess, double* diff_T_LTR_LP_out);
+
+    void InitializeSolve();
+
+public:
+    // Inputs Struct
+    S_sco2_htrbp_in m_inputs;
+
+    // Publicly Accessible Fields (Outputs)
+    int m_error_code;
+    C_turbine m_t;                          // Turbine model
+    C_comp_multi_stage m_mc_ms;             // Main Compressor Model
+    C_comp_multi_stage m_rc_ms;             // Recompressor Model
+    C_HeatExchanger m_PHX, m_PC, m_BPX;     // Primary, Cooler, Bypass Heat Exchanger Models
+    C_HX_co2_to_co2_CRM mc_LT_recup;        // LTR
+    C_HX_co2_to_co2_CRM mc_HT_recup;        // HTR
+    C_CO2_to_air_cooler mc_air_cooler;      // Air Cooler
+    std::vector<double> m_temp, m_pres, m_enth, m_entr, m_dens;		// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
+    double m_w_t, m_w_mc, m_w_rc;                       // [kJ/kg] specific work of turbine, main compressor, recompressor
+    double m_m_dot_t, m_m_dot_mc, m_m_dot_rc;           // [kg/s] sco2 Mass flow in main compressor, recompressor, turbine
+    double m_m_dot_bp, m_m_dot_htr_hp;                  // [kg/s] sco2 Mass flow through bypass, hot side HTR
+    double m_Q_dot_LT, m_Q_dot_HT;                      // [kWt]  Heat Transfer in LTR, HTR
+    double m_W_dot_mc, m_W_dot_rc, m_W_dot_t;           // [kWt] Energy consumed by main compressor, recompressor, produced by turbine
+    double m_W_dot_net;                                 // [kWt] ACTUAL produced net work in system
+    double m_W_dot_air_cooler;                          // [kWe] Energy consumed by air cooler
+    double m_Q_dot_air_cooler;                          // [kWt] Heat rejected by air cooler
+    double m_Q_dot_LTR_LP, m_Q_dot_LTR_HP, m_Q_dot_HTR_LP, m_Q_dot_HTR_HP;  // kWt Heat change on LTR low pressure, etc...
+    double m_Q_dot_total;                               // [kWt] Total heat entering sco2
+    double m_Q_dot_PHX, m_Q_dot_BP;                     // [kWt] Energy exchange in PHX, BPX
+    double m_m_dot_HTF;                                 // [kg/s] HTF mass flow rate
+    double m_T_HTF_PHX_out;                             // [K] HTF PHX outlet temperature
+    double m_HTF_PHX_cold_approach;                     // [delta K/C] PHX cold approach temperature
+    double m_T_HTF_BP_outlet;                           // [K] HTF BPX outlet temperature
+    double m_HTF_BP_cold_approach;                      // [K] BPX cold approach temperature
+    double m_eta_thermal;                               // Thermal Efficiency
+
+    // Public Methods
+    void SetInputs(S_sco2_htrbp_in inputs) { m_inputs = inputs; };
+    int Solve();
+
+};
+
 class C_HTRBypass_Cycle : public C_sco2_cycle_core
 {
 public:
