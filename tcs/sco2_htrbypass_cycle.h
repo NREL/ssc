@@ -79,28 +79,28 @@ struct S_sco2_htrbp_in
 
 
     // Added
-    double m_W_dot_net_design;          //[kWe] Target net cycle power
-    double m_T_mc_in;                   //[K] Compressor inlet temperature
-    double m_T_t_in;			        //[K] Turbine inlet temperature
-    double m_dT_BP;                     // [delta K/C] BYPASS_OUT - HTR_HP_OUT
-    std::vector<double> m_DP_LTR;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-    std::vector<double> m_DP_HTR;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-    std::vector<double> m_DP_PC_main;	//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-    std::vector<double> m_DP_PHX;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
-    double m_eta_mc;			        //[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
-    double m_eta_t;				        //[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
-    double m_eta_rc;		            //[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
-    double m_eta_generator;             //[-] Mechanical-to-electrical efficiency of generator
-    double m_frac_fan_power;            //[-] Fraction of total cycle power 'S_des_par_cycle_dep.m_W_dot_fan_des' consumed by air fan
-    double m_set_HTF_mdot;              //[kg/s] > 0 set HTF mass flow, <= 0 use bypass approach temp to calculate HTF mdot
-    double m_cp_HTF;                    //[kJ/kg K] HTF specific heat
-    double m_T_HTF_PHX_inlet;           //[K] HTF Inlet Temperature
-    double m_eta_fan;                   //[-] Fan isentropic efficiency
-    double m_deltaP_cooler_frac;        //[-] Fraction of high side (of cycle, i.e. comp outlet) pressure that is allowed as pressure drop to design the ACC
-    double m_T_amb_des;		            //[K] Design point ambient temperature
-    double m_elevation;			        //[m] Elevation (used to calculate ambient pressure)
-    int m_N_nodes_pass;                 //[-] Number of nodes per pass
-
+    double m_W_dot_net_design;                  //[kWe] Target net cycle power
+    double m_T_mc_in;                           //[K] Compressor inlet temperature
+    double m_T_t_in;			                //[K] Turbine inlet temperature
+    double m_dT_BP;                             //[delta K/C] BYPASS_OUT - HTR_HP_OUT
+    std::vector<double> m_DP_LTR;		        //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+    std::vector<double> m_DP_HTR;		        //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+    std::vector<double> m_DP_PC_main;	        //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+    std::vector<double> m_DP_PHX;		        //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
+    double m_eta_mc;			                //[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
+    double m_eta_t;				                //[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
+    double m_eta_rc;		                    //[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
+    double m_eta_generator;                     //[-] Mechanical-to-electrical efficiency of generator
+    double m_frac_fan_power;                    //[-] Fraction of total cycle power 'S_des_par_cycle_dep.m_W_dot_fan_des' consumed by air fan
+    double m_set_HTF_mdot;                      //[kg/s] > 0 set HTF mass flow, <= 0 use bypass approach temp to calculate HTF mdot
+    double m_cp_HTF;                            //[kJ/kg K] HTF specific heat
+    double m_T_HTF_PHX_inlet;                   //[K] HTF Inlet Temperature
+    double m_eta_fan;                           //[-] Fan isentropic efficiency
+    double m_deltaP_cooler_frac;                //[-] Fraction of high side (of cycle, i.e. comp outlet) pressure that is allowed as pressure drop to design the ACC
+    double m_T_amb_des;		                    //[K] Design point ambient temperature
+    double m_elevation;			                //[m] Elevation (used to calculate ambient pressure)
+    int m_N_nodes_pass;                         //[-] Number of nodes per pass
+    double m_HTF_PHX_cold_approach_input;       //[delta K] PHX cold approach temperature. Only needed if m_set_HTF_mdot < 0 
 
     S_sco2_htrbp_in()
     {
@@ -126,6 +126,7 @@ struct S_sco2_htrbp_in
             m_T_amb_des =
             m_elevation =
             m_dT_BP =
+            m_HTF_PHX_cold_approach_input =
             std::numeric_limits<double>::quiet_NaN();
 
         m_N_nodes_pass = 0;
@@ -141,7 +142,6 @@ struct S_sco2_htrbp_in
         m_is_des_air_cooler = true;
 
     }
-
 
 };
 

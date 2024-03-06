@@ -421,7 +421,8 @@ int C_sco2_htrbp_core::Solve()
         else
         {
             // Use HTF Bypass cold approach to calculate PHX outlet Temperature
-            m_T_HTF_PHX_out = m_HTF_PHX_cold_approach + m_temp[C_sco2_cycle_core::MIXER2_OUT];
+            m_T_HTF_PHX_out = m_inputs.m_HTF_PHX_cold_approach_input + m_temp[C_sco2_cycle_core::MIXER2_OUT];
+            m_HTF_PHX_cold_approach = m_inputs.m_HTF_PHX_cold_approach_input;
 
             // Calculate HTF mdot
             m_m_dot_HTF = m_Q_dot_PHX / ((m_inputs.m_T_HTF_PHX_inlet - m_T_HTF_PHX_out) * m_inputs.m_cp_HTF);
@@ -745,7 +746,7 @@ void C_HTRBypass_Cycle::design_core(int& error_code)
         core_inputs.m_HTR_od_UA_target_type = ms_des_par.m_HTR_od_UA_target_type;
 
         core_inputs.m_recomp_frac = ms_des_par.m_recomp_frac;
-        core_inputs.m_bypass_frac = ms_des_par.m_bypass_frac;
+        core_inputs.m_bypass_frac = ms_opt_des_par.m_bypass_frac_guess;
         core_inputs.m_des_tol = ms_des_par.m_des_tol;
         core_inputs.m_is_des_air_cooler = ms_des_par.m_is_des_air_cooler;
 
@@ -769,7 +770,7 @@ void C_HTRBypass_Cycle::design_core(int& error_code)
         core_inputs.m_T_amb_des = m_T_amb_des;
         core_inputs.m_elevation = m_elevation;
         core_inputs.m_N_nodes_pass = m_N_nodes_pass;
-
+        core_inputs.m_HTF_PHX_cold_approach_input = m_HTF_PHX_cold_approach;
 
         C_sco2_htrbp_core sco2_core;
         sco2_core.SetInputs(core_inputs);
