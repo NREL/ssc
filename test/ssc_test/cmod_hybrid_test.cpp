@@ -57,7 +57,7 @@ TEST_F(CmodHybridTest, PVWattsv8WindBatterySingleOwner) {
 
     auto wind_table = ssc_data_get_table(table, "windpower");
     char wind_resource_path[256];
-    sprintf(wind_resource_path, "%s/test/input_cases/general_data/WY_Southern-Flat_Lands.srw", std::getenv("SSCDIR"));
+    sprintf(wind_resource_path, "%s/test/input_cases/general_data/AZ Eastern-Rolling Hills.srw", std::getenv("SSCDIR"));
     ssc_data_set_string(wind_table, "wind_resource_filename", wind_resource_path);
 
     int errors = run_module(dat, "hybrid");
@@ -74,17 +74,17 @@ TEST_F(CmodHybridTest, PVWattsv8WindBatterySingleOwner) {
         auto pv_outputs = ssc_data_get_table(outputs, "pvwattsv8");
         auto pv_inputs = ssc_data_get_table(inputs, "pvwattsv8");
         ssc_data_get_number(pv_outputs, "annual_energy", &pvannualenergy);
-        EXPECT_NEAR(pvannualenergy, 211907455, 211907455 * 0.01);
+        EXPECT_NEAR(pvannualenergy, 211907456, 211907456 * 0.01);
 
         auto wind_outputs = ssc_data_get_table(outputs, "windpower");
         auto wind_inputs = ssc_data_get_table(inputs, "windpower");
         ssc_data_get_number(wind_outputs, "annual_energy", &windannualenergy);
-        EXPECT_NEAR(windannualenergy, 818888286, 818888286 * 0.01);
+        EXPECT_NEAR(windannualenergy, 366975552, 366975552 * 0.01);
 
         auto batt_outputs = ssc_data_get_table(outputs, "battery");
         auto batt_inputs = ssc_data_get_table(inputs, "battery");
         ssc_data_get_number(batt_outputs, "annual_energy", &battannualenergy);
-        EXPECT_NEAR(battannualenergy, 1022195808, 1022195808 * 0.01);
+        EXPECT_NEAR(battannualenergy, 570565000, 570565000 * 0.01);
 
         auto hybrid_outputs = ssc_data_get_table(outputs, "Hybrid");
 
@@ -96,9 +96,9 @@ TEST_F(CmodHybridTest, PVWattsv8WindBatterySingleOwner) {
         ssc_data_get_number(hybrid_outputs, "project_return_aftertax_npv", &npv);
 
         EXPECT_NEAR(om_expenses[1], 10772001, 1);
-        EXPECT_NEAR(revenue[1], 56354351, 1);
-        EXPECT_NEAR(ebitda[1], 45582350, 1);
-        EXPECT_NEAR(npv, 22961119, 61506 * 0.001);
+        EXPECT_NEAR(revenue[1], 31648432, 1);
+        EXPECT_NEAR(ebitda[1], 20876432, 1);
+        EXPECT_NEAR(npv, -242777472, 242777472 * 0.001);
     }
     ssc_data_free(dat);
     dat = nullptr;
@@ -126,7 +126,7 @@ TEST_F(CmodHybridTest, PVWattsv8WindBatteryHostDeveloper) {
 
     auto wind_table = ssc_data_get_table(table, "windpower");
     char wind_resource_path[256];
-    sprintf(wind_resource_path, "%s/test/input_cases/general_data/WY_Southern-Flat_Lands.srw", std::getenv("SSCDIR"));
+    sprintf(wind_resource_path, "%s/test/input_cases/general_data/AZ Eastern-Rolling Hills.srw", std::getenv("SSCDIR"));
     ssc_data_set_string(wind_table, "wind_resource_filename", wind_resource_path);
 
     int errors = run_module(dat, "hybrid");
@@ -143,11 +143,11 @@ TEST_F(CmodHybridTest, PVWattsv8WindBatteryHostDeveloper) {
 
         auto wind_outputs = ssc_data_get_table(outputs, "windpower");
         ssc_data_get_number(wind_outputs, "annual_energy", &windannualenergy);
-        EXPECT_NEAR(windannualenergy, 396876, 396876 * 0.01);
+        EXPECT_NEAR(windannualenergy, 187767, 187767 * 0.01);
 
         auto hybrid_outputs = ssc_data_get_table(outputs, "Hybrid");
         ssc_data_get_number(hybrid_outputs, "project_return_aftertax_npv", &npv);
-        EXPECT_NEAR(npv, 70350, 70350 * 0.001);
+        EXPECT_NEAR(npv, -174953, 174953 * 0.001);
     }
     ssc_data_free(dat);
     dat = nullptr;
@@ -171,7 +171,7 @@ TEST_F(CmodHybridTest, GenericPVWattsWindFuelCellBatteryHybrid_SingleOwner) {
 
     auto wind_table = ssc_data_get_table(table, "windpower");
     char wind_resource_path[256];
-    sprintf(wind_resource_path, "%s/test/input_cases/general_data/WY_Southern-Flat_Lands.srw", std::getenv("SSCDIR"));
+    sprintf(wind_resource_path, "%s/test/input_cases/general_data/AZ Eastern-Rolling Hills.srw", std::getenv("SSCDIR"));
     ssc_data_set_string(wind_table, "wind_resource_filename", wind_resource_path);
 
     int errors = run_module(dat, "hybrid");
@@ -208,14 +208,14 @@ TEST_F(CmodHybridTest, GenericPVWattsWindFuelCellBatteryHybrid_SingleOwner) {
 
 
         EXPECT_NEAR(genericannualenergy, 756864000., 1e6);
-        EXPECT_NEAR(pvannualenergy, 211907455., 1e6);
-        EXPECT_NEAR(windannualenergy, 818888286., 1e6);
-        EXPECT_NEAR(battannualenergy, 1783633373., 1e6);
+        EXPECT_NEAR(pvannualenergy, 211907456., 1e6);
+        EXPECT_NEAR(windannualenergy, 366975552., 1e6);
+        EXPECT_NEAR(battannualenergy, 1331720000., 1e6);
         
-        EXPECT_NEAR(om_expenses[1], 90570833., 1e5);
-        EXPECT_NEAR(revenue[1], 89461086., 1e5);
-        EXPECT_NEAR(ebitda[1], -1109746., 1e5);
-        EXPECT_NEAR(npv, -1545988651., 1e6);
+        EXPECT_NEAR(om_expenses[1], 90570832., 1e5);
+        EXPECT_NEAR(revenue[1], 66865452., 1e5);
+        EXPECT_NEAR(ebitda[1], -23705384., 1e5);
+        EXPECT_NEAR(npv, -1748593536., 1e6);
     }
     ssc_data_free(dat);
     dat = nullptr;
