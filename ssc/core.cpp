@@ -335,6 +335,15 @@ void compute_module::add_var_info(var_info vi[]) {
     }
 }
 
+void compute_module::add_var_info(var_info* vi[]) {
+    int i = 0;
+    while (vi[i] != NULL && vi[i]->data_type != SSC_INVALID
+           && vi[i]->name != NULL ) {
+        m_varlist.push_back(vi[i]);
+        i++;
+    }
+}
+
 void compute_module::remove_var_info(var_info vi[]) {
     int i = 0;
     while (vi[i].data_type != SSC_INVALID
@@ -385,6 +394,23 @@ compute_module::log_item *compute_module::log(int index) {
         return &m_loglist[index];
     else
         return NULL;
+}
+
+bool compute_module::has_info(const std::string &name) {
+    // if there is an info lookup table, use it
+    if (m_infomap != NULL) {
+        unordered_map<std::string, var_info *>::iterator pos = m_infomap->find(name);
+        if (pos != m_infomap->end())
+            return true;
+    }
+
+    // otherwise search
+    std::vector<var_info *>::iterator it;
+    for (it = m_varlist.begin(); it != m_varlist.end(); ++it) {
+        if ((*it)->name == name)
+            return true;
+    }
+    return false;
 }
 
 var_info *compute_module::info(int index) {

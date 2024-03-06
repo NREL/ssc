@@ -554,6 +554,14 @@ public:
         if (is_assigned("grid_outage")) {
             grid_outage = as_vector_bool("grid_outage");
         }
+        if (grid_outage.size() != m_num_rec_yearly) {
+            // throw error - causing sam issue 1676
+            // set to first value or false
+            bool bVal = false;
+            if (grid_outage.size() > 0)
+                bVal = grid_outage[0];
+            grid_outage.resize(m_num_rec_yearly, bVal);
+        }
 
 		// prepare timestep arrays for load and grid values
 		std::vector<ssc_number_t>
@@ -910,7 +918,7 @@ public:
 		idx = 0;
 		for (i=0;i<nyears;i++)
 		{
-			if (i > 0) {
+ 			if (i > 0) {
 				last_month_w_sys = rate.m_month[11];
 				last_excess_energy_w_sys = monthly_cumulative_excess_energy_w_sys[11];
 				last_excess_dollars_w_sys = monthly_cumulative_excess_dollars_w_sys[11];
@@ -1412,6 +1420,10 @@ public:
 					dc_tou_sched[ii] = (ssc_number_t)rate.m_dc_tou_sched[ii];
 					load[ii] = -e_load_cy[ii];
 					e_tofromgrid[ii] = e_grid_cy[ii];
+
+                    if (fabs(e_tofromgrid[ii]) < powerflow_tolerance) { // powerflow_tolerance is defined globally in shared/lib_battery_powerflow.h, set to 0.000005 (Watts or Watt-hrs)
+                        e_tofromgrid[ii] = 0.0;
+                    }
 					if (e_tofromgrid[ii] > 0)
 					{
 						year1_hourly_e_togrid[ii] = e_tofromgrid[ii];
@@ -1422,7 +1434,7 @@ public:
 						year1_hourly_e_togrid[ii] = 0.0;
 						year1_hourly_e_fromgrid[ii] = -e_tofromgrid[ii];
 					}
-					p_tofromgrid[ii] = p_grid_cy[ii];
+					p_tofromgrid[ii] = fabs(p_grid_cy[ii]) > powerflow_tolerance ? p_grid_cy[ii] : 0.0;
 					salespurchases[ii] = revenue_w_sys[ii];
 				}
 				assign("year1_hourly_ec_tou_schedule", var_data(&ec_tou_sched[0], (int)m_num_rec_yearly));

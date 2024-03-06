@@ -505,7 +505,7 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
             if (trackMode == irrad::SEASONAL_TILT)
                 throw exec_error(cmName, "Time-series tilt input may not be used with the snow model at this time: subarray " + util::to_string((int)(subarrayNumber)));
             // if tracking mode is 1-axis tracking, don't need to limit tilt angles
-            if (snowModel.setup(selfShadingInputs.nmody, (float)tiltDegrees, (trackMode != irrad::SINGLE_AXIS))) {
+            if (snowModel.setup(selfShadingInputs.nmody, (float)tiltDegrees, cm->as_double("snow_slide_coefficient"), (trackMode != irrad::SINGLE_AXIS))) {
                 if (!snowModel.good) {
                     cm->log(snowModel.msg, SSC_ERROR);
                 }
@@ -973,10 +973,15 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
     p_dcLifetimeLoss = cm->allocate("dc_lifetime_loss", numberOfWeatherFileRecords);
     p_systemDCPower = cm->allocate("dc_net", numberOfLifetimeRecords);
     p_systemACPower = cm->allocate("gen", numberOfLifetimeRecords);
+    p_systemACPowerMax = cm->allocate("ac_csky_max", numberOfLifetimeRecords);
 
     p_systemDCPowerCS = cm->allocate("dc_net_clearsky", numberOfLifetimeRecords);
-    p_subhourlyClippingLoss = cm->allocate("subhourly_clipping_loss", numberOfLifetimeRecords);
-    p_subhourlyClippingLossFactor = cm->allocate("subhourly_clipping_loss_factor", numberOfLifetimeRecords);
+    if (cm->as_boolean("enable_subhourly_clipping")) {
+        p_subhourlyClippingLoss = cm->allocate("subhourly_clipping_loss", numberOfLifetimeRecords);
+    }
+    if (cm->as_boolean("enable_subinterval_distribution")) {
+        p_DistributionClippingLoss = cm->allocate("distribution_clipping_loss", numberOfLifetimeRecords);
+    }
 
     if (Simulation->useLifetimeOutput)
     {
