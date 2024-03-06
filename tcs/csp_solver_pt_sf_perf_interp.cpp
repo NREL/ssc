@@ -203,6 +203,7 @@ void C_pt_sf_perf_interp::init()
 	}
 
 	// Initialize stored variables
+    m_is_field_tracking_prev = ms_params.m_is_field_tracking_init;
 	//m_eta_prev = 0.0;
 	//m_v_wind_prev = 0.0;
 
@@ -389,6 +390,11 @@ void C_pt_sf_perf_interp::converged()
     m_is_field_tracking_prev = m_is_field_tracking;     //[-]
 
 	m_ncall = -1;
+}
+
+void C_pt_sf_perf_interp::get_converged(bool& is_field_tracking_prev)
+{
+    is_field_tracking_prev = m_is_field_tracking_prev;
 }
 
 double C_pt_sf_perf_interp::rdist(VectDoub *p1, VectDoub *p2, int dim)

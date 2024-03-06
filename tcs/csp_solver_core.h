@@ -248,11 +248,23 @@ public:
 		double m_q_dot_rec_des_mult;
 		double m_f_q_dot_pc_overwrite;
 
+        // Outside dispatch targets
+        bool m_is_dispatch_targets;                 // Pass in external dispatch targets
+        std::vector<double> m_q_pc_target_su_in;
+        std::vector<double> m_q_pc_target_on_in;
+        std::vector<double> m_q_pc_max_in;
+        std::vector<bool> m_is_rec_su_allowed_in;
+        std::vector<bool> m_is_pc_su_allowed_in;
+        std::vector<bool> m_is_pc_sb_allowed_in;
+        // electric heater control
+        std::vector<double> m_q_dot_elec_to_PAR_HTR_in;
+        std::vector<bool> m_is_PAR_HTR_allowed_in;
 
         S_csp_tou_params()
         {
             m_is_block_dispatch = true;			// Either this or m_dispatch_optimize must be true
             m_is_arbitrage_policy = false;
+            m_is_dispatch_targets = false;      
 
             m_isleapyear = false;
 			m_w_lim_full.resize(8760);
