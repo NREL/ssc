@@ -59,7 +59,7 @@ static var_info _cm_vtab_windpower[] = {
 	{ SSC_INPUT  , SSC_NUMBER , "wind_turbine_max_cp"                , "Max Coefficient of Power"                 , ""        ,""                                    , "Turbine"                              , "wind_resource_model_choice=1"                    , "MIN=0"                                           , "" } ,
 
 	{ SSC_INPUT  , SSC_NUMBER , "wind_farm_wake_model"               , "Wake Model [Simple, Park, EV, Constant]"  , "0/1/2/3" ,""                                    , "Farm"                                 , "*"                                               , "INTEGER"                                         , "" } ,
-	{ SSC_INPUT  , SSC_NUMBER , "wind_resource_turbulence_coeff"     , "Turbulence coefficient"                   , "%"       ,""                                    , "Farm"                                 , "*"                                               , "MIN=0"                                           , "" } ,
+    { SSC_INPUT  , SSC_NUMBER , "wind_resource_turbulence_coeff"     , "Turbulence coefficient"                   , "%"       ,""                                    , "Farm"                                 , "*"                                               , "MIN=0"                                           , "" } ,
 	{ SSC_INPUT  , SSC_NUMBER , "system_capacity"                    , "Nameplate capacity"                       , "kW"      ,""                                    , "Farm"                                 , "*"                                               , "MIN=0"                                           , "" } ,
 	{ SSC_INPUT  , SSC_ARRAY  , "wind_farm_xCoordinates"             , "Turbine X coordinates"                    , "m"       ,""                                    , "Farm"                                 , "*"                                               , ""                                                , "" } ,
 	{ SSC_INPUT  , SSC_ARRAY  , "wind_farm_yCoordinates"             , "Turbine Y coordinates"                    , "m"       ,""                                    , "Farm"                                 , "*"                                               , "LENGTH_EQUAL=wind_farm_xCoordinates"             , "" } ,
@@ -70,6 +70,8 @@ static var_info _cm_vtab_windpower[] = {
 	{ SSC_INPUT  , SSC_NUMBER , "en_icing_cutoff"                    , "Enable Icing Cutoff"                      , "0/1"     ,""                                    , "Losses"                               , "?=0"                                             , "INTEGER"                                         , "" } ,
 	{ SSC_INPUT  , SSC_NUMBER , "icing_cutoff_temp"                  , "Icing Cutoff Temperature"                 , "C"       ,""                                    , "Losses"                               , "en_icing_cutoff=1"                               , ""                                                , "" } ,
 	{ SSC_INPUT  , SSC_NUMBER , "icing_cutoff_rh"                    , "Icing Cutoff Relative Humidity"           , "%"       ,"'rh' required in wind_resource_data" , "Losses"                               , "en_icing_cutoff=1"                               , "MIN=0"                                           , "" } ,
+
+    { SSC_INPUT  , SSC_NUMBER , "wake_loss_multiplier"               , "Multiplier for the calculated wake loss"  , ""        ,">1 increases loss, <1 decreases loss", "Farm"                                 , ""                                                , "MIN=0"                                           , "" } ,
 
     { SSC_INPUT  , SSC_NUMBER , "wake_int_loss"                      , "Constant Wake Model, internal wake loss"  , "%"       ,""                                    , "Losses"                               , "wind_farm_wake_model=3"                          , "MIN=0,MAX=100"                                   , "" } ,
     { SSC_INPUT  , SSC_NUMBER , "wake_ext_loss"                      , "External Wake loss"                       , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
@@ -362,6 +364,7 @@ void cm_windpower::exec()
 		ssc_number_t gross_energy = turbine_kw * wpc.nTurbines;
 
         annual_wake_int_loss_percent = is_assigned("wake_int_loss") ? as_double("wake_int_loss") : 0.;
+        annual_wake_int_loss_percent *= is_assigned("wake_loss_multiplier") ? as_double("wake_loss_multiplier") : 1.; //to do- update this if input type changes
 		turbine_kw = turbine_kw * lossMultiplier * (1. - annual_wake_int_loss_percent/100.);
 
 		int nstep = 8760;
@@ -422,6 +425,11 @@ void cm_windpower::exec()
         auto wind_dist = lookup("wind_resource_distribution")->matrix_vector();
         if (!wpc.windPowerUsingDistribution(wind_dist, &farmPower, &farmPowerGross)){
             throw exec_error("windpower", wpc.GetErrorDetails());
+        }
+
+        if (is_assigned("wake_loss_multiplier"))
+        {
+            //to do- depends on type of input
         }
 
         if (wakeModelChoice != CONSTANTVALUE)
@@ -619,6 +627,11 @@ void cm_windpower::exec()
                     &DistDown[0],
                     &DistCross[0]))
 				throw exec_error("windpower", util::format("error in wind calculation at time %d, details: %s", i, wpc.GetErrorDetails().c_str()));
+
+            if (is_assigned("wake_loss_multiplier"))
+            {
+                //to do- depends on type of input
+            }
 
             //wake loss calculations need to happen before other losses are applied
             annual_gross += gross_farmp / (ssc_number_t)steps_per_hour;
