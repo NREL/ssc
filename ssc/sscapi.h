@@ -438,6 +438,9 @@ SSCEXPORT ssc_bool_t ssc_module_exec_with_handler(
 /** Add a var info vartable to a compute module. */
 SSCEXPORT ssc_bool_t ssc_module_add_var_info(ssc_module_t, ssc_info_t);
 
+/** Adds the input variables required for a technology module to be used in a cmod_hybrid simulation. */
+SSCEXPORT ssc_bool_t ssc_module_hybridize(ssc_module_t p_mod);
+
 /** Retrive notices, warnings, and error messages from the simulation. Returns a NULL-terminated ASCII C string with the message text, or NULL if the index passed in was invalid. */
 SSCEXPORT const char *ssc_module_log( ssc_module_t p_mod, int index, int *item_type, float *time );
 

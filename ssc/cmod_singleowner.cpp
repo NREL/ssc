@@ -923,6 +923,7 @@ public:
         add_var_info(vtab_lcos_inputs);
         add_var_info(vtab_update_tech_outputs);
         add_var_info(vtab_tod_dispatch_periods);
+		add_var_info(vtab_utility_rate_common);
         add_var_info(vtab_hybrid_fin_om);
         add_var_info(vtab_update_tech_outputs);
     }

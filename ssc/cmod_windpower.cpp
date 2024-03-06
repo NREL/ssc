@@ -226,7 +226,7 @@ cm_windpower::cm_windpower(){
 	add_var_info(vtab_technology_outputs);
 	// wind PRUF
 	add_var_info(vtab_p50p90);
-    add_var_info(vtab_hybrid_tech_om);
+    add_var_info(vtab_hybrid_tech_om_outputs);
 
 }
 
