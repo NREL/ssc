@@ -146,65 +146,8 @@ struct S_sco2_htrbp_in
 };
 
 // Defines sco2 htr bypass output variables (no optimized variables)
-//struct S_sco2_htrbp_out
-//{
-//    int m_error_code;
-//    double m_eta_thermal; // Thermal Efficiency
-//
-//    S_sco2_htrbp_out()
-//    {
-//        m_error_code = m_eta_thermal
-//            = std::numeric_limits<double>::quiet_NaN();
-//    }
-//};
-
-
-
-// This class is purely for solving the cycle
-// No optimization
-class C_sco2_htrbp_core
+struct S_sco2_htrbp_out
 {
-private:
-    CO2_state m_co2_props;
-
-    class C_mono_htrbp_core_HTR_des : public C_monotonic_equation
-    {
-    private:
-        C_sco2_htrbp_core* m_htr_bypass_cycle;
-
-    public:
-        C_mono_htrbp_core_HTR_des(C_sco2_htrbp_core* htr_bypass_cycle)
-        {
-            m_htr_bypass_cycle = htr_bypass_cycle;
-        }
-
-        virtual int operator()(double T_HTR_LP_OUT_guess /*K*/, double* diff_T_HTR_LP_out /*K*/);
-    };
-
-    class C_mono_htrbp_core_LTR_des : public C_monotonic_equation
-    {
-    private:
-        C_sco2_htrbp_core* m_htr_bypass_cycle;
-
-    public:
-        C_mono_htrbp_core_LTR_des(C_sco2_htrbp_core* htr_bypass_cycle)
-        {
-            m_htr_bypass_cycle = htr_bypass_cycle;
-        }
-
-        virtual int operator()(double T_LTR_LP_OUT_guess /*K*/, double* diff_T_LTR_LP_out /*K*/);
-    };
-
-    int solve_HTR(double T_HTR_LP_OUT_guess, double* diff_T_HTR_LP_out);
-    int solve_LTR(double T_LTR_LP_OUT_guess, double* diff_T_LTR_LP_out);
-
-    void InitializeSolve();
-
-public:
-    // Inputs Struct
-    S_sco2_htrbp_in m_inputs;
-
-    // Publicly Accessible Fields (Outputs)
     int m_error_code;
     C_turbine m_t;                          // Turbine model
     C_comp_multi_stage m_mc_ms;             // Main Compressor Model
@@ -231,6 +174,87 @@ public:
     double m_T_HTF_BP_outlet;                           // [K] HTF BPX outlet temperature
     double m_HTF_BP_cold_approach;                      // [K] BPX cold approach temperature
     double m_eta_thermal;                               // Thermal Efficiency
+
+    S_sco2_htrbp_out()
+    {
+        Init();
+    }
+
+    void Init()
+    {
+        m_error_code = m_w_t = m_w_mc = m_w_rc
+            = m_m_dot_t = m_m_dot_mc = m_m_dot_rc
+            = m_m_dot_bp = m_m_dot_htr_hp
+            = m_Q_dot_LT = m_Q_dot_HT
+            = m_W_dot_mc = m_W_dot_rc = m_W_dot_t
+            = m_W_dot_net = m_W_dot_air_cooler = m_Q_dot_air_cooler
+            = m_Q_dot_LTR_LP = m_Q_dot_LTR_HP = m_Q_dot_HTR_LP = m_Q_dot_HTR_HP
+            = m_Q_dot_total = m_Q_dot_PHX = m_Q_dot_BP
+            = m_m_dot_HTF = m_T_HTF_PHX_out = m_HTF_PHX_cold_approach
+            = m_T_HTF_BP_outlet = m_HTF_BP_cold_approach = m_eta_thermal
+            = std::numeric_limits<double>::quiet_NaN();
+
+        // Clear and Size Output Vectors
+        m_temp.resize(C_sco2_cycle_core::END_SCO2_STATES);
+        std::fill(m_temp.begin(), m_temp.end(), std::numeric_limits<double>::quiet_NaN());
+        m_pres = m_enth = m_entr = m_dens = m_temp;
+    }
+};
+
+
+
+// This class is purely for solving the cycle
+// No optimization
+class C_sco2_htrbp_core
+{
+private:
+    CO2_state m_co2_props;
+
+    class C_mono_htrbp_core_HTR_des : public C_monotonic_equation
+    {
+    private:
+        C_sco2_htrbp_core* m_htr_bypass_cycle;
+
+    public:
+        C_mono_htrbp_core_HTR_des(C_sco2_htrbp_core* htr_bypass_cycle)
+        {
+            m_htr_bypass_cycle = htr_bypass_cycle;
+        }
+
+        virtual int operator()(double T_HTR_LP_OUT_guess /*K*/, double* diff_T_HTR_LP_out /*K*/)
+        {
+            return m_htr_bypass_cycle->solve_HTR(T_HTR_LP_OUT_guess, diff_T_HTR_LP_out);
+        };
+    };
+
+    class C_mono_htrbp_core_LTR_des : public C_monotonic_equation
+    {
+    private:
+        C_sco2_htrbp_core* m_htr_bypass_cycle;
+
+    public:
+        C_mono_htrbp_core_LTR_des(C_sco2_htrbp_core* htr_bypass_cycle)
+        {
+            m_htr_bypass_cycle = htr_bypass_cycle;
+        }
+
+        virtual int operator()(double T_LTR_LP_OUT_guess /*K*/, double* diff_T_LTR_LP_out /*K*/)
+        {
+            return m_htr_bypass_cycle->solve_LTR(T_LTR_LP_OUT_guess, diff_T_LTR_LP_out);
+        };
+    };
+
+    int solve_HTR(double T_HTR_LP_OUT_guess, double* diff_T_HTR_LP_out);
+    int solve_LTR(double T_LTR_LP_OUT_guess, double* diff_T_LTR_LP_out);
+
+    void InitializeSolve();
+
+public:
+    // Inputs Struct
+    S_sco2_htrbp_in m_inputs;
+
+    // Outputs Struct
+    S_sco2_htrbp_out m_outputs;
 
     // Public Methods
     void SetInputs(S_sco2_htrbp_in inputs) { m_inputs = inputs; };
