@@ -201,8 +201,6 @@ struct S_sco2_htrbp_out
     }
 };
 
-
-
 // This class is purely for solving the cycle
 // No optimization
 class C_sco2_htrbp_core
@@ -261,6 +259,8 @@ public:
     int Solve();
 
 };
+
+
 
 class C_HTRBypass_Cycle : public C_sco2_cycle_core
 {
@@ -396,6 +396,12 @@ public:
     };
 
 private:
+
+    // NEW REFACTOR METHODS
+    int opt_max_eta(S_auto_opt_design_parameters auto_par, S_opt_design_parameters opt_par);
+
+    int opt_nonbp_par(S_auto_opt_design_parameters auto_par, S_opt_design_parameters opt_par, S_sco2_htrbp_in core_inputs);
+
 
     // Component classes
     C_turbine m_t;
@@ -566,6 +572,10 @@ public:
 
     double design_bypass_frac_free_var_return_objective_metric(const std::vector<double>& x);
 
+    double C_HTRBypass_Cycle::opt_max_eta_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters auto_par, const S_opt_design_parameters opt_par, S_sco2_htrbp_in core_inputs);
+
+    double C_HTRBypass_Cycle::opt_nonbp_par_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters auto_par, const S_opt_design_parameters opt_par, S_sco2_htrbp_in core_inputs);
+
     class C_mono_htr_bypass_LTR_des : public C_monotonic_equation
     {
     private:
@@ -666,6 +676,14 @@ double nlopt_cb_opt_htr_bypass_des(const std::vector<double>& x, std::vector<dou
 double nlopt_cb_opt_bypass_frac_des(const std::vector<double>& x, std::vector<double>& grad, void* data);
 
 double nlopt_cb_opt_bypass_frac_free_var(const std::vector<double>& x, std::vector<double>& grad, void* data);
+
+
+// ADDED
+double nlopt_opt_max_eta_func(const std::vector<double>& x, std::vector<double>& grad, void* data);
+
+double nlopt_opt_nonbp_par_func(const std::vector<double>& x, std::vector<double>& grad, void* data);
+
+
 
 
 double sigmoid(const double val);
