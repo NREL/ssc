@@ -565,7 +565,7 @@ bool AutoPilot::Setup(var_map &V, bool /*for_optimize*/)
 		_SF->PrepareFieldLayout(*_SF, 0, true);	//Run the layout method in refresh_only mode
         Vect sun = Ambient::calcSunVectorFromAzZen( _SF->getVarMap()->sf.sun_az_des.Val()*D2R, (90. - _SF->getVarMap()->sf.sun_el_des.Val())*D2R );   
 		_SF->calcHeliostatShadows(sun);
-        double area = V.land.land_area.Val();  //acre -> TODO (Bill) why is this here?
+        double area = V.land.land_area.Val();  //acre
 		V.land.bound_area.Setval( area );
         V.land.land_area.Setval( area );
 	}
@@ -609,7 +609,7 @@ void AutoPilot::GenerateDesignPointSimulations(var_map &V, vector<string> &wdata
 	1..,  0..,  1-12, W/m2,    C,  bar,  m/s
 	*/
 #ifdef _DEBUG
-    interop::GenerateSimulationWeatherData(V, var_solarfield::DES_SIM_DETAIL::SINGLE_SIMULATION_POINT, wdata);
+    interop::GenerateSimulationWeatherData(V, var_solarfield::DES_SIM_DETAIL::SINGLE_SIMULATION_POINT, wdata);	// Reduces number of cases to run in debug
 #else
 	interop::GenerateSimulationWeatherData(V, -1, wdata);
 #endif
@@ -740,9 +740,9 @@ void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, in
 	fluxtab.flux_surfaces.resize(nsurftot);
 	//resize the flux surfaces to match the flux data and the number of annual simulation positions
     for (int i = 0; i < (int)_SF->getReceivers()->size(); i++) {//for all receivers
-        for (int j = 0; j < (int)_SF->getReceivers()->at(i)->getFluxSurfaces()->size(); j++) {//for all receiver
+        for (int j = 0; j < (int)_SF->getReceivers()->at(i)->getFluxSurfaces()->size(); j++) {//for all receiver flux surfaces
             FluxSurface *fs = &_SF->getReceivers()->at(i)->getFluxSurfaces()->at(j);
-            fluxtab.flux_surfaces.at(i+j).flux_data.resize(fs->getFluxNY(), fs->getFluxNX(), nflux_sim); // TODO (Bill): why is the resizing here?
+            fluxtab.flux_surfaces.at(i+j).flux_data.resize(fs->getFluxNY(), fs->getFluxNX(), nflux_sim);
         }
     }
 }

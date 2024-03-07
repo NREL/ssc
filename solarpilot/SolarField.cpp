@@ -1010,9 +1010,8 @@ bool SolarField::CheckReceiverAcceptance(Receiver* Rec, sp_point *hpos, double t
     acc_x *= 0.5;
     acc_y *= 0.5;
     if (Rv->accept_ang_type.mapval() == var_receiver::ACCEPT_ANG_TYPE::RECTANGULAR  //Rectangular
-        || rectype == var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL) //or, if this is a cylindrical receiver (no elliptical view from cylinder)
-    {
-        if (std::abs(theta_x) < acc_x && std::abs(theta_y) < acc_y)
+        || rectype == var_receiver::REC_TYPE::EXTERNAL_CYLINDRICAL) {  //or, if this is a cylindrical receiver (no elliptical view from cylinder)
+        if (std::abs(theta_x) <= acc_x + 1.e-6 && std::abs(theta_y) <= acc_y + 1.e-6)
             return true;
     }
     else {	//Elliptical
