@@ -2196,7 +2196,7 @@ public:
                     // recalculate debt size with constrained dscr
                     size_of_debt = 0.0;
                     for (i = 0; i <= nyears; i++) {
-                        if (dscr != 0)
+                        if (dscr > 0)
                             cf.at(CF_debt_size, i) = cf.at(CF_pv_cash_for_ds, i) / dscr;
                         else
                             cf.at(CF_debt_size, i) = 0.0; // default behavior of initialization of cash flow line items
