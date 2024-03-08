@@ -184,7 +184,7 @@ struct S_sco2_htrbp_out
 
     void Init()
     {
-        m_error_code = m_w_t = m_w_mc = m_w_rc
+        m_w_t = m_w_mc = m_w_rc
             = m_m_dot_t = m_m_dot_mc = m_m_dot_rc
             = m_m_dot_bp = m_m_dot_htr_hp
             = m_Q_dot_LT = m_Q_dot_HT
@@ -195,6 +195,8 @@ struct S_sco2_htrbp_out
             = m_m_dot_HTF = m_T_HTF_PHX_out = m_HTF_PHX_cold_approach
             = m_T_HTF_BP_outlet = m_HTF_BP_cold_approach = m_eta_thermal
             = std::numeric_limits<double>::quiet_NaN();
+
+        m_error_code = -1;
 
         // Clear and Size Output Vectors
         m_temp.resize(C_sco2_cycle_core::END_SCO2_STATES);
@@ -406,6 +408,9 @@ private:
 
     int x_to_inputs(const std::vector<double>& x, const S_auto_opt_design_parameters auto_par, const S_opt_design_parameters opt_par, S_sco2_htrbp_in &core_inputs);
 
+    int clear_optimized_inputs(const std::vector<double>& x, const S_auto_opt_design_parameters auto_par, const S_opt_design_parameters opt_par, S_sco2_htrbp_in& core_inputs);
+
+
     // Optimal inputs, for bypass optimizer DO NOT USE
     S_sco2_htrbp_in m_optimal_inputs_internal_only;
     double m_opt_obj_internal_only;
@@ -581,9 +586,9 @@ public:
 
     double design_bypass_frac_free_var_return_objective_metric(const std::vector<double>& x);
 
-    double C_HTRBypass_Cycle::opt_max_eta_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, S_sco2_htrbp_in& core_inputs);
+    double C_HTRBypass_Cycle::opt_max_eta_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, C_sco2_htrbp_core& htrbp_core);
 
-    double C_HTRBypass_Cycle::opt_nonbp_par_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, S_sco2_htrbp_in& core_inputs);
+    double C_HTRBypass_Cycle::opt_nonbp_par_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, C_sco2_htrbp_core& htrbp_core);
 
     class C_mono_htr_bypass_LTR_des : public C_monotonic_equation
     {

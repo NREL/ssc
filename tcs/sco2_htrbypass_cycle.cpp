@@ -828,8 +828,12 @@ int C_HTRBypass_Cycle::opt_max_eta(const S_auto_opt_design_parameters& auto_par,
         opt_des_cycle.set_xtol_rel(auto_par.m_des_opt_tol);
         opt_des_cycle.set_maxeval(50);
 
+        // Set up Core Model that will be passed to objective function
+        C_sco2_htrbp_core htrbp_core;
+        htrbp_core.SetInputs(core_inputs);
+
         // Make Tuple to pass in parameters
-        std::tuple<C_HTRBypass_Cycle*, const S_auto_opt_design_parameters*, const S_opt_design_parameters*, S_sco2_htrbp_in*> par_tuple = { this, &auto_par, &opt_par, &core_inputs };
+        std::tuple<C_HTRBypass_Cycle*, const S_auto_opt_design_parameters*, const S_opt_design_parameters*, C_sco2_htrbp_core*> par_tuple = { this, &auto_par, &opt_par, &htrbp_core };
 
         // Set max objective function
         std::vector<double> x;
@@ -938,15 +942,19 @@ int C_HTRBypass_Cycle::opt_nonbp_par(const S_auto_opt_design_parameters& auto_pa
     if (index > 0)
     {
         // Set up instance of nlopt class and set optimization parameters
-        nlopt::opt		opt_des_cycle(nlopt::LN_SBPLX, index);
+        nlopt::opt opt_des_cycle(nlopt::LN_SBPLX, index);
         opt_des_cycle.set_lower_bounds(lb);
         opt_des_cycle.set_upper_bounds(ub);
         opt_des_cycle.set_initial_step(scale);
         opt_des_cycle.set_xtol_rel(auto_par.m_des_opt_tol);
         opt_des_cycle.set_maxeval(50);
 
+        // Set up Core Model that will be passed to objective function
+        C_sco2_htrbp_core htrbp_core;
+        htrbp_core.SetInputs(core_inputs);
+
         // Make Tuple to pass in parameters
-        std::tuple<C_HTRBypass_Cycle*, const S_auto_opt_design_parameters*, const S_opt_design_parameters*, S_sco2_htrbp_in*> par_tuple = { this, &auto_par, &opt_par, &core_inputs };
+        std::tuple<C_HTRBypass_Cycle*, const S_auto_opt_design_parameters*, const S_opt_design_parameters*, C_sco2_htrbp_core*> par_tuple = { this, &auto_par, &opt_par, &htrbp_core };
 
         // Set max objective function
         
@@ -981,6 +989,7 @@ int C_HTRBypass_Cycle::opt_nonbp_par(const S_auto_opt_design_parameters& auto_pa
         error_code = core_model.Solve();
     }
 
+    // Set Optimal Inputs
     optimal_inputs = core_inputs;
 
     return error_code;
@@ -998,7 +1007,7 @@ int C_HTRBypass_Cycle::opt_nonbp_par(const S_auto_opt_design_parameters& auto_pa
 double C_HTRBypass_Cycle::opt_max_eta_return_objective_metric(const std::vector<double>& x,
     const S_auto_opt_design_parameters& auto_par,
     const S_opt_design_parameters& opt_par,
-    S_sco2_htrbp_in& core_inputs)
+    C_sco2_htrbp_core& htrbp_core)
 {
     if (opt_par.m_fixed_bypass_frac == true)
     {
@@ -1006,22 +1015,22 @@ double C_HTRBypass_Cycle::opt_max_eta_return_objective_metric(const std::vector<
     }
 
     // Set Bypass Fraction
-    core_inputs.m_bypass_frac = x[0];
+    htrbp_core.m_inputs.m_bypass_frac = x[0];
 
     // Optimize all other variables
     S_sco2_htrbp_in optimal_inputs_case;
-    opt_nonbp_par(auto_par, opt_par, core_inputs, optimal_inputs_case);
+    opt_nonbp_par(auto_par, opt_par, htrbp_core.m_inputs, optimal_inputs_case);
 
     // ^ Get optimal core_inputs from here
 
     // Run Optimal Case, return objective function
-    C_sco2_htrbp_core core_model;
-    core_model.SetInputs(optimal_inputs_case);
-    int error_code = core_model.Solve();
+
+    htrbp_core.SetInputs(optimal_inputs_case);
+    int error_code = htrbp_core.Solve();
     if (error_code != 0)
         return -100000000000000000;
 
-    double eff = core_model.m_outputs.m_eta_thermal;
+    double eff = htrbp_core.m_outputs.m_eta_thermal;
 
     // If variable bypass fraction or targeting temperature
     double penalty = 0;
@@ -1032,13 +1041,13 @@ double C_HTRBypass_Cycle::opt_max_eta_return_objective_metric(const std::vector<
 
         if (m_T_target_is_HTF == 0)
         {
-            temp_calc = core_model.m_outputs.m_temp[MIXER_OUT];
-            span = core_model.m_outputs.m_temp[TURB_IN] - m_T_target;
+            temp_calc = htrbp_core.m_outputs.m_temp[MIXER_OUT];
+            span = htrbp_core.m_outputs.m_temp[TURB_IN] - m_T_target;
         }
         else
         {
-            temp_calc = core_model.m_outputs.m_T_HTF_BP_outlet;
-            span = core_model.m_inputs.m_T_HTF_PHX_inlet - m_T_target;
+            temp_calc = htrbp_core.m_outputs.m_T_HTF_BP_outlet;
+            span = htrbp_core.m_inputs.m_T_HTF_PHX_inlet - m_T_target;
         }
 
         penalty = calc_penalty(m_T_target, temp_calc, span);
@@ -1052,6 +1061,10 @@ double C_HTRBypass_Cycle::opt_max_eta_return_objective_metric(const std::vector<
         m_optimal_inputs_internal_only = optimal_inputs_case;
     }
 
+    // Reset htrbp_core
+    htrbp_core.m_inputs.m_bypass_frac = std::numeric_limits<double>::quiet_NaN();
+    htrbp_core.m_outputs.Init();
+
     return obj;
 }
 
@@ -1059,30 +1072,27 @@ double C_HTRBypass_Cycle::opt_max_eta_return_objective_metric(const std::vector<
 /// <summary>
 /// Objective Function for NON Bypass optimization
 /// </summary>
-/// <param name="x"></param>
-/// <param name="auto_par"></param>
-/// <param name="opt_par"></param>
-/// <param name="core_inputs"></param>
-/// <returns></returns>
+/// <returns>ONLY Objective Value</returns>
 double C_HTRBypass_Cycle::opt_nonbp_par_return_objective_metric(const std::vector<double>& x,
     const S_auto_opt_design_parameters& auto_par,
     const S_opt_design_parameters& opt_par,
-    S_sco2_htrbp_in& core_inputs)
+    C_sco2_htrbp_core& htrbp_core)
 {
     // Modify Core Inputs with Variable Parameters
-    int error_code = x_to_inputs(x, auto_par, opt_par, core_inputs);
+    int error_code = x_to_inputs(x, auto_par, opt_par, htrbp_core.m_inputs);
+
+    if (error_code != 0)
+        return -1000000000;
 
     // AT this point, will have fully defined core input struct
     // Run the core model
-    C_sco2_htrbp_core core_model;
-    core_model.SetInputs(core_inputs);
-    error_code = core_model.Solve();
+    error_code = htrbp_core.Solve();
 
     // Set Objective
     double objective_metric = -10000000000.0;
     if (error_code == 0)
     {
-        double eff = core_model.m_outputs.m_eta_thermal;
+        double eff = htrbp_core.m_outputs.m_eta_thermal;
 
         // If variable bypass fraction or targeting temperature
         double penalty = 0;
@@ -1093,13 +1103,13 @@ double C_HTRBypass_Cycle::opt_nonbp_par_return_objective_metric(const std::vecto
 
             if (m_T_target_is_HTF == 0)
             {
-                temp_calc = core_model.m_outputs.m_temp[MIXER_OUT];
-                span = core_model.m_outputs.m_temp[TURB_IN] - m_T_target;
+                temp_calc = htrbp_core.m_outputs.m_temp[MIXER_OUT];
+                span = htrbp_core.m_outputs.m_temp[TURB_IN] - m_T_target;
             }
             else
             {
-                temp_calc = core_model.m_outputs.m_T_HTF_BP_outlet;
-                span = core_model.m_inputs.m_T_HTF_PHX_inlet - m_T_target;
+                temp_calc = htrbp_core.m_outputs.m_T_HTF_BP_outlet;
+                span = htrbp_core.m_inputs.m_T_HTF_PHX_inlet - m_T_target;
             }
 
             penalty = calc_penalty(m_T_target, temp_calc, span);
@@ -1114,11 +1124,14 @@ double C_HTRBypass_Cycle::opt_nonbp_par_return_objective_metric(const std::vecto
         }*/
     }
 
+    // Clear Optimized Inputs
+    clear_optimized_inputs(x, auto_par, opt_par, htrbp_core.m_inputs);
+    
     return objective_metric;
 }
 
 /// <summary>
-/// Take x inputs from optimizer results, create S_sco2_htrbp_in inputs from this
+/// Take x inputs from optimizer results, write appropriate values to S_sco2_htrbp_in
 /// </summary>
 int C_HTRBypass_Cycle::x_to_inputs(const std::vector<double>& x,
     const S_auto_opt_design_parameters auto_par,
@@ -1209,19 +1222,60 @@ int C_HTRBypass_Cycle::x_to_inputs(const std::vector<double>& x,
     return 0;
 }
 
+/// <summary>
+/// Set Optimized Variables to NaN, to save them from misuse
+/// </summary>
+int C_HTRBypass_Cycle::clear_optimized_inputs(const std::vector<double>& x, const S_auto_opt_design_parameters auto_par, const S_opt_design_parameters opt_par, S_sco2_htrbp_in& core_inputs)
+{
+    // 'x' is array of inputs either being adjusted by optimizer or set constant
+    // Finish defining core_inputs based on current 'x' values
+
+    int error_message = 0;
+    int index = 0;
+
+    // Main compressor outlet pressure
+
+    if (!auto_par.m_fixed_P_mc_out)
+    {
+        core_inputs.m_P_mc_out = std::numeric_limits<double>::quiet_NaN();
+    }
+
+
+    core_inputs.m_P_mc_in = std::numeric_limits<double>::quiet_NaN();
+
+    // Recompression fraction
+    if (!opt_par.m_fixed_recomp_frac)
+    {
+        core_inputs.m_recomp_frac = std::numeric_limits<double>::quiet_NaN();
+    }
+
+    // Recuperator split fraction
+    if (!opt_par.m_fixed_LT_frac)
+    {
+        if (auto_par.m_LTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA || auto_par.m_HTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA)
+        {
+            // ASSIGN LTR_UA and HTR_UA
+            core_inputs.m_LTR_UA = std::numeric_limits<double>::quiet_NaN();;
+            core_inputs.m_HTR_UA = std::numeric_limits<double>::quiet_NaN();;
+        }
+    }
+
+    return 0;
+}
+
 double nlopt_opt_max_eta_func(const std::vector<double>& x, std::vector<double>& grad, void* data)
 {
     // Unpack Data Tuple
-    std::tuple<C_HTRBypass_Cycle*, const C_HTRBypass_Cycle::S_auto_opt_design_parameters*, const C_HTRBypass_Cycle::S_opt_design_parameters*, S_sco2_htrbp_in*>* data_tuple
-        = static_cast<std::tuple<C_HTRBypass_Cycle*, const C_HTRBypass_Cycle::S_auto_opt_design_parameters*, const C_HTRBypass_Cycle::S_opt_design_parameters*, S_sco2_htrbp_in*>*>(data);
+    std::tuple<C_HTRBypass_Cycle*, const C_HTRBypass_Cycle::S_auto_opt_design_parameters*, const C_HTRBypass_Cycle::S_opt_design_parameters*, C_sco2_htrbp_core*>* data_tuple
+        = static_cast<std::tuple<C_HTRBypass_Cycle*, const C_HTRBypass_Cycle::S_auto_opt_design_parameters*, const C_HTRBypass_Cycle::S_opt_design_parameters*, C_sco2_htrbp_core*>*>(data);
 
     C_HTRBypass_Cycle* frame = std::get<0>(*data_tuple);
     const C_HTRBypass_Cycle::S_auto_opt_design_parameters* auto_opt_par = std::get<1>(*data_tuple);
     const C_HTRBypass_Cycle::S_opt_design_parameters* opt_par = std::get<2>(*data_tuple);
-    S_sco2_htrbp_in* core_inputs = std::get<3>(*data_tuple);
+    C_sco2_htrbp_core* htrbp_core = std::get<3>(*data_tuple);
 
     if (frame != NULL)
-        return frame->opt_max_eta_return_objective_metric(x, *auto_opt_par, *opt_par, *core_inputs);
+        return frame->opt_max_eta_return_objective_metric(x, *auto_opt_par, *opt_par, *htrbp_core);
     else
         return 0.0;
 }
@@ -1229,16 +1283,16 @@ double nlopt_opt_max_eta_func(const std::vector<double>& x, std::vector<double>&
 double nlopt_opt_nonbp_par_func(const std::vector<double>& x, std::vector<double>& grad, void* data)
 {
     // Unpack Data Tuple
-    std::tuple<C_HTRBypass_Cycle*, const C_HTRBypass_Cycle::S_auto_opt_design_parameters*, const C_HTRBypass_Cycle::S_opt_design_parameters*, S_sco2_htrbp_in*>* data_tuple
-        = static_cast<std::tuple<C_HTRBypass_Cycle*, const C_HTRBypass_Cycle::S_auto_opt_design_parameters*, const C_HTRBypass_Cycle::S_opt_design_parameters*, S_sco2_htrbp_in*>*>(data);
+    std::tuple<C_HTRBypass_Cycle*, const C_HTRBypass_Cycle::S_auto_opt_design_parameters*, const C_HTRBypass_Cycle::S_opt_design_parameters*, C_sco2_htrbp_core*>* data_tuple
+        = static_cast<std::tuple<C_HTRBypass_Cycle*, const C_HTRBypass_Cycle::S_auto_opt_design_parameters*, const C_HTRBypass_Cycle::S_opt_design_parameters*, C_sco2_htrbp_core*>*>(data);
 
     C_HTRBypass_Cycle* frame = std::get<0>(*data_tuple);
     const C_HTRBypass_Cycle::S_auto_opt_design_parameters* auto_opt_par = std::get<1>(*data_tuple);
     const C_HTRBypass_Cycle::S_opt_design_parameters* opt_par = std::get<2>(*data_tuple);
-    S_sco2_htrbp_in* core_inputs = std::get<3>(*data_tuple);
+    C_sco2_htrbp_core* htrbp_core = std::get<3>(*data_tuple);
 
     if (frame != NULL)
-        return frame->opt_nonbp_par_return_objective_metric(x, *auto_opt_par, *opt_par, *core_inputs);
+        return frame->opt_nonbp_par_return_objective_metric(x, *auto_opt_par, *opt_par, *htrbp_core);
     else
         return 0.0;
 }
@@ -1507,68 +1561,6 @@ void C_HTRBypass_Cycle::auto_opt_design_core(int& error_code)
 
 void C_HTRBypass_Cycle::design_core(int& error_code)
 {
-    // DEBUG
-    {
-        S_sco2_htrbp_in core_inputs;
-        core_inputs.m_dT_BP = m_dT_BP;
-        core_inputs.m_P_mc_in = ms_des_par.m_P_mc_in;
-        core_inputs.m_P_mc_out = ms_des_par.m_P_mc_out;
-        core_inputs.m_LTR_target_code = ms_des_par.m_LTR_target_code;
-        core_inputs.m_LTR_UA = ms_des_par.m_LTR_UA;
-        core_inputs.m_LTR_min_dT = ms_des_par.m_LTR_min_dT;
-        core_inputs.m_LTR_eff_target = ms_des_par.m_LTR_eff_target;
-        core_inputs.m_LTR_eff_max = ms_des_par.m_LTR_eff_max;
-        core_inputs.m_LTR_N_sub_hxrs = m_LTR_N_sub_hxrs;
-        core_inputs.m_LTR_od_UA_target_type = ms_des_par.m_LTR_od_UA_target_type;
-
-        core_inputs.m_HTR_target_code = ms_des_par.m_HTR_target_code;
-        core_inputs.m_HTR_UA = ms_des_par.m_HTR_UA;
-        core_inputs.m_HTR_min_dT = ms_des_par.m_HTR_min_dT;
-        core_inputs.m_HTR_eff_target = ms_des_par.m_HTR_eff_target;
-        core_inputs.m_HTR_eff_max = ms_des_par.m_HTR_eff_max;
-        core_inputs.m_HTR_N_sub_hxrs = m_HTR_N_sub_hxrs;
-        core_inputs.m_HTR_od_UA_target_type = ms_des_par.m_HTR_od_UA_target_type;
-
-        core_inputs.m_recomp_frac = ms_des_par.m_recomp_frac;
-        core_inputs.m_bypass_frac = ms_opt_des_par.m_bypass_frac_guess;
-        core_inputs.m_des_tol = ms_des_par.m_des_tol;
-        core_inputs.m_is_des_air_cooler = ms_des_par.m_is_des_air_cooler;
-
-        core_inputs.m_W_dot_net_design = m_W_dot_net;
-        core_inputs.m_T_mc_in = m_T_mc_in;                          // Comes from constructor (constant)
-        core_inputs.m_T_t_in = m_T_t_in;                            // Comes from constructor (constant)
-        core_inputs.m_DP_LTR = m_DP_LTR;                            // Comes from constructor (constant)
-        core_inputs.m_DP_HTR = m_DP_HTR;                            // Comes from constructor (constant)
-        core_inputs.m_DP_PC_main = m_DP_PC_main;                    // Comes from constructor (constant)
-        core_inputs.m_DP_PHX = m_DP_PHX;                            // Comes from constructor (constant)
-        core_inputs.m_eta_mc = m_eta_mc;                            // Comes from constructor (constant)
-        core_inputs.m_eta_t = m_eta_t;                              // Comes from constructor (constant)
-        core_inputs.m_eta_rc = m_eta_rc;                            // Comes from constructor (constant)
-        core_inputs.m_eta_generator = m_eta_generator;              // Comes from constructor (constant)
-        core_inputs.m_frac_fan_power = m_frac_fan_power;            // Comes from constructor (constant)
-
-        core_inputs.m_set_HTF_mdot = m_set_HTF_mdot;                // Comes from HTF par function (constant)
-        core_inputs.m_cp_HTF = m_cp_HTF;                            // Comes from HTF par function (constant)
-        core_inputs.m_T_HTF_PHX_inlet = m_T_HTF_PHX_inlet;          // Comes from HTF par function (constant)
-        core_inputs.m_HTF_PHX_cold_approach_input = m_HTF_PHX_cold_approach;    // Comes from constructor (constant)
-
-        core_inputs.m_eta_fan = m_eta_fan;                          // Comes from constructor (constant)
-        core_inputs.m_deltaP_cooler_frac = m_deltaP_cooler_frac;    // Comes from constructor (constant)
-        core_inputs.m_T_amb_des = m_T_amb_des;                      // Comes from constructor (constant)
-        core_inputs.m_elevation = m_elevation;                      // Comes from constructor (constant)
-        core_inputs.m_N_nodes_pass = m_N_nodes_pass;                // Comes from constructor (constant)
-
-
-        C_sco2_htrbp_core sco2_core;
-        sco2_core.SetInputs(core_inputs);
-        int err = sco2_core.Solve();
-        int ta = 0;
-    }
-    
-    
-
-
-
     // Check if HTF parameters were set
     if (is_bp_par_set == false)
     {
