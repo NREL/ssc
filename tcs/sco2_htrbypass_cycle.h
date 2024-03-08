@@ -130,6 +130,8 @@ struct S_sco2_htrbp_in
             std::numeric_limits<double>::quiet_NaN();
 
         m_N_nodes_pass = 0;
+        m_LTR_N_sub_hxrs = 0;
+        m_HTR_N_sub_hxrs = 0;
 
         // Recuperator design target codes
         m_LTR_target_code = 1;      // default to target conductance
@@ -397,11 +399,18 @@ public:
 
 private:
 
-    // NEW REFACTOR METHODS
-    int opt_max_eta(S_auto_opt_design_parameters auto_par, S_opt_design_parameters opt_par);
+    // NEW REFACTOR Fields and methods
+    int opt_max_eta(const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, S_sco2_htrbp_in& optimal_inputs);
 
-    int opt_nonbp_par(S_auto_opt_design_parameters auto_par, S_opt_design_parameters opt_par, S_sco2_htrbp_in core_inputs);
+    int opt_nonbp_par(const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, S_sco2_htrbp_in core_inputs, S_sco2_htrbp_in& optimal_inputs);
 
+    int x_to_inputs(const std::vector<double>& x, const S_auto_opt_design_parameters auto_par, const S_opt_design_parameters opt_par, S_sco2_htrbp_in &core_inputs);
+
+    // Optimal inputs, for bypass optimizer DO NOT USE
+    S_sco2_htrbp_in m_optimal_inputs_internal_only;
+    double m_opt_obj_internal_only;
+
+    // END new refactor fields and methods
 
     // Component classes
     C_turbine m_t;
@@ -572,9 +581,9 @@ public:
 
     double design_bypass_frac_free_var_return_objective_metric(const std::vector<double>& x);
 
-    double C_HTRBypass_Cycle::opt_max_eta_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters auto_par, const S_opt_design_parameters opt_par, S_sco2_htrbp_in core_inputs);
+    double C_HTRBypass_Cycle::opt_max_eta_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, S_sco2_htrbp_in& core_inputs);
 
-    double C_HTRBypass_Cycle::opt_nonbp_par_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters auto_par, const S_opt_design_parameters opt_par, S_sco2_htrbp_in core_inputs);
+    double C_HTRBypass_Cycle::opt_nonbp_par_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, S_sco2_htrbp_in& core_inputs);
 
     class C_mono_htr_bypass_LTR_des : public C_monotonic_equation
     {
@@ -682,6 +691,7 @@ double nlopt_cb_opt_bypass_frac_free_var(const std::vector<double>& x, std::vect
 double nlopt_opt_max_eta_func(const std::vector<double>& x, std::vector<double>& grad, void* data);
 
 double nlopt_opt_nonbp_par_func(const std::vector<double>& x, std::vector<double>& grad, void* data);
+
 
 
 
