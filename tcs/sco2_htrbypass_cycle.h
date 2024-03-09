@@ -268,6 +268,7 @@ public:
     void SetInputs(S_sco2_htrbp_in inputs) { m_inputs = inputs; };
     int Solve();
     int FinalizeDesign(C_sco2_cycle_core::S_design_solved& design_solved);
+    void Reset();
 };
 
 
@@ -421,100 +422,27 @@ private:
     S_sco2_htrbp_in m_optimal_inputs_internal_only;
     double m_opt_obj_internal_only;
 
-    // END new refactor fields and methods
-
-    // Component classes
-    C_turbine m_t;
-    C_comp_multi_stage m_mc_ms;
-    C_comp_multi_stage m_rc_ms;
-    C_HeatExchanger m_PHX, m_PC, m_BPX;
-
-    C_HX_co2_to_co2_CRM mc_LT_recup;
-    C_HX_co2_to_co2_CRM mc_HT_recup;
-
-    C_CO2_to_air_cooler mc_air_cooler;
-
     // Input/Ouput structures for class methods
-    S_design_parameters ms_des_par;
     S_opt_design_parameters ms_opt_des_par;
-    
 
-    // Results from last 'design' solution
-    std::vector<double> m_temp_last, m_pres_last, m_enth_last, m_entr_last, m_dens_last;		// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
-    double m_eta_thermal_calc_last;
-    double m_W_dot_net_last;
-    double m_m_dot_mc, m_m_dot_rc, m_m_dot_t;
-    double m_Q_dot_PHX;
-    double m_W_dot_mc, m_W_dot_rc, m_W_dot_t, m_W_dot_mc_bypass;
-    double m_objective_metric_last;
-    double m_objective_metric_bypass_frac_last;
-
-    // Structures and data for optimization
-    S_design_parameters ms_des_par_optimal;
-    double m_objective_metric_opt;
-    double m_objective_metric_bypass_frac_opt;
-
-    S_design_parameters ms_des_par_bp_frac_optimal;
-
-    // Structures and data for auto-optimization
-    double m_objective_metric_auto_opt;
-    S_design_parameters ms_des_par_auto_opt;
-
-    S_design_parameters ms_des_par_full_auto_opt;
-    double m_objective_metric_full_auto_opt = 0;
-
-    // NEW Internal Variables
-    double m_w_t;                       // kJ/kg
-    double m_w_mc;                      // kJ/kg
-    double m_w_rc;                      // kJ/kg
-    double m_Q_dot_LT, m_Q_dot_HT;
-    double m_Q_dot_LTR_LP, m_Q_dot_LTR_HP, m_Q_dot_HTR_LP, m_Q_dot_HTR_HP;
-    double m_m_dot_bp;
-    double m_m_dot_htr_hp;
-    double m_cp_HTF;                    // kJ/kg K
-    double m_m_dot_HTF;                 // kg/s
-    double m_Q_dot_BP;
-    double m_T_HTF_PHX_inlet;
-    double m_T_target;
-    int m_T_target_is_HTF;
-    double m_T_HTF_BP_outlet_calc;
-    double m_T_HTF_PHX_out;
-    double m_dT_BP;                     // BYPASS_OUT - HTR_HP_OUT
-    double m_set_HTF_mdot;
-    double m_Q_dot_total;
-    double m_HTF_BP_cold_approach;
-    double m_HTF_PHX_cold_approach;
-    bool is_bp_par_set = false;
-    double m_W_dot_air_cooler;
-    double m_Q_dot_air_cooler;
-    C_HX_co2_to_htf c_phx;
-    C_HX_co2_to_htf c_bp;  // Bypass Heat Exchanger
-    
-
-    // New opt
-    bool m_found_opt;
-    double m_eta_phx_max;
-    double m_UA_diff_eta_max;
-    double m_over_deltaP_eta_max;
-
-    void design_core(int& error_code);
-
-    void design_core_standard(int& error_code);
-
-    void opt_design_core(int& error_code);
 
     void auto_opt_design_core(int& error_code);
 
-    void finalize_design(int& error_code);
+    // Bypass Specific HTF variables
+    int m_T_target_is_HTF;
+    double m_T_target;
+    double m_T_HTF_PHX_inlet;
+    double m_set_HTF_mdot;
+    double m_HTF_PHX_cold_approach;
+    double m_dT_BP;
+    double m_cp_HTF;
+    bool is_bp_par_set;
 
+    // Optimal htrbp core class (contains all results and component data)
+    C_sco2_htrbp_core m_optimal_htrbp_core;
 
     // Added
-    int solve_HTR(double T_HTR_LP_OUT_guess, double* diff_T_HTR_LP_out);
-    int solve_LTR(double T_LTR_LP_OUT_guess, double* diff_T_LTR_LP_out);
     double calc_penalty(double target, double calc, double span);
-
-
-    std::string make_result_csv_string();
 
 public:
 
@@ -547,7 +475,7 @@ public:
             N_nodes_pass,
             T_amb_des, elevation)
     {
-        m_temp_last.resize(END_SCO2_STATES);
+        /*m_temp_last.resize(END_SCO2_STATES);
         std::fill(m_temp_last.begin(), m_temp_last.end(), std::numeric_limits<double>::quiet_NaN());
         m_pres_last = m_enth_last = m_entr_last = m_dens_last = m_temp_last;
 
@@ -559,7 +487,7 @@ public:
         m_W_dot_net_last = std::numeric_limits<double>::quiet_NaN();
 
         m_objective_metric_opt = std::numeric_limits<double>::quiet_NaN();
-        m_objective_metric_auto_opt = std::numeric_limits<double>::quiet_NaN();
+        m_objective_metric_auto_opt = std::numeric_limits<double>::quiet_NaN();*/
 
         
     }
@@ -574,9 +502,7 @@ public:
 
     ~C_HTRBypass_Cycle() {};
 
-    void design(S_design_parameters& des_par_in, int& error_code);
-
-    void opt_design(S_opt_design_parameters& opt_des_par_in, int& error_code);
+    
 
     void reset_ms_od_turbo_bal_csp_solved();
 
@@ -584,60 +510,10 @@ public:
 
 
 
-    // Called by 'nlopt_callback_opt_des_1', so needs to be public
-    double design_cycle_return_objective_metric(const std::vector<double>& x);
-
-    // Called by 'nlopt_callback_opt_des_1', so needs to be public
-    double design_bypass_frac_return_objective_metric(const std::vector<double>& x);
-
-    double design_bypass_frac_free_var_return_objective_metric(const std::vector<double>& x);
 
     double C_HTRBypass_Cycle::opt_cycle_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, C_sco2_htrbp_core& htrbp_core);
 
     double C_HTRBypass_Cycle::opt_nonbp_par_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, C_sco2_htrbp_core& htrbp_core);
-
-    class C_mono_htr_bypass_LTR_des : public C_monotonic_equation
-    {
-    private:
-        C_HTRBypass_Cycle *m_htr_bypass_cycle;
-
-    public:
-        C_mono_htr_bypass_LTR_des(C_HTRBypass_Cycle* htr_bypass_cycle)
-        {
-            m_htr_bypass_cycle = htr_bypass_cycle;
-        }
-
-        virtual int operator()(double T_LTR_LP_OUT_guess /*K*/, double* diff_T_LTR_LP_out /*K*/);
-    };
-
-    class C_mono_htr_bypass_HTR_des : public C_monotonic_equation
-    {
-    private:
-        C_HTRBypass_Cycle *m_htr_bypass_cycle;
-
-    public:
-        C_mono_htr_bypass_HTR_des(C_HTRBypass_Cycle* htr_bypass_cycle)
-        {
-            m_htr_bypass_cycle = htr_bypass_cycle;
-        }
-
-        virtual int operator()(double T_HTR_LP_OUT_guess /*K*/, double* diff_T_HTR_LP_out /*K*/);
-    };
-
-    class C_mono_htr_bypass_BP_des : public C_monotonic_equation
-    {
-    private:
-        C_HTRBypass_Cycle* m_htr_bypass_cycle;
-
-    public:
-        C_mono_htr_bypass_BP_des(C_HTRBypass_Cycle* htr_bypass_cycle)
-        {
-            m_htr_bypass_cycle = htr_bypass_cycle;
-        }
-
-        virtual int operator()(double bp_frac_guess, double* diff_bp_frac);
-    };
-
 
 
 
@@ -673,7 +549,8 @@ public:
 
     const C_comp_multi_stage::S_od_solved* get_rc_od_solved()
     {
-        return m_rc_ms.get_od_solved();
+        return m_optimal_htrbp_core.m_outputs.m_rc_ms.get_od_solved();
+        //return m_rc_ms.get_od_solved();
     }
 
     /*const S_od_turbo_bal_csp_solved* get_od_turbo_bal_csp_solved()
