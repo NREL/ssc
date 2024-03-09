@@ -101,6 +101,9 @@ struct S_sco2_htrbp_in
     double m_elevation;			                //[m] Elevation (used to calculate ambient pressure)
     int m_N_nodes_pass;                         //[-] Number of nodes per pass
     double m_HTF_PHX_cold_approach_input;       //[delta K] PHX cold approach temperature. Only needed if m_set_HTF_mdot < 0 
+    int m_mc_comp_model_code;                   // Main compressor model code
+    int m_rc_comp_model_code;                   // Recompressor model code
+    int m_N_turbine;                            //[rpm] Turbine rpm
 
     S_sco2_htrbp_in()
     {
@@ -132,6 +135,9 @@ struct S_sco2_htrbp_in
         m_N_nodes_pass = 0;
         m_LTR_N_sub_hxrs = 0;
         m_HTR_N_sub_hxrs = 0;
+        m_mc_comp_model_code = -1;
+        m_rc_comp_model_code = -1;
+        m_N_turbine = -1;
 
         // Recuperator design target codes
         m_LTR_target_code = 1;      // default to target conductance
@@ -261,7 +267,7 @@ public:
     // Public Methods
     void SetInputs(S_sco2_htrbp_in inputs) { m_inputs = inputs; };
     int Solve();
-
+    int FinalizeDesign(C_sco2_cycle_core::S_design_solved& design_solved);
 };
 
 
@@ -402,13 +408,13 @@ public:
 private:
 
     // NEW REFACTOR Fields and methods
-    int opt_max_eta(const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, S_sco2_htrbp_in& optimal_inputs);
+    int optimize_cycle(const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, S_sco2_htrbp_in& optimal_inputs);
 
     int opt_nonbp_par(const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, S_sco2_htrbp_in core_inputs, S_sco2_htrbp_in& optimal_inputs);
 
     int x_to_inputs(const std::vector<double>& x, const S_auto_opt_design_parameters auto_par, const S_opt_design_parameters opt_par, S_sco2_htrbp_in &core_inputs);
 
-    int clear_optimized_inputs(const std::vector<double>& x, const S_auto_opt_design_parameters auto_par, const S_opt_design_parameters opt_par, S_sco2_htrbp_in& core_inputs);
+    int clear_x_inputs(const std::vector<double>& x, const S_auto_opt_design_parameters auto_par, const S_opt_design_parameters opt_par, S_sco2_htrbp_in& core_inputs);
 
 
     // Optimal inputs, for bypass optimizer DO NOT USE
@@ -586,7 +592,7 @@ public:
 
     double design_bypass_frac_free_var_return_objective_metric(const std::vector<double>& x);
 
-    double C_HTRBypass_Cycle::opt_max_eta_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, C_sco2_htrbp_core& htrbp_core);
+    double C_HTRBypass_Cycle::opt_cycle_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, C_sco2_htrbp_core& htrbp_core);
 
     double C_HTRBypass_Cycle::opt_nonbp_par_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, C_sco2_htrbp_core& htrbp_core);
 
@@ -693,7 +699,7 @@ double nlopt_cb_opt_bypass_frac_free_var(const std::vector<double>& x, std::vect
 
 
 // ADDED
-double nlopt_opt_max_eta_func(const std::vector<double>& x, std::vector<double>& grad, void* data);
+double nlopt_opt_cycle_func(const std::vector<double>& x, std::vector<double>& grad, void* data);
 
 double nlopt_opt_nonbp_par_func(const std::vector<double>& x, std::vector<double>& grad, void* data);
 
