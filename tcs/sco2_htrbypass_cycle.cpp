@@ -839,7 +839,7 @@ void C_HTRBypass_Cycle::auto_opt_design_core(int& error_code)
     // Reset optimal htrbp model
     m_optimal_htrbp_core.Reset();
 
-    // COPY Values (TODO)
+    // Fill in 'ms_opt_des_par' (Can this be less cumbersome?)
     {
         // Check that simple/recomp flag is set
         if (ms_auto_opt_des_par.m_is_recomp_ok < -1.0 || (ms_auto_opt_des_par.m_is_recomp_ok > 0 &&
@@ -880,84 +880,74 @@ void C_HTRBypass_Cycle::auto_opt_design_core(int& error_code)
         ms_opt_des_par.m_fixed_PR_HP_to_LP = ms_auto_opt_des_par.m_fixed_PR_HP_to_LP;			//[-]
     }
 
-    // LOOK AT P MC OUT
-    double best_P_high = m_P_high_limit;		//[kPa]
-    double PR_mc_guess = 2.5;				//[-]
-    if (!ms_opt_des_par.m_fixed_P_mc_out)
+    // Complete 'ms_opt_des_par' for Design Variables
     {
-        double P_low_limit = std::min(m_P_high_limit, std::max(10.E3, m_P_high_limit * 0.2));		//[kPa]
+        double best_P_high = m_P_high_limit;		//[kPa]
+        double PR_mc_guess = 2.5;				//[-]
+        if (!ms_opt_des_par.m_fixed_P_mc_out)
+        {
+            double P_low_limit = std::min(m_P_high_limit, std::max(10.E3, m_P_high_limit * 0.2));		//[kPa]
 
-        //best_P_high = fminbr(P_low_limit, m_P_high_limit, &fmin_cb_opt_des_fixed_P_high, this, 1.0);
-        best_P_high = m_P_high_limit; // TEMPORARY 
+            //best_P_high = fminbr(P_low_limit, m_P_high_limit, &fmin_cb_opt_des_fixed_P_high, this, 1.0);
+            best_P_high = m_P_high_limit;
+        }
 
-        // If this runs, it should set:
-            // ms_des_par_auto_opt
-            // m_objective_metric_auto_opt
-        // So we can update pressure ratio guess
-        //double PR_mc_guess_calc = ms_des_par_auto_opt.m_P_mc_out / ms_des_par_auto_opt.m_P_mc_in;
-        //
-        //if (std::isfinite(PR_mc_guess_calc)) {
-        //    PR_mc_guess = PR_mc_guess_calc;
-        //}
-        //else {
-        //    best_P_high = m_P_high_limit;       //[kPa]
-        //}
+
+        ms_opt_des_par.m_P_mc_out_guess = best_P_high;      //[kPa]
+        ms_opt_des_par.m_fixed_P_mc_out = true;
+
+        if (ms_opt_des_par.m_fixed_PR_HP_to_LP)
+        {
+            ms_opt_des_par.m_PR_HP_to_LP_guess = ms_auto_opt_des_par.m_PR_HP_to_LP_guess;	//[-]
+        }
+        else
+        {
+            ms_opt_des_par.m_PR_HP_to_LP_guess = PR_mc_guess;		//[-]
+        }
+
+        // Is recompression fraction fixed or optimized?
+        if (ms_auto_opt_des_par.m_is_recomp_ok <= 0.0)
+        {   // fixed
+            ms_opt_des_par.m_recomp_frac_guess = std::abs(ms_auto_opt_des_par.m_is_recomp_ok);
+            ms_opt_des_par.m_fixed_recomp_frac = true;
+        }
+        else
+        {   // optimized
+            ms_opt_des_par.m_recomp_frac_guess = 0.3;
+            ms_opt_des_par.m_fixed_recomp_frac = false;
+        }
+
+        // Is bypass fraction fixed or optimized?
+        if (ms_auto_opt_des_par.m_is_bypass_ok <= 0.0)
+        {   // fixed
+            ms_opt_des_par.m_bypass_frac_guess = std::abs(ms_auto_opt_des_par.m_is_bypass_ok);
+            ms_opt_des_par.m_fixed_bypass_frac = true;
+        }
+        else
+        {   // optimized
+            ms_opt_des_par.m_bypass_frac_guess = 0.3;
+            ms_opt_des_par.m_fixed_bypass_frac = false;
+        }
+
+        ms_opt_des_par.m_LT_frac_guess = 0.5;
+        ms_opt_des_par.m_fixed_LT_frac = false;
+
+        if (ms_opt_des_par.m_LTR_target_code != NS_HX_counterflow_eqs::OPTIMIZE_UA || ms_opt_des_par.m_HTR_target_code != NS_HX_counterflow_eqs::OPTIMIZE_UA)
+        {
+            ms_opt_des_par.m_fixed_LT_frac = true;
+        }
+
     }
-
-    // Complete 'ms_opt_des_par' for recompression cycle
-    ms_opt_des_par.m_P_mc_out_guess = best_P_high;      //[kPa]
-    ms_opt_des_par.m_fixed_P_mc_out = true;
-
-    if (ms_opt_des_par.m_fixed_PR_HP_to_LP)
-    {
-        ms_opt_des_par.m_PR_HP_to_LP_guess = ms_auto_opt_des_par.m_PR_HP_to_LP_guess;	//[-]
-    }
-    else
-    {
-        ms_opt_des_par.m_PR_HP_to_LP_guess = PR_mc_guess;		//[-]
-    }
-
-    // Is recompression fraction fixed or optimized?
-    if (ms_auto_opt_des_par.m_is_recomp_ok <= 0.0)
-    {   // fixed
-        ms_opt_des_par.m_recomp_frac_guess = std::abs(ms_auto_opt_des_par.m_is_recomp_ok);
-        ms_opt_des_par.m_fixed_recomp_frac = true;
-    }
-    else
-    {   // optimized
-        ms_opt_des_par.m_recomp_frac_guess = 0.3;
-        ms_opt_des_par.m_fixed_recomp_frac = false;
-    }
-
-    // Is bypass fraction fixed or optimized?
-    if (ms_auto_opt_des_par.m_is_bypass_ok <= 0.0)
-    {   // fixed
-        ms_opt_des_par.m_bypass_frac_guess = std::abs(ms_auto_opt_des_par.m_is_bypass_ok);
-        ms_opt_des_par.m_fixed_bypass_frac = true;
-    }
-    else
-    {   // optimized
-        ms_opt_des_par.m_bypass_frac_guess = 0.3;
-        ms_opt_des_par.m_fixed_bypass_frac = false;
-    }
-
-    ms_opt_des_par.m_LT_frac_guess = 0.5;
-    ms_opt_des_par.m_fixed_LT_frac = false;
-
-    if (ms_opt_des_par.m_LTR_target_code != NS_HX_counterflow_eqs::OPTIMIZE_UA || ms_opt_des_par.m_HTR_target_code != NS_HX_counterflow_eqs::OPTIMIZE_UA)
-    {
-        ms_opt_des_par.m_fixed_LT_frac = true;
-    }
-
+    
     // Find optimal inputs
-    S_sco2_htrbp_in optimal_inputs;
-    error_code = optimize_cycle(ms_auto_opt_des_par, ms_opt_des_par, optimal_inputs);
+    S_sco2_htrbp_in optimal_inputs_out;
+    error_code = optimize_cycle(ms_auto_opt_des_par, ms_opt_des_par, optimal_inputs_out);
 
     if (error_code != 0)
         return;
 
     // Run Optimal Case
-    m_optimal_htrbp_core.SetInputs(optimal_inputs);
+    m_optimal_htrbp_core.SetInputs(optimal_inputs_out);
     error_code = m_optimal_htrbp_core.Solve();
 
     if (error_code != 0)
@@ -1350,7 +1340,7 @@ int C_HTRBypass_Cycle::x_to_inputs(const std::vector<double>& x,
 }
 
 /// <summary>
-/// Set Optimized Variables to NaN, to save them from misuse
+/// Set Optimized Variables to NaN, to protect them from misuse
 /// </summary>
 int C_HTRBypass_Cycle::clear_x_inputs(const std::vector<double>& x, const S_auto_opt_design_parameters auto_par, const S_opt_design_parameters opt_par, S_sco2_htrbp_in& core_inputs)
 {
@@ -1625,46 +1615,6 @@ double logit(const double val)
 {
     return std::log(val / (1.0 - val));
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 int C_HTRBypass_Cycle::off_design_fix_shaft_speeds(S_od_par& od_phi_par_in, double od_tol)
 {
