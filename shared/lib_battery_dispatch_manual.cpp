@@ -116,11 +116,11 @@ void dispatch_manual_t::prepareDispatch(size_t hour_of_year, size_t )
 	m_batteryPower->canGridCharge = _gridcharge_array[iprofile - 1];
     m_batteryPower->canClipCharge = _can_clip_charge;
 
-	if (iprofile < _fuelcellcharge_array.size()) {
+	if (iprofile <= _fuelcellcharge_array.size()) {
 		m_batteryPower->canFuelCellCharge = _fuelcellcharge_array[iprofile - 1];
 	}
 
-    if (iprofile < _discharge_grid_array.size()) {
+    if (iprofile <= _discharge_grid_array.size()) {
         m_batteryPower->canDischargeToGrid = _discharge_grid_array[iprofile - 1];
     }
 

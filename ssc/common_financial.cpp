@@ -3297,6 +3297,8 @@ void check_financial_metrics::check_debt_percentage(compute_module* cm, ssc_numb
 {
     if (debt_percentage > 100.0)
         cm->log(util::format("Debt percent is %lg. A debt percent greater than 100%% may indicate that revenues are higher than necessary to cover project costs.", debt_percentage), SSC_WARNING);
+    if (debt_percentage < 0.0)
+        cm->log(util::format("Debt percent is %lg. A debt percent less than 0%% may indicate the mininum EBITDA cannot support any debt in at least one year.", debt_percentage), SSC_WARNING);
 }
 
 
@@ -3312,14 +3314,19 @@ var_info vtab_tod_dispatch_periods[] = {
         { SSC_INPUT,        SSC_MATRIX,     "dispatch_sched_weekend",                 "Diurnal weekend TOD periods",                                   "1..9", "12 x 24 matrix",    "Revenue", "ppa_multiplier_model=0", "", "" },
         var_info_invalid };
 
-
-
-var_info vtab_lcos_inputs[] = {
-    /*   VARTYPE           DATATYPE         NAME                             LABEL                                UNITS      META                 GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-
+var_info vtab_update_tech_outputs[] = {
     { SSC_INOUT,        SSC_ARRAY,      "batt_annual_charge_from_system",                 "Battery annual energy charged from system",                 "kWh",      "",                      "LCOS",       "",                           "",                               "" },
     { SSC_INOUT,        SSC_ARRAY,      "batt_annual_discharge_energy",               "Battery annual energy discharged",                      "kWh",      "",                      "LCOS",       "",                           "",                               "" },
     { SSC_INOUT,        SSC_ARRAY,      "batt_annual_charge_energy",               "Battery annual energy charged",                      "kWh",      "",                      "LCOS",       "",                           "",                               "" },
+
+    { SSC_INOUT,       SSC_ARRAY,      "annual_fuel_usage_lifetime",            "Annual Fuel Usage (lifetime)",               "kWht",          "",      "Fuel Cell",           "",               "",                    "" },
+    { SSC_INOUT,       SSC_ARRAY,       "fuelcell_annual_energy_discharged",  "Fuel cell annual energy discharged",    "kWh",        "",                 "Fuel Cell",                  "",                        "",                              "" },
+    { SSC_INOUT,       SSC_ARRAY,       "fuelcell_replacement",                "Fuel cell replacements per year",      "number/year", "",              "Fuel Cell",           "",                           "",                              "" },
+    var_info_invalid
+};
+
+var_info vtab_lcos_inputs[] = {
+    /*   VARTYPE           DATATYPE         NAME                             LABEL                                UNITS      META                 GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
     { SSC_INPUT,        SSC_NUMBER,     "batt_salvage_percentage",                     "Net pre-tax cash battery salvage value",	                               "%",	 "",					  "LCOS",             "?=0",                     "MIN=0,MAX=100",      			"" },
 
     { SSC_INPUT,        SSC_NUMBER,      "battery_total_cost_lcos",               "Battery total investment cost",                      "$",      "",                      "LCOS",       "",                           "",                               "" },
@@ -3333,7 +3340,7 @@ var_info vtab_lcos_inputs[] = {
     { SSC_INPUT, SSC_MATRIX, "net_billing_credits_ym", "Net billing credit", "$", "", "Charges by Month", "", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
 
     // fix for running financial compute modules tests
-    { SSC_INOUT,       SSC_ARRAY,       "gen_purchases",                              "Electricity from grid",                                    "kW",      "",                       "System Output",       "",                           "",                              "" },
+    { SSC_INOUT,       SSC_ARRAY,       "gen_purchases",                              "Electricity from grid to system",                         "kW",      "",                       "System Output",       "",                           "",                              "" },
     { SSC_INPUT,        SSC_ARRAY,      "rate_escalation",          "Annual electricity rate escalation",   "%/year",   "",                      "Electricity Rates",       "",              "",                             "" },
 
     
@@ -3751,5 +3758,15 @@ void update_battery_outputs(compute_module* cm, size_t nyears) {
         prepend_to_output(cm, "batt_annual_charge_energy", arr_length, yr_0_value);
         prepend_to_output(cm, "batt_annual_discharge_energy", arr_length, yr_0_value);
         prepend_to_output(cm, "batt_annual_charge_from_system", arr_length, yr_0_value);
+    }
+}
+
+void update_fuelcell_outputs(compute_module* cm, size_t nyears) {
+    if (cm->as_integer("system_use_lifetime_output") == 1) {
+        size_t arr_length = nyears + 1;
+        ssc_number_t yr_0_value = 0.0;
+        prepend_to_output(cm, "fuelcell_replacement", arr_length, yr_0_value);
+        prepend_to_output(cm, "annual_fuel_usage_lifetime", arr_length, yr_0_value);
+        prepend_to_output(cm, "fuelcell_annual_energy_discharged", arr_length, yr_0_value);
     }
 }

@@ -202,6 +202,7 @@ extern var_info
     vtab_tax_credits[],
     vtab_payment_incentives[],
     vtab_lcos_inputs[],
+    vtab_update_tech_outputs[],
     vtab_utility_rate_common[];
     
 
@@ -241,7 +242,6 @@ enum {
 	
 	CF_ptc_fed,
 	CF_ptc_sta,
-	CF_ptc_total,
 	
 	CF_sta_depr_sched,
 	CF_sta_depreciation,
@@ -364,6 +364,7 @@ public:
 		add_var_info(vtab_fuelcell_replacement_cost);
 		add_var_info(vtab_cashloan);
         add_var_info(vtab_lcos_inputs);
+        add_var_info(vtab_update_tech_outputs);
 	}
 
 	void exec( )
@@ -504,12 +505,11 @@ public:
 		std::vector<double> fuel_use;
 		if ((as_integer("system_use_lifetime_output") == 1) && is_assigned("annual_fuel_usage_lifetime")) {
 			fuel_use = as_vector_double("annual_fuel_usage_lifetime");
-			if (fuel_use.size() != (size_t)(nyears + 1)) {
-				throw exec_error("cashloan", util::format("fuel usage years (%d) not equal to analysis period years (%d).", (int)fuel_use.size() - 1, nyears));
+			if (fuel_use.size() != (size_t)(nyears)) {
+				throw exec_error("cashloan", util::format("fuel usage years (%d) not equal to analysis period years (%d).", (int)fuel_use.size(), nyears));
 			}
 		}
 		else {
-			fuel_use.push_back(0.);
 			for (size_t y = 0; y < (size_t)(nyears); y++) {
 				fuel_use.push_back(year1_fuel_use);
 			}
@@ -586,7 +586,7 @@ public:
         ssc_number_t nameplate1 = 0;
         ssc_number_t nameplate2 = 0;
         std::vector<double> battery_discharged(nyears,0);
-        std::vector<double> fuelcell_discharged(nyears+1,0);
+        std::vector<double> fuelcell_discharged(nyears,0);
 
         if (add_om_num_types > 0) //PV Battery
         {
@@ -612,11 +612,11 @@ public:
 			nameplate2 = as_number("om_fuelcell_nameplate");
             fuelcell_discharged = as_vector_double("fuelcell_annual_energy_discharged");
 		}
-        if (fuelcell_discharged.size()== 2) { // ssc #992
-            double first_val = fuelcell_discharged[1];
-            fuelcell_discharged.resize(nyears+1, first_val);
+        if (fuelcell_discharged.size()== 1) { // ssc #992
+            double first_val = fuelcell_discharged[0];
+            fuelcell_discharged.resize(nyears, first_val);
          }
-        if (fuelcell_discharged.size() != nyears+1)
+        if (fuelcell_discharged.size() != nyears)
             throw exec_error("cashloan", util::format("fuelcell_discharged size (%d) incorrect",(int)fuelcell_discharged.size()));
 
         
@@ -909,11 +909,11 @@ public:
 			// TODO additional production o and m here
 
 
-			cf.at(CF_om_fuel_expense,i) *= fuel_use[i];
+			cf.at(CF_om_fuel_expense,i) *= fuel_use[i-1];
 
             //Battery Production OM Costs
             cf.at(CF_om_production1_expense, i) *= battery_discharged[i - 1]; //$/MWh * 0.001 MWh/kWh * kWh = $
-            cf.at(CF_om_production2_expense, i) *= fuelcell_discharged[i];
+            cf.at(CF_om_production2_expense, i) *= fuelcell_discharged[i-1];
 
 			cf.at(CF_om_opt_fuel_1_expense,i) *= om_opt_fuel_1_usage;
 			cf.at(CF_om_opt_fuel_2_expense,i) *= om_opt_fuel_2_usage;
@@ -987,8 +987,6 @@ public:
 			
 			// compute pbi total		
 			cf.at(CF_pbi_total, i) = cf.at(CF_pbi_fed, i) + cf.at(CF_pbi_sta, i) + cf.at(CF_pbi_uti, i) + cf.at(CF_pbi_oth, i);
-			// compute ptc total		
-			cf.at(CF_ptc_total, i) = cf.at(CF_ptc_fed, i) + cf.at(CF_ptc_sta, i);
 			
 			// compute depreciation from basis and precalculated schedule
 			cf.at(CF_sta_depreciation,i) = cf.at(CF_sta_depr_sched,i)*state_depr_basis;
@@ -1282,6 +1280,7 @@ public:
     if (as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1) {
         update_battery_outputs(this, nyears);
     }
+    update_fuelcell_outputs(this, nyears);
 
 	double wacc = 0.0;
 	wacc = (1.0 - debt_frac)*nom_discount_rate + debt_frac*loan_rate*(1.0 - cf.at(CF_effective_tax_frac, 1));
@@ -1435,7 +1434,6 @@ public:
 	
 		save_cf( CF_ptc_fed, nyears, "cf_ptc_fed" );
 		save_cf( CF_ptc_sta, nyears, "cf_ptc_sta" );
-		save_cf( CF_ptc_total, nyears, "cf_ptc_total" );
 
 
         // SAM 1038

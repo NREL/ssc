@@ -358,6 +358,8 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
         nModulesPerString = cm->as_integer(prefix + "modules_per_string");
         mpptInput = cm->as_integer(prefix + "mppt_input");
         trackMode = cm->as_integer(prefix + "track_mode");
+        useCustomRotAngles = cm->as_boolean(prefix + "use_custom_rot_angles");
+        useCustomCellTemp = cm->as_boolean(prefix + "use_custom_cell_temp");
         tiltEqualLatitude = 0;
         if (cm->is_assigned(prefix + "tilt_eq_lat")) tiltEqualLatitude = cm->as_boolean(prefix + "tilt_eq_lat");
 
@@ -376,6 +378,35 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
                 if (monthlyTiltDegrees[i] < 0.0) throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " monthly tilt angles cannot be negative.");
             }
         }
+        
+        /* Insert checks for custom tracker rotation angles here*/
+        if (useCustomRotAngles == 1) {
+            if (cm->is_assigned(prefix + "custom_rot_angles_array")) {
+                customRotAngles = cm->as_vector_double(prefix + "custom_rot_angles_array");
+                for (int i = 0; i < customRotAngles.size(); i++) {
+                    if (customRotAngles[i] > 90.0 || customRotAngles[i] < -90.0) throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " custom tracker rotation angles must be between -90 and 90 degrees.");
+                }
+            }
+            else {
+                throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " custom tracker rotation angles required but not assigned.");
+            }
+        }
+        
+        
+
+        /* Insert checks for using custom cell temperature array*/
+        if (useCustomCellTemp == 1) {
+            if (cm->is_assigned(prefix + "custom_cell_temp_array")) {
+                customCellTempArray = cm->as_vector_double(prefix + "custom_cell_temp_array");
+                    for (int i = 0; i < customCellTempArray.size(); i++) {
+                        if (customCellTempArray[i] > 100.0) throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " custom cell temperature cannot be greater than 100 degrees Celsius.");
+                    }
+            }
+            else {
+                throw exec_error(cmName, "Subarray " + util::to_string((int)subarrayNumber) + " custom cell temperatures required but not assigned.");
+            }
+        }
+        
         //azimuth required for fixed tilt, single axis, and seasonal tilt- can't check for this in variable table so check here
         azimuthDegrees = std::numeric_limits<double>::quiet_NaN();
         if (trackMode == irrad::FIXED_TILT || trackMode == irrad::SINGLE_AXIS || trackMode == irrad::SEASONAL_TILT)
@@ -474,7 +505,7 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
             if (trackMode == irrad::SEASONAL_TILT)
                 throw exec_error(cmName, "Time-series tilt input may not be used with the snow model at this time: subarray " + util::to_string((int)(subarrayNumber)));
             // if tracking mode is 1-axis tracking, don't need to limit tilt angles
-            if (snowModel.setup(selfShadingInputs.nmody, (float)tiltDegrees, (trackMode != irrad::SINGLE_AXIS))) {
+            if (snowModel.setup(selfShadingInputs.nmody, (float)tiltDegrees, cm->as_double("snow_slide_coefficient"), (trackMode != irrad::SINGLE_AXIS))) {
                 if (!snowModel.good) {
                     cm->log(snowModel.msg, SSC_ERROR);
                 }
@@ -642,7 +673,7 @@ void PVSystem_IO::SetupPOAInput()
 
 
                 if (tms[2] > 0) {
-                    incidence(Subarrays[nn]->trackMode, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, sun[1], sun[0], Subarrays[nn]->backtrackingEnabled, Subarrays[nn]->groundCoverageRatio, Subarrays[nn]->slopeTilt, Subarrays[nn]->slopeAzm, false, 0.0, angle);
+                    incidence(Subarrays[nn]->trackMode, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, sun[1], sun[0], Subarrays[nn]->backtrackingEnabled, Subarrays[nn]->groundCoverageRatio, Subarrays[nn]->slopeTilt, Subarrays[nn]->slopeAzm, false, 0.0, false, 0.0, angle);
                 }
                 else {
                     angle[0] = -999;
@@ -680,8 +711,8 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO* 
     numberOfInverters = cm->as_integer("inverter_count");
     
     dcNameplate = cm->as_double("system_capacity");
-    //numberOfInvertersClipping = cm->as_integer("num_inverter_subhourly_clipping");
     numberOfInvertersClipping = dcNameplate / (Inverter->ratedACOutput / 1000);
+    if (numberOfInvertersClipping == 0.0) numberOfInvertersClipping = 1;
     
 
     ratedACOutput = Inverter->ratedACOutput * numberOfInverters;
@@ -869,6 +900,7 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
             p_poaBeamFrontCS.push_back(cm->allocate(prefix + "poa_beam_front_cs", numberOfWeatherFileRecords));
             p_poaDiffuseFrontCS.push_back(cm->allocate(prefix + "poa_diffuse_front_cs", numberOfWeatherFileRecords));
             p_poaGroundFrontCS.push_back(cm->allocate(prefix + "poa_ground_front_cs", numberOfWeatherFileRecords));
+            p_poaRearCS.push_back(cm->allocate(prefix + "poa_rear_cs", numberOfWeatherFileRecords));
 
             if (enableSnowModel) {
                 p_snowLoss.push_back(cm->allocate(prefix + "snow_loss", numberOfWeatherFileRecords));
@@ -932,16 +964,24 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
     p_inverterACOutputPreLoss = cm->allocate("ac_gross", numberOfWeatherFileRecords);
     p_acWiringLoss = cm->allocate("ac_wiring_loss", numberOfWeatherFileRecords);
     p_ClippingPotential = cm->allocate("clipping_potential", numberOfWeatherFileRecords);
+    p_CPBin = cm->allocate("clipping_potential_bin", numberOfWeatherFileRecords);
+    p_DNIIndexBin = cm->allocate("dni_index_bin", numberOfWeatherFileRecords);
+
     p_transmissionLoss = cm->allocate("ac_transmission_loss", numberOfWeatherFileRecords);
     p_acPerfAdjLoss = cm->allocate("ac_perf_adj_loss", numberOfWeatherFileRecords);
     p_acLifetimeLoss = cm->allocate("ac_lifetime_loss", numberOfWeatherFileRecords);
     p_dcLifetimeLoss = cm->allocate("dc_lifetime_loss", numberOfWeatherFileRecords);
     p_systemDCPower = cm->allocate("dc_net", numberOfLifetimeRecords);
     p_systemACPower = cm->allocate("gen", numberOfLifetimeRecords);
+    p_systemACPowerMax = cm->allocate("ac_csky_max", numberOfLifetimeRecords);
 
     p_systemDCPowerCS = cm->allocate("dc_net_clearsky", numberOfLifetimeRecords);
-    p_subhourlyClippingLoss = cm->allocate("subhourly_clipping_loss", numberOfLifetimeRecords);
-    p_subhourlyClippingLossFactor = cm->allocate("subhourly_clipping_loss_factor", numberOfLifetimeRecords);
+    if (cm->as_boolean("enable_subhourly_clipping")) {
+        p_subhourlyClippingLoss = cm->allocate("subhourly_clipping_loss", numberOfLifetimeRecords);
+    }
+    if (cm->as_boolean("enable_subinterval_distribution")) {
+        p_DistributionClippingLoss = cm->allocate("distribution_clipping_loss", numberOfLifetimeRecords);
+    }
 
     if (Simulation->useLifetimeOutput)
     {

@@ -42,6 +42,8 @@ char subarray1_shading[256] = {};
 char subarray2_shading[256] = {};
 char temperature_path[256] = {};
 char solar_resource_path_15min_fail[256] = {};
+char custom_cell_temp_array_path[256] = {};
+char custom_rot_angle_array_path[256] = {};
 
 int n1 = sprintf(solar_resource_path, "%s/test/input_cases/pvsamv1_data/USA AZ Phoenix (TMY2).csv", SSCDIR);
 int n2 = sprintf(load_profile_path, "%s/test/input_cases/pvsamv1_data/pvsamv1_residential_load.csv", SSCDIR);
@@ -52,6 +54,8 @@ int n6 = sprintf(subarray1_shading, "%s/test/input_cases/pvsamv1_data/subarray1_
 int n7 = sprintf(subarray2_shading, "%s/test/input_cases/pvsamv1_data/subarray2_shading_timestep.csv", SSCDIR);
 int n8 = sprintf(temperature_path, "%s/test/input_cases/battery_data/batt_room_temperature_celsius_60min.csv", SSCDIR);
 int n9 = sprintf(solar_resource_path_15min_fail, "%s/test/input_cases/pvsamv1_data/LosAngeles_WeatherFile_15min_timestamp_fail.csv", SSCDIR);
+int n10 = sprintf(custom_cell_temp_array_path, "%s/test/input_cases/pvsamv1_data/custom_cell_temp_array.csv", SSCDIR);
+int n11 = sprintf(custom_rot_angle_array_path, "%s/test/input_cases/pvsamv1_data/custom_rot_angle_array.csv", SSCDIR);
 
 
 /**
@@ -100,6 +104,8 @@ void pvsamv_nofinancial_default(ssc_data_t& data)
     ssc_data_set_number(data, "subarray1_dcwiring_loss", 2);
     ssc_data_set_number(data, "subarray1_tracking_loss", 0);
     ssc_data_set_number(data, "subarray1_nameplate_loss", 0);
+    set_array(data, "subarray1_custom_cell_temp_array", custom_cell_temp_array_path, 8760);
+    set_array(data, "subarray1_custom_rot_angles_array", custom_rot_angle_array_path, 8760);
     ssc_data_set_number(data, "subarray2_rear_soiling_loss", 0);
     ssc_data_set_number(data, "subarray2_rack_shading", 0);
     ssc_data_set_number(data, "subarray2_electrical_mismatch", 0);
@@ -213,11 +219,11 @@ void pvsamv_nofinancial_default(ssc_data_t& data)
     ssc_data_set_number(data, "spe_is_bifacial", 0);
     ssc_data_set_number(data, "spe_bifacial_transmission_factor", 0);
     ssc_data_set_number(data, "spe_bifaciality", 0);
-    ssc_data_set_number(data, "spe_bifacial_ground_clearance_height", 0);
+    ssc_data_set_number(data, "spe_bifacial_ground_clearance_height", 0.1);
     ssc_data_set_number(data, "cec_is_bifacial", 0);
     ssc_data_set_number(data, "cec_bifacial_transmission_factor", 0);
     ssc_data_set_number(data, "cec_bifaciality", 0);
-    ssc_data_set_number(data, "cec_bifacial_ground_clearance_height", 0);
+    ssc_data_set_number(data, "cec_bifacial_ground_clearance_height", 0.1);
     ssc_data_set_number(data, "cec_area", 1.6310000419616699);
     ssc_data_set_number(data, "cec_a_ref", 2.4200999736785889);
     ssc_data_set_number(data, "cec_adjust", 5.0100002288818359);
@@ -251,7 +257,7 @@ void pvsamv_nofinancial_default(ssc_data_t& data)
     ssc_data_set_number(data, "6par_is_bifacial", 0);
     ssc_data_set_number(data, "6par_bifacial_transmission_factor", 0);
     ssc_data_set_number(data, "6par_bifaciality", 0);
-    ssc_data_set_number(data, "6par_bifacial_ground_clearance_height", 0);
+    ssc_data_set_number(data, "6par_bifacial_ground_clearance_height", 0.1);
     ssc_data_set_number(data, "6par_vmp", 30);
     ssc_data_set_number(data, "6par_imp", 6);
     ssc_data_set_number(data, "6par_voc", 37);
@@ -703,11 +709,11 @@ void pvsamv1_with_residential_default(ssc_data_t& data)
     ssc_data_set_number(data, "spe_is_bifacial", 0);
     ssc_data_set_number(data, "spe_bifacial_transmission_factor", 0);
     ssc_data_set_number(data, "spe_bifaciality", 0);
-    ssc_data_set_number(data, "spe_bifacial_ground_clearance_height", 0);
+    ssc_data_set_number(data, "spe_bifacial_ground_clearance_height", 0.1);
     ssc_data_set_number(data, "cec_is_bifacial", 0);
     ssc_data_set_number(data, "cec_bifacial_transmission_factor", 0);
     ssc_data_set_number(data, "cec_bifaciality", 0);
-    ssc_data_set_number(data, "cec_bifacial_ground_clearance_height", 0);
+    ssc_data_set_number(data, "cec_bifacial_ground_clearance_height", 0.1);
     ssc_data_set_number(data, "cec_area", 1.6310000419616699);
     ssc_data_set_number(data, "cec_a_ref", 2.4200999736785889);
     ssc_data_set_number(data, "cec_adjust", 5.0100002288818359);
@@ -740,7 +746,7 @@ void pvsamv1_with_residential_default(ssc_data_t& data)
     ssc_data_set_number(data, "6par_is_bifacial", 0);
     ssc_data_set_number(data, "6par_bifacial_transmission_factor", 0);
     ssc_data_set_number(data, "6par_bifaciality", 0);
-    ssc_data_set_number(data, "6par_bifacial_ground_clearance_height", 0);
+    ssc_data_set_number(data, "6par_bifacial_ground_clearance_height", 0.1);
     ssc_data_set_number(data, "6par_celltech", 1);
     ssc_data_set_number(data, "6par_vmp", 30);
     ssc_data_set_number(data, "6par_imp", 6);

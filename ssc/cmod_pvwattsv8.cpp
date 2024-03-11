@@ -310,7 +310,7 @@ public:
         add_var_info(_cm_vtab_pvwattsv8);
         add_var_info(vtab_adjustment_factors);
         add_var_info(vtab_technology_outputs);
-        add_var_info(vtab_hybrid_tech_om);
+        add_var_info(vtab_hybrid_tech_om_outputs);
 
 
         ld.add("poa_nominal", true);
@@ -657,7 +657,7 @@ public:
             // if tracking mode is 1-axis tracking,
             // don't need to limit tilt angles
             if (snowmodel.setup(pv.nmody,
-                (float)pv.tilt,
+                (float)pv.tilt, 1.97,
                 pv.type == FIXED_RACK || pv.type == FIXED_ROOF)) {
 
                 if (!snowmodel.good) {

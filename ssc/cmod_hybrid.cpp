@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "core.h"
-
+#include "common.h"
 
 
 static var_info _cm_vtab_hybrid[] = {
@@ -51,6 +51,24 @@ public:
     {
         add_var_info(_cm_vtab_hybrid);
     }
+
+    void ssc_module_exec_with_error(ssc_module_t module, var_table& input, std::string compute_module) {
+        if (!ssc_module_exec(module, static_cast<ssc_data_t>(&input))) {
+            std::string str = std::string(compute_module) + " execution error. ";
+            int idx = 0;
+            int type = -1;
+            while (const char* msg = ssc_module_log(module, idx++, &type, nullptr))
+            {
+                if (/*/(type == SSC_NOTICE) || */(type == SSC_WARNING) || (type == SSC_ERROR)) {
+                    str += std::string(msg);
+                    str += "\t";
+                }
+            }
+            ssc_module_free(module);
+            throw std::runtime_error(str);
+        }
+    }
+
     void exec()
     {
         float percent = 0;
@@ -79,8 +97,13 @@ public:
                     batteries.push_back(computemodulename);
                 else if (computemodulename == "fuelcell")
                     fuelcells.push_back(computemodulename);
-                else
+                else {
                     financials.push_back(computemodulename);
+                    computemodulename = "hybrid";
+                }
+                var_data* compute_module_inputs = input_table->table.lookup(computemodulename);
+                if (compute_module_inputs->type != SSC_TABLE)
+                    throw exec_error("hybrid", "No input input_table found for " + computemodulename);
             }
 
             // Hybrid system precheck
@@ -94,10 +117,28 @@ public:
             // run all generators and collect outputs and compute outputs
             size_t maximumTimeStepsPerHour = 1, currentTimeStepsPerHour;
             double hybridSystemCapacity = 0, hybridTotalInstalledCost = 0;
-            ssc_number_t inflation_rate;
-            int len, analysisPeriod = 0;
+            int len = 0;
             std::vector<size_t> genTimestepsPerHour;
             bool ts_adj = false; // keep track of whether time step is adjusted for log messages
+
+            // get financial inputs common to all technologies and copy into each tech's input tables
+            var_data* financial_compute_modules = input_table->table.lookup("hybrid");
+            int analysisPeriod = (int)financial_compute_modules->table.lookup("analysis_period")->num;
+            ssc_number_t inflation_rate = financial_compute_modules->table.lookup("inflation_rate")->num * 0.01;
+            ssc_number_t sales_tax_rate = 0;
+            if (financial_compute_modules->table.is_assigned("sales_tax_rate")){
+                sales_tax_rate = financial_compute_modules->table.lookup("sales_tax_rate")->num * 0.01;
+            }
+
+            for (size_t i = 0; i < vec_cms.size(); i++) {
+                std::string computemodulename = vec_cms[i].str;
+                var_data* compute_module_inputs = input_table->table.lookup(computemodulename);
+                if (compute_module_inputs) {
+                    compute_module_inputs->table.assign("analysis_period", analysisPeriod);
+                    compute_module_inputs->table.assign("inflation_rate", inflation_rate * 1e2);
+                    compute_module_inputs->table.assign("sales_tax_rate", sales_tax_rate * 1e2);
+                }
+            }
 
             for (size_t igen = 0; igen < generators.size(); igen++) {
 
@@ -106,22 +147,17 @@ public:
 
                 std::string& compute_module = generators[igen];
                 var_data* compute_module_inputs = input_table->table.lookup(compute_module);
-                if (compute_module_inputs->type != SSC_TABLE)
-                    throw exec_error("hybrid", "No input input_table found for " + compute_module);
-
-                ssc_number_t system_capacity = compute_module_inputs->table.lookup("system_capacity")->num;
-
-                hybridSystemCapacity += system_capacity;
-                hybridTotalInstalledCost += compute_module_inputs->table.lookup("total_installed_cost")->num;
-                analysisPeriod = (int)compute_module_inputs->table.lookup("analysis_period")->num;
-
                 ssc_module_t module = ssc_module_create(compute_module.c_str());
+                ssc_module_hybridize(module);
 
                 var_table& input = compute_module_inputs->table;
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "en_batt", 0);
 
+                ssc_module_exec_with_error(module, input, compute_module);
 
-                ssc_module_exec(module, static_cast<ssc_data_t>(&input));
+                ssc_number_t system_capacity = compute_module_inputs->table.lookup("system_capacity")->num;
+                hybridSystemCapacity += system_capacity;
+                hybridTotalInstalledCost += compute_module_inputs->table.lookup("total_installed_cost")->num;
 
                 ssc_data_t compute_module_outputs = ssc_data_create();
 
@@ -132,14 +168,17 @@ public:
                         auto var_name = ssc_info_name(p_inf);
                         auto var_value = input.lookup(var_name);
                         ssc_data_set_var(compute_module_outputs, var_name, var_value);
-                    }
+                    } 
                 }
+                bool system_use_lifetime_output = false;
+                if (compute_module_inputs->table.lookup("system_use_lifetime_output"))
+                    system_use_lifetime_output = compute_module_inputs->table.lookup("system_use_lifetime_output")->num;
 
                 // get minimum timestep from gen vector
                 ssc_number_t* curGen = ssc_data_get_array(compute_module_outputs, "gen", &len);
                 currentTimeStepsPerHour = len / 8760;
                 log(util::format("Simulation time step is %d minutes for %s.", 60 / int(maximumTimeStepsPerHour), compute_module.c_str()), SSC_NOTICE);
-                if (compute_module_inputs->table.lookup("system_use_lifetime_output")->num > 0) // below - assuming single year only
+                if (system_use_lifetime_output > 0) // below - assuming single year only
                     currentTimeStepsPerHour /= analysisPeriod;
                 if (currentTimeStepsPerHour > maximumTimeStepsPerHour)
                 {
@@ -152,7 +191,6 @@ public:
                 ssc_number_t* pOMProduction = ((var_table*)compute_module_outputs)->allocate("cf_om_production", analysisPeriod + 1);
                 ssc_number_t* pOMCapacity = ((var_table*)compute_module_outputs)->allocate("cf_om_capacity", analysisPeriod + 1);
                 ssc_number_t* pOMFixed = ((var_table*)compute_module_outputs)->allocate("cf_om_fixed", analysisPeriod + 1);
-                inflation_rate = compute_module_inputs->table.lookup("inflation_rate")->num * 0.01;
 
                 escal_or_annual(input, pOMFixed, analysisPeriod, "om_fixed", inflation_rate, 1.0, false, input.as_double("om_fixed_escal") * 0.01); // $ 
                 escal_or_annual(input, pOMProduction, analysisPeriod, "om_production", inflation_rate, 0.001, false, input.as_double("om_production_escal") * 0.01); // $/kWh after conversion
@@ -165,7 +203,7 @@ public:
                 ssc_number_t* pEnergyNet = ((var_table*)compute_module_outputs)->allocate("cf_energy_net", analysisPeriod + 1);
                 ssc_number_t* pDegradation = ((var_table*)compute_module_outputs)->allocate("cf_degradation", analysisPeriod + 1);
 
-                if (compute_module_inputs->table.lookup("system_use_lifetime_output")->num > 0) { // e.g. pvsamv1
+                if (system_use_lifetime_output > 0) { // e.g. pvsamv1
                     size_t timestepsPerYear = len / analysisPeriod;
                     for (int i = 0; i < analysisPeriod; i++) {
                         pDegradation[i + 1] = 1.0;
@@ -177,8 +215,9 @@ public:
                 }
                 else {
                     size_t count_degrad = 0;
-                    ssc_number_t* degrad = 0;
-                    degrad = input.as_array("degradation", &count_degrad);
+                    ssc_number_t* degrad = input.as_array("degradation", &count_degrad);
+                    if (compute_module == "generic_system")
+                        input.assign("generic_degradation", *input.lookup("degradation"));
                     if (count_degrad == 1) {
                         for (int i = 1; i <= analysisPeriod; i++)
                             pDegradation[i] = pow((1.0 - degrad[0] / 100.0), i - 1);
@@ -203,7 +242,7 @@ public:
                     escal_or_annual(input, pOMLandLease, analysisPeriod, "om_land_lease", inflation_rate, total_land_area, false, input.as_double("om_land_lease_escal") * 0.01);
                 }
                 // optional fossil fuel costs
-                if (compute_module_inputs->table.lookup("om_fuel_cost")) {
+                if (compute_module_inputs->table.lookup("om_fuel_cost") && compute_module_inputs->table.lookup("system_heat_rate") && compute_module_inputs->table.lookup("annual_fuel_usage")) {
                     ssc_number_t* pOMFuelCost = ((var_table*)compute_module_outputs)->allocate("cf_om_fuel_cost", analysisPeriod + 1);
                     ssc_number_t system_heat_rate = compute_module_inputs->table.lookup("system_heat_rate")->num;
                     ssc_number_t year1_fuel_use = ((var_table*)compute_module_outputs)->as_double("annual_fuel_usage"); // kWht
@@ -273,32 +312,28 @@ public:
                 percent = 100.0f * ((float)(generators.size() + fuelcells.size()) / (float)(generators.size() + fuelcells.size() + batteries.size() + financials.size()));
                 update("", percent);
 
-
                 std::string& compute_module = fuelcells[0];
                 var_data* compute_module_inputs = input_table->table.lookup(compute_module);
-                if (compute_module_inputs->type != SSC_TABLE)
-                    throw exec_error("hybrid", "No input input_table found for ." + compute_module);
-
-                ssc_number_t system_capacity = compute_module_inputs->table.lookup("fuelcell_power_nameplate")->num;
-                hybridSystemCapacity += system_capacity;
-                hybridTotalInstalledCost += compute_module_inputs->table.lookup("total_installed_cost")->num;
-                analysisPeriod = (int)compute_module_inputs->table.lookup("analysis_period")->num;
 
                 ssc_module_t module = ssc_module_create(compute_module.c_str());
+                class compute_module* cmod = static_cast<class compute_module*>(module);
+                ssc_module_hybridize(module);
+
+                ssc_number_t system_capacity = compute_module_inputs->table.lookup("fuelcell_unit_max_power")->num;
+                system_capacity *= compute_module_inputs->table.lookup("fuelcell_number_of_units")->num;
+                hybridSystemCapacity += system_capacity;
+                hybridTotalInstalledCost += compute_module_inputs->table.lookup("total_installed_cost")->num;
 
                 var_table& input = compute_module_inputs->table;
                 ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);
+                ssc_data_set_number(static_cast<ssc_data_t>(&input), "system_use_lifetime_output", 1); // for fuelcell_annual_energy_discharged
 
-                if (!ssc_module_exec(module, static_cast<ssc_data_t>(&input))) {
-                    // merge in hybrid vartable for configurations where battery and fuel cell dispatch are combined and not in the technology bin
-                    std::string hybridVarTable("Hybrid");
-                    var_data* hybrid_inputs = input_table->table.lookup(hybridVarTable);
-                    if (compute_module_inputs->type != SSC_TABLE)
-                        throw exec_error("hybrid", "No input input_table found for ." + hybridVarTable);
-                    var_table& hybridinput = hybrid_inputs->table;
-                    input.merge(hybridinput, false);
-                    ssc_module_exec(module, static_cast<ssc_data_t>(&input));
-                }
+                // merge in hybrid vartable for configurations where battery and fuel cell dispatch are combined and not in the technology bin
+                std::string hybridVarTable("Hybrid");
+                var_data* hybrid_inputs = input_table->table.lookup(hybridVarTable);
+                var_table& hybridinput = hybrid_inputs->table;
+                input.merge(hybridinput, false);
+                ssc_module_exec_with_error(module, input, compute_module);
 
                 ssc_data_t compute_module_outputs = ssc_data_create();
 
@@ -319,7 +354,6 @@ public:
                 ssc_number_t* pOMCapacity = ((var_table*)compute_module_outputs)->allocate("cf_om_capacity", analysisPeriod + 1);
                 ssc_number_t* pOMFixed = ((var_table*)compute_module_outputs)->allocate("cf_om_fixed", analysisPeriod + 1);
                 ssc_number_t* pFuelCellReplacement = ((var_table*)compute_module_outputs)->allocate("cf_fuelcell_replacement_cost_schedule", analysisPeriod + 1);
-                inflation_rate = compute_module_inputs->table.lookup("inflation_rate")->num * 0.01; // can retrieve from "Hybrid" vartable directly
                 escal_or_annual(input, pOMFixed, analysisPeriod, "om_fuelcell_fixed_cost", inflation_rate, 1.0, false, input.as_double("om_fixed_escal") * 0.01); // $
                 escal_or_annual(input, pOMProduction, analysisPeriod, "om_fuelcell_variable_cost", inflation_rate, 0.001, false, input.as_double("om_production_escal") * 0.01); // $/kW
                 escal_or_annual(input, pOMCapacity, analysisPeriod, "om_fuelcell_capacity_cost", inflation_rate, system_capacity, false, input.as_double("om_capacity_escal") * 0.01); // $
@@ -331,21 +365,21 @@ public:
 
                 nameplate = system_capacity;
                 fuelcell_discharged = ((var_table*)compute_module_outputs)->as_vector_double("fuelcell_annual_energy_discharged");
-                if (fuelcell_discharged.size() == 2) { // ssc #992
+                if (fuelcell_discharged.size() == 1) { // ssc #992
                     double first_val = fuelcell_discharged[0]; // first value differs here!
-                    fuelcell_discharged.resize(analysisPeriod + 1, first_val);
+                    fuelcell_discharged.resize(analysisPeriod , first_val);
                 }
-                if (fuelcell_discharged.size() != (size_t)analysisPeriod + 1)
+                if (fuelcell_discharged.size() != (size_t)analysisPeriod )
                     throw exec_error("hybrid", util::format("fuelcell_discharged size (%d) incorrect", (int)fuelcell_discharged.size()));
                 // fuelcell cost - replacement from lifetime analysis
-                if (((var_table*)compute_module_outputs)->is_assigned("fuelcell_replacement_option") && (((var_table*)compute_module_outputs)->as_integer("fuelcell_replacement_option") > 0))
+                if (input.is_assigned("fuelcell_replacement_option") && (input.as_integer("fuelcell_replacement_option") > 0))
                 {
                     size_t count;
                     ssc_number_t* fuelcell_rep = 0;
-                    if (((var_table*)compute_module_outputs)->as_integer("fuelcell_replacement_option") == 1)
+                    if (input.as_integer("fuelcell_replacement_option") == 1)
                         fuelcell_rep = ((var_table*)compute_module_outputs)->as_array("fuelcell_replacement", &count); // replacements per year calculated
                     else // user specified
-                        fuelcell_rep = ((var_table*)compute_module_outputs)->as_array("fuelcell_replacement_schedule", &count); // replacements per year user-defined
+                        fuelcell_rep = input.as_array("fuelcell_replacement_schedule", &count); // replacements per year user-defined
 
                     escal_or_annual(input, pFuelCellReplacement, analysisPeriod, "om_fuelcell_replacement_cost", inflation_rate, nameplate, false, input.as_double("om_replacement_cost_escal") * 0.01);
 
@@ -359,18 +393,33 @@ public:
                     }
                 }
                 // production O and M conversion to $
-                for (size_t i = 0; i <= (size_t)analysisPeriod; i++)
-                    pOMProduction[i] *= fuelcell_discharged[i];
+                for (size_t i = 0; i < (size_t)analysisPeriod; i++)
+                    pOMProduction[i + 1] *= fuelcell_discharged[i];
+
+                // add to gen "fuelcell_power" * timestep (set for pGen above)
+                // cash flow line item is fuelcell_annual_energy_discharged from cmod_fuelcell
+                std::vector<double> gen(genLength, 0);
+                gen = ((var_table*)compute_module_outputs)->as_vector_double("fuelcell_power");
+                if (gen.size() != genLength)
+                    throw exec_error("hybrid", util::format("fuelcell_power size (%d) incorrect", (int)gen.size()));
+                for (size_t g = 0; g < genLength; g++) {
+                    pGen[g] += gen[g] * maximumTimeStepsPerHour;
+                }
 
 
-                // add calculations to compute module outputs - done above for regular ompute module outputs
+                // resize annual outputs
+                size_t arr_length = analysisPeriod + 1;
+                ssc_number_t yr_0_value = 0.0;
+                prepend_to_output((var_table*)compute_module_outputs, "fuelcell_replacement", arr_length, yr_0_value);
+                prepend_to_output((var_table*)compute_module_outputs, "annual_fuel_usage_lifetime", arr_length, yr_0_value);
+                prepend_to_output((var_table*)compute_module_outputs, "fuelcell_annual_energy_discharged", arr_length, yr_0_value);
+
 
                 ssc_data_set_table(outputs, compute_module.c_str(), compute_module_outputs);
                 ssc_module_free(module);
                 ssc_data_free(compute_module_outputs);
-
             }
-
+ 
             if (batteries.size() > 0) { // run single battery (refator running code below)
 
                 percent = 100.0f * ((float)(generators.size() + fuelcells.size() + batteries.size()) / (float)(generators.size() + fuelcells.size() + batteries.size() + financials.size()));
@@ -378,32 +427,45 @@ public:
 
                 std::string& compute_module = batteries[0];
                 var_data* compute_module_inputs = input_table->table.lookup(compute_module);
-                if (compute_module_inputs->type != SSC_TABLE)
-                    throw exec_error("hybrid", "No input input_table found for ." + compute_module);
 
-                hybridSystemCapacity += compute_module_inputs->table.lookup("system_capacity")->num; // TODO: check capacity definitions for batteries and hybrid systems
+                ssc_number_t system_capacity = compute_module_inputs->table.lookup("batt_power_discharge_max_kwac")->num;
+                hybridSystemCapacity += system_capacity; // TODO: check capacity definitions for batteries and hybrid systems
                 hybridTotalInstalledCost += compute_module_inputs->table.lookup("total_installed_cost")->num;
-                analysisPeriod = (int)compute_module_inputs->table.lookup("analysis_period")->num;
+
+                // copy over required dispatch variables from hybrid
+                if (financial_compute_modules->table.is_assigned("dispatch_sched_weekday"))
+                compute_module_inputs->table.assign("dispatch_sched_weekday", *financial_compute_modules->table.lookup("dispatch_sched_weekday"));
+                if (financial_compute_modules->table.is_assigned("dispatch_sched_weekday"))
+                compute_module_inputs->table.assign("dispatch_sched_weekend", *financial_compute_modules->table.lookup("dispatch_sched_weekend"));
+                if (financial_compute_modules->table.is_assigned("dispatch_tod_factors"))
+                compute_module_inputs->table.assign("dispatch_tod_factors", *financial_compute_modules->table.lookup("dispatch_tod_factors"));
+                if (financial_compute_modules->table.is_assigned("grid_interconnection_limit_kwac"))
+                compute_module_inputs->table.assign("grid_interconnection_limit_kwac", *financial_compute_modules->table.lookup("grid_interconnection_limit_kwac"));
+                if (financial_compute_modules->table.is_assigned("ppa_escalation"))
+                compute_module_inputs->table.assign("ppa_escalation", *financial_compute_modules->table.lookup("ppa_escalation"));
+                if (financial_compute_modules->table.is_assigned("ppa_multiplier_model"))
+                compute_module_inputs->table.assign("ppa_multiplier_model", *financial_compute_modules->table.lookup("ppa_multiplier_model"));
+                if (financial_compute_modules->table.is_assigned("ppa_price_input"))
+                compute_module_inputs->table.assign("ppa_price_input", *financial_compute_modules->table.lookup("ppa_price_input"));
 
                 ssc_module_t module = ssc_module_create(compute_module.c_str());
+                ssc_module_hybridize(module);
 
                 var_table& input = compute_module_inputs->table;
+
+                // merge in hybrid vartable for configurations where battery dispatch variables are combined and not in the technology bin
+                std::string hybridVarTable("Hybrid");
+                var_data* hybrid_inputs = input_table->table.lookup(hybridVarTable);
+                if (compute_module_inputs->type != SSC_TABLE)
+                    throw exec_error("hybrid", "No input input_table found for ." + hybridVarTable);
+                var_table& hybridinput = hybrid_inputs->table;
+                input.merge(hybridinput, false);
+
                 ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);  // check if issue with lookahead dispatch with hourly PV and subhourly wind
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "system_use_lifetime_output", 1);
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "en_batt", 1); // should be done at UI level
 
-                if (!ssc_module_exec(module, static_cast<ssc_data_t>(&input))) {
-                    // merge in hybrid vartable for configurations where battery and fuel cell dispatch are combined and not in the technology bin
-                    std::string hybridVarTable("Hybrid");
-                    var_data* hybrid_inputs = input_table->table.lookup(hybridVarTable);
-                    if (compute_module_inputs->type != SSC_TABLE)
-                        throw exec_error("hybrid", "No input input_table found for ." + hybridVarTable);
-                    var_table& hybridinput = hybrid_inputs->table;
-                    input.merge(hybridinput, false);
-                    ssc_data_set_number(static_cast<ssc_data_t>(&input), "en_batt", 1);
-
-                    ssc_module_exec(module, static_cast<ssc_data_t>(&input));
-                }
+                ssc_module_exec_with_error(module, input, compute_module);
 
                 ssc_data_t compute_module_outputs = ssc_data_create();
 
@@ -422,7 +484,6 @@ public:
                 ssc_number_t* pOMProduction = ((var_table*)compute_module_outputs)->allocate("cf_om_production", analysisPeriod + 1);
                 ssc_number_t* pOMCapacity = ((var_table*)compute_module_outputs)->allocate("cf_om_capacity", analysisPeriod + 1);
                 ssc_number_t* pOMFixed = ((var_table*)compute_module_outputs)->allocate("cf_om_fixed", analysisPeriod + 1);
-                inflation_rate = compute_module_inputs->table.lookup("inflation_rate")->num * 0.01; // can retrieve from "Hybrid" vartable directly
                 escal_or_annual(input, pOMFixed, analysisPeriod, "om_batt_fixed_cost", inflation_rate, 1.0, false, input.as_double("om_fixed_escal") * 0.01);
                 escal_or_annual(input, pOMProduction, analysisPeriod, "om_batt_variable_cost", inflation_rate, 0.001, false, input.as_double("om_production_escal") * 0.01);
                 std::vector<double> battery_discharged(analysisPeriod, 0);
@@ -433,7 +494,7 @@ public:
                     battery_discharged.resize(analysisPeriod, first_val);
                 }
                 else if (len != analysisPeriod) {
-                    throw exec_error("hybrid", util::format("battery_discharged size (%d) incorrect", (int)battery_discharged.size()));
+                    throw exec_error("hybrid", util::format("battery_discharged size (%d) incorrect", (int)len));
                 }
                 else {
                     for (int i = 0; i < len; i++)
@@ -478,10 +539,8 @@ public:
                 escal_or_annual(input, pOMCapacity, analysisPeriod, "om_batt_capacity_cost", inflation_rate, batt_cap, false, input.as_double("om_capacity_escal") * 0.01);
 
                 // production O and M conversion to $
-                for (size_t i = 1; i <= (size_t)analysisPeriod; i++)
-                    pOMProduction[i] *= battery_discharged[i - 1];
-
-
+                for (size_t i = 0; i < (size_t)analysisPeriod; i++)
+                    pOMProduction[i+1] *= battery_discharged[i];
 
                 // resize annual outputs
                 size_t arr_length = analysisPeriod + 1;
@@ -497,7 +556,6 @@ public:
                 ssc_data_set_table(outputs, compute_module.c_str(), compute_module_outputs);
                 ssc_module_free(module);
                 ssc_data_free(compute_module_outputs);
-
             }
 
             bool use_batt_output = false;
@@ -508,7 +566,6 @@ public:
                 use_batt_output = true;
                 pBattGen = ((var_table*)outputs)->lookup(batteries[0])->table.as_array("gen", &battGenLen);
             }
-
 
             ssc_number_t* pHybridOMSum = ((var_table*)outputs)->allocate("cf_hybrid_om_sum", analysisPeriod + 1); // add to top level "output" - assumes analysis period the same for all generators
 
@@ -559,22 +616,16 @@ public:
                 }
             }
 
-
-
-
             if (financials.size() > 0) { // run remaining compute modules with necessary inputs
                 // note that single vartable is used to run multiple compute modules
                 // battery outputs passed in if present
                 std::string hybridVarTable("Hybrid");
                 var_data* compute_module_inputs = input_table->table.lookup(hybridVarTable);
-                if (compute_module_inputs->type != SSC_TABLE)
-                    throw exec_error("hybrid", "No input input_table found for ." + hybridVarTable);
-
                 var_table& input = compute_module_inputs->table;
 
-                if (use_batt_output)
-                    ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pBattGen, (int)battGenLen);
-                else
+ //               if (use_batt_output)
+ //                   ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pBattGen, (int)battGenLen);
+ //               else
                     ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);
 
                 if (batteries.size() > 0)
@@ -592,8 +643,6 @@ public:
                 ssc_data_set_array(&(compute_module_inputs->table), "monthly_energy", pGenMonthly, 12);
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "annual_energy", pGenAnnual);
 
-
-
                 // run remaining compute modules in sequence and add results to "Hybrid" VarTable
                 ssc_data_t hybridFinancialOutputs = ssc_data_create();
 
@@ -605,8 +654,7 @@ public:
                     std::string compute_module = financials[i];
 
                     ssc_module_t module = ssc_module_create(compute_module.c_str());
-                    ssc_module_exec(module, static_cast<ssc_data_t>(&input));
-
+                    ssc_module_exec_with_error(module, input, compute_module);
 
                     int pidx = 0;
                     while (const ssc_info_t p_inf = ssc_module_var_info(module, pidx++)) {
@@ -617,20 +665,15 @@ public:
                             ssc_data_set_var(hybridFinancialOutputs, var_name, var_value);
                         }
                     }
-
                     ssc_module_free(module);
-
                 }
 
                 ssc_data_set_table(outputs, hybridVarTable.c_str(), hybridFinancialOutputs);
                 ssc_data_free(hybridFinancialOutputs);
-
-
             }
 
             assign("output", var_data(*(static_cast<var_table*>(outputs))));
             ssc_data_free(outputs);
-
         }
         else {
             throw exec_error("hybrid", "No compute modules specified.");
