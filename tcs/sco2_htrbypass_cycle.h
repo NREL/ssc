@@ -417,6 +417,7 @@ private:
 
     int clear_x_inputs(const std::vector<double>& x, const S_auto_opt_design_parameters auto_par, const S_opt_design_parameters opt_par, S_sco2_htrbp_in& core_inputs);
 
+    CO2_state mc_co2_props;
 
     // Optimal inputs, for bypass optimizer DO NOT USE
     S_sco2_htrbp_in m_optimal_inputs_internal_only;
@@ -425,7 +426,7 @@ private:
     // Input/Ouput structures for class methods
     S_opt_design_parameters ms_opt_des_par;
 
-
+    
     void auto_opt_design_core(int& error_code);
 
     // Bypass Specific HTF variables
@@ -435,14 +436,17 @@ private:
     double m_set_HTF_mdot;
     double m_HTF_PHX_cold_approach;
     double m_dT_BP;
-    double m_cp_HTF;
-    bool is_bp_par_set;
+    double m_cp_HTF = 0;
+    bool m_is_bp_par_set;
 
     // Optimal htrbp core class (contains all results and component data)
     C_sco2_htrbp_core m_optimal_htrbp_core;
 
     // Added
     double calc_penalty(double target, double calc, double span);
+
+protected:
+    
 
 public:
 
@@ -475,49 +479,30 @@ public:
             N_nodes_pass,
             T_amb_des, elevation)
     {
-        /*m_temp_last.resize(END_SCO2_STATES);
-        std::fill(m_temp_last.begin(), m_temp_last.end(), std::numeric_limits<double>::quiet_NaN());
-        m_pres_last = m_enth_last = m_entr_last = m_dens_last = m_temp_last;
+        m_T_target = m_T_HTF_PHX_inlet = m_set_HTF_mdot
+            = m_HTF_PHX_cold_approach = m_dT_BP
+            = m_cp_HTF
+            = std::numeric_limits<double>::quiet_NaN();
 
-        m_eta_thermal_calc_last = m_m_dot_mc = m_m_dot_rc = m_m_dot_t = std::numeric_limits<double>::quiet_NaN();
-        m_Q_dot_PHX = std::numeric_limits<double>::quiet_NaN();
-        m_W_dot_mc = m_W_dot_rc = m_W_dot_t = m_W_dot_mc_bypass = std::numeric_limits<double>::quiet_NaN();
-        m_objective_metric_last = std::numeric_limits<double>::quiet_NaN();
-
-        m_W_dot_net_last = std::numeric_limits<double>::quiet_NaN();
-
-        m_objective_metric_opt = std::numeric_limits<double>::quiet_NaN();
-        m_objective_metric_auto_opt = std::numeric_limits<double>::quiet_NaN();*/
-
-        
+        m_is_bp_par_set = false;
     }
-
-    // Set Bypass Specific Parameters
-    void set_bp_par(double T_htf_phx_in, double T_target, double cp_htf, double dT_bp, double htf_phx_cold_approach, double set_HTF_mdot,
-                    int T_target_is_HTF);
-
-
-
-    CO2_state mc_co2_props;
 
     ~C_HTRBypass_Cycle() {};
 
-    
-
-    void reset_ms_od_turbo_bal_csp_solved();
-
+    // Find optimal cycle
     int auto_opt_design(S_auto_opt_design_parameters& auto_opt_des_par_in);
 
+    // Set Bypass Specific Parameters
+    void set_bp_par(double T_htf_phx_in, double T_target, double cp_htf, double dT_bp, double htf_phx_cold_approach, double set_HTF_mdot,
+        int T_target_is_HTF);
 
-
-
+    // Objective Functions
     double C_HTRBypass_Cycle::opt_cycle_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, C_sco2_htrbp_core& htrbp_core);
-
     double C_HTRBypass_Cycle::opt_nonbp_par_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, C_sco2_htrbp_core& htrbp_core);
 
-
-
     // Unused
+
+    void reset_ms_od_turbo_bal_csp_solved();
 
     int auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters& auto_opt_des_hit_eta_in, std::string& error_msg);
 
@@ -567,23 +552,12 @@ public:
 
 };
 
-
-double nlopt_cb_opt_htr_bypass_des(const std::vector<double>& x, std::vector<double>& grad, void* data);
-
-double nlopt_cb_opt_bypass_frac_des(const std::vector<double>& x, std::vector<double>& grad, void* data);
-
-double nlopt_cb_opt_bypass_frac_free_var(const std::vector<double>& x, std::vector<double>& grad, void* data);
-
-
-// ADDED
+// Nlopt objective functions
 double nlopt_opt_cycle_func(const std::vector<double>& x, std::vector<double>& grad, void* data);
 
 double nlopt_opt_nonbp_par_func(const std::vector<double>& x, std::vector<double>& grad, void* data);
 
-
-
-
-
+// Penalty value methods
 double sigmoid(const double val);
 
 double logit(const double val);
