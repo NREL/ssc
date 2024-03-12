@@ -1024,10 +1024,6 @@ protected:
     double poaRearRowReflections;           ///< Rear row reflected irradiance on rear (W/m2)
     double poaRearGroundReflected;          ///< Ground reflected irradiance onto the rear (W/m2)
     double poaRearSelfShaded;               ///< Irradiance shaded from being incident on the rear (W/m2)
-    double poaRearDirectDiffuseCS;            ///< Direct and sky diffuse irradiance on rear (W/m2)
-    double poaRearRowReflectionsCS;           ///< Rear row reflected irradiance on rear (W/m2)
-    double poaRearGroundReflectedCS;          ///< Ground reflected irradiance onto the rear (W/m2)
-    double poaRearSelfShadedCS;               ///< Irradiance shaded from being incident on the rear (W/m2)
 
     // Outputs
     double sunAnglesRadians[9];				///< Sun angles in radians calculated from solarpos()	
@@ -1035,11 +1031,9 @@ protected:
     double planeOfArrayIrradianceFront[3];	///< Front-side plane-of-array irradiance for beam, sky diffuse, ground diffuse (W/m2)
     double planeOfArrayIrradianceFrontCS[3]; ///< Front-side plane-of-array clearsky irradiance for beam, sky diffuse, ground diffuse (W/m2)
     double planeOfArrayIrradianceRear[3];	///< Rear-side plane-of-array irradiance for beam, sky diffuse, ground diffuse (W/m2)
-    double planeOfArrayIrradianceRearCS[3];
     double diffuseIrradianceFront[3];		///< Front-side diffuse irradiance for isotropic, circumsolar, and horizon (W/m2)
     double diffuseIrradianceFrontCS[3];		///< Front-side diffuse clearsky irradiance for isotropic, circumsolar, and horizon (W/m2)
     double diffuseIrradianceRear[3];		///< Rear-side diffuse irradiance for isotropic, circumsolar, and horizon (W/m2)
-    double diffuseIrradianceRearCS[3];
     int timeStepSunPosition[3];				///< [0] effective hour of day used for sun position, [1] effective minute of hour used for sun position, [2] is sun up?  (0=no, 1=midday, 2=sunup, 3=sundown)
     double planeOfArrayIrradianceRearAverage; ///< Average rear side plane-of-array irradiance (W/m2)
     double planeOfArrayIrradianceRearAverageCS; ///< Average rear side clearsky plane-of-array irradiance (W/m2)

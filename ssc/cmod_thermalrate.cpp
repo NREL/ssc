@@ -401,7 +401,7 @@ public:
 					e_sys_cy[j] = pgen[idx] * ts_hour_gen;
 					p_sys_cy[j] = pgen[idx];
 					// until lifetime load fully implemented
-					lifetime_load[idx] = -e_load_cy[j]/ts_hour_gen;
+					lifetime_load[idx] = -e_load_cy[j];
 					idx++;
 				}
 				else
