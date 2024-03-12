@@ -429,6 +429,8 @@ private:
     
     void auto_opt_design_core(int& error_code);
 
+    void auto_opt_design_hit_eta_core(int& error_code);
+
     // Bypass Specific HTF variables
     int m_T_target_is_HTF;
     double m_T_target;
@@ -497,6 +499,7 @@ public:
         int T_target_is_HTF);
 
     // Objective Functions
+    double C_HTRBypass_Cycle::opt_total_UA_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par);
     double C_HTRBypass_Cycle::opt_cycle_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, C_sco2_htrbp_core& htrbp_core);
     double C_HTRBypass_Cycle::opt_nonbp_par_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, C_sco2_htrbp_core& htrbp_core);
 
@@ -553,9 +556,14 @@ public:
 };
 
 // Nlopt objective functions
+double nlopt_opt_total_UA_func(const std::vector<double>& x, std::vector<double>& grad, void* data);
+
 double nlopt_opt_cycle_func(const std::vector<double>& x, std::vector<double>& grad, void* data);
 
 double nlopt_opt_nonbp_par_func(const std::vector<double>& x, std::vector<double>& grad, void* data);
+
+
+
 
 // Penalty value methods
 double sigmoid(const double val);
