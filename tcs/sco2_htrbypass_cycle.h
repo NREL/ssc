@@ -277,32 +277,9 @@ class C_HTRBypass_Cycle : public C_sco2_cycle_core
 {
 public:
 
+    // Struct to store optimization variables
     struct S_opt_design_parameters
     {
-        double m_UA_rec_total;				//[kW/K] Total design-point recuperator UA
-        // LTR thermal design
-        int m_LTR_target_code;              //[-] 1 = UA, 2 = min dT, 3 = effectiveness
-        double m_LTR_UA;					//[kW/K] target LTR conductance
-        double m_LTR_min_dT;                //[K] target LTR minimum temperature difference
-        double m_LTR_eff_target;            //[-] target LTR effectiveness
-        double m_LTR_eff_max;				//[-] Maximum allowable effectiveness in LT recuperator
-        NS_HX_counterflow_eqs::E_UA_target_type m_LTR_od_UA_target_type;
-        // HTR thermal design
-        int m_HTR_target_code;              //[-] 1 = UA, 2 = min dT, 3 = effectiveness
-        double m_HTR_UA;					//[kW/K] target HTR conductance
-        double m_HTR_min_dT;                //[K] target HTR min temperature difference
-        double m_HTR_eff_target;            //[-] target HTR effectiveness
-        double m_HTR_eff_max;				//[-] Maximum allowable effectiveness in HT recuperator
-        NS_HX_counterflow_eqs::E_UA_target_type m_HTR_od_UA_target_type;
-        //
-        double m_des_tol;					//[-] Convergence tolerance
-        double m_des_opt_tol;					//[-] Optimization tolerance
-
-        // Air cooler parameters
-        bool m_is_des_air_cooler;		//[-] False will skip physical air cooler design. UA will not be available for cost models.
-
-        int m_des_objective_type;			//[2] = min phx deltat then max eta, [else] max eta
-        double m_min_phx_deltaT;			//[C]
 
         double m_P_mc_out_guess;			//[kPa] Initial guess for main compressor outlet pressure
         bool m_fixed_P_mc_out;				//[-] if true, P_mc_out is fixed at P_mc_out_guess
@@ -312,6 +289,7 @@ public:
 
         double m_recomp_frac_guess;			//[-] Initial guess for design-point recompression fraction
         bool m_fixed_recomp_frac;			//[-] if true, recomp_frac is fixed at recomp_frac_guess
+
         double m_bypass_frac_guess;			//[-] Initial guess for design-point bypass fraction
         bool m_fixed_bypass_frac;           //[-] if true, bypass_frac is fixed at bypass_frac_guess
 
@@ -320,34 +298,18 @@ public:
 
         // ADDED
         int m_design_method;                //[] Design Method [1] Optimize total UA for target eta, [2] Optimize UA split ratio, [3] set LTR HTR directly
-        double m_eta_thermal_target;                //[] Cycle thermal efficiency target (used by total UA optimization)
+        double m_eta_thermal_target;        //[] Cycle thermal efficiency target (used by total UA optimization)
         double m_UA_recup_total_max;        //[kW/K] Maximum recuperator conductance (for total UA optimizer)
         double m_UA_recup_total_min;        //[kW/K] Minimum recuperator conductance (for total UA optimizer)
 
 
         S_opt_design_parameters()
         {
-            m_UA_rec_total =
-                m_LTR_UA = m_LTR_min_dT = m_LTR_eff_target = m_LTR_eff_max =
-                m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max =
-                m_des_tol = m_des_opt_tol =
-                m_P_mc_out_guess = m_PR_HP_to_LP_guess = m_recomp_frac_guess = m_LT_frac_guess =
+            m_P_mc_out_guess = m_PR_HP_to_LP_guess = m_recomp_frac_guess = m_LT_frac_guess =
                 m_bypass_frac_guess = m_eta_thermal_target =
                 m_UA_recup_total_max = m_UA_recup_total_min =
                 std::numeric_limits<double>::quiet_NaN();
 
-            // Recuperator design target codes
-            m_LTR_target_code = 1;      // default to target conductance
-            m_LTR_od_UA_target_type = NS_HX_counterflow_eqs::E_UA_target_type::E_calc_UA;
-            m_HTR_target_code = 1;      // default to target conductance
-            m_HTR_od_UA_target_type = NS_HX_counterflow_eqs::E_UA_target_type::E_calc_UA;
-
-            // Air cooler default
-            m_is_des_air_cooler = true;
-
-            // Default to standard optimization to maximize cycle efficiency
-            m_des_objective_type = 1;
-            m_min_phx_deltaT = 0.0;		//[C]
 
             m_design_method = -1;
             m_fixed_recomp_frac = false;
@@ -366,7 +328,7 @@ private:
     // NEW REFACTOR Fields and methods
     int optimize_cycle(const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, S_sco2_htrbp_in& optimal_inputs);
 
-    int opt_nonbp_par(const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, S_sco2_htrbp_in core_inputs, S_sco2_htrbp_in& optimal_inputs);
+    int opt_nonbp_par(const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, S_sco2_htrbp_in& core_inputs, S_sco2_htrbp_in& optimal_inputs);
 
     int x_to_inputs(const std::vector<double>& x, const S_auto_opt_design_parameters auto_par, const S_opt_design_parameters opt_par, S_sco2_htrbp_in &core_inputs);
 

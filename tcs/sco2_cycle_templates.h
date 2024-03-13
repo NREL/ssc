@@ -149,7 +149,7 @@ public:
 
 		S_auto_opt_design_hit_eta_parameters()
 		{
-                m_T_pc_in =
+            m_eta_thermal = m_T_pc_in =
                 m_LTR_UA = m_LTR_min_dT = m_LTR_eff_target = m_LTR_eff_max = 
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max =
                 m_eta_pc = 
@@ -231,12 +231,12 @@ public:
 
 		S_auto_opt_design_parameters()
 		{
-                m_T_pc_in =
+            m_T_pc_in =
 				m_UA_rec_total = 
                 m_LTR_UA = m_LTR_min_dT = m_LTR_eff_target = m_LTR_eff_max = 
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max =
                 m_eta_pc = m_des_tol = m_des_opt_tol = 
-                m_is_recomp_ok =
+                m_is_recomp_ok = m_is_bypass_ok =
 				m_PR_HP_to_LP_guess = m_f_PR_HP_to_IP_guess = std::numeric_limits<double>::quiet_NaN();
 
             // Recuperator design target codes
