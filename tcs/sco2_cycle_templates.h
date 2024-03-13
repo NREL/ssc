@@ -130,6 +130,7 @@ public:
 		bool m_is_des_air_cooler;		//[-] False will skip physical air cooler design. UA will not be available for cost models.
 
 		double m_is_recomp_ok;          //[-] 1 = Yes, 0 = simple cycle only, < 0 = fix f_recomp to abs(input)
+        double m_is_bypass_ok;          //[-] 1 = Yes, 0 = no bp, < 0 = fix f_bypass to abs(input)
 
 		int m_des_objective_type;			//[2] = min phx deltat then max eta, [else] max eta
 		double m_min_phx_deltaT;			//[C]
@@ -153,7 +154,7 @@ public:
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max =
                 m_eta_pc = 
 				m_des_tol = m_des_opt_tol = 
-                m_is_recomp_ok =
+                m_is_recomp_ok = m_is_bypass_ok =
 				m_PR_HP_to_LP_guess = m_f_PR_HP_to_IP_guess = std::numeric_limits<double>::quiet_NaN();
 
             // Recuperator design target codes

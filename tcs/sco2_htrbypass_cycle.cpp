@@ -937,6 +937,12 @@ void C_HTRBypass_Cycle::auto_opt_design_core(int& error_code)
             ms_opt_des_par.m_fixed_LT_frac = true;
         }
 
+        // Set Design Method
+        if (ms_opt_des_par.m_fixed_LT_frac == true)
+            ms_opt_des_par.m_design_method = 3;
+        else
+            ms_opt_des_par.m_design_method = 2;
+
     }
     
     // Find optimal inputs
@@ -1083,7 +1089,8 @@ int C_HTRBypass_Cycle::optimize_cycle(const S_auto_opt_design_parameters& auto_p
         opt_des_cycle.set_lower_bounds(lb);
         opt_des_cycle.set_upper_bounds(ub);
         opt_des_cycle.set_initial_step(0.1);
-        opt_des_cycle.set_xtol_rel(auto_par.m_des_opt_tol);
+        //opt_des_cycle.set_xtol_rel(auto_par.m_des_opt_tol);
+        opt_des_cycle.set_xtol_rel(0.1);
         opt_des_cycle.set_maxeval(50);
 
         // Set up Core Model that will be passed to objective function
@@ -1385,11 +1392,68 @@ int C_HTRBypass_Cycle::clear_x_inputs(const std::vector<double>& x, const S_auto
     return 0;
 }
 
+double C_HTRBypass_Cycle::calc_penalty(double target, double calc, double span)
+{
+    double percent_error = std::abs(target - calc) / span;
+    //double penalty = 10.0 * (100.0 * sigmoid(percent_error) - 0.5);
+
+    double penalty = percent_error;
+
+    return penalty;
+}
+
+double C_HTRBypass_Cycle::calc_objective(const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, const C_sco2_htrbp_core& htrbp_core)
+{
+    double obj = 0;
+    double eta = htrbp_core.m_outputs.m_eta_thermal;
+
+    // Hit a target thermal efficiency
+    if (opt_par.m_design_method == 1)
+    {
+        double eta_error = std::min(eta - opt_par.m_eta_thermal_target, 0.0);
+        obj = 1.0 - std::abs(eta_error);
+
+        // Penalize for total UA (lower is better)
+
+    }
+    // Maximize thermal efficiency
+    else
+    {
+        obj = eta;
+    }
+
+    // Penalize for HTF outlet temp (if necessary)
+    double penalty = 0;
+    if (opt_par.m_fixed_bypass_frac == false || auto_par.m_des_objective_type == 2)
+    {
+        double temp_calc = 0;
+        double span = 0;
+
+        if (m_T_target_is_HTF == 0)
+        {
+            temp_calc = htrbp_core.m_outputs.m_temp[MIXER_OUT];
+            span = htrbp_core.m_outputs.m_temp[TURB_IN] - m_T_target;
+        }
+        else
+        {
+            temp_calc = htrbp_core.m_outputs.m_T_HTF_BP_outlet;
+            span = htrbp_core.m_inputs.m_T_HTF_PHX_inlet - m_T_target;
+        }
+
+        penalty = calc_penalty(m_T_target, temp_calc, span);
+    }
+
+    obj = obj - penalty;
+
+    return obj;
+}
+
 // ********************************************************************************* END PRIVATE methods
 
 // ********************************************************************************** PUBLIC C_HTRBypass_Cycle (: C_sco2_cycle_core) 
 
-void C_HTRBypass_Cycle::set_bp_par(double T_htf_phx_in, double T_target, double cp_htf, double dT_bp, double htf_phx_cold_approach, double set_HTF_mdot,
+void C_HTRBypass_Cycle::set_bp_par(double T_htf_phx_in, double T_target, double cp_htf,
+    double dT_bp, double htf_phx_cold_approach, double set_HTF_mdot,
     int T_target_is_HTF)
 {
     m_T_HTF_PHX_inlet = T_htf_phx_in;  // K
@@ -1423,7 +1487,7 @@ double C_HTRBypass_Cycle::opt_total_UA_return_objective_metric(const std::vector
     auto_par_internal.m_UA_rec_total = total_UA;
     opt_par_internal.m_UA_rec_total = total_UA;
 
-    // Optimize all other variables
+    // Optimize all internal variables (bypass_frac -> recomp frac, UA ratio, pressure ratio)
     S_sco2_htrbp_in optimal_inputs_case;
     int error_code = optimize_cycle(auto_par_internal, opt_par_internal, optimal_inputs_case);
 
@@ -1439,41 +1503,54 @@ double C_HTRBypass_Cycle::opt_total_UA_return_objective_metric(const std::vector
     if (error_code != 0)
         return -100000000000000000;
 
-    double eff = htrbp_core.m_outputs.m_eta_thermal;
+    // Calculate Objective Value
+    double obj = calc_objective(auto_par_internal, opt_par_internal, htrbp_core);
 
-    // If variable bypass fraction or targeting temperature
-    double penalty = 0;
-    if (opt_par.m_fixed_bypass_frac == false || auto_par.m_des_objective_type == 2)
-    {
-        double temp_calc = 0;
-        double span = 0;
+    // This objectve ^ targets a thermal efficiency (and tries to hit a temperature, if applicable)
+    // Need to incentivize lower UA value
 
-        if (m_T_target_is_HTF == 0)
-        {
-            temp_calc = htrbp_core.m_outputs.m_temp[MIXER_OUT];
-            span = htrbp_core.m_outputs.m_temp[TURB_IN] - m_T_target;
-        }
-        else
-        {
-            temp_calc = htrbp_core.m_outputs.m_T_HTF_BP_outlet;
-            span = htrbp_core.m_inputs.m_T_HTF_PHX_inlet - m_T_target;
-        }
+    // Hitting eta and temperature is more important than low UA
+    double UA_percent = (total_UA - opt_par.m_UA_recup_total_min) / (opt_par.m_UA_recup_total_max - opt_par.m_UA_recup_total_min);  // Lower is closer to 0
+    double UA_penalty = UA_percent;
 
-        penalty = calc_penalty(m_T_target, temp_calc, span);
-    }
+    // Increase obj scale (making eta and temp more weighted)
+    double obj_weighted = obj * 1e2;
 
-    double obj = eff - penalty;
+    // Subtract UA_penalty
+    obj_weighted = obj_weighted - UA_penalty;
 
-    if (obj > m_opt_obj_internal_only)
-    {
-        m_opt_obj_internal_only = obj;
-        m_optimal_inputs_internal_only = optimal_inputs_case;
-    }
+    //double eff = htrbp_core.m_outputs.m_eta_thermal;
 
-    // Reset htrbp_core
-    htrbp_core.m_outputs.Init();
+    //// If variable bypass fraction or targeting temperature
+    //double penalty = 0;
+    //if (opt_par.m_fixed_bypass_frac == false || auto_par.m_des_objective_type == 2)
+    //{
+    //    double temp_calc = 0;
+    //    double span = 0;
 
-    return obj;
+    //    if (m_T_target_is_HTF == 0)
+    //    {
+    //        temp_calc = htrbp_core.m_outputs.m_temp[MIXER_OUT];
+    //        span = htrbp_core.m_outputs.m_temp[TURB_IN] - m_T_target;
+    //    }
+    //    else
+    //    {
+    //        temp_calc = htrbp_core.m_outputs.m_T_HTF_BP_outlet;
+    //        span = htrbp_core.m_inputs.m_T_HTF_PHX_inlet - m_T_target;
+    //    }
+
+    //    penalty = calc_penalty(m_T_target, temp_calc, span);
+    //}
+
+    //double obj = eff - penalty;
+
+    //if (obj > m_opt_obj_internal_only)
+    //{
+    //    m_opt_obj_internal_only = obj;
+    //    m_optimal_inputs_internal_only = optimal_inputs_case;
+    //}
+
+    return obj_weighted;
 }
 
 /// <summary>
@@ -1511,30 +1588,33 @@ double C_HTRBypass_Cycle::opt_cycle_return_objective_metric(const std::vector<do
     if (error_code != 0)
         return -100000000000000000;
 
-    double eff = htrbp_core.m_outputs.m_eta_thermal;
+    // Calculate Objective Value
+    double obj = calc_objective(auto_par, opt_par, htrbp_core);
 
-    // If variable bypass fraction or targeting temperature
-    double penalty = 0;
-    if (opt_par.m_fixed_bypass_frac == false || auto_par.m_des_objective_type == 2)
-    {
-        double temp_calc = 0;
-        double span = 0;
+    //double eff = htrbp_core.m_outputs.m_eta_thermal;
 
-        if (m_T_target_is_HTF == 0)
-        {
-            temp_calc = htrbp_core.m_outputs.m_temp[MIXER_OUT];
-            span = htrbp_core.m_outputs.m_temp[TURB_IN] - m_T_target;
-        }
-        else
-        {
-            temp_calc = htrbp_core.m_outputs.m_T_HTF_BP_outlet;
-            span = htrbp_core.m_inputs.m_T_HTF_PHX_inlet - m_T_target;
-        }
+    //// If variable bypass fraction or targeting temperature
+    //double penalty = 0;
+    //if (opt_par.m_fixed_bypass_frac == false || auto_par.m_des_objective_type == 2)
+    //{
+    //    double temp_calc = 0;
+    //    double span = 0;
 
-        penalty = calc_penalty(m_T_target, temp_calc, span);
-    }
+    //    if (m_T_target_is_HTF == 0)
+    //    {
+    //        temp_calc = htrbp_core.m_outputs.m_temp[MIXER_OUT];
+    //        span = htrbp_core.m_outputs.m_temp[TURB_IN] - m_T_target;
+    //    }
+    //    else
+    //    {
+    //        temp_calc = htrbp_core.m_outputs.m_T_HTF_BP_outlet;
+    //        span = htrbp_core.m_inputs.m_T_HTF_PHX_inlet - m_T_target;
+    //    }
 
-    double obj = eff - penalty;
+    //    penalty = calc_penalty(m_T_target, temp_calc, span);
+    //}
+
+    //double obj = eff - penalty;
 
     if (obj > m_opt_obj_internal_only)
     {
@@ -1573,30 +1653,32 @@ double C_HTRBypass_Cycle::opt_nonbp_par_return_objective_metric(const std::vecto
     double objective_metric = -10000000000.0;
     if (error_code == 0)
     {
-        double eff = htrbp_core.m_outputs.m_eta_thermal;
+        objective_metric = calc_objective(auto_par, opt_par, htrbp_core);
 
-        // If variable bypass fraction or targeting temperature
-        double penalty = 0;
-        if (opt_par.m_fixed_bypass_frac == false || auto_par.m_des_objective_type == 2)
-        {
-            double temp_calc = 0;
-            double span = 0;
+        //double eff = htrbp_core.m_outputs.m_eta_thermal;
 
-            if (m_T_target_is_HTF == 0)
-            {
-                temp_calc = htrbp_core.m_outputs.m_temp[MIXER_OUT];
-                span = htrbp_core.m_outputs.m_temp[TURB_IN] - m_T_target;
-            }
-            else
-            {
-                temp_calc = htrbp_core.m_outputs.m_T_HTF_BP_outlet;
-                span = htrbp_core.m_inputs.m_T_HTF_PHX_inlet - m_T_target;
-            }
+        //// If variable bypass fraction or targeting temperature
+        //double penalty = 0;
+        //if (opt_par.m_fixed_bypass_frac == false || auto_par.m_des_objective_type == 2)
+        //{
+        //    double temp_calc = 0;
+        //    double span = 0;
 
-            penalty = calc_penalty(m_T_target, temp_calc, span);
-        }
+        //    if (m_T_target_is_HTF == 0)
+        //    {
+        //        temp_calc = htrbp_core.m_outputs.m_temp[MIXER_OUT];
+        //        span = htrbp_core.m_outputs.m_temp[TURB_IN] - m_T_target;
+        //    }
+        //    else
+        //    {
+        //        temp_calc = htrbp_core.m_outputs.m_T_HTF_BP_outlet;
+        //        span = htrbp_core.m_inputs.m_T_HTF_PHX_inlet - m_T_target;
+        //    }
 
-        objective_metric = eff - penalty;
+        //    penalty = calc_penalty(m_T_target, temp_calc, span);
+        //}
+
+        //objective_metric = eff - penalty;
 
         /*if (objective_metric > m_objective_metric_opt)
         {
@@ -1614,13 +1696,7 @@ double C_HTRBypass_Cycle::opt_nonbp_par_return_objective_metric(const std::vecto
 
 
 
-double C_HTRBypass_Cycle::calc_penalty(double target, double calc, double span)
-{
-    double percent_error = std::abs(target - calc) / span;
-    double penalty = 10.0 * (100.0 * sigmoid(percent_error) - 0.5);
 
-    return penalty;
-}
 
 int C_HTRBypass_Cycle::auto_opt_design(S_auto_opt_design_parameters& auto_opt_des_par_in)
 {
@@ -1658,6 +1734,7 @@ int C_HTRBypass_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_paramet
         ms_auto_opt_des_par.m_des_tol = auto_opt_des_hit_eta_in.m_des_tol;					//[-] Convergence tolerance
         ms_auto_opt_des_par.m_des_opt_tol = auto_opt_des_hit_eta_in.m_des_opt_tol;			//[-] Optimization tolerance
         ms_auto_opt_des_par.m_is_recomp_ok = auto_opt_des_hit_eta_in.m_is_recomp_ok;		//[-] 1 = yes, 0 = no, other = invalid
+        ms_auto_opt_des_par.m_is_bypass_ok = auto_opt_des_hit_eta_in.m_is_bypass_ok;        //[-] 1 = yes, 0 = no, other = invalid
 
         ms_auto_opt_des_par.m_is_des_air_cooler = auto_opt_des_hit_eta_in.m_is_des_air_cooler;	//[-]
 
@@ -1673,6 +1750,8 @@ int C_HTRBypass_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_paramet
         ms_auto_opt_des_par.m_fixed_PR_HP_to_LP = auto_opt_des_hit_eta_in.m_fixed_PR_HP_to_LP;			//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess		
     }
 
+    
+
     // Fill in 'ms_opt_des_par' from input
     {
         // Fill in 'ms_opt_des_par' (Can this be less cumbersome?)
@@ -1686,6 +1765,8 @@ int C_HTRBypass_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_paramet
             }
 
             // map 'auto_opt_des_par_in' to 'ms_auto_opt_des_par'
+
+            ms_opt_des_par.m_eta_thermal_target = auto_opt_des_hit_eta_in.m_eta_thermal;
 
                 // LTR thermal design
             ms_opt_des_par.m_LTR_target_code = ms_auto_opt_des_par.m_LTR_target_code;   //[-]
@@ -1776,6 +1857,9 @@ int C_HTRBypass_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_paramet
         }
     }
 
+    // Set design method (it is 1, because total UA is optimized for target eta)
+    ms_opt_des_par.m_design_method = 1;
+
     // LTR HTF UA ratio can't be fixed
     ms_opt_des_par.m_fixed_LT_frac = false;
 
@@ -1839,8 +1923,9 @@ int C_HTRBypass_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_paramet
             return -1;
         }
 
+        // REMOVED CHECKS (not compatible with negative values)
         // Check for realistic isentropic efficiencies
-        if (m_eta_mc > 1.0)
+        /*if (m_eta_mc > 1.0)
         {
             error_msg.append(util::format("The main compressor isentropic efficiency, %lg, was reset to theoretical maximum 1.0\n",
                 m_eta_mc));
@@ -1881,7 +1966,7 @@ int C_HTRBypass_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_paramet
                 m_eta_t));
 
             m_eta_t = 0.1;
-        }
+        }*/
 
         if (ms_auto_opt_des_par.m_LTR_eff_max > 1.0)
         {
@@ -1964,18 +2049,19 @@ int C_HTRBypass_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_paramet
     // Create Optimizer
     nlopt::opt opt_des_cycle(nlopt::GN_DIRECT, 1);
 
-    // Generate min and max values
-    double UA_recup_total_max = ms_des_limits.m_UA_net_power_ratio_max * m_W_dot_net;		//[kW/K]
-    double UA_recup_total_min = ms_des_limits.m_UA_net_power_ratio_min * m_W_dot_net;		//[kW/K]
-    double UA_recup_guess = (UA_recup_total_max + UA_recup_total_min) / 2.0;                //[kW/K]
+    // Select min and max values
+    ms_opt_des_par.m_UA_recup_total_max = ms_des_limits.m_UA_net_power_ratio_max * m_W_dot_net;		//[kW/K]
+    ms_opt_des_par.m_UA_recup_total_min = ms_des_limits.m_UA_net_power_ratio_min * m_W_dot_net;		//[kW/K]
+    double UA_recup_guess = (ms_opt_des_par.m_UA_recup_total_max + ms_opt_des_par.m_UA_recup_total_min) / 2.0;                //[kW/K]
 
-    std::vector<double> lb = { UA_recup_total_min };
-    std::vector<double> ub = { UA_recup_total_max };
+    std::vector<double> lb = { ms_opt_des_par.m_UA_recup_total_min };
+    std::vector<double> ub = { ms_opt_des_par.m_UA_recup_total_max };
 
     opt_des_cycle.set_lower_bounds(lb);
     opt_des_cycle.set_upper_bounds(ub);
-    opt_des_cycle.set_initial_step(0.1);
-    opt_des_cycle.set_xtol_rel(ms_auto_opt_des_par.m_des_opt_tol);
+    opt_des_cycle.set_initial_step(1000);
+    //opt_des_cycle.set_xtol_rel(ms_auto_opt_des_par.m_des_opt_tol);
+    opt_des_cycle.set_xtol_rel(1);
     opt_des_cycle.set_maxeval(50);
 
     S_auto_opt_design_parameters auto_par = ms_auto_opt_des_par;
@@ -1998,9 +2084,28 @@ int C_HTRBypass_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_paramet
         int w = 0;
     }
 
-    // Need to collect optimal input somehow
+    // Assign Total UA
+    double total_UA = x[0];
+    ms_auto_opt_des_par.m_UA_rec_total = total_UA;
+    ms_opt_des_par.m_UA_rec_total = total_UA;
 
-    return 0;
+    // Have Total UA, now rerun optimizer to get other variables (redundant but shouldn't be very costly)
+    S_sco2_htrbp_in optimal_inputs_case;
+    int error_code = optimize_cycle(ms_auto_opt_des_par, ms_opt_des_par, optimal_inputs_case);
+    if (error_code != 0)
+        return error_code;
+    
+    // Run Optimal Core model and finalize design
+    m_optimal_htrbp_core.Reset();
+    m_optimal_htrbp_core.SetInputs(optimal_inputs_case);
+    error_code = m_optimal_htrbp_core.Solve();
+    if (error_code != 0)
+        return error_code;
+
+    // Finalize Design (pass in reference to solved parameters)
+    error_code = m_optimal_htrbp_core.FinalizeDesign(ms_des_solved);
+
+    return error_code;
 }
 
 

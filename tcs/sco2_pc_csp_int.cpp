@@ -260,6 +260,7 @@ void C_sco2_phx_air_cooler::design_core()
 		ms_cycle_des_par.m_des_tol = ms_des_par.m_des_tol;
 		ms_cycle_des_par.m_des_opt_tol = ms_des_par.m_des_opt_tol;
 		ms_cycle_des_par.m_is_recomp_ok = ms_des_par.m_is_recomp_ok;
+        ms_cycle_des_par.m_is_bypass_ok = ms_des_par.m_is_bypass_ok;
 
 		ms_cycle_des_par.m_is_des_air_cooler = ms_des_par.m_is_des_air_cooler;		//[-]
 
