@@ -284,6 +284,8 @@ SSCEXPORT ssc_var_t ssc_data_get_data_array(ssc_data_t p_data, const char *name,
 /** Returns the reference of a @a SSC_DATAMAT variable with the given name. */
 SSCEXPORT ssc_var_t ssc_data_get_data_matrix(ssc_data_t p_data, const char *name, int* nrows, int* ncols );
 
+SSCEXPORT ssc_bool_t ssc_data_deep_copy(ssc_data_t source, ssc_data_t dest);
+
 /**@}*/
 
 
