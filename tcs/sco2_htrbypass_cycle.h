@@ -260,7 +260,7 @@ private:
     int solve_HTR(double T_HTR_LP_OUT_guess, double* diff_T_HTR_LP_out);
     int solve_LTR(double T_LTR_LP_OUT_guess, double* diff_T_LTR_LP_out);
 
-    void InitializeSolve();
+    void initialize_solve();
 
 public:
     // Inputs Struct
@@ -343,6 +343,8 @@ private:
     C_sco2_htrbp_core::S_sco2_htrbp_in m_optimal_inputs_internal_only;
     double m_opt_obj_internal_only;
 
+    int m_opt_iteration_count;          // Counter of bypass iterations
+
     // Bypass Specific HTF variables
     int m_T_target_is_HTF;              // Target Temperature is HTF (1) or cold sco2 at BP
     double m_T_target;                  // [K] Target temperature (either HTF or sco2)
@@ -358,7 +360,7 @@ private:
 
     void auto_opt_design_core(int& error_code);
 
-    void auto_opt_design_hit_eta_core(int& error_code, double eta_thermal_target);
+    void auto_opt_design_hit_eta_core(int& error_code, const double eta_thermal_target);
 
     int optimize_totalUA(const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, C_sco2_htrbp_core::S_sco2_htrbp_in& optimal_inputs);
 
@@ -414,6 +416,7 @@ public:
             = std::numeric_limits<double>::quiet_NaN();
 
         m_T_target_is_HTF = -1;
+        m_opt_iteration_count = 0;
 
         m_is_bp_par_set = false;
     }

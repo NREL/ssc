@@ -41,14 +41,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // ********************************************************************************** C_sco2_htrbp_core CORE MODEL
 
-void C_sco2_htrbp_core::InitializeSolve()
+void C_sco2_htrbp_core::initialize_solve()
 {
     m_outputs.Init();
 }
 
 int C_sco2_htrbp_core::solve()
 {
-    InitializeSolve();
+    initialize_solve();
     m_outputs.m_error_code = -1;
 
     // Apply scaling to the turbomachinery here
@@ -940,7 +940,7 @@ void C_HTRBypass_Cycle::auto_opt_design_core(int& error_code)
 /// <summary>
 /// Core function to optimize cycle for target eta (variable total UA)
 /// </summary>
-void C_HTRBypass_Cycle::auto_opt_design_hit_eta_core(int& error_code, double eta_thermal_target)
+void C_HTRBypass_Cycle::auto_opt_design_hit_eta_core(int& error_code, const double eta_thermal_target)
 {
     // Create 'ms_opt_des_par' for Design Variables
     S_opt_design_parameters opt_par;
@@ -1613,10 +1613,15 @@ int C_HTRBypass_Cycle::auto_opt_design(S_auto_opt_design_parameters& auto_opt_de
         return -1;
     }
 
+    // Reset Counter
+    m_opt_iteration_count = 0;
+
+    // Collect auto_opt_des parameters
     ms_auto_opt_des_par = auto_opt_des_par_in;
 
     int auto_opt_des_error_code = 0;
 
+    // Design cycle
     auto_opt_design_core(auto_opt_des_error_code);
 
     return auto_opt_des_error_code;
@@ -1637,6 +1642,9 @@ int C_HTRBypass_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_paramet
         error_msg = "BP parameters are not defined";
         return -1;
     }
+
+    // Reset Counter
+    m_opt_iteration_count = 0;
 
     // Fill in 'ms_auto_opt_des_par' from input
     {
@@ -1882,6 +1890,9 @@ double C_HTRBypass_Cycle::optimize_totalUA_return_objective_metric(const std::ve
     const S_opt_design_parameters& opt_par
 )
 {
+    // Update counter
+    m_opt_iteration_count++; // global
+
     // Copy optimal parameters
     S_auto_opt_design_parameters auto_par_internal = auto_par;
     S_opt_design_parameters opt_par_internal = opt_par;
@@ -1935,6 +1946,9 @@ double C_HTRBypass_Cycle::optimize_bp_return_objective_metric(const std::vector<
     const S_opt_design_parameters& opt_par,
     C_sco2_htrbp_core& htrbp_core)
 {
+    // Update counter
+    m_opt_iteration_count++; // global
+
     if (opt_par.m_fixed_bypass_frac == true)
     {
         throw std::exception("Optimizing bypass fraction even though it is fixed");
@@ -1982,6 +1996,9 @@ double C_HTRBypass_Cycle::optimize_nonbp_return_objective_metric(const std::vect
     const S_opt_design_parameters& opt_par,
     C_sco2_htrbp_core& htrbp_core)
 {
+    // Update counter
+    m_opt_iteration_count++; // global
+
     // Modify Core Inputs with Variable Parameters
     int error_code = x_to_inputs(x, auto_par, opt_par, htrbp_core.m_inputs);
 
