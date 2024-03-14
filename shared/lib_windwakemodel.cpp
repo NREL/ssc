@@ -214,7 +214,7 @@ double parkWakeModel::delta_V_Park(double Uo, double Ui, double distCrosswind, d
 	// bound the coeff of thrust
 	double Ct = max_of(min_of(0.999, dThrustCoeff), minThrustCoeff);
 
-	double k = wakeDecayCoefficient;
+	double k = wakeDecayConstant;
 
 	double dRadiusOfWake = dRadiusUpstream + (k * distDownwind); // radius of circle formed by wake from upwind rotor
 	double dAreaOverlap = circle_overlap(distCrosswind, dRadiusDownstream, dRadiusOfWake);

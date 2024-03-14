@@ -59,6 +59,7 @@ static var_info _cm_vtab_windpower[] = {
 	{ SSC_INPUT  , SSC_NUMBER , "wind_turbine_max_cp"                , "Max Coefficient of Power"                 , ""        ,""                                    , "Turbine"                              , "wind_resource_model_choice=1"                    , "MIN=0"                                           , "" } ,
 
 	{ SSC_INPUT  , SSC_NUMBER , "wind_farm_wake_model"               , "Wake Model [Simple, Park, EV, Constant]"  , "0/1/2/3" ,""                                    , "Farm"                                 , "*"                                               , "INTEGER"                                         , "" } ,
+    { SSC_INPUT  , SSC_NUMBER , "park_wake_decay_constant"           , "Wake decay constant for Park model"       , "0..1"    ,""                                    , "Farm"                                 , ""                                                , ""                                                , "" } ,
     { SSC_INPUT  , SSC_NUMBER , "wind_resource_turbulence_coeff"     , "Turbulence coefficient"                   , "%"       ,""                                    , "Farm"                                 , "*"                                               , "MIN=0"                                           , "" } ,
 	{ SSC_INPUT  , SSC_NUMBER , "system_capacity"                    , "Nameplate capacity"                       , "kW"      ,""                                    , "Farm"                                 , "*"                                               , "MIN=0"                                           , "" } ,
 	{ SSC_INPUT  , SSC_ARRAY  , "wind_farm_xCoordinates"             , "Turbine X coordinates"                    , "m"       ,""                                    , "Farm"                                 , "*"                                               , ""                                                , "" } ,
@@ -402,7 +403,12 @@ void cm_windpower::exec()
     if (wakeModelChoice == SIMPLE)
         wakeModel = std::make_shared<simpleWakeModel>(simpleWakeModel(wpc.nTurbines, &wt));
     else if (wakeModelChoice == PARK)
-        wakeModel = std::make_shared<parkWakeModel>(parkWakeModel(wpc.nTurbines, &wt));
+    {
+        double wdc = 0.07; //this is the default value
+        if (is_assigned("park_wake_decay_constant"))
+            wdc = as_double("park_wake_decay_constant");
+        wakeModel = std::make_shared<parkWakeModel>(parkWakeModel(wpc.nTurbines, &wt, wdc));
+    }
     else if (wakeModelChoice == EDDYVISCOSITY)
     {
         wpc.turbulenceIntensity *= 100;

@@ -151,17 +151,18 @@ public:
 class parkWakeModel : public wakeModelBase{
 private:
 	double rotorDiameter;
-	double wakeDecayCoefficient = 0.07,
+	double wakeDecayConstant = 0.07,
 		   minThrustCoeff = 0.02;
 	double delta_V_Park(double dVelFreeStream, double dVelUpwind, double dDistCrossWind, double dDistDownWind, double dRadiusUpstream, double dRadiusDownstream, double dThrustCoeff);
 	double circle_overlap(double dist_center_to_center, double rad1, double rad2);
 
 public:
 	parkWakeModel(){ nTurbines = 0; }
-	parkWakeModel(size_t numberOfTurbinesInFarm, windTurbine* wt){ nTurbines = numberOfTurbinesInFarm; wTurbine = wt; }
+    parkWakeModel(size_t numberOfTurbinesInFarm, windTurbine* wt, double wdc) { nTurbines = numberOfTurbinesInFarm; wTurbine = wt; setWakeDecayConstant(wdc); }
 	virtual ~parkWakeModel() {};
 	std::string getModelName() override { return "Park"; }
 	void setRotorDiameter(double d){ rotorDiameter = d; }
+    void setWakeDecayConstant(double w) { wakeDecayConstant = w; }
 	void wakeCalculations(
 		/*INPUTS*/
 		const double airDensity,					// not used in this model
