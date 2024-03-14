@@ -41,7 +41,7 @@ public:
 	pvsnowmodel();
 
 	// limitTilt requires tilt to be between 10 and 45 degrees
-	bool setup(int, float, bool limitTilt = true);
+	bool setup(int, float, float snow_slide_coeff = 1.97, bool limitTilt = true);
 
 	bool getLoss(float poa, float tilt, float wspd, float tdry, float snowDepth, int sunup, float dt, float &returnLoss);
 

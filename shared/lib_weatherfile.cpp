@@ -116,7 +116,7 @@ static float col_or_nan(const std::string& s)
         }
     }
     else
-        return std::numeric_limits<float>::quiet_NaN();;
+        return std::numeric_limits<float>::quiet_NaN();
 }
 
 static double conv_deg_min_sec(double degrees,
@@ -824,9 +824,11 @@ bool weatherfile::open(const std::string& file, bool header_only)
             {
                 m_hdr.lon = col_or_nan(value);
             }
-            else if (name == "tz" || name == "timezone" || name == "time zone") // require "time zone" and "local time zone" columns in NSRDB files are the same
+            else if (name == "tz" || name == "timezone" || name == "time zone" || name == "local time zone") // require "time zone" and "local time zone" columns in NSRDB files are the same
             {
-                m_hdr.tz = col_or_nan(value);
+                // some nsrdb endpoints like nsrdb-msg-v1-0-0 have both "local time zone" and "time zone" with "time zone" empty, so we need to read "local time zone" and ignore "time zone"
+                if (std::isnan(m_hdr.tz))  // only assign value if one was not assigned in an earlier pass
+                    m_hdr.tz = col_or_nan(value);
             }
             else if (name == "el" || name == "elev" || name == "elevation" || name == "site elevation" || name == "altitude")
             {

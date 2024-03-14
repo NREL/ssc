@@ -1,11 +1,15 @@
 
-doc/* linguist-documentation=true
+doc/** linguist-documentation=true
 tcsdata/docs/* linguist-documentation=true
 
+
 *.c linguist-vendored
-lpsolve/* linguist-vendored=true
-nlopt/* linguist-vendored=true
-examples/* linguist-vendored=true
+lpsolve/** linguist-vendored=true
+nlopt/** linguist-vendored=true
+samples/** linguist-vendored=true
+test/input_docs/** linguist-vendored=true
+splinter/** linguist-vendored=true
+rapidjson/** linguist-vendored=true
 
 build_*/* linguist_generated=true
 

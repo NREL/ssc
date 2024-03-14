@@ -204,16 +204,16 @@ var_info vtab_battery_inputs[] = {
     { SSC_INPUT,        SSC_NUMBER,     "batt_cycle_cost_choice",                      "Use SAM cost model for degradaton penalty or input custom via batt_cycle_cost", "0/1",     "0=UseCostModel,1=InputCost", "BatteryDispatch", "?=0",                           "",                             "" },
     { SSC_INPUT,        SSC_ARRAY,      "batt_cycle_cost",                             "Input battery cycle degradaton penalty per year",                      "$/cycle-kWh","length 1 or analysis_period, length 1 will be extended using inflation", "BatteryDispatch",       "batt_cycle_cost_choice=1",                           "",                             "" },
 
-    { SSC_INPUT,        SSC_NUMBER,     "inflation_rate",                              "Inflation rate",                                          "%", "", "Lifetime", "?=0", "MIN=-99", "" },
-    { SSC_INPUT,        SSC_ARRAY,      "load_escalation",                             "Annual load escalation",                                  "%/year", "",                                                                                                                                                                                      "Load",                                               "?=0",                                "",                    "" },
-    { SSC_INPUT,        SSC_ARRAY,      "om_batt_replacement_cost"                 , "Replacement cost 1"                                             , "$/kWh"                                  , ""                                      , "System Costs"         , "?=0.0"          , ""                      , "" },
-    { SSC_INPUT,        SSC_NUMBER,     "om_replacement_cost_escal"            , "Replacement cost escalation"                                    , "%/year"                                 , ""                                      , "System Costs"         , "?=0.0"          , ""                      , "" },
+    { SSC_INPUT,        SSC_NUMBER,     "inflation_rate",                              "Inflation rate",                                          "%",      "", "Lifetime", "?=0", "MIN=-99", "" },
+    { SSC_INPUT,        SSC_ARRAY,      "load_escalation",                             "Annual load escalation",                                  "%/year", "", "Load",                                               "?=0",                                "",                    "" },
+    { SSC_INPUT,        SSC_ARRAY,      "om_batt_replacement_cost",                    "Replacement cost 1",                                      "$/kWh",  "", "System Costs"         , "?=0.0"          , ""                      , "" },
+    { SSC_INPUT,        SSC_NUMBER,     "om_replacement_cost_escal",                   "Replacement cost escalation",                             "%/year", "", "System Costs"         , "?=0.0"          , ""                      , "" },
 
-    { SSC_INPUT,SSC_ARRAY   , "om_batt_variable_cost"                       , "Battery production-based System Costs amount"                   , "$/MWh"                                  , ""                                      , "System Costs"         , "?=0.0"          , ""                      , "" },
-    { SSC_INPUT,        SSC_NUMBER,      "om_production_escal",          "Production-based O&M escalation",   "%/year",  "",                  "System Costs",            "?=0.0",                 "",                                         "" },
+    { SSC_INPUT,        SSC_ARRAY,      "om_batt_variable_cost",                       "Battery production-based System Costs amount",            "$/MWh",  "", "System Costs"         , "?=0.0"          , ""                      , "" },
+    { SSC_INPUT,        SSC_NUMBER,     "om_production_escal",                         "Production-based O&M escalation",                         "%/year", "", "System Costs",            "?=0.0",                 "",                                         "" },
 
     // Powerflow calculation inputs
-    { SSC_INPUT,       SSC_ARRAY,       "fuelcell_power",                               "Electricity from fuel cell AC",                            "kW",       "",                     "FuelCell",     "",                           "",                         "" },
+    { SSC_INPUT,       SSC_ARRAY,       "fuelcell_power",                              "Electricity from fuel cell AC",                           "kW",     "", "FuelCell",              "",                           "",                         "" },
 
 
     var_info_invalid
@@ -1111,7 +1111,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     }
 
     if (batt_vars->T_room.size() != nrec) {
-        throw exec_error("battery", "Length of battery environment temperature batt_room_temperature_celsius must equal number of weather file and/or electric load data records.");
+        throw exec_error("battery", util::format("Length of battery environment temperature batt_room_temperature_celsius must equal number of weather file and/or electric load data records: %d records or %d-minute time steps.", nrec, 60/(nrec/8760)));
     }
 
     if (batt_vars->batt_life_model == lifetime_params::NMC) {
@@ -2105,13 +2105,23 @@ void battstor::calculate_monthly_and_annual_outputs(compute_module& cm)
 
         if (batt_vars->batt_dispatch == dispatch_t::SELF_CONSUMPTION)
         {
+            std::vector<double> crit_load_unmet;
+            if (cm.is_assigned("crit_load_unmet")) {
+                crit_load_unmet = cm.as_vector_double("crit_load_unmet");
+            }
+
             //calculate all outputs for number of timesteps the load is met by the system, using grid_to_load == 0 as a qualification
             //better to parse the grid_to_load timeseries once here for all outputs, than to create a new timeseries variable for whether load is met by system
             outTimestepsLoadMetBySystemYear1 = 0.0;
             outTimestepsLoadMetBySystemLifetime = 0.0;
             for (size_t i = 0; i < total_steps; i++)
             {
-                if (outGridToLoad[i] == 0.0)
+                double crit_load_unmet_i = 0.0;
+                if (i < crit_load_unmet.size()) {
+                    crit_load_unmet_i = crit_load_unmet[i];
+                }
+                
+                if (outGridToLoad[i] == 0.0 && crit_load_unmet_i == 0.0)
                 {
                     outTimestepsLoadMetBySystemLifetime++;
                     if (i < step_per_year) outTimestepsLoadMetBySystemYear1++;
@@ -2251,7 +2261,7 @@ public:
         add_var_info(vtab_resilience_outputs);
         add_var_info(vtab_utility_rate_common);
         add_var_info(vtab_grid_curtailment);
-        add_var_info(vtab_hybrid_tech_om);
+        add_var_info(vtab_hybrid_tech_om_outputs);
 
     }
 
