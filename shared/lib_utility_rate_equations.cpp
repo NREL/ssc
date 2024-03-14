@@ -1367,7 +1367,7 @@ void forecast_setup::setup(rate_data* rate, std::vector<double>& P_pv_ac, std::v
         }
 
         if (rate->dc_enabled) {
-            int dc_tou_period = rate->get_dc_tou_row(hour_of_year + step, curr_month - 1);
+            int dc_tou_period = rate->get_dc_tou_row(idx, curr_month - 1);
             size_t month_idx = year * 12 + (curr_month - 1);
             double peak = monthly_peaks.at(month_idx, dc_tou_period) - peak_offset; // Peak for dispatch calcs in battery: peak minus battery capacity
             if (-1.0 * grid_power > peak) {
