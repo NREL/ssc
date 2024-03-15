@@ -1875,6 +1875,19 @@ int C_HTRBypass_Cycle::auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_paramet
     // Optimize
     auto_opt_design_hit_eta_core(error_code, auto_opt_des_hit_eta_in.m_eta_thermal);
 
+    // Send log update upstream
+    if (ms_auto_opt_des_par.mf_callback_log && ms_auto_opt_des_par.mp_mf_active)
+    {
+        std::string msg_log = "Optimization finished in " + std::to_string(m_opt_iteration_count) + " iterations.";
+        std::string msg_progress = "";
+        if (!ms_auto_opt_des_par.mf_callback_log(msg_log, msg_progress, ms_auto_opt_des_par.mp_mf_active, 100.0, 2))
+        {
+            std::string error_msg = "User terminated simulation...";
+            std::string loc_msg = "C_MEQ_sco2_design_hit_eta__UA_total";
+            throw(C_csp_exception(error_msg, loc_msg, 1));
+        }
+    }
+
     return error_code;
 }
 
