@@ -54,10 +54,10 @@ GTEST_API_ int main(int argc, char **argv) {
 
     //    filter to include
     //    ::testing::GTEST_FLAG(filter) = "CmodPVWatts*:CMPvwatts*";
-    //::testing::GTEST_FLAG(filter) = "CmodCashLoanTest.FuelCell*";
+    //::testing::GTEST_FLAG(filter) = "CmodHybridTest*";
 
     //   ::testing::GTEST_FLAG(filter) = "CmodCashLoanTest*:CmodSingleOwnerTest*";
-    //::testing::GTEST_FLAG(filter) = "csp_fresnel.PowerFresnelCmod*";
+    //::testing::GTEST_FLAG(filter) = "CMGeothermal*:GeothermalPlantAnalyzer*";
 
     //    filter to exclude
     //    ::testing::GTEST_FLAG(filter) = "-PVSmoothing_lib_battery_dispatch*";

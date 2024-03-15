@@ -36,6 +36,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_power_electronics.h"
 #include "lib_shared_inverter.h"
 
+// 0.005 W when applied to power. Some inverters have a night time loss of 0.01 W
+double powerflow_tolerance = 0.000005;
+
 BatteryPower::BatteryPower(double dtHour) :
 		dtHour(dtHour),
 		powerSystem(0),
@@ -102,7 +105,7 @@ BatteryPower::BatteryPower(double dtHour) :
 		depthOfDischargeMax(1),
         currentChargeMax(0),
         currentDischargeMax(0),
-		tolerance(0.001){}
+		tolerance(powerflow_tolerance){}
 
 BatteryPower::BatteryPower(const BatteryPower& orig) {
     sharedInverter = orig.sharedInverter;
