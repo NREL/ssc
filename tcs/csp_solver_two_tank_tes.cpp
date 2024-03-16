@@ -1346,7 +1346,7 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 C_csp_two_tank_tes::C_csp_two_tank_tes()
 {
     m_vol_tank = m_V_tank_active = m_q_pb_design = m_Q_tes_des =
-        m_V_tank_hot_ini = m_mass_total_active = m_d_tank = m_q_dot_loss_des =
+        m_V_tank_hot_ini = m_mass_total_active = m_h_tank_calc = m_d_tank_calc = m_q_dot_loss_des =
         m_cp_external_avg = m_rho_store_avg = m_m_dot_tes_des_over_m_dot_external_des = std::numeric_limits<double>::quiet_NaN();
 
     mc_reported_outputs.construct(S_output_info);
@@ -1360,7 +1360,9 @@ C_csp_two_tank_tes::C_csp_two_tank_tes(
     double q_dot_design,                         // [MWt] Design heat rate in and out of tes
     double frac_max_q_dot,                       // [-] the max design heat rate as a fraction of the nominal
     double Q_tes_des,			                 // [MWt-hr] design storage capacity
-    double h_tank,			                     // [m] tank height
+    bool is_h_fixed,                             // [] [true] Height is input, calculate diameter, [false] diameter input, calculate height
+    double h_tank_in,			                 // [m] tank height input
+    double d_tank_in,                            // [m] tank diameter input
     double u_tank,			                     // [W/m^2-K]
     int tank_pairs,			                     // [-]
     double hot_tank_Thtr,		                 // [C] convert to K in init()
@@ -1393,7 +1395,8 @@ C_csp_two_tank_tes::C_csp_two_tank_tes(
     )
     :
         m_external_fl(external_fl), m_external_fl_props(external_fl_props), m_tes_fl(tes_fl), m_tes_fl_props(tes_fl_props),
-        m_q_dot_design(q_dot_design), m_frac_max_q_dot(frac_max_q_dot), m_Q_tes_des(Q_tes_des), m_h_tank(h_tank),
+        m_q_dot_design(q_dot_design), m_frac_max_q_dot(frac_max_q_dot), m_Q_tes_des(Q_tes_des),
+        m_is_h_fixed(is_h_fixed), m_h_tank_in(h_tank_in), m_d_tank_in(d_tank_in),
         m_u_tank(u_tank), m_tank_pairs(tank_pairs), m_hot_tank_Thtr(hot_tank_Thtr), m_hot_tank_max_heat(hot_tank_max_heat),
         m_cold_tank_Thtr(cold_tank_Thtr), m_cold_tank_max_heat(cold_tank_max_heat), m_dt_hot(dt_hot), m_T_cold_des(T_cold_des),
         m_T_hot_des(T_hot_des), m_T_tank_hot_ini(T_tank_hot_ini), m_T_tank_cold_ini(T_tank_cold_ini),
@@ -1411,7 +1414,7 @@ C_csp_two_tank_tes::C_csp_two_tank_tes(
     }
 
     m_vol_tank = m_V_tank_active = m_q_pb_design = m_ts_hours =
-        m_V_tank_hot_ini = m_mass_total_active = m_d_tank = m_q_dot_loss_des =
+        m_V_tank_hot_ini = m_mass_total_active = m_h_tank_calc = m_d_tank_calc = m_q_dot_loss_des =
         m_cp_external_avg = m_rho_store_avg = m_m_dot_tes_des_over_m_dot_external_des = std::numeric_limits<double>::quiet_NaN();
 
 	mc_reported_outputs.construct(S_output_info);
@@ -1563,9 +1566,24 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
         T_tes_hot_des = m_T_hot_des;
         T_tes_cold_des = m_T_cold_des;
     }
-	two_tank_tes_sizing(mc_store_htfProps, m_Q_tes_des, T_tes_hot_des, T_tes_cold_des,
-		m_h_tank_min, m_h_tank, m_tank_pairs, m_u_tank,
-		m_V_tank_active, m_vol_tank, m_d_tank, m_q_dot_loss_des);
+
+    // Size Tank with Fixed Height
+    if (m_is_h_fixed)
+    {
+        two_tank_tes_sizing(mc_store_htfProps, m_Q_tes_des, T_tes_hot_des, T_tes_cold_des,
+            m_h_tank_min, m_h_tank_in, m_tank_pairs, m_u_tank,
+            m_V_tank_active, m_vol_tank, m_d_tank_calc, m_q_dot_loss_des);
+        m_h_tank_calc = m_h_tank_in;
+    }
+    // Size Tank with Fixed Diameter
+    else
+    {
+        two_tank_tes_sizing_fixed_diameter(mc_store_htfProps, m_Q_tes_des, T_tes_hot_des, T_tes_cold_des,
+            m_h_tank_min, m_d_tank_in, m_tank_pairs, m_u_tank,
+            m_V_tank_active, m_vol_tank, m_h_tank_calc, m_q_dot_loss_des);
+        m_d_tank_calc = m_d_tank_in;
+    }
+	
 
 	// 5.13.15, twn: also be sure that hx is sized such that it can supply full load to sink
 	double duty = m_q_pb_design * std::max(1.0, m_frac_max_q_dot);		//[W] Allow all energy from the source to go into storage at any time
@@ -1613,11 +1631,11 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
 
 		// Initialize cold and hot tanks
 			// Hot tank
-	mc_hot_tank.init(mc_store_htfProps, m_vol_tank, m_h_tank, m_h_tank_min, 
+	mc_hot_tank.init(mc_store_htfProps, m_vol_tank, m_h_tank_calc, m_h_tank_min, 
 		m_u_tank, m_tank_pairs, m_hot_tank_Thtr, m_hot_tank_max_heat,
 		V_hot_ini, T_hot_ini, T_tes_hot_des);
 			// Cold tank
-	mc_cold_tank.init(mc_store_htfProps, m_vol_tank, m_h_tank, m_h_tank_min, 
+	mc_cold_tank.init(mc_store_htfProps, m_vol_tank, m_h_tank_calc, m_h_tank_min, 
 		m_u_tank, m_tank_pairs, m_cold_tank_Thtr, m_cold_tank_max_heat,
 		V_cold_ini, T_cold_ini, T_tes_cold_des);
 
@@ -1665,12 +1683,14 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
     }
 }
 
-void C_csp_two_tank_tes::get_design_parameters(double& vol_one_temp_avail /*m3*/, double& vol_one_temp_total /*m3*/, double& d_tank /*m*/,
+void C_csp_two_tank_tes::get_design_parameters(double& vol_one_temp_avail /*m3*/, double& vol_one_temp_total /*m3*/,
+    double& h_tank_calc /*m*/, double& d_tank_calc /*m*/,
     double& q_dot_loss_des /*MWt*/, double& dens_store_htf_at_T_ave /*kg/m3*/, double& Q_tes /*MWt-hr*/)
 {
     vol_one_temp_avail = m_V_tank_active;   //[m3]
     vol_one_temp_total = m_vol_tank;        //[m3]
-    d_tank = m_d_tank;                      //[m]
+    h_tank_calc = m_h_tank_calc;            //[m]
+    d_tank_calc = m_d_tank_calc;            //[m]
     q_dot_loss_des = m_q_dot_loss_des;      //[MWt]
     dens_store_htf_at_T_ave = m_rho_store_avg;  //[kg/m3]
     Q_tes = m_Q_tes_des;                    //[MWt-hr]
@@ -1742,7 +1762,7 @@ double C_csp_two_tank_tes::get_max_charge_energy()
 double C_csp_two_tank_tes::get_degradation_rate()  
 {
     //calculates an approximate "average" tank heat loss rate based on some assumptions. Good for simple optimization performance projections.
-    double d_tank = sqrt( m_vol_tank / ( (double)m_tank_pairs * m_h_tank * 3.14159) );
+    double d_tank = sqrt( m_vol_tank / ( (double)m_tank_pairs * m_h_tank_calc * 3.14159) );
     double e_loss = m_u_tank * 3.14159 * m_tank_pairs * d_tank * ( m_T_cold_des + m_T_hot_des - 576.3 )*1.e-6;  //MJ/s  -- assumes full area for loss, Tamb = 15C
 	return e_loss / (m_q_pb_design * m_ts_hours * 3600.); //s^-1  -- fraction of heat loss per second based on full charge
 }
@@ -1765,11 +1785,11 @@ void C_csp_two_tank_tes::reset_storage_to_initial_state()
 
 	// Initialize cold and hot tanks
 	// Hot tank
-	mc_hot_tank.init(mc_store_htfProps, m_vol_tank, m_h_tank, m_h_tank_min,
+	mc_hot_tank.init(mc_store_htfProps, m_vol_tank, m_h_tank_calc, m_h_tank_min,
 		m_u_tank, m_tank_pairs, m_hot_tank_Thtr, m_hot_tank_max_heat,
 		V_hot_ini, T_hot_ini, m_T_hot_des);
 	// Cold tank
-	mc_cold_tank.init(mc_store_htfProps, m_vol_tank, m_h_tank, m_h_tank_min,
+	mc_cold_tank.init(mc_store_htfProps, m_vol_tank, m_h_tank_calc, m_h_tank_min,
 		m_u_tank, m_tank_pairs, m_cold_tank_Thtr, m_cold_tank_max_heat,
 		V_cold_ini, T_cold_ini, m_T_cold_des);
 }

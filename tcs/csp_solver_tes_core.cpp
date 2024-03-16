@@ -35,8 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 void two_tank_tes_sizing(HTFProperties& tes_htf_props, double Q_tes_des /*MWt-hr*/, double T_tes_hot /*K*/,
-    double T_tes_cold /*K*/, double h_min /*m*/, double h_tank /*m*/, int tank_pairs /*-*/, double u_tank /*W/m^2-K*/,
-    double& vol_one_temp_avail /*m3*/, double& vol_one_temp_total /*m3*/, double& d_tank /*m*/,
+    double T_tes_cold /*K*/, double h_min /*m*/, double h_tank_in /*m*/, int tank_pairs /*-*/, double u_tank /*W/m^2-K*/,
+    double& vol_one_temp_avail /*m3*/, double& vol_one_temp_total /*m3*/, double& d_tank_out /*m*/,
     double& q_dot_loss_des /*MWt*/)
 {
     double T_tes_ave = 0.5 * (T_tes_hot + T_tes_cold);		//[K]
@@ -49,13 +49,47 @@ void two_tank_tes_sizing(HTFProperties& tes_htf_props, double Q_tes_des /*MWt-hr
     vol_one_temp_avail = Q_tes_des * 3600.0 / (rho_ave * cp_ave / 1000.0 * (T_tes_hot - T_tes_cold));
 
     // Additional volume necessary due to minimum tank limits
-    vol_one_temp_total = vol_one_temp_avail / (1.0 - h_min / h_tank);	//[m^3]
+    vol_one_temp_total = vol_one_temp_avail / (1.0 - h_min / h_tank_in);	//[m^3]
 
-    double A_cs = vol_one_temp_total / (h_tank * tank_pairs);		//[m^2] Cross-sectional area of a single tank
+    double A_cs = vol_one_temp_total / (h_tank_in * tank_pairs);		//[m^2] Cross-sectional area of a single tank
 
-    d_tank = pow(A_cs / CSP::pi, 0.5) * 2.0;			//[m] Diameter of a single tank
+    d_tank_out = pow(A_cs / CSP::pi, 0.5) * 2.0;			//[m] Diameter of a single tank
 
-    double UA_tanks_one_temp = u_tank * (A_cs + CSP::pi * d_tank * h_tank) * tank_pairs;		//[W/K]
+    double UA_tanks_one_temp = u_tank * (A_cs + CSP::pi * d_tank_out * h_tank_in) * tank_pairs;		//[W/K]
+
+    double T_amb_des = 15.0 + 273.15;       //[K]
+    double q_dot_loss_cold = UA_tanks_one_temp * (T_tes_cold - T_amb_des) * 1.E-6;	//[MWt]
+    double q_dot_loss_hot = UA_tanks_one_temp * (T_tes_hot - T_amb_des) * 1.E-6;	//[MWt]
+    q_dot_loss_des = q_dot_loss_cold + q_dot_loss_hot;	//[MWt]
+
+}
+
+void two_tank_tes_sizing_fixed_diameter(HTFProperties& tes_htf_props, double Q_tes_des /*MWt-hr*/, double T_tes_hot /*K*/,
+    double T_tes_cold /*K*/, double h_min /*m*/, double d_tank_in, int tank_pairs /*-*/, double u_tank /*W/m^2-K*/,
+    double& vol_one_temp_avail /*m3*/, double& vol_one_temp_total /*m3*/, double& h_tank_out /*m*/,
+    double& q_dot_loss_des /*MWt*/)
+{
+    double T_tes_ave = 0.5 * (T_tes_hot + T_tes_cold);		//[K]
+
+    double rho_ave = tes_htf_props.dens(T_tes_ave, 1.0);		//[kg/m^3] Density at average temperature
+    double cp_ave = tes_htf_props.Cp_ave(T_tes_cold, T_tes_hot);//[kJ/kg-K] Specific heat at average temperature
+
+    // Volume required to supply design hours of thermal energy storage
+        //[m^3] = [MJ/s-hr] * [sec]/[hr] = [MJ] / (kg/m^3 * MJ/kg-K * K 
+    vol_one_temp_avail = Q_tes_des * 3600.0 / (rho_ave * cp_ave / 1000.0 * (T_tes_hot - T_tes_cold));
+
+    double A_cs = CSP::pi * std::pow(d_tank_in, 2.0) * 0.25 ;		//[m^2] Cross-sectional area of a single tank
+
+    // Additional volume necessary due to minimum tank limits
+    double vol_added_min = A_cs * h_min * tank_pairs; //[m^3]
+
+    // Total Volume
+    vol_one_temp_total = vol_one_temp_avail + vol_added_min;	//[m^3]
+
+    // Tank Height
+    h_tank_out = vol_one_temp_total / (A_cs * tank_pairs); // [m]
+
+    double UA_tanks_one_temp = u_tank * (A_cs + CSP::pi * d_tank_in * h_tank_out) * tank_pairs;		//[W/K]
 
     double T_amb_des = 15.0 + 273.15;       //[K]
     double q_dot_loss_cold = UA_tanks_one_temp * (T_tes_cold - T_amb_des) * 1.E-6;	//[MWt]

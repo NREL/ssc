@@ -165,7 +165,9 @@ public:
                 as_double("P_ref") / as_double("eta_ref"),                          // [MWt] Design heat rate in and out of tes
                 as_double("solar_mult"),                                            // [-] the max design heat rate as a fraction of the nominal
                 as_double("P_ref") / as_double("eta_ref") * as_double("tshours"),   // [MWt-hr] design storage capacity
-                as_double("h_tank"),                                                // [m] tank height
+                true,                                                               // Use input height
+                as_double("h_tank"),                                                // [m] tank height input
+                0.0,                                                                // [m] tank diameter input
                 as_double("u_tank"),                                                // [W/m^2-K]
                 as_integer("tank_pairs"),                                           // [-]
                 as_double("hot_tank_Thtr"),                                         // [C] convert to K in init()
@@ -226,7 +228,9 @@ public:
                 as_double("P_ref") / as_double("eta_ref"),
                 as_double("solar_mult"),
                 as_double("P_ref") / as_double("eta_ref") * as_double("tshours"),
+                true,   // use input height
                 as_double("h_tank"),
+                0.0,    // no input diameter
                 as_double("u_tank"),
                 as_integer("tank_pairs"),
                 as_double("hot_tank_Thtr"),
@@ -299,18 +303,18 @@ public:
 
         // Get Design Point Outputs
         double V_tes_htf_avail_calc /*m3*/, V_tes_htf_total_calc /*m3*/,
-            d_tank_calc /*m*/, q_dot_loss_tes_des_calc /*MWt*/, dens_store_htf_at_T_ave_calc /*kg/m3*/,
+            h_tank_calc /*m*/, d_tank_calc /*m*/, q_dot_loss_tes_des_calc /*MWt*/, dens_store_htf_at_T_ave_calc /*kg/m3*/,
             Q_tes_des_calc /*MWt-hr*/;
 
         if (tes_type == 0)
         {
             storage_two_tank.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
-                d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
+                h_tank_calc, d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
         }
         else if (tes_type == 1)
         {
             storage_NT.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
-                d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
+                h_tank_calc, d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
         }
 
         // Allocate outputs

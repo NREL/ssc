@@ -610,7 +610,9 @@ public:
             W_dot_cycle_des / eta_cycle,  //[MWt]
             heater_mult,                  //[-]
             W_dot_cycle_des / eta_cycle * tshours,  //[MWht]
+            true,
             as_double("h_tank"),
+            0.0,
             as_double("u_tank"),
             as_integer("tank_pairs"),
             as_double("hot_tank_Thtr"),
@@ -921,8 +923,8 @@ public:
         c_electric_resistance.get_design_parameters(E_heater_su_des, W_dot_heater_des_calc);
 
             // TES
-        double V_tes_htf_avail /*m3*/, V_tes_htf_total /*m3*/, d_tank /*m*/, q_dot_loss_tes_des /*MWt*/, dens_store_htf_at_T_ave /*kg/m3*/, Q_tes_des_tes_class;
-        storage.get_design_parameters(V_tes_htf_avail, V_tes_htf_total, d_tank,
+        double V_tes_htf_avail /*m3*/, V_tes_htf_total /*m3*/, h_tank /*m*/, d_tank /*m*/, q_dot_loss_tes_des /*MWt*/, dens_store_htf_at_T_ave /*kg/m3*/, Q_tes_des_tes_class;
+        storage.get_design_parameters(V_tes_htf_avail, V_tes_htf_total, h_tank, d_tank,
             q_dot_loss_tes_des, dens_store_htf_at_T_ave, Q_tes_des_tes_class);        
 
             // System

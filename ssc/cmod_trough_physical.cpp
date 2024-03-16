@@ -196,7 +196,9 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "store_fluid",               "Material number for storage fluid",                                                "-",            "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "store_fl_props",            "User defined storage fluid property data",                                         "-",            "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tshours",                   "Equivalent full-load thermal storage hours",                                       "hr",           "",               "TES",            "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "h_tank",                    "Total height of tank (height of HTF when tank is full",                            "m",            "",               "TES",            "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "is_h_tank_fixed",           "[1] Use fixed height (calculate diameter) [0] Use fixed diameter",                 "-",            "",               "TES",            "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "h_tank_in",                 "Total height of tank input (height of HTF when tank is full",                      "m",            "",               "TES",            "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "d_tank_in",                 "Tank diameter input",                                                              "m",            "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "u_tank",                    "Loss coefficient from the tank",                                                   "W/m2-K",       "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tank_pairs",                "Number of equivalent tank pairs",                                                  "-",            "",               "TES",            "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "hot_tank_Thtr",             "Minimum allowable hot tank HTF temp",                                              "C",            "",               "TES",            "*",                       "",                      "" },
@@ -412,6 +414,7 @@ static var_info _cm_vtab_trough_physical[] = {
     // Thermal Storage
     { SSC_OUTPUT,       SSC_NUMBER,      "vol_tank",                         "Total tank volume",                                                        "m3",            "",               "Thermal Storage","*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "q_tes",                            "TES design capacity",                                                      "MWt-hr",        "",               "Thermal Storage","*",                                "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "csp_pt_tes_tank_height",           "Tank height",                                                              "m",             "",               "Thermal Storage","*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "csp_pt_tes_tank_diameter",         "Tank diameter",                                                            "m",             "",               "Thermal Storage","*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "q_dot_tes_est",                    "Estimated TES Heat Loss",                                                  "MW",            "",               "Thermal Storage","*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "csp_pt_tes_htf_density",           "Storage htf density",                                                      "kg/m3",         "",               "Thermal Storage","*",                                "",                      "" },
@@ -1230,7 +1233,9 @@ public:
                 as_double("P_ref") / as_double("eta_ref"),
                 c_trough.m_solar_mult,
                 as_double("P_ref") / as_double("eta_ref") * as_double("tshours"),
-                as_double("h_tank"),
+                as_boolean("is_h_tank_fixed"),
+                as_double("h_tank_in"),
+                as_double("d_tank_in"),
                 as_double("u_tank"),
                 as_integer("tank_pairs"),
                 as_double("hot_tank_Thtr"),
@@ -1316,7 +1321,9 @@ public:
                 as_double("P_ref") / as_double("eta_ref"),
                 c_trough.m_solar_mult,
                 as_double("P_ref") / as_double("eta_ref") * as_double("tshours"),
-                as_double("h_tank"),
+                as_boolean("is_h_tank_fixed"),
+                as_double("h_tank_in"),
+                as_double("d_tank_in"),
                 as_double("u_tank"),
                 as_integer("tank_pairs"),
                 as_double("hot_tank_Thtr"),
@@ -1812,23 +1819,23 @@ public:
             // Thermal Storage
             {
                 double V_tes_htf_avail_calc /*m3*/, V_tes_htf_total_calc /*m3*/,
-                    d_tank_calc /*m*/, q_dot_loss_tes_des_calc /*MWt*/, dens_store_htf_at_T_ave_calc /*kg/m3*/,
+                    h_tank_calc /*m*/, d_tank_calc /*m*/, q_dot_loss_tes_des_calc /*MWt*/, dens_store_htf_at_T_ave_calc /*kg/m3*/,
                     Q_tes_des_calc /*MWt-hr*/;
 
                 if (tes_type == 0)
                 {
                     storage_two_tank.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
-                        d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
+                        h_tank_calc, d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
                 }
                 else if (tes_type == 1)
                 {
                     storage_NT.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
-                        d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
+                        h_tank_calc, d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
                 }
                 
 
-                double vol_min = V_tes_htf_total_calc * (storage_NT.m_h_tank_min / storage_NT.m_h_tank);
-                double V_tank_hot_ini = (as_double("h_tank_min") / as_double("h_tank")) * V_tes_htf_total_calc; // m3
+                double vol_min = V_tes_htf_total_calc * (storage_NT.m_h_tank_min / h_tank_calc);
+                double V_tank_hot_ini = (as_double("h_tank_min") / h_tank_calc) * V_tes_htf_total_calc; // m3
                 double T_avg = (as_double("T_loop_in_des") + as_double("T_loop_out")) / 2.0;    // C
                 //double tes_htf_min_temp = storage_NT.get_min_storage_htf_temp() - 273.15;
                 //double tes_htf_max_temp = storage_NT.get_max_storage_htf_temp() - 273.15;
@@ -1836,6 +1843,7 @@ public:
                 assign("q_tes", Q_tes_des_calc); // MWt-hr
                 assign("tes_avail_vol", V_tes_htf_avail_calc); // m3
                 assign("vol_tank", V_tes_htf_total_calc);   // m3
+                assign("csp_pt_tes_tank_height", h_tank_calc);    // m
                 assign("csp_pt_tes_tank_diameter", d_tank_calc);    // m
                 assign("q_dot_tes_est", q_dot_loss_tes_des_calc);   // MWt
                 assign("csp_pt_tes_htf_density", dens_store_htf_at_T_ave_calc); // kg/m3

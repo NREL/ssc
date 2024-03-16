@@ -39,9 +39,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "sam_csp_util.h"
 
 void two_tank_tes_sizing(HTFProperties& tes_htf_props, double Q_tes_des /*MWt-hr*/, double T_tes_hot /*K*/,
-    double T_tes_cold /*K*/, double h_min /*m*/, double h_tank /*m*/, int tank_pairs /*-*/, double u_tank /*W/m^2-K*/,
-    double& vol_one_temp_avail /*m3*/, double& vol_one_temp_total /*m3*/, double& d_tank /*m*/,
+    double T_tes_cold /*K*/, double h_min /*m*/, double h_tank_in /*m*/, int tank_pairs /*-*/, double u_tank /*W/m^2-K*/,
+    double& vol_one_temp_avail /*m3*/, double& vol_one_temp_total /*m3*/, double& d_tank_out /*m*/,
     double& q_dot_loss_des /*MWt*/);
+
+void two_tank_tes_sizing_fixed_diameter(HTFProperties& tes_htf_props, double Q_tes_des /*MWt-hr*/, double T_tes_hot /*K*/,
+    double T_tes_cold /*K*/, double h_min /*m*/, double d_tank_in, int tank_pairs /*-*/, double u_tank /*W/m^2-K*/,
+    double& vol_one_temp_avail /*m3*/, double& vol_one_temp_total /*m3*/, double& h_tank_out /*m*/,
+    double& q_dot_loss_des /*MWt*/);
+
 
 int size_tes_piping(double vel_dsn, util::matrix_t<double> L, double rho_avg, double m_dot_pb, double solarm,
     bool tanks_in_parallel, double& vol_tot, util::matrix_t<double>& v_dot_rel, util::matrix_t<double>& diams,

@@ -182,7 +182,8 @@ private:
 	double m_q_pb_design;		//[Wt] thermal power to sink at design
 	double m_V_tank_hot_ini;	//[m^3] Initial volume in hot storage tank
 	double m_mass_total_active; //[kg] Total HTF mass at design point inlet/outlet T
-	double m_d_tank;            //[m] diameter of a single tank
+    double m_h_tank_calc;       //[m] Actual height (length) of tank
+    double m_d_tank_calc;       //[m] diameter of a single tank
 	double m_q_dot_loss_des;    //[MWt] design tank heat loss
 	double m_ts_hours;          //[hr] hours of storage at design sink operation		
 
@@ -243,7 +244,9 @@ public:
     double m_q_dot_design;                    //[MWe] Design heat rate in and out of tes
     double m_frac_max_q_dot;                  //[-] the max design heat rate as a fraction of the nominal
     double m_Q_tes_des;                       //[MWt-hr] design storage capacity
-    double m_h_tank;			              //[m] tank height
+    bool m_is_h_fixed;                        //[true] Height is input, calculate diameter, [false] diameter input, calculate height
+    double m_h_tank_in;			              //[m] tank height input
+    double m_d_tank_in;                       //[m] tank diameter input
     double m_u_tank;			              //[W/m^2-K]
     int m_tank_pairs;			              //[-]
     double m_hot_tank_Thtr;		              //[C] convert to K in init()
@@ -290,7 +293,9 @@ public:
         double q_dot_design,                         // [MWt] Design heat rate in and out of tes
         double frac_max_q_dot,                       // [-] the max design heat rate as a fraction of the nominal
         double Q_tes_des,                            // [MWt-hr] design storage capacity
-        double h_tank,			                     // [m] tank height
+        bool is_h_fixed,                             // [] [true] Height is input, calculate diameter, [false] diameter input, calculate height
+        double h_tank_in,			                 // [m] tank height input
+        double d_tank_in,                            // [m] tank diameter input
         double u_tank,			                     // [W/m^2-K]
         int tank_pairs,			                     // [-]
         double hot_tank_Thtr,		                 // [C] convert to K in init()
@@ -377,7 +382,8 @@ public:
 	virtual /*MWe*/ double pumping_power(double m_dot_sf /*kg/s*/, double m_dot_pb /*kg/s*/, double m_dot_tank /*kg/s*/,
 		double T_sf_in /*K*/, double T_sf_out /*K*/, double T_pb_in /*K*/, double T_pb_out /*K*/, bool recirculating);
 
-    void get_design_parameters(double& vol_one_temp_avail /*m3*/, double& vol_one_temp_total /*m3*/, double& d_tank /*m*/,
+    void get_design_parameters(double& vol_one_temp_avail /*m3*/, double& vol_one_temp_total /*m3*/,
+        double& h_tank /*m*/, double& d_tank /*m*/,
         double& q_dot_loss_des /*MWt*/, double& dens_store_htf_at_T_ave /*kg/m3*/, double& Q_tes /*MWt-hr*/);
 
     bool charge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/,
