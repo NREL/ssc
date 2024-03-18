@@ -344,11 +344,6 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "disp_pen_delta_w",                    "Dispatch cycle production change penalty",                               "$/kWe-change", "",               "tou",                "",           "",              "SIMULATION_PARAMETER" },
     { SSC_INPUT,        SSC_NUMBER,      "P_boil",                              "Boiler operating pressure",                                              "bar",          "",               "powerblock",         "",           "",              "SIMULATION_PARAMETER" },
 
-
-    // ADDED For Design Point
-    { SSC_INPUT,        SSC_NUMBER,      "lat",                                 "Latitude",                                                               "degree",       "",               "",                   "*",          "",              "" },
-
-
     // Direct Capital Costs
     { SSC_INPUT,    SSC_NUMBER,         "csp.dtr.cost.site_improvements.cost_per_m2", "Site Improvement Cost per m2",                                     "$/m2",         "",               "Capital_Costs",      "?=0",        "",              "" },
     { SSC_INPUT,    SSC_NUMBER,         "csp.dtr.cost.solar_field.cost_per_m2",       "Solar Field Cost per m2",                                          "$/m2",         "",               "Capital_Costs",      "?=0",        "",              "" },
@@ -812,6 +807,8 @@ public:
         // Initialize to get weather file info
         weather_reader.init();
         if (weather_reader.has_error()) throw exec_error("trough_physical", weather_reader.get_error());
+
+        double lat = weather_reader.ms_solved_params.m_lat;     //[deg]
 
         // Set up ssc output arrays
         // Set steps per hour
@@ -1846,7 +1843,6 @@ public:
                 vector<double> L_SCA = as_vector_double("L_SCA");
                 vector<double> ColperSCA = as_vector_double("ColperSCA");
                 vector<double> Ave_Focal_Length = as_vector_double("Ave_Focal_Length");
-                double lat = as_double("lat");
 
                 util::matrix_t<ssc_number_t> csp_dtr_sca_ap_lengths;
                 {
