@@ -279,6 +279,7 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
 
     // System capacity required by downstream financial model
     { SSC_OUTPUT,    SSC_NUMBER, "system_capacity",                    "System capacity",                                                           "kWt",          "",                                  "System Design",                             "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "nameplate",                          "Nameplate capacity",                                                        "MWt",          "",                                 "System Design Calc",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "cp_system_nameplate",                 "System capacity for capacity payments",                                    "MWt",          "",                                  "System Design",                             "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "cp_battery_nameplate",                "Battery nameplate",                                                        "MWt",          "",                                  "System Design",                             "*",                                                                "",              "" },
 
@@ -1332,7 +1333,7 @@ public:
 
             // Assign
             {
-                assign("nameplate", nameplate * 1.E-3); // [MWt]
+                assign("nameplate", nameplate); // [MWt]
                 assign("W_dot_bop_design", W_dot_bop_design);
                 assign("W_dot_fixed", W_dot_fixed_parasitic_design);
 
