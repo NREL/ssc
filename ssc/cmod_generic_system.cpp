@@ -81,7 +81,7 @@ public:
 		// performance adjustment factors
 		add_var_info(vtab_adjustment_factors);
 		add_var_info(vtab_technology_outputs);
-        add_var_info(vtab_hybrid_tech_om);
+        add_var_info(vtab_hybrid_tech_om_outputs);
 	}
 
 	void exec( )
