@@ -1313,6 +1313,12 @@ public:
             //double tes_tankcp = 1200;   // J/kg K
             //double tes_tankdens = 8000; // kg/m3
 
+            bool tanks_in_parallel = as_boolean("tanks_in_parallel");
+            if (tanks_in_parallel == false)
+            {
+                throw exec_error("trough_physical", "TES model requires tanks in parallel");
+            }
+
             storage_NT = C_csp_NTHeatTrap_tes(
                 c_trough.m_Fluid,
                 c_trough.m_field_fl_props,
@@ -1338,7 +1344,6 @@ public:
                 as_double("h_tank_min"),
                 as_double("init_hot_htf_percent"),
                 as_double("pb_pump_coef"),
-                as_boolean("tanks_in_parallel"),
                 as_double("tes_tank_cp") * 1000, // convert to J/kgK
                 as_double("tes_tank_dens"),
                 as_double("tes_tank_thick"),

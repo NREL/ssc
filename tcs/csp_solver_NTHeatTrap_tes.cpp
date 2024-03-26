@@ -787,7 +787,6 @@ C_csp_NTHeatTrap_tes::C_csp_NTHeatTrap_tes(
     double h_tank_min,		                     // [m] Minimum allowable HTF height in storage tank
     double f_V_hot_ini,                          // [%] Initial fraction of available volume that is hot
     double htf_pump_coef,		                 // [kW/kg/s] Pumping power to move 1 kg/s of HTF through sink
-    bool tanks_in_parallel,                      // [-] Whether the tanks are in series or parallel with the external system. Series means external htf must go through storage tanks.
     double tank_wall_cp,                         // [J/kg-K] Tank wall specific heat
     double tank_wall_dens,                       // [kg/m3] Tank wall density
     double tank_wall_thick,                      // [m] Tank wall thickness
@@ -816,7 +815,6 @@ C_csp_NTHeatTrap_tes::C_csp_NTHeatTrap_tes(
         m_cold_tank_Thtr(cold_tank_Thtr), m_cold_tank_max_heat(cold_tank_max_heat), m_dt_hot(dt_hot), m_T_cold_des(T_cold_des),
         m_T_hot_des(T_hot_des), m_T_tank_hot_ini(T_tank_hot_ini), m_T_tank_cold_ini(T_tank_cold_ini),
         m_h_tank_min(h_tank_min), m_f_V_hot_ini(f_V_hot_ini), m_htf_pump_coef(htf_pump_coef),
-        tanks_in_parallel(tanks_in_parallel),
         m_tank_wall_cp(tank_wall_cp), m_tank_wall_dens(tank_wall_dens), m_tank_wall_thick(tank_wall_thick), m_nstep(nstep),
         m_piston_loss_poly(piston_loss_poly),
         V_tes_des(V_tes_des), calc_design_pipe_vals(calc_design_pipe_vals), m_tes_pump_coef(tes_pump_coef),
@@ -941,7 +939,7 @@ void C_csp_NTHeatTrap_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inpu
         m_is_cr_to_cold_tank_allowed = false;
     }
     else {
-        m_is_cr_to_cold_tank_allowed = true;
+        throw C_csp_exception("Tank model must be in parallel");
     }
 
     // Calculate thermal power to PC at design
@@ -1173,6 +1171,27 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
     double& T_sink_htf_in_hot /*K*/, double& T_cr_in_cold /*K*/,
     C_csp_tes::S_csp_tes_outputs& s_outputs)		//, C_csp_solver_htf_state & s_tes_ch_htf, C_csp_solver_htf_state & s_tes_dc_htf)
 {
+    // DEBUG
+    if (true)
+    {
+        double mdot_from_FIELD_to_HOT_TES = m_dot_cr_to_cv_hot;
+        double mdot_PC_HOT_IN = m_dot_cv_hot_to_sink;
+        double mdot_FIELD_to_COLD_TES = m_dot_cr_to_cv_cold;
+
+        if ((mdot_from_FIELD_to_HOT_TES > 0 && mdot_PC_HOT_IN > 0)
+            && (std::abs(mdot_from_FIELD_to_HOT_TES - mdot_PC_HOT_IN) > 0.01))
+        {
+            int asdfasg = 0;
+        }
+    }
+    
+
+
+
+
+
+
+
     // Enthalpy balance on inlet to cold cv
     double T_htf_cold_cv_in = T_sink_out_cold;     //[K]
     double m_dot_total_to_cv_cold = m_dot_cv_hot_to_sink + m_dot_cr_to_cv_cold;    //[kg/s]
@@ -1223,16 +1242,7 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
     }
     else
     {   // Serial configuration
-
-
-        m_dot_cr_to_tes_hot = m_dot_cr_to_cv_hot;		//[kg/s]
-        m_dot_cr_to_tes_cold = m_dot_cr_to_cv_cold;     //[kg/s]
-        m_dot_tes_hot_out = m_dot_cv_hot_to_sink;		//[kg/s]
-        m_dot_pc_to_tes_cold = m_dot_cv_hot_to_sink;	//[kg/s]
-        m_dot_tes_cold_out = m_dot_cr_to_cv_hot + m_dot_cr_to_cv_cold;		//[kg/s]
-        m_dot_tes_cold_in = m_dot_total_to_cv_cold;     //[kg/s]
-        m_dot_src_to_sink = 0.0;				//[kg/s]
-        m_dot_sink_to_src = 0.0;				//[kg/s]
+        throw C_csp_exception("Tank model must be in parallel");
     }
 
     double q_dot_heater = std::numeric_limits<double>::quiet_NaN();			//[MWe]  Heating power required to keep tanks at a minimum temperature
@@ -1310,120 +1320,7 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
     }
     else // Serial tank operation
     {
-
-
-        // Inputs are:
-        // 1) Mass flow rate of HTF from source to hot tank
-        // 2) Mass flow rate of HTF from source to cold tank
-        // 3) Mass flow rate of HTF from hot tank to sink
-        // 4) Temperature of HTF leaving source and entering hot tank
-        // 5) Temperature of HTF leaving the sink and entering the cold tank
-
-        double q_dot_ch_est, m_dot_tes_ch_max, T_cold_to_src_est;
-        q_dot_ch_est = m_dot_tes_ch_max = T_cold_to_src_est = std::numeric_limits<double>::quiet_NaN();
-        charge_avail_est(T_cr_out_hot, timestep, q_dot_ch_est, m_dot_tes_ch_max, T_cold_to_src_est);
-
-        if (m_dot_cr_to_cv_hot > m_dot_cv_hot_to_sink && std::max(1.E-4, (m_dot_cr_to_cv_hot - m_dot_cv_hot_to_sink)) > 1.0001 * std::max(1.E-4, m_dot_tes_ch_max))
-        {
-            q_dot_heater = std::numeric_limits<double>::quiet_NaN();
-            m_dot_cold_tank_to_hot_tank = std::numeric_limits<double>::quiet_NaN();
-            W_dot_rhtf_pump = std::numeric_limits<double>::quiet_NaN();
-            q_dot_loss = std::numeric_limits<double>::quiet_NaN();
-            q_dot_dc_to_htf = std::numeric_limits<double>::quiet_NaN();
-            q_dot_ch_from_htf = std::numeric_limits<double>::quiet_NaN();
-            T_hot_ave = std::numeric_limits<double>::quiet_NaN();
-            T_cold_ave = std::numeric_limits<double>::quiet_NaN();
-            T_hot_final = std::numeric_limits<double>::quiet_NaN();
-            T_cold_final = std::numeric_limits<double>::quiet_NaN();
-
-            return -1;
-        }
-
-        double q_dot_dc_est, m_dot_tes_dc_max, T_hot_to_pc_est;
-        q_dot_dc_est = m_dot_tes_dc_max = T_hot_to_pc_est = std::numeric_limits<double>::quiet_NaN();
-        // Use temperature downstream of sink-out and cr-to-cold-tank mixer
-        discharge_avail_est(T_htf_cold_cv_in, timestep, q_dot_dc_est, m_dot_tes_dc_max, T_hot_to_pc_est);
-
-        // If mass flow into the cold tank *from the sink* is greater than mass flow going from cold tank to source to hot tank
-        if (m_dot_cv_hot_to_sink > m_dot_cr_to_cv_hot && std::max(1.E-4, (m_dot_cv_hot_to_sink - m_dot_cr_to_cv_hot)) > 1.0001 * std::max(1.E-4, m_dot_tes_dc_max))
-        {
-            q_dot_heater = std::numeric_limits<double>::quiet_NaN();
-            m_dot_cold_tank_to_hot_tank = std::numeric_limits<double>::quiet_NaN();
-            W_dot_rhtf_pump = std::numeric_limits<double>::quiet_NaN();
-            q_dot_loss = std::numeric_limits<double>::quiet_NaN();
-            q_dot_dc_to_htf = std::numeric_limits<double>::quiet_NaN();
-            q_dot_ch_from_htf = std::numeric_limits<double>::quiet_NaN();
-            T_hot_ave = std::numeric_limits<double>::quiet_NaN();
-            T_cold_ave = std::numeric_limits<double>::quiet_NaN();
-            T_hot_final = std::numeric_limits<double>::quiet_NaN();
-            T_cold_final = std::numeric_limits<double>::quiet_NaN();
-
-            return -2;
-        }
-
-        // serial operation constrained to direct configuration, so HTF leaving TES must pass through another plant component
-        m_dot_cold_tank_to_hot_tank = 0.0;	//[kg/s]
-
-        double q_heater_hot, q_dot_loss_hot, q_heater_cold, q_dot_loss_cold;
-        q_heater_hot = q_dot_loss_hot = q_heater_cold = q_dot_loss_cold = std::numeric_limits<double>::quiet_NaN();
-
-        double T_hot_prev = mc_hot_tank_NT.get_m_T_prev();
-        double T_cold_prev = mc_cold_tank_NT.get_m_T_prev();
-
-        // Call energy balance on hot tank discharge to get average outlet temperature over timestep
-        mc_hot_tank_NT.energy_balance_iterated(timestep, m_dot_cr_to_cv_hot, m_dot_cv_hot_to_sink,
-            T_cr_out_hot, T_amb,
-            T_cold_prev, T_cold_prev,
-            T_sink_htf_in_hot, q_heater_hot, q_dot_loss_hot, q_dot_out_hot);
-
-        /*mc_hot_tank_NT.energy_balance(timestep, m_dot_cr_to_cv_hot, m_dot_cv_hot_to_sink,
-            T_cr_out_hot, T_amb,
-            T_cold_prev,
-            T_sink_htf_in_hot, q_heater_hot, q_dot_loss_hot);*/
-
-            // Call energy balance on cold tank charge to track tank mass and temperature
-            // Use mass flow and temperature downstream of sink-out and cr-to-cold-tank mixer
-        mc_cold_tank_NT.energy_balance_iterated(timestep, m_dot_total_to_cv_cold, m_dot_cv_cold_to_cr,
-            T_htf_cold_cv_in, T_amb,
-            T_hot_prev, T_hot_prev,
-            T_cr_in_cold, q_heater_cold, q_dot_loss_cold, q_dot_out_cold);
-
-        /*mc_cold_tank_NT.energy_balance(timestep, m_dot_total_to_cv_cold, m_dot_cv_cold_to_cr,
-            T_htf_cold_cv_in, T_amb,
-            T_hot_prev,
-            T_cr_in_cold, q_heater_cold, q_dot_loss_cold);*/
-
-            // Set output structure
-        q_dot_heater = q_heater_cold + q_heater_hot;			//[MWt]
-
-        W_dot_rhtf_pump = 0;                              //[MWe] Tank-to-tank pumping power
-
-        q_dot_loss = q_dot_loss_cold + q_dot_loss_hot;	//[MWt]
-        q_dot_ch_from_htf = 0.0;		                    //[MWt]
-        T_hot_ave = T_sink_htf_in_hot;						//[K]
-        T_cold_ave = T_cr_in_cold;						//[K]
-        T_hot_final = mc_hot_tank_NT.get_m_T_calc();			//[K]
-        T_cold_final = mc_cold_tank_NT.get_m_T_calc();		//[K]
-
-        // Net TES discharge
-        double cp_field = mc_external_htfProps.Cp_ave(T_cold_ave, T_cr_out_hot);
-        double cp_cycle = mc_store_htfProps.Cp_ave(T_htf_cold_cv_in, T_hot_ave);
-        double q_dot_tes_net_discharge = (cp_field * (m_dot_tes_cold_out * T_cold_ave - m_dot_cr_to_tes_hot * T_cr_out_hot)
-            + cp_cycle * (m_dot_tes_hot_out * T_hot_ave - m_dot_total_to_cv_cold * T_htf_cold_cv_in)) / 1000.0;		//[MWt]
-
-        if (m_dot_cv_hot_to_sink >= m_dot_cr_to_cv_hot)
-        {
-            q_dot_ch_from_htf = 0.0;
-
-            q_dot_dc_to_htf = q_dot_tes_net_discharge;	//[MWt]
-        }
-        else
-        {
-            q_dot_dc_to_htf = 0.0;
-
-            q_dot_ch_from_htf = -q_dot_tes_net_discharge;	//[MWt]
-        }
-
+        throw C_csp_exception("Tank model must be in parallel");
     }
 
     // TOTAL Energy Balance for total system here

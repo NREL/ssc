@@ -264,7 +264,7 @@ public:
     double m_htf_pump_coef;		              //[kW/kg/s] Pumping power to move 1 kg/s of HTF through sink
     double m_tes_pump_coef;		              //[kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
     double eta_pump;                          //[-] Pump efficiency, for newer pumping calculations
-    bool tanks_in_parallel;                   //[-] Whether the tanks are in series or parallel with the external system. Series means external htf must go through storage tanks.
+    bool tanks_in_parallel;                   //[-] Whether the tanks are in series or parallel with the external system. ALWAYS TRUE for NT Heat Trap
     bool has_hot_tank_bypass;                 //[-] True if the bypass valve causes the external htf to bypass just the hot tank and enter the cold tank before flowing back to the external system.
     double T_tank_hot_inlet_min;              //[C] Minimum external htf temperature that may enter the hot tank
     double V_tes_des;                         //[m/s] Design-point velocity for sizing the diameters of the TES piping
@@ -310,8 +310,6 @@ public:
         double h_tank_min,		                     // [m] Minimum allowable HTF height in storage tank
         double f_V_hot_ini,                          // [%] Initial fraction of available volume that is hot
         double htf_pump_coef,		                 // [kW/kg/s] Pumping power to move 1 kg/s of HTF through sink
-        bool tanks_in_parallel,                      // [-] Whether the tanks are in series or parallel with the external system. Series means external htf must go through storage tanks.
-
         double tank_wall_cp,                         // [J/kg-K] Tank wall specific heat
         double tank_wall_dens,                       // [kg/m3] Tank wall density
         double tank_wall_thick = 0,                  // [m] Tank wall thickness
