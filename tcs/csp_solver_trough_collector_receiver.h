@@ -332,7 +332,8 @@ public:
 	double m_theta_dep = std::numeric_limits<double>::quiet_NaN();		//[deg] deploy angle
 	double m_Row_Distance = std::numeric_limits<double>::quiet_NaN();	//[m] Spacing between rows (centerline to centerline)
 	double m_T_startup = std::numeric_limits<double>::quiet_NaN();		//[C] The required temperature (converted to K in init) of the system before the power block can be switched on
-	double m_T_loop_in_des = std::numeric_limits<double>::quiet_NaN();	//[C] Design loop inlet temperature, converted to K in init
+    double m_T_shutdown = std::numeric_limits<double>::quiet_NaN();     //[C] The temperature at which the field stops operating (converted to K in init)
+    double m_T_loop_in_des = std::numeric_limits<double>::quiet_NaN();	//[C] Design loop inlet temperature, converted to K in init
 	double m_T_loop_out_des = std::numeric_limits<double>::quiet_NaN();//[C] Target loop outlet temperature, converted to K in init
 	int m_Fluid = std::numeric_limits<double>::quiet_NaN();			//[-] Field HTF fluid number
 	
