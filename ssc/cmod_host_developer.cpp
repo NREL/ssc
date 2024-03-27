@@ -1910,7 +1910,8 @@ public:
                 cf.at(CF_reserve_om, 0) +
                 cf.at(CF_reserve_receivables, 0);
 
-            cost_installed = cost_prefinancing + cost_financing
+            cost_installed = cost_prefinancing + cost_financing;// -max(depr_fed_reduction, depr_sta_reduction);
+/*          SAM issue 1477
                 - ibi_fed_amount
                 - ibi_sta_amount
                 - ibi_uti_amount
@@ -1923,19 +1924,20 @@ public:
                 - cbi_sta_amount
                 - cbi_uti_amount
                 - cbi_oth_amount;
-
+*/
         }
         else
         { // debt fraction input
             double debt_frac = as_double("debt_percent")*0.01;
 
-			cost_installed =
-				cost_prefinancing
-				+ constr_total_financing
-				+ cost_debt_closing
-				+ cost_other_financing
-				+ cf.at(CF_reserve_debtservice, 0) // initially zero - based on p&i
-				+ cf.at(CF_reserve_om, 0)
+            cost_installed =
+                cost_prefinancing
+                + constr_total_financing
+                + cost_debt_closing
+                + cost_other_financing
+                + cf.at(CF_reserve_debtservice, 0) // initially zero - based on p&i
+                + cf.at(CF_reserve_om, 0);// -max(depr_fed_reduction, depr_sta_reduction);
+                /* SAM issue 1477
 				- ibi_fed_amount
 				- ibi_sta_amount
 				- ibi_uti_amount
@@ -1948,6 +1950,7 @@ public:
 				- cbi_sta_amount
 				- cbi_uti_amount
 				- cbi_oth_amount;
+                */
 			cost_installed += debt_frac *cost_installed*cost_debt_fee_frac; // approximate up front fee
 			double loan_amount = debt_frac * cost_installed;
 
@@ -1988,14 +1991,15 @@ public:
 				new_ds_reserve = cf.at(CF_reserve_debtservice, 0);
 
 				// update installed cost with approximate debt reserve account for year 0
-				cost_installed =
-					cost_prefinancing
-					+ constr_total_financing
-					+ cost_debt_closing
-					+ cost_other_financing
-					+ cf.at(CF_reserve_debtservice, 0) // initially zero - based on p&i
-					+ cf.at(CF_reserve_om, 0)
-					- ibi_fed_amount
+                cost_installed =
+                    cost_prefinancing
+                    + constr_total_financing
+                    + cost_debt_closing
+                    + cost_other_financing
+                    + cf.at(CF_reserve_debtservice, 0) // initially zero - based on p&i
+                    + cf.at(CF_reserve_om, 0);// -max(depr_fed_reduction, depr_sta_reduction);
+                /* SAM issue 1477
+                    - ibi_fed_amount
 					- ibi_sta_amount
 					- ibi_uti_amount
 					- ibi_oth_amount
@@ -2007,6 +2011,7 @@ public:
 					- cbi_sta_amount
 					- cbi_uti_amount
 					- cbi_oth_amount;
+                    */
 				cost_debt_upfront = debt_frac * cost_installed * cost_debt_fee_frac; // for cash flow output
 				cost_installed += debt_frac *cost_installed*cost_debt_fee_frac;
 				loan_amount = debt_frac * cost_installed;
@@ -2267,20 +2272,21 @@ public:
 
 			cost_debt_upfront = cost_debt_fee_frac * size_of_debt; // cpg added this to make cash flow consistent with single_owner.xlsx
 
-			cost_installed = cost_prefinancing + cost_financing
-				- ibi_fed_amount
-				- ibi_sta_amount
-				- ibi_uti_amount
-				- ibi_oth_amount
-				- ibi_fed_per
-				- ibi_sta_per
-				- ibi_uti_per
-				- ibi_oth_per
-				- cbi_fed_amount
-				- cbi_sta_amount
-				- cbi_uti_amount
-				- cbi_oth_amount;
-
+            cost_installed = cost_prefinancing + cost_financing;// -max(depr_fed_reduction, depr_sta_reduction);
+            /*          SAM issue 1477
+                            - ibi_fed_amount
+                            - ibi_sta_amount
+                            - ibi_uti_amount
+                            - ibi_oth_amount
+                            - ibi_fed_per
+                            - ibi_sta_per
+                            - ibi_uti_per
+                            - ibi_oth_per
+                            - cbi_fed_amount
+                            - cbi_sta_amount
+                            - cbi_uti_amount
+                            - cbi_oth_amount;
+            */
 //		}
 		depr_alloc_total = depr_alloc_total_frac * cost_installed;
 		depr_alloc_macrs_5 = depr_alloc_macrs_5_frac * depr_alloc_total;
