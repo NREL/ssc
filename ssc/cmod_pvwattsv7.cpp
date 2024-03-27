@@ -1270,8 +1270,8 @@ public:
                     annual_kwh += p_gen[idx] / step_per_hour;
                 }
 
-                if (y == 0 && wdprov->annualSimulation()) ld("ac_loss_adjustments") += ac * (1.0 - haf(hour_of_year)) * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
-                if (y == 0 && wdprov->annualSimulation()) ld("ac_delivered") += ac * haf(hour_of_year) * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
+                if (y == 0 && wdprov->annualSimulation()) ld("ac_loss_adjustments") += ac * (1.0 - haf(wdprov->annualSimulation() ? hour_of_year : idx)) * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
+                if (y == 0 && wdprov->annualSimulation()) ld("ac_delivered") += ac * haf(wdprov->annualSimulation() ? hour_of_year : idx) * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
 
                 idx_life++;
             }

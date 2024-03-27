@@ -1359,8 +1359,7 @@ public:
                 p_tmod[idx] = (ssc_number_t)tmod;
                 p_dc[idx] = (ssc_number_t)dc; // power, Watts
                 p_ac_pre_adjust[idx] = (ssc_number_t)ac; //power, Watts
-                // p_ac[idx] = (ssc_number_t)(ac * haf(wdprov->annualSimulation() ? hour_of_year : idx)); // power, Watts
-                p_ac[idx] = (ssc_number_t)(ac * haf(hour_of_year)); // power, Watts
+                p_ac[idx] = (ssc_number_t)(ac * haf(wdprov->annualSimulation() ? hour_of_year : idx)); // power, Watts
 
                 // accumulate hourly energy (kWh) (was initialized to zero when allocated)
                 p_gen[idx_life] = (ssc_number_t)(p_ac[idx] * util::watt_to_kilowatt);
