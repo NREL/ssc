@@ -5,7 +5,7 @@
 #####################################################################################################################
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-include_directories(. ../splinter)
+include_directories(. ../splinter/include ../)
 
 set(SHARED_SRC
         6par_gamma.h
@@ -69,6 +69,8 @@ set(SHARED_SRC
         lib_power_electronics.h
         lib_powerblock.cpp
         lib_powerblock.h
+        lib_ptes_chp_dispatch.cpp
+        lib_ptes_chp_dispatch.h
         lib_pv_incidence_modifier.cpp
         lib_pv_incidence_modifier.h
         lib_pv_io_manager.cpp
@@ -142,6 +144,39 @@ set_disabled_warnings(shared)
 set( DEPENDENCIES
 	splinter
 	)
+
+find_package(re2 CONFIG REQUIRED)
+find_package(Eigen3 CONFIG REQUIRED)
+
+if (USE_XPRESS)
+    if (NOT DEFINED XPRESS_ROOT AND DEFINED ENV{XPRESS_ROOT})
+        set(XPRESS_ROOT $ENV{XPRESS_ROOT})
+    endif()
+    add_library(XPRESS::XPRESS UNKNOWN IMPORTED)
+
+    if(UNIX)
+        target_include_directories(XPRESS::XPRESS SYSTEM INTERFACE "${XPRESS_ROOT}/include")
+    endif()
+
+    if(APPLE)
+        set_target_properties(XPRESS::XPRESS PROPERTIES
+            IMPORTED_LOCATION "${XPRESS_ROOT}/lib/libxprs.dylib")
+    elseif(UNIX)
+        set_target_properties(XPRESS::XPRESS PROPERTIES
+            INTERFACE_LINK_DIRECTORIES "${XPRESS_ROOT}/lib"
+            IMPORTED_LOCATION ${XPRESS_ROOT}/lib/libxprs.so)
+    elseif(MSVC)
+        set_target_properties(XPRESS::XPRESS PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES "${XPRESS_ROOT}\\include"
+            IMPORTED_LOCATION "${XPRESS_ROOT}\\lib\\xprs.lib")
+    else()
+        message(FATAL_ERROR "XPRESS not supported for ${CMAKE_SYSTEM}")
+    endif()
+    target_link_libraries(shared XPRESS::XPRESS)
+endif()
+
+find_package(ortools CONFIG REQUIRED)
+target_link_libraries(shared ortools::ortools)
 
 if (UNIX)
     set(CMAKE_SHARED_LINKER_FLAGS "-lm")

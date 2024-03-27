@@ -27,6 +27,16 @@ jobs:
         SSCDIR=$GITHUB_WORKSPACE/ssc
         echo "SSCDIR=$SSCDIR" >> $GITHUB_ENV
     
+    - name: download OR-Tools
+      run: |
+          sudo apt update
+          sudo apt install -y build-essential cmake lsb-release
+          cd $GITHUB_WORKSPACE
+          wget -q https://github.com/google/or-tools/releases/download/v9.7/or-tools_amd64_ubuntu-22.04_cpp_v9.7.2996.tar.gz
+          tar -xvf or-tools_amd64_ubuntu-22.04_cpp_v9.7.2996.tar.gz
+          ORTOOLSDIR=$GITHUB_WORKSPACE/or-tools_x86_64_Ubuntu-22.04_cpp_v9.7.2996
+          echo "ORTOOLSDIR=$ORTOOLSDIR" >> $GITHUB_ENV
+
     - name: Clone Gtest
       uses: actions/checkout@v2
       with:
@@ -41,7 +51,7 @@ jobs:
           cd ${GTEST}/build
           cmake -DCMAKE_CXX_FLAGS=-std=c++11 ..
           make          
-    
+
     - name: Checkout SSC
       uses: actions/checkout@v2
       with:
@@ -50,9 +60,10 @@ jobs:
     - name: Configure CMake
       # Configure cmake to build ssc tests but not tools
       run: |
+        ls $ORTOOLSDIR
         mkdir ${SSCDIR}/build
         cd ${SSCDIR}/build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DSAM_SKIP_TOOLS=1
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DSAM_SKIP_TOOLS=1 -DCMAKE_INSTALL_PREFIX=${ORTOOLSDIR}
 
     - name: Build
       # Build your program with the given configuration
@@ -93,6 +104,14 @@ jobs:
         SSCDIR=$GITHUB_WORKSPACE/ssc
         echo "SSCDIR=$SSCDIR" >> $GITHUB_ENV
     
+    - name: download OR-Tools
+      run: |
+          cd $GITHUB_WORKSPACE
+          curl -LJO https://github.com/google/or-tools/releases/download/v9.7/or-tools_x86_64_macOS-13.5_cpp_v9.7.2996.tar.gz
+          tar -xvf or-tools_x86_64_macOS-13.5_cpp_v9.7.2996.tar.gz
+          ORTOOLSDIR=$GITHUB_WORKSPACE/or-tools_x86_64_macOS-13.5_cpp_v9.7.2996
+          echo "ORTOOLSDIR=$ORTOOLSDIR" >> $GITHUB_ENV
+
     - name: Clone Gtest
       uses: actions/checkout@v2
       with:
@@ -118,7 +137,7 @@ jobs:
       run: |
         mkdir ${SSCDIR}/build
         cd ${SSCDIR}/build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DSAM_SKIP_TOOLS=1 -DSAMAPI_EXPORT=0 
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DSAM_SKIP_TOOLS=1 -DSAMAPI_EXPORT=0 -DCMAKE_INSTALL_PREFIX=${ORTOOLSDIR}
 
     - name: Build
       # Build your program with the given configuration
