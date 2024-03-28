@@ -214,6 +214,13 @@ double parkWakeModel::delta_V_Park(double Uo, double Ui, double distCrosswind, d
 	// bound the coeff of thrust
 	double Ct = max_of(min_of(0.999, dThrustCoeff), minThrustCoeff);
 
+    // overwrite the coefficient of thrust if it has been specified by the user
+    // if it has not been specified by the user, the thrust curve vector is {0.}
+    if (ctCurve.size() != 1)
+    {
+        // do something here
+    }
+
 	double k = wakeDecayConstant;
 
 	double dRadiusOfWake = dRadiusUpstream + (k * distDownwind); // radius of circle formed by wake from upwind rotor

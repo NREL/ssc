@@ -153,12 +153,16 @@ private:
 	double rotorDiameter;
 	double wakeDecayConstant = 0.07,
 		   minThrustCoeff = 0.02;
+    std::vector<double> ctCurve; //vector that stores the optional coefficient of thrust curve input
 	double delta_V_Park(double dVelFreeStream, double dVelUpwind, double dDistCrossWind, double dDistDownWind, double dRadiusUpstream, double dRadiusDownstream, double dThrustCoeff);
 	double circle_overlap(double dist_center_to_center, double rad1, double rad2);
 
 public:
 	parkWakeModel(){ nTurbines = 0; }
-    parkWakeModel(size_t numberOfTurbinesInFarm, windTurbine* wt, double wdc) { nTurbines = numberOfTurbinesInFarm; wTurbine = wt; setWakeDecayConstant(wdc); }
+    parkWakeModel(size_t numberOfTurbinesInFarm, windTurbine* wt, double wdc, std::vector<double> ctc)
+    {
+        nTurbines = numberOfTurbinesInFarm; wTurbine = wt; setWakeDecayConstant(wdc); ctCurve = ctc;
+    }
 	virtual ~parkWakeModel() {};
 	std::string getModelName() override { return "Park"; }
 	void setRotorDiameter(double d){ rotorDiameter = d; }

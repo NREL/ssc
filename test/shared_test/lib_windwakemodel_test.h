@@ -154,7 +154,7 @@ public:
 		windSpeed.resize(numberTurbines);
 		turbIntensity.resize(numberTurbines, 0.1);
 		createDefaultTurbine(&wt);
-		pm = parkWakeModel(numberTurbines, &wt, 0.07);
+        pm = parkWakeModel(numberTurbines, &wt, 0.07, { 0. }); //use default values for the last two inputs
 		for (int i = 0; i < numberTurbines; i++){
 			windSpeed[i] = 10.;
 		}

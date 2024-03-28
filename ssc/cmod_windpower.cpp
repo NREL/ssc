@@ -72,7 +72,9 @@ static var_info _cm_vtab_windpower[] = {
 	{ SSC_INPUT  , SSC_NUMBER , "icing_cutoff_temp"                  , "Icing Cutoff Temperature"                 , "C"       ,""                                    , "Losses"                               , "en_icing_cutoff=1"                               , ""                                                , "" } ,
 	{ SSC_INPUT  , SSC_NUMBER , "icing_cutoff_rh"                    , "Icing Cutoff Relative Humidity"           , "%"       ,"'rh' required in wind_resource_data" , "Losses"                               , "en_icing_cutoff=1"                               , "MIN=0"                                           , "" } ,
 
+    // optional SDK only wake loss inputs
     { SSC_INPUT  , SSC_NUMBER , "wake_loss_multiplier"               , "Multiplier for the calculated wake loss"  , ""        ,">1 increases loss, <1 decreases loss", "Farm"                                 , ""                                                , "MIN=0"                                           , "" } ,
+    { SSC_INOUT  , SSC_ARRAY  , "wind_turbine_ct_curve"              , "Park model coeff of thrust curve vs WS"   , ""        ,"uses same wind speeds as power curve", "Turbine"                              , ""                                                , "LENGTH_EQUAL=wind_turbine_powercurve_windspeeds" , "GROUP=WTPCD" } ,
 
     { SSC_INPUT  , SSC_NUMBER , "wake_int_loss"                      , "Constant Wake Model, internal wake loss"  , "%"       ,""                                    , "Losses"                               , "wind_farm_wake_model=3"                          , "MIN=0,MAX=100"                                   , "" } ,
     { SSC_INPUT  , SSC_NUMBER , "wake_ext_loss"                      , "External Wake loss"                       , "%"       ,""                                    , "Losses"                               , "?=0"                                             , "MIN=0,MAX=100"                                   , "" } ,
@@ -291,7 +293,7 @@ void cm_windpower::exec()
 	wt.rotorDiameter = as_double("wind_turbine_rotor_diameter");
 	ssc_number_t *pc_w = as_array("wind_turbine_powercurve_windspeeds", &wt.powerCurveArrayLength);
     if (wt.powerCurveArrayLength == 1)
-        throw exec_error("windpower", util::format("The wind turbine power curves has insufficient data. Consider changing the turbine design parameters"));
+        throw exec_error("windpower", util::format("The wind turbine power curve has insufficient data. Consider changing the turbine design parameters"));
 	ssc_number_t *pc_p = as_array("wind_turbine_powercurve_powerout", NULL);
 	std::vector<double> windSpeeds(wt.powerCurveArrayLength), powerOutput(wt.powerCurveArrayLength);
 	for (size_t i = 0; i < wt.powerCurveArrayLength; i++){
@@ -404,10 +406,26 @@ void cm_windpower::exec()
         wakeModel = std::make_shared<simpleWakeModel>(simpleWakeModel(wpc.nTurbines, &wt));
     else if (wakeModelChoice == PARK)
     {
+        // get optional thrust curve
+        std::vector<double> ct_curve = { 0. }; //initialize this to length 1: a power curve length of 1 throws an exec error above & the length of ct curve is tied to the power curve, so this is a safe null value
+        if (is_assigned("wind_turbine_ct_curve"))
+        {
+            size_t *ctCurveLength = 0;
+            ssc_number_t *ctc = as_array("wind_turbine_ct_curve", ctCurveLength);
+            if (*ctCurveLength != wt.powerCurveArrayLength)
+                throw exec_error("windpower", "Thrust curve must have same number of values as the power curve");
+            ct_curve.resize(*ctCurveLength);
+            for (size_t i = 0; i < *ctCurveLength; i++)
+                ct_curve[i] = ctc[i];
+        }
+
+        // get optional wake decay constant
         double wdc = 0.07; //this is the default value
         if (is_assigned("park_wake_decay_constant"))
             wdc = as_double("park_wake_decay_constant");
-        wakeModel = std::make_shared<parkWakeModel>(parkWakeModel(wpc.nTurbines, &wt, wdc));
+
+        // create the wake model
+        wakeModel = std::make_shared<parkWakeModel>(parkWakeModel(wpc.nTurbines, &wt, wdc, ct_curve));
     }
     else if (wakeModelChoice == EDDYVISCOSITY)
     {
