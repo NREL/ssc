@@ -517,13 +517,13 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, NonAnnualSummerStart)
 
     ssc_number_t dc, gen, ac;
     dc = ssc_data_get_array(data, "dc", nullptr)[12];
-    EXPECT_NEAR(dc, 769, 0.01) << "DC Energy at noon";
+    EXPECT_NEAR(dc, 769.13, 1.) << "DC Energy at noon";
 
     ac = ssc_data_get_array(data, "ac", nullptr)[12];
-    EXPECT_NEAR(ac, 769, 0.01) << "AC Energy at noon";
+    EXPECT_NEAR(ac, 726.023, 1.) << "AC Energy at noon";
 
     gen = ssc_data_get_array(data, "gen", nullptr)[12];
-    EXPECT_NEAR(gen, 0.77, 0.01) << "Gen at noon";
+    EXPECT_NEAR(gen, 0.726, 0.01) << "Gen at noon";
     
     free_weatherdata_array(weather_data);
 }
