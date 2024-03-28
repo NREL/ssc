@@ -40,7 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * Creates resources as var_data, as opposed to resources from files, for testing use through SDK
  */
 
-var_table* create_weatherdata_array(size_t length);
+var_table* create_weatherdata_array(size_t length, size_t start_idx=0);
 
 void free_weatherdata_array(var_table* data);
 
