@@ -116,9 +116,9 @@ void windTurbine::turbinePower(double windVelocity, double airDensity, double *t
 
 	// Find power from turbine power curve
 	double out_pwr = 0.0;
+    int j = 1; // an index for the correct wind speed in the power curve for interpolations
 	if ((windVelocity > densityCorrectedWS[0]) && (windVelocity < densityCorrectedWS[powerCurveArrayLength - 1]))
 	{
-		int j = 1;
 		while (densityCorrectedWS[j] <= windVelocity)
 			j++; // find first m_adPowerCurveWS > windVelocity
 
@@ -149,7 +149,9 @@ void windTurbine::turbinePower(double windVelocity, double airDensity, double *t
         // if it has not been specified by the user, the thrust curve vector is {0.}
         if (ctCurve.size() != 1)
         {
-            // do something here
+            //interpolate to right value of Ct based on wind speed, like for power curve
+            //can use the same index for the wind speed array that was determined above
+            *thrustCoefficient = util::interpolate(densityCorrectedWS[j - 1], ctCurve[j - 1], densityCorrectedWS[j], ctCurve[j], windVelocity);
         }
 
 	} // out_pwr > (rated power * 0.001)
