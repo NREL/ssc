@@ -47,10 +47,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class windTurbine
 {
 private:
-	std::vector<double> powerCurveWS,			// windspeed: x-axis on turbine power curve
-						powerCurveKW,			// power output: y-axis
-						densityCorrectedWS,
-						powerCurveRPM;
+    std::vector<double> powerCurveWS,			// windspeed: x-axis on turbine power curve
+                        powerCurveKW,			// power output: y-axis
+                        densityCorrectedWS,
+                        powerCurveRPM;
+    // vector that stores the optional coefficient of thrust curve input
+    // set to a default value of length 1 to mean that it's not assigned, and check for that length before using it
+    std::vector<double> ctCurve = { 0. };
 	double cutInSpeed;
 	double previousAirDensity;
 public:
@@ -70,6 +73,7 @@ public:
         previousAirDensity = physics::AIR_DENSITY_SEA_LEVEL;
 	}
 	bool setPowerCurve(std::vector<double> windSpeeds, std::vector<double> powerOutput);
+    bool setCtCurve(std::vector<double> thrustCoeffCurve);
 	
 	double tipSpeedRatio(double windSpeed);
 
@@ -153,15 +157,16 @@ private:
 	double rotorDiameter;
 	double wakeDecayConstant = 0.07,
 		   minThrustCoeff = 0.02;
-    std::vector<double> ctCurve; //vector that stores the optional coefficient of thrust curve input
 	double delta_V_Park(double dVelFreeStream, double dVelUpwind, double dDistCrossWind, double dDistDownWind, double dRadiusUpstream, double dRadiusDownstream, double dThrustCoeff);
 	double circle_overlap(double dist_center_to_center, double rad1, double rad2);
 
 public:
 	parkWakeModel(){ nTurbines = 0; }
-    parkWakeModel(size_t numberOfTurbinesInFarm, windTurbine* wt, double wdc, std::vector<double> ctc)
+    parkWakeModel(size_t numberOfTurbinesInFarm, windTurbine* wt, double wdc)
     {
-        nTurbines = numberOfTurbinesInFarm; wTurbine = wt; setWakeDecayConstant(wdc); ctCurve = ctc;
+        nTurbines = numberOfTurbinesInFarm;
+        wTurbine = wt;
+        setWakeDecayConstant(wdc);
     }
 	virtual ~parkWakeModel() {};
 	std::string getModelName() override { return "Park"; }

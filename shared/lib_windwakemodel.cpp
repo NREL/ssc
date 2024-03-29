@@ -49,6 +49,18 @@ bool windTurbine::setPowerCurve(std::vector<double> windSpeeds, std::vector<doub
 	return 1;
 }
 
+bool windTurbine::setCtCurve(std::vector<double> thrustCoeffCurve)
+{
+    if (thrustCoeffCurve.size() != powerCurveWS.size())
+    {
+        errDetails = "Coefficient of thrust curve must have the same number of values as the power curve wind speeds";
+        return 0;
+    }
+    ctCurve.resize(thrustCoeffCurve.size());
+    ctCurve = thrustCoeffCurve;
+    return 1;
+}
+
 double windTurbine::tipSpeedRatio(double windSpeed)
 {
 	if (powerCurveRPM[0] == -1) return 7.0;
@@ -132,6 +144,14 @@ void windTurbine::turbinePower(double windVelocity, double airDensity, double *t
 		*turbineOutput = out_pwr;
 		if (fPowerCoefficient >= 0.0)
 			*thrustCoefficient = max_of(0.0, -1.453989e-2 + 1.473506*fPowerCoefficient - 2.330823*pow(fPowerCoefficient, 2) + 3.885123*pow(fPowerCoefficient, 3));
+
+        // overwrite the coefficient of thrust if it has been specified by the user
+        // if it has not been specified by the user, the thrust curve vector is {0.}
+        if (ctCurve.size() != 1)
+        {
+            // do something here
+        }
+
 	} // out_pwr > (rated power * 0.001)
 
 	return;
@@ -213,13 +233,6 @@ double parkWakeModel::delta_V_Park(double Uo, double Ui, double distCrosswind, d
 {
 	// bound the coeff of thrust
 	double Ct = max_of(min_of(0.999, dThrustCoeff), minThrustCoeff);
-
-    // overwrite the coefficient of thrust if it has been specified by the user
-    // if it has not been specified by the user, the thrust curve vector is {0.}
-    if (ctCurve.size() != 1)
-    {
-        // do something here
-    }
 
 	double k = wakeDecayConstant;
 
