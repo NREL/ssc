@@ -57,6 +57,7 @@ set(TCS_SRC
 		sco2_rec_util.cpp
 		sco2_recompression_cycle.cpp
 		sco2_test_type401.cpp
+        sco2_turbinesplitflow_cycle.cpp
 		tc_test_type402.cpp
 		tcskernel.cpp
 		trnsys_weatherreader.cpp
@@ -152,6 +153,7 @@ set(TCS_SRC
 		sco2_power_cycle.h
 		sco2_recompression_cycle.h
 		sco2_rec_util.h
+        sco2_turbinesplitflow_cycle.h
 		storage_hx.h
 		tcskernel.h
 		tcstype.h
