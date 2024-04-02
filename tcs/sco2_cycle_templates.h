@@ -212,6 +212,7 @@ public:
 
 		double m_is_recomp_ok;			//[-] 1 = Yes, 0 = simple cycle only, < 0 = fix f_recomp to abs(input)
         double m_is_bypass_ok;          //[-] 1 = Yes, 0 = no bypass, < 0 = fix bp_frac to abs(input)
+        double m_is_turbinesplit_ok;    //[-] 1 = Yes, 0 = no secondary turbine, < 0 = fix split_frac to abs(input) (Turbine split flow ONLY)
 
 		bool m_fixed_P_mc_out;			//[-] if true, P_mc_out is fixed at 'm_P_high_limit'
 

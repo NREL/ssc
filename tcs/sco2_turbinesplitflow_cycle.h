@@ -46,10 +46,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "nlopt_callbacks.h"
 
 
-
+// Core Turbine Split Flow Model
 // This class is purely for solving the cycle
 // No optimization
-class C_sco2_turbinesplitflow_core
+class C_sco2_tsf_core
 {
 public:
 
@@ -226,10 +226,10 @@ private:
     class C_mono_htrbp_core_HTR_des : public C_monotonic_equation
     {
     private:
-        C_sco2_turbinesplitflow_core* m_tsf_cycle;
+        C_sco2_tsf_core* m_tsf_cycle;
 
     public:
-        C_mono_htrbp_core_HTR_des(C_sco2_turbinesplitflow_core* tsf_cycle)
+        C_mono_htrbp_core_HTR_des(C_sco2_tsf_core* tsf_cycle)
         {
             m_tsf_cycle = tsf_cycle;
         }
@@ -252,7 +252,7 @@ public:
     S_sco2_tsf_out m_outputs;
 
     // Public Methods
-    C_sco2_turbinesplitflow_core()
+    C_sco2_tsf_core()
     {
         m_outputs.Init();
         m_co2_props = CO2_state();
@@ -283,11 +283,8 @@ public:
         double m_PR_HP_to_LP_guess;         //[-] Initial guess for ratio of P_mc_out to P_LP_in
         bool m_fixed_PR_HP_to_LP;					//[-] if true, ratio of P_mc_out to P_mc_in is fixed at PR_mc_guess
 
-        double m_recomp_frac_guess;			//[-] Initial guess for design-point recompression fraction
-        bool m_fixed_recomp_frac;			//[-] if true, recomp_frac is fixed at recomp_frac_guess
-
-        double m_bypass_frac_guess;			//[-] Initial guess for design-point bypass fraction
-        bool m_fixed_bypass_frac;           //[-] if true, bypass_frac is fixed at bypass_frac_guess
+        double m_split_frac_guess;			//[-] Initial guess for design-point split flow fraction (0.0 is no secondary turbine)
+        bool m_fixed_split_frac;			//[-] if true, split_frac is fixed at split_frac_guess
 
         double m_LT_frac_guess;				//[-] Initial guess for fraction of UA_rec_total that is in the low-temperature recuperator
         bool m_fixed_LT_frac;				//[-] if true, LT_frac is fixed at LT_frac_guess
@@ -301,15 +298,14 @@ public:
 
         S_opt_design_parameters()
         {
-            m_P_mc_out_guess = m_PR_HP_to_LP_guess = m_recomp_frac_guess = m_LT_frac_guess =
-                m_bypass_frac_guess = m_eta_thermal_target =
+            m_P_mc_out_guess = m_PR_HP_to_LP_guess = m_split_frac_guess = m_LT_frac_guess =
+                m_eta_thermal_target =
                 m_UA_recup_total_max = m_UA_recup_total_min =
                 std::numeric_limits<double>::quiet_NaN();
 
 
             m_design_method = -1;
-            m_fixed_recomp_frac = false;
-            m_fixed_bypass_frac = false;
+            m_fixed_split_frac = false;
             m_fixed_LT_frac = false;
             m_fixed_PR_HP_to_LP = false;
             m_fixed_P_mc_out = false;
@@ -334,15 +330,15 @@ private:
     bool m_is_bp_par_set;               // Are bp parameters set
 
     // Optimal htrbp core class (contains all results and component data)
-    C_sco2_turbinesplitflow_core m_optimal_tsf_core;
+    C_sco2_tsf_core m_optimal_tsf_core;
 
     void auto_opt_design_core(int& error_code);
 
     void auto_opt_design_hit_eta_core(int& error_code, const double eta_thermal_target);
 
-    int optimize_totalUA(const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, C_sco2_turbinesplitflow_core::S_sco2_tsf_in& optimal_inputs);
+    int optimize_totalUA(const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, C_sco2_tsf_core::S_sco2_tsf_in& optimal_inputs);
 
-    int optimize_par(const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, C_sco2_turbinesplitflow_core::S_sco2_tsf_in& core_inputs, C_sco2_turbinesplitflow_core::S_sco2_tsf_in& optimal_inputs);
+    int optimize_par(const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, C_sco2_tsf_core::S_sco2_tsf_in& core_inputs, C_sco2_tsf_core::S_sco2_tsf_in& optimal_inputs);
 
 protected:
 
@@ -414,7 +410,7 @@ public:
 
     // Objective Functions (internal use only)
     double C_TurbineSplitFlow_Cycle::optimize_totalUA_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par);
-    double C_TurbineSplitFlow_Cycle::optimize_par_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, C_sco2_turbinesplitflow_core& htrbp_core);
+    double C_TurbineSplitFlow_Cycle::optimize_par_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, C_sco2_tsf_core& htrbp_core);
 
     // Off Design
 
@@ -467,16 +463,9 @@ public:
 };
 
 // Nlopt objective functions
-double nlopt_optimize_totalUA_func(const std::vector<double>& x, std::vector<double>& grad, void* data);
+double nlopt_tsf_optimize_totalUA_func(const std::vector<double>& x, std::vector<double>& grad, void* data);
 
-double nlopt_optimize_par_func(const std::vector<double>& x, std::vector<double>& grad, void* data);
+double nlopt_tsf_optimize_par_func(const std::vector<double>& x, std::vector<double>& grad, void* data);
 
-
-
-
-// Penalty value methods
-double sigmoid(const double val);
-
-double logit(const double val);
 
 #endif

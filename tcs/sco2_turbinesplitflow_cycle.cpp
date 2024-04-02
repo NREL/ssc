@@ -41,17 +41,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // ********************************************************************************** C_sco2_htrbp_core CORE MODEL
 
-void C_sco2_turbinesplitflow_core::initialize_solve()
+void C_sco2_tsf_core::initialize_solve()
 {
     m_outputs.Init();
 }
 
-int C_sco2_turbinesplitflow_core::solve()
+int C_sco2_tsf_core::solve()
 {
     return -1;
 }
 
-int C_sco2_turbinesplitflow_core::finalize_design(C_sco2_cycle_core::S_design_solved& design_solved)
+int C_sco2_tsf_core::finalize_design(C_sco2_cycle_core::S_design_solved& design_solved)
 {
     // Design Main Compressor
     {
@@ -187,12 +187,12 @@ int C_sco2_turbinesplitflow_core::finalize_design(C_sco2_cycle_core::S_design_so
     return 0;
 }
 
-int C_sco2_turbinesplitflow_core::solve_HTR_LTR(double T_HTR_HP_OUT_guess, double* diff_T_HTR_HP_out)
+int C_sco2_tsf_core::solve_HTR_LTR(double T_HTR_HP_OUT_guess, double* diff_T_HTR_HP_out)
 {
     return -1;
 }
 
-void C_sco2_turbinesplitflow_core::reset()
+void C_sco2_tsf_core::reset()
 {
     this->m_inputs = S_sco2_tsf_in();
     this->m_outputs.Init();
@@ -208,6 +208,177 @@ void C_sco2_turbinesplitflow_core::reset()
 /// </summary>
 void C_TurbineSplitFlow_Cycle::auto_opt_design_core(int& error_code)
 {
+    // Create 'ms_opt_des_par' for Design Variables
+    S_opt_design_parameters opt_par;
+    {
+        // Max Pressure
+        double best_P_high = m_P_high_limit;		//[kPa]
+        double PR_mc_guess = 2.5;				//[-]
+
+        opt_par.m_fixed_P_mc_out = ms_auto_opt_des_par.m_fixed_P_mc_out;		//[-]
+        if (!opt_par.m_fixed_P_mc_out)
+        {
+            double P_low_limit = std::min(m_P_high_limit, std::max(10.E3, m_P_high_limit * 0.2));		//[kPa]
+
+            //best_P_high = fminbr(P_low_limit, m_P_high_limit, &fmin_cb_opt_des_fixed_P_high, this, 1.0);
+            best_P_high = m_P_high_limit;
+        }
+        opt_par.m_P_mc_out_guess = best_P_high;      //[kPa]
+        //ms_opt_des_par.m_fixed_P_mc_out = true;
+
+        // Pressure Ratio (min pressure)
+        opt_par.m_fixed_PR_HP_to_LP = ms_auto_opt_des_par.m_fixed_PR_HP_to_LP;			//[-]
+        if (opt_par.m_fixed_PR_HP_to_LP)
+        {
+            opt_par.m_PR_HP_to_LP_guess = ms_auto_opt_des_par.m_PR_HP_to_LP_guess;	//[-]
+        }
+        else
+        {
+            opt_par.m_PR_HP_to_LP_guess = PR_mc_guess;		//[-]
+        }
+
+        // Is recompression fraction fixed or optimized?
+        if (ms_auto_opt_des_par.m_is_turbinesplit_ok <= 0.0)
+        {   // fixed
+            opt_par.m_split_frac_guess = std::abs(ms_auto_opt_des_par.m_is_turbinesplit_ok);
+            opt_par.m_fixed_split_frac = true;
+        }
+        else
+        {   // optimized
+            opt_par.m_split_frac_guess = 0.5;
+            opt_par.m_fixed_split_frac = false;
+        }
+
+        // LTR HTR UA Ratio
+        opt_par.m_LT_frac_guess = 0.5;
+        opt_par.m_fixed_LT_frac = false;
+        if (ms_auto_opt_des_par.m_LTR_target_code != NS_HX_counterflow_eqs::OPTIMIZE_UA || ms_auto_opt_des_par.m_HTR_target_code != NS_HX_counterflow_eqs::OPTIMIZE_UA)
+        {
+            opt_par.m_fixed_LT_frac = true;
+        }
+
+        // Set Design Method
+        if (opt_par.m_fixed_LT_frac == true)
+            opt_par.m_design_method = 3;
+        else
+            opt_par.m_design_method = 2;
+
+    }
+
+    // Set up baseline core inputs (will go somewhere else)
+    C_sco2_tsf_core::S_sco2_tsf_in core_inputs;
+    {
+        // From Auto Opt Design Parameters
+        core_inputs.m_LTR_target_code = ms_auto_opt_des_par.m_LTR_target_code;
+        core_inputs.m_LTR_UA = ms_auto_opt_des_par.m_LTR_UA;
+        core_inputs.m_LTR_min_dT = ms_auto_opt_des_par.m_LTR_min_dT;
+        core_inputs.m_LTR_eff_target = ms_auto_opt_des_par.m_LTR_eff_target;
+        core_inputs.m_LTR_eff_max = ms_auto_opt_des_par.m_LTR_eff_max;
+
+        core_inputs.m_LTR_od_UA_target_type = ms_auto_opt_des_par.m_LTR_od_UA_target_type;
+        core_inputs.m_HTR_target_code = ms_auto_opt_des_par.m_HTR_target_code;
+        core_inputs.m_HTR_UA = ms_auto_opt_des_par.m_HTR_UA;
+        core_inputs.m_HTR_min_dT = ms_auto_opt_des_par.m_HTR_min_dT;
+        core_inputs.m_HTR_eff_target = ms_auto_opt_des_par.m_HTR_eff_target;
+        core_inputs.m_HTR_eff_max = ms_auto_opt_des_par.m_HTR_eff_max;
+        core_inputs.m_HTR_od_UA_target_type = ms_auto_opt_des_par.m_HTR_od_UA_target_type;
+        core_inputs.m_des_tol = ms_auto_opt_des_par.m_des_tol;
+        core_inputs.m_is_des_air_cooler = ms_auto_opt_des_par.m_is_des_air_cooler;
+
+        // From Constructor
+        core_inputs.m_LTR_N_sub_hxrs = m_LTR_N_sub_hxrs;            // Comes from constructor (constant)
+        core_inputs.m_HTR_N_sub_hxrs = m_HTR_N_sub_hxrs;            // Comes from constructor (constant)
+        core_inputs.m_W_dot_net_design = m_W_dot_net;               // Comes from constructor (constant)
+        core_inputs.m_T_mc_in = m_T_mc_in;                          // Comes from constructor (constant)
+        core_inputs.m_T_t_in = m_T_t_in;                            // Comes from constructor (constant)
+        core_inputs.m_DP_LTR = m_DP_LTR;                            // Comes from constructor (constant)
+        core_inputs.m_DP_HTR = m_DP_HTR;                            // Comes from constructor (constant)
+        core_inputs.m_DP_PC_main = m_DP_PC_main;                    // Comes from constructor (constant)
+        core_inputs.m_DP_PHX = m_DP_PHX;                            // Comes from constructor (constant)
+        core_inputs.m_eta_mc = m_eta_mc;                            // Comes from constructor (constant)
+        core_inputs.m_eta_t = m_eta_t;                              // Comes from constructor (constant)
+        core_inputs.m_eta_rc = m_eta_rc;                            // Comes from constructor (constant)
+        core_inputs.m_eta_generator = m_eta_generator;              // Comes from constructor (constant)
+        core_inputs.m_frac_fan_power = m_frac_fan_power;            // Comes from constructor (constant)
+        core_inputs.m_eta_fan = m_eta_fan;                          // Comes from constructor (constant)
+        core_inputs.m_deltaP_cooler_frac = m_deltaP_cooler_frac;    // Comes from constructor (constant)
+        core_inputs.m_T_amb_des = m_T_amb_des;                      // Comes from constructor (constant)
+        core_inputs.m_elevation = m_elevation;                      // Comes from constructor (constant)
+        core_inputs.m_N_nodes_pass = m_N_nodes_pass;                // Comes from constructor (constant)
+        core_inputs.m_mc_comp_model_code = m_mc_comp_model_code;    // Comes from constructor (constant)
+        core_inputs.m_N_turbine = m_N_turbine;                      // Comes from constructor (constant)
+
+        core_inputs.m_rc_comp_model_code = C_comp__psi_eta_vs_phi::E_snl_radial_via_Dyreby; // Constant
+
+        // From special bypass fraction function (should remove)
+        core_inputs.m_dT_BP = m_dT_BP;                              // Comes from bp par function (constant)
+        core_inputs.m_set_HTF_mdot = m_set_HTF_mdot;                // Comes from bp par function (constant)
+        core_inputs.m_cp_HTF = m_cp_HTF;                            // Comes from bp par function (constant)
+        core_inputs.m_T_HTF_PHX_inlet = m_T_HTF_PHX_inlet;          // Comes from bp par function (constant)
+        core_inputs.m_HTF_PHX_cold_approach_input = m_HTF_PHX_cold_approach;    // Comes from bp par function (constant)
+
+
+        // Handle design variables (check if fixed or free)
+        {
+            // Recompression Fraction
+            if (opt_par.m_fixed_split_frac == true)
+                core_inputs.m_recomp_frac = opt_par.m_split_frac_guess;
+            else
+                throw new C_csp_exception("not handled");
+
+            // MC Outlet Pressure
+            if (opt_par.m_fixed_P_mc_out == true)
+                core_inputs.m_P_mc_out = opt_par.m_P_mc_out_guess;
+            else
+                throw new C_csp_exception("not handled");
+
+            // Recuperator split fraction
+            double LT_frac_local = opt_par.m_LT_frac_guess;
+            if (ms_auto_opt_des_par.m_LTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA || ms_auto_opt_des_par.m_HTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA)
+            {
+                core_inputs.m_LTR_UA = ms_auto_opt_des_par.m_UA_rec_total * LT_frac_local;
+                core_inputs.m_HTR_UA = ms_auto_opt_des_par.m_UA_rec_total * (1.0 - LT_frac_local);
+            }
+            else
+            {
+                core_inputs.m_LTR_UA = ms_auto_opt_des_par.m_LTR_UA;      //[kW/K]
+                core_inputs.m_HTR_UA = ms_auto_opt_des_par.m_HTR_UA;      //[kW/K]
+            }
+
+
+            // Pressure Ratio is calculated in callback
+        }
+
+    }
+
+    // Handle Pressure Ratio (temporary)
+    double PR_mc_local = -999.9;
+    double P_mc_in = -999.9;
+    if (!opt_par.m_fixed_PR_HP_to_LP)
+    {
+        throw new C_csp_exception("not handled");
+    }
+    else
+    {
+        if (opt_par.m_PR_HP_to_LP_guess >= 0.0)
+        {
+            PR_mc_local = opt_par.m_PR_HP_to_LP_guess;
+            P_mc_in = core_inputs.m_P_mc_out / PR_mc_local;		//[kPa]
+        }
+        else
+        {
+            P_mc_in = std::abs(opt_par.m_PR_HP_to_LP_guess);		//[kPa]
+        }
+    }
+
+    core_inputs.m_P_mc_in = P_mc_in;
+
+
+    // Should have enough to run model (with all variables fixed)
+    C_sco2_tsf_core tsf_core;
+    tsf_core.set_inputs(core_inputs);
+    tsf_core.solve();
+
     return;
 }
 
@@ -229,7 +400,7 @@ void C_TurbineSplitFlow_Cycle::auto_opt_design_hit_eta_core(int& error_code, con
 /// <returns></returns>
 int C_TurbineSplitFlow_Cycle::optimize_totalUA(const S_auto_opt_design_parameters& auto_par,
     const S_opt_design_parameters& opt_par,
-    C_sco2_turbinesplitflow_core::S_sco2_tsf_in& optimal_inputs)
+    C_sco2_tsf_core::S_sco2_tsf_in& optimal_inputs)
 {
     return -1;;
 }
@@ -245,8 +416,8 @@ int C_TurbineSplitFlow_Cycle::optimize_totalUA(const S_auto_opt_design_parameter
 /// <returns></returns>
 int C_TurbineSplitFlow_Cycle::optimize_par(const S_auto_opt_design_parameters& auto_par,
     const S_opt_design_parameters& opt_par,
-    C_sco2_turbinesplitflow_core::S_sco2_tsf_in& core_inputs,
-    C_sco2_turbinesplitflow_core::S_sco2_tsf_in& optimal_inputs)
+    C_sco2_tsf_core::S_sco2_tsf_in& core_inputs,
+    C_sco2_tsf_core::S_sco2_tsf_in& optimal_inputs)
 {
     return -1;
 }
@@ -307,7 +478,7 @@ double C_TurbineSplitFlow_Cycle::optimize_totalUA_return_objective_metric(const 
 double C_TurbineSplitFlow_Cycle::optimize_par_return_objective_metric(const std::vector<double>& x,
     const S_auto_opt_design_parameters& auto_par,
     const S_opt_design_parameters& opt_par,
-    C_sco2_turbinesplitflow_core& htrbp_core)
+    C_sco2_tsf_core& htrbp_core)
 {
     return 0;
 }
@@ -372,22 +543,13 @@ void C_TurbineSplitFlow_Cycle::estimate_od_turbo_operation(double T_mc_in, doubl
 
 // ********************************************************************************** PUBLIC Methods defined outside of any class
 
-double nlopt_optimize_totalUA_func(const std::vector<double>& x, std::vector<double>& grad, void* data)
+double nlopt_tsf_optimize_totalUA_func(const std::vector<double>& x, std::vector<double>& grad, void* data)
 {
     return 0;
 }
 
-double nlopt_optimize_par_func(const std::vector<double>& x, std::vector<double>& grad, void* data)
+double nlopt_tsf_optimize_par_func(const std::vector<double>& x, std::vector<double>& grad, void* data)
 {
     return 0;
 }
 
-double sigmoid(const double val)
-{
-    return 1.0 / (1.0 + std::exp(-1.0 * val));
-}
-
-double logit(const double val)
-{
-    return std::log(val / (1.0 - val));
-}

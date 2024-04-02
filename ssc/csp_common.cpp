@@ -819,6 +819,11 @@ var_info vtab_sco2_design[] = {
     { SSC_INPUT,  SSC_NUMBER,  "deltaT_bypass",        "sco2 Bypass Outlet Temp - HTR_HP_OUT Temp",             "C",          "",    "System Design",      "cycle_config=3",     "",       "" },
     { SSC_INPUT,  SSC_NUMBER,  "set_HTF_mdot",         "For HTR Bypass ONLY, 0 = calculate HTF mdot (need to set dT_PHX_cold_approach), > 0 = HTF mdot kg/s",   "kg/s",       "",    "System Design",      "?=0",     "",       "" },
 
+    // Turbine Split Flow Design
+    { SSC_INPUT,  SSC_NUMBER,  "is_turbine_split_ok",  "1 = Yes, 0 = No Second Turbine, < 0 = fix split_frac to abs(input)","",  "",    "",      "cycle_config=4",   "",       "" },
+    { SSC_INPUT,  SSC_NUMBER,  "eta_isen_t2",          "Design secondary turbine isentropic efficiency (TSF only)",    "-",  "",    "",        "cycle_config=4",     "",       "" },
+
+
 
     // DEBUG
     //{ SSC_OUTPUT,  SSC_STRING,  "debug_string",        "output string used for debug",              "C",          "",    "System Design",      "cycle_config=3",     "",       "" },
