@@ -53,7 +53,7 @@ private:
                         powerCurveRPM;
     // vector that stores the optional coefficient of thrust curve input
     // set to a default value of length 1 to mean that it's not assigned, and check for that length before using it
-    std::vector<double> ctCurve = { 0. };
+    std::vector<double> ctCurve;
 	double cutInSpeed;
 	double previousAirDensity;
 public:
@@ -71,6 +71,7 @@ public:
 		hubHeight = -999;
 		rotorDiameter = -999;
         previousAirDensity = physics::AIR_DENSITY_SEA_LEVEL;
+        ctCurve = { 0.0 };
 	}
 	bool setPowerCurve(std::vector<double> windSpeeds, std::vector<double> powerOutput);
     bool setCtCurve(std::vector<double> thrustCoeffCurve);
