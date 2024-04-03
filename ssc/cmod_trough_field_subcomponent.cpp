@@ -184,6 +184,13 @@ static var_info _cm_vtab_trough_field_subcomponent[] = {
     { SSC_INPUT,        SSC_NUMBER,      "non_solar_field_land_area_multiplier", "non_solar_field_land_area_multiplier",                                  "-",            "",               "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "trough_loop_control",                 "trough_loop_control",                                                    "-",            "",               "controller",     "*",                       "",                      "" },
 
+    // Optional Component Initialization (state at start of first timestep)
+    // Trough field
+    { SSC_INPUT,        SSC_NUMBER,      "rec_op_mode_initial",       "Initial receiver operating mode 0: off, 1: startup, 2: on",                        "-",            "",               "System Control", "",                        "",                      "SIMULATION_PARAMETER" },
+    { SSC_INPUT,        SSC_NUMBER,      "defocus_initial",           "Initial receiver defocus",                                                         "-",            "",               "System Control", "",                        "",                      "SIMULATION_PARAMETER" },
+    { SSC_INPUT,        SSC_NUMBER,      "T_in_loop_initial",         "Initial loop inlet, cold header and cold runner fluid temperature",                "-",            "",               "System Control", "",                        "",                      "SIMULATION_PARAMETER" },
+    { SSC_INPUT,        SSC_NUMBER,      "T_out_loop_initial",        "Initial loop outlet, hot header and hot runner fluid temperature",                 "-",            "",               "System Control", "",                        "",                      "SIMULATION_PARAMETER" },
+    { SSC_INPUT,        SSC_ARRAY,       "T_out_scas_initial",        "Initial SCA outlet temperatures",                                                  "-",            "",               "System Control", "",                        "",                      "SIMULATION_PARAMETER" },
 
 
 
@@ -415,6 +422,26 @@ public:
                 }
                 double T_startup = max(T_startup_min, 0.67 * T_loop_in_des + 0.33 * T_loop_out_des); //[C]
                 c_trough.m_T_startup = T_startup;                           //[C] The required temperature (converted to K in init) of the system before the power block can be switched on
+
+                // Check initialization variables
+                if (is_assigned("rec_op_mode_initial")) {
+                    c_trough.m_operating_mode_initial = (C_csp_collector_receiver::E_csp_cr_modes)as_integer("rec_op_mode_initial");
+                }
+                if (is_assigned("defocus_initial")) {
+                    c_trough.m_defocus_initial = as_integer("defocus_initial");
+                }
+                if (is_assigned("T_in_loop_initial")) {
+                    c_trough.m_T_in_loop_initial = as_double("T_in_loop_initial");
+                }
+                if (is_assigned("T_out_loop_initial")) {
+                    c_trough.m_T_out_loop_initial = as_double("T_out_loop_initial");
+                }
+                if (is_assigned("T_out_scas_initial")) {
+                    size_t n_T_out_scas_last_initial = -1;
+                    ssc_number_t* T_out_scas_last_initial = as_array("T_out_scas_initial", &n_T_out_scas_last_initial);
+                    std::copy(T_out_scas_last_initial, T_out_scas_last_initial + n_T_out_scas_last_initial, back_inserter(c_trough.m_T_out_scas_last_initial));
+                }
+
 
                 c_trough.m_m_dot_htfmin = as_double("m_dot_htfmin");        //[kg/s] Minimum loop HTF flow rate
                 c_trough.m_m_dot_htfmax = as_double("m_dot_htfmax");        //[kg/s] Maximum loop HTF flow rate
