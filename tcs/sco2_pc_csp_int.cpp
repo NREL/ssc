@@ -201,7 +201,7 @@ void C_sco2_phx_air_cooler::design_core()
 	}
     else if (ms_des_par.m_cycle_config == 4)
     {
-        std::unique_ptr<C_TurbineSplitFlow_Cycle> c_bp_cycle = std::unique_ptr<C_TurbineSplitFlow_Cycle>(new C_TurbineSplitFlow_Cycle(
+        std::unique_ptr<C_TurbineSplitFlow_Cycle> c_tsf_cycle = std::unique_ptr<C_TurbineSplitFlow_Cycle>(new C_TurbineSplitFlow_Cycle(
             turbo_gen_motor_config,
             eta_generator,
             T_mc_in,
@@ -212,7 +212,8 @@ void C_sco2_phx_air_cooler::design_core()
             ms_des_par.m_LTR_N_sub_hxrs, ms_des_par.m_HTR_N_sub_hxrs,
             ms_des_par.m_eta_mc, ms_des_par.m_mc_comp_type,
             ms_des_par.m_eta_rc,
-            ms_des_par.m_eta_t, ms_des_par.m_N_turbine,
+            ms_des_par.m_eta_t, ms_des_par.m_eta_t2,
+            ms_des_par.m_N_turbine,
             ms_des_par.m_frac_fan_power, ms_des_par.m_eta_fan, ms_des_par.m_deltaP_cooler_frac,
             ms_des_par.m_N_nodes_pass,
             ms_des_par.m_T_amb_des, ms_des_par.m_elevation));
@@ -220,7 +221,7 @@ void C_sco2_phx_air_cooler::design_core()
         s_cycle_config = "turbine split flow";
 
 
-        mpc_sco2_cycle = std::move(c_bp_cycle);
+        mpc_sco2_cycle = std::move(c_tsf_cycle);
     }
     else
     {
@@ -361,6 +362,7 @@ void C_sco2_phx_air_cooler::design_core()
 
 		des_params.m_is_recomp_ok = ms_des_par.m_is_recomp_ok;
         des_params.m_is_bypass_ok = ms_des_par.m_is_bypass_ok;
+        des_params.m_is_turbinesplit_ok = ms_des_par.m_is_turbine_split_ok;
 
 		auto_err_code = mpc_sco2_cycle->auto_opt_design(des_params);
 	}

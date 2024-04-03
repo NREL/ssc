@@ -820,7 +820,7 @@ var_info vtab_sco2_design[] = {
     { SSC_INPUT,  SSC_NUMBER,  "set_HTF_mdot",         "For HTR Bypass ONLY, 0 = calculate HTF mdot (need to set dT_PHX_cold_approach), > 0 = HTF mdot kg/s",   "kg/s",       "",    "System Design",      "?=0",     "",       "" },
 
     // Turbine Split Flow Design
-    { SSC_INPUT,  SSC_NUMBER,  "is_turbine_split_ok",  "1 = Yes, 0 = No Second Turbine, < 0 = fix split_frac to abs(input)","",  "",    "",      "cycle_config=4",   "",       "" },
+    { SSC_INPUT,  SSC_NUMBER,  "is_turbine_split_ok",  "1 = Yes, 0 = No Second Turbine, < 0 = fix split_frac to abs(input)","",  "",    "",      "?=1",   "",       "" },
     { SSC_INPUT,  SSC_NUMBER,  "eta_isen_t2",          "Design secondary turbine isentropic efficiency (TSF only)",    "-",  "",    "",        "cycle_config=4",     "",       "" },
 
 
@@ -1099,6 +1099,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 
     s_sco2_des_par.m_is_recomp_ok = cm->as_double("is_recomp_ok");
     s_sco2_des_par.m_is_bypass_ok = cm->as_double("is_bypass_ok");
+    s_sco2_des_par.m_is_turbine_split_ok = cm->as_double("is_turbine_split_ok");
 
 	s_sco2_des_par.m_P_high_limit = cm->as_double("P_high_limit")*1000.0;		//[kPa], convert from MPa
 	s_sco2_des_par.m_fixed_P_mc_out = cm->as_integer("is_P_high_fixed");		//[-]
@@ -1271,6 +1272,15 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
         //s_sco2_des_par.m_phx_dt_cold_approach = cm->as_double("dT_PHX_cold_approach"); // [delta C]
     }
     
+    // Turbine Split Flow Configuration Paramters
+    if (s_sco2_des_par.m_cycle_config == 4)
+    {
+        s_sco2_des_par.m_eta_t2 = cm->as_double("eta_isen_t2");
+    }
+    else
+    {
+        s_sco2_des_par.m_eta_t2 = s_sco2_des_par.m_eta_t;
+    }
 
 	// For try/catch below
 	int out_type = -1;

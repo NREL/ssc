@@ -297,6 +297,7 @@ void C_TurbineSplitFlow_Cycle::auto_opt_design_core(int& error_code)
         core_inputs.m_DP_PHX = m_DP_PHX;                            // Comes from constructor (constant)
         core_inputs.m_eta_mc = m_eta_mc;                            // Comes from constructor (constant)
         core_inputs.m_eta_t = m_eta_t;                              // Comes from constructor (constant)
+        core_inputs.m_eta_t2 = m_eta_t2;                            // Comes from constructor (constant)
         core_inputs.m_eta_rc = m_eta_rc;                            // Comes from constructor (constant)
         core_inputs.m_eta_generator = m_eta_generator;              // Comes from constructor (constant)
         core_inputs.m_frac_fan_power = m_frac_fan_power;            // Comes from constructor (constant)
@@ -309,13 +310,6 @@ void C_TurbineSplitFlow_Cycle::auto_opt_design_core(int& error_code)
         core_inputs.m_N_turbine = m_N_turbine;                      // Comes from constructor (constant)
 
         core_inputs.m_rc_comp_model_code = C_comp__psi_eta_vs_phi::E_snl_radial_via_Dyreby; // Constant
-
-        // From special bypass fraction function (should remove)
-        core_inputs.m_dT_BP = m_dT_BP;                              // Comes from bp par function (constant)
-        core_inputs.m_set_HTF_mdot = m_set_HTF_mdot;                // Comes from bp par function (constant)
-        core_inputs.m_cp_HTF = m_cp_HTF;                            // Comes from bp par function (constant)
-        core_inputs.m_T_HTF_PHX_inlet = m_T_HTF_PHX_inlet;          // Comes from bp par function (constant)
-        core_inputs.m_HTF_PHX_cold_approach_input = m_HTF_PHX_cold_approach;    // Comes from bp par function (constant)
 
 
         // Handle design variables (check if fixed or free)

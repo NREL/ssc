@@ -94,12 +94,14 @@ public:
         double m_eta_rc;					//[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
 		double m_eta_pc;					//[-] design-point efficiency of the precompressor; isentropic if positive, polytropic if negative
 		double m_eta_t;						//[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
-		double m_P_high_limit;				//[kPa] maximum allowable pressure in cycle
+        double m_eta_t2;                    //[-] design-point efficiency of the secondary turbine (TSF ONLY); isentropic if positive, polytropic if negative
+        double m_P_high_limit;				//[kPa] maximum allowable pressure in cycle
 		double m_des_tol;				    //[-] Design point convergence tolerance
 		double m_des_opt_tol;				//[-] Optimization tolerance
 		double m_N_turbine;					//[rpm] Turbine shaft speed (negative values link turbine to compressor)
 		double m_is_recomp_ok;				//[-] 1 = Yes, 0 = simple cycle only, < 0 = fix f_recomp to abs(input)
         double m_is_bypass_ok;              //[-] 1 = Yes, 0 = no bypass, < 0 = fix bp_frac to abs(input)
+        double m_is_turbine_split_ok;       //[-] 1 = Yes, 0 = No Second Turbine, < 0 = fix split_frac to abs(input)
 
 		int m_des_objective_type;			//[2] = min phx deltat then max eta, [else] max eta
 		double m_min_phx_deltaT;			//[C]
@@ -164,9 +166,9 @@ public:
                 m_LTR_UA = m_LTR_min_dT = m_LTR_eff_target = m_LTR_eff_max =
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max =
 	
-				m_eta_mc = m_eta_rc = m_eta_pc = m_eta_t =
+				m_eta_mc = m_eta_rc = m_eta_pc = m_eta_t = m_eta_t2 =
 				m_P_high_limit = m_des_tol = m_des_opt_tol = m_N_turbine =
-                m_is_recomp_ok = 
+                m_is_recomp_ok = m_is_turbine_split_ok =
 	
 				m_PR_HP_to_LP_guess = m_f_PR_HP_to_IP_guess =
 	

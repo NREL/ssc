@@ -85,30 +85,24 @@ public:
         // Air cooler parameters
         bool m_is_des_air_cooler;		//[-] False will skip physical air cooler design. UA will not be available for cost models.
 
-
-        // Added
         double m_W_dot_net_design;                  //[kWe] Target net cycle power
         double m_T_mc_in;                           //[K] Compressor inlet temperature
         double m_T_t_in;			                //[K] Turbine inlet temperature
-        double m_dT_BP;                             //[delta K/C] BYPASS_OUT - HTR_HP_OUT
         std::vector<double> m_DP_LTR;		        //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
         std::vector<double> m_DP_HTR;		        //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
         std::vector<double> m_DP_PC_main;	        //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
         std::vector<double> m_DP_PHX;		        //(cold, hot) positive values are absolute [kPa], negative values are relative (-)
         double m_eta_mc;			                //[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
         double m_eta_t;				                //[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
+        double m_eta_t2;                            //[-] design-point efficiency of the secondary turbine; isentropic if positive, polytropic if negative
         double m_eta_rc;		                    //[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
         double m_eta_generator;                     //[-] Mechanical-to-electrical efficiency of generator
         double m_frac_fan_power;                    //[-] Fraction of total cycle power 'S_des_par_cycle_dep.m_W_dot_fan_des' consumed by air fan
-        double m_set_HTF_mdot;                      //[kg/s] > 0 set HTF mass flow, <= 0 use bypass approach temp to calculate HTF mdot
-        double m_cp_HTF;                            //[kJ/kg K] HTF specific heat
-        double m_T_HTF_PHX_inlet;                   //[K] HTF Inlet Temperature
         double m_eta_fan;                           //[-] Fan isentropic efficiency
         double m_deltaP_cooler_frac;                //[-] Fraction of high side (of cycle, i.e. comp outlet) pressure that is allowed as pressure drop to design the ACC
         double m_T_amb_des;		                    //[K] Design point ambient temperature
         double m_elevation;			                //[m] Elevation (used to calculate ambient pressure)
         int m_N_nodes_pass;                         //[-] Number of nodes per pass
-        double m_HTF_PHX_cold_approach_input;       //[delta K] PHX cold approach temperature. Only needed if m_set_HTF_mdot < 0 
         int m_mc_comp_model_code;                   // Main compressor model code
         int m_rc_comp_model_code;                   // Recompressor model code
         int m_N_turbine;                            //[rpm] Turbine rpm
@@ -126,18 +120,14 @@ public:
                 m_T_t_in =
                 m_eta_mc =
                 m_eta_t =
+                m_eta_t2 = 
                 m_eta_rc =
                 m_eta_generator =
                 m_frac_fan_power =
-                m_set_HTF_mdot =
-                m_cp_HTF =
-                m_T_HTF_PHX_inlet =
                 m_eta_fan =
                 m_deltaP_cooler_frac =
                 m_T_amb_des =
                 m_elevation =
-                m_dT_BP =
-                m_HTF_PHX_cold_approach_input =
                 std::numeric_limits<double>::quiet_NaN();
 
             m_N_nodes_pass = 0;
@@ -319,16 +309,9 @@ private:
 
     int m_opt_iteration_count;          // Counter of bypass iterations
 
-    // Bypass Specific HTF variables
-    int m_T_target_is_HTF;              // Target Temperature is HTF (1) or cold sco2 at BP
-    double m_T_target;                  // [K] Target temperature (either HTF or sco2)
-    double m_T_HTF_PHX_inlet;           // [K] HTF Primary Heat Exchanger Inlet Temperature
-    double m_set_HTF_mdot;              // [kg/s] [0] calculate HTF mdot (need to set dT_PHX_cold_approach) [>0] mdot
-    double m_HTF_PHX_cold_approach;     // [K] PHX cold approach temperature (need if m_set_HTF_mdot == 0)
-    double m_dT_BP;                     // [K] Temperature difference at second mixer inlet
-    double m_cp_HTF;                    // [kJ/kg K] HTF specific heat
-    bool m_is_bp_par_set;               // Are bp parameters set
-
+    // TSF specific parameters
+    double m_eta_t2;
+    
     // Optimal htrbp core class (contains all results and component data)
     C_sco2_tsf_core m_optimal_tsf_core;
 
@@ -355,7 +338,8 @@ public:
         int LTR_N_sub_hxrs, int HTR_N_sub_hxrs,
         double eta_mc, int mc_comp_model_code,
         double eta_rc,
-        double eta_t, double N_turbine,
+        double eta_t, double eta_t2,
+        double N_turbine,
         double frac_fan_power, double eta_fan, double deltaP_cooler_frac,
         int N_nodes_pass,
         double T_amb_des, double elevation) :
@@ -372,35 +356,13 @@ public:
             eta_t, N_turbine,
             frac_fan_power, eta_fan, deltaP_cooler_frac,
             N_nodes_pass,
-            T_amb_des, elevation)
+            T_amb_des, elevation),
+        m_eta_t2(eta_t2)
     {
-        m_T_target = m_T_HTF_PHX_inlet = m_set_HTF_mdot
-            = m_HTF_PHX_cold_approach = m_dT_BP
-            = m_cp_HTF 
-            = std::numeric_limits<double>::quiet_NaN();
-
-        m_T_target_is_HTF = -1;
         m_opt_iteration_count = 0;
-
-        m_is_bp_par_set = false;
     }
 
     ~C_TurbineSplitFlow_Cycle() {};
-
-    // Set Bypass Specific Parameters
-    void set_bp_par(double T_htf_phx_in, double T_target, double cp_htf, double dT_bp,
-        double htf_phx_cold_approach, double set_HTF_mdot, int T_target_is_HTF)
-    {
-        m_T_HTF_PHX_inlet = T_htf_phx_in;  // K
-        m_T_target = T_target; // K
-        m_T_target_is_HTF = T_target_is_HTF;
-        m_cp_HTF = cp_htf;  // kJ/kg K
-        m_dT_BP = dT_bp;
-        m_HTF_PHX_cold_approach = htf_phx_cold_approach;
-        m_set_HTF_mdot = set_HTF_mdot;
-
-        m_is_bp_par_set = true;
-    }
 
     // Overridden - Optimize Cycle (fixed total UA)
     int auto_opt_design(S_auto_opt_design_parameters& auto_opt_des_par_in);
