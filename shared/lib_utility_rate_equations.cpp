@@ -1352,6 +1352,7 @@ void forecast_setup::setup(rate_data* rate, std::vector<double>& P_pv_ac, std::v
     }
     for (size_t idx = 0; idx < num_recs && idx < array_size; idx++)
     {
+        size_t year_one_index = util::yearOneIndex(1.0 / _steps_per_hour, idx);
         double grid_power = P_pv_ac[idx] - P_load_ac[idx];
 
         gross_load_during_month += P_load_ac[idx] * _dt_hour;
@@ -1367,7 +1368,7 @@ void forecast_setup::setup(rate_data* rate, std::vector<double>& P_pv_ac, std::v
         }
 
         if (rate->dc_enabled) {
-            int dc_tou_period = rate->get_dc_tou_row(hour_of_year + step, curr_month - 1);
+            int dc_tou_period = rate->get_dc_tou_row(year_one_index, curr_month - 1);
             size_t month_idx = year * 12 + (curr_month - 1);
             double peak = monthly_peaks.at(month_idx, dc_tou_period) - peak_offset; // Peak for dispatch calcs in battery: peak minus battery capacity
             if (-1.0 * grid_power > peak) {

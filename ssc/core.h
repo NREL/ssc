@@ -185,7 +185,8 @@ public:
 	void clear_log();
 	log_item *log(int index);
 	var_info *info(int index);
-
+	bool has_info(const std::string &name);
+	
     virtual bool compute( handler_interface *handler, var_table *data );
 
 
@@ -204,7 +205,7 @@ public:
 	virtual bool on_extproc_output( const std::string & ) { return false; }
 
     void add_var_info(var_info vi[]);
-
+    void add_var_info(var_info* vi[]);
 
 protected:
 

@@ -62,7 +62,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 pvsnowmodel::pvsnowmodel()
 {
 	mSlope = -80;
-	sSlope = (float)1.97;
+	//sSlope = (float)1.97;
 	deltaThreshold = 1.00;
 	depthThreshold = 1.00;
 	previousDepth = 0;
@@ -76,11 +76,11 @@ pvsnowmodel::pvsnowmodel()
 
 }
 
-bool pvsnowmodel::setup(int nmody_in, float baseTilt_in, bool limitTilt){
+bool pvsnowmodel::setup(int nmody_in, float baseTilt_in, float snow_slide_coeff, bool limitTilt){
 
 	nmody = nmody_in;
 	baseTilt = baseTilt_in;
-
+    sSlope = snow_slide_coeff;
 	if(limitTilt && (baseTilt>45 || baseTilt < 10)){
 		good = true;
 		msg = util::format("The snow model is designed to work for PV arrays with a tilt angle between 10 and 45 degrees, but will generate results for tilt angles outside this range. The system you are modeling includes a subarray tilt angle of %f degrees.", baseTilt);
