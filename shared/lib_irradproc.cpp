@@ -2193,9 +2193,7 @@ int irrad::calc() {
     }
 
     //clearsky
-    if (enableSubhourlyClipping) {
-        ineichen(clearskyIrradiance, RTOD * sunAnglesRadians[1], month, day, pressure * 100.0, 1.0, elevation, 0, true);
-    }
+    ineichen(clearskyIrradiance, RTOD * sunAnglesRadians[1], month, day, pressure * 100.0, 1.0, elevation, 0, true);
 
 
     planeOfArrayIrradianceFront[0] = planeOfArrayIrradianceFront[1] = planeOfArrayIrradianceFront[2] = 0;

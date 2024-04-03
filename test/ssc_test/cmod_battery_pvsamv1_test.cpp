@@ -1144,7 +1144,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelGridOu
     ssc_number_t expectedEnergy = 8521.00;
     ssc_number_t expectedBatteryChargeEnergy = 3290.77;
     ssc_number_t expectedBatteryDischargeEnergy = 2974.91;
-    ssc_number_t expectedCritLoadUnmet = 485.18;
+    ssc_number_t expectedCritLoadUnmet = 488.14;
 
     ssc_number_t peakKwCharge = -3.4;
     ssc_number_t peakKwDischarge = 1.964;
