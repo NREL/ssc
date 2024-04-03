@@ -153,15 +153,6 @@ private:
     // Call variables
     double m_od_control;            //[-]
 
-    // ************************************
-    // State variables
-    // m_mode_prev and m_mode are members of parent class
-    double m_E_su_prev;         //[W-hr] Startup energy required at end of previous timestep
-    double m_E_su;              //[W-hr] Startup energy required calculated at end of current timestep
-
-    double m_t_su;          //[hr] Startup time requirement at end of previous timestep
-    double m_t_su_prev;     //[hr] Startup time requirement calculated at end of current timestep
-
 public:
 
 	// Methods

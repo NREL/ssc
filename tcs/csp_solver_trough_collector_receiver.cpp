@@ -73,6 +73,11 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_trough_collector_receiver::E_W_DOT_SCA_TRACK, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_trough_collector_receiver::E_W_DOT_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
+    {C_csp_trough_collector_receiver::E_REC_OP_MODE_FINAL, C_csp_reported_outputs::TS_LAST},
+    {C_csp_trough_collector_receiver::E_DEFOCUS_FINAL, C_csp_reported_outputs::TS_LAST},
+    {C_csp_trough_collector_receiver::E_T_IN_LOOP_FINAL, C_csp_reported_outputs::TS_LAST},
+    {C_csp_trough_collector_receiver::E_T_OUT_LOOP_FINAL, C_csp_reported_outputs::TS_LAST},
+
 	csp_info_invalid
 };
 
@@ -242,6 +247,10 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_AnnulusGasMat.fill(NULL);
 	m_AbsorberPropMat.fill(NULL);
 
+    m_operating_mode_initial = C_csp_collector_receiver::OFF;
+    m_defocus_initial = std::numeric_limits<double>::quiet_NaN();
+    m_T_in_loop_initial = std::numeric_limits<double>::quiet_NaN();
+    m_T_out_loop_initial = std::numeric_limits<double>::quiet_NaN();
 }
 
 C_csp_trough_collector_receiver::~C_csp_trough_collector_receiver()
@@ -489,8 +498,15 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
         m_is_using_input_gen = is_using_input_gen_orig;
     }
 
-	// Set previous operating mode
-	m_operating_mode_converged = C_csp_collector_receiver::OFF;					//[-] 0 = requires startup, 1 = starting up, 2 = running
+    // Set previous operating mode
+    m_operating_mode = m_operating_mode_initial;
+    m_operating_mode_converged = m_operating_mode_initial;
+    m_defocus_old = m_defocus_initial;
+
+    // Set initial state if configured
+    if (isfinite(m_T_in_loop_initial) && isfinite(m_T_out_loop_initial) && !m_T_out_scas_last_initial.empty()) {
+        set_state(m_T_in_loop_initial, m_T_out_loop_initial, m_T_out_scas_last_initial);
+    }
 
 	return;
 }
@@ -840,6 +856,11 @@ double C_csp_trough_collector_receiver::get_tracking_power()
         return std::numeric_limits<double>::quiet_NaN();
 
     return m_SCA_drives_elec * 1.e-6 * m_nSCA * m_nLoops;     //MWe
+}
+
+std::vector<double> C_csp_trough_collector_receiver::get_scas_outlet_temps()
+{
+    return m_T_htf_out_t_end_converged;
 }
 
 double C_csp_trough_collector_receiver::get_col_startup_power()
@@ -2861,7 +2882,8 @@ void C_csp_trough_collector_receiver::estimates(const C_csp_weatherreader::S_out
 	{
 		if( weather.m_beam > 1.0 )
 		{
-			est_out.m_q_startup_avail = 1.0;	//[MWt] Trough is recirculating, so going into startup isn't significantly different than OFF
+            double opt_eff_approx = calculate_optical_efficiency(weather, sim_info);
+            est_out.m_q_startup_avail = max(get_collector_area() * opt_eff_approx * weather.m_beam * 1e-6, 1.0); //[MWt] Trough is recirculating, so going into startup isn't significantly different than OFF
 		}
 		else
 		{
@@ -2873,6 +2895,26 @@ void C_csp_trough_collector_receiver::estimates(const C_csp_weatherreader::S_out
 	}
 	
 	return;
+}
+
+void C_csp_trough_collector_receiver::set_state(double T_in_loop, double T_out_loop, std::vector<double> T_out_scas)
+{
+    std::size_t N_scas_trough = m_T_htf_out_t_end_converged.size();
+    std::size_t N_scas_state = T_out_scas.size();
+    if (N_scas_trough != N_scas_state) {
+        throw "Incorrect trough state array length.";
+    }
+
+    // Set converged values so reset_last_temps() propagates the temps in time
+    m_T_sys_c_t_end_converged = m_T_sys_c_t_end_last = T_in_loop;       // this ends up setting m_T_sys_c_t_end_last
+    m_T_sys_h_t_end_converged = m_T_sys_h_t_end_last = T_out_loop;      // this ends up setting m_T_sys_h_t_end_last
+
+    // SCA temperatures - these end up setting m_T_htf_out_t_end_last[i]
+    for (std::vector<int>::size_type i = 0; i != T_out_scas.size(); i++) {
+        m_T_htf_out_t_end_converged[i] = T_out_scas[i];
+        m_T_htf_out_t_end[i] = T_out_scas[i];
+        m_T_htf_out_t_int[i] = T_out_scas[i];
+    }
 }
 
 void C_csp_trough_collector_receiver::update_last_temps()
@@ -4017,6 +4059,13 @@ void C_csp_trough_collector_receiver::converged()
 
 	// Reset the optical efficiency member data
 	loop_optical_eta_off();
+
+    // Set reported converged values
+    mc_reported_outputs.value(E_REC_OP_MODE_FINAL, m_operating_mode_converged);
+    mc_reported_outputs.value(E_DEFOCUS_FINAL, m_defocus_old);
+    mc_reported_outputs.value(E_T_IN_LOOP_FINAL, m_T_sys_c_t_end_converged);
+    mc_reported_outputs.value(E_T_OUT_LOOP_FINAL, m_T_sys_h_t_end_converged);
+    // NOTE: m_T_htf_out_t_end_converged is returned in the compute module;
 
 	mc_reported_outputs.set_timestep_outputs();
 
