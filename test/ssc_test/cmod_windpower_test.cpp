@@ -188,6 +188,33 @@ TEST_F(CMWindPowerIntegration, WakeLossMultiplier_cmod_windpower)
 
 }
 
+/// Test using the optional coefficient of thrust curve input for the park model
+TEST_F(CMWindPowerIntegration, CtCurve_cmod_windpower)
+{
+    //set the park wake model and get original wake loss
+    ssc_data_set_number(data, "wind_farm_wake_model", 1); 
+    compute();
+    ssc_number_t wakeLoss1, wakeLoss2;
+    ssc_data_get_number(data, "annual_wake_loss_internal_percent", &wakeLoss1); //get the wake loss without setting Ct curve
+
+    // use a bogus ct curve just to test that it does something
+    double ctc[161];
+    for (int i = 0; i < 161; i++)
+        ctc[i] = 0.5;
+    var_data ct = var_data(ctc, 161, 1);
+    auto* vt = static_cast<var_table*>(data);
+    vt->assign("wind_turbine_ct_curve", ct);
+
+    // get new wake loss
+    compute();
+    ssc_data_get_number(data, "annual_wake_loss_internal_percent", &wakeLoss2); //get the wake loss without setting Ct curve
+
+    ssc_number_t difference = wakeLoss2 - wakeLoss1;
+    EXPECT_NEAR(wakeLoss1, 4.148, 0.01) << "Wake Loss 1";
+    EXPECT_NEAR(wakeLoss2, 10.0, 0.5) << "Wake Loss 2";
+    EXPECT_NEAR(difference, 10.0, 0.5) << "Difference";
+}
+
 /// Using Interpolated Subhourly Wind Data
 TEST_F(CMWindPowerIntegration, UsingInterpolatedSubhourly_cmod_windpower) {
     // Using AR Northwestern-Flat Lands
