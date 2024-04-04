@@ -1007,7 +1007,7 @@ var_info vtab_utility_rate_common[] = {
     { SSC_INPUT,        SSC_NUMBER,     "en_electricity_rates",     "Optionally enable/disable electricity_rate",  "years",    "",                    "Electricity Rates",         "",                 "INTEGER,MIN=0,MAX=1",          "SIMULATION_PARAMETER" }, // Required for battery to use retail rates
 
     // 24.04.04 twn added to access setup()
-    { SSC_INPUT, SSC_NUMBER, "inflation_rate", "Inflation rate", "%", "", "Lifetime", "*", "MIN=-99", "SIMULATION_PARAMETER" },
+    { SSC_INPUT, SSC_NUMBER, "inflation_rate", "Inflation rate", "%", "", "Lifetime", "", "MIN=-99", "SIMULATION_PARAMETER" },
 
     // -----------------------------
 
