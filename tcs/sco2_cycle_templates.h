@@ -27,6 +27,7 @@ public:
 		PC_OUT,			// Precompressor outlet (partial cooling cycle)
         BYPASS_OUT,     // Bypass outlet (htr bypass cycle)
         MIXER2_OUT,     // Mixer 2 Outlet (htr bypass cycle)
+        TURB2_OUT,      // Secondary Turbine Outlet (turbine split flow cycle)
 
 		END_SCO2_STATES
 	};

@@ -78,8 +78,8 @@ public:
         NS_HX_counterflow_eqs::E_UA_target_type m_HTR_od_UA_target_type;
         int m_HTR_N_sub_hxrs;               //[-] Number of sub-hxs to use in hx model
 
-        double m_recomp_frac;				//[-] Fraction of flow that bypasses the precooler and the main compressor at the design point
-        double m_bypass_frac;                   //[-] Fraction of flow that bypasses the HTR and passes through the Bypass HX 
+        double m_split_frac;                // [-] Fraction of flow that goes to secondary turbine (0 = no secondary turbine)
+
         double m_des_tol;						//[-] Convergence tolerance
 
         // Air cooler parameters
@@ -95,7 +95,6 @@ public:
         double m_eta_mc;			                //[-] design-point efficiency of the main compressor; isentropic if positive, polytropic if negative
         double m_eta_t;				                //[-] design-point efficiency of the turbine; isentropic if positive, polytropic if negative
         double m_eta_t2;                            //[-] design-point efficiency of the secondary turbine; isentropic if positive, polytropic if negative
-        double m_eta_rc;		                    //[-] design-point efficiency of the recompressor; isentropic if positive, polytropic if negative
         double m_eta_generator;                     //[-] Mechanical-to-electrical efficiency of generator
         double m_frac_fan_power;                    //[-] Fraction of total cycle power 'S_des_par_cycle_dep.m_W_dot_fan_des' consumed by air fan
         double m_eta_fan;                           //[-] Fan isentropic efficiency
@@ -104,7 +103,6 @@ public:
         double m_elevation;			                //[m] Elevation (used to calculate ambient pressure)
         int m_N_nodes_pass;                         //[-] Number of nodes per pass
         int m_mc_comp_model_code;                   // Main compressor model code
-        int m_rc_comp_model_code;                   // Recompressor model code
         int m_N_turbine;                            //[rpm] Turbine rpm
 
         S_sco2_tsf_in()
@@ -112,8 +110,7 @@ public:
             m_P_mc_in = m_P_mc_out =
                 m_LTR_UA = m_LTR_min_dT = m_LTR_eff_target = m_LTR_eff_max =
                 m_HTR_UA = m_HTR_min_dT = m_HTR_eff_target = m_HTR_eff_max =
-                m_recomp_frac =
-                m_bypass_frac =
+                m_split_frac =
                 m_des_tol =
                 m_W_dot_net_design =
                 m_T_mc_in =
@@ -121,7 +118,6 @@ public:
                 m_eta_mc =
                 m_eta_t =
                 m_eta_t2 = 
-                m_eta_rc =
                 m_eta_generator =
                 m_frac_fan_power =
                 m_eta_fan =
@@ -134,7 +130,6 @@ public:
             m_LTR_N_sub_hxrs = 0;
             m_HTR_N_sub_hxrs = 0;
             m_mc_comp_model_code = -1;
-            m_rc_comp_model_code = -1;
             m_N_turbine = -1;
 
             // Recuperator design target codes
@@ -156,29 +151,23 @@ public:
     {
         int m_error_code;
         C_turbine m_t;                          // Turbine model
+        C_turbine m_t2;                         // Secondary Turbine model
         C_comp_multi_stage m_mc_ms;             // Main Compressor Model
-        C_comp_multi_stage m_rc_ms;             // Recompressor Model
         C_HeatExchanger m_PHX, m_PC, m_BPX;     // Primary, Cooler, Bypass Heat Exchanger Models
         C_HX_co2_to_co2_CRM mc_LT_recup;        // LTR
         C_HX_co2_to_co2_CRM mc_HT_recup;        // HTR
         C_CO2_to_air_cooler mc_air_cooler;      // Air Cooler
         std::vector<double> m_temp, m_pres, m_enth, m_entr, m_dens;		// thermodynamic states (K, kPa, kJ/kg, kJ/kg-K, kg/m3)
-        double m_w_t, m_w_mc, m_w_rc;                       // [kJ/kg] specific work of turbine, main compressor, recompressor
-        double m_m_dot_t, m_m_dot_mc, m_m_dot_rc;           // [kg/s] sco2 Mass flow in main compressor, recompressor, turbine
-        double m_m_dot_bp, m_m_dot_htr_hp;                  // [kg/s] sco2 Mass flow through bypass, hot side HTR
-        double m_Q_dot_LT, m_Q_dot_HT;                      // [kWt]  Heat Transfer in LTR, HTR
-        double m_W_dot_mc, m_W_dot_rc, m_W_dot_t;           // [kWt] Energy consumed by main compressor, recompressor, produced by turbine
+        double m_w_t, m_w_t2, m_w_mc;                       // [kJ/kg] specific work of turbine, main compressor, recompressor
+        double m_m_dot_t, m_m_dot_t2, m_m_dot_mc;           // [kg/s] sco2 Mass flow in turbine, secondary turbine, and main compressor (total)
+        double m_Q_dot_LT, m_Q_dot_HT;                      // [kWt] Heat Transfer in LTR, HTR
+        double m_W_dot_mc, m_W_dot_t, m_W_dot_t2;            // [kWt] Energy consumed by main compressor, produced by turbine and secondary turbine
         double m_W_dot_net;                                 // [kWt] ACTUAL produced net work in system
         double m_W_dot_air_cooler;                          // [kWe] Energy consumed by air cooler
         double m_Q_dot_air_cooler;                          // [kWt] Heat rejected by air cooler
         double m_Q_dot_LTR_LP, m_Q_dot_LTR_HP, m_Q_dot_HTR_LP, m_Q_dot_HTR_HP;  // kWt Heat change on LTR low pressure, etc...
         double m_Q_dot_total;                               // [kWt] Total heat entering sco2
-        double m_Q_dot_PHX, m_Q_dot_BP;                     // [kWt] Energy exchange in PHX, BPX
-        double m_m_dot_HTF;                                 // [kg/s] HTF mass flow rate
-        double m_T_HTF_PHX_out;                             // [K] HTF PHX outlet temperature
-        double m_HTF_PHX_cold_approach;                     // [delta K/C] PHX cold approach temperature
-        double m_T_HTF_BP_outlet;                           // [K] HTF BPX outlet temperature
-        double m_HTF_BP_cold_approach;                      // [K] BPX cold approach temperature
+        double m_Q_dot_PHX;                                 // [kWt] Energy exchange in PHX, BPX
         double m_eta_thermal;                               // Thermal Efficiency
 
         S_sco2_tsf_out()
@@ -188,16 +177,14 @@ public:
 
         void Init()
         {
-            m_w_t = m_w_mc = m_w_rc
-                = m_m_dot_t = m_m_dot_mc = m_m_dot_rc
-                = m_m_dot_bp = m_m_dot_htr_hp
+            m_w_t = m_w_mc
+                = m_m_dot_t = m_m_dot_t2 = m_m_dot_mc
                 = m_Q_dot_LT = m_Q_dot_HT
-                = m_W_dot_mc = m_W_dot_rc = m_W_dot_t
+                = m_W_dot_mc = m_W_dot_t = m_W_dot_t2
                 = m_W_dot_net = m_W_dot_air_cooler = m_Q_dot_air_cooler
                 = m_Q_dot_LTR_LP = m_Q_dot_LTR_HP = m_Q_dot_HTR_LP = m_Q_dot_HTR_HP
-                = m_Q_dot_total = m_Q_dot_PHX = m_Q_dot_BP
-                = m_m_dot_HTF = m_T_HTF_PHX_out = m_HTF_PHX_cold_approach
-                = m_T_HTF_BP_outlet = m_HTF_BP_cold_approach = m_eta_thermal
+                = m_Q_dot_total = m_Q_dot_PHX
+                = m_eta_thermal
                 = std::numeric_limits<double>::quiet_NaN();
 
             m_error_code = -1;
@@ -213,13 +200,13 @@ public:
 private:
     CO2_state m_co2_props;
 
-    class C_mono_htrbp_core_HTR_des : public C_monotonic_equation
+    class C_mono_htrbp_core_HTR_LTR_des : public C_monotonic_equation
     {
     private:
         C_sco2_tsf_core* m_tsf_cycle;
 
     public:
-        C_mono_htrbp_core_HTR_des(C_sco2_tsf_core* tsf_cycle)
+        C_mono_htrbp_core_HTR_LTR_des(C_sco2_tsf_core* tsf_cycle)
         {
             m_tsf_cycle = tsf_cycle;
         }
