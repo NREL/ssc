@@ -114,8 +114,8 @@ static var_info _cm_vtab_windpower[] = {
     { SSC_OUTPUT , SSC_NUMBER  , "year"                              , "Year"                                     , ""        ,""                                    , "Location"                             , "wind_resource_model_choice=0"                    , ""                                                , "" } ,
 
     // timeseries outputs
-    { SSC_OUTPUT , SSC_ARRAY   , "timeseries_wake_loss_kW"           , "Wake loss at each timestep in kW"         , "kW"      ,""                                    , "Time Series"                          , ""                                                , ""                                                , "" } ,
-    { SSC_OUTPUT , SSC_ARRAY   , "timeseries_wake_loss_percent"      , "Wake loss at each timestep percent"       , "%"       ,""                                    , "Time Series"                          , ""                                                , ""                                                , "" } ,
+    { SSC_OUTPUT , SSC_ARRAY   , "wake_loss_internal_kW"             , "Internal wake loss in kW"                 , "kW"      ,""                                    , "Time Series"                          , ""                                                , ""                                                , "" } ,
+    { SSC_OUTPUT , SSC_ARRAY   , "wake_loss_internal_percent"        , "Internal wake loss percent"               , "%"       ,""                                    , "Time Series"                          , ""                                                , ""                                                , "" } ,
 
     // monthly and annual outputs
 	{ SSC_OUTPUT , SSC_ARRAY  , "monthly_energy"                     , "Monthly Energy Gross"                     , "kWh"     ,""                                    , "Monthly"                              , "*"                                               , "LENGTH=12"                                       , "" } ,
@@ -131,9 +131,9 @@ static var_info _cm_vtab_windpower[] = {
     { SSC_OUTPUT , SSC_NUMBER , "env_losses"                         , "Environmental losses"                     , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
     { SSC_OUTPUT , SSC_NUMBER , "ops_losses"                         , "Operational losses"                       , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
     { SSC_OUTPUT , SSC_NUMBER , "turb_losses"                        , "Turbine losses"                           , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
-    { SSC_OUTPUT , SSC_NUMBER , "annual_internal_wake_loss_percent"  , "Annual internal wake loss percentage"     , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
-    { SSC_OUTPUT , SSC_NUMBER , "annual_internal_wake_loss_kWh"      , "Annual internal wake loss"                , "kWh"     ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
-    { SSC_OUTPUT , SSC_NUMBER , "annual_total_wake_loss_percent"     , "Annual total wake loss percentage"        , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
+    { SSC_OUTPUT , SSC_NUMBER , "annual_wake_loss_internal_percent"  , "Annual internal wake loss percentage"     , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
+    { SSC_OUTPUT , SSC_NUMBER , "annual_wake_loss_internal_kWh"      , "Annual internal wake loss"                , "kWh"     ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
+    { SSC_OUTPUT , SSC_NUMBER , "annual_wake_loss_total_percent"     , "Annual total wake loss percentage"        , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
     { SSC_OUTPUT , SSC_NUMBER , "cutoff_losses"                      , "Low temp and Icing Cutoff losses"         , "%"       ,""                                    , "Annual"                           ,"" , ""                                                , "" } ,
 	var_info_invalid };
 
@@ -266,7 +266,7 @@ void calculate_losses(compute_module *cm, double annual_wake_int_loss_percent) {
     cm->assign("env_losses", env_loss_percent * 100.);
     cm->assign("ops_losses", ops_loss_percent * 100.);
     cm->assign("turb_losses", turb_loss_percent * 100.);
-    cm->assign("annual_total_wake_loss_percent", total_wake_loss_percent * 100.);
+    cm->assign("annual_wake_loss_total_percent", total_wake_loss_percent * 100.);
 }
 
 double get_fixed_losses(compute_module* cm){
@@ -459,9 +459,9 @@ void cm_windpower::exec()
                 double newWakeLoss = wakeLossBeforeMultiplier * wakeLossMultiplier;
                 farmPower = farmPowerGross - newWakeLoss;
             }
-            assign("annual_internal_wake_loss_kWh", var_data((ssc_number_t)(farmPowerGross - farmPower)));
+            assign("annual_wake_loss_internal_kWh", var_data((ssc_number_t)(farmPowerGross - farmPower)));
             annual_wake_int_loss_percent = (1. - farmPower / farmPowerGross) * 100.;
-            assign("annual_internal_wake_loss_percent", var_data((ssc_number_t)annual_wake_int_loss_percent));
+            assign("annual_wake_loss_internal_percent", var_data((ssc_number_t)annual_wake_int_loss_percent));
         }
 
         int nstep = 8760;
@@ -557,8 +557,8 @@ void cm_windpower::exec()
 
 	// allocate output data
 	ssc_number_t *farmpwr = allocate("gen", nstep);
-    ssc_number_t* wakeLosskW = allocate("timeseries_wake_loss_kW", nstep);
-    ssc_number_t* wakeLossPercent = allocate("timeseries_wake_loss_percent", nstep);
+    ssc_number_t* wakeLosskW = allocate("wake_loss_internal_kW", nstep);
+    ssc_number_t* wakeLossPercent = allocate("wake_loss_internal_percent", nstep);
 	ssc_number_t *wspd = allocate("wind_speed", nstep);
 	ssc_number_t *wdir = allocate("wind_direction", nstep);
 	ssc_number_t *air_temp = allocate("temp", nstep);
@@ -717,9 +717,9 @@ void cm_windpower::exec()
 
 	// if internal wake loss is calculated during simulation rather than provided, assign these outputs
 	if (wakeModelChoice != CONSTANTVALUE){
-        assign("annual_internal_wake_loss_kWh", var_data((ssc_number_t)(annual_gross - annual_after_wake_loss)));
+        assign("annual_wake_loss_internal_kWh", var_data((ssc_number_t)(annual_gross - annual_after_wake_loss)));
         annual_wake_int_loss_percent = (1. - annual_after_wake_loss/annual_gross) * 100.;
-        assign("annual_internal_wake_loss_percent", var_data((ssc_number_t)annual_wake_int_loss_percent));
+        assign("annual_wake_loss_internal_percent", var_data((ssc_number_t)annual_wake_int_loss_percent));
 	}
 
 	calculate_p50p90(this);

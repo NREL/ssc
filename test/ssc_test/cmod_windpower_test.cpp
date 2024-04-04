@@ -85,7 +85,7 @@ TEST_F(CMWindPowerIntegration, WakeModelsUsingFile_cmod_windpower) {
     EXPECT_NEAR(monthly_energy, 2.8218e6, e) << "Simple: December";
 
     ssc_number_t wake_loss;
-    ssc_data_get_number(data, "annual_internal_wake_loss_percent", &wake_loss);
+    ssc_data_get_number(data, "annual_wake_loss_internal_percent", &wake_loss);
     EXPECT_NEAR(wake_loss, 1.546, 1e-3) << "Simple: Wake loss";
 
 
@@ -102,7 +102,7 @@ TEST_F(CMWindPowerIntegration, WakeModelsUsingFile_cmod_windpower) {
     monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[11];
     EXPECT_NEAR(monthly_energy, 2.7472e6, e) << "Wasp: Dec";
 
-    ssc_data_get_number(data, "annual_internal_wake_loss_percent", &wake_loss);
+    ssc_data_get_number(data, "annual_wake_loss_internal_percent", &wake_loss);
     EXPECT_NEAR(wake_loss, 4.148, 1e-3) << "Wasp: Wake loss";
 
     // Eddy Viscosity Model
@@ -118,7 +118,7 @@ TEST_F(CMWindPowerIntegration, WakeModelsUsingFile_cmod_windpower) {
     monthly_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[11];
     EXPECT_NEAR(monthly_energy, 2.6398e6, e) << "Eddy: Dec";
 
-    ssc_data_get_number(data, "annual_internal_wake_loss_percent", &wake_loss);
+    ssc_data_get_number(data, "annual_wake_loss_internal_percent", &wake_loss);
     EXPECT_NEAR(wake_loss, 7.895, 1e-3) << "Eddy: Wake loss";
 
     // Constant Loss Model
@@ -132,7 +132,7 @@ TEST_F(CMWindPowerIntegration, WakeModelsUsingFile_cmod_windpower) {
     ssc_data_get_number(data, "annual_gross_energy", &gross);
     EXPECT_NEAR(annual_energy, gross * 0.95, e) << "Constant";
 
-    ssc_data_get_number(data, "annual_total_wake_loss_percent", &wake_loss); //this wake model option doesn't report internal wake loss as an output
+    ssc_data_get_number(data, "annual_wake_loss_total_percent", &wake_loss); //this wake model option doesn't report internal wake loss as an output
     EXPECT_NEAR(wake_loss, 5, 1e-3) << "Constant: Wake loss";
 }
 
@@ -144,10 +144,10 @@ TEST_F(CMWindPowerIntegration, WakeLossMultiplier_cmod_windpower)
     //Simple Wake Model
     ssc_data_set_number(data, "wake_loss_multiplier", 1.0);
     compute();
-    ssc_data_get_number(data, "annual_internal_wake_loss_percent", &withoutMultiplier);
+    ssc_data_get_number(data, "annual_wake_loss_internal_percent", &withoutMultiplier);
     ssc_data_set_number(data, "wake_loss_multiplier", multiplier);
     compute();
-    ssc_data_get_number(data, "annual_internal_wake_loss_percent", &withMultiplier);
+    ssc_data_get_number(data, "annual_wake_loss_internal_percent", &withMultiplier);
     if (withoutMultiplier != 0.)
         EXPECT_NEAR((withMultiplier / withoutMultiplier), multiplier, 0.01) << "Simple Wake Model Multiplier";
 
@@ -155,10 +155,10 @@ TEST_F(CMWindPowerIntegration, WakeLossMultiplier_cmod_windpower)
     ssc_data_set_number(data, "wind_farm_wake_model", 1);
     ssc_data_set_number(data, "wake_loss_multiplier", 1.0);
     compute();
-    ssc_data_get_number(data, "annual_internal_wake_loss_percent", &withoutMultiplier);
+    ssc_data_get_number(data, "annual_wake_loss_internal_percent", &withoutMultiplier);
     ssc_data_set_number(data, "wake_loss_multiplier", multiplier);
     compute();
-    ssc_data_get_number(data, "annual_internal_wake_loss_percent", &withMultiplier);
+    ssc_data_get_number(data, "annual_wake_loss_internal_percent", &withMultiplier);
     if (withoutMultiplier != 0.)
         EXPECT_NEAR((withMultiplier / withoutMultiplier), multiplier, 0.01) << "WASP Wake Model Multiplier";
 
@@ -166,10 +166,10 @@ TEST_F(CMWindPowerIntegration, WakeLossMultiplier_cmod_windpower)
     ssc_data_set_number(data, "wind_farm_wake_model", 2);
     ssc_data_set_number(data, "wake_loss_multiplier", 1.0);
     compute();
-    ssc_data_get_number(data, "annual_internal_wake_loss_percent", &withoutMultiplier);
+    ssc_data_get_number(data, "annual_wake_loss_internal_percent", &withoutMultiplier);
     ssc_data_set_number(data, "wake_loss_multiplier", multiplier);
     compute();
-    ssc_data_get_number(data, "annual_internal_wake_loss_percent", &withMultiplier);
+    ssc_data_get_number(data, "annual_wake_loss_internal_percent", &withMultiplier);
     if (withoutMultiplier != 0.)
         EXPECT_NEAR((withMultiplier / withoutMultiplier), multiplier, 0.01) << "EV Wake Model Multiplier";
 
@@ -178,10 +178,10 @@ TEST_F(CMWindPowerIntegration, WakeLossMultiplier_cmod_windpower)
     ssc_data_set_number(data, "wake_int_loss", 5);
     ssc_data_set_number(data, "wake_loss_multiplier", 1.0);
     compute();
-    ssc_data_get_number(data, "annual_total_wake_loss_percent", &withoutMultiplier);
+    ssc_data_get_number(data, "annual_wake_loss_total_percent", &withoutMultiplier);
     ssc_data_set_number(data, "wake_loss_multiplier", multiplier);
     compute();
-    ssc_data_get_number(data, "annual_total_wake_loss_percent", &withMultiplier);
+    ssc_data_get_number(data, "annual_wake_loss_total_percent", &withMultiplier);
     if (withoutMultiplier != 0.)
         EXPECT_NEAR((withMultiplier / withoutMultiplier), multiplier, 0.01) << "Constant Loss Wake Model Multiplier";
 

@@ -51,6 +51,11 @@ bool windTurbine::setPowerCurve(std::vector<double> windSpeeds, std::vector<doub
 
 bool windTurbine::setCtCurve(std::vector<double> thrustCoeffCurve)
 {
+    if (powerCurveWS.empty())
+    {
+        errDetails = "Power curve must be set before thrust curve.";
+        return 0;
+    }
     if (thrustCoeffCurve.size() != powerCurveWS.size())
     {
         errDetails = "Coefficient of thrust curve must have the same number of values as the power curve wind speeds";
