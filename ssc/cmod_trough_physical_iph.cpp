@@ -52,6 +52,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm>
 #include <iterator>
 
+// for utility rates
+#include "cmod_utilityrate5.h"
+
 // signed/unsigned mismatch
 #pragma warning (disable : 4388)
 
@@ -664,6 +667,9 @@ public:
         add_var_info( _cm_vtab_trough_physical_iph );
         add_var_info( vtab_adjustment_factors );
         add_var_info(vtab_technology_outputs);
+
+        add_var_info(vtab_utility_rate_common); // Required for dispatch w/ utility rates
+
     }
 
     void exec( )
@@ -1272,6 +1278,12 @@ public:
 
                 }
                 else if (csp_financial_model == 5) {    // Commercial
+
+                    bool is_ur_assigned = is_assigned("ur_en_ts_sell_rate");
+
+                    // rate data setup from ~ line 1336 in cmod_battery.cpp
+                    rate_data* util_rate_data = new rate_data();
+                    rate_setup::setup(m_vartab, 8760, 1, *util_rate_data, "cmod_trough_physical_iph");
 
                     // Need to figure out dispatch, but for now, just use something so that annual simulation solves
                     tou_params->mc_pricing.mc_weekdays.resize_fill(12, 24, 1.);
