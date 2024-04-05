@@ -69,6 +69,7 @@ public:
 		double m_m_dot_rc;		//[kg/s]
 		double m_m_dot_pc;		//[kg/s]
 		double m_m_dot_t;		//[kg/s]
+        double m_m_dot_t2;		//[kg/s]
 		double m_recomp_frac;	//[-]
 		double m_UA_LTR;			//[kW/K]
 		double m_UA_HTR;			//[kW/K]
@@ -76,7 +77,9 @@ public:
 		double m_W_dot_rc;		//[kWe]
 		double m_W_dot_pc;		//[kWe]
 		double m_W_dot_t;		//[kWe]
+        double m_W_dot_t2;      //[kWe]
         double m_bypass_frac;       //[-] Bypass Fraction
+        double m_turbine_split_frac;    // [-] Turbine split fraction (TSF only)
 
 		double m_W_dot_cooler_tot;	//[kWe]
 
@@ -86,6 +89,7 @@ public:
 		C_comp_multi_stage::S_des_solved ms_rc_ms_des_solved;
 		C_comp_multi_stage::S_des_solved ms_pc_ms_des_solved;
 		C_turbine::S_design_solved ms_t_des_solved;
+        C_turbine::S_design_solved ms_t2_des_solved;
 		C_HX_counterflow_CRM::S_des_solved ms_LTR_des_solved;
 		C_HX_counterflow_CRM::S_des_solved ms_HTR_des_solved;
 

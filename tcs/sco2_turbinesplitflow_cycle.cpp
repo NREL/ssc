@@ -211,109 +211,66 @@ int C_sco2_tsf_core::solve()
         }
     }
 
-    // Solve Recuperators (iterate HTR_HP_OUT)
+    // Solve HTR_HP_OUT Temp
+    double T_HTR_HP_out_calc = std::numeric_limits<double>::quiet_NaN();
+    double T_HTR_LP_out_calc = std::numeric_limits<double>::quiet_NaN();
     {
-        C_mono_htrbp_core_HTR_LTR_des HTR_LTR_des_eq(this);
-        C_monotonic_eq_solver HTR_LTR_des_solver(HTR_LTR_des_eq);
+        double mdot_mc_unit = 1.0;
+        double mdot_t_unit = mdot_mc_unit * (1.0 - m_inputs.m_split_frac);
+        double mdot_t2_unit = mdot_mc_unit * m_inputs.m_split_frac;
 
-        // Bounds
-        double T_HTR_HP_out_lower = m_outputs.m_temp[C_sco2_cycle_core::MC_OUT];    //[K] Coldest possible temp
-        double T_HTR_HP_out_upper = m_outputs.m_temp[C_sco2_cycle_core::TURB_IN];   //[K] Coldest possible temp (probably is TURB_OUT)
-
-        // Solution Guess
-        double T_HTR_HP_out_guess_lower = 0.25 * (T_HTR_HP_out_upper - T_HTR_HP_out_lower) + T_HTR_HP_out_lower;    // [K]
-        double T_HTR_HP_out_guess_upper = 0.75 * (T_HTR_HP_out_upper - T_HTR_HP_out_lower) + T_HTR_HP_out_lower;    // [K]
-
-        // Optimization Settings
-        HTR_LTR_des_solver.settings(m_inputs.m_des_tol* m_outputs.m_temp[C_sco2_cycle_core::MC_IN], 1000, T_HTR_HP_out_lower, T_HTR_HP_out_upper, false);
-
-        // Optimization Output variables
-        double T_HTR_HP_out_solved, tol_T_HTR_HP_out_solved;
-        T_HTR_HP_out_solved = tol_T_HTR_HP_out_solved = std::numeric_limits<double>::quiet_NaN();
-        int iter_T_HTR_LP_out = -1;
-
-        // Optimize
-        int T_HTR_HP_out_code = HTR_LTR_des_solver.solve(T_HTR_HP_out_guess_lower, T_HTR_HP_out_guess_upper, 0,
-            T_HTR_HP_out_solved, tol_T_HTR_HP_out_solved, iter_T_HTR_LP_out);
-
-        // Check if converged
-        if (T_HTR_HP_out_code != C_monotonic_eq_solver::CONVERGED)
+        // Simulate HTR (with unit mass flow rates)
         {
-            m_outputs.m_error_code = 25;
-            return m_outputs.m_error_code;
+            m_outputs.mc_HT_recup.design_for_target__calc_outlet(m_inputs.m_HTR_target_code,
+                m_inputs.m_HTR_UA, m_inputs.m_HTR_min_dT, m_inputs.m_HTR_eff_target,
+                m_inputs.m_HTR_eff_max,
+                m_outputs.m_temp[C_sco2_cycle_core::MC_OUT], m_outputs.m_pres[C_sco2_cycle_core::MC_OUT], mdot_t2_unit, m_outputs.m_pres[C_sco2_cycle_core::HTR_HP_OUT],
+                m_outputs.m_temp[C_sco2_cycle_core::TURB_OUT], m_outputs.m_pres[C_sco2_cycle_core::TURB_OUT], mdot_t_unit, m_outputs.m_pres[C_sco2_cycle_core::HTR_LP_OUT],
+                m_inputs.m_des_tol,
+                m_outputs.m_Q_dot_HT, T_HTR_HP_out_calc, T_HTR_LP_out_calc);
+
+            m_outputs.m_temp[C_sco2_cycle_core::HTR_HP_OUT] = T_HTR_HP_out_calc;    // [K]
+            m_outputs.m_temp[C_sco2_cycle_core::HTR_LP_OUT] = T_HTR_LP_out_calc;    // [K]
         }
 
-        // Call solve_HTR_LTR to solve cycle with correct HTR_HP_out
-        double test = 0;
-        solve_HTR_LTR(T_HTR_HP_out_solved, &test);
-
-        int x = 0;
 
     }
 
-    return -1;
-}
-
-int C_sco2_tsf_core::finalize_design(C_sco2_cycle_core::S_design_solved& design_solved)
-{
-    return -1;
-}
-
-int C_sco2_tsf_core::solve_HTR_LTR(double T_HTR_HP_OUT_guess, double* diff_T_HTR_HP_out)
-{
-    // Intialize
-    m_outputs.m_w_t2 = m_outputs.m_m_dot_mc = m_outputs.m_m_dot_t = m_outputs.m_m_dot_t2
-        = m_outputs.m_Q_dot_LT = m_outputs.m_Q_dot_HT
-        = std::numeric_limits<double>::quiet_NaN();
-
-    // Set temperature guess
-    m_outputs.m_temp[C_sco2_cycle_core::HTR_HP_OUT] = T_HTR_HP_OUT_guess;   // [K]
-
-    // Get HTR_HP_OUT co2 properties
-    {
-        int prop_error_code = CO2_TP(m_outputs.m_temp[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_pres[C_sco2_cycle_core::HTR_HP_OUT], &m_co2_props);
-        if (prop_error_code != 0)
-        {
-            *diff_T_HTR_HP_out = std::numeric_limits<double>::quiet_NaN();
-            return prop_error_code;
-        }
-        m_outputs.m_enth[C_sco2_cycle_core::HTR_HP_OUT] = m_co2_props.enth;
-        m_outputs.m_entr[C_sco2_cycle_core::HTR_HP_OUT] = m_co2_props.entr;
-        m_outputs.m_dens[C_sco2_cycle_core::HTR_HP_OUT] = m_co2_props.dens;
-    }
-
-    // Determine equivalent isentropic efficiencies for secondary turbine, if necessary
-    double eta_t2_isen = std::numeric_limits<double>::quiet_NaN();
-    {
-        if (m_inputs.m_eta_t2 < 0.0)
-        {
-            int poly_error_code = 0;
-
-            isen_eta_from_poly_eta(m_outputs.m_temp[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_pres[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_pres[C_sco2_cycle_core::TURB2_OUT], std::abs(m_inputs.m_eta_t2),
-                false, poly_error_code, eta_t2_isen);
-
-            if (poly_error_code != 0)
-            {
-                m_outputs.m_error_code = poly_error_code;
-                return m_outputs.m_error_code;
-            }
-        }
-        else
-            eta_t2_isen = m_inputs.m_eta_t2;
-    }
-    
     // Simulate Secondary Turbine
     {
-        int turbine2_error_code = 0;
-
-        calculate_turbomachinery_outlet_1(m_outputs.m_temp[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_pres[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_pres[C_sco2_cycle_core::TURB2_OUT], eta_t2_isen, false,
-            turbine2_error_code, m_outputs.m_enth[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_entr[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_dens[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_temp[C_sco2_cycle_core::TURB2_OUT],
-            m_outputs.m_enth[C_sco2_cycle_core::TURB2_OUT], m_outputs.m_entr[C_sco2_cycle_core::TURB2_OUT], m_outputs.m_dens[C_sco2_cycle_core::TURB2_OUT], m_outputs.m_w_t2);
-
-        if (turbine2_error_code != 0)
+        // Determine equivalent isentropic efficiencies for secondary turbine, if necessary
+        double eta_t2_isen = std::numeric_limits<double>::quiet_NaN();
         {
-            m_outputs.m_error_code = turbine2_error_code;
-            return m_outputs.m_error_code;
+            if (m_inputs.m_eta_t2 < 0.0)
+            {
+                int poly_error_code = 0;
+
+                isen_eta_from_poly_eta(m_outputs.m_temp[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_pres[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_pres[C_sco2_cycle_core::TURB2_OUT], std::abs(m_inputs.m_eta_t2),
+                    false, poly_error_code, eta_t2_isen);
+
+                if (poly_error_code != 0)
+                {
+                    m_outputs.m_error_code = poly_error_code;
+                    return m_outputs.m_error_code;
+                }
+            }
+            else
+                eta_t2_isen = m_inputs.m_eta_t2;
+        }
+
+        // Simulate Secondary Turbine
+        {
+            int turbine2_error_code = 0;
+
+            calculate_turbomachinery_outlet_1(m_outputs.m_temp[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_pres[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_pres[C_sco2_cycle_core::TURB2_OUT], eta_t2_isen, false,
+                turbine2_error_code, m_outputs.m_enth[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_entr[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_dens[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_temp[C_sco2_cycle_core::TURB2_OUT],
+                m_outputs.m_enth[C_sco2_cycle_core::TURB2_OUT], m_outputs.m_entr[C_sco2_cycle_core::TURB2_OUT], m_outputs.m_dens[C_sco2_cycle_core::TURB2_OUT], m_outputs.m_w_t2);
+
+            if (turbine2_error_code != 0)
+            {
+                m_outputs.m_error_code = turbine2_error_code;
+                return m_outputs.m_error_code;
+            }
         }
     }
 
@@ -327,21 +284,20 @@ int C_sco2_tsf_core::solve_HTR_LTR(double T_HTR_HP_OUT_guess, double* diff_T_HTR
 
         m_outputs.m_m_dot_t = m_outputs.m_m_dot_mc * (1.0 - m_inputs.m_split_frac); //[kg/s]
         m_outputs.m_m_dot_t2 = m_outputs.m_m_dot_mc * m_inputs.m_split_frac;        //[kg/s]
+
+
+        // Back Calculate Output
+        double W_dot_calc = (m_outputs.m_m_dot_t * m_outputs.m_w_t)
+            + (m_outputs.m_m_dot_t2 * m_outputs.m_w_t2)
+            + (m_outputs.m_m_dot_mc * m_outputs.m_w_mc);
+
+        if (std::abs(W_dot_calc - m_inputs.m_W_dot_net_design) > 0.001)
+        {
+            throw new C_csp_exception("Could not achieve target power output");
+        }
     }
 
-    //// Simulate LTR
-    //{
-    //    m_outputs.mc_LT_recup.design_for_target__calc_outlet(m_inputs.m_LTR_target_code,
-    //        m_inputs.m_LTR_UA, m_inputs.m_LTR_min_dT, m_inputs.m_LTR_eff_target,
-    //        m_inputs.m_LTR_eff_max,
-    //        m_outputs.m_temp[C_sco2_cycle_core::MC_OUT], m_outputs.m_pres[C_sco2_cycle_core::MC_OUT], m_outputs.m_m_dot_t, m_outputs.m_pres[C_sco2_cycle_core::LTR_HP_OUT],
-    //        m_outputs.m_temp[C_sco2_cycle_core::TURB2_OUT], m_outputs.m_pres[C_sco2_cycle_core::TURB2_OUT], m_outputs.m_m_dot_t2, m_outputs.m_pres[C_sco2_cycle_core::LTR_LP_OUT],
-    //        m_inputs.m_des_tol,
-    //        m_outputs.m_Q_dot_LT, m_outputs.m_temp[C_sco2_cycle_core::LTR_HP_OUT], m_outputs.m_temp[C_sco2_cycle_core::LTR_LP_OUT]);
-    //}
-
-    // Simulate HTR
-    double T_HTR_HP_out_calc = std::numeric_limits<double>::quiet_NaN();
+    // Re-Solve HTR (with actual mass flow rates)
     {
         m_outputs.mc_HT_recup.design_for_target__calc_outlet(m_inputs.m_HTR_target_code,
             m_inputs.m_HTR_UA, m_inputs.m_HTR_min_dT, m_inputs.m_HTR_eff_target,
@@ -349,12 +305,288 @@ int C_sco2_tsf_core::solve_HTR_LTR(double T_HTR_HP_OUT_guess, double* diff_T_HTR
             m_outputs.m_temp[C_sco2_cycle_core::MC_OUT], m_outputs.m_pres[C_sco2_cycle_core::MC_OUT], m_outputs.m_m_dot_t2, m_outputs.m_pres[C_sco2_cycle_core::HTR_HP_OUT],
             m_outputs.m_temp[C_sco2_cycle_core::TURB_OUT], m_outputs.m_pres[C_sco2_cycle_core::TURB_OUT], m_outputs.m_m_dot_t, m_outputs.m_pres[C_sco2_cycle_core::HTR_LP_OUT],
             m_inputs.m_des_tol,
-            m_outputs.m_Q_dot_HT, T_HTR_HP_out_calc, m_outputs.m_temp[C_sco2_cycle_core::HTR_LP_OUT]);
+            m_outputs.m_Q_dot_HT, T_HTR_HP_out_calc, T_HTR_LP_out_calc);
+
+        if (T_HTR_HP_out_calc != m_outputs.m_temp[C_sco2_cycle_core::HTR_HP_OUT])
+        {
+            throw new C_csp_exception("Could not converge");
+        }
+
+        if (T_HTR_LP_out_calc != m_outputs.m_temp[C_sco2_cycle_core::HTR_LP_OUT])
+        {
+            throw new C_csp_exception("Could not converge");
+        }
     }
 
-    *diff_T_HTR_HP_out = T_HTR_HP_out_calc - T_HTR_HP_OUT_guess;
+    // Complete HTR_HP_OUT and HTR_LP_OUT co2 properties
+    {
+        int prop_error_code = CO2_TP(m_outputs.m_temp[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_pres[C_sco2_cycle_core::HTR_HP_OUT], &m_co2_props);
+        if (prop_error_code != 0)
+        {
+            m_outputs.m_error_code = prop_error_code;
+            return m_outputs.m_error_code;
+        }
+        m_outputs.m_enth[C_sco2_cycle_core::HTR_HP_OUT] = m_co2_props.enth;
+        m_outputs.m_entr[C_sco2_cycle_core::HTR_HP_OUT] = m_co2_props.entr;
+        m_outputs.m_dens[C_sco2_cycle_core::HTR_HP_OUT] = m_co2_props.dens;
 
-    return -1;
+        prop_error_code = CO2_TP(m_outputs.m_temp[C_sco2_cycle_core::HTR_LP_OUT], m_outputs.m_pres[C_sco2_cycle_core::HTR_LP_OUT], &m_co2_props);
+        if (prop_error_code != 0)
+        {
+            m_outputs.m_error_code = prop_error_code;
+            return m_outputs.m_error_code;
+        }
+        m_outputs.m_enth[C_sco2_cycle_core::HTR_LP_OUT] = m_co2_props.enth;
+        m_outputs.m_entr[C_sco2_cycle_core::HTR_LP_OUT] = m_co2_props.entr;
+        m_outputs.m_dens[C_sco2_cycle_core::HTR_LP_OUT] = m_co2_props.dens;
+    }
+
+    // Simulate LTR
+    {
+        m_outputs.mc_LT_recup.design_for_target__calc_outlet(m_inputs.m_LTR_target_code,
+            m_inputs.m_LTR_UA, m_inputs.m_LTR_min_dT, m_inputs.m_LTR_eff_target,
+            m_inputs.m_LTR_eff_max,
+            m_outputs.m_temp[C_sco2_cycle_core::MC_OUT], m_outputs.m_pres[C_sco2_cycle_core::MC_OUT], m_outputs.m_m_dot_t, m_outputs.m_pres[C_sco2_cycle_core::LTR_HP_OUT],
+            m_outputs.m_temp[C_sco2_cycle_core::TURB2_OUT], m_outputs.m_pres[C_sco2_cycle_core::TURB2_OUT], m_outputs.m_m_dot_t2, m_outputs.m_pres[C_sco2_cycle_core::LTR_LP_OUT],
+            m_inputs.m_des_tol,
+            m_outputs.m_Q_dot_LT, m_outputs.m_temp[C_sco2_cycle_core::LTR_HP_OUT], m_outputs.m_temp[C_sco2_cycle_core::LTR_LP_OUT]);
+    }
+
+    // Complete LTR_HP_OUT and LTR_LP_OUT co2 properties
+    {
+        int prop_error_code = CO2_TP(m_outputs.m_temp[C_sco2_cycle_core::LTR_HP_OUT], m_outputs.m_pres[C_sco2_cycle_core::LTR_HP_OUT], &m_co2_props);
+        if (prop_error_code != 0)
+        {
+            m_outputs.m_error_code = prop_error_code;
+            return m_outputs.m_error_code;
+        }
+        m_outputs.m_enth[C_sco2_cycle_core::LTR_HP_OUT] = m_co2_props.enth;
+        m_outputs.m_entr[C_sco2_cycle_core::LTR_HP_OUT] = m_co2_props.entr;
+        m_outputs.m_dens[C_sco2_cycle_core::LTR_HP_OUT] = m_co2_props.dens;
+
+        prop_error_code = CO2_TP(m_outputs.m_temp[C_sco2_cycle_core::LTR_LP_OUT], m_outputs.m_pres[C_sco2_cycle_core::LTR_LP_OUT], &m_co2_props);
+        if (prop_error_code != 0)
+        {
+            m_outputs.m_error_code = prop_error_code;
+            return m_outputs.m_error_code;
+        }
+        m_outputs.m_enth[C_sco2_cycle_core::LTR_LP_OUT] = m_co2_props.enth;
+        m_outputs.m_entr[C_sco2_cycle_core::LTR_LP_OUT] = m_co2_props.entr;
+        m_outputs.m_dens[C_sco2_cycle_core::LTR_LP_OUT] = m_co2_props.dens;
+    }
+
+    // Simulate Mixer
+    {
+        m_outputs.m_enth[C_sco2_cycle_core::MIXER_OUT] = ((1.0 - m_inputs.m_split_frac) * m_outputs.m_enth[C_sco2_cycle_core::HTR_LP_OUT])
+            + (m_inputs.m_split_frac * m_outputs.m_enth[C_sco2_cycle_core::LTR_LP_OUT]);
+
+        int prop_error_code = CO2_PH(m_outputs.m_pres[C_sco2_cycle_core::MIXER_OUT], m_outputs.m_enth[C_sco2_cycle_core::MIXER_OUT], &m_co2_props);
+        if (prop_error_code != 0)
+        {
+            m_outputs.m_error_code = prop_error_code;
+            return m_outputs.m_error_code;
+        }
+        m_outputs.m_temp[C_sco2_cycle_core::MIXER_OUT] = m_co2_props.temp;		//[K]
+        m_outputs.m_entr[C_sco2_cycle_core::MIXER_OUT] = m_co2_props.entr;		//[kJ/kg-K]
+        m_outputs.m_dens[C_sco2_cycle_core::MIXER_OUT] = m_co2_props.dens;		//[kg/m^3]
+    }
+
+    // Calculate total work and heat metrics
+    {
+        // Work
+        m_outputs.m_W_dot_mc = m_outputs.m_w_mc * m_outputs.m_m_dot_mc;
+        m_outputs.m_W_dot_t = m_outputs.m_w_t * m_outputs.m_m_dot_t;
+        m_outputs.m_W_dot_t2 = m_outputs.m_w_t2 * m_outputs.m_m_dot_t2;
+        m_outputs.m_W_dot_net = m_outputs.m_W_dot_mc + m_outputs.m_W_dot_t + m_outputs.m_W_dot_t2;
+
+        // Air Cooler (heat rejection unit)
+        m_outputs.m_W_dot_air_cooler = m_inputs.m_frac_fan_power * m_outputs.m_W_dot_net;
+        m_outputs.m_Q_dot_air_cooler = m_outputs.m_m_dot_mc * (m_outputs.m_enth[C_sco2_cycle_core::MIXER_OUT] - m_outputs.m_enth[C_sco2_cycle_core::MC_IN]);
+
+        // Total heat entering sco2
+        m_outputs.m_Q_dot_PHX = m_outputs.m_m_dot_t * (m_outputs.m_enth[C_sco2_cycle_core::TURB_IN] - m_outputs.m_enth[C_sco2_cycle_core::LTR_HP_OUT]);
+        m_outputs.m_Q_dot_total = m_outputs.m_Q_dot_PHX;
+
+        // LTR
+        m_outputs.m_Q_dot_LTR_LP = m_outputs.m_m_dot_t2 * (m_outputs.m_enth[C_sco2_cycle_core::TURB2_OUT] - m_outputs.m_enth[C_sco2_cycle_core::LTR_LP_OUT]);
+        m_outputs.m_Q_dot_LTR_HP = m_outputs.m_m_dot_t * (m_outputs.m_enth[C_sco2_cycle_core::LTR_HP_OUT] - m_outputs.m_enth[C_sco2_cycle_core::MC_OUT]);
+
+        // LTR
+        m_outputs.m_Q_dot_HTR_LP = m_outputs.m_m_dot_t * (m_outputs.m_enth[C_sco2_cycle_core::TURB_OUT] - m_outputs.m_enth[C_sco2_cycle_core::HTR_LP_OUT]);
+        m_outputs.m_Q_dot_HTR_HP = m_outputs.m_m_dot_t2 * (m_outputs.m_enth[C_sco2_cycle_core::HTR_HP_OUT] - m_outputs.m_enth[C_sco2_cycle_core::MC_OUT]);
+
+        // Thermal Efficiency
+        m_outputs.m_eta_thermal = m_outputs.m_W_dot_net / m_outputs.m_Q_dot_total;
+
+        // Back Calculate Heat In
+        double Q_in_calc = m_outputs.m_W_dot_net + m_outputs.m_Q_dot_air_cooler;
+    }
+
+    // Define Heat Exchangers and Air Cooler
+    {
+        // PHX
+        C_HeatExchanger::S_design_parameters PHX_des_par;
+        PHX_des_par.m_DP_design[0] = m_outputs.m_pres[C_sco2_cycle_core::LTR_HP_OUT] - m_outputs.m_pres[C_sco2_cycle_core::TURB_IN];
+        PHX_des_par.m_DP_design[1] = 0.0;
+        PHX_des_par.m_m_dot_design[0] = m_outputs.m_m_dot_t;
+        PHX_des_par.m_m_dot_design[1] = 0.0;
+        PHX_des_par.m_Q_dot_design = m_outputs.m_m_dot_t * (m_outputs.m_enth[C_sco2_cycle_core::TURB_IN] - m_outputs.m_enth[C_sco2_cycle_core::LTR_HP_OUT]);
+        m_outputs.m_PHX.initialize(PHX_des_par);
+
+        // Air Cooler
+        C_HeatExchanger::S_design_parameters PC_des_par;
+        PC_des_par.m_DP_design[0] = 0.0;
+        PC_des_par.m_DP_design[1] = m_outputs.m_pres[C_sco2_cycle_core::MIXER_OUT] - m_outputs.m_pres[C_sco2_cycle_core::MC_IN];
+        PC_des_par.m_m_dot_design[0] = 0.0;
+        PC_des_par.m_m_dot_design[1] = m_outputs.m_m_dot_mc;
+        PC_des_par.m_Q_dot_design = m_outputs.m_m_dot_mc * (m_outputs.m_enth[C_sco2_cycle_core::MIXER_OUT] - m_outputs.m_enth[C_sco2_cycle_core::MC_IN]);
+        m_outputs.m_PC.initialize(PC_des_par);
+    }
+
+    m_outputs.m_error_code = 0;
+
+    return m_outputs.m_error_code;
+}
+
+int C_sco2_tsf_core::finalize_design(C_sco2_cycle_core::S_design_solved& design_solved)
+{
+    // Design Main Compressor
+    {
+        int mc_design_err = m_outputs.m_mc_ms.design_given_outlet_state(m_inputs.m_mc_comp_model_code, m_outputs.m_temp[C_sco2_cycle_core::MC_IN],
+            m_outputs.m_pres[C_sco2_cycle_core::MC_IN],
+            m_outputs.m_m_dot_mc,
+            m_outputs.m_temp[C_sco2_cycle_core::MC_OUT],
+            m_outputs.m_pres[C_sco2_cycle_core::MC_OUT],
+            m_inputs.m_des_tol);
+
+        if (mc_design_err != 0)
+        {
+            m_outputs.m_error_code = mc_design_err;
+            return m_outputs.m_error_code;
+        }
+    }
+
+    // Size Turbine
+    {
+        C_turbine::S_design_parameters t_des_par;
+        // Set turbine shaft speed
+        t_des_par.m_N_design = m_inputs.m_N_turbine;
+        t_des_par.m_N_comp_design_if_linked = m_outputs.m_mc_ms.get_design_solved()->m_N_design; //[rpm] m_mc.get_design_solved()->m_N_design;
+        // Turbine inlet state
+        t_des_par.m_P_in = m_outputs.m_pres[C_sco2_cycle_core::TURB_IN];
+        t_des_par.m_T_in = m_outputs.m_temp[C_sco2_cycle_core::TURB_IN];
+        t_des_par.m_D_in = m_outputs.m_dens[C_sco2_cycle_core::TURB_IN];
+        t_des_par.m_h_in = m_outputs.m_enth[C_sco2_cycle_core::TURB_IN];
+        t_des_par.m_s_in = m_outputs.m_entr[C_sco2_cycle_core::TURB_IN];
+        // Turbine outlet state
+        t_des_par.m_P_out = m_outputs.m_pres[C_sco2_cycle_core::TURB_OUT];
+        t_des_par.m_h_out = m_outputs.m_enth[C_sco2_cycle_core::TURB_OUT];
+        // Mass flow
+        t_des_par.m_m_dot = m_outputs.m_m_dot_t;
+
+        int turb_size_error_code = 0;
+        m_outputs.m_t.turbine_sizing(t_des_par, turb_size_error_code);
+
+        if (turb_size_error_code != 0)
+        {
+            m_outputs.m_error_code = turb_size_error_code;
+            return m_outputs.m_error_code;
+        }
+    }
+
+    // Size Secondary Turbine
+    {
+        C_turbine::S_design_parameters t2_des_par;
+        // Set turbine shaft speed
+        t2_des_par.m_N_design = m_inputs.m_N_turbine;
+        t2_des_par.m_N_comp_design_if_linked = m_outputs.m_mc_ms.get_design_solved()->m_N_design; //[rpm] m_mc.get_design_solved()->m_N_design;
+        // Turbine inlet state
+        t2_des_par.m_P_in = m_outputs.m_pres[C_sco2_cycle_core::HTR_HP_OUT];
+        t2_des_par.m_T_in = m_outputs.m_temp[C_sco2_cycle_core::HTR_HP_OUT];
+        t2_des_par.m_D_in = m_outputs.m_dens[C_sco2_cycle_core::HTR_HP_OUT];
+        t2_des_par.m_h_in = m_outputs.m_enth[C_sco2_cycle_core::HTR_HP_OUT];
+        t2_des_par.m_s_in = m_outputs.m_entr[C_sco2_cycle_core::HTR_HP_OUT];
+        // Turbine outlet state
+        t2_des_par.m_P_out = m_outputs.m_pres[C_sco2_cycle_core::TURB2_OUT];
+        t2_des_par.m_h_out = m_outputs.m_enth[C_sco2_cycle_core::TURB2_OUT];
+        // Mass flow
+        t2_des_par.m_m_dot = m_outputs.m_m_dot_t2;
+
+        int turb_size_error_code = 0;
+        m_outputs.m_t2.turbine_sizing(t2_des_par, turb_size_error_code);
+
+        if (turb_size_error_code != 0)
+        {
+            m_outputs.m_error_code = turb_size_error_code;
+            return m_outputs.m_error_code;
+        }
+    }
+
+    // Design air cooler
+    {
+        // Structure for design parameters that are dependent on cycle design solution
+        C_CO2_to_air_cooler::S_des_par_cycle_dep s_air_cooler_des_par_dep;
+        // Set air cooler design parameters that are dependent on the cycle design solution
+        s_air_cooler_des_par_dep.m_T_hot_in_des = m_outputs.m_temp[C_sco2_cycle_core::MIXER_OUT];  // [K]
+        s_air_cooler_des_par_dep.m_P_hot_in_des = m_outputs.m_pres[C_sco2_cycle_core::MIXER_OUT];  // [kPa]
+        s_air_cooler_des_par_dep.m_m_dot_total = m_outputs.m_m_dot_mc;                // [kg/s]
+
+        // This pressure drop is currently uncoupled from the cycle design
+        double cooler_deltaP = m_outputs.m_pres[C_sco2_cycle_core::MIXER_OUT] - m_outputs.m_pres[C_sco2_cycle_core::MC_IN];    // [kPa]
+        if (cooler_deltaP == 0.0)
+            s_air_cooler_des_par_dep.m_delta_P_des = m_inputs.m_deltaP_cooler_frac * m_outputs.m_pres[C_sco2_cycle_core::MIXER_OUT];    // [kPa]
+        else
+            s_air_cooler_des_par_dep.m_delta_P_des = cooler_deltaP; // [kPa]
+
+        s_air_cooler_des_par_dep.m_T_hot_out_des = m_outputs.m_temp[C_sco2_cycle_core::MC_IN];                          // [K]
+        s_air_cooler_des_par_dep.m_W_dot_fan_des = m_inputs.m_frac_fan_power * m_outputs.m_W_dot_net / 1000.0;     // [MWe]
+        // Structure for design parameters that are independent of cycle design solution
+        C_CO2_to_air_cooler::S_des_par_ind s_air_cooler_des_par_ind;
+        s_air_cooler_des_par_ind.m_T_amb_des = m_inputs.m_T_amb_des;         // [K]
+        s_air_cooler_des_par_ind.m_elev = m_inputs.m_elevation;              // [m]
+        s_air_cooler_des_par_ind.m_eta_fan = m_inputs.m_eta_fan;             // [-]
+        s_air_cooler_des_par_ind.m_N_nodes_pass = m_inputs.m_N_nodes_pass;   // [-]
+
+        if (m_inputs.m_is_des_air_cooler && std::isfinite(m_inputs.m_deltaP_cooler_frac) && std::isfinite(m_inputs.m_frac_fan_power)
+            && std::isfinite(m_inputs.m_T_amb_des) && std::isfinite(m_inputs.m_elevation) && std::isfinite(m_inputs.m_eta_fan) && m_inputs.m_N_nodes_pass > 0)
+        {
+            m_outputs.mc_air_cooler.design_hx(s_air_cooler_des_par_ind, s_air_cooler_des_par_dep, m_inputs.m_des_tol);
+        }
+    }
+
+    // Get 'design_solved' structure from component classes
+    design_solved.ms_mc_ms_des_solved = *m_outputs.m_mc_ms.get_design_solved();
+    design_solved.ms_t_des_solved = *m_outputs.m_t.get_design_solved();
+    design_solved.ms_t2_des_solved = *m_outputs.m_t2.get_design_solved();
+    design_solved.ms_LTR_des_solved = m_outputs.mc_LT_recup.ms_des_solved;
+    design_solved.ms_HTR_des_solved = m_outputs.mc_HT_recup.ms_des_solved;
+    design_solved.ms_mc_air_cooler = *m_outputs.mc_air_cooler.get_design_solved();
+
+    // Set solved design point metrics
+    design_solved.m_temp = m_outputs.m_temp;
+    design_solved.m_pres = m_outputs.m_pres;
+    design_solved.m_enth = m_outputs.m_enth;
+    design_solved.m_entr = m_outputs.m_entr;
+    design_solved.m_dens = m_outputs.m_dens;
+
+    design_solved.m_eta_thermal = m_outputs.m_eta_thermal;
+    design_solved.m_W_dot_net = m_outputs.m_W_dot_net;
+    design_solved.m_m_dot_mc = m_outputs.m_m_dot_mc;
+    design_solved.m_m_dot_t = m_outputs.m_m_dot_t;
+    design_solved.m_m_dot_t2 = m_outputs.m_m_dot_t2;
+    design_solved.m_turbine_split_frac = m_inputs.m_split_frac;
+
+    design_solved.m_UA_LTR = m_inputs.m_LTR_UA;
+    design_solved.m_UA_HTR = m_inputs.m_HTR_UA;
+
+    design_solved.m_W_dot_t = m_outputs.m_W_dot_t;		//[kWe]
+    design_solved.m_W_dot_t2 = m_outputs.m_W_dot_t2;    //[kWe]
+    design_solved.m_W_dot_mc = m_outputs.m_W_dot_mc;	//[kWe]
+    
+
+    design_solved.m_W_dot_cooler_tot = m_outputs.mc_air_cooler.get_design_solved()->m_W_dot_fan * 1.E3;	//[kWe] convert from MWe
+
+    return 0;
 }
 
 void C_sco2_tsf_core::reset()

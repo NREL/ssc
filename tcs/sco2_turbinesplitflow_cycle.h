@@ -153,7 +153,7 @@ public:
         C_turbine m_t;                          // Turbine model
         C_turbine m_t2;                         // Secondary Turbine model
         C_comp_multi_stage m_mc_ms;             // Main Compressor Model
-        C_HeatExchanger m_PHX, m_PC, m_BPX;     // Primary, Cooler, Bypass Heat Exchanger Models
+        C_HeatExchanger m_PHX, m_PC;            // Primary and Cooler Heat Exchanger Models
         C_HX_co2_to_co2_CRM mc_LT_recup;        // LTR
         C_HX_co2_to_co2_CRM mc_HT_recup;        // HTR
         C_CO2_to_air_cooler mc_air_cooler;      // Air Cooler
@@ -161,7 +161,7 @@ public:
         double m_w_t, m_w_t2, m_w_mc;                       // [kJ/kg] specific work of turbine, main compressor, recompressor
         double m_m_dot_t, m_m_dot_t2, m_m_dot_mc;           // [kg/s] sco2 Mass flow in turbine, secondary turbine, and main compressor (total)
         double m_Q_dot_LT, m_Q_dot_HT;                      // [kWt] Heat Transfer in LTR, HTR
-        double m_W_dot_mc, m_W_dot_t, m_W_dot_t2;            // [kWt] Energy consumed by main compressor, produced by turbine and secondary turbine
+        double m_W_dot_mc, m_W_dot_t, m_W_dot_t2;           // [kWt] Energy consumed by main compressor, produced by turbine and secondary turbine
         double m_W_dot_net;                                 // [kWt] ACTUAL produced net work in system
         double m_W_dot_air_cooler;                          // [kWe] Energy consumed by air cooler
         double m_Q_dot_air_cooler;                          // [kWt] Heat rejected by air cooler
@@ -199,25 +199,6 @@ public:
 
 private:
     CO2_state m_co2_props;
-
-    class C_mono_htrbp_core_HTR_LTR_des : public C_monotonic_equation
-    {
-    private:
-        C_sco2_tsf_core* m_tsf_cycle;
-
-    public:
-        C_mono_htrbp_core_HTR_LTR_des(C_sco2_tsf_core* tsf_cycle)
-        {
-            m_tsf_cycle = tsf_cycle;
-        }
-
-        virtual int operator()(double T_HTR_HP_OUT_guess /*K*/, double* diff_T_HTR_HP_out /*K*/)
-        {
-            return m_tsf_cycle->solve_HTR_LTR(T_HTR_HP_OUT_guess, diff_T_HTR_HP_out);
-        };
-    };
-
-    int solve_HTR_LTR(double T_HTR_HP_OUT_guess, double* diff_T_HTR_HP_out);
 
     void initialize_solve();
 
