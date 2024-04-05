@@ -198,16 +198,17 @@ TEST_F(CMWindPowerIntegration, CtCurve_cmod_windpower)
     ssc_data_get_number(data, "annual_wake_loss_internal_percent", &wakeLoss1); //get the wake loss without setting Ct curve
 
     // use a bogus ct curve just to test that it does something
-    double ctc[161];
-    for (int i = 0; i < 161; i++)
-        ctc[i] = 0.5;
-    var_data ct = var_data(ctc, 161, 1);
-    auto* vt = static_cast<var_table*>(data);
-    vt->assign("wind_turbine_ct_curve", ct);
-
+    ssc_number_t ctCurve[161] = { 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5,
+        0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5,
+        0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5,
+        0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5,
+        0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5,
+        0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5 };
+    ssc_data_set_array(data, "wind_turbine_ct_curve", ctCurve, 161);
+        
     // get new wake loss
     compute();
-    ssc_data_get_number(data, "annual_wake_loss_internal_percent", &wakeLoss2); //get the wake loss without setting Ct curve
+    ssc_data_get_number(data, "annual_wake_loss_internal_percent", &wakeLoss2); //get the wake loss with Ct curve
 
     ssc_number_t difference = wakeLoss2 - wakeLoss1;
     EXPECT_NEAR(wakeLoss1, 4.148, 0.01) << "Wake Loss 1";
