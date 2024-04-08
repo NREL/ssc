@@ -307,14 +307,16 @@ int C_sco2_tsf_core::solve()
             m_inputs.m_des_tol,
             m_outputs.m_Q_dot_HT, T_HTR_HP_out_calc, T_HTR_LP_out_calc);
 
-        if (T_HTR_HP_out_calc != m_outputs.m_temp[C_sco2_cycle_core::HTR_HP_OUT])
+        if (std::abs(T_HTR_HP_out_calc - m_outputs.m_temp[C_sco2_cycle_core::HTR_HP_OUT]) > 0.1)
         {
-            throw new C_csp_exception("Could not converge");
+            m_outputs.m_error_code = -1;
+            return m_outputs.m_error_code;
         }
 
-        if (T_HTR_LP_out_calc != m_outputs.m_temp[C_sco2_cycle_core::HTR_LP_OUT])
+        if (std::abs(T_HTR_LP_out_calc - m_outputs.m_temp[C_sco2_cycle_core::HTR_LP_OUT]) > 0.1)
         {
-            throw new C_csp_exception("Could not converge");
+            m_outputs.m_error_code = -1;
+            return m_outputs.m_error_code;
         }
     }
 
