@@ -97,7 +97,8 @@ bool tidal_turbine_calculate_powercurve(ssc_data_t data)
     }
 
     double rotor_diameter, cut_in,
-        cut_out, rotor_area, generator_rated_capacity, number_rotors = 0;
+        cut_out, rotor_area, number_rotors = 0;
+    double generator_rated_capacity = 0;
     util::matrix_t<double> tidal_resource;
     std::vector<double> pto_efficiency;
     std::vector<double> max_cp;
@@ -110,7 +111,7 @@ bool tidal_turbine_calculate_powercurve(ssc_data_t data)
         vt_get_number(vt, "cut_in", &cut_in);
         vt_get_number(vt, "cut_out", &cut_out);
         vt_get_matrix(vt, "tidal_resource", tidal_resource);
-        vt_get_number(vt, "generator_rated_capacity", &generator_rated_capacity);
+        //vt_get_number(vt, "generator_rated_capacity", &generator_rated_capacity);
 
     }
     catch (std::runtime_error& e) {
@@ -120,6 +121,7 @@ bool tidal_turbine_calculate_powercurve(ssc_data_t data)
 
     util::matrix_t<ssc_number_t> powercurve_tidespeeds;
     util::matrix_t<ssc_number_t> powercurve_powerout;
+    util::matrix_t<ssc_number_t> powercurve_powerout_rated;
     util::matrix_t<ssc_number_t> powercurve_hub_efficiency;
 
     char errmsg[250];
@@ -129,11 +131,13 @@ bool tidal_turbine_calculate_powercurve(ssc_data_t data)
 
     powercurve_tidespeeds.resize(array_size);
     powercurve_powerout.resize(array_size);
+    powercurve_powerout_rated.resize(array_size);
     rotor_area = pow((rotor_diameter / 2), 2) * M_PI * number_rotors;
-    double tidal_vel, p_fluid, p_rotor, eff, p_electric;
+    double tidal_vel, tidal_freq, p_fluid, p_rotor, eff, p_electric = 0;
     double max_cp_value, pto_eff_value;
     for (size_t i = 0; i < array_size; i += 1) {
         tidal_vel = tidal_resource.at(i, 0);
+        tidal_freq = tidal_resource.at(i, 1);
         p_fluid = 0.5 * pow(tidal_vel, 3) * 1.025 * rotor_area;
 
         if (max_cp.size() == 1) {
@@ -152,17 +156,25 @@ bool tidal_turbine_calculate_powercurve(ssc_data_t data)
         eff = pto_eff_value / 100.0;
         if (tidal_vel < cut_in) eff = 0;
         if (tidal_vel > cut_out) eff = 0;
-        p_electric = std::min(eff * p_rotor, generator_rated_capacity);
+        p_electric = eff * p_rotor;
         powercurve_powerout[i] = p_electric;
         powercurve_tidespeeds[i] = tidal_vel;
+        generator_rated_capacity += p_electric * tidal_freq;
 
+    }
+    generator_rated_capacity = generator_rated_capacity / 0.3;
+    for (int i = 0; i < array_size; i++) {
+        powercurve_powerout_rated[i] = std::min(powercurve_powerout[i], generator_rated_capacity);
     }
 
     var_data windspeeds = var_data(powercurve_tidespeeds.data(), powercurve_tidespeeds.ncols());
     var_data powerout = var_data(powercurve_powerout.data(), powercurve_powerout.ncols());
+    var_data powerout_rated = var_data(powercurve_powerout_rated.data(), powercurve_powerout_rated.ncols());
 
     vt->assign("tidal_turbine_powercurve_tidespeeds", windspeeds);
-    vt->assign("tidal_turbine_powercurve_powerout", powerout);
+    vt->assign("tidal_turbine_powercurve_electric", powerout);
+    vt->assign("tidal_turbine_powercurve_powerout", powerout_rated);
+    vt->assign("rated_power", generator_rated_capacity);
     sprintf(errmsg, "None");
     vt->assign("error", std::string(errmsg));
     return true;
