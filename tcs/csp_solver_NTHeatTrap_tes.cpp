@@ -1171,27 +1171,6 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
     double& T_sink_htf_in_hot /*K*/, double& T_cr_in_cold /*K*/,
     C_csp_tes::S_csp_tes_outputs& s_outputs)		//, C_csp_solver_htf_state & s_tes_ch_htf, C_csp_solver_htf_state & s_tes_dc_htf)
 {
-    // DEBUG
-    if (true)
-    {
-        double mdot_from_FIELD_to_HOT_TES = m_dot_cr_to_cv_hot;
-        double mdot_PC_HOT_IN = m_dot_cv_hot_to_sink;
-        double mdot_FIELD_to_COLD_TES = m_dot_cr_to_cv_cold;
-
-        if ((mdot_from_FIELD_to_HOT_TES > 0 && mdot_PC_HOT_IN > 0)
-            && (std::abs(mdot_from_FIELD_to_HOT_TES - mdot_PC_HOT_IN) > 0.01))
-        {
-            int asdfasg = 0;
-        }
-    }
-    
-
-
-
-
-
-
-
     // Enthalpy balance on inlet to cold cv
     double T_htf_cold_cv_in = T_sink_out_cold;     //[K]
     double m_dot_total_to_cv_cold = m_dot_cv_hot_to_sink + m_dot_cr_to_cv_cold;    //[kg/s]
@@ -1445,10 +1424,6 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
         else
             energy_balance_error_percent = 0;
 
-        if (std::abs(energy_balance_error) > 100)
-        {
-            int asdfag = 0;
-        }
     }
 
 
