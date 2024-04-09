@@ -397,6 +397,9 @@ void C_sco2_phx_air_cooler::design_core()
     int phx_cold_inlet_state = C_sco2_cycle_core::HTR_HP_OUT;
     if (ms_des_par.m_cycle_config == 3)
         phx_cold_inlet_state = C_sco2_cycle_core::MIXER2_OUT;
+    else if (ms_des_par.m_cycle_config == 4)
+        phx_cold_inlet_state = C_sco2_cycle_core::LTR_HP_OUT;
+
 
 	// Design the PHX
 	

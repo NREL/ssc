@@ -280,7 +280,7 @@ private:
     // TSF specific parameters
     double m_eta_t2;
     
-    // Optimal htrbp core class (contains all results and component data)
+    // Optimal tsf core class (contains all results and component data)
     C_sco2_tsf_core m_optimal_tsf_core;
 
     void auto_opt_design_core(int& error_code);
@@ -289,7 +289,14 @@ private:
 
     int optimize_totalUA(const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, C_sco2_tsf_core::S_sco2_tsf_in& optimal_inputs);
 
-    int optimize_par(const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, C_sco2_tsf_core::S_sco2_tsf_in& core_inputs, C_sco2_tsf_core::S_sco2_tsf_in& optimal_inputs);
+    int optimize_par(const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, C_sco2_tsf_core::S_sco2_tsf_in& optimal_inputs);
+
+    int x_to_inputs(const std::vector<double>& x, const S_auto_opt_design_parameters auto_par, const S_opt_design_parameters opt_par, C_sco2_tsf_core::S_sco2_tsf_in& core_inputs);
+
+    int clear_x_inputs(const std::vector<double>& x, const S_auto_opt_design_parameters auto_par, const S_opt_design_parameters opt_par, C_sco2_tsf_core::S_sco2_tsf_in& core_inputs);
+
+    double calc_objective(const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, const C_sco2_tsf_core& tsf_core);
+
 
 protected:
 
@@ -340,7 +347,7 @@ public:
 
     // Objective Functions (internal use only)
     double C_TurbineSplitFlow_Cycle::optimize_totalUA_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par);
-    double C_TurbineSplitFlow_Cycle::optimize_par_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, C_sco2_tsf_core& htrbp_core);
+    double C_TurbineSplitFlow_Cycle::optimize_par_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, C_sco2_tsf_core& tsf_core);
 
     // Off Design
 

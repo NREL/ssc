@@ -584,7 +584,8 @@ int C_sco2_tsf_core::finalize_design(C_sco2_cycle_core::S_design_solved& design_
     design_solved.m_W_dot_t = m_outputs.m_W_dot_t;		//[kWe]
     design_solved.m_W_dot_t2 = m_outputs.m_W_dot_t2;    //[kWe]
     design_solved.m_W_dot_mc = m_outputs.m_W_dot_mc;	//[kWe]
-    
+
+    design_solved.m_is_rc = false;
 
     design_solved.m_W_dot_cooler_tot = m_outputs.mc_air_cooler.get_design_solved()->m_W_dot_fan * 1.E3;	//[kWe] convert from MWe
 
@@ -664,7 +665,62 @@ void C_TurbineSplitFlow_Cycle::auto_opt_design_core(int& error_code)
 
     }
 
-    // Set up baseline core inputs (will go somewhere else)
+    C_sco2_tsf_core::S_sco2_tsf_in optimal_inputs_out;
+    error_code = optimize_par(ms_auto_opt_des_par, opt_par, optimal_inputs_out);
+
+    if (error_code != 0)
+        return;
+
+    // Run Optimal Case
+    m_optimal_tsf_core.set_inputs(optimal_inputs_out);
+    error_code = m_optimal_tsf_core.solve();
+
+    if (error_code != 0)
+        return;
+
+    // Finalize Design (pass in reference to solved parameters)
+    error_code = m_optimal_tsf_core.finalize_design(ms_des_solved);
+
+}
+
+/// <summary>
+/// Core function to optimize cycle for target eta (variable total UA)
+/// </summary>
+void C_TurbineSplitFlow_Cycle::auto_opt_design_hit_eta_core(int& error_code, const double eta_thermal_target)
+{
+    return;
+}
+
+/// <summary>
+/// Optimize Total Recuperator UA
+/// totalUA -> bp -> UA split, pressure, recomp
+/// </summary>
+/// <param name="auto_par"></param>
+/// <param name="opt_par"></param>
+/// <param name="optimal_inputs"></param>
+/// <returns></returns>
+int C_TurbineSplitFlow_Cycle::optimize_totalUA(const S_auto_opt_design_parameters& auto_par,
+    const S_opt_design_parameters& opt_par,
+    C_sco2_tsf_core::S_sco2_tsf_in& optimal_inputs)
+{
+    return -1;;
+}
+
+/// <summary>
+/// Optimize internal variables (UA split, pressure, recomp)
+/// totalUA -> bp -> UA split, pressure, recomp
+/// </summary>
+/// <param name="auto_par"></param>
+/// <param name="opt_par"></param>
+/// <param name="core_inputs"></param>
+/// <param name="optimal_inputs"></param>
+/// <returns></returns>
+int C_TurbineSplitFlow_Cycle::optimize_par(const S_auto_opt_design_parameters& auto_par,
+    const S_opt_design_parameters& opt_par,
+    C_sco2_tsf_core::S_sco2_tsf_in& optimal_inputs)
+{
+
+    // Set up baseline core inputs
     C_sco2_tsf_core::S_sco2_tsf_in core_inputs;
     {
         // From Auto Opt Design Parameters
@@ -713,14 +769,10 @@ void C_TurbineSplitFlow_Cycle::auto_opt_design_core(int& error_code)
             // Turbine Split Fraction
             if (opt_par.m_fixed_split_frac == true)
                 core_inputs.m_split_frac = opt_par.m_split_frac_guess;
-            else
-                throw new C_csp_exception("not handled");
 
             // MC Outlet Pressure
             if (opt_par.m_fixed_P_mc_out == true)
                 core_inputs.m_P_mc_out = opt_par.m_P_mc_out_guess;
-            else
-                throw new C_csp_exception("not handled");
 
             // Recuperator split fraction
             double LT_frac_local = opt_par.m_LT_frac_guess;
@@ -735,19 +787,155 @@ void C_TurbineSplitFlow_Cycle::auto_opt_design_core(int& error_code)
                 core_inputs.m_HTR_UA = ms_auto_opt_des_par.m_HTR_UA;      //[kW/K]
             }
 
-            
-
             // Pressure Ratio is calculated in callback
         }
 
     }
 
-    // Handle Pressure Ratio (temporary)
+    // Add applicable design variables to Optimizer
+    int index = 0;
+
+    std::vector<double> x(0);
+    std::vector<double> lb(0);
+    std::vector<double> ub(0);
+    std::vector<double> scale(0);
+
+    if (!auto_par.m_fixed_P_mc_out)
+    {
+        x.push_back(opt_par.m_P_mc_out_guess);
+        lb.push_back(100.0);
+        ub.push_back(m_P_high_limit);
+        scale.push_back(500.0);
+
+        index++;
+    }
+
+    if (!auto_par.m_fixed_PR_HP_to_LP)
+    {
+        x.push_back(opt_par.m_PR_HP_to_LP_guess);
+        lb.push_back(0.0001);
+        double PR_max = m_P_high_limit / 100.0;
+        ub.push_back(PR_max);
+        scale.push_back(0.2);
+
+        index++;
+    }
+
+    if (!opt_par.m_fixed_split_frac)
+    {
+        x.push_back(opt_par.m_split_frac_guess);
+        lb.push_back(0.0);
+        ub.push_back(0.99);
+        scale.push_back(0.05);
+        index++;
+    }
+
+    if (!opt_par.m_fixed_LT_frac)
+    {
+        x.push_back(opt_par.m_LT_frac_guess);
+        lb.push_back(0.0);
+        ub.push_back(1.0);
+        scale.push_back(0.05);
+
+        index++;
+    }
+
+    // Make Optimizer (if there are variables to be optimized)
+    int error_code = 0;
+    C_sco2_tsf_core::S_sco2_tsf_in optimal_inputs_internal;
+    if (index > 0)
+    {
+        // Set up instance of nlopt class and set optimization parameters
+        nlopt::opt opt_des_cycle(nlopt::LN_SBPLX, index);
+        opt_des_cycle.set_lower_bounds(lb);
+        opt_des_cycle.set_upper_bounds(ub);
+        opt_des_cycle.set_initial_step(scale);
+        opt_des_cycle.set_xtol_rel(auto_par.m_des_opt_tol);
+        opt_des_cycle.set_maxeval(50);
+
+        // Set up core model that will be passed to objective function
+        C_sco2_tsf_core tsf_core;
+        tsf_core.set_inputs(core_inputs);
+
+        // Make Tuple to pass in parameters
+        std::tuple<C_TurbineSplitFlow_Cycle*, const S_auto_opt_design_parameters*, const S_opt_design_parameters*, C_sco2_tsf_core*> par_tuple = { this, &auto_par, &opt_par, &tsf_core };
+
+        // Set max objective function
+        opt_des_cycle.set_max_objective(nlopt_tsf_optimize_par_func, &par_tuple);
+        double max_f = std::numeric_limits<double>::quiet_NaN();
+
+        // Optimize
+        nlopt::result result_des_cycle = opt_des_cycle.optimize(x, max_f);
+
+        // Check if forced stop
+        int flag = opt_des_cycle.get_force_stop();
+        if (flag == true)
+        {
+            error_code = -1;
+            return error_code;
+        }
+
+        // Get Optimal Input Case
+        error_code = x_to_inputs(x, auto_par, opt_par, core_inputs);
+        if (error_code != 0)
+            return error_code;
+    }
+    // Nothing to optimize
+    else
+    {
+        // Define P_mc_in (because pressure ratio and mc_out are constant)
+        core_inputs.m_P_mc_in = core_inputs.m_P_mc_out / opt_par.m_PR_HP_to_LP_guess;
+
+        // Simulate Case (don't actually need to run...)
+        C_sco2_tsf_core core_model;
+        core_model.set_inputs(core_inputs);
+        error_code = core_model.solve();
+    }
+
+    // Set Optimal Inputs
+    optimal_inputs = core_inputs;
+
+    return error_code;
+}
+
+/// <summary>
+/// Take optimizer array 'x', write appropriate values to S_sco2_tsf_in
+/// </summary>
+int C_TurbineSplitFlow_Cycle::x_to_inputs(const std::vector<double>& x,
+    const S_auto_opt_design_parameters auto_par,
+    const S_opt_design_parameters opt_par,
+    C_sco2_tsf_core::S_sco2_tsf_in& core_inputs)
+{
+    // 'x' is array of inputs either being adjusted by optimizer or set constant
+    // Finish defining core_inputs based on current 'x' values
+
+    int error_message = 0;
+    int index = 0;
+
+    // Main compressor outlet pressure
+
+    if (!auto_par.m_fixed_P_mc_out)
+    {
+        double P_mc_out = x[index];
+        if (P_mc_out > m_P_high_limit)
+            return -1;
+        index++;
+
+        // assign P_mc_out
+        core_inputs.m_P_mc_out = P_mc_out;
+    }
+
+
+    // Main compressor pressure ratio
     double PR_mc_local = -999.9;
     double P_mc_in = -999.9;
     if (!opt_par.m_fixed_PR_HP_to_LP)
     {
-        throw new C_csp_exception("not handled");
+        PR_mc_local = x[index];
+        if (PR_mc_local > 50.0)
+            return -1;
+        index++;
+        P_mc_in = core_inputs.m_P_mc_out / PR_mc_local;
     }
     else
     {
@@ -762,55 +950,127 @@ void C_TurbineSplitFlow_Cycle::auto_opt_design_core(int& error_code)
         }
     }
 
+    if (P_mc_in >= core_inputs.m_P_mc_out)
+        return -1;
+    if (P_mc_in <= 100.0)
+        return -1;
+
     core_inputs.m_P_mc_in = P_mc_in;
 
+    // Turbine split fraction
+    if (!opt_par.m_fixed_split_frac)
+    {
+        core_inputs.m_split_frac = x[index];
+        if (core_inputs.m_split_frac < 0.0)
+            return -1;
+        index++;
+    }
 
-    // Should have enough to run model (with all variables fixed)
-    C_sco2_tsf_core tsf_core;
-    tsf_core.set_inputs(core_inputs);
-    tsf_core.solve();
+    // Recuperator split fraction
+    double LT_frac_local = -999.9;
+    double LTR_UA, HTR_UA;
+    if (!opt_par.m_fixed_LT_frac)
+    {
+        LT_frac_local = x[index];
+        if (LT_frac_local > 1.0 || LT_frac_local < 0.0)
+            return -1;
+        index++;
 
-    return;
+        if (auto_par.m_LTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA || auto_par.m_HTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA)
+        {
+            LTR_UA = auto_par.m_UA_rec_total * LT_frac_local;
+            HTR_UA = auto_par.m_UA_rec_total * (1.0 - LT_frac_local);
+
+            // ASSIGN LTR_UA and HTR_UA
+            core_inputs.m_LTR_UA = LTR_UA;
+            core_inputs.m_HTR_UA = HTR_UA;
+        }
+    }
+
+    return 0;
 }
 
 /// <summary>
-/// Core function to optimize cycle for target eta (variable total UA)
+/// Set optimized variables to NaN, to protect them from misuse
 /// </summary>
-void C_TurbineSplitFlow_Cycle::auto_opt_design_hit_eta_core(int& error_code, const double eta_thermal_target)
+int C_TurbineSplitFlow_Cycle::clear_x_inputs(const std::vector<double>& x,
+    const S_auto_opt_design_parameters auto_par,
+    const S_opt_design_parameters opt_par,
+    C_sco2_tsf_core::S_sco2_tsf_in& core_inputs)
 {
-    return;
+    // 'x' is array of inputs either being adjusted by optimizer or set constant
+    // Finish defining core_inputs based on current 'x' values
+
+    int error_message = 0;
+    int index = 0;
+
+    // Main compressor outlet pressure
+
+    if (!auto_par.m_fixed_P_mc_out)
+    {
+        core_inputs.m_P_mc_out = std::numeric_limits<double>::quiet_NaN();
+    }
+
+
+    core_inputs.m_P_mc_in = std::numeric_limits<double>::quiet_NaN();
+
+    // Turbine split fraction
+    if (!opt_par.m_fixed_split_frac)
+    {
+        core_inputs.m_split_frac = std::numeric_limits<double>::quiet_NaN();
+    }
+
+    // Recuperator split fraction
+    if (!opt_par.m_fixed_LT_frac)
+    {
+        if (auto_par.m_LTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA || auto_par.m_HTR_target_code == NS_HX_counterflow_eqs::OPTIMIZE_UA)
+        {
+            // ASSIGN LTR_UA and HTR_UA
+            core_inputs.m_LTR_UA = std::numeric_limits<double>::quiet_NaN();;
+            core_inputs.m_HTR_UA = std::numeric_limits<double>::quiet_NaN();;
+        }
+    }
+
+    return 0;
 }
 
 /// <summary>
-/// Optimize Total Recuperator UA
-/// totalUA -> bp -> UA split, pressure, recomp
+/// Calculate Objective Value (does not consider total UA minimization)
 /// </summary>
-/// <param name="auto_par"></param>
-/// <param name="opt_par"></param>
-/// <param name="optimal_inputs"></param>
-/// <returns></returns>
-int C_TurbineSplitFlow_Cycle::optimize_totalUA(const S_auto_opt_design_parameters& auto_par,
+double C_TurbineSplitFlow_Cycle::calc_objective(const S_auto_opt_design_parameters& auto_par,
     const S_opt_design_parameters& opt_par,
-    C_sco2_tsf_core::S_sco2_tsf_in& optimal_inputs)
+    const C_sco2_tsf_core& tsf_core)
 {
-    return -1;;
-}
+    double obj = 0;
+    double eta = tsf_core.m_outputs.m_eta_thermal;
 
-/// <summary>
-/// Optimize internal variables (UA split, pressure, recomp)
-/// totalUA -> bp -> UA split, pressure, recomp
-/// </summary>
-/// <param name="auto_par"></param>
-/// <param name="opt_par"></param>
-/// <param name="core_inputs"></param>
-/// <param name="optimal_inputs"></param>
-/// <returns></returns>
-int C_TurbineSplitFlow_Cycle::optimize_par(const S_auto_opt_design_parameters& auto_par,
-    const S_opt_design_parameters& opt_par,
-    C_sco2_tsf_core::S_sco2_tsf_in& core_inputs,
-    C_sco2_tsf_core::S_sco2_tsf_in& optimal_inputs)
-{
-    return -1;
+    // Hit a target thermal efficiency
+    if (opt_par.m_design_method == 1)
+    {
+        double eta_error = std::min(eta - opt_par.m_eta_thermal_target, 0.0);
+        obj = 1.0 - std::abs(eta_error);
+    }
+    // Maximize thermal efficiency
+    else
+    {
+        obj = eta;
+    }
+
+    // Penalize for PHX sco2 temp diff (if necessary)
+    double penalty = 0;
+    if (auto_par.m_des_objective_type == 2)
+    {
+        double phx_deltaT = tsf_core.m_outputs.m_temp[C_sco2_cycle_core::TURB_IN] - tsf_core.m_outputs.m_temp[C_sco2_cycle_core::LTR_HP_OUT];
+        double under_min_deltaT = std::max(0.0, auto_par.m_min_phx_deltaT - phx_deltaT);
+        
+        double percent_err = under_min_deltaT / auto_par.m_min_phx_deltaT;
+
+        penalty = percent_err;
+    }
+
+    obj = obj - penalty;
+
+    return obj;
 }
 
 // ********************************************************************************** PUBLIC Methods C_TurbineSplitFlow_Cycle (: C_sco2_cycle_core) 
@@ -862,16 +1122,39 @@ double C_TurbineSplitFlow_Cycle::optimize_totalUA_return_objective_metric(const 
 }
 
 /// <summary>
-/// Objective Function for NON Bypass optimization
-/// Total UA -> Bypass Fraction -> pressure, split UA, recomp frac
+/// Objective Function for general parameters 
+/// Total UA -> pressure, split UA, recomp frac
 /// </summary>
 /// <returns>ONLY Objective Value</returns>
 double C_TurbineSplitFlow_Cycle::optimize_par_return_objective_metric(const std::vector<double>& x,
     const S_auto_opt_design_parameters& auto_par,
     const S_opt_design_parameters& opt_par,
-    C_sco2_tsf_core& htrbp_core)
+    C_sco2_tsf_core& tsf_core)
 {
-    return 0;
+    // Update counter
+    m_opt_iteration_count++; // global
+
+    // Modify core inputs with Variable Parameters
+    int error_code = x_to_inputs(x, auto_par, opt_par, tsf_core.m_inputs);
+
+    if (error_code != 0)
+        return -100000;
+
+    // At this point, have fully defined core input struct
+    // Run the core model
+    error_code = tsf_core.solve();
+
+    // Set Objective
+    double objective_metric = -10000000000.0;
+    if (error_code == 0)
+    {
+        objective_metric = calc_objective(auto_par, opt_par, tsf_core);
+    }
+
+    // Clear optimized inputs
+    clear_x_inputs(x, auto_par, opt_par, tsf_core.m_inputs);
+
+    return objective_metric;
 }
 
 // ********************************************************************************** Off Design Functions
@@ -941,6 +1224,18 @@ double nlopt_tsf_optimize_totalUA_func(const std::vector<double>& x, std::vector
 
 double nlopt_tsf_optimize_par_func(const std::vector<double>& x, std::vector<double>& grad, void* data)
 {
-    return 0;
+    // Unpack Data Tuple
+    std::tuple<C_TurbineSplitFlow_Cycle*, const C_TurbineSplitFlow_Cycle::S_auto_opt_design_parameters*, const C_TurbineSplitFlow_Cycle::S_opt_design_parameters*, C_sco2_tsf_core*>* data_tuple
+        = static_cast<std::tuple<C_TurbineSplitFlow_Cycle*, const C_TurbineSplitFlow_Cycle::S_auto_opt_design_parameters*, const C_TurbineSplitFlow_Cycle::S_opt_design_parameters*, C_sco2_tsf_core*>* > (data);
+
+    C_TurbineSplitFlow_Cycle* frame = std::get<0>(*data_tuple);
+    const C_TurbineSplitFlow_Cycle::S_auto_opt_design_parameters* auto_opt_par = std::get<1>(*data_tuple);
+    const C_TurbineSplitFlow_Cycle::S_opt_design_parameters* opt_par = std::get<2>(*data_tuple);
+    C_sco2_tsf_core* tsf_core = std::get<3>(*data_tuple);
+
+    if (frame != NULL)
+        return frame->optimize_par_return_objective_metric(x, *auto_opt_par, *opt_par, *tsf_core);
+    else
+        return 0.0;
 }
 
