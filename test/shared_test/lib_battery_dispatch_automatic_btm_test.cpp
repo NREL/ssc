@@ -1619,3 +1619,54 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutageFuelCellCharge
         EXPECT_NEAR(batteryPower->powerCritLoadUnmet, expectedCritLoadUnmet[h], 0.1) << " error in crit load at hour " << h;
     }
 }
+
+TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMSetupRateForecastMultiYear) {
+    double dtHour = 1;
+    CreateBattery(dtHour);
+
+    util_rate = new rate_data();
+    util_rate->dc_enabled = true;
+    set_up_default_commercial_rate_data(*util_rate);
+
+    double defaultEff = 0.96;
+    size_t nyears = 25;
+
+    dispatchAutoBTM = new dispatch_automatic_behind_the_meter_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice,
+        max_current,
+        max_current, max_power * defaultEff, max_power / defaultEff, max_power, max_power,
+        0, dispatch_t::BTM_MODES::RETAIL_RATE, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, 0, nyears, 24, 1, true,
+        true, false, false, util_rate, replacementCost, cyclingChoice, cyclingCost, omCost, interconnection_limit, chargeOnlySystemExceedLoad,
+        dischargeOnlyLoadExceedSystem, dischargeToGrid, min_outage_soc, dispatch_t::LOAD_FORECAST_CHOICE::LOAD_LOOK_AHEAD);
+
+    // Setup pv and load signal for peak shaving algorithm
+    for (size_t h = 0; h < 8760 * nyears; h++) {
+        if (h % 24 > 6 && h % 24 < 16) {
+            pv_prediction.push_back(700);
+        }
+        else if (h % 24 == 18) {
+            pv_prediction.push_back(750);
+        }
+        else {
+            pv_prediction.push_back(0);
+        }
+
+        if (h % 24 == 6) {
+            load_prediction.push_back(600);
+        }
+        else if (h % 24 > 16) {
+            load_prediction.push_back(700);
+        }
+        else {
+            load_prediction.push_back(50);
+        }
+    }
+
+    dispatchAutoBTM->update_load_data(load_prediction);
+    dispatchAutoBTM->update_pv_data(pv_prediction);
+    dispatchAutoBTM->setup_rate_forecast();
+
+    // Testing to make sure there are no errors thrown
+
+    delete util_rate;
+
+}

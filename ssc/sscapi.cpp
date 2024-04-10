@@ -49,7 +49,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 SSCEXPORT int ssc_version()
 {
-	return 288;
+	return 290;
 }
 
 SSCEXPORT const char *ssc_build_info()
@@ -266,6 +266,11 @@ static module_entry_info *module_table[] = {
     &cm_entry_hybrid_steps,
     &cm_entry_hybrid,
 0 };
+
+extern var_info vtab_oandm[];
+extern var_info vtab_hybrid_tech_inputs[];
+extern var_info vtab_oandm_hybrid[];
+
 
 SSCEXPORT ssc_module_t ssc_module_create( const char *name )
 {
@@ -707,6 +712,16 @@ SSCEXPORT ssc_var_t ssc_data_get_data_matrix(ssc_data_t p_data, const char *name
     }
     return dat;
 }
+
+SSCEXPORT ssc_bool_t ssc_data_deep_copy(ssc_data_t source, ssc_data_t dest) {
+    auto source_vt = static_cast<var_table*>(source);
+    if (!source_vt) return 0;
+    auto dest_vt = static_cast<var_table*>(dest);
+    if (!dest_vt) return 0;
+	*dest_vt = *source_vt;  // invokes operator= for deep copy
+    return 1;
+}
+
 /*
 void json_to_ssc_var(const Json::Value& json_val, ssc_var_t ssc_val){
     if (!ssc_val)
@@ -1300,6 +1315,87 @@ SSCEXPORT ssc_bool_t ssc_module_add_var_info(ssc_module_t p_mod, ssc_info_t v)
     return 1;
 }
 
+SSCEXPORT ssc_bool_t ssc_module_hybridize(ssc_module_t p_mod)
+{
+    compute_module* cmod = static_cast<compute_module*>(p_mod);
+    if (!p_mod)
+        return 0;
+
+    if (vtab_oandm_hybrid[0].var_type == SSC_INVALID){
+        memcpy(&vtab_oandm_hybrid, &vtab_oandm, 35 * sizeof(var_info));
+
+        for (size_t i=0; i < 35; i++){
+            if (vtab_oandm_hybrid[i].var_type != 0)
+                vtab_oandm_hybrid[i].group = "HybridCosts";
+        }
+    }
+
+    // copy only the subset for the technology
+    std::string cmod_name = cmod->get_name();
+    var_info* vtab_oandm_hybrid_tech[35];
+    for (size_t i=0; i<35; i++)
+        vtab_oandm_hybrid_tech[i] = nullptr;
+
+    size_t copy_counter = 0;
+    for (size_t i=0; i<35; i++){
+        if (vtab_oandm_hybrid[i].var_type == SSC_INVALID)
+            break;
+        std::string name = std::string(vtab_oandm_hybrid[i].name);
+        std::string meta = std::string(vtab_oandm_hybrid[i].meta);
+        if (!meta.size()){
+            // if no meta description on variable, apply it to all technologies
+            if (!cmod->has_info(name)) {
+                vtab_oandm_hybrid_tech[copy_counter] = &vtab_oandm_hybrid[i];
+                copy_counter++;
+            }
+            continue;
+        }
+
+        size_t pos = 0;
+        std::vector<std::string> tokens;
+        while ((pos = meta.find(',')) != std::string::npos){
+            std::string token = meta.substr(0, pos);
+            tokens.push_back(token);
+            meta.erase(0, pos + 1);
+        }
+        if (meta.size())
+            tokens.push_back(meta);
+
+        if (tokens[0][0] == '!'){
+            // apply blocklist
+            bool restricted = false;
+            for (std::string token:tokens){
+                if (cmod_name == token.substr(1)){
+                    restricted = true;
+                    break;
+                }
+            }
+            if (!restricted) {
+                if (!cmod->has_info(name)){
+                    vtab_oandm_hybrid_tech[copy_counter] = &vtab_oandm_hybrid[i];
+                    copy_counter++;
+                }
+                continue;
+            }
+        }
+        else {
+            // apply allowlist
+            for (std::string token:tokens){
+                if (cmod_name == token){
+                    if (!cmod->has_info(name)){
+                        vtab_oandm_hybrid_tech[copy_counter] = &vtab_oandm_hybrid[i];
+                        copy_counter++;
+                    }
+                    break;
+                }
+            }
+        }
+    }    
+
+    cmod->add_var_info(vtab_oandm_hybrid_tech);
+    cmod->add_var_info(vtab_hybrid_tech_inputs);
+    return 1;
+}
 
 SSCEXPORT const char *ssc_module_log( ssc_module_t p_mod, int index, int *item_type, float *time )
 {

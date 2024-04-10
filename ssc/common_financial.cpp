@@ -3297,6 +3297,8 @@ void check_financial_metrics::check_debt_percentage(compute_module* cm, ssc_numb
 {
     if (debt_percentage > 100.0)
         cm->log(util::format("Debt percent is %lg. A debt percent greater than 100%% may indicate that revenues are higher than necessary to cover project costs.", debt_percentage), SSC_WARNING);
+    if (debt_percentage < 0.0)
+        cm->log(util::format("Debt percent is %lg. A debt percent less than 0%% may indicate the mininum EBITDA cannot support any debt in at least one year.", debt_percentage), SSC_WARNING);
 }
 
 
