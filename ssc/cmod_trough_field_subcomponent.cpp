@@ -236,23 +236,6 @@ static var_info _cm_vtab_trough_field_subcomponent[] = {
     { SSC_OUTPUT,       SSC_NUMBER,      "field_thermal_output_actual",      "Design-point thermal power from the solar field limited by mass flow", "MW",           "",         "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "field_thermal_output_ideal",       "Design-point thermal power from the solar field with no limit",        "MW",           "",         "Receiver",                       "*",                                                                "",              "" },
 
-    // Simulation Kernel
-    { SSC_OUTPUT,       SSC_ARRAY,       "time_hr",                   "Time at end of timestep",                                                          "hr",           "",               "solver",         "sim_type=1",                       "",                      "" },
-
-    // Weather Reader
-    { SSC_OUTPUT,       SSC_ARRAY,       "month",                     "Resource Month",                                                                   "",             "",               "weather",        "sim_type=1",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "hour_day",                  "Resource Hour of Day",                                                             "",             "",               "weather",        "sim_type=1",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "solazi",                    "Resource Solar Azimuth",                                                           "deg",          "",               "weather",        "sim_type=1",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "solzen",                    "Resource Solar Zenith",                                                            "deg",          "",               "weather",        "sim_type=1",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "beam",                      "Resource Beam normal irradiance",                                                  "W/m2",         "",               "weather",        "sim_type=1",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "tdry",                      "Resource Dry bulb temperature",                                                    "C",            "",               "weather",        "sim_type=1",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "twet",                      "Resource Wet bulb temperature",                                                    "C",            "",               "weather",        "sim_type=1",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "rh",                        "Resource Relative Humidity",                                                       "%",            "",               "weather",        "sim_type=1",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "wspd",                      "Resource Wind Speed",                                                              "m/s",          "",               "weather",        "sim_type=1",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pres",                      "Resource Pressure",                                                                "mbar",         "",               "weather",        "sim_type=1",                       "",                      "" },
-
-    { SSC_OUTPUT,       SSC_ARRAY,       "defocus",                   "Field optical focus fraction",                                                     "",             "",               "weather",        "sim_type=1",                       "",                      "" },
-
     // Solar Field                                                                                                                                                                                                                   
     { SSC_OUTPUT,       SSC_ARRAY,       "Theta_ave",                 "Field collector solar incidence angle",                                            "deg",          "",               "solar_field",    "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "CosTh_ave",                 "Field collector cosine efficiency",                                                "",             "",               "solar_field",    "sim_type=1",                       "",                      "" },
@@ -688,7 +671,49 @@ public:
         C_csp_collector_receiver::S_csp_cr_solved_params cr_solved_params;
 
         c_trough.init(init_inputs, cr_solved_params);
-        
+
+        // Output Design Point Calculaions
+        {
+            assign("nameplate", q_dot_pc_des);  // [MWt]
+
+            assign("nSCA", c_trough.m_nSCA);
+            assign("field_htf_min_temp", c_trough.m_htfProps.min_temp() - 273.15);    // [C]
+            assign("field_htf_max_temp", c_trough.m_htfProps.max_temp() - 273.15);    // [C]
+            assign("field_htf_cp_avg_des", c_trough.m_field_htf_cp_avg_des);          // [kJ/kg-K]
+            assign("single_loop_aperture", c_trough.m_single_loop_aperture);  // [m2]
+            assign("min_inner_diameter", c_trough.m_min_inner_diameter);      // [m]
+            ssc_number_t* hce_design = allocate("csp_dtr_hce_design_heat_losses", c_trough.m_HCE_heat_loss_des.size());
+            for (int i = 0; i < c_trough.m_HCE_heat_loss_des.size(); i++)
+                hce_design[i] = c_trough.m_HCE_heat_loss_des[i];    // [W/m]
+            assign("csp_dtr_loop_hce_heat_loss", c_trough.m_HCE_heat_loss_loop_des); //[W/m]
+            ssc_number_t* sca_effs = allocate("csp_dtr_sca_calc_sca_effs", c_trough.m_csp_dtr_sca_calc_sca_effs.size());
+            for (int i = 0; i < c_trough.m_csp_dtr_sca_calc_sca_effs.size(); i++)
+                sca_effs[i] = c_trough.m_csp_dtr_sca_calc_sca_effs[i];    // []
+            assign("loop_optical_efficiency", c_trough.m_opteff_des);  //[]
+            ssc_number_t* hce_effs = allocate("csp_dtr_hce_optical_effs", c_trough.m_csp_dtr_hce_optical_effs.size());
+            for (int i = 0; i < c_trough.m_csp_dtr_hce_optical_effs.size(); i++)
+                hce_effs[i] = c_trough.m_csp_dtr_hce_optical_effs[i];    // []
+            assign("SCAInfoArray", c_trough.m_SCAInfoArray);    // []
+            set_vector("SCADefocusArray", c_trough.m_SCADefocusArray);
+            assign("max_field_flow_velocity", c_trough.m_max_field_flow_velocity);  //[m/s]
+            assign("min_field_flow_velocity", c_trough.m_min_field_flow_velocity);  //[m/s]
+            assign("total_loop_conversion_efficiency", c_trough.m_total_loop_conversion_efficiency_des);
+            assign("total_required_aperture_for_SM1", c_trough.m_total_required_aperture_for_SM1);
+            assign("required_number_of_loops_for_SM1", c_trough.m_required_number_of_loops_for_SM1);
+            assign("nLoops", c_trough.m_nLoops);
+            assign("total_aperture", c_trough.m_Ap_tot);    //[m2]
+            assign("field_thermal_output_actual", c_trough.m_q_design_actual / 1e6); // [MWt]
+            assign("field_thermal_output_ideal", c_trough.m_q_design_ideal / 1e6); // [MWt]
+            assign("solar_mult", c_trough.m_solar_mult);
+            assign("fixed_land_area", c_trough.m_fixed_land_area);  //[acre]
+            assign("total_land_area", c_trough.m_total_land_area);  //[acre]
+            double total_tracking_power = c_trough.get_tracking_power();
+            assign("total_tracking_power", total_tracking_power);  //[MWe]
+            assign("K_cpnt", c_trough.m_K_cpnt);
+            assign("D_cpnt", c_trough.m_D_cpnt);    //[m]
+            assign("L_cpnt", c_trough.m_L_cpnt);    //[m]
+            assign("Type_cpnt", c_trough.m_Type_cpnt);   //[]
+        }
 
         // Return if only called for design point
         if (sim_type != 1)
@@ -697,23 +722,33 @@ public:
         // Simulate
         int mode = 1;
 
+        double T_htf_inlet = 90;    // [C]
+        double mdot_htf_inlet = 1;  // [kg/s]
+
         // ON
         if (mode == 1)
         {
-            C_csp_solver_sim_info sim_info;
-            sim_info.ms_ts.m_step = 10;
-            sim_info.ms_ts.m_time = 0;
-            sim_info.ms_ts.m_time_start = 0;
-            sim_info.m_tou = 0;
+            // Starting Time (starts at 0 = Jan 1, midnight)
+            double day = 4;     // [day] (starts at 0!!!!!!)
+            double hr = 12;     // [hr]
 
-            weather_reader.read_time_step(10, sim_info);
+            // Time step (simulation duration)
+            double step = 3600; // [s]
+
+            C_csp_solver_sim_info sim_info;
+            sim_info.ms_ts.m_step = step;       // [s] Size of timestep
+
+            double num_steps = (24 * day) + hr;              // Number of time steps (i.e. if step == 1 hr, then this would be hrs)
+
+            weather_reader.read_time_step(num_steps, sim_info);
             weather_reader.ms_outputs;
 
+            // HTF State
             C_csp_solver_htf_1state htf_state;
-            htf_state.m_m_dot = 1;              // [kg/s]
-            htf_state.m_pres = 17 / 1.e-5;      // [Pa]
-            htf_state.m_qual = 1;               // [-]
-            htf_state.m_temp = 25;              // [C]
+            htf_state.m_m_dot = mdot_htf_inlet;         // [kg/s]
+            htf_state.m_pres = 17 / 1.e-5;              // [Pa]
+            htf_state.m_qual = 1;          // [-]
+            htf_state.m_temp = T_htf_inlet;             // [C] Inlet Temp
 
             double q_dot_elec_to_CR_heat = 0;   // [MWt]
             double field_control = 1;           // [-] Defocus control (1 is no defocus)
@@ -724,6 +759,48 @@ public:
                 cr_out_solver, sim_info);
             c_trough.converged();
         }
+
+        // Output
+        
+        // Non-timeseries array outputs
+        ssc_number_t* p_pipe_runner_diams = allocate("pipe_runner_diams", c_trough.m_D_runner.size());
+        std::copy(c_trough.m_D_runner.begin(), c_trough.m_D_runner.end(), p_pipe_runner_diams);
+        ssc_number_t* p_pipe_runner_wallthk = allocate("pipe_runner_wallthk", c_trough.m_WallThk_runner.size());
+        std::copy(c_trough.m_WallThk_runner.begin(), c_trough.m_WallThk_runner.end(), p_pipe_runner_wallthk);
+        ssc_number_t* p_pipe_runner_lengths = allocate("pipe_runner_lengths", c_trough.m_L_runner.size());
+        std::copy(c_trough.m_L_runner.begin(), c_trough.m_L_runner.end(), p_pipe_runner_lengths);
+        ssc_number_t* p_pipe_runner_expansions = allocate("pipe_runner_expansions", c_trough.m_N_rnr_xpans.size());
+        std::copy(c_trough.m_N_rnr_xpans.begin(), c_trough.m_N_rnr_xpans.end(), p_pipe_runner_expansions);
+        ssc_number_t* p_pipe_runner_mdot_dsn = allocate("pipe_runner_mdot_dsn", c_trough.m_m_dot_rnr_dsn.size());
+        std::copy(c_trough.m_m_dot_rnr_dsn.begin(), c_trough.m_m_dot_rnr_dsn.end(), p_pipe_runner_mdot_dsn);
+        ssc_number_t* p_pipe_runner_vel_dsn = allocate("pipe_runner_vel_dsn", c_trough.m_V_rnr_dsn.size());
+        std::copy(c_trough.m_V_rnr_dsn.begin(), c_trough.m_V_rnr_dsn.end(), p_pipe_runner_vel_dsn);
+        ssc_number_t* p_pipe_runner_T_dsn = allocate("pipe_runner_T_dsn", c_trough.m_T_rnr_dsn.size());
+        std::copy(c_trough.m_T_rnr_dsn.begin(), c_trough.m_T_rnr_dsn.end(), p_pipe_runner_T_dsn);
+        ssc_number_t* p_pipe_runner_P_dsn = allocate("pipe_runner_P_dsn", c_trough.m_P_rnr_dsn.size());
+        std::copy(c_trough.m_P_rnr_dsn.begin(), c_trough.m_P_rnr_dsn.end(), p_pipe_runner_P_dsn);
+
+        ssc_number_t* p_pipe_header_diams = allocate("pipe_header_diams", c_trough.m_D_hdr.size());
+        std::copy(c_trough.m_D_hdr.begin(), c_trough.m_D_hdr.end(), p_pipe_header_diams);
+        ssc_number_t* p_pipe_header_wallthk = allocate("pipe_header_wallthk", c_trough.m_WallThk_hdr.size());
+        std::copy(c_trough.m_WallThk_hdr.begin(), c_trough.m_WallThk_hdr.end(), p_pipe_header_wallthk);
+        ssc_number_t* p_pipe_header_lengths = allocate("pipe_header_lengths", c_trough.m_L_hdr.size());
+        std::copy(c_trough.m_L_hdr.begin(), c_trough.m_L_hdr.end(), p_pipe_header_lengths);
+        ssc_number_t* p_pipe_header_expansions = allocate("pipe_header_expansions", c_trough.m_N_hdr_xpans.size());
+        std::copy(c_trough.m_N_hdr_xpans.begin(), c_trough.m_N_hdr_xpans.end(), p_pipe_header_expansions);
+        ssc_number_t* p_pipe_header_mdot_dsn = allocate("pipe_header_mdot_dsn", c_trough.m_m_dot_hdr_dsn.size());
+        std::copy(c_trough.m_m_dot_hdr_dsn.begin(), c_trough.m_m_dot_hdr_dsn.end(), p_pipe_header_mdot_dsn);
+        ssc_number_t* p_pipe_header_vel_dsn = allocate("pipe_header_vel_dsn", c_trough.m_V_hdr_dsn.size());
+        std::copy(c_trough.m_V_hdr_dsn.begin(), c_trough.m_V_hdr_dsn.end(), p_pipe_header_vel_dsn);
+        ssc_number_t* p_pipe_header_T_dsn = allocate("pipe_header_T_dsn", c_trough.m_T_hdr_dsn.size());
+        std::copy(c_trough.m_T_hdr_dsn.begin(), c_trough.m_T_hdr_dsn.end(), p_pipe_header_T_dsn);
+        ssc_number_t* p_pipe_header_P_dsn = allocate("pipe_header_P_dsn", c_trough.m_P_hdr_dsn.size());
+        std::copy(c_trough.m_P_hdr_dsn.begin(), c_trough.m_P_hdr_dsn.end(), p_pipe_header_P_dsn);
+
+        ssc_number_t* p_pipe_loop_T_dsn = allocate("pipe_loop_T_dsn", c_trough.m_T_loop_dsn.size());
+        std::copy(c_trough.m_T_loop_dsn.begin(), c_trough.m_T_loop_dsn.end(), p_pipe_loop_T_dsn);
+        ssc_number_t* p_pipe_loop_P_dsn = allocate("pipe_loop_P_dsn", c_trough.m_P_loop_dsn.size());
+        std::copy(c_trough.m_P_loop_dsn.begin(), c_trough.m_P_loop_dsn.end(), p_pipe_loop_P_dsn);
 
     }
 
