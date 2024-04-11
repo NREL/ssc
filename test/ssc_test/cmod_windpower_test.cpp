@@ -212,8 +212,8 @@ TEST_F(CMWindPowerIntegration, CtCurve_cmod_windpower)
 
     ssc_number_t difference = wakeLoss2 - wakeLoss1;
     EXPECT_NEAR(wakeLoss1, 4.148, 0.01) << "Wake Loss 1";
-    EXPECT_NEAR(wakeLoss2, 10.0, 0.5) << "Wake Loss 2";
-    EXPECT_NEAR(difference, 10.0, 0.5) << "Difference";
+    EXPECT_NEAR(wakeLoss2, 5.562, 0.5) << "Wake Loss 2";
+    EXPECT_NEAR(difference, 1.413, 0.5) << "Difference";
 }
 
 /// Using Interpolated Subhourly Wind Data

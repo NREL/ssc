@@ -305,10 +305,10 @@ void cm_windpower::exec()
     // get optional thrust curve for wind turbine
     if (is_assigned("wind_turbine_ct_curve"))
     {
-        size_t* ctCurveLength = 0;
-        ssc_number_t* ctc = as_array("wind_turbine_ct_curve", ctCurveLength);
-        std::vector<double> ct_curve(*ctCurveLength);
-        for (size_t i = 0; i < *ctCurveLength; i++)
+        size_t ctCurveLength = 0;
+        ssc_number_t* ctc = as_array("wind_turbine_ct_curve", &ctCurveLength);
+        std::vector<double> ct_curve(ctCurveLength);
+        for (size_t i = 0; i < ctCurveLength; i++)
             ct_curve[i] = ctc[i];
         wt.setCtCurve(ct_curve);
     }
