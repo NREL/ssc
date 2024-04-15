@@ -56,7 +56,9 @@ int sco2_cycle_plot_data_PH(int cycle_config,
 	std::vector<double> & P_rc /*MPa*/,
 	std::vector<double> & h_rc /*kJ/kg*/,
 	std::vector<double> & P_pc /*MPa*/,
-	std::vector<double> & h_pc /*kJ/kg*/);
+	std::vector<double> & h_pc /*kJ/kg*/,
+    std::vector<double> & P_t2 /*MPa*/,
+    std::vector<double> & h_t2 /*kJ/kg*/);
 
 int Ts_arrays_over_constP(double T_cold /*C*/, double T_hot /*C*/, std::vector<double> P_consts /*kPa*/,
 	std::vector<std::vector<double>> & T_data /*C*/, std::vector<std::vector<double>> & s_data);

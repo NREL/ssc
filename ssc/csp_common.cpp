@@ -1331,6 +1331,8 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 	std::vector<double> h_rc;		//[kJ/kg]
 	std::vector<double> P_pc;		//[MPa]
 	std::vector<double> h_pc;		//[kJ/kg]
+    std::vector<double> P_t2;       //[MPa]
+    std::vector<double> h_t2;       //[kJ/kg]
 	int ph_err_code = sco2_cycle_plot_data_PH(s_sco2_des_par.m_cycle_config,
 		c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_temp,
 		c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres,
@@ -1341,7 +1343,9 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 		P_rc,
 		h_rc,
 		P_pc,
-		h_pc);
+		h_pc,
+        P_t2,
+        h_t2);
 
 	if (ph_err_code != 0)
 		throw exec_error("sco2_csp_system", "cycle plot data routine failed");
@@ -1700,7 +1704,35 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 	cost_equip_sum += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_equipment_cost;			//[M$]
     cm->assign("t_cost_bare_erected", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_bare_erected_cost);		//[M$]
     cost_bare_erected_sum += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_bare_erected_cost;
-		// Recuperator
+
+    // Secondary Turbine
+    if (cycle_config == 4)
+    {
+        cm->assign("t2_W_dot", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_W_dot_t * 1.E-3));	//[MWe] convert from kWe
+        cm->assign("t_m_dot_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_m_dot_t);		//[kg/s]
+        cm->assign("T_turb_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::TURB_IN] - 273.15));	//[C] Turbine inlet temp, convert from K
+        cm->assign("t_P_in_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::TURB_IN] * 1.E-3));	//[MPa] Turbine inlet pressure, convert from kPa
+        cm->assign("t_T_out_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::TURB_OUT] - 273.15)); //[C] Turbine outlet temp, convert from K
+        cm->assign("t_P_out_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::TURB_OUT] * 1.E-3));	//[MPa] Turbine outlet pressure, convert from kPa
+        cm->assign("t_delta_h_isen_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_delta_h_isen));	//[kJ/kg]
+        cm->assign("t_rho_in_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_rho_in));	//[kg/m3]
+        cm->assign("t_nu_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_nu_design);           //[-]
+        cm->assign("t_tip_ratio_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_w_tip_ratio);  //[-]
+        cm->assign("t_N_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_N_design);			   //[rpm]
+        cm->assign("t_D", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_D_rotor);                  //[m]
+        cm->assign("t_cost_equipment", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_equipment_cost);			//[M$]
+        cost_equip_sum += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_equipment_cost;			//[M$]
+        cm->assign("t_cost_bare_erected", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_bare_erected_cost);		//[M$]
+        cost_bare_erected_sum += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_bare_erected_cost;
+    }
+    else
+    {
+
+    }
+    
+
+
+        // Recuperator
 	double recup_total_UA_assigned = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_UA_allocated*1.E-3;	//[MW/K] convert from kW/K
     double recup_total_UA_calculated = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_UA_calc_at_eff_max*1.E-3;	//[MW/K] convert from kW/K
     double recup_total_cost_equip = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_cost_equipment;					//[M$]
@@ -1986,6 +2018,8 @@ int sco2_helper_core(compute_module* cm)
     std::vector<double> h_rc;		//[kJ/kg]
     std::vector<double> P_pc;		//[MPa]
     std::vector<double> h_pc;		//[kJ/kg]
+    std::vector<double> P_t2;       //[MPa]
+    std::vector<double> h_t2;       //[kJ/kg]
     int ph_err_code = sco2_cycle_plot_data_PH(cycle_config,
         T_state_points_K,
         P_state_points_kPa,
@@ -1996,7 +2030,9 @@ int sco2_helper_core(compute_module* cm)
         P_rc,
         h_rc,
         P_pc,
-        h_pc);
+        h_pc,
+        P_t2,
+        h_t2);
 
     if (ph_err_code != 0)
         throw exec_error("sco2_csp_system", "cycle plot data routine failed");
