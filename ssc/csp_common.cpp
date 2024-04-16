@@ -900,23 +900,38 @@ var_info vtab_sco2_design[] = {
     { SSC_OUTPUT, SSC_NUMBER,  "pc_cost_equipment",    "Precompressor cost equipment",                           "M$",         "Precompressor",    "",      "*",     "",       "" },
     { SSC_OUTPUT, SSC_NUMBER,  "pc_cost_bare_erected", "Precompressor cost equipment plus install",              "M$",         "Precompressor",    "",      "*",     "",       "" },
 		// Compressor Totals	
-	{ SSC_OUTPUT, SSC_NUMBER,   "c_tot_cost_equip",    "Compressor total cost",                                  "M$",         "Compressor Totals",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,   "c_tot_W_dot",         "Compressor total summed power",                          "MWe",        "Compressor Totals",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,   "c_tot_cost_equip",    "Compressor total cost",                                  "M$",         "Compressor Totals",    "",  "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,   "c_tot_W_dot",         "Compressor total summed power",                          "MWe",        "Compressor Totals",    "",  "*",     "",       "" },
 		// Turbine
-	{ SSC_OUTPUT, SSC_NUMBER,  "t_W_dot",              "Turbine power",                                          "MWe",        "Turbine",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "t_m_dot_des",          "Turbine mass flow rate",                                 "kg/s",       "Turbine",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "T_turb_in",            "Turbine inlet temperature",                              "C",          "Turbine",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "t_P_in_des",           "Turbine design inlet pressure",                          "MPa",        "Turbine",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "t_T_out_des",          "Turbine outlet temperature",                             "C",          "Turbine",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "t_P_out_des",          "Turbine design outlet pressure",                         "MPa",        "Turbine",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "t_delta_h_isen_des",   "Turbine isentropic specific work",                       "kJ/kg",      "Turbine",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "t_rho_in_des",         "Turbine inlet density",                                  "kg/m3",      "Turbine",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "t_nu_des",             "Turbine design velocity ratio",                          "",           "Turbine",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "t_tip_ratio_des",	   "Turbine design tip speed ratio",                         "",           "Turbine",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "t_N_des",			   "Turbine design shaft speed",	                         "rpm",        "Turbine",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "t_D",                  "Turbine diameter",                                       "m",          "Turbine",    "",      "*",     "",       "" },
-	{ SSC_OUTPUT, SSC_NUMBER,  "t_cost_equipment",     "Tubine cost - equipment",                                "M$",         "Turbine",    "",      "*",     "",       "" },
-    { SSC_OUTPUT, SSC_NUMBER,  "t_cost_bare_erected",  "Tubine cost - equipment plus install",                   "M$",         "Turbine",    "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "t_W_dot",              "Turbine power",                                          "MWe",        "Turbine",          "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "t_m_dot_des",          "Turbine mass flow rate",                                 "kg/s",       "Turbine",          "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "T_turb_in",            "Turbine inlet temperature",                              "C",          "Turbine",          "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "t_P_in_des",           "Turbine design inlet pressure",                          "MPa",        "Turbine",          "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "t_T_out_des",          "Turbine outlet temperature",                             "C",          "Turbine",          "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "t_P_out_des",          "Turbine design outlet pressure",                         "MPa",        "Turbine",          "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "t_delta_h_isen_des",   "Turbine isentropic specific work",                       "kJ/kg",      "Turbine",          "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "t_rho_in_des",         "Turbine inlet density",                                  "kg/m3",      "Turbine",          "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "t_nu_des",             "Turbine design velocity ratio",                          "",           "Turbine",          "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "t_tip_ratio_des",	   "Turbine design tip speed ratio",                         "",           "Turbine",          "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "t_N_des",			   "Turbine design shaft speed",	                         "rpm",        "Turbine",          "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "t_D",                  "Turbine diameter",                                       "m",          "Turbine",          "",      "*",     "",       "" },
+	{ SSC_OUTPUT, SSC_NUMBER,  "t_cost_equipment",     "Tubine cost - equipment",                                "M$",         "Turbine",          "",      "*",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "t_cost_bare_erected",  "Tubine cost - equipment plus install",                   "M$",         "Turbine",          "",      "*",     "",       "" },
+        // Secondary Turbine (TSF cycle only)
+    { SSC_OUTPUT, SSC_NUMBER,  "t2_W_dot",             "Secondary Turbine power",                                "MWe",        "Turbine 2",  "",      "cycle_config=4",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "t2_m_dot_des",         "Secondary Turbine mass flow rate",                       "kg/s",       "Turbine 2",  "",      "cycle_config=4",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "T_turb2_in",           "Secondary Turbine inlet temperature",                    "C",          "Turbine 2",  "",      "cycle_config=4",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "t2_P_in_des",          "Secondary Turbine design inlet pressure",                "MPa",        "Turbine 2",  "",      "cycle_config=4",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "t2_T_out_des",         "Secondary Turbine outlet temperature",                   "C",          "Turbine 2",  "",      "cycle_config=4",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "t2_P_out_des",         "Secondary Turbine design outlet pressure",               "MPa",        "Turbine 2",  "",      "cycle_config=4",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "t2_delta_h_isen_des",  "Secondary Turbine isentropic specific work",             "kJ/kg",      "Turbine 2",  "",      "cycle_config=4",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "t2_rho_in_des",        "Secondary Turbine inlet density",                        "kg/m3",      "Turbine 2",  "",      "cycle_config=4",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "t2_nu_des",            "Secondary Turbine design velocity ratio",                "",           "Turbine 2",  "",      "cycle_config=4",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "t2_tip_ratio_des",	   "Secondary Turbine design tip speed ratio",               "",           "Turbine 2",  "",      "cycle_config=4",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "t2_N_des",			   "Secondary Turbine design shaft speed",	                 "rpm",        "Turbine 2",  "",      "cycle_config=4",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "t2_D",                 "Secondary Turbine diameter",                             "m",          "Turbine 2",  "",      "cycle_config=4",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "t2_cost_equipment",    "Secondary Tubine cost - equipment",                      "M$",         "Turbine 2",  "",      "cycle_config=4",     "",       "" },
+    { SSC_OUTPUT, SSC_NUMBER,  "t2_cost_bare_erected", "Secondary Tubine cost - equipment plus install",         "M$",         "Turbine 2",  "",      "cycle_config=4",     "",       "" },
         // Recuperators																				 
 	{ SSC_OUTPUT, SSC_NUMBER,  "recup_total_UA_assigned", "Total recuperator UA assigned to design routine",     "MW/K",       "Recuperators",    "",      "*",     "",       "" },
     { SSC_OUTPUT, SSC_NUMBER,  "recup_total_UA_calculated", "Total recuperator UA calculated considering max eff and/or min temp diff parameter", "MW/K",       "Recuperators",    "",      "*",     "",       "" },
@@ -1508,7 +1523,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
     }
     else
     {
-        cm->assign("T_htf_cold_des", (ssc_number_t)(T_htf_cold_calc - 273.15));		//[C] convert from K    Final HTF Temp (PHX outlet for recompression and partial)
+        cm->assign("T_htf_cold_des", (ssc_number_t)(T_htf_cold_calc - 273.15));		//[C] convert from K    Final HTF Temp (PHX outlet)
     }
         
     // Compressor
@@ -1708,31 +1723,29 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
     // Secondary Turbine
     if (cycle_config == 4)
     {
-        cm->assign("t2_W_dot", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_W_dot_t * 1.E-3));	//[MWe] convert from kWe
-        cm->assign("t_m_dot_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_m_dot_t);		//[kg/s]
-        cm->assign("T_turb_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::TURB_IN] - 273.15));	//[C] Turbine inlet temp, convert from K
-        cm->assign("t_P_in_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::TURB_IN] * 1.E-3));	//[MPa] Turbine inlet pressure, convert from kPa
-        cm->assign("t_T_out_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::TURB_OUT] - 273.15)); //[C] Turbine outlet temp, convert from K
-        cm->assign("t_P_out_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::TURB_OUT] * 1.E-3));	//[MPa] Turbine outlet pressure, convert from kPa
-        cm->assign("t_delta_h_isen_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_delta_h_isen));	//[kJ/kg]
-        cm->assign("t_rho_in_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_rho_in));	//[kg/m3]
-        cm->assign("t_nu_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_nu_design);           //[-]
-        cm->assign("t_tip_ratio_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_w_tip_ratio);  //[-]
-        cm->assign("t_N_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_N_design);			   //[rpm]
-        cm->assign("t_D", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_D_rotor);                  //[m]
-        cm->assign("t_cost_equipment", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_equipment_cost);			//[M$]
-        cost_equip_sum += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_equipment_cost;			//[M$]
-        cm->assign("t_cost_bare_erected", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_bare_erected_cost);		//[M$]
-        cost_bare_erected_sum += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t_des_solved.m_bare_erected_cost;
-    }
-    else
-    {
-
+        cm->assign("t2_W_dot", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_W_dot_t2 * 1.E-3));	//[MWe] convert from kWe
+        cm->assign("t2_m_dot_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_m_dot_t2);		//[kg/s]
+        cm->assign("T_turb2_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::HTR_HP_OUT] - 273.15));	//[C] Turbine 2 inlet temp, convert from K
+        cm->assign("t2_P_in_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::HTR_HP_OUT] * 1.E-3));	//[MPa] Turbine 2 inlet pressure, convert from kPa
+        cm->assign("t2_T_out_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::TURB2_OUT] - 273.15)); //[C] Turbine 2 outlet temp, convert from K
+        cm->assign("t2_P_out_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::TURB2_OUT] * 1.E-3));	//[MPa] Turbine 2 outlet pressure, convert from kPa
+        cm->assign("t2_delta_h_isen_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t2_des_solved.m_delta_h_isen));	//[kJ/kg]
+        cm->assign("t2_rho_in_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t2_des_solved.m_rho_in));	//[kg/m3]
+        cm->assign("t2_nu_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t2_des_solved.m_nu_design);           //[-]
+        cm->assign("t2_tip_ratio_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t2_des_solved.m_w_tip_ratio);  //[-]
+        cm->assign("t2_N_des", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t2_des_solved.m_N_design);			   //[rpm]
+        cm->assign("t2_D", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t2_des_solved.m_D_rotor);                  //[m]
+        cm->assign("t2_cost_equipment", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t2_des_solved.m_equipment_cost);			//[M$]
+        cost_equip_sum += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t2_des_solved.m_equipment_cost;			//[M$]
+        cm->assign("t2_cost_bare_erected", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t2_des_solved.m_bare_erected_cost);		//[M$]
+        cost_bare_erected_sum += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_t2_des_solved.m_bare_erected_cost;
     }
     
 
 
         // Recuperator
+    int LTR_LP_IN_enum = cycle_config == 4 ? C_sco2_cycle_core::TURB2_OUT : C_sco2_cycle_core::HTR_LP_OUT;  // Define LTR LP inlet state point
+
 	double recup_total_UA_assigned = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_UA_allocated*1.E-3;	//[MW/K] convert from kW/K
     double recup_total_UA_calculated = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_UA_calc_at_eff_max*1.E-3;	//[MW/K] convert from kW/K
     double recup_total_cost_equip = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_cost_equipment;					//[M$]
@@ -1745,7 +1758,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 	cm->assign("NTU_LTR", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_NTU_design);		//[-]
 	cm->assign("q_dot_LTR", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_Q_dot_design*1.E-3));	//[MWt] convert from kWt
 	double LTR_LP_deltaP_frac = 1.0 - c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::LTR_LP_OUT] / 
-									c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::HTR_LP_OUT];   //[-] Fractional pressure drop through LP side of LTR
+									c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[LTR_LP_IN_enum];   //[-] Fractional pressure drop through LP side of LTR
 	cm->assign("LTR_LP_deltaP_des", (ssc_number_t)LTR_LP_deltaP_frac);		//[-]
 	double LTR_HP_deltaP_frac = 1.0 - c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::LTR_HP_OUT] /
 		c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::MC_OUT];   //[-] Fractional pressure drop through HP side of LTR
@@ -1756,12 +1769,14 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
     cost_equip_sum += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_cost_equipment;		//[M$]
     cost_bare_erected_sum += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_LTR_des_solved.m_cost_bare_erected;		//[M$]
 			// High-temp
-	if (is_rc || s_sco2_des_par.m_cycle_config == 3) // Cycle may still have HTR if it is htr bypass cycle
+	if (is_rc || cycle_config == 3 || cycle_config == 4) // Cycle may still have HTR if it is htr bypass cycle
 	{
+        int HTR_HP_IN_enum = cycle_config == 4 ? C_sco2_cycle_core::MC_OUT : C_sco2_cycle_core::MIXER_OUT;
+
 		recup_total_UA_assigned += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_UA_allocated*1.E-3;	//[MW/K] convert from kW/K
         recup_total_UA_calculated += c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_UA_calc_at_eff_max*1.E-3;	//[MW/K] convert from kW/K
         cm->assign("HTR_LP_T_out_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::HTR_LP_OUT] - 273.15));	//[C] HTR LP stream outlet temp, convert from K
-		cm->assign("HTR_HP_T_in_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::MIXER_OUT] - 273.15));		//[C] HTR HP stream inlet temp, convert from K
+		cm->assign("HTR_HP_T_in_des", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_temp[HTR_HP_IN_enum] - 273.15));		//[C] HTR HP stream inlet temp, convert from K
 		cm->assign("HTR_UA_assigned", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_UA_allocated*1.E-3));	//[MW/K] convert from kW/K
         cm->assign("HTR_UA_calculated", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_UA_calc_at_eff_max*1.E-3));	//[MW/K] convert from kW/K
         cm->assign("eff_HTR", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_HTR_des_solved.m_eff_design);		//[-]
@@ -1780,7 +1795,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 			c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::TURB_OUT];   //[-] Fractional pressure drop through LP side of HTR
 		cm->assign("HTR_LP_deltaP_des", (ssc_number_t)HTR_LP_deltaP_frac);		//[-]
 		double HTR_HP_deltaP_frac = 1.0 - c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::HTR_HP_OUT] /
-			c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::LTR_HP_OUT];   //[-] Fractional pressure drop through HP side of HTR
+			c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[HTR_HP_IN_enum];   //[-] Fractional pressure drop through HP side of HTR
 		cm->assign("HTR_HP_deltaP_des", (ssc_number_t)HTR_HP_deltaP_frac);		//[-]
 	}
 	else
@@ -1811,19 +1826,26 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
         double mdot_t = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_m_dot_t;
         htr_hp_m_dot = mdot_t * (1.0 - c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_bypass_frac);
     }
+    else if (cycle_config == 4)
+    {
+        htr_hp_m_dot = c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_m_dot_t2; //[kg/s]
+    }
+
     cm->assign("HTR_HP_m_dot", (ssc_number_t)htr_hp_m_dot);
 
     // PHX
+    int PHX_IN_enum = cycle_config == 4 ? C_sco2_cycle_core::LTR_HP_OUT : C_sco2_cycle_core::HTR_HP_OUT;
+
 	cm->assign("UA_PHX", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_phx_des_solved.m_UA_design*1.E-3));	//[MW/K] convert from kW/K
 	cm->assign("eff_PHX", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_phx_des_solved.m_eff_design);				//[-]
 	cm->assign("NTU_PHX", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_phx_des_solved.m_NTU_design);				//[-]
-	cm->assign("T_co2_PHX_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_temp[C_sco2_cycle_core::HTR_HP_OUT] - 273.15));	//[C]
-	cm->assign("P_co2_PHX_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::HTR_HP_OUT] * 1.E-3));		//[MPa] convert from kPa
+	cm->assign("T_co2_PHX_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_temp[PHX_IN_enum] - 273.15));	//[C]
+	cm->assign("P_co2_PHX_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[PHX_IN_enum] * 1.E-3));		//[MPa] convert from kPa
 	cm->assign("deltaT_HTF_PHX", (ssc_number_t)s_sco2_des_par.m_T_htf_hot_in - T_htf_cold_calc);		//[K]
 	cm->assign("q_dot_PHX", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_phx_des_solved.m_Q_dot_design*1.E-3));	//[MWt] convert from kWt
     cm->assign("PHX_min_dT", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_phx_des_solved.m_min_DT_design));	//[C/K]
 	double PHX_deltaP_frac = 1.0 - c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::TURB_IN] /
-		c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::HTR_HP_OUT];   //[-] Fractional pressure drop through co2 side of PHX
+		c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[PHX_IN_enum];   //[-] Fractional pressure drop through co2 side of PHX
 	cm->assign("PHX_co2_deltaP_des", (ssc_number_t)PHX_deltaP_frac);
 	cm->assign("PHX_cost_equipment", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_phx_des_solved.m_cost_equipment);	//[M$]
     cm->assign("PHX_cost_bare_erected", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_phx_des_solved.m_cost_bare_erected);	//[M$]
@@ -1853,14 +1875,16 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
     }
 
         // Low Pressure Cooler
+    int MC_COOLER_IN_enum = cycle_config == 4 ? C_sco2_cycle_core::MIXER_OUT : C_sco2_cycle_core::LTR_LP_OUT;
+
 	cm->assign("mc_cooler_T_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_air_cooler.m_T_in_co2 - 273.15));	//[C]
 	cm->assign("mc_cooler_P_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_air_cooler.m_P_in_co2 / 1.E3));		//[MPa]
-	cm->assign("mc_cooler_rho_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_dens[C_sco2_cycle_core::LTR_LP_OUT]));	//[kg/m3]
+	cm->assign("mc_cooler_rho_in", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_dens[MC_COOLER_IN_enum]));	//[kg/m3]
 	cm->assign("mc_cooler_m_dot_co2", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_air_cooler.m_m_dot_co2);		//[kg/s]
 	cm->assign("mc_cooler_UA", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_air_cooler.m_UA_total*1.E-6));		//[MW/K] convert from W/K
 	cm->assign("mc_cooler_q_dot", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_air_cooler.m_q_dot*1.E-6));		//[MWt] convert from W
 	double LP_cooler_deltaP_frac = 1.0 - c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::MC_IN] /
-		c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[C_sco2_cycle_core::LTR_LP_OUT];   //[-] Fractional pressure drop through co2 side of PHX
+		c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_pres[MC_COOLER_IN_enum];   //[-] Fractional pressure drop through co2 side of PHX
 	cm->assign("mc_cooler_co2_deltaP_des", (ssc_number_t)LP_cooler_deltaP_frac);
 	cm->assign("mc_cooler_W_dot_fan", (ssc_number_t)(c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_air_cooler.m_W_dot_fan));	//[MWe]
 	cm->assign("mc_cooler_cost_equipment", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.ms_mc_air_cooler.m_cost_equipment);					//[M$]
