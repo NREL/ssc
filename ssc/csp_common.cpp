@@ -1044,6 +1044,9 @@ var_info vtab_sco2_design[] = {
 	{ SSC_OUTPUT, SSC_ARRAY,  "h_rc_data",            "Enthalpy points along re compression",          "kJ/kg",    "P-h plot data",   "",   "*",   "",   "" },
 	{ SSC_OUTPUT, SSC_ARRAY,  "P_pc_data",            "Pressure points along pre compression",         "MPa",	   "P-h plot data",   "",   "*",   "",   "" },
 	{ SSC_OUTPUT, SSC_ARRAY,  "h_pc_data",            "Enthalpy points along pre compression",         "kJ/kg",    "P-h plot data",   "",   "*",   "",   "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "P_t2_data",            "Pressure points along secondary turbine expansion",  "MPa",	   "P-h plot data",   "",   "*",   "",   "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "h_t2_data",            "Enthalpy points along secondary turbine expansion",  "kJ/kg",    "P-h plot data",   "",   "*",   "",   "" },
+
 
 var_info_invalid };
 
@@ -1400,6 +1403,15 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 		p_P_pc_data[i] = (ssc_number_t)(P_pc[i]);		//[MPa]
 		p_h_pc_data[i] = (ssc_number_t)(h_pc[i]);		//[kJ/kg]
 	}
+
+    n_v = P_t2.size();
+    ssc_number_t* p_P_t2_data = cm->allocate("P_t2_data", n_v);
+    ssc_number_t* p_h_t2_data = cm->allocate("h_t2_data", n_v);
+    for (size_t i = 0; i < n_v; i++)
+    {
+        p_P_t2_data[i] = (ssc_number_t)(P_t2[i]);		//[MPa]
+        p_h_t2_data[i] = (ssc_number_t)(h_t2[i]);		//[kJ/kg]
+    }
 
 	// Get data for T-s cycle plot
 	std::vector<double> T_LTR_HP;	//[C]
@@ -1990,29 +2002,31 @@ var_info vtab_sco2_helper[] =
     { SSC_INPUT,  SSC_ARRAY,   "s_state_points",                "Entropy state point array",                 "kJ/kg-K",    "",    "",      "",     "",       "" },
 
     // T-s plot data
-    { SSC_OUTPUT, SSC_ARRAY,  "T_LTR_HP_data",        "Temperature points along LTR HP stream",        "C",	       "T-s plot data",   "",   "*",   "",   "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "s_LTR_HP_data",        "Entropy points along LTR HP stream",            "kJ/kg-K",    "T-s plot data",   "",   "*",   "",   "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "T_HTR_HP_data",        "Temperature points along HTR HP stream",        "C",	       "T-s plot data",   "",   "*",   "",   "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "s_HTR_HP_data",        "Entropy points along HTR HP stream",            "kJ/kg-K",    "T-s plot data",   "",   "*",   "",   "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "T_PHX_data",           "Temperature points along PHX stream",           "C",	       "T-s plot data",   "",   "*",   "",   "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "s_PHX_data",           "Entropy points along PHX stream",               "kJ/kg-K",    "T-s plot data",   "",   "*",   "",   "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "T_HTR_LP_data",        "Temperature points along HTR LP stream",        "C",	       "T-s plot data",   "",   "*",   "",   "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "s_HTR_LP_data",        "Entropy points along HTR LP stream",            "kJ/kg-K",    "T-s plot data",   "",   "*",   "",   "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "T_LTR_LP_data",        "Temperature points along LTR LP stream",        "C",	       "T-s plot data",   "",   "*",   "",   "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "s_LTR_LP_data",        "Entropy points along LTR LP stream",            "kJ/kg-K",    "T-s plot data",   "",   "*",   "",   "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "T_main_cooler_data",   "Temperature points along main cooler stream",   "C",	       "T-s plot data",   "",   "*",   "",   "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "s_main_cooler_data",   "Entropy points along main cooler stream",       "kJ/kg-K",    "T-s plot data",   "",   "*",   "",   "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "T_pre_cooler_data",    "Temperature points along pre cooler stream",    "C",	       "T-s plot data",   "",   "*",   "",   "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "s_pre_cooler_data",    "Entropy points along pre cooler stream",        "kJ/kg-K",    "T-s plot data",   "",   "*",   "",   "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "T_LTR_HP_data",        "Temperature points along LTR HP stream",             "C",	       "T-s plot data",   "",   "*",   "",   "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "s_LTR_HP_data",        "Entropy points along LTR HP stream",                 "kJ/kg-K",    "T-s plot data",   "",   "*",   "",   "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "T_HTR_HP_data",        "Temperature points along HTR HP stream",             "C",	       "T-s plot data",   "",   "*",   "",   "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "s_HTR_HP_data",        "Entropy points along HTR HP stream",                 "kJ/kg-K",    "T-s plot data",   "",   "*",   "",   "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "T_PHX_data",           "Temperature points along PHX stream",                "C",	       "T-s plot data",   "",   "*",   "",   "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "s_PHX_data",           "Entropy points along PHX stream",                    "kJ/kg-K",    "T-s plot data",   "",   "*",   "",   "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "T_HTR_LP_data",        "Temperature points along HTR LP stream",             "C",	       "T-s plot data",   "",   "*",   "",   "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "s_HTR_LP_data",        "Entropy points along HTR LP stream",                 "kJ/kg-K",    "T-s plot data",   "",   "*",   "",   "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "T_LTR_LP_data",        "Temperature points along LTR LP stream",             "C",	       "T-s plot data",   "",   "*",   "",   "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "s_LTR_LP_data",        "Entropy points along LTR LP stream",                 "kJ/kg-K",    "T-s plot data",   "",   "*",   "",   "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "T_main_cooler_data",   "Temperature points along main cooler stream",        "C",	       "T-s plot data",   "",   "*",   "",   "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "s_main_cooler_data",   "Entropy points along main cooler stream",            "kJ/kg-K",    "T-s plot data",   "",   "*",   "",   "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "T_pre_cooler_data",    "Temperature points along pre cooler stream",         "C",	       "T-s plot data",   "",   "*",   "",   "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "s_pre_cooler_data",    "Entropy points along pre cooler stream",             "kJ/kg-K",    "T-s plot data",   "",   "*",   "",   "" },
     // P-h plot data
-    { SSC_OUTPUT, SSC_ARRAY,  "P_t_data",             "Pressure points along turbine expansion",       "MPa",	   "P-h plot data",   "",   "*",   "",   "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "h_t_data",             "Enthalpy points along turbine expansion",       "kJ/kg",    "P-h plot data",   "",   "*",   "",   "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "P_mc_data",            "Pressure points along main compression",        "MPa",	   "P-h plot data",   "",   "*",   "",   "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "h_mc_data",            "Enthalpy points along main compression",        "kJ/kg",    "P-h plot data",   "",   "*",   "",   "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "P_rc_data",            "Pressure points along re compression",          "MPa",	   "P-h plot data",   "",   "*",   "",   "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "h_rc_data",            "Enthalpy points along re compression",          "kJ/kg",    "P-h plot data",   "",   "*",   "",   "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "P_pc_data",            "Pressure points along pre compression",         "MPa",	   "P-h plot data",   "",   "*",   "",   "" },
-    { SSC_OUTPUT, SSC_ARRAY,  "h_pc_data",            "Enthalpy points along pre compression",         "kJ/kg",    "P-h plot data",   "",   "*",   "",   "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "P_t_data",             "Pressure points along turbine expansion",            "MPa",	   "P-h plot data",   "",   "*",   "",   "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "h_t_data",             "Enthalpy points along turbine expansion",            "kJ/kg",    "P-h plot data",   "",   "*",   "",   "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "P_mc_data",            "Pressure points along main compression",             "MPa",	   "P-h plot data",   "",   "*",   "",   "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "h_mc_data",            "Enthalpy points along main compression",             "kJ/kg",    "P-h plot data",   "",   "*",   "",   "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "P_rc_data",            "Pressure points along re compression",               "MPa",	   "P-h plot data",   "",   "*",   "",   "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "h_rc_data",            "Enthalpy points along re compression",               "kJ/kg",    "P-h plot data",   "",   "*",   "",   "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "P_pc_data",            "Pressure points along pre compression",              "MPa",	   "P-h plot data",   "",   "*",   "",   "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "h_pc_data",            "Enthalpy points along pre compression",              "kJ/kg",    "P-h plot data",   "",   "*",   "",   "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "P_t2_data",            "Pressure points along secondary turbine expansion",  "MPa",	   "P-h plot data",   "",   "*",   "",   "" },
+    { SSC_OUTPUT, SSC_ARRAY,  "h_t2_data",            "Enthalpy points along secondary turbine expansion",  "kJ/kg",    "P-h plot data",   "",   "*",   "",   "" },
 
 
 
@@ -2095,6 +2109,15 @@ int sco2_helper_core(compute_module* cm)
     {
         p_P_pc_data[i] = (ssc_number_t)(P_pc[i]);		//[MPa]
         p_h_pc_data[i] = (ssc_number_t)(h_pc[i]);		//[kJ/kg]
+    }
+
+    n_v = P_t2.size();
+    ssc_number_t* p_P_t2_data = cm->allocate("P_t2_data", n_v);
+    ssc_number_t* p_h_t2_data = cm->allocate("h_t2_data", n_v);
+    for (size_t i = 0; i < n_v; i++)
+    {
+        p_P_t2_data[i] = (ssc_number_t)(P_t2[i]);		//[MPa]
+        p_h_t2_data[i] = (ssc_number_t)(h_t2[i]);		//[kJ/kg]
     }
 
     // Get data for T-s cycle plot
