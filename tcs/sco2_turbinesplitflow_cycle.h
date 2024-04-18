@@ -200,6 +200,25 @@ public:
 private:
     CO2_state m_co2_props;
 
+    class C_mono_tsf_core_HTR_des : public C_monotonic_equation
+    {
+    private:
+        C_sco2_tsf_core* m_tsf_cycle;
+
+    public:
+        C_mono_tsf_core_HTR_des(C_sco2_tsf_core* tsf_cycle)
+        {
+            m_tsf_cycle = tsf_cycle;
+        }
+
+        virtual int operator()(double T_HTR_HP_OUT_guess /*K*/, double* diff_T_HTR_HP_out /*K*/)
+        {
+            return m_tsf_cycle->solve_HTR(T_HTR_HP_OUT_guess, diff_T_HTR_HP_out);
+        };
+    };
+
+    int solve_HTR(double T_HTR_HP_OUT_guess, double* diff_T_HTR_HP_out);
+
     void initialize_solve();
 
 public:

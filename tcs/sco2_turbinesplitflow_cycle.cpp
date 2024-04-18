@@ -211,113 +211,42 @@ int C_sco2_tsf_core::solve()
         }
     }
 
-    // Solve HTR_HP_OUT Temp
-    double T_HTR_HP_out_calc = std::numeric_limits<double>::quiet_NaN();
-    double T_HTR_LP_out_calc = std::numeric_limits<double>::quiet_NaN();
+    // Solve HTR_HP_OUT Temp (iteratively)
     {
-        double mdot_mc_unit = 1.0;
-        double mdot_t_unit = mdot_mc_unit * (1.0 - m_inputs.m_split_frac);
-        double mdot_t2_unit = mdot_mc_unit * m_inputs.m_split_frac;
+        // Make monotonic solver
+        C_mono_tsf_core_HTR_des HTR_des_eq(this);
+        C_monotonic_eq_solver HTR_des_solver(HTR_des_eq);
 
-        // Simulate HTR (with unit mass flow rates)
+        // Bounds
+        double T_HTR_HP_out_lower = m_outputs.m_temp[C_sco2_cycle_core::MC_OUT];    //[K] Coldest possible temp
+        double T_HTR_HP_out_upper = m_outputs.m_temp[C_sco2_cycle_core::TURB_IN];   //[K] Coldest possible temp (probably is TURB_OUT)
+
+        // Solution Guess
+        double T_HTR_HP_out_guess_lower = 0.25 * (T_HTR_HP_out_upper - T_HTR_HP_out_lower) + T_HTR_HP_out_lower;    // [K]
+        double T_HTR_HP_out_guess_upper = 0.75 * (T_HTR_HP_out_upper - T_HTR_HP_out_lower) + T_HTR_HP_out_lower;    // [K]
+
+        // Optimization Settings
+        HTR_des_solver.settings(m_inputs.m_des_tol* m_outputs.m_temp[C_sco2_cycle_core::MC_IN], 1000, T_HTR_HP_out_lower, T_HTR_HP_out_upper, false);
+
+        // Optimization Output variables
+        double tol_T_HTR_HP_out_solved;
+        double T_HTR_HP_out_solved = tol_T_HTR_HP_out_solved = std::numeric_limits<double>::quiet_NaN();
+        int iter_T_HTR_LP_out = -1;
+
+        // Optimize
+        int T_HTR_HP_out_code = HTR_des_solver.solve(T_HTR_HP_out_guess_lower, T_HTR_HP_out_guess_upper, 0,
+            T_HTR_HP_out_solved, tol_T_HTR_HP_out_solved, iter_T_HTR_LP_out);
+
+        // Check if converged
+        if (T_HTR_HP_out_code != C_monotonic_eq_solver::CONVERGED)
         {
-            m_outputs.mc_HT_recup.design_for_target__calc_outlet(m_inputs.m_HTR_target_code,
-                m_inputs.m_HTR_UA, m_inputs.m_HTR_min_dT, m_inputs.m_HTR_eff_target,
-                m_inputs.m_HTR_eff_max,
-                m_outputs.m_temp[C_sco2_cycle_core::MC_OUT], m_outputs.m_pres[C_sco2_cycle_core::MC_OUT], mdot_t2_unit, m_outputs.m_pres[C_sco2_cycle_core::HTR_HP_OUT],
-                m_outputs.m_temp[C_sco2_cycle_core::TURB_OUT], m_outputs.m_pres[C_sco2_cycle_core::TURB_OUT], mdot_t_unit, m_outputs.m_pres[C_sco2_cycle_core::HTR_LP_OUT],
-                m_inputs.m_des_tol,
-                m_outputs.m_Q_dot_HT, T_HTR_HP_out_calc, T_HTR_LP_out_calc);
-
-            m_outputs.m_temp[C_sco2_cycle_core::HTR_HP_OUT] = T_HTR_HP_out_calc;    // [K]
-            m_outputs.m_temp[C_sco2_cycle_core::HTR_LP_OUT] = T_HTR_LP_out_calc;    // [K]
-        }
-
-
-    }
-
-    // Simulate Secondary Turbine
-    {
-        // Determine equivalent isentropic efficiencies for secondary turbine, if necessary
-        double eta_t2_isen = std::numeric_limits<double>::quiet_NaN();
-        {
-            if (m_inputs.m_eta_t2 < 0.0)
-            {
-                int poly_error_code = 0;
-
-                isen_eta_from_poly_eta(m_outputs.m_temp[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_pres[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_pres[C_sco2_cycle_core::TURB2_OUT], std::abs(m_inputs.m_eta_t2),
-                    false, poly_error_code, eta_t2_isen);
-
-                if (poly_error_code != 0)
-                {
-                    m_outputs.m_error_code = poly_error_code;
-                    return m_outputs.m_error_code;
-                }
-            }
-            else
-                eta_t2_isen = m_inputs.m_eta_t2;
-        }
-
-        // Simulate Secondary Turbine
-        {
-            int turbine2_error_code = 0;
-
-            calculate_turbomachinery_outlet_1(m_outputs.m_temp[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_pres[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_pres[C_sco2_cycle_core::TURB2_OUT], eta_t2_isen, false,
-                turbine2_error_code, m_outputs.m_enth[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_entr[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_dens[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_temp[C_sco2_cycle_core::TURB2_OUT],
-                m_outputs.m_enth[C_sco2_cycle_core::TURB2_OUT], m_outputs.m_entr[C_sco2_cycle_core::TURB2_OUT], m_outputs.m_dens[C_sco2_cycle_core::TURB2_OUT], m_outputs.m_w_t2);
-
-            if (turbine2_error_code != 0)
-            {
-                m_outputs.m_error_code = turbine2_error_code;
-                return m_outputs.m_error_code;
-            }
-        }
-    }
-
-    // Calculate Mass Flow Rates
-    {
-        m_outputs.m_m_dot_mc = m_inputs.m_W_dot_net_design
-            / (((m_outputs.m_w_t * (1.0 - m_inputs.m_split_frac))
-                + (m_outputs.m_w_t2 * m_inputs.m_split_frac)
-                + (m_outputs.m_w_mc))
-                * m_inputs.m_eta_generator);    //[kg/s]
-
-        m_outputs.m_m_dot_t = m_outputs.m_m_dot_mc * (1.0 - m_inputs.m_split_frac); //[kg/s]
-        m_outputs.m_m_dot_t2 = m_outputs.m_m_dot_mc * m_inputs.m_split_frac;        //[kg/s]
-
-
-        // Back Calculate Output
-        double W_dot_calc = (m_outputs.m_m_dot_t * m_outputs.m_w_t)
-            + (m_outputs.m_m_dot_t2 * m_outputs.m_w_t2)
-            + (m_outputs.m_m_dot_mc * m_outputs.m_w_mc);
-
-        if (std::abs(W_dot_calc - m_inputs.m_W_dot_net_design) > 0.001)
-        {
-            throw new C_csp_exception("Could not achieve target power output");
-        }
-    }
-
-    // Re-Solve HTR (with actual mass flow rates)
-    {
-        m_outputs.mc_HT_recup.design_for_target__calc_outlet(m_inputs.m_HTR_target_code,
-            m_inputs.m_HTR_UA, m_inputs.m_HTR_min_dT, m_inputs.m_HTR_eff_target,
-            m_inputs.m_HTR_eff_max,
-            m_outputs.m_temp[C_sco2_cycle_core::MC_OUT], m_outputs.m_pres[C_sco2_cycle_core::MC_OUT], m_outputs.m_m_dot_t2, m_outputs.m_pres[C_sco2_cycle_core::HTR_HP_OUT],
-            m_outputs.m_temp[C_sco2_cycle_core::TURB_OUT], m_outputs.m_pres[C_sco2_cycle_core::TURB_OUT], m_outputs.m_m_dot_t, m_outputs.m_pres[C_sco2_cycle_core::HTR_LP_OUT],
-            m_inputs.m_des_tol,
-            m_outputs.m_Q_dot_HT, T_HTR_HP_out_calc, T_HTR_LP_out_calc);
-
-        if (std::abs(T_HTR_HP_out_calc - m_outputs.m_temp[C_sco2_cycle_core::HTR_HP_OUT]) > 0.1)
-        {
-            m_outputs.m_error_code = -1;
+            m_outputs.m_error_code = 25;
             return m_outputs.m_error_code;
         }
-
-        if (std::abs(T_HTR_LP_out_calc - m_outputs.m_temp[C_sco2_cycle_core::HTR_LP_OUT]) > 0.1)
-        {
-            m_outputs.m_error_code = -1;
-            return m_outputs.m_error_code;
-        }
+      
+        // Run Calculated HTR HP Out (to set correct temps)
+        double dummy;
+        solve_HTR(T_HTR_HP_out_solved, &dummy);
     }
 
     // Complete HTR_HP_OUT and HTR_LP_OUT co2 properties
@@ -588,6 +517,74 @@ int C_sco2_tsf_core::finalize_design(C_sco2_cycle_core::S_design_solved& design_
     design_solved.m_is_rc = false;
 
     design_solved.m_W_dot_cooler_tot = m_outputs.mc_air_cooler.get_design_solved()->m_W_dot_fan * 1.E3;	//[kWe] convert from MWe
+
+    return 0;
+}
+
+int C_sco2_tsf_core::solve_HTR(double T_HTR_HP_OUT_guess, double* diff_T_HTR_HP_out)
+{
+    // Set HTR_HP_OUT temp
+    m_outputs.m_temp[C_sco2_cycle_core::HTR_HP_OUT] = T_HTR_HP_OUT_guess;
+
+    // Simulate Secondary Turbine
+    {
+        // Determine equivalent isentropic efficiencies for secondary turbine, if necessary
+        double eta_t2_isen = std::numeric_limits<double>::quiet_NaN();
+        {
+            if (m_inputs.m_eta_t2 < 0.0)
+            {
+                int poly_error_code = 0;
+
+                isen_eta_from_poly_eta(m_outputs.m_temp[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_pres[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_pres[C_sco2_cycle_core::TURB2_OUT], std::abs(m_inputs.m_eta_t2),
+                    false, poly_error_code, eta_t2_isen);
+
+                if (poly_error_code != 0)
+                {
+                    m_outputs.m_error_code = poly_error_code;
+                    return m_outputs.m_error_code;
+                }
+            }
+            else
+                eta_t2_isen = m_inputs.m_eta_t2;
+        }
+
+        // Simulate Secondary Turbine
+        {
+            int turbine2_error_code = 0;
+
+            calculate_turbomachinery_outlet_1(m_outputs.m_temp[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_pres[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_pres[C_sco2_cycle_core::TURB2_OUT], eta_t2_isen, false,
+                turbine2_error_code, m_outputs.m_enth[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_entr[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_dens[C_sco2_cycle_core::HTR_HP_OUT], m_outputs.m_temp[C_sco2_cycle_core::TURB2_OUT],
+                m_outputs.m_enth[C_sco2_cycle_core::TURB2_OUT], m_outputs.m_entr[C_sco2_cycle_core::TURB2_OUT], m_outputs.m_dens[C_sco2_cycle_core::TURB2_OUT], m_outputs.m_w_t2);
+
+            if (turbine2_error_code != 0)
+            {
+                m_outputs.m_error_code = turbine2_error_code;
+                return m_outputs.m_error_code;
+            }
+        }
+    }
+
+    // Calculate Mass Flow Rates
+    m_outputs.m_m_dot_mc = m_inputs.m_W_dot_net_design
+        / (((m_outputs.m_w_t * (1.0 - m_inputs.m_split_frac))
+            + (m_outputs.m_w_t2 * m_inputs.m_split_frac)
+            + (m_outputs.m_w_mc))
+            * m_inputs.m_eta_generator);    //[kg/s]
+
+    m_outputs.m_m_dot_t = m_outputs.m_m_dot_mc * (1.0 - m_inputs.m_split_frac); //[kg/s]
+    m_outputs.m_m_dot_t2 = m_outputs.m_m_dot_mc * m_inputs.m_split_frac;        //[kg/s]
+
+    // Solve HTR
+    double T_HTR_HP_out_calc = std::numeric_limits<double>::quiet_NaN();
+    m_outputs.mc_HT_recup.design_for_target__calc_outlet(m_inputs.m_HTR_target_code,
+        m_inputs.m_HTR_UA, m_inputs.m_HTR_min_dT, m_inputs.m_HTR_eff_target,
+        m_inputs.m_HTR_eff_max,
+        m_outputs.m_temp[C_sco2_cycle_core::MC_OUT], m_outputs.m_pres[C_sco2_cycle_core::MC_OUT], m_outputs.m_m_dot_t2, m_outputs.m_pres[C_sco2_cycle_core::HTR_HP_OUT],
+        m_outputs.m_temp[C_sco2_cycle_core::TURB_OUT], m_outputs.m_pres[C_sco2_cycle_core::TURB_OUT], m_outputs.m_m_dot_t, m_outputs.m_pres[C_sco2_cycle_core::HTR_LP_OUT],
+        m_inputs.m_des_tol,
+        m_outputs.m_Q_dot_HT, T_HTR_HP_out_calc, m_outputs.m_temp[C_sco2_cycle_core::HTR_LP_OUT]);
+
+    *diff_T_HTR_HP_out =  T_HTR_HP_OUT_guess - T_HTR_HP_out_calc;
 
     return 0;
 }
