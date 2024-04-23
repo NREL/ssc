@@ -220,7 +220,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
 
 
     // TES parameters - general
-    { SSC_INPUT,     SSC_NUMBER, "tes_init_hot_htf_percent",           "Initial fraction of available volume that is hot",                                                                                        "%",            "",                                  "Thermal Storage",                          "", /*not required because replacing deprecated var and checked in cmod*/ "",        ""},
+    { SSC_INPUT,     SSC_NUMBER, "tes_init_hot_htf_percent",           "Initial fraction of available volume that is hot",                                                                                        "%",            "",                                  "Thermal Storage",                          "*", /*not required because replacing deprecated var and checked in cmod*/ "",        ""},
     { SSC_INPUT,     SSC_NUMBER, "h_tank",                             "Total height of bin (height of HTF when bin is full)",                                                                                  "m",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "cold_tank_max_heat",                 "Rated heater capacity for cold bin heating",                                                                                             "MW",           "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "u_tank",                             "Loss coefficient from the bin",                                                                                                          "W/m2-K",       "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
@@ -718,6 +718,9 @@ public:
 
 	void exec() override
 	{
+        //FILE* fp = fopen("particle_cmod_to_lk.lk", "w");
+        //write_cmod_to_lk_script(fp, m_vartab);
+
         std::clock_t clock_start = std::clock();
         int sim_type = as_integer("sim_type");      // 1 (default): time-series, 2: design only
         bool is_dispatch = as_boolean("is_dispatch");
