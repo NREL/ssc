@@ -252,7 +252,7 @@ int C_sco2_htrbp_core::solve()
 
         if (m_outputs.m_w_mc + m_outputs.m_w_rc + m_outputs.m_w_t <= 0.0)	// positive net power is impossible; return an error
         {
-            m_outputs.m_error_code = 25;
+            m_outputs.m_error_code = (int)C_sco2_cycle_core::E_cycle_error_msg::E_CANNOT_PRODUCE_POWER;
             return m_outputs.m_error_code;
         }
     }
@@ -280,7 +280,7 @@ int C_sco2_htrbp_core::solve()
 
             if (T_HTR_LP_out_code != C_monotonic_eq_solver::CONVERGED)
             {
-                m_outputs.m_error_code = 35;
+                m_outputs.m_error_code = (int)C_sco2_cycle_core::E_cycle_error_msg::E_HTR_LTR_CONVERGENCE;
                 return m_outputs.m_error_code;
             }
 
@@ -932,6 +932,13 @@ void C_HTRBypass_Cycle::auto_opt_design_core(int& error_code)
 
     if (error_code != 0)
         return;
+
+    // don't size system if eta is terrible
+    //if (m_optimal_htrbp_core.m_outputs.m_eta_thermal < 0.15)
+    //{
+    //    error_code = (int)C_sco2_cycle_core::E_cycle_error_msg::E_ETA_THRESHOLD;
+    //    return;
+    //}
 
     // Finalize Design (pass in reference to solved parameters)
     error_code = m_optimal_htrbp_core.finalize_design(ms_des_solved);

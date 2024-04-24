@@ -62,11 +62,11 @@ C_sco2_phx_air_cooler::C_sco2_phx_air_cooler()
 	mp_mf_update = 0;			// NULL
 }
 
-void C_sco2_phx_air_cooler::design(S_des_par des_par)
+int C_sco2_phx_air_cooler::design(S_des_par des_par)
 {
 	ms_des_par = des_par;
 
-	design_core();
+	return design_core();
 }
 
 void C_sco2_phx_air_cooler::C_P_LP_in_iter_tracker::reset_vectors()
@@ -88,7 +88,7 @@ void C_sco2_phx_air_cooler::C_P_LP_in_iter_tracker::push_back_vectors(double P_L
     mv_is_converged.push_back(is_converged);    //[-]
 }
 
-void C_sco2_phx_air_cooler::design_core()
+int C_sco2_phx_air_cooler::design_core()
 {
 	// using -> C_RecompCycle::S_auto_opt_design_hit_eta_parameters
 	std::string error_msg;
@@ -375,7 +375,16 @@ void C_sco2_phx_air_cooler::design_core()
 
 	if (auto_err_code != 0)
 	{
-		throw(C_csp_exception(error_msg.c_str()));
+        // Check if error code is handled (need to report out)
+        if (auto_err_code >= (int)C_sco2_cycle_core::E_cycle_error_msg::E_CANNOT_PRODUCE_POWER
+            && auto_err_code < (int)C_sco2_cycle_core::E_cycle_error_msg::E_NO_ERROR)
+        {
+            return auto_err_code;
+        }
+
+        // Unhandled exception
+        else
+            throw(C_csp_exception(error_msg.c_str()));
 	}
 
 	if (error_msg.empty())
@@ -536,7 +545,7 @@ void C_sco2_phx_air_cooler::design_core()
 
 
 
-	return;
+	return auto_err_code;
 }
 
 

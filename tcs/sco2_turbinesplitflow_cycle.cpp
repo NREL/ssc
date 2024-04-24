@@ -477,11 +477,20 @@ int C_sco2_tsf_core::finalize_design(C_sco2_cycle_core::S_design_solved& design_
         s_air_cooler_des_par_ind.m_elev = m_inputs.m_elevation;              // [m]
         s_air_cooler_des_par_ind.m_eta_fan = m_inputs.m_eta_fan;             // [-]
         s_air_cooler_des_par_ind.m_N_nodes_pass = m_inputs.m_N_nodes_pass;   // [-]
-
+        
         if (m_inputs.m_is_des_air_cooler && std::isfinite(m_inputs.m_deltaP_cooler_frac) && std::isfinite(m_inputs.m_frac_fan_power)
             && std::isfinite(m_inputs.m_T_amb_des) && std::isfinite(m_inputs.m_elevation) && std::isfinite(m_inputs.m_eta_fan) && m_inputs.m_N_nodes_pass > 0)
         {
-            m_outputs.mc_air_cooler.design_hx(s_air_cooler_des_par_ind, s_air_cooler_des_par_dep, m_inputs.m_des_tol);
+            try
+            {
+                m_outputs.mc_air_cooler.design_hx(s_air_cooler_des_par_ind, s_air_cooler_des_par_dep, m_inputs.m_des_tol);
+            }
+            catch (...)
+            {
+                m_outputs.m_error_code = C_sco2_cycle_core::E_cycle_error_msg::E_AIR_COOLER_CONVERGENCE;
+                return m_outputs.m_error_code;
+            }
+            
         }
     }
 

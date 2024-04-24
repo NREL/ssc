@@ -38,6 +38,49 @@ public:
         E_SET_T_T_IN        // Model sets turbine inlet temperature to HTF inlet temperature
     };
 
+    class E_cycle_error_msg
+    {
+    public:
+
+        // Error Types
+        enum E_cycle_error_types
+        {
+            E_CANNOT_PRODUCE_POWER = 200,
+            E_CO2_PROPS_ERROR,
+            E_ETA_THRESHOLD,
+            E_HTR_LTR_CONVERGENCE,
+            E_AIR_COOLER_CONVERGENCE,
+            E_NO_ERROR
+        };
+
+        // Get error message corresponding to error type
+        // NO COMMAS in message
+        static std::string get_error_string(int error_enum)
+        {
+            switch (error_enum)
+            {
+                case((int)E_CANNOT_PRODUCE_POWER):
+                    return "Cycle cannot produce power";
+                    break;
+                case((int)E_CO2_PROPS_ERROR):
+                    return "Error calculating sCO2 properties";
+                case((int)E_ETA_THRESHOLD):
+                    return "Eta below threshold";
+                case((int)E_NO_ERROR):
+                    return "No error";
+                    break;
+                case((int)E_HTR_LTR_CONVERGENCE):
+                    return "HTR LTR convergence issue";
+                case((int)E_AIR_COOLER_CONVERGENCE):
+                    return "Air cooler did not converge";
+                default:
+                    return "Error code not recognized";
+                    break;
+            }
+        }
+        
+    };
+
     enum class E_turbo_gen_motor_config
     {
         // Options to apply motor and generator losses

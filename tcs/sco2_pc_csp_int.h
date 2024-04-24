@@ -404,7 +404,7 @@ private:
 	double m_T_co2_crit;		//[K]
 	double m_P_co2_crit;		//[kPa]
 
-	void design_core();
+	int design_core();
 
 	double adjust_P_mc_in_away_2phase(double T_co2 /*K*/, double P_mc_in /*kPa*/);
 
@@ -629,7 +629,7 @@ public:
 		util::matrix_t<double> & T_htf_ind, util::matrix_t<double> & T_amb_ind, util::matrix_t<double> & m_dot_htf_ND_ind,
         double od_opt_tol /*-*/, double od_tol /*-*/);
 
-	void design(S_des_par des_par);
+	int design(S_des_par des_par);
 
     int off_design__constant_N__calc_max_htf_massflow__T_mc_in_P_LP_in__objective(C_sco2_phx_air_cooler::S_od_par od_par,
         bool is_rc_N_od_at_design, double rc_N_od_f_des /*-*/,
