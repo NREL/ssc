@@ -2047,7 +2047,7 @@ public:
         size_t n_rows_eta_map = heliostatfield.ms_params.m_eta_map.nrows();             // Number of solar positions
         ssc_number_t *eta_map_out = allocate("eta_map_out", n_rows_eta_map, 3);
         size_t n_rows_flux_maps = heliostatfield.ms_params.m_flux_maps.nrows();         // solar positions * number of y flux points
-        size_t n_cols_flux_maps = heliostatfield.ms_params.m_flux_maps.ncols();         // REMOVED Adding 2 for solar positions
+        size_t n_cols_flux_maps = heliostatfield.ms_params.m_flux_maps.ncols() + 2;
         ssc_number_t *flux_maps_out = allocate("flux_maps_out", n_rows_flux_maps, n_cols_flux_maps);
         ssc_number_t *flux_maps_for_import = allocate("flux_maps_for_import", n_rows_flux_maps, n_cols_flux_maps);
         size_t rec_n_flux_x = heliostatfield.ms_params.m_n_flux_x;
@@ -2061,24 +2061,20 @@ public:
         double flux_scaling_mult = as_double("dni_des")*heliostatfield.ms_params.m_A_sf / 1000.0 /
             (A_rec_curtain / double(rec_n_flux_x * rec_n_flux_y));
 
-        ssc_number_t azi_angle, zen_angle;
         for (size_t i = 0; i < n_rows_eta_map; i++) { // for each solar position
-            azi_angle = (ssc_number_t)heliostatfield.ms_params.m_eta_map(i, 0);         //[deg] Solar azimuth angle
-            zen_angle = (ssc_number_t)heliostatfield.ms_params.m_eta_map(i, 1);         //[deg] Solar zenith angle
-            eta_map_out[3 * i] = azi_angle;
-            eta_map_out[3 * i + 1] = zen_angle;
-            eta_map_out[3 * i + 2] = (ssc_number_t)heliostatfield.ms_params.m_eta_map(i, 2);    //[deg] Solar field optical efficiency
+            eta_map_out[3 * i] = (ssc_number_t)heliostatfield.ms_params.m_eta_map(i, 0);         //[deg] Solar azimuth angle
+            eta_map_out[3 * i + 1] = (ssc_number_t)heliostatfield.ms_params.m_eta_map(i, 1);     //[deg] Solar zenith angle
+            eta_map_out[3 * i + 2] = (ssc_number_t)heliostatfield.ms_params.m_eta_map(i, 2);     //[deg] Solar field optical efficiency
             size_t idx;
             for (size_t j = 0; j < rec_n_flux_y; j++) { // for all y flux positions
                 idx = rec_n_flux_y * n_cols_flux_maps * i + n_cols_flux_maps * j;
-                //flux_maps_for_import[idx] = flux_maps_out[idx] = azi_angle;
-                //flux_maps_for_import[idx + 1] = flux_maps_out[idx + 1] = zen_angle;
-                size_t flux_map_row;
-                for (size_t k = 0; k < n_cols_flux_maps; k++) {
-                    flux_map_row = rec_n_flux_y * i + j;
-                    flux_maps_out[idx + k] =
-                        (ssc_number_t)(heliostatfield.ms_params.m_flux_maps(flux_map_row, k) * heliostatfield.ms_params.m_eta_map(i, 2) * flux_scaling_mult);      //[kW/m^2]
-                    flux_maps_for_import[idx + k] = (ssc_number_t)heliostatfield.ms_params.m_flux_maps(flux_map_row, k);
+                flux_maps_for_import[idx] = flux_maps_out[idx] = eta_map_out[3 * i];             //[deg] Solar azimuth angle
+                idx++;
+                flux_maps_for_import[idx] = flux_maps_out[idx] = eta_map_out[3 * i + 1];         //[deg] Solar zenith angle
+                idx++;
+                for (size_t k = 0; k < n_cols_flux_maps-2; k++) {
+                    flux_maps_out[idx + k] = (ssc_number_t)(heliostatfield.ms_params.m_flux_maps(rec_n_flux_y * i + j, k) * heliostatfield.ms_params.m_eta_map(i, 2) * flux_scaling_mult);      //[kW/m^2]
+                    flux_maps_for_import[idx + k] = (ssc_number_t)heliostatfield.ms_params.m_flux_maps(rec_n_flux_y * i + j, k);
                 }
             }
         }
