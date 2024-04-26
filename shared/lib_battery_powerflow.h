@@ -42,6 +42,9 @@ class SharedInverter;
 
 struct BatteryPower;
 
+// Allow for consistent power tolerances between the technology code and utility rate code
+extern double powerflow_tolerance; 
+
 /**
 * \class BatteryPowerFlow
 *

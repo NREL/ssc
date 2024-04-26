@@ -111,6 +111,8 @@ public:
 
 		double m_A_sf;		//[m2]
 
+        bool m_is_field_tracking_init;
+
         int m_clearsky_model;
 
         std::vector<double> mv_clearsky_data;
@@ -123,6 +125,9 @@ public:
 			// Doubles
 			m_p_start = m_p_track = m_hel_stow_deploy = m_v_wind_max = 
 				m_land_area = m_A_sf = std::numeric_limits<double>::quiet_NaN();
+
+            // Booleans
+            m_is_field_tracking_init = false;
 
 		}		
 	};
@@ -161,6 +166,8 @@ public:
         const C_csp_solver_sim_info &sim_info);
 
 	void converged();
+
+    void get_converged(bool& is_field_tracking_prev);
 
     double get_clearsky(const C_csp_weatherreader::S_outputs& weather, double hour);
 };

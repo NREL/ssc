@@ -73,7 +73,6 @@ static var_info _cm_vtab_trough_physical_iph[] = {
 
     { SSC_INPUT,        SSC_NUMBER,      "q_pb_design",               "Design heat input to power block",                                                 "MWt",          "",               "System_Design",  "*",                       "",                      "" },
 
-    { SSC_INPUT,        SSC_NUMBER,      "nSCA",                      "Number of SCAs in a loop",                                                         "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "nHCEt",                     "Number of HCE types",                                                              "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "nColt",                     "Number of collector types",                                                        "none",         "constant=4",     "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "nHCEVar",                   "Number of HCE variants per type",                                                  "none",         "",               "solar_field",    "*",                       "",                      "" },
@@ -279,10 +278,6 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_INPUT,        SSC_NUMBER,      "P_boil",                              "Boiler operating pressure",                                              "bar",          "",               "powerblock",         "",           "",              "SIMULATION_PARAMETER" },
 
 
-    // ADDED For Design Point
-    { SSC_INPUT,        SSC_NUMBER,      "lat",                                 "Latitude",                                                               "degree",       "",               "",                   "*",          "",              "" },
-
-
     // Direct Capital Costs
     { SSC_INPUT,    SSC_NUMBER,         "csp.dtr.cost.site_improvements.cost_per_m2", "Site Improvement Cost per m2",                                     "$/m2",         "",               "Capital_Costs",      "?=0",        "",              "" },
     { SSC_INPUT,    SSC_NUMBER,         "csp.dtr.cost.solar_field.cost_per_m2",       "Solar Field Cost per m2",                                          "$/m2",         "",               "Capital_Costs",      "?=0",        "",              "" },
@@ -343,6 +338,7 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_OUTPUT,       SSC_NUMBER,      "cp_battery_nameplate",             "Battery nameplate",                                                        "MWt",          "",                "System Design",  "*",                                "",                      "" },
 
     // Solar Field
+    { SSC_OUTPUT,       SSC_NUMBER,      "nSCA",                             "Number of SCAs in a loop",                                                 "none",          "",               "solar_field",     "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "field_htf_min_temp",               "Minimum field htf temp",                                                   "C",             "",               "Power Cycle",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "field_htf_max_temp",               "Maximum field htf temp",                                                   "C",             "",               "Power Cycle",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "field_htf_cp_avg_des",             "Field average htf cp at design",                                           "kJ/kgK",        "",               "Solar Field",    "*",                                "",                      "" },
@@ -692,6 +688,7 @@ public:
         C_csp_weatherreader weather_reader;
         C_csp_solver::S_sim_setup sim_setup;
         int n_steps_fixed;
+        double lat = std::numeric_limits<double>::quiet_NaN();
         int steps_per_hour;
         {
             if (is_assigned("file_name")) {
@@ -723,6 +720,8 @@ public:
             int n_wf_records = (int)weather_reader.m_weather_data_provider->nrecords();
             steps_per_hour = n_wf_records / 8760;                       //[-]
 
+            lat = weather_reader.ms_solved_params.m_lat;     //[deg]
+
             n_steps_fixed = steps_per_hour * 8760;                    //[-]
             sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;  //[s]
         }
@@ -737,10 +736,16 @@ public:
         {
             // Collect Inputs
             {
+                // ADDED Trough Inputs (TMB 10/06/2023) for design point calculations
+                std::vector<double> trough_loop_vec = as_vector_double("trough_loop_control");
+                c_trough.m_trough_loop_control.assign(&trough_loop_vec[0], trough_loop_vec.size());
+
+                int actual_nSCA = trough_loop_vec[0];
+
                 c_trough.m_use_solar_mult_or_aperture_area = as_number("use_solar_mult_or_aperture_area"); // Use specified solar mult (0) or total aperture (1)
                 c_trough.m_specified_solar_mult = as_number("specified_solar_multiple");            // User specified solar mult
                 c_trough.m_specified_total_aperture = as_number("specified_total_aperture");    //[m2] User specified total aperture
-                c_trough.m_nSCA = as_integer("nSCA");                       //[-] Number of SCA's in a loop
+                c_trough.m_nSCA = actual_nSCA;                              //[-] Number of SCA's in a loop
                 c_trough.m_nHCEt = as_integer("nHCEt");                     //[-] Number of HCE types
                 c_trough.m_nColt = as_integer("nColt");                     //[-] Number of collector types
                 c_trough.m_nHCEVar = as_integer("nHCEVar");                 //[-] Number of HCE variants per t
@@ -959,10 +964,6 @@ public:
                 c_trough.m_sf_hdr_wallthicks = as_matrix("sf_hdr_wallthicks");    //[m] Imported header wall thicknesses, used if custom_sf_pipe_sizes is true
                 c_trough.m_sf_hdr_lengths = as_matrix("sf_hdr_lengths");          //[m] Imported header lengths, used if custom_sf_pipe_sizes is true
 
-
-                // ADDED Trough Inputs (TMB 10/06/2023) for design point calculations
-                std::vector<double> trough_loop_vec = as_vector_double("trough_loop_control");
-                c_trough.m_trough_loop_control.assign(&trough_loop_vec[0], trough_loop_vec.size());
             }
 
             // Calculate solar multiple (needed for other component constructors)
@@ -1460,6 +1461,7 @@ public:
 
             // Solar Field
             {
+                assign("nSCA", c_trough.m_nSCA);
                 assign("field_htf_min_temp", c_trough.m_htfProps.min_temp() - 273.15);    // [C]
                 assign("field_htf_max_temp", c_trough.m_htfProps.max_temp() - 273.15);    // [C]
                 assign("field_htf_cp_avg_des", c_trough.m_field_htf_cp_avg_des);          // [kJ/kg-K]
@@ -1533,8 +1535,7 @@ public:
                 vector<double> L_SCA = as_vector_double("L_SCA");
                 vector<double> ColperSCA = as_vector_double("ColperSCA");
                 vector<double> Ave_Focal_Length = as_vector_double("Ave_Focal_Length");
-                double lat = as_double("lat");
-
+                
                 util::matrix_t<ssc_number_t> csp_dtr_sca_ap_lengths;
                 {
                     size_t n = L_SCA.size();
@@ -1586,7 +1587,7 @@ public:
 
                 util::matrix_t<ssc_number_t> csp_dtr_sca_calc_end_losses(1, 1, std::numeric_limits<double>::quiet_NaN());
                 {
-                    int nSCA = as_number("nSCA");
+                    int nSCA = c_trough.m_nSCA;
 
                     size_t n = Ave_Focal_Length.size();
 

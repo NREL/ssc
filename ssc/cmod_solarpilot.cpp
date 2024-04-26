@@ -119,7 +119,7 @@ static var_info _cm_vtab_solarpilot[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "contingency_rate",          "Contingency for cost overrun",               "%",      "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sales_tax_rate",            "Sales tax rate",                             "%",      "",         "SolarPILOT",   "*",                "",                "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "sales_tax_frac",            "Percent of cost to which sales tax applies", "%",      "",         "SolarPILOT",   "*",                "",                "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "cost_sf_fixed",             "Soalr field fixed cost",                     "$",      "",         "SolarPILOT",   "*",                "",                "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "cost_sf_fixed",             "Solar field fixed cost",                     "$",      "",         "SolarPILOT",   "*",                "",                "" },
 
     { SSC_INPUT,        SSC_NUMBER,      "is_optimize",               "Do SolarPILOT optimization",                 "",       "",         "SolarPILOT",   "?=0",              "",                "" },
     { SSC_INPUT,        SSC_NUMBER,      "flux_max",                  "Maximum allowable flux",                     "",       "",         "SolarPILOT",   "?=1000",           "",                "" },

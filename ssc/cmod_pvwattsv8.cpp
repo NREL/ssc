@@ -310,7 +310,7 @@ public:
         add_var_info(_cm_vtab_pvwattsv8);
         add_var_info(vtab_adjustment_factors);
         add_var_info(vtab_technology_outputs);
-        add_var_info(vtab_hybrid_tech_om);
+        add_var_info(vtab_hybrid_tech_om_outputs);
 
 
         ld.add("poa_nominal", true);
@@ -657,7 +657,7 @@ public:
             // if tracking mode is 1-axis tracking,
             // don't need to limit tilt angles
             if (snowmodel.setup(pv.nmody,
-                (float)pv.tilt,
+                (float)pv.tilt, 1.97,
                 pv.type == FIXED_RACK || pv.type == FIXED_ROOF)) {
 
                 if (!snowmodel.good) {
@@ -1359,7 +1359,7 @@ public:
                 p_tmod[idx] = (ssc_number_t)tmod;
                 p_dc[idx] = (ssc_number_t)dc; // power, Watts
                 p_ac_pre_adjust[idx] = (ssc_number_t)ac; //power, Watts
-                p_ac[idx] = (ssc_number_t)(ac * haf(hour_of_year)); // power, Watts
+                p_ac[idx] = (ssc_number_t)(ac * haf(wdprov->annualSimulation() ? hour_of_year : idx)); // power, Watts
 
                 // accumulate hourly energy (kWh) (was initialized to zero when allocated)
                 p_gen[idx_life] = (ssc_number_t)(p_ac[idx] * util::watt_to_kilowatt);
@@ -1369,8 +1369,8 @@ public:
                     annual_kwh += p_gen[idx] / step_per_hour;
                 }
 
-                if (y == 0 && wdprov->annualSimulation()) ld("ac_loss_adjustments") += ac * (1.0 - haf(hour_of_year)) * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
-                if (y == 0 && wdprov->annualSimulation()) ld("ac_delivered") += ac * haf(hour_of_year) * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
+                if (y == 0 && wdprov->annualSimulation()) ld("ac_loss_adjustments") += ac * (1.0 - haf(wdprov->annualSimulation() ? hour_of_year : idx)) * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
+                if (y == 0 && wdprov->annualSimulation()) ld("ac_delivered") += ac * haf(wdprov->annualSimulation() ? hour_of_year : idx) * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
 
                 idx_life++;
             }

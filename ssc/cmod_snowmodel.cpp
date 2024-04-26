@@ -70,7 +70,8 @@ static var_info _cm_vtab_snowmodel[] =
 	{ SSC_INPUT,        SSC_NUMBER,     "subarray1_nmody",			"Number of Modules in a Row","",				"",					"PV Snow Model", "*",           "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "subarray1_tilt",			"Base tilt",				"Degrees",			"",					"PV Snow Model", "*",           "",                             "" },
 	{ SSC_INPUT,        SSC_NUMBER,     "subarray1_track_mode",		"Tracking Mode",			"",					"",					"PV Snow Model", "*",           "",                             "" },
-	
+    { SSC_INPUT,        SSC_NUMBER,     "snow_slide_coefficient",		"Snow Slide Coefficient",			"",					"",					"PV Snow Model", "?=1.97",           "",                             "" },
+
 	{ SSC_OUTPUT,       SSC_ARRAY,      "hourly_energy_before_snow","Hourly Energy Without Snow Loss","kwh",		"",                 "Time Series",		"*",           "",			"" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "monthly_energy_before_snow","Monthly Energy Without Snow Loss","kwh",		"",                 "Monthly",			"*",           "",			"" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "annual_energy_before_snow","Annual Energy Without Snow Losses","kwh",		"",                 "Annual",			"*",           "",								"" },
@@ -111,7 +112,8 @@ public:
 		int nmody = as_integer("subarray1_nmody");								// The number of modules in a row
 		int baseTilt = as_integer("subarray1_tilt");							// The tilt for static systems
 		//int trackMode = as_integer("subarray1_track_mode");						// The systems tracking mode (0 -> static, 1 -> 1 axis tracking)
-
+        double snow_slide_coeff = 1.97;
+        if (is_assigned("snow_slide_coefficient")) snow_slide_coeff = as_double("snow_slide_coefficient");
 		// Define output arrays and variables
 		ssc_number_t *hrEn_b4Snow = allocate( "hourly_energy_before_snow", num_steps);	// Hourly Energy with Snow Modeld
 
