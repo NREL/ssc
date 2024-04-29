@@ -867,8 +867,11 @@ public:
                 else {
                     // sim_type == 2
                     // Filling maps with dummy values
+                    int n_y = as_integer("n_flux_y");
+                    int n_x = as_integer("n_flux_x");
+                     
                     mt_eta_map.resize_fill(1, 3, std::numeric_limits<double>::quiet_NaN());
-                    mt_flux_maps.resize_fill(1, 12, std::numeric_limits<double>::quiet_NaN());
+                    mt_flux_maps.resize_fill(n_y, n_x, std::numeric_limits<double>::quiet_NaN());
                 }
             }
             else if (field_model_type == 3) { // Read in user efficiency and flux maps
