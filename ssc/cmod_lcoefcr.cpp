@@ -113,6 +113,9 @@ static var_info vtab_lcoefcr_design[] =
 
     { SSC_INPUT,        SSC_NUMBER,      "variable_operating_cost",  "Annual variable operating cost",             "$/kWh",  "",       "Simple LCOE",          "sim_type=1",               "",         "SIMULATION_PARAMETER" },
     { SSC_INPUT,        SSC_NUMBER,      "annual_energy",            "Annual energy production",                   "kWh",    "",       "Simple LCOE",          "sim_type=1",               "",         "SIMULATION_PARAMETER" },
+    { SSC_INPUT,        SSC_NUMBER,      "ui_fixed_charge_rate",     "Input fixed charge rate",                    "",       "",       "Simple LCOE",          "ui_fcr_input_option=0",   "",         ""},
+
+    { SSC_INPUT,		SSC_NUMBER,		"adjusted capacity_factor",					  "Adjusted capacity factor (financial)",									"",			"",					 "",					"?",				"",					"" },
 
     // "Design" outputs
     { SSC_OUTPUT,       SSC_NUMBER,      "crf",                      "Capital recovery factor",                    "",       "",	   "Simple LCOE",          "*",                        "",         "" },
@@ -211,6 +214,12 @@ public:
         double foc = foc_in + annual_electricity_cost;      //[$]
 
         double lcoe = (fixed_charge_rate * icc + foc) / aep + voc; //$/kWh
+
+        //Geothermal - input capacity factor for used in capex calculation rather than annual_energy
+        if (is_assigned("adjusted_capacity_factor")) {
+            double adjusted_capacity_factor = as_double("adjusted_capacity_factor");
+            lcoe = (fixed_charge_rate * icc) / adjusted_capacity_factor + foc / aep + voc;
+        }
 
         assign("lcoe_fcr", var_data((ssc_number_t)lcoe));
 

@@ -2424,7 +2424,7 @@ bool CGeothermalAnalyzer::RunAnalysis(bool(*update_function)(float, void*), void
 	}//years
 
     double power_after_drawdown = actualpowertotal / powersalestotal;
-    double adjusted_capacity_factor = power_after_drawdown * mo_geo_in.md_CapacityFactor / 100.0;
+    double adjusted_capacity_factor = (PlantGrossPowerkW() - mp_geo_out->md_PumpWorkKW) * power_after_drawdown * mo_geo_in.md_CapacityFactor / 100.0;
     mp_geo_out->AdjustedCapacityFactor = adjusted_capacity_factor;
 
 	if (!ms_ErrorString.empty()) return false;

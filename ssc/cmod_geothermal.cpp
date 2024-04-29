@@ -63,7 +63,7 @@ static var_info _cm_vtab_geothermal[] = {
     { SSC_INPUT,        SSC_NUMBER,      "geothermal_analysis_period",         "Analysis Lifetime",                            "years",          "",             "GeoHourly",        "*",                        "INTEGER",         "" },
     { SSC_INPUT,        SSC_NUMBER,      "model_choice",                       "Which model to run (0,1,2)",                   "",               "",             "GeoHourly",        "*",                        "INTEGER",         "" },
     { SSC_INPUT,        SSC_MATRIX,      "reservoir_model_inputs",                       "Reservoir temperatures over time",                   "",               "",             "GeoHourly",        "reservoir_pressure_change_type=3",                        "",         "" },
-    { SSC_INPUT,        SSC_NUMBER,      "geothermal_capacity_factor",         "Capacity Factor",                            "%",          "",             "GeoHourly",        "*",                        "",         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "geothermal_capacity_factor",         "Input capacity Factor",                            "%",          "",             "GeoHourly",        "*",                        "",         "" },
     { SSC_INPUT,        SSC_NUMBER,      "discount_rate",         "Discount Rate",                            "%",          "",             "GeoHourly",        "*",                        "",         "" },
 
     // geothermal plant and equipment									       											   				     														             
@@ -212,6 +212,7 @@ static var_info _cm_vtab_geothermal[] = {
 	{ SSC_OUTPUT,		SSC_NUMBER,		"first_year_output",				  "First Year Output",									 "kWh",		"",				 "GeoHourly",		 "ui_calculations_only=0",	 "",				"" },
 	{ SSC_OUTPUT,		SSC_NUMBER,		"annual_energy",					  "Annual Energy",										"kWh",		"",				"GeoHourly",		 "ui_calculations_only=0",	"",					"" },
 
+    { SSC_OUTPUT,		SSC_NUMBER,		"adjusted capacity_factor",					  "Adjusted capacity factor (financial)",									"",			"",					 "",					"",				"",					"" },
 
 	{ SSC_OUTPUT,		SSC_NUMBER,		"capacity_factor",					  "Capacity factor",									"",			"",					 "",					"*",				"",					"" },
 	{ SSC_OUTPUT,		SSC_NUMBER,		 "kwh_per_kw",						  "First year kWh/kW",									 "",		"",					 "",					 "*",				"",					"" },
@@ -545,7 +546,7 @@ public:
 			double eff_secondlaw = geo_outputs.eff_secondlaw;
 			assign("eff_secondlaw", (ssc_number_t)eff_secondlaw);
 
-			
+            assign("adjusted_capacity_factor", geo_outputs.AdjustedCapacityFactor);
 
 			//Assign HP & LP Flash Pressures: 
 			double hp_flash_pressure = geo_outputs.md_PressureHPFlashPSI;
