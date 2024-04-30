@@ -361,7 +361,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
     s.capacity = { 47.09, 920.30, 883.49, 9.08, 0, 5.33, 6.36, 2};
-    s.batt_voltage = 467.09;
+    s.batt_voltage = 467.106;
     s.lifetime.q_relative = 93.08;
     s.lifetime.day_age_of_battery = 2591.17;
     s.lifetime.cycle->q_relative_cycle = 92.08;
