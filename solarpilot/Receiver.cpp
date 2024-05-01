@@ -799,7 +799,7 @@ void Receiver::DefineReceiverGeometry(int nflux_x, int nflux_y)
 	The process of defining receiver geometry for each receiver should be:
 
 	1) Indicate which specific geometry type should be used with "_rec_geom"
-	2) Calculate and set the number of surfaces used for the recever. Resize "_surfaces".
+	2) Calculate and set the number of surfaces used for the receiver. Resize "_surfaces".
 	3) Calculate and set the normal vector for each surface (if not curved surfaces) with setNormalVector(Vect).
 	4) Setup the geometry etc.. including setSurfaceGeometry, setSurfaceOffset, setSurfaceSpanAngle, if applicable.
 	5) Define the precision of the flux map.

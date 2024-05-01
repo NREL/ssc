@@ -336,7 +336,7 @@ namespace interop
 	bool ticker_increment(int lengths[], int indices[], bool changed[], int n);
 
 	//Simulation setup methods
-	bool PerformanceSimulationPrep(SolarField& SF, Hvector& helios, int sim_method);
+	bool PerformanceSimulationPrep(SolarField& SF, Hvector& helios);
 #ifdef SP_USE_SOLTRACE
 	bool SolTraceFluxSimulation_ST(st_context_t cxt, SolarField& SF, Hvector& helios, Vect& sunvect,
 		int callback(st_uint_t ntracedtotal, st_uint_t ntraced, st_uint_t ntotrace, st_uint_t curstage, st_uint_t nstages, void* data),

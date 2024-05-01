@@ -832,7 +832,7 @@ bool AutoPilot::EvaluateDesign(double &obj_metric, std::vector< double > &flux_m
         _SF->getVarMap()->flux.flux_time_type.combo_select_by_mapval( var_fluxsim::FLUX_TIME_TYPE::SUN_POSITION );
 
 		//prep for performance simulation (aim points, etc.)
-		interop::PerformanceSimulationPrep(*_SF, *_SF->getHeliostats(), 0 /*analytical*/);
+		interop::PerformanceSimulationPrep(*_SF, *_SF->getHeliostats());
 		
 		//do flux simulation
 		_SF->HermiteFluxSimulation( *_SF->getHeliostats(), V->flux.aim_method.mapval() == var_fluxsim::AIM_METHOD::IMAGE_SIZE_PRIORITY);	

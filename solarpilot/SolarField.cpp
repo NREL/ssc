@@ -48,9 +48,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "heliodata.h"
 
 #include "OpticalMesh.h"
-#ifdef SP_MULTI_REC
 #include "MultiRecOptimize.h"
-#endif
 
 using namespace std;
 
@@ -1804,7 +1802,6 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
 
     //--- get lists of all heliostats pointing at each receiver
     unordered_map<Receiver*, Hvector > aim_list;
-#ifdef SP_MULTI_REC
     if (getActiveReceiverCount() > 1)
     {
         
@@ -1813,7 +1810,7 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
         
         /*
         iterate over all heliostats in order of best to worst (backwards) and add a sufficient number
-        to provide power for all recievers. 
+        to provide power for all receivers. 
         */
         int nhprev = (int)_heliostats.size();
 
@@ -1878,7 +1875,6 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
         }
     }
     else
-#endif
     {
         _q_to_rec = 0.;
         for (int i = 0; i < (int)_heliostats.size(); i++)
@@ -1912,7 +1908,7 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
 	        //The value of isave is 1 entry more than satisfied the criteria.
 
 	        if(_var_map->sf.is_prox_filter.val){
-		        //sort the last nfilter*2 heliostats by proximity to the reciever and use the closest ones. 
+		        //sort the last nfilter*2 heliostats by proximity to the receiver and use the closest ones. 
 		        Hvector hfilter;
 		        vector<double> prox;
 		        for(int i=max(isave-2*(nfilter-1), 0); i<isave; i++){
@@ -3324,6 +3320,7 @@ void SolarField::Simulate(double azimuth, double zenith, sim_params &P)
     {
         P.is_layout = psave;
         calcAllAimPoints(Sun, P);
+		updateAllTrackVectors(Sun);
     }
     
     //Update the heliostat neighbors to include possible shadowers
@@ -3396,8 +3393,8 @@ void SolarField::SimulateHeliostatEfficiency(Vect &Sun, Heliostat *helios, sim_p
 	//Intercept
 	if(! (P.is_layout && V->sf.is_opt_zoning.val && getActiveReceiverCount() == 1) ){	//For layout simulations, the simulation method that calls this method handles image intercept
 		double eta_int = getFluxObject()->imagePlaneIntercept(*V, *helios, Rec, &Sun);
-        if(eta_int != eta_int)
-            throw spexception("An error occurred when calculating heliostat intercept factor. Please contact support for help resolving this issue.");
+		if(eta_int != eta_int)
+			throw spexception("An error occurred when calculating heliostat intercept factor. Please contact support for help resolving this issue.");
 		if(eta_int>1.) eta_int = 1.;
 		helios->setEfficiencyIntercept(eta_int);
 	}
@@ -3761,7 +3758,6 @@ void SolarField::calcAllAimPoints(Vect &Sun, sim_params &P) //bool force_simple,
 
 	int nh = (int)_heliostats.size();
     int method = _var_map->flux.aim_method.mapval();
-#ifdef SP_MULTI_REC
 
     /*
     Multiple receiver aiming method ------------------------------------------
@@ -3834,8 +3830,7 @@ void SolarField::calcAllAimPoints(Vect &Sun, sim_params &P) //bool force_simple,
             }
         }
     }
-    // ---------------------------- end of multiple reciever method
-#endif
+    // ---------------------------- end of multiple receiver method
 
     if(P.is_layout && method != var_fluxsim::AIM_METHOD::KEEP_EXISTING)
         method = var_fluxsim::AIM_METHOD::SIMPLE_AIM_POINTS;
@@ -3915,11 +3910,11 @@ void SolarField::calcAllAimPoints(Vect &Sun, sim_params &P) //bool force_simple,
 		
         int usemethod = method;
 
-        //hande image size priority separately from the main switch structure
+        //handle image size priority separately from the main switch structure
         if( method == var_fluxsim::AIM_METHOD::IMAGE_SIZE_PRIORITY )
         {
 			try{
-                Heliostat *hsorti = hsort.at(nh - i - 1);
+				Heliostat *hsorti = hsort.at(nh - i - 1);
                 if( hsorti->IsEnabled() )     //is it enabled?
                 {
 				    args[2] = i == 0 ? 1. : 0.;
@@ -4255,7 +4250,7 @@ void SolarField::CalcDimensionalFluxProfiles(Hvector &helios)
     */
 
     //DNI
-    double dni = _var_map->flux.flux_dni.val*0.001; // _var_map->sf.dni_des.val*0.001;	 //kW/m2
+    double dni = _var_map->flux.flux_dni.val*0.001;	 //kW/m2
 
     //Determine the total power delivered from the heliostats. This serves as a normalizing basis.
     unordered_map<Receiver*, double> q_to_rec;

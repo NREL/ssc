@@ -2397,85 +2397,89 @@ bool Flux::calculateProjectedSnoutApertureIntersection(Heliostat& H, Receiver* R
 		
 		Returns:
 			Boolean: if the SNOUT interferes with the heliostat's view of the aperture
-			viewable_aperture[4]: the bounds of the aperature viewable by the heliostat in the following order: minimum X, maximum X, minimum Y, and maximum Y
+			viewable_aperture[4]: the bounds of the aperture viewable by the heliostat in the following order: minimum X, maximum X, minimum Y, and maximum Y
 		
-		NOTE: viewable_aperature assumes the aperture center is at the origin.
+		NOTE: viewable_aperture assumes the aperture center is at the origin.
 		
 		TODO: Move this method somewhere else -> heliostat? or receiver?
 	*/
-	var_receiver* Rv = Rec->getVarMap();
-	sp_point rec_offset(Rv->rec_offset_x_global.Val(), Rv->rec_offset_y_global.Val(), Rv->optical_height.Val());
 
 	// Heliostat image plane
-	Vect* T = H.getTowerVector();	// Does this include rec_offset? yes
-	sp_point* hloc = H.getLocation();
+	Vect* h2t = H.getTowerVector();				// This includes receiver offset
+	sp_point origin(0., 0., 0.);				// Basing everything off the receiver origin (center of aperture)
+	PointVect helio_img_plane(origin, *h2t); 
 
-	sp_point rec_origin(0.0, 0.0, Rv->optical_height.Val());
-	PointVect helio_img_plane(rec_origin, *T);
+	//First check to make sure the heliostat can see the aperture plane. If not, don't bother.
+	PointVect rec_norm;
+	Rec->CalculateNormalVector(rec_norm);
+	if (Toolbox::dotprod(*rec_norm.vect(), *h2t) > 0.) {	// Heliostat can't see aperture
+		viewable_aperture[0] = 0.;
+		viewable_aperture[1] = 0.;
+		viewable_aperture[2] = 0.;
+		viewable_aperture[3] = 0.;
+		return true;
+	}
 
 	// Determine aperture window corner points -> assumes vertical
-	double azi = Rv->rec_azimuth.val;
+	var_receiver* Rv = Rec->getVarMap();
+	double azi_rads = Rv->rec_azimuth.val * D2R;	// [deg]->[rads]
 	double ap_w = Rv->rec_width.val;
 	double ap_h = Rv->rec_height.val;
+	double ap_hw_cos_azi = (ap_w / 2.) * cos(azi_rads); // aperture half-width cos azimuth
+	double ap_hw_sin_azi = (ap_w / 2.) * sin(azi_rads); // aperture half-width sin azimuth
 
-	double ap_hw_cos_azi = (ap_w / 2.) * cos(azi * D2R); // aperture half-width cos azimuth
-	double ap_hw_sin_azi = (ap_w / 2.) * sin(azi * D2R); // aperture half-width sin azimuth
-
+	//Draw aperture window - centered about the origin
 	vector<sp_point> ap_win;
 	ap_win.resize(4);
-	ap_win.at(0).Set(ap_hw_cos_azi, -ap_hw_sin_azi, ap_h / 2.);  //upper right (east on a north facing receiver)
-	ap_win.at(1).Set(-ap_hw_cos_azi, ap_hw_sin_azi, ap_h / 2.);  //upper left 
-	ap_win.at(2).Set(-ap_hw_cos_azi, ap_hw_sin_azi, -ap_h / 2.); //lower left
-	ap_win.at(3).Set(ap_hw_cos_azi, -ap_hw_sin_azi, -ap_h / 2.); //lower right
+	ap_win.at(0).Set( ap_hw_cos_azi, -ap_hw_sin_azi,  ap_h / 2.);  //upper right (east on a north facing receiver)
+	ap_win.at(1).Set(-ap_hw_cos_azi,  ap_hw_sin_azi,  ap_h / 2.);  //upper left 
+	ap_win.at(2).Set(-ap_hw_cos_azi,  ap_hw_sin_azi, -ap_h / 2.);  //lower left
+	ap_win.at(3).Set( ap_hw_cos_azi, -ap_hw_sin_azi, -ap_h / 2.);  //lower right
 
-	for (int i = 0; i < ap_win.size(); i++) {
-		ap_win.at(i).Add(rec_offset); // Translate to true receiver location
-	}
 	// Project aperture onto heliostat image plane
 	vector<sp_point> ap_win_proj = Toolbox::projectPolygon(ap_win, helio_img_plane);
 
-	// Determine tower-to-helio vector zenith and azimuth
-	double t2h_zenith = pi/2. + std::atan2(T->k, std::sqrt(std::pow(T->i, 2) + std::pow(T->j, 2)));
-	double t2h_azimuth = std::atan2(-T->i, -T->j);
+	// Determine tower-to-heliostat vector zenith and azimuth
+	double t2h_zenith = pi/2. + std::atan2(h2t->k, std::sqrt(std::pow(h2t->i, 2) + std::pow(h2t->j, 2)));
+	double t2h_azimuth = std::atan2(-h2t->i, -h2t->j);
 
 	// Transform the projection points on to a x-y plane
 	for (int i = 0; i < ap_win_proj.size(); i++) {
-		ap_win_proj.at(i).Subtract(rec_origin); // Translate to origin
 		Toolbox::rotation(-t2h_azimuth, 2, ap_win_proj.at(i));
 		Toolbox::rotation(pi-t2h_zenith, 0, ap_win_proj.at(i));
 	}
+
 	// Determine snout window corner points -> assumes vertical
 	double s_depth = Rv->snout_depth.val;
-	double s_horiz_angle = Rv->snout_horiz_angle.val;
-	double s_vert_top_angle = Rv->snout_vert_top_angle.val;
-	double s_vert_bot_angle = Rv->snout_vert_bot_angle.val;
+	double s_horiz_angle_rads = Rv->snout_horiz_angle.val * D2R;
+	double s_vert_top_angle_rads = Rv->snout_vert_top_angle.val * D2R;
+	double s_vert_bot_angle_rads = Rv->snout_vert_bot_angle.val * D2R;
 
-	double s_width = ap_w + 2. * s_depth * tan(s_horiz_angle / 2. * D2R); // Snout window width
-	double s_hw_cos_azi = (s_width / 2.) * cos(azi * D2R); // snout window half-width cos azimuth
-	double s_hw_sin_azi = (s_width / 2.) * sin(azi * D2R); // snout window half-width sin azimuth
-	double s_high_drop = s_depth * tan(s_vert_top_angle * D2R); // snout window top edge drop from aperture
-	double s_low_drop = s_depth * tan(s_vert_bot_angle * D2R); // snout window lower edge drop from aperture
+	double s_width = ap_w + 2. * s_depth * std::tan(s_horiz_angle_rads / 2.);	// Snout window width
+	double s_hw_cos_azi = (s_width / 2.) * std::cos(azi_rads);					// snout window half-width cos azimuth
+	double s_hw_sin_azi = (s_width / 2.) * std::sin(azi_rads);					// snout window half-width sin azimuth
+	double s_high_drop = s_depth * std::tan(s_vert_top_angle_rads);				// snout window top edge drop from aperture
+	double s_low_drop = s_depth * std::tan(s_vert_bot_angle_rads);				// snout window lower edge drop from aperture
 
-	sp_point s_depth_offset(s_depth * sin(azi * D2R), s_depth * cos(azi * D2R), 0.0); //Snout window offset from aperture
-
-	int h_id = H.getId();
+	// Draw SNOUT window
 	vector<sp_point> snout_win;
 	snout_win.resize(4);
-	snout_win.at(0).Set(s_hw_cos_azi, -s_hw_sin_azi, ap_h / 2. - s_high_drop);	//upper right (east on a north facing receiver)
-	snout_win.at(1).Set(-s_hw_cos_azi, s_hw_sin_azi, ap_h / 2. - s_high_drop);	//upper left
-	snout_win.at(2).Set(-s_hw_cos_azi, s_hw_sin_azi, -ap_h / 2. - s_low_drop);	//lower left
-	snout_win.at(3).Set(s_hw_cos_azi, -s_hw_sin_azi, -ap_h / 2. - s_low_drop);	//lower right
-	// Translate to global coordinates
+	snout_win.at(0).Set( s_hw_cos_azi, -s_hw_sin_azi,  ap_h / 2. - s_high_drop);	//upper right (east on a north facing receiver)
+	snout_win.at(1).Set(-s_hw_cos_azi,  s_hw_sin_azi,  ap_h / 2. - s_high_drop);	//upper left
+	snout_win.at(2).Set(-s_hw_cos_azi,  s_hw_sin_azi, -ap_h / 2. - s_low_drop);		//lower left
+	snout_win.at(3).Set( s_hw_cos_azi, -s_hw_sin_azi, -ap_h / 2. - s_low_drop);		//lower right
+
+	// Translate points to account for SNOUT depth
+	sp_point s_depth_offset(s_depth * std::sin(azi_rads), s_depth * std::cos(azi_rads), 0.0); //Snout window offset from aperture
 	for (int i = 0; i < snout_win.size(); i++) {
 		snout_win.at(i).Add(s_depth_offset);
-		snout_win.at(i).Add(rec_offset);
 	}
 
 	// Project snout onto heliostat image plane
 	vector<sp_point> s_win_proj = Toolbox::projectPolygon(snout_win, helio_img_plane);
+
 	// Transform the projection points on to a x-y plane
 	for (int i = 0; i < s_win_proj.size(); i++) {
-		s_win_proj.at(i).Subtract(rec_origin); // Translate to origin
 		Toolbox::rotation(-t2h_azimuth, 2, s_win_proj.at(i));
 		Toolbox::rotation(pi-t2h_zenith, 0, s_win_proj.at(i));
 	}
@@ -2487,51 +2491,55 @@ bool Flux::calculateProjectedSnoutApertureIntersection(Heliostat& H, Receiver* R
 		s_win_proj.at(i).y += s_win_proj.at(i).y < 0 ? -tol : tol;
 	}
 
-	// Determine special cases where clipping is not required
-	bool is_ap_within_snout = true;			// Is aperture window within snout?
+	// Determine special cases where polygon clipping is not required
+	bool is_ap_within_snout = true;			// Is aperture window completely within the snout?
+	bool is_ap_outside_snout = true;		// Is aperture window completely outside of snout?
 	for (int i = 0; i < ap_win_proj.size(); i++) {
-		if (!Toolbox::pointInPolygon(s_win_proj, ap_win_proj.at(i))) { // point is outside Polygon
-			is_ap_within_snout = false;		// only one point need to be outside
+		if (!Toolbox::pointInPolygon(s_win_proj, ap_win_proj.at(i))) { // is aperture point outside snout?
+			is_ap_within_snout = false;		// only one point needs to be outside
+		}
+		else {	// aperture point is within snout
+			is_ap_outside_snout = false;
 		}
 	}
 
 	if (is_ap_within_snout) { // Snout doesn't impact image, return aperture width and height
-		viewable_aperture[0] = -Rv->rec_width.val / 2.;
-		viewable_aperture[1] = Rv->rec_width.val / 2.;
-		viewable_aperture[2] = -Rv->rec_height.val / 2.;
-		viewable_aperture[3] = Rv->rec_height.val / 2.;
+		viewable_aperture[0] = - Rv->rec_width.val / 2.;
+		viewable_aperture[1] =   Rv->rec_width.val / 2.;
+		viewable_aperture[2] = - Rv->rec_height.val / 2.;
+		viewable_aperture[3] =   Rv->rec_height.val / 2.;
 		return false;
+	}
+	else if (is_ap_outside_snout) { // Snout completely blocks aperture, return zeros
+		viewable_aperture[0] = 0.;
+		viewable_aperture[1] = 0.;
+		viewable_aperture[2] = 0.;
+		viewable_aperture[3] = 0.;
+		return true;
 	}
 	else {
 		// Determine intersection of the two projections using Sutherland-Hodgeman Algorithm 
 		vector<sp_point> intsection_proj = Toolbox::clipPolygon(ap_win_proj, s_win_proj);
 
-		if (intsection_proj.size() == 0) { // Projections do not overlap
-			viewable_aperture[0] = 0.;
-			viewable_aperture[1] = 0.;
-			viewable_aperture[2] = 0.;
-			viewable_aperture[3] = 0.;
-			return true;
+		if (intsection_proj.size() == 0) { // Heliostat is on the wrong side of receiver
+			throw spexception("Unexpected result when calculating aperture viewable area.");
 		}
 
-		// Transform the to global coordinates
+		// Transform heliostat image plane
 		for (int i = 0; i < intsection_proj.size(); i++) {
 			Toolbox::rotation(-(pi - t2h_zenith), 0, intsection_proj.at(i));
 			Toolbox::rotation(t2h_azimuth, 2, intsection_proj.at(i));
 		}
-		// Get receiver plane (aperture)
-		PointVect rec_norm_plane;
-		Rec->CalculateNormalVector(rec_norm_plane);
 
 		// Determine intersection on the receiver plane and Transform the points on to a x-y plane
+		double el_rads = 0.0;	// Falling particles receivers are not allowed a elevation
 		for (int i = 0; i < intsection_proj.size(); i++) {
-			Toolbox::plane_intersect(*rec_norm_plane.point(), *rec_norm_plane.vect(), intsection_proj.at(i), *T, intsection_proj.at(i));
-			Toolbox::rotation(pi-Rv->rec_azimuth.val, 2, intsection_proj.at(i));
-			Toolbox::rotation(pi / 2. - Rv->rec_elevation.val, 0, intsection_proj.at(i));
+			Toolbox::plane_intersect(origin, *rec_norm.vect(), intsection_proj.at(i), *h2t, intsection_proj.at(i));
+			Toolbox::rotation(pi - azi_rads, 2, intsection_proj.at(i));
+			Toolbox::rotation(pi/2. - el_rads, 0, intsection_proj.at(i));
 		}
 
-		double area = std::abs(Toolbox::area_polygon(intsection_proj));
-		// Calculate envelope width
+		// Calculate envelope
 		double min_x = intsection_proj.at(0).x,
 			max_x = intsection_proj.at(0).x,
 			min_y = intsection_proj.at(0).y,
@@ -3126,7 +3134,7 @@ void Flux::imageSizeAimPoint(Heliostat &H, SolarField &SF, double args[], bool i
 				viewable_aperture[1] += Receiver::getReceiverWidth(*Rv) / 2.;	// right
 				viewable_aperture[2] += Rv->rec_height.val / 2.;				// bottom
 				viewable_aperture[3] += Rv->rec_height.val / 2.;				// top
-				for (int i = 0; i < 4; i++) { // if negative it's due to precision
+				for (int i = 0; i < end(viewable_aperture) - begin(viewable_aperture); i++) { // if negative it's due to precision
 					if (viewable_aperture[i] < 0.) viewable_aperture[i] = 0.;
 				}
 			}

@@ -37,6 +37,7 @@ set(SOLARPILOT_SRC
 	Land.cpp                   Land.h
 	LayoutSimulateThread.cpp   LayoutSimulateThread.h
 	mod_base.cpp               mod_base.h
+	MultiRecOptimize.cpp       MultiRecOptimize.h
 	OpticalMesh.cpp            OpticalMesh.h
 	optimize.cpp               optimize.h
 	Receiver.cpp               Receiver.h
@@ -90,7 +91,7 @@ endif()
 
 
 
-if(NOT COPILOT_API)
+if(NOT BUILD_COPILOT_API)
 	add_library(solarpilot_core STATIC ${SOLARPILOT_SRC})
 	set_target_properties(solarpilot_core
 		PROPERTIES
@@ -118,7 +119,7 @@ else()
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:LINUX")
 endif()
 	
-if(COPILOT_API)
+if(BUILD_COPILOT_API)
 	target_link_libraries(solarpilot lpsolve nlopt shared coretrace)
 	if (MSVC)		
 		set(COPILOT_DLL $<TARGET_FILE_DIR:solarpilot>/$<TARGET_FILE_BASE_NAME:solarpilot>.dll)
