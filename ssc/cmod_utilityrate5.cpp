@@ -2396,7 +2396,7 @@ public:
                                             surplus_tier = (int)curr_month.ec_tou_ub.ncols() - 1;
 
                                         sr = curr_month.ec_tou_sr.at(row, surplus_tier);
-                                        tier_credit += upper_tier_energy * tier_credit * rate_esc;
+                                        tier_credit += upper_tier_energy * sr * rate_esc;
                                         curr_month.ec_energy_surplus.at(row, surplus_tier) += (ssc_number_t)upper_tier_energy;
                                     }
                                     else {
