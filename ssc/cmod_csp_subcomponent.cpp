@@ -107,7 +107,8 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_OUTPUT,       SSC_NUMBER,      "tes_radius",                "TES Radius",                                                                       "m",            "",               "TES",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "hot_tank_vol_frac",         "Hot tank volume fraction of total",                                                "",             "",               "TES",            "*",                       "",                      "" },
 
-
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_error",                 "TES energy balance error",                                                         "MJ",           "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_error_percent",         "TES energy balance error percent",                                                 "%",            "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "piston_loc",                "Piston Location (distance from left cold side)",                                   "m",            "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "piston_frac",               "Piston Fraction (distance from left cold side)",                                   "",             "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "T_hot_calc",                "Analytical Hot Side Temperature (no losses)",                                      "C",            "",               "TES",            "tes_type=1",              "",                      "" },
@@ -333,7 +334,8 @@ public:
         vector<double> piston_frac_vec;
         vector<double> T_hot_calc_vec;
         vector<double> T_cold_calc_vec;
-
+        vector<double> tes_error_vec;
+        vector<double> tes_error_percent_vec;
 
         // Simulate
         for (size_t i = 0; i < n_steps; i++) {
@@ -365,6 +367,9 @@ public:
 
             hot_tank_vol_frac[i] = storage_pointer->get_hot_tank_vol_frac();
 
+
+
+            // Add NT specific outputs
             if (tes_type == 1)
             {
                 double piston_location, piston_fraction;
@@ -373,8 +378,16 @@ public:
                 piston_loc_vec.push_back(piston_location);
                 piston_frac_vec.push_back(piston_fraction);
 
+                double tes_error = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_ERROR);
+                double tes_error_percent = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_ERROR_PERCENT);
 
-                // Simulate Analytically
+                tes_error_vec.push_back(tes_error);
+                tes_error_percent_vec.push_back(tes_error_percent);
+            }
+
+            // Simulate Analytically
+            if (tes_type == 1)
+            {
                 double mdot_hot_net = mdot_src.at(i) - mdot_sink.at(i);
                 double mdot_cold_net = -1.0 * mdot_hot_net;
 
@@ -424,6 +437,8 @@ public:
             set_vector("piston_frac", piston_frac_vec);
             set_vector("T_hot_calc", T_hot_calc_vec);
             set_vector("T_cold_calc", T_cold_calc_vec);
+            set_vector("tes_error", tes_error_vec);
+            set_vector("tes_error_percent", tes_error_percent_vec);
         }
 
 
