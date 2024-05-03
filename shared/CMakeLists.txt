@@ -174,16 +174,30 @@ endif()
 
 
 if (UNIX)
+    set(absl_DIR $ENV{ORTOOLSDIR}/../install_universal/lib/cmake/absl)
+    find_package(utf8_range
+        HINTS "$ENV{ORTOOLSDIR}/../install_universal/lib/cmake/utf8_range"
+        REQUIRED
+    )
+    set(Protobuf_DIR $ENV{ORTOOLSDIR}/../install_universal/lib/cmake/protobuf)
+#     set(SCIP_ROOT "$ENV{ORTOOLSDIR}/../install_universal/bin")
+    find_package(scip
+                HINTS $ENV{ORTOOLSDIR}/lib/cmake/scip
+                REQUIRED
+    )
+    SET(CMAKE_INSTALL_PREFIX $ENV{ORTOOLSDIR}/../install_universal CACHE PATH "Install OR-Tools" FORCE)
+
     find_package(re2
-                HINTS $ENV{ORTOOLSDIR}
+                HINTS $ENV{ORTOOLSDIR}/../install_universal
                 CONFIG REQUIRED)
     find_package(Eigen3
-                HINTS $ENV{ORTOOLSDIR}
+                HINTS $ENV{ORTOOLSDIR}/../install_universal
                 CONFIG REQUIRED)
     find_package(ortools
-                HINTS $ENV{ORTOOLSDIR}
+                HINTS $ENV{ORTOOLSDIR}/../install_universal
                 CONFIG REQUIRED)
     target_link_libraries(shared ortools::ortools)
+    target_link_libraries(shared libscip)
 elseif(MSVC)
     # get absl
     find_package(absl
