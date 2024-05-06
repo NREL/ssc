@@ -177,7 +177,7 @@ jobs:
           mkdir ${GTEST}/build
           cd ${GTEST}/build
           cmake -DCMAKE_CXX_FLAGS=-std=c++11 ..
-          make          
+          cmake --build .
     
     - name: Checkout SSC
       uses: actions/checkout@v2
