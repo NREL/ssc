@@ -176,8 +176,8 @@ jobs:
           export 
           mkdir ${GTEST}/build
           cd ${GTEST}/build
-          cmake -DCMAKE_CXX_FLAGS=-std=c++11 ..
-          cmake --build  --config Release . 
+          cmake ..
+          cmake --build . --config Release -j4
     
     - name: Checkout SSC
       uses: actions/checkout@v2
@@ -190,14 +190,8 @@ jobs:
       run: |
         mkdir ${SSCDIR}/build
         cd ${SSCDIR}/build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DSAM_SKIP_TOOLS=1
-
-    - name: Build
-      shell: bash
-      # Build your program with the given configuration
-      run: |
-        cd ${SSCDIR}/build
-        make -j4
+        cmake .. -DSAM_SKIP_TOOLS=1
+        cmake --build . --config Release -j4
 
     - name: Test
       # Turn off fast fail for when the landbosse tests write to cerr
