@@ -107,9 +107,9 @@ jobs:
     - name: download OR-Tools
       run: |
           cd $GITHUB_WORKSPACE
-          curl -LJO https://github.com/google/or-tools/releases/download/v9.9/or-tools_arm64_macOS-14.3.1_cpp_v9.9.3963.tar.gz
-          tar -xvf or-tools_arm64_macOS-14.3.1_cpp_v9.9.3963.tar.gz
-          ORTOOLSDIR=$GITHUB_WORKSPACE/or-tools_arm64_macOS-14.3.1_cpp_v9.9.3963
+          curl -LJO https://github.com/google/or-tools/releases/download/v9.7/or-tools_x86_64_macOS-13.5_cpp_v9.7.2996.tar.gz
+          tar -xvf or-tools_x86_64_macOS-13.5_cpp_v9.7.2996.tar.gz
+          ORTOOLSDIR=$GITHUB_WORKSPACE/or-tools_x86_64_macOS-13.5_cpp_v9.7.2996
           echo "ORTOOLSDIR=$ORTOOLSDIR" >> $GITHUB_ENV
 
     - name: Clone Gtest

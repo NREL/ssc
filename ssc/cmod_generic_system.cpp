@@ -41,21 +41,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // for adjustment factors
 #include "common.h"
 
-// for finding paths relative to the application
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
-   //define something for Windows (32-bit and 64-bit, this part is common)
-   #ifdef _WIN64
-      //define something for Windows (64-bit only)
-   #else
-      //define something for Windows (32-bit only)
-   #endif
-#elif __APPLE__
-	#include <CoreFoundation/CFURL.h>
-	#include <CoreFoundation/CFBundle.h>
-#elif __linux__
-    // linux
-#endif
-
 static var_info _cm_vtab_generic_system[] = {
 //	  VARTYPE           DATATYPE         NAME                           LABEL                                 UNITS           META     GROUP                REQUIRED_IF        CONSTRAINTS           UI_HINTS
 	{ SSC_INPUT,        SSC_NUMBER,      "spec_mode",                  "Spec mode: 0=constant CF,1=profile",  "",             "",      "Plant",      "*",               "",                    "" },
@@ -281,28 +266,12 @@ public:
 
         char input_data_path[512];
         sprintf(input_data_path, "%s/test/input_cases/ortools/", std::getenv("SSCDIR"));
-		std::string input_dir = input_data_path;
-
-#if __APPLE__
-		CFURLRef appUrlRef;
-		appUrlRef = CFBundleCopyResourceURL(CFBundleGetMainBundle(), CFSTR("ortools"), NULL, NULL);
-
-		if (appUrlRef) {
-			CFStringRef filePathRef = CFURLCopyPath(appUrlRef);
-			const char* filePath = CFStringGetCStringPtr(filePathRef, kCFStringEncodingUTF8);
-			input_dir = std::string(filePath);
-
-			CFRelease(filePathRef);
-			CFRelease(appUrlRef);
-
-			printf("directory %s\n", input_dir.c_str());
-		}
-#endif
 
         bool run_rolling_horizon_cases = false;
 
         std::string results_file = "heat_valued_results_no_off_design_heat.csv";
         std::string res_dir = "heat_valued_no_offdes_results_1p_gap/";
+        std::string input_dir = input_data_path;
 
         // Problem set-up
         ptes_chp_dispatch ptes_chp;
