@@ -188,8 +188,8 @@ jobs:
       shell: bash
       # Configure cmake to build ssc tests but not tools
       run: |
-        mkdir ${SSCDIR}\build
-        cd ${SSCDIR}\build
+        mkdir ${SSCDIR}/build
+        cd ${SSCDIR}/build
         cmake .. -DCMAKE_BUILD_TYPE=Release -DSAM_SKIP_TOOLS=1
 
     - name: Build
