@@ -198,7 +198,10 @@ jobs:
     - name: Test
       # Turn off fast fail for when the landbosse tests write to cerr
       run: |
-        ${SSCDIR}\build\test\Release\Test.exe
+        echo "${SSCDIR}"
+        echo "$env:SSCDIR"
+        & "$env:SSCDIR\build\test\Release\Test.exe"
+        & "${SSCDIR}\build\test\Release\Test.exe"
     
     - name: Upload Artifacts
       uses: actions/upload-artifact@v3
