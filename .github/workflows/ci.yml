@@ -156,11 +156,12 @@ jobs:
       run: cmake --version
     
     - name: Set relative paths
+      shell: bash
       run: | 
-        $GTEST=$GITHUB_WORKSPACE\googletest
-        echo "GTEST=$GTEST" >> $env:GITHUB_ENV
-        $SSCDIR=$GITHUB_WORKSPACE/ssc
-        echo "SSCDIR=$SSCDIR" >> $env:GITHUB_ENV
+        GTEST=$GITHUB_WORKSPACE/googletest
+        echo "GTEST=$GTEST" >> $GITHUB_ENV
+        SSCDIR=$GITHUB_WORKSPACE/ssc
+        echo "SSCDIR=$SSCDIR" >> $GITHUB_ENV
     
     - name: Clone Gtest
       uses: actions/checkout@v2
@@ -170,10 +171,11 @@ jobs:
         ref: b85864c64758dec007208e56af933fc3f52044ee
     
     - name: build Gtest
+      shell: bash
       run: | 
           export 
-          mkdir ${GTEST}\build
-          cd ${GTEST}\build
+          mkdir ${GTEST}/build
+          cd ${GTEST}/build
           cmake -DCMAKE_CXX_FLAGS=-std=c++11 ..
           make          
     
@@ -186,8 +188,8 @@ jobs:
       shell: bash
       # Configure cmake to build ssc tests but not tools
       run: |
-        mkdir ${SSCDIR}/build
-        cd ${SSCDIR}/build
+        mkdir ${SSCDIR}\build
+        cd ${SSCDIR}\build
         cmake .. -DCMAKE_BUILD_TYPE=Release -DSAM_SKIP_TOOLS=1
 
     - name: Build
