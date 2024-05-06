@@ -127,7 +127,7 @@ jobs:
       # Build your program with the given configuration
       run: |
         cd ${SSCDIR}/build
-        make -j4
+        make -j3
 
     - name: Test
       # Turn off fast fail for when the landbosse tests write to cerr
@@ -200,7 +200,7 @@ jobs:
       shell: bash
       run: |
         set -e
-        ${SSCDIR}/build/test/Test
+        ${SSCDIR}/build/test/Test.exe
     
     - name: Upload Artifacts
       uses: actions/upload-artifact@v3
