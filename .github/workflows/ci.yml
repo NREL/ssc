@@ -172,12 +172,14 @@ jobs:
     
     - name: build Gtest
       shell: bash
+      # Need to build both Release and Debug for the SSC CMake below
       run: | 
           export 
           mkdir ${GTEST}/build
           cd ${GTEST}/build
           cmake ..
           cmake --build . --config Release -j4
+          cmake --build . --config Debug -j4
     
     - name: Checkout SSC
       uses: actions/checkout@v2
