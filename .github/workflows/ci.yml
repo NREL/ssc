@@ -200,7 +200,7 @@ jobs:
       shell: bash
       run: |
         set -e
-        ${SSCDIR}/build/test/Test.exe
+        ${SSCDIR}/build/test/Release/Test.exe
     
     - name: Upload Artifacts
       uses: actions/upload-artifact@v3
