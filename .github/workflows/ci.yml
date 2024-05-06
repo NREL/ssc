@@ -76,7 +76,10 @@ jobs:
             ${{env.SSCDIR}}/build/ssc/ssc.so
       
   build-on-mac:
-    runs-on: macos-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-14-large, macos-latest]
 
     steps:
     - name: Setup cmake
@@ -141,3 +144,70 @@ jobs:
             ${{env.SSCDIR}}/build/ssc/libssc.dylib
             ${{env.SSCDIR}}/build/ssc/ssc.dylib 
 
+  build-on-windows:
+    runs-on: windows-latest
+
+    steps:
+    - name: Setup cmake
+      uses: jwlawson/actions-setup-cmake@v1.12
+      with:
+        cmake-version: '3.24.x'
+    - name: Test cmake version
+      run: cmake --version
+    
+    - name: Set relative paths
+      run: | 
+        $GTEST=$GITHUB_WORKSPACE/googletest
+        echo "GTEST=$GTEST" >> $env:GITHUB_ENV
+        $SSCDIR=$GITHUB_WORKSPACE/ssc
+        echo "SSCDIR=$SSCDIR" >> $env:GITHUB_ENV
+    
+    - name: Clone Gtest
+      uses: actions/checkout@v2
+      with:
+        repository: google/googletest
+        path: googletest
+        ref: b85864c64758dec007208e56af933fc3f52044ee
+    
+    - name: build Gtest
+      run: | 
+          export 
+          mkdir ${GTEST}/build
+          cd ${GTEST}/build
+          cmake -DCMAKE_CXX_FLAGS=-std=c++11 ..
+          make          
+    
+    - name: Checkout SSC
+      uses: actions/checkout@v2
+      with:
+          path: ssc
+
+    - name: Configure CMake
+      shell: bash
+      # Configure cmake to build ssc tests but not tools
+      run: |
+        mkdir ${SSCDIR}/build
+        cd ${SSCDIR}/build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DSAM_SKIP_TOOLS=1
+
+    - name: Build
+      shell: bash
+      # Build your program with the given configuration
+      run: |
+        cd ${SSCDIR}/build
+        make -j4
+
+    - name: Test
+      # Turn off fast fail for when the landbosse tests write to cerr
+      shell: bash
+      run: |
+        set -e
+        ${SSCDIR}/build/test/Test
+    
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+          name: SSC Linux Shared Libraries
+          path: |
+            ${{env.SSCDIR}}/build/ssc/libssc.so
+            ${{env.SSCDIR}}/build/ssc/ssc.so
