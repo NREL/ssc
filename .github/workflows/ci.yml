@@ -157,7 +157,7 @@ jobs:
     
     - name: Set relative paths
       run: | 
-        $GTEST=$GITHUB_WORKSPACE/googletest
+        $GTEST=$GITHUB_WORKSPACE\googletest
         echo "GTEST=$GTEST" >> $env:GITHUB_ENV
         $SSCDIR=$GITHUB_WORKSPACE/ssc
         echo "SSCDIR=$SSCDIR" >> $env:GITHUB_ENV
@@ -172,8 +172,8 @@ jobs:
     - name: build Gtest
       run: | 
           export 
-          mkdir ${GTEST}/build
-          cd ${GTEST}/build
+          mkdir ${GTEST}\build
+          cd ${GTEST}\build
           cmake -DCMAKE_CXX_FLAGS=-std=c++11 ..
           make          
     
