@@ -31,12 +31,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
+#include "solesca_test.h"
 
-#ifndef SYSTEM_ADVISOR_MODEL_CMOD_LEVPARTFLIP_TEST_H
-#define SYSTEM_ADVISOR_MODEL_CMOD_LEVPARTFLIP_TEST_H
+#include "gtest/gtest.h"
 
-#include "cmod_json_comparison_test.h"
+// from branch SOL-853
+TEST_F(SolescaTest, sam_pv_test) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/solesca/sam_pv_test.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/solesca/sam_pv_test_out.json";
+    std::vector<std::string> compare_number_variables = { "annual_energy"};
+    std::vector<std::string> compare_array_variables;
 
-class CmodLeveragedPartnershipFlipTest : public JSONComparisonTest {};
+    Test("pvsamv1", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+}
 
-#endif //SYSTEM_ADVISOR_MODEL_CMOD_LEVPARTFLIP_TEST_H
+
+
