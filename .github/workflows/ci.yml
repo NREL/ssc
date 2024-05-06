@@ -176,7 +176,7 @@ jobs:
           export 
           mkdir ${GTEST}/build
           cd ${GTEST}/build
-          cmake -DCMAKE_CXX_FLAGS=-std=c++11 ..
+          cmake -DCMAKE_CXX_FLAGS=-std=c++11 -DCMAKE_BUILD_TYPE=Release ..
           cmake --build .
     
     - name: Checkout SSC
