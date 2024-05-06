@@ -177,7 +177,7 @@ jobs:
           export 
           mkdir ${GTEST}/build
           cd ${GTEST}/build
-          cmake ..
+          cmake -Dgtest_force_shared_crt=ON ..
           cmake --build . --config Release -j4
           cmake --build . --config Debug -j4
     
