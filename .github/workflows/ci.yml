@@ -203,6 +203,7 @@ jobs:
         ls -lh ${SSCDIR}/build/test/Release
         cd ${SSCDIR}/build/test/Release
         chmod +x Test.exe
+        ls -lh Test.exe
         ./Test.exe
   
     - name: Test
