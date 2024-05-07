@@ -201,12 +201,12 @@ jobs:
       run: |
         ls ${SSCDIR}/build/test/Release
         cd ${SSCDIR}/build/test/Release
-        .\Test.exe
+        ./Test.exe
     
     - name: Upload Artifacts
       uses: actions/upload-artifact@v3
       with:
           name: SSC Linux Shared Libraries
           path: |
-            ${{env.SSCDIR}}/build/ssc/libssc.so
-            ${{env.SSCDIR}}/build/ssc/ssc.so
+            ${{env.SSCDIR}}\build\ssc\libssc.so
+            ${{env.SSCDIR}}\build\ssc\ssc.so
