@@ -59,11 +59,13 @@ private:
     double m_V_prev;		    //[m^3] Volume of storage fluid in tank
     double m_T_prev;		    //[K] Temperature of storage fluid in tank
     double m_m_prev;		    //[kg] Mass of storage fluid in tank
+    double m_E_prev;            //[MJ] Internal energy (including tank walll)
 
     // Calculated values for current timestep
     double m_V_calc;		    //[m^3] Volume of storage fluid in tank
     double m_T_calc;		    //[K] Temperature of storage fluid in tank
     double m_m_calc;		    //[kg] Mass of storage fluid in tank
+    double m_E_calc;            //[MJ] Internal energy (including tank wall)
 
     // Added TMB 12.15.2023
     double m_radius;   //[m]
@@ -110,6 +112,10 @@ public:
 
     double get_m_m_prev();
 
+    double get_m_E_prev();
+
+    double get_m_E_calc();
+
     double get_vol_frac();
 
     double get_mass_avail();    //[kg]
@@ -144,13 +150,15 @@ public:
         double T_tank_in /*K*/, double T_prev_inner /*K*/,
         double T_leak_in /*K*/,
         double& T_ave /*K*/, double& q_heater /*MW*/, double& q_dot_loss /*MW*/,
-        double& mass_calc_inner /*kg*/, double& T_calc_inner /*K*/, double& q_dot_out_inner /*MW*/);
+        double& mass_calc_inner /*kg*/, double& T_calc_inner /*K*/, double& q_dot_out_inner /*MW*/,
+        double& q_dot_error_inner /*MW*/);
 
     void energy_balance_iterated(double timestep /*s*/, double m_dot_in /*kg/s*/, double m_dot_out /*kg/s*/,
         double T_in /*K*/, double T_amb /*K*/,
         double T_tank_in, /*K*/
         double T_leak_in, /*K*/
-        double& T_ave /*K*/, double& q_heater /*MW*/, double& q_dot_loss /*MW*/, double& q_dot_out /*MW*/);
+        double& T_ave /*K*/, double& q_heater /*MW*/, double& q_dot_loss /*MW*/, double& q_dot_out /*MW*/,
+        double& q_dot_error /*MW*/);
 
     void converged();
 
@@ -233,7 +241,12 @@ public:
         E_SA_HOT,
         E_SA_TOT,
         E_ERROR,
-        E_ERROR_PERCENT
+        E_ERROR_PERCENT,
+        E_HOT_ERROR,
+        E_COLD_ERROR,
+        E_LEAK_ERROR,
+        E_E_HOT,
+        E_E_COLD
 	};
 
 
@@ -389,14 +402,14 @@ public:
         double& q_dot_heater /*MWe*/, double& m_dot /*kg/s*/, double& W_dot_rhtf_pump /*MWe*/,
         double& q_dot_loss /*MWt*/, double& q_dot_dc_to_htf /*MWt*/, double& q_dot_ch_from_htf /*MWt*/,
         double& T_hot_ave /*K*/, double& T_cold_ave /*K*/, double& T_hot_final /*K*/, double& T_cold_final /*K*/,
-        double& q_dot_out_cold /*MW*/, double& q_dot_out_hot /*MW*/);
+        double& q_dot_out_cold /*MW*/, double& q_dot_out_hot /*MW*/, double& q_dot_error_cold, double& q_dot_error_hot);
 
     bool discharge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/,
         double T_htf_cold_in, double& T_htf_hot_out /*K*/,
         double& q_dot_heater /*MWe*/, double& m_dot /*kg/s*/, double& W_dot_rhtf_pump /*MWe*/,
         double& q_dot_loss /*MWt*/, double& q_dot_dc_to_htf /*MWt*/, double& q_dot_ch_from_htf /*MWt*/,
         double& T_hot_ave /*K*/, double& T_cold_ave /*K*/, double& T_hot_final /*K*/, double& T_cold_final /*K*/,
-        double& q_dot_out_cold /*MW*/, double& q_dot_out_hot /*MW*/);
+        double& q_dot_out_cold /*MW*/, double& q_dot_out_hot /*MW*/, double& q_dot_error_cold, double& q_dot_error_hot);
 
     int pressure_drops(double m_dot_sf, double m_dot_pb,
         double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating,

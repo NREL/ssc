@@ -107,12 +107,17 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_OUTPUT,       SSC_NUMBER,      "tes_radius",                "TES Radius",                                                                       "m",            "",               "TES",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "hot_tank_vol_frac",         "Hot tank volume fraction of total",                                                "",             "",               "TES",            "*",                       "",                      "" },
 
-    { SSC_OUTPUT,       SSC_ARRAY,       "tes_error",                 "TES energy balance error",                                                         "MJ",           "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_error",                 "TES energy balance error",                                                         "MW",           "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_error_percent",         "TES energy balance error percent",                                                 "%",            "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "piston_loc",                "Piston Location (distance from left cold side)",                                   "m",            "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "piston_frac",               "Piston Fraction (distance from left cold side)",                                   "",             "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "T_hot_calc",                "Analytical Hot Side Temperature (no losses)",                                      "C",            "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "T_cold_calc",               "Analytical Cold Side Temperature (no losses)",                                     "C",            "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_hot_error",             "TES hot energy balance error",                                                     "MWt",          "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_cold_error",            "TES cold energy balance error",                                                    "MWt",          "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_leak_error",            "TES energy balance error dut to leakage assumption",                               "MWt",          "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_E_hot",                 "TES hot side internal energy",                                                     "MJ",           "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_E_cold",                "TES cold side internal energy",                                                    "MJ",           "",               "TES",            "tes_type=1",              "",                      "" },
 
 
 
@@ -336,6 +341,11 @@ public:
         vector<double> T_cold_calc_vec;
         vector<double> tes_error_vec;
         vector<double> tes_error_percent_vec;
+        vector<double> tes_error_hot_vec;
+        vector<double> tes_error_cold_vec;
+        vector<double> tes_error_leakage_vec;
+        vector<double> tes_E_hot_vec;
+        vector<double> tes_E_cold_vec;
 
         // Simulate
         for (size_t i = 0; i < n_steps; i++) {
@@ -380,9 +390,19 @@ public:
 
                 double tes_error = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_ERROR);
                 double tes_error_percent = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_ERROR_PERCENT);
+                double tes_error_hot = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_HOT_ERROR);
+                double tes_error_cold = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_COLD_ERROR);
+                double tes_error_leak = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_LEAK_ERROR);
+                double tes_E_hot = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_E_HOT);
+                double tes_E_cold = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_E_COLD);
 
                 tes_error_vec.push_back(tes_error);
                 tes_error_percent_vec.push_back(tes_error_percent);
+                tes_error_hot_vec.push_back(tes_error_hot);
+                tes_error_cold_vec.push_back(tes_error_cold);
+                tes_error_leakage_vec.push_back(tes_error_leak);
+                tes_E_hot_vec.push_back(tes_E_hot);
+                tes_E_cold_vec.push_back(tes_E_cold);
             }
 
             // Simulate Analytically
@@ -439,6 +459,11 @@ public:
             set_vector("T_cold_calc", T_cold_calc_vec);
             set_vector("tes_error", tes_error_vec);
             set_vector("tes_error_percent", tes_error_percent_vec);
+            set_vector("tes_hot_error", tes_error_hot_vec);
+            set_vector("tes_cold_error", tes_error_cold_vec);
+            set_vector("tes_leak_error", tes_error_leakage_vec);
+            set_vector("tes_E_hot", tes_E_hot_vec);
+            set_vector("tes_E_cold", tes_E_cold_vec);
         }
 
 
@@ -606,8 +631,41 @@ public:
         double timestep = as_double("t_step");
 
         // Fluid Properties
+        int store_fluid = as_integer("store_fluid");
+        util::matrix_t<double> store_fl_props = as_matrix("store_fl_props");
+
         HTFProperties fluid_props;
-        fluid_props.SetFluid(as_integer("Fluid"));
+        // Declare instance of fluid class for STORAGE fluid.
+        // Set fluid number and copy over fluid matrix if it makes sense.
+        if (store_fluid != HTFProperties::User_defined && store_fluid < HTFProperties::End_Library_Fluids)
+        {
+            if (!fluid_props.SetFluid(store_fluid))
+            {
+                throw(C_csp_exception("Storage HTF code is not recognized", "Two Tank TES Initialization"));
+            }
+        }
+        else if (store_fluid == HTFProperties::User_defined)
+        {
+            int n_rows = (int)store_fl_props.nrows();
+            int n_cols = (int)store_fl_props.ncols();
+            if (n_rows > 2 && n_cols == 7)
+            {
+                if (!fluid_props.SetUserDefinedFluid(store_fl_props))
+                {
+                    std::string error_msg = util::format(fluid_props.UserFluidErrMessage(), n_rows, n_cols);
+                    throw(C_csp_exception(error_msg, "Two Tank TES Initialization"));
+                }
+            }
+            else
+            {
+                std::string error_msg = util::format("The user defined storage HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", n_rows, n_cols);
+                throw(C_csp_exception(error_msg, "Two Tank TES Initialization"));
+            }
+        }
+        else
+        {
+            throw(C_csp_exception("Storage HTF code is not recognized", "Two Tank TES Initialization"));
+        }
 
         // Tank Dimensions
         double thickness_wall = as_double("tes_tank_thick");            // m
