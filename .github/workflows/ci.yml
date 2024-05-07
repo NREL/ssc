@@ -202,6 +202,7 @@ jobs:
       run: |
         ls -lh ${SSCDIR}/build/test/Release
         cd ${SSCDIR}/build/test/Release
+        chmod +x Test.exe
         ./Test.exe
   
     - name: Test
