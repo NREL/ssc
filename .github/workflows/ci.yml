@@ -194,6 +194,7 @@ jobs:
         cd ${SSCDIR}/build
         cmake .. -DSAM_SKIP_TOOLS=1
         cmake --build . --config Release -j4
+        test/Release/Test.exe
 
     - name: Test
       shell: bash
@@ -201,7 +202,6 @@ jobs:
       run: |
         ls ${SSCDIR}/build/test/Release
         cd ${SSCDIR}/build/test/Release
-        ./Test.exe
     
     - name: Upload Artifacts
       uses: actions/upload-artifact@v3
