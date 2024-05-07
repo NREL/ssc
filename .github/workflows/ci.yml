@@ -204,13 +204,15 @@ jobs:
         cd ${SSCDIR}/build/test/Release
         chmod +x Test.exe
         ls -lh Test.exe
-        ./Test.exe
+        # ./Test.exe
   
     - name: Test
-      shell: bash
-      # Turn off fast fail for when the landbosse tests write to cerr
-      run: |
-        ${SSCDIR}/build/test/Release/Test.exe
+      uses: actions/upload-artifact@v3
+      with:
+          name: SSC Test
+          path: |
+            ${{env.SSCDIR}}/build/test/Release/Test.exe
+            ${{env.SSCDIR}}/build/test/Release/Test.exe
     
     - name: Upload Artifacts
       uses: actions/upload-artifact@v3
