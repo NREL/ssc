@@ -196,6 +196,7 @@ jobs:
         cmake --build . --config Release -j4
 
     - name: Test
+      shell: bash
       # Turn off fast fail for when the landbosse tests write to cerr
       run: |
         ls ${SSCDIR}/build/test/Release
