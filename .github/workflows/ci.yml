@@ -196,10 +196,6 @@ jobs:
         cmake --build . --config Release -j4
 
     - name: Test
-      run: |
-        & 'D:\a\ssc\ssc\ssc\build\test\Release\Test.exe'
-
-    - name: Test
       # Turn off fast fail for when the landbosse tests write to cerr
       run: |
         set -e
