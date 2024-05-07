@@ -198,7 +198,6 @@ jobs:
     - name: Test
       # Turn off fast fail for when the landbosse tests write to cerr
       run: |
-        set -e
         ls ${SSCDIR}/build/test/Release
         cd ${SSCDIR}/build/test/Release
         .\Test.exe
