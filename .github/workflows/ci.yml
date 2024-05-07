@@ -196,9 +196,16 @@ jobs:
         cmake --build . --config Release -j4
 
     - name: Test
+      run: |
+        & 'D:\a\ssc\ssc\ssc\build\test\Release\Test.exe'
+
+    - name: Test
       # Turn off fast fail for when the landbosse tests write to cerr
       run: |
-        D:\a\ssc\ssc\ssc\build\test\Release\Test.exe
+        set -e
+        ls ${SSCDIR}/build/test/Release
+        cd ${SSCDIR}/build/test/Release
+        .\Test.exe
     
     - name: Upload Artifacts
       uses: actions/upload-artifact@v3
