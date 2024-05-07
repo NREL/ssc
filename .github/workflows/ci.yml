@@ -200,7 +200,7 @@ jobs:
       shell: bash
       # Turn off fast fail for when the landbosse tests write to cerr
       run: |
-        ls ${SSCDIR}/build/test/Release
+        ls -lh ${SSCDIR}/build/test/Release
         cd ${SSCDIR}/build/test/Release
         ./Test.exe
   
