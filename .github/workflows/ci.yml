@@ -145,7 +145,7 @@ jobs:
             ${{env.SSCDIR}}/build/ssc/ssc.dylib 
 
   build-on-windows:
-    runs-on: windows-latest
+    runs-on: windows-2019
 
     steps:
     - name: Setup cmake
@@ -194,16 +194,19 @@ jobs:
         cd ${SSCDIR}/build
         cmake .. -DSAM_SKIP_TOOLS=1
         cmake --build . --config Release -j4
+        cp ${SSCDIR}/build/ssc/Release/*  ${SSCDIR}/build/test/Release
 
     - name: Test
+      shell: bash
       # Turn off fast fail for when the landbosse tests write to cerr
       run: |
-        ${SSCDIR}\build\test\Release\Test.exe
-    
+        cd ${SSCDIR}/build/test/Release
+        ls -lh .
+        ./Test.exe
+  
     - name: Upload Artifacts
       uses: actions/upload-artifact@v3
       with:
           name: SSC Linux Shared Libraries
           path: |
-            ${{env.SSCDIR}}/build/ssc/libssc.so
-            ${{env.SSCDIR}}/build/ssc/ssc.so
+            ${{env.SSCDIR}}\build\ssc\Release\ssc.dll
