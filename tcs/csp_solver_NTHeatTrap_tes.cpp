@@ -62,7 +62,7 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
     {C_csp_NTHeatTrap_tes::E_LEAK_ERROR, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[MWt]
     {C_csp_NTHeatTrap_tes::E_E_HOT, C_csp_reported_outputs::TS_LAST},	//[MJ]
     {C_csp_NTHeatTrap_tes::E_E_COLD, C_csp_reported_outputs::TS_LAST},	//[MJ]
-
+    {C_csp_NTHeatTrap_tes::E_ERROR_LEAK_CORRECTED, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[MW]
     csp_info_invalid
 };
 
@@ -1343,6 +1343,7 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
     // TOTAL Energy Balance for total system here
     double energy_balance_error = 0;    // [MW]
     double energy_error_leakage = 0;    // MW
+    double total_error_leakage_corrected = 0;   //[MW]
     double energy_balance_error_percent = 0; // Percent error of total internal energy change
     {
         // Positive is Charge, Negative is Discharge
@@ -1526,6 +1527,8 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
             }
         }
 
+        total_error_leakage_corrected = std::abs(energy_balance_error) - std::abs(energy_error_leakage);
+
     }
 
 
@@ -1549,9 +1552,6 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
     double cold_frac = vol_cold / vol_tot;
     double piston_loc, piston_frac;
     calc_piston_location(piston_loc, piston_frac);
-
-
-    
 
     s_outputs.m_q_heater = q_dot_heater;
     s_outputs.m_W_dot_elec_in_tot = W_dot_htf_pump;             //[MWe]
@@ -1591,13 +1591,15 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
     mc_reported_outputs.value(E_SA_COLD, mc_cold_tank_NT.get_SA_calc());    //[m2]
     mc_reported_outputs.value(E_SA_HOT, mc_hot_tank_NT.get_SA_calc());    //[m2]
     mc_reported_outputs.value(E_SA_TOT, mc_cold_tank_NT.get_SA_calc() + mc_hot_tank_NT.get_SA_calc());    //[m2]
-    mc_reported_outputs.value(E_ERROR, energy_balance_error / timestep); //[MW]
+    mc_reported_outputs.value(E_ERROR, energy_balance_error); //[MW]
     mc_reported_outputs.value(E_ERROR_PERCENT, energy_balance_error_percent); //[%]
     mc_reported_outputs.value(E_HOT_ERROR, q_dot_error_hot);    //[MWt]
     mc_reported_outputs.value(E_COLD_ERROR, q_dot_error_cold);  //[MWt]
     mc_reported_outputs.value(E_LEAK_ERROR, energy_error_leakage);  //[MWt]
     mc_reported_outputs.value(E_E_HOT, mc_hot_tank_NT.get_m_E_calc());  //[MJ]
     mc_reported_outputs.value(E_E_COLD, mc_cold_tank_NT.get_m_E_calc());//[MJ]
+    mc_reported_outputs.value(E_E_COLD, mc_cold_tank_NT.get_m_E_calc());//[MJ]
+    mc_reported_outputs.value(E_ERROR_LEAK_CORRECTED, total_error_leakage_corrected); //[MW]
 
     return 0;
 }
@@ -1704,7 +1706,9 @@ bool C_csp_NTHeatTrap_tes::charge(double timestep /*s*/, double T_amb /*K*/, dou
     q_dot_ch_est = m_dot_tes_ch_max = T_cold_to_src_est = std::numeric_limits<double>::quiet_NaN();
     charge_avail_est(T_htf_hot_in, timestep, q_dot_ch_est, m_dot_tes_ch_max, T_cold_to_src_est);
 
-    if (m_dot_htf_in > 1.0001 * m_dot_tes_ch_max && m_dot_htf_in > 1.E-6)
+    double m_dot_htf_in_net = m_dot_htf_in * (1.0 - mc_hot_tank_NT.calc_leakage_fraction(m_dot_htf_in));
+
+    if (m_dot_htf_in_net > 1.0001 * m_dot_tes_ch_max && m_dot_htf_in_net > 1.E-6)
     {
         q_dot_heater = std::numeric_limits<double>::quiet_NaN();
         m_dot_tank_to_tank = std::numeric_limits<double>::quiet_NaN();
@@ -1782,7 +1786,9 @@ bool C_csp_NTHeatTrap_tes::discharge(double timestep /*s*/, double T_amb /*K*/, 
     q_dot_dc_est = m_dot_tes_dc_max = T_hot_to_pc_est = std::numeric_limits<double>::quiet_NaN();
     discharge_avail_est(T_htf_cold_in, timestep, q_dot_dc_est, m_dot_tes_dc_max, T_hot_to_pc_est);
 
-    if (m_dot_htf_in > 1.0001 * m_dot_tes_dc_max && m_dot_htf_in > 1.E-6)      // mass flow in = mass flow out
+    double m_dot_htf_in_net = m_dot_htf_in * (1.0 - mc_hot_tank_NT.calc_leakage_fraction(m_dot_htf_in));
+
+    if (m_dot_htf_in_net > 1.0001 * m_dot_tes_dc_max && m_dot_htf_in_net > 1.E-6)      // mass flow in = mass flow out
     {
         q_dot_heater = std::numeric_limits<double>::quiet_NaN();
         m_dot_tank_to_tank = std::numeric_limits<double>::quiet_NaN();

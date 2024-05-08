@@ -49,6 +49,9 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_INPUT,        SSC_ARRAY,       "hot_tank_bypassed",         "Is mass flow from source going straight to cold tank?",                            "-",            "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "T_src_out",                 "Temperature from heat source",                                                     "C",            "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "T_sink_out",                "Temperature from heat sink or power block",                                        "C",            "",               "TES",            "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "T_tank_hot_ini",            "Temperature of fluid in hot tank at beginning of step",                            "C",            "",               "TES",            "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "T_tank_cold_ini",           "Temperature of fluid in cold tank at beginning of step",                           "C",            "",               "TES",            "*",                       "",                      "" },
+
 
     // TES
     { SSC_INPUT,        SSC_NUMBER,      "Fluid",                     "Field HTF fluid ID number",                                                        "-",            "",               "solar_field",    "*",                       "",                      "" },
@@ -115,10 +118,10 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "T_cold_calc",               "Analytical Cold Side Temperature (no losses)",                                     "C",            "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_hot_error",             "TES hot energy balance error",                                                     "MWt",          "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_cold_error",            "TES cold energy balance error",                                                    "MWt",          "",               "TES",            "tes_type=1",              "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "tes_leak_error",            "TES energy balance error dut to leakage assumption",                               "MWt",          "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_leak_error",            "TES energy balance error due to leakage assumption",                               "MWt",          "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_E_hot",                 "TES hot side internal energy",                                                     "MJ",           "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_E_cold",                "TES cold side internal energy",                                                    "MJ",           "",               "TES",            "tes_type=1",              "",                      "" },
-
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_error_leak_corrected",  "TES energy balance error, removing leakage assumption error",                      "MW",           "",               "TES",            "tes_type=1",              "",                      "" },
 
 
     var_info_invalid };
@@ -183,8 +186,8 @@ public:
                 as_double("dt_hot"),                                                // [C] Temperature difference across heat exchanger - assume hot and cold deltaTs are equal
                 as_double("T_loop_in_des"),                                         // [C] convert to K in init()
                 as_double("T_loop_out"),                                            // [C] convert to K in init()
-                as_double("T_loop_out"),                                            // [C] Initial temperature in hot storage tank
-                as_double("T_loop_in_des"),                                         // [C] Initial temperature in cold storage cold
+                as_double("T_tank_hot_ini"),                                        // [C] Initial temperature in hot storage tank
+                as_double("T_tank_cold_ini"),                                       // [C] Initial temperature in cold storage cold
                 as_double("h_tank_min"),                                            // [m] Minimum allowable HTF height in storage tank
                 as_double("init_hot_htf_percent"),                                  // [%] Initial fraction of available volume that is hot
                 as_double("pb_pump_coef"),                                          // [kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle
@@ -233,49 +236,49 @@ public:
             }
 
             storage_NT = C_csp_NTHeatTrap_tes(
-                as_integer("Fluid"),
-                as_matrix("field_fl_props"),
-                as_integer("store_fluid"),
-                as_matrix("store_fl_props"),
-                as_double("P_ref") / as_double("eta_ref"),
-                as_double("solar_mult"),
-                as_double("P_ref") / as_double("eta_ref") * as_double("tshours"),
-                true,   // use input height
-                as_double("h_tank"),
-                0.0,    // no input diameter
-                as_double("u_tank"),
-                as_integer("tank_pairs"),
-                as_double("hot_tank_Thtr"),
-                as_double("hot_tank_max_heat"),
-                as_double("cold_tank_Thtr"),
-                as_double("cold_tank_max_heat"),
-                as_double("dt_hot"),
-                as_double("T_loop_in_des"),
-                as_double("T_loop_out"),
-                as_vector_double("T_src_out")[0],
-                as_double("T_loop_in_des"),
-                as_double("h_tank_min"),
-                as_double("init_hot_htf_percent"),
-                as_double("pb_pump_coef"),
-                as_double("tes_tank_cp") * 1000, // convert to J/kgK
-                as_double("tes_tank_dens"),
-                as_double("tes_tank_thick"),
-                nstep,
-                as_vector_double("tes_NT_piston_loss_poly"),
-                as_double("V_tes_des"),
-                as_boolean("calc_design_pipe_vals"),
-                as_double("tes_pump_coef"),
-                as_double("eta_pump"),
-                as_boolean("has_hot_tank_bypass"),
-                as_double("T_tank_hot_inlet_min"),
-                false,
-                false,
-                as_matrix("k_tes_loss_coeffs"),
-                tes_diams,
-                tes_wallthicks,
-                tes_lengths,
-                as_double("HDR_rough"),
-                as_double("DP_SGS")
+                as_integer("Fluid"),                                                // [-] field fluid identifier
+                as_matrix("field_fl_props"),                                        // [-] field fluid properties
+                as_integer("store_fluid"),                                          // [-] tes fluid identifier
+                as_matrix("store_fl_props"),                                        // [-] tes fluid properties
+                as_double("P_ref") / as_double("eta_ref"),                          // [MWt] Design heat rate in and out of tes
+                as_double("solar_mult"),                                            // [-] the max design heat rate as a fraction of the nominal
+                as_double("P_ref") / as_double("eta_ref") * as_double("tshours"),   // [MWt-hr] design storage capacity
+                true,   // use input height                                         // Use input height
+                as_double("h_tank"),                                                // [m] tank height input
+                0.0,    // no input diameter                                        // [m] tank diameter input
+                as_double("u_tank"),                                                // [W/m^2-K]
+                as_integer("tank_pairs"),                                           // [-]
+                as_double("hot_tank_Thtr"),                                         // [C] convert to K in init()
+                as_double("hot_tank_max_heat"),                                     // [MW]
+                as_double("cold_tank_Thtr"),                                        // [C] convert to K in init()
+                as_double("cold_tank_max_heat"),                                    // [MW]
+                as_double("dt_hot"),                                                // [C] Temperature difference across heat exchanger - assume hot and cold deltaTs are equal
+                as_double("T_loop_in_des"),                                         // [C] convert to K in init()
+                as_double("T_loop_out"),                                            // [C] convert to K in init()
+                as_double("T_tank_hot_ini"),                                        // [C] Initial temperature in hot storage tank
+                as_double("T_tank_cold_ini"),                                       // [C] Initial temperature in cold storage cold
+                as_double("h_tank_min"),                                            // [m] Minimum allowable HTF height in storage tank
+                as_double("init_hot_htf_percent"),                                  // [%] Initial fraction of available volume that is hot
+                as_double("pb_pump_coef"),                                          // [kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle
+                as_double("tes_tank_cp") * 1000,                                    // convert to J/kgK
+                as_double("tes_tank_dens"),                                         // Tank Wall density
+                as_double("tes_tank_thick"),                                        // Tank wall thickness
+                nstep,                                                              // Number subtimesteps
+                as_vector_double("tes_NT_piston_loss_poly"),                        // Leakage polynomial (%)
+                as_double("V_tes_des"),                                             // [m/s] Design-point velocity for sizing the diameters of the TES piping
+                as_boolean("calc_design_pipe_vals"),                                // [-] Should the HTF state be calculated at design conditions
+                as_double("tes_pump_coef"),                                         // [kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
+                as_double("eta_pump"),                                              // [-] Pump efficiency, for newer pumping calculations
+                as_boolean("has_hot_tank_bypass"),                                  // [-] True if the bypass valve causes the field htf to bypass just the hot tank and enter the cold tank before flowing back to the field.
+                as_double("T_tank_hot_inlet_min"),                                  // [C] Minimum field htf temperature that may enter the hot tank
+                false,                                                              // [-] True if the TES piping losses should be calculated using the TES pipe lengths and minor loss coeffs, false if using the pumping loss parameters
+                false,                                                              // [-] True if the TES diameters and wall thicknesses parameters should be used instead of calculating them
+                as_matrix("k_tes_loss_coeffs"),                                     // [-] Combined minor loss coefficients of the fittings and valves in the collection (including bypass) and generation loops in the TES 
+                tes_diams,                                                          // [m] Imported inner diameters for the TES piping as read from the modified output files
+                tes_wallthicks,                                                     // [m] Imported wall thicknesses for the TES piping as read from the modified output files
+                tes_lengths,                                                        // [m] Imported lengths for the TES piping as read from the modified output files
+                as_double("HDR_rough"),                                             // [m] Pipe absolute roughness
+                as_double("DP_SGS")                                                 // [bar] Pressure drop on the TES discharge side (e.g., within the steam generator)
             );
 
             storage_pointer = &storage_NT;
@@ -346,6 +349,7 @@ public:
         vector<double> tes_error_leakage_vec;
         vector<double> tes_E_hot_vec;
         vector<double> tes_E_cold_vec;
+        vector<double> tes_error_leak_corrected_vec;
 
         // Simulate
         for (size_t i = 0; i < n_steps; i++) {
@@ -395,6 +399,7 @@ public:
                 double tes_error_leak = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_LEAK_ERROR);
                 double tes_E_hot = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_E_HOT);
                 double tes_E_cold = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_E_COLD);
+                double tes_error_leak_corrected = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_ERROR_LEAK_CORRECTED);
 
                 tes_error_vec.push_back(tes_error);
                 tes_error_percent_vec.push_back(tes_error_percent);
@@ -403,6 +408,7 @@ public:
                 tes_error_leakage_vec.push_back(tes_error_leak);
                 tes_E_hot_vec.push_back(tes_E_hot);
                 tes_E_cold_vec.push_back(tes_E_cold);
+                tes_error_leak_corrected_vec.push_back(tes_error_leak_corrected);
             }
 
             // Simulate Analytically
@@ -464,6 +470,7 @@ public:
             set_vector("tes_leak_error", tes_error_leakage_vec);
             set_vector("tes_E_hot", tes_E_hot_vec);
             set_vector("tes_E_cold", tes_E_cold_vec);
+            set_vector("tes_error_leak_corrected", tes_error_leak_corrected_vec);
         }
 
 

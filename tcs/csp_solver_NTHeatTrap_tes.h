@@ -94,7 +94,7 @@ private:
 
     double calc_SA(double volume /*m3*/);
 
-    double calc_leakage_fraction(double mdot);
+    
 
 public:
 
@@ -162,6 +162,7 @@ public:
 
     void converged();
 
+    double calc_leakage_fraction(double mdot);
     
 };
 
@@ -246,7 +247,8 @@ public:
         E_COLD_ERROR,
         E_LEAK_ERROR,
         E_E_HOT,
-        E_E_COLD
+        E_E_COLD,
+        E_ERROR_LEAK_CORRECTED
 	};
 
 
