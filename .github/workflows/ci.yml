@@ -137,9 +137,19 @@ jobs:
       shell: bash      
     
     - name: Upload Artifacts
+      if: ${{ matrix.os == 'macos-latest' }}
       uses: actions/upload-artifact@v4
       with:
-          name: SSC Mac Shared Libraries
+          name: SSC Mac Arm Shared Libraries
+          path: |
+            ${{env.SSCDIR}}/build/ssc/libssc.dylib
+            ${{env.SSCDIR}}/build/ssc/ssc.dylib 
+
+    - name: Upload Artifacts
+      if: ${{ matrix.os != 'macos-latest' }}
+      uses: actions/upload-artifact@v4
+      with:
+          name: SSC Mac Intel Shared Libraries
           path: |
             ${{env.SSCDIR}}/build/ssc/libssc.dylib
             ${{env.SSCDIR}}/build/ssc/ssc.dylib 
