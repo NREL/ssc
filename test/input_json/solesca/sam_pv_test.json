@@ -178,7 +178,7 @@
   ],
   "irrad_mode": 0.0,
   "sky_model": 2.0,
-  "enable_mismatch_vmax_calc": 1.0,
+  "enable_mismatch_vmax_calc": 0.0,
   "calculate_rack_shading": 1.0,
   "calculate_bifacial_electrical_mismatch": 0.0,
   "subarray1_shading_diff": 0.0,
@@ -622,26 +622,26 @@
   "inv_cec_cg_vdco": 0.0,
   "inv_cec_cg_vdcmax": 0.0,
   "inv_cec_cg_eff_cec": 0.0,
-  "inv_tdc_cec_cg": [
+  "inv_tdc_cec_cg": [[
     1300.0,
     50.0,
     -0.02,
     53.0,
     -0.47
-  ],
+  ]],
   "inv_ds_paco": 24000.0,
   "inv_ds_eff": 98.0,
   "inv_ds_pnt": 1.79,
   "inv_ds_pso": 46.660604748907716,
   "inv_ds_vdco": 712.0,
   "inv_ds_vdcmax": 800.0,
-  "inv_tdc_ds": [
+  "inv_tdc_ds": [[
     1300.0,
     50.0,
     -0.02,
     53.0,
     -0.47
-  ],
+  ]],
   "en_batt": 0.0,
   "compute_module_name": "pvsamv1",
   "adjust_constant": 0.0,
