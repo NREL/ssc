@@ -194,7 +194,6 @@ jobs:
         cd ${SSCDIR}/build
         cmake .. -DSAM_SKIP_TOOLS=1
         cmake --build . --config Release -j4
-        ls ssc/Release
         cp ssc/Release/* test/Release
 
     - name: Test
@@ -202,12 +201,11 @@ jobs:
       # Turn off fast fail for when the landbosse tests write to cerr
       run: |
         cd ${SSCDIR}/build/test/Release
-        ls -lh .
         ./Test.exe
   
     - name: Upload Artifacts
       uses: actions/upload-artifact@v3
       with:
-          name: SSC Linux Shared Libraries
+          name: SSC Windows Shared Libraries
           path: |
             ${{env.SSCDIR}}\build\ssc\Release\ssc.dll
