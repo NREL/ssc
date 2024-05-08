@@ -696,41 +696,40 @@ public:
 
         int tes_type = 1;
 
-        // 'sf_model_type'
-        // 0 = design field and tower/receiver geometry
+        // 'field_model_type'
+        // 0 = optimize design field and tower/receiver geometry
         // 1 = design field
-        // 2 = user field, calculate performance
-        // 3 = user performance maps vs solar position
+        // 2 = user specified heliostat positions, SolarPILOT calculates performance
+        // 3 = user flux and eta maps, pass heliostat_positions to SolarPILOT for layout
+        // 4 = user flux and eta maps, no SolarPILOT, input A_sf_in, total_land_area_in, and N_hel
         int field_model_type = as_integer("field_model_type");
-
         if (sim_type == 2 && field_model_type < 2) {
-            field_model_type = 2;
+            field_model_type = 2;  //skip heliostat design, only users maps are not provided
         }
 
+        // Run SolarPILOT right away to update values as needed
         int rec_type = as_integer("receiver_type");
 
-        // Run solarpilot right away to update values as needed
-        util::matrix_t<double> mt_eta_map;
-        util::matrix_t<double> mt_flux_maps;
-
-        int N_hel = -999;
-        double A_sf = std::numeric_limits<double>::quiet_NaN();
-        double THT = std::numeric_limits<double>::quiet_NaN();
-        double rec_height = std::numeric_limits<double>::quiet_NaN();
-        double cav_rec_height = std::numeric_limits<double>::quiet_NaN();
+        // SolarPILOT outputs
+        util::matrix_t<double> mt_eta_map;                          // [deg, deg, -] Azimuth, zenith, solar field efficiency map
+        util::matrix_t<double> mt_flux_maps;                        // Receiver flux maps
+        util::matrix_t<double> helio_pos;                           // [m, m] X, Y positions of heliostats
+        int N_hel = -999;                                                           // [-] Number of heliostats
+        double A_sf = std::numeric_limits<double>::quiet_NaN();                     // [m^2] Solar field area 
+        double THT = std::numeric_limits<double>::quiet_NaN();                      // [m] tower height
+        double rec_height = std::numeric_limits<double>::quiet_NaN();               // [m] receiver height
+        double cav_rec_height = std::numeric_limits<double>::quiet_NaN();           
         double rec_aspect = std::numeric_limits<double>::quiet_NaN();
-        double D_rec = std::numeric_limits<double>::quiet_NaN();
+        double D_rec = std::numeric_limits<double>::quiet_NaN();                    // [m] receiver diameter
         double cav_rec_width = std::numeric_limits<double>::quiet_NaN();
-        double land_area_base = std::numeric_limits<double>::quiet_NaN();
-        double total_land_area_before_rad_cooling = std::numeric_limits<double>::quiet_NaN();
-        double heliostat_area = std::numeric_limits<double>::quiet_NaN();
-        double h_helio = std::numeric_limits<double>::quiet_NaN();     //[m]
-        double average_attenuation = std::numeric_limits<double>::quiet_NaN();
-        double refl_image_error = std::numeric_limits<double>::quiet_NaN();
-        double land_max_abs = std::numeric_limits<double>::quiet_NaN();
-        double land_min_abs = std::numeric_limits<double>::quiet_NaN();
-
-        util::matrix_t<double> helio_pos;
+        double land_area_base = std::numeric_limits<double>::quiet_NaN();           // [acres] base land area
+        double heliostat_area = std::numeric_limits<double>::quiet_NaN();           // [m^2] heliostat reflective area   
+        double h_helio = std::numeric_limits<double>::quiet_NaN();                  // [m] Heliostat height
+        double average_attenuation = std::numeric_limits<double>::quiet_NaN();      // [%] average attenuation loss
+        double refl_image_error = std::numeric_limits<double>::quiet_NaN();         // [mrad] Reflected image conical error 
+        double land_max_abs = std::numeric_limits<double>::quiet_NaN();             // [m] maximum distance from tower
+        double land_min_abs = std::numeric_limits<double>::quiet_NaN();             // [m] minimum distance from tower
+        double total_land_area_before_rad_cooling = std::numeric_limits<double>::quiet_NaN();       // [acres] Total land area without rad cooling
 
         assign("is_optimize", 0);
         bool is_optimize = false;
@@ -808,99 +807,10 @@ public:
                 double H_rec = spi.recs.front().rec_height.val;
 
                 //collect the optical efficiency data and sun positions
-                if (spi.fluxtab.zeniths.size() > 0 && spi.fluxtab.azimuths.size() > 0
-                    && spi.fluxtab.efficiency.size() > 0)
-                {
-                    size_t nvals = spi.fluxtab.efficiency.size();
-                    mt_eta_map.resize(nvals, 3);
-
-                    for (size_t i = 0; i < nvals; i++)
-                    {
-                        mt_eta_map(i, 0) = spi.fluxtab.azimuths[i] * 180. / CSP::pi;      //Convention is usually S=0, E<0, W>0 
-                        mt_eta_map(i, 1) = spi.fluxtab.zeniths[i] * 180. / CSP::pi;     //Provide zenith angle
-                        mt_eta_map(i, 2) = spi.fluxtab.efficiency[i];
-                    }
-                }
-                else
-                    throw exec_error("solarpilot", "failed to calculate a correct optical efficiency table");
+                spi.getHeliostatFieldEfficiency(mt_eta_map);
 
                 //collect the flux map data
-                block_t<double>* flux_data = &spi.fluxtab.flux_surfaces.front().flux_data;  //there should be only one flux stack for SAM
-                if (flux_data->ncols() > 0 && flux_data->nlayers() > 0)
-                {
-                    if (rec_type == 0) {
-
-                        int nflux_y = (int)flux_data->nrows();
-                        int nflux_x = (int)flux_data->ncols();
-
-                        mt_flux_maps.resize(nflux_y * flux_data->nlayers(), nflux_x);
-
-                        int cur_row = 0;
-
-                        for (size_t i = 0; i < flux_data->nlayers(); i++)
-                        {
-                            for (int j = 0; j < nflux_y; j++)
-                            {
-                                for (int k = 0; k < nflux_x; k++)
-                                {
-                                    mt_flux_maps(cur_row, k) = flux_data->at(j, k, i);
-                                    //fluxdata[cur_row * nflux_x + k] = (float)flux_data->at(j, k, i);
-                                }
-                                cur_row++;
-                            }
-                        }
-                    }
-                    else if (rec_type == 1) {
-
-                        int nflux_y = (int)flux_data->nrows();
-                        int nflux_x = (int)flux_data->ncols();
-
-                        int n_panels_cav = as_integer("n_cav_rec_panels");  //[-]
-                        int n_sp_surfaces = spi.fluxtab.flux_surfaces.size();
-                        int n_panels_cav_sp = n_sp_surfaces - 1;
-
-                        if (nflux_y > 1) {
-                            throw exec_error("solarpilot", "cavity flux maps currently only work for nflux_y = 1");
-                        }
-
-                        mt_flux_maps.resize(nflux_y * flux_data->nlayers(), n_panels_cav_sp);
-
-                        int cur_row = 0;
-
-                        // nlayers is number of solar positions (i.e. flux maps)
-                        for (size_t i = 0; i < flux_data->nlayers(); i++) {
-
-                            int j = 0;
-
-                            double flux_receiver = 0.0;
-
-                            // Start at k=1 because the first surface in flux_surfaces is the aperture, which we don't want
-                            for (int k = 1; k <= n_panels_cav_sp; k++) {
-
-                                block_t<double>* flux_data = &spi.fluxtab.flux_surfaces[k].flux_data; //.front().flux_data;  //there should be only one flux stack for SAM
-
-                                double flux_local = 0.0;
-                                for (int l = 0; l < nflux_x; l++) {
-                                    //double flux_local0 = flux_data->at(j, 0, i);
-                                    //double flux_local1 = flux_data->at(j, 1, i);
-                                    //double flux_local2 = flux_data->at(j, 2, i);
-                                    //double flux_local3 = flux_data->at(j, 3, i);
-
-                                    flux_local += flux_data->at(j, l, i);
-                                }
-
-                                // Adjust k to start flux maps with first receiver surface
-                                mt_flux_maps(cur_row, k - 1) = flux_local;
-                                flux_receiver += flux_local;
-                                double abc = 1.23;
-                            }
-
-                            cur_row++;
-                        }
-                    }
-                }
-                else
-                    throw exec_error("solarpilot", "failed to calculate a correct flux map table");
+                spi.getReceiverFluxMaps(mt_flux_maps);
             }
             else if (field_model_type == 2 || field_model_type == 3)
             {
@@ -955,95 +865,10 @@ public:
 
                 if (sim_type == 1 && field_model_type == 2) {
                     //collect the optical efficiency data and sun positions
-                    if (spi.fluxtab.zeniths.size() > 0 && spi.fluxtab.azimuths.size() > 0
-                        && spi.fluxtab.efficiency.size() > 0)
-                    {
-                        size_t nvals = spi.fluxtab.efficiency.size();
-                        mt_eta_map.resize(nvals, 3);
-
-                        for (size_t i = 0; i < nvals; i++)
-                        {
-                            mt_eta_map(i, 0) = spi.fluxtab.azimuths[i] * 180. / CSP::pi;    //Convention is usually S=0, E<0, W>0 
-                            mt_eta_map(i, 1) = spi.fluxtab.zeniths[i] * 180. / CSP::pi;     //Provide zenith angle
-                            mt_eta_map(i, 2) = spi.fluxtab.efficiency[i];
-                        }
-                    }
-                    else
-                        throw exec_error("solarpilot", "failed to calculate a correct optical efficiency table");
+                    spi.getHeliostatFieldEfficiency(mt_eta_map);
 
                     //collect the flux map data
-                    block_t<double>* flux_data = &spi.fluxtab.flux_surfaces.front().flux_data;  //there should be only one flux stack for SAM
-                    if (flux_data->ncols() > 0 && flux_data->nlayers() > 0)
-                    {
-                        if (rec_type == 0) {
-
-                            int nflux_y = (int)flux_data->nrows();
-                            int nflux_x = (int)flux_data->ncols();
-
-                            mt_flux_maps.resize(nflux_y * flux_data->nlayers(), nflux_x);
-
-                            int cur_row = 0;
-
-                            for (size_t i = 0; i < flux_data->nlayers(); i++)
-                            {
-                                for (int j = 0; j < nflux_y; j++)
-                                {
-                                    for (int k = 0; k < nflux_x; k++)
-                                    {
-                                        mt_flux_maps(cur_row, k) = flux_data->at(j, k, i);
-                                        //fluxdata[cur_row * nflux_x + k] = (float)flux_data->at(j, k, i);
-                                    }
-                                    cur_row++;
-                                }
-                            }
-                        }
-                        else if (rec_type == 1) {
-
-                            int nflux_y = (int)flux_data->nrows();
-                            int nflux_x = (int)flux_data->ncols();
-
-                            int n_panels_cav = as_integer("n_cav_rec_panels"); //[-]
-                            int n_sp_surfaces = spi.fluxtab.flux_surfaces.size();
-                            int n_panels_cav_sp = n_sp_surfaces - 1;
-
-                            if (nflux_y > 1) {
-                                throw exec_error("solarpilot", "cavity flux maps currently only work for nflux_y = 1");
-                            }
-
-                            mt_flux_maps.resize(nflux_y * flux_data->nlayers(), n_panels_cav_sp);
-
-                            int cur_row = 0;
-
-                            // nlayers is number of solar positions (i.e. flux maps)
-                            for (size_t i = 0; i < flux_data->nlayers(); i++) {
-
-                                int j = 0;
-
-                                double flux_receiver = 0.0;
-
-                                // Start at k=1 because the first surface in flux_surfaces is the aperture, which we don't want
-                                for (int k = 1; k <= n_panels_cav_sp; k++) {
-
-                                    block_t<double>* flux_data = &spi.fluxtab.flux_surfaces[k].flux_data; //.front().flux_data;  //there should be only one flux stack for SAM
-
-                                    double flux_local = 0.0;
-                                    for (int l = 0; l < nflux_x; l++) {
-                                        flux_local += flux_data->at(j, l, i);
-                                    }
-
-                                    // Adjust k to start flux maps with first receiver surface
-                                    mt_flux_maps(cur_row, k - 1) = flux_local;
-                                    flux_receiver += flux_local;
-                                }
-                                // flux_receiver should equal 1 after each panel is added
-
-                                cur_row++;
-                            }
-                        }
-                    }
-                    else
-                        throw exec_error("solarpilot", "failed to calculate a correct flux map table");
-
+                    spi.getReceiverFluxMaps(mt_flux_maps);
                 }
                 else if (field_model_type == 3) {
 
