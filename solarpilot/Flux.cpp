@@ -2412,7 +2412,7 @@ bool Flux::calculateProjectedSnoutApertureIntersection(Heliostat& H, Receiver* R
 	//First check to make sure the heliostat can see the aperture plane. If not, don't bother.
 	PointVect rec_norm;
 	Rec->CalculateNormalVector(rec_norm);
-	if (Toolbox::dotprod(*rec_norm.vect(), *h2t) > 0.) {	// Heliostat can't see aperture
+	if (Toolbox::dotprod(*rec_norm.vect(), *h2t) > - 0.001) {	// Heliostat can't see aperture
 		viewable_aperture[0] = 0.;
 		viewable_aperture[1] = 0.;
 		viewable_aperture[2] = 0.;
