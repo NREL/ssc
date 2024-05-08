@@ -2427,12 +2427,8 @@ void sim_result::process_flux(SolarField *SF, bool normalize){
 				flux_surfaces.back().at(j).Normalize();
 			}
 		}
-		receiver_names.push_back( 
-            //*SF->getReceivers()->at(i)->getReceiverName() 
-            SF->getReceivers()->at(i)->getVarMap()->rec_name.val
-            );
+		receiver_names.push_back( SF->getReceivers()->at(i)->getVarMap()->rec_name.val );
 	}
-	
 }
 
 //------parametric------------------------

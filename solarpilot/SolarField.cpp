@@ -403,6 +403,9 @@ void SolarField::updateCalculatedReceiverPower(var_map &V)
     {
         //receiver power [MWt]
         V.recs.at(i).q_rec_des.Setval(V.sf.q_des.val * V.recs.at(i).power_fraction.val / frac_tot);
+        // Update thermal efficiency
+        double qdesplus = V.recs.at(i).q_rec_des.Val() + V.recs.at(i).piping_loss.Val() + V.recs.at(i).therm_loss.Val();
+        V.recs.at(i).therm_eff.Setval(V.recs.at(i).q_rec_des.Val() / qdesplus);
     }
 }
 
@@ -1824,7 +1827,8 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
             for (unordered_map<Receiver*, double>::iterator ra = rec_alloc.begin(); ra != rec_alloc.end(); ra++)
             {
                 //check if power is met by at least 125% (empirical multiplier)
-                if (power_totals[ra->first] > ra->first->getVarMap()->q_rec_des.Val()*1e6*_var_map->opt.multirec_screen_mult.val || rec_alloc[ ra->first ] < 0.01 )
+                double power_requirement = (ra->first->getVarMap()->q_rec_des.Val() / ra->first->getVarMap()->therm_eff.Val()) * 1e6;   // [MW] -> [W]
+                if (power_totals[ra->first] > power_requirement * _var_map->opt.multirec_screen_mult.val || rec_alloc[ ra->first ] < 0.01 )
                     continue;
                 else
                 {
@@ -1857,12 +1861,12 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
         mroh.run(this);         //run the optimization
         
         if (mroh.result_status == multi_rec_opt_helper::RS_INFEASIBLE)
-            _sim_error.addSimulationError("The field can't provide enough power to meet receiver input power requirements.");
+            _sim_error.addSimulationError("The field can't provide enough power to meet receiver input power requirements.", true, false);
         else if (mroh.result_status == multi_rec_opt_helper::RS_OPTIMAL || mroh.result_status == multi_rec_opt_helper::RS_SUBOPTIMAL)
             (void*)0;
         else
         {
-            _sim_error.addSimulationError("Multiple-receiver heliostat selection optimization failed with an unknown error.");
+            _sim_error.addSimulationError("Multiple-receiver heliostat selection optimization failed with an unknown error.", true, false);
         }
         
         //once again, update the official heliostat list based on the optimization results.

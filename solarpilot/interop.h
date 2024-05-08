@@ -320,7 +320,7 @@ typedef std::vector<sim_result> sim_results;
 namespace interop
 {
 	/*
-	Provides functions that calculate simulatin input values based on other specified data.
+	Provides functions that calculate simulation input values based on other specified data.
 
 	E.g. - given a layout simulation method, calculate the days/hours of the year to simulate.
 

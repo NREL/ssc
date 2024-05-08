@@ -108,7 +108,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     // TODO (Bill): Talk to Ty about removing -> these should be passed into C_pt_sf_perf_interp but are hard-coded instead
     //{ SSC_INPUT,     SSC_NUMBER, "interp_nug",                         "Interpolation nugget",                                                                                                                    "-",            "",                                  "Heliostat Field",                          "?=0",                                                              "",              "SIMULATION_PARAMETER"},
     //{ SSC_INPUT,     SSC_NUMBER, "interp_beta",                        "Interpolation beta coefficient",                                                                                                                "-",            "",                                  "Heliostat Field",                          "?=1.99",                                                     "",              "SIMULATION_PARAMETER"},
-    { SSC_INPUT,     SSC_MATRIX, "helio_aim_points",                   "Heliostat aim point table",                                                                                                               "m",            "",                                  "Heliostat Field",                          "?",                                                                "",              "SIMULATION_PARAMETER"},
+    //{ SSC_INPUT,     SSC_MATRIX, "helio_aim_points",                   "Heliostat aim point table",                                                                                                               "m",            "",                                  "Heliostat Field",                          "?",                                                                "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_MATRIX, "eta_map",                            "Field efficiency array",                                                                                                                  "",             "",                                  "Heliostat Field",                          "field_model_type>2",                                               "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_NUMBER, "eta_map_aod_format",                 "Use 3D AOD format field efficiency array",                                                                                                "",             "heliostat",                         "Heliostat Field",                          "field_model_type>2",                                               "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_MATRIX, "flux_maps",                          "Flux map intensities",                                                                                                                    "",             "",                                  "Heliostat Field",                          "field_model_type>2",                                               "",              "SIMULATION_PARAMETER"},
@@ -127,9 +127,9 @@ static var_info _cm_vtab_csp_tower_particle[] = {
 
     // Inputs required for user-defined SF performance when field_model_type = 4
     // Values can be defined by mapping to equivalent _calc output for simulation results with field_model_type < 3
-    { SSC_INPUT,     SSC_NUMBER, "A_sf_in",                            "Solar field area",                                                                                                                        "m^2",          "",                                  "Heliostat Field",                          "field_model_type>3",                                               "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,     SSC_ARRAY,  "A_sf_in",                            "Solar field area",                                                                                                                        "m^2",          "",                                  "Heliostat Field",                          "field_model_type>3",                                               "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_NUMBER, "total_land_area_in",                 "Total land area - in",                                                                                                                    "acre",         "",                                  "Heliostat Field",                          "field_model_type>3",                                               "",              "SIMULATION_PARAMETER"},
-    { SSC_INPUT,     SSC_NUMBER, "N_hel",                              "Number of heliostats - in",                                                                                                               "",             "",                                  "Heliostat Field",                          "field_model_type>3",                                               "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,     SSC_ARRAY,  "N_hel",                              "Number of heliostats - in",                                                                                                               "",             "",                                  "Heliostat Field",                          "field_model_type>3",                                               "",              "SIMULATION_PARAMETER"},
 
     { SSC_INPUT,     SSC_NUMBER, "flux_max",                           "Maximum allowable flux",                                                                                                                  "",             "",                                  "Tower and Receiver",                       "?=1000",                                                           "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "opt_init_step",                      "Optimization initial step size",                                                                                                          "",             "",                                  "Heliostat Field",                          "?=0.05",                                                           "",              ""},
@@ -140,6 +140,8 @@ static var_info _cm_vtab_csp_tower_particle[] = {
 
     
     // Receiver parameters - general
+    { SSC_INPUT,     SSC_NUMBER, "num_recs",                           "Number of receivers",                                                                                                                     "",             "",                                  "Tower and Receiver",                       "?=1",                                                              "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "is_recs_duplicate",                  "1 = All receivers have the same power and geometry; 0 = otherwise",                                                                       "",             "",                                  "Tower and Receiver",                       "?=1",                                                              "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "rec_htf",                            "Receiver HTF, 36=Bauxite particles 50=Lookup tables",                                                                                     "",             "",                                  "Tower and Receiver",                       "?=36",                                                             "",              ""},
     { SSC_INPUT,     SSC_MATRIX, "field_fl_props",                     "User-defined field fluid property data",                                                                                                  "-",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "f_rec_min",                          "Minimum receiver mass flow rate turn down fraction",                                                                                      "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
@@ -156,19 +158,21 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_INPUT,     SSC_NUMBER, "transport_deltaT_hot",               "Temperature loss for hot particle transport",                                                                                             "K",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "transport_deltaT_cold",              "Temperature loss for cold particle transport",                                                                                            "K",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
 
-
     // Falling particle receiver inputs for SolarPILOT that should *not* be reset during call to this cmod
-    { SSC_INPUT,     SSC_NUMBER, "norm_curtain_height",                "Normalized particle curtain height",                                                                                                      "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "norm_curtain_width",                 "Normalized particle curtain width",                                                                                                       "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "max_curtain_depth",                  "Particle curtain entrance depth",                                                                                                         "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
+    { SSC_INPUT,     SSC_MATRIX, "rec_tower_offset",                   "Distance from tower optical height to receiver aperture center, format [[x1,y1],[x2,y2],...] or [[x1,y1,z1],[x2,y2,z2],...]",             "m",            "",                                  "Tower and Receiver",                       "?",                                                                "",              ""},
+    { SSC_INPUT,     SSC_ARRAY,  "rec_azimuth",                        "Receiver azimuth orientation: 0 deg is north, positive clockwise",                                                                        "deg",          "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
+    { SSC_INPUT,     SSC_ARRAY,  "power_fraction",                     "Target fraction of absorbed energy delivered by the heliostat field in configurations with multiple receivers",                           "",             "",                                  "Tower and Receiver",                       "?",                                                                "",              ""},
+    { SSC_INPUT,     SSC_ARRAY,  "norm_curtain_height",                "Normalized particle curtain height",                                                                                                      "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
+    { SSC_INPUT,     SSC_ARRAY,  "norm_curtain_width",                 "Normalized particle curtain width",                                                                                                       "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
+    { SSC_INPUT,     SSC_ARRAY,  "max_curtain_depth",                  "Particle curtain entrance depth",                                                                                                         "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_MATRIX, "norm_heights_depths",                "Normalized troughs heights and depths, pass [[0,0]] for no curtain troughs",                                                              "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "curtain_type",                       "Flat=0;Curved=1",                                                                                                                         "",             "",                                  "Tower and Receiver",                       "?=0",                                                              "",              ""},
     //{ SSC_INPUT,     SSC_NUMBER, "curtain_radius",                     "Particle curtain radius",                                                                                                                 "m",            "",                                  "Tower and Receiver",                       "curtain_type=1",                                                   "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "is_snout",                           "Is SNOUT enabled?",                                                                                                                       "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "snout_depth",                        "Distance from aperture window to SNOUT front plane",                                                                                      "m",            "",                                  "Tower and Receiver",                       "is_snout=1",                                                       "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "snout_horiz_angle",                  "SNOUT spanning angle defined in the aperture vertical mid-plane",                                                                         "deg",          "",                                  "Tower and Receiver",                       "is_snout=1",                                                       "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "snout_vert_bot_angle",               "SNOUT bottom surface angle from aperture normal",                                                                                         "deg",          "",                                  "Tower and Receiver",                       "is_snout=1",                                                       "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "snout_vert_top_angle",               "SNOUT top surface angle from aperture normal",                                                                                            "deg",          "",                                  "Tower and Receiver",                       "is_snout=1",                                                       "",              ""},
+    { SSC_INPUT,     SSC_ARRAY,  "is_snout",                           "Is SNOUT enabled?",                                                                                                                       "",             "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
+    { SSC_INPUT,     SSC_ARRAY,  "snout_depth",                        "Distance from aperture window to SNOUT front plane",                                                                                      "m",            "",                                  "Tower and Receiver",                       "?",                                                                "",              ""},
+    { SSC_INPUT,     SSC_ARRAY,  "snout_horiz_angle",                  "SNOUT spanning angle defined in the aperture vertical mid-plane",                                                                         "deg",          "",                                  "Tower and Receiver",                       "?",                                                                "",              ""},
+    { SSC_INPUT,     SSC_ARRAY,  "snout_vert_bot_angle",               "SNOUT bottom surface angle from aperture normal",                                                                                         "deg",          "",                                  "Tower and Receiver",                       "?",                                                                "",              ""},
+    { SSC_INPUT,     SSC_ARRAY,  "snout_vert_top_angle",               "SNOUT top surface angle from aperture normal",                                                                                            "deg",          "",                                  "Tower and Receiver",                       "?",                                                                "",              ""},
 
     { SSC_INPUT,     SSC_NUMBER, "rec_hl_perm2",                       "Receiver design heat loss",                                                                                                               "kW/m2",        "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "n_flux_days",                        "Number of days in flux map lookup",                                                                                                       "",             "",                                  "Tower and Receiver",                       "?=8",                                                              "",              ""},
@@ -195,17 +199,12 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_INPUT,     SSC_NUMBER, "rec_tauc_mult",                      "User-provided multiplier for calculated curtain transmissivity",                                                                          "",             "",                                  "Tower and Receiver",                       "?=1.0",                                                            "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "rec_hadv_mult",                      "User-provided multiplier for calculated advective loss coefficient",                                                                      "",             "",                                  "Tower and Receiver",                       "?=1.0",                                                            "",              ""},
 
-
-
-
-
-
         // Field layout and tower/receiver dimensions
         // If field_model_type = 1, tower/receiver dimensions are used as guess values
         //        and optimized values are reported as _calc outputs
     { SSC_INPUT,     SSC_MATRIX, "helio_positions",                    "Heliostat position table - in",                                                                                                           "",             "",                                  "Heliostat Field",                          "field_model_type=2|field_model_type=3",                            "", "COL_LABEL=XY_POSITION" },
-    { SSC_INPUT,     SSC_NUMBER, "rec_height",                         "Receiver height - in",                                                                                                                    "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "rec_width",                          "Receiver width - in",                                                                                                                     "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
+    { SSC_INPUT,     SSC_ARRAY,  "rec_height",                         "Receiver height - in",                                                                                                                    "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
+    { SSC_INPUT,     SSC_ARRAY,  "rec_width",                          "Receiver width - in",                                                                                                                     "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "h_tower",                            "Tower height - in",                                                                                                                       "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
 
     // Parallel heater parameters
@@ -403,12 +402,12 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "cp_battery_nameplate",               "Battery nameplate",                                                                                                                       "MWe",          "",                                  "System Costs",                             "*",                                                                "",              ""},
 
         // Solar Field
-    { SSC_OUTPUT,    SSC_NUMBER, "N_hel_calc",                         "Number of heliostats - out",                                                                                                               "",             "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
+    { SSC_OUTPUT,    SSC_ARRAY,  "N_hel_calc",                         "Number of heliostats - out",                                                                                                               "",             "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "refl_image_error",                   "Reflected image error",                                                                                                                    "mrad",         "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "heliostat_area",                     "Active area of heliostat",                                                                                                                 "m^2",          "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "average_attenuation",                "Average solar field attenuation",                                                                                                          "%",            "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_MATRIX, "helio_positions_calc",               "Heliostat position table - out",                                                                                                           "",             "",                                  "Heliostat Field",                          "*",                                                                "",              "COL_LABEL=XY_POSITION" },
-    { SSC_OUTPUT,    SSC_NUMBER, "A_sf",                               "Solar field area",                                                                                                                         "m^2",          "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
+    { SSC_OUTPUT,    SSC_ARRAY,  "A_sf",                               "Solar field area",                                                                                                                         "m^2",          "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "land_min_abs",                       "Min distance from tower to heliostat",                                                                                                     "m",            "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "land_max_abs",                       "Max distance from tower to heliostat",                                                                                                     "m",            "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "land_area_base_calc",                "Land area occupied by heliostats",                                                                                                         "acre",         "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
@@ -416,14 +415,14 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "W_dot_col_tracking_des",             "Collector tracking power at design",                                                                                                       "MWe",          "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
 
         // Receiver Geometry
-    { SSC_OUTPUT,    SSC_NUMBER, "rec_height_calc",                    "Receiver height - out",                                                                                                                    "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
-    { SSC_OUTPUT,    SSC_NUMBER, "rec_width_calc",                     "Receiver width - out",                                                                                                                     "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
+    { SSC_OUTPUT,    SSC_ARRAY,  "rec_height_calc",                    "Receiver height - out",                                                                                                                    "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
+    { SSC_OUTPUT,    SSC_ARRAY,  "rec_width_calc",                     "Receiver width - out",                                                                                                                     "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "h_tower_calc",                       "Tower height - out",                                                                                                                       "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
-    { SSC_OUTPUT,    SSC_NUMBER, "A_rec",                              "Receiver aperture area",                                                                                                                   "m2",           "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
-    { SSC_OUTPUT,    SSC_NUMBER, "A_rec_curtain",                      "Receiver particle curtain area",                                                                                                           "m2",           "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
+    { SSC_OUTPUT,    SSC_NUMBER,  "A_rec",                              "Receiver aperture area",                                                                                                                   "m2",           "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
+    { SSC_OUTPUT,    SSC_NUMBER,  "A_rec_curtain",                      "Receiver particle curtain area",                                                                                                           "m2",           "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "L_tower_piping_calc",                "Tower piping length",                                                                                                                      "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
 
-        // Receiver Performance
+        // Receiver Performance -> TODO: This will need to be arrays...
     { SSC_OUTPUT,    SSC_NUMBER, "q_dot_rec_des",                      "Receiver thermal output at design",                                                                                                       "MWt",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "eta_rec_thermal_des",                "Receiver estimated thermal efficiency at design",                                                                                         "",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "P_tower_lift_des",                   "Receiver and tower estimated particle lift power at design",                                                                              "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
@@ -736,6 +735,9 @@ public:
         double q_dot_pc_des = W_dot_cycle_des / eta_cycle;          // [MWt]
         double q_dot_rec_des = q_dot_pc_des * as_number("solarm");  // [MWt]
 
+        int num_recs = as_integer("num_recs");
+        bool duplicate_recs = as_boolean("is_recs_duplicate");
+
         // *****************************************************
         // Weather reader
         // *****************************************************
@@ -767,30 +769,29 @@ public:
         // 3 = user flux and eta maps, pass heliostat_positions to SolarPILOT for layout
         // 4 = user flux and eta maps, no SolarPILOT, input A_sf_in, total_land_area_in, and N_hel
         int field_model_type = as_integer("field_model_type");
-        assign("receiver_type", var_receiver::REC_TYPE::FALLING_PARTICLE);
-
         if (sim_type == 2 && field_model_type < 2) {
-            field_model_type = 2;  //skip heliostat design? if design only option
+            field_model_type = 2;  //skip heliostat design, only users maps are not provided
         }
 
-        // Run solarpilot right away to update values as needed
+        // Run SolarPILOT right away to update values as needed
+        assign("receiver_type", var_receiver::REC_TYPE::FALLING_PARTICLE);
         // SolarPILOT outputs
-        util::matrix_t<double> mt_eta_map;      // [deg, deg, -] Azimuth, zenith, solar field efficiency map
-        util::matrix_t<double> mt_flux_maps;    // Receiver flux maps
+        // TODO: Update these for multi-receivers
+        util::matrix_t<double> mt_eta_map;         // [deg, deg, -] Azimuth, zenith, solar field efficiency (per receiver)
+        util::matrix_t<double> mt_flux_maps;       // Receiver flux maps
         util::matrix_t<double> helio_pos;       // [m, m] X, Y positions of heliostats
-
-        int N_hel = -999;                                                       // [-] Number of heliostats
-        double A_sf = std::numeric_limits<double>::quiet_NaN();                 // [m^2] Solar field area 
+        std::vector<int> N_hel;                                                 // [-] Number of heliostats
+        std::vector<double> A_sf;                                               // [m^2] Solar field area 
         double THT = std::numeric_limits<double>::quiet_NaN();                  // [m] tower height
-        double rec_height = std::numeric_limits<double>::quiet_NaN();           // [m] receiver height
-        double rec_width = std::numeric_limits<double>::quiet_NaN();            // [m] receiver width
+        std::vector<double> rec_height;                                         // [m] receiver height
+        std::vector<double> rec_width;                                          // [m] receiver width
         double land_area_base = std::numeric_limits<double>::quiet_NaN();       // [acres] base land area
         double total_land_area = std::numeric_limits<double>::quiet_NaN();      // [acres] Total land area
         double heliostat_area = std::numeric_limits<double>::quiet_NaN();       // [m^2] heliostat reflective area
         double h_helio = std::numeric_limits<double>::quiet_NaN();              // [m] Heliostat height
         double average_attenuation = std::numeric_limits<double>::quiet_NaN();  // [%] average attenuation loss
         double refl_image_error = std::numeric_limits<double>::quiet_NaN();     // [mrad] Reflected image conical error 
-        double land_max_abs = std::numeric_limits<double>::quiet_NaN();         // [m] maximum distance from tower?
+        double land_max_abs = std::numeric_limits<double>::quiet_NaN();         // [m] maximum distance from tower
         double land_min_abs = std::numeric_limits<double>::quiet_NaN();         // [m] minimum distance from tower
         
         double helio_optical_error_mrad = as_number("helio_optical_error_mrad");        //[mrad]
@@ -799,12 +800,12 @@ public:
         assign("helio_optical_error", (ssc_number_t)(helio_optical_error_mrad * 1.E-3));
 
         if (field_model_type < 4) {
-            // Field types 0-3 require solarPILOT
+            // Field types 0-3 Requires solarPILOT
             solarpilot_invoke spi(this);
             assign("q_design", q_dot_rec_des);       //[MWt]
             h_helio = as_double("helio_height");     //[m] Heliostat height - for system costing
 
-            // Check 'n_flux_x' and 'n_flux_y'?
+            // TODO: Check 'n_flux_x' and 'n_flux_y'?
             //      - n_flux_y must be greater than the number of troughs in the curtain
             //      - Add a limit to these values <= 50?
             //if (as_integer("n_flux_x") < 1 || as_integer("n_flux_y") < 5)
@@ -812,15 +813,14 @@ public:
             // Default configuration specific case will overwrite these values
             assign("is_optimize", 0);            // Turn-off heliostat layout and tower optimization
             assign("calc_fluxmaps", 1);          // Include flux map calculations
-            if (field_model_type == 0 && sim_type == 1) { // Optimize design field and tower/receiver geometry
-                // TODO (Bill): Update optimization if cost function change
-                assign("is_optimize", 1);
+            if (field_model_type == 0 && sim_type == 1) {
+                assign("is_optimize", 1); // Optimize design field and tower/receiver geometry
             }
             else if (field_model_type == 3 || sim_type == 2) {
                 assign("calc_fluxmaps", 0); // efficiency and flux maps are provide by the user
             }
 
-            // Process user provide solar field and check if it's for a cavity receiver
+            // Process user provided solar field and check if it's for a cavity receiver
             if (field_model_type == 2 || field_model_type == 3) { 
                 // Only calculates a flux map, so need to "assign" 'helio_positions_in' for SolarPILOT cmod
                 util::matrix_t<double> helio_pos_temp = as_matrix("helio_positions");
@@ -870,7 +870,7 @@ public:
                     int n_y = as_integer("n_flux_y");
                     int n_x = as_integer("n_flux_x");
                      
-                    mt_eta_map.resize_fill(1, 3, std::numeric_limits<double>::quiet_NaN());
+                    mt_eta_map.resize_fill(1, (size_t)(2 + num_recs), std::numeric_limits<double>::quiet_NaN());
                     mt_flux_maps.resize_fill(n_y, n_x, std::numeric_limits<double>::quiet_NaN());
                 }
             }
@@ -883,20 +883,35 @@ public:
                 throw exec_error("CSP Solver", msg);
             }
 
-            N_hel = (int)spi.layout.heliostat_positions.size();
-
-            helio_pos.resize(N_hel, 2);
-            for (int i = 0; i < N_hel; i++) {
+            // Count heliostats per receiver and get positions
+            N_hel.clear();
+            N_hel.resize(num_recs, 0);
+            int tot_N_hel = (int)spi.layout.heliostat_positions.size();
+            helio_pos.resize(tot_N_hel, 2);
+            for (int i = 0; i < tot_N_hel; i++) {
                 helio_pos(i, 0) = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.x;
                 helio_pos(i, 1) = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.y;
+                N_hel[spi.layout.heliostat_positions.at(i).which_rec]++;
             }
 
             THT = spi.sf.tht.val;
 
-            rec_height = spi.recs.front().rec_height.val;
-            rec_width = spi.recs.front().rec_width.val;
+            int sp_num_recs = spi.recs.size();
+            if (sp_num_recs != num_recs)
+                throw exec_error("csp_tower_particle", "Unexpected error: SolarPILOT's receivers count is inconsistent with user input.");
 
-            A_sf = spi.CalcSolarFieldArea(N_hel);
+            rec_height.resize(num_recs);
+            rec_width.resize(num_recs);
+            for (size_t i = 0; i < spi.recs.size(); i++) {
+                rec_height[i] = spi.recs.at(i).rec_height.val;
+                rec_width[i] = spi.recs.at(i).rec_width.val;
+            }
+
+            A_sf.clear();
+            A_sf.resize(num_recs);
+            for (size_t i = 0; i < spi.recs.size(); i++) {
+                A_sf[i] = spi.CalcSolarFieldArea(N_hel[i]);
+            }
             heliostat_area = spi.CalcHeliostatArea();
             average_attenuation = spi.CalcAveAttenuation();
 
@@ -905,7 +920,6 @@ public:
 
             total_land_area = spi.GetTotalLandArea();           // [acres] Total land area
             land_area_base = spi.GetBaseLandArea();             // [acres] Land area occupied by heliostats
-
         }
         else if (field_model_type == 4) {
             // User input flux and efficiency maps, no SolarPILOT needed
@@ -914,19 +928,48 @@ public:
 
             // Need to specify:
             // 1) reflective area (scale flux map)
-            // 2) number heliostats for heliostats (tracking parasitics)
+            // 2) number heliostats for heliostats (tracking parasitic)
             // 3) total land area
             // 4) tower and receiver dimensions
-            N_hel = as_number("N_hel");
-            A_sf = as_number("A_sf_in");        //[m2]
-            total_land_area = as_double("total_land_area_in");
+            total_land_area = as_double("total_land_area_in");  //[acres]
 
             // Get tower/receiver dimensions through cmod
             THT = as_double("h_tower");             //[m]
             h_helio = 0.0;                          //[m] Need a finite value for cost model
 
-            rec_height = as_double("rec_height");   // [m]
-            rec_width = as_double("rec_width");     // [m]
+            size_t count_N_hel, count_A_sf, count_rec_height, count_rec_width;
+            ssc_number_t* N_hel_in = as_array("N_hel", &count_N_hel);
+            ssc_number_t* A_sf_in = as_array("A_sf_in", &count_A_sf);
+            if (count_N_hel != num_recs
+                || count_A_sf != num_recs)
+                throw exec_error("csp_tower_particle",
+                    "Invalid field input. Either N_hel or A_sf_in length is not equal to the number of receivers: " + util::to_string(num_recs));
+            ssc_number_t* rec_height_in = as_array("rec_height", &count_rec_height);   // [m]
+            ssc_number_t* rec_width_in = as_array("rec_width", &count_rec_width);      // [m]
+
+            if (duplicate_recs) { // Receivers are duplicates
+                if (count_rec_height < 1
+                    || count_rec_width < 1)
+                    throw exec_error("csp_tower_particle", "Invalid receiver height and/or width input. A receiver height or width is has an array length of zero.");
+            }
+            else {
+                if (count_rec_height != num_recs
+                    || count_rec_width != num_recs)
+                    throw exec_error("csp_tower_particle", "Invalid receiver height and/or width input. For non-duplicate receivers, input arrays must have a length of " + util::to_string(num_recs));
+            }
+
+            N_hel.resize(num_recs);
+            A_sf.resize(num_recs);
+            rec_height.resize(num_recs);
+            rec_width.resize(num_recs);
+            int input_idx;
+            for (int i = 0; i < num_recs; i++) {    // loop through receivers
+                N_hel.at(i) = N_hel_in[i];
+                A_sf.at(i) = A_sf_in[i];
+                input_idx = duplicate_recs ? 0 : i; // Use the first element if duplicate receivers
+                rec_height.at(i) = rec_height_in[input_idx];
+                rec_width.at(i) = rec_width_in[input_idx];
+            }
 
             helio_pos.resize_fill(1, 2, std::numeric_limits<double>::quiet_NaN());
 
@@ -1076,20 +1119,59 @@ public:
         if (rec_clearsky_model == -1 && as_double("rec_clearsky_fraction") >= 0.0001)
             throw exec_error("csp_tower_particle", "'rec_clearsky_model' must be specified when 'rec_clearsky_fraction' > 0.0.");
 
-        double ap_height = rec_height;  
-        double ap_width = rec_width;
-        double curtain_height = ap_height * as_double("norm_curtain_height");
-        double curtain_width = ap_width * as_double("norm_curtain_width");   // TODO: Update curtain width when curved curtains are allowed
-        A_rec_curtain = curtain_height * curtain_width;  // This receiver area is used to define the flux distribution.  Particle receiver model assumes that the flux distribution is defined based on the curtain area.
-        A_rec_aperture = ap_height * ap_width;          // The aperture area should be used in cost calculations
-        double ap_curtain_depth_ratio = as_double("max_curtain_depth") / rec_height;
-        int n_x = mt_flux_maps.ncols();
-        int n_y = (mt_flux_maps.nrows() / mt_eta_map.nrows()) + 1;
+        // Reading in multi-receiver geometry inputs
+        size_t count_rec_azimuth, count_power_fraction,
+            count_norm_curtain_height, count_norm_curtain_width, count_max_curtain_depth, count_is_snout,
+            count_snout_depth, count_snout_horiz_angle, count_snout_vert_bot_angle, count_snout_vert_top_angle;
+        ssc_number_t* rec_azimuth = as_array("rec_azimuth", &count_rec_azimuth);
+        ssc_number_t* power_fraction = as_array("power_fraction", &count_power_fraction);
+        ssc_number_t* norm_curtain_height = as_array("norm_curtain_height", &count_norm_curtain_height);
+        ssc_number_t* norm_curtain_width = as_array("norm_curtain_width", &count_norm_curtain_width);
+        ssc_number_t* max_curtain_depth = as_array("max_curtain_depth", &count_max_curtain_depth);
+
+
+        // TODO: Remove height and width based on SolarPILOT output (optimization)
+
+        // Checking array lengths 
+        if (duplicate_recs) { // Receivers are duplicates -> TODO: Do we need this test? Check if an array can be initialize to empty
+            if (count_rec_azimuth < 1
+                || count_power_fraction < 1
+                || count_norm_curtain_height < 1
+                || count_norm_curtain_width < 1
+                || count_max_curtain_depth < 1)
+                throw exec_error("csp_tower_particle", "Invalid receiver input. A receiver input is has an array length of zero.");
+        }
+        else {  // Receivers are unique
+            if (count_rec_azimuth != num_recs
+                || count_power_fraction != num_recs
+                || count_norm_curtain_height != num_recs
+                || count_norm_curtain_width != num_recs
+                || count_max_curtain_depth != num_recs)
+                throw exec_error("csp_tower_particle", "Invalid receiver input. For nonduplicate receivers input array must have a length of " + util::to_string(num_recs));
+        }
+        // setting receiver parameters
         double user_efficiency = as_integer("rec_model_type") == 0 ? as_double("rec_eta_fixed") : 0.0;
         double user_hadv = as_integer("rec_adv_model_type") == 0 ? as_double("rec_hadv_fixed") : 0.0;
 
-        if (as_integer("curtain_type") == 1)
-        { 
+        int input_idx;
+        double ap_height, ap_width, curtain_height, curtain_width, ap_curtain_depth_ratio;
+        for (int i = 0; i < num_recs; i++) {    // loop through receivers
+            input_idx = duplicate_recs ? 0 : i; // Use the first element if duplicate receivers
+            ap_height = rec_height[input_idx];
+            ap_width = rec_width[input_idx];
+            curtain_height = ap_height * norm_curtain_height[input_idx];
+            curtain_width = ap_width * norm_curtain_width[input_idx];     // TODO: Update curtain width when curved curtains are allowed
+            A_rec_curtain = curtain_height * curtain_width;  // This receiver area is used to define the flux distribution.  Particle receiver model assumes that the flux distribution is defined based on the curtain area.
+            A_rec_aperture = ap_height * ap_width;           // The aperture area should be used in cost calculations
+            ap_curtain_depth_ratio = max_curtain_depth[input_idx] / ap_height;
+
+            // TODO (Janna): update to initialize individual receivers
+        }
+        int n_x = mt_flux_maps.ncols() / num_recs;
+        int n_y = (mt_flux_maps.nrows() / mt_eta_map.nrows()) + 1;
+
+
+        if (as_integer("curtain_type") == 1) { 
             std::string err_msg = "Curved particle curtain is not currently implemented in the falling particle receiver performance model. Simulated performance will assume a flat curtain.\n";
             log(err_msg, SSC_WARNING);
         }
@@ -1101,7 +1183,7 @@ public:
             as_double("csp.pt.rec.max_oper_frac"), as_double("eta_lift"),
             as_integer("rec_htf"), as_matrix("field_fl_props"),
             as_integer("rec_model_type"), user_efficiency, as_integer("rec_rad_model_type"), as_integer("rec_adv_model_type"), user_hadv,
-            ap_height, ap_width, as_double("norm_curtain_height"), as_double("norm_curtain_width"), ap_curtain_depth_ratio,
+            ap_height, ap_width, norm_curtain_height[input_idx], norm_curtain_width[input_idx], ap_curtain_depth_ratio,
             as_double("particle_dp"), as_double("particle_abs"), as_double("curtain_emis"), as_double("curtain_dthdy"),
             as_double("cav_abs"), as_double("cav_twall"), as_double("cav_kwall"), as_double("cav_hext"),
             as_double("transport_deltaT_cold"), as_double("transport_deltaT_hot"),
@@ -1114,6 +1196,39 @@ public:
         //receiver.init();
 
         // *******************************************************
+        // Formatting efficiency data and flux maps for heliostat field class
+        std::vector<util::matrix_t<double>> eta_maps;
+        {// scope for temp_eta_map
+            util::matrix_t<double> temp_eta_map;
+            temp_eta_map.resize(mt_eta_map.nrows(), 3);
+            for (size_t r = 0; r < mt_eta_map.nrows(); r++) {
+                temp_eta_map.at(r, 0) = mt_eta_map.at(r, 0);
+                temp_eta_map.at(r, 1) = mt_eta_map.at(r, 1);
+            }
+            for (size_t rec = 0; rec < num_recs; rec++) {
+                for (size_t r = 0; r < mt_eta_map.nrows(); r++) {
+                    temp_eta_map.at(r, 2) = mt_eta_map.at(r, 2 + rec);
+                }
+                eta_maps.push_back(temp_eta_map);
+            }
+        }
+
+        std::vector<util::matrix_t<double>> rec_flux_maps;
+        {// scope for temp_flux_map
+            int nx = as_integer("n_flux_x");
+            util::matrix_t<double> temp_flux_map;
+            temp_flux_map.resize(mt_flux_maps.nrows(), nx );
+            for (size_t rec = 0; rec < num_recs; rec++) {
+                for (size_t r = 0; r < mt_flux_maps.nrows(); r++) {
+                    for (size_t c = 0; c < nx; c++) {
+                        temp_flux_map.at(r, c) = mt_flux_maps.at(r, rec * nx + c);
+                    }
+                }
+                rec_flux_maps.push_back(temp_flux_map);
+            }
+        }
+
+        // *******************************************************
         // Construct heliostat field class after receiver
         //    so it can use the active receiver area
         C_pt_sf_perf_interp heliostatfield(A_rec_curtain);
@@ -1122,12 +1237,12 @@ public:
         heliostatfield.ms_params.m_p_track = as_double("p_track");      //[kWe] Heliostat tracking power
         heliostatfield.ms_params.m_hel_stow_deploy = as_double("hel_stow_deploy");  // N/A
         heliostatfield.ms_params.m_v_wind_max = as_double("v_wind_max");            // N/A
-        heliostatfield.ms_params.m_eta_map = mt_eta_map;
-        heliostatfield.ms_params.m_flux_maps = mt_flux_maps;
-        heliostatfield.ms_params.m_n_flux_x = mt_flux_maps.ncols();                     
-        heliostatfield.ms_params.m_n_flux_y = mt_flux_maps.nrows() / mt_eta_map.nrows();
-        heliostatfield.ms_params.m_N_hel = N_hel;
-        heliostatfield.ms_params.m_A_sf = A_sf;        //[m2]
+        heliostatfield.ms_params.m_eta_map = eta_maps[0];
+        heliostatfield.ms_params.m_flux_maps = rec_flux_maps[0];
+        heliostatfield.ms_params.m_n_flux_x = rec_flux_maps[0].ncols();
+        heliostatfield.ms_params.m_n_flux_y = rec_flux_maps[0].nrows() / eta_maps[0].nrows();
+        heliostatfield.ms_params.m_N_hel = N_hel[0];
+        heliostatfield.ms_params.m_A_sf = A_sf[0];        //[m2]
         if (field_model_type < 3)
         {
             heliostatfield.ms_params.m_eta_map_aod_format = false;
@@ -1650,16 +1765,22 @@ public:
 
             // *************************
             // Solar field
-        assign("N_hel_calc", N_hel);                    //[-]
-        assign("refl_image_error", refl_image_error);   //[mrad]
-        assign("heliostat_area", heliostat_area);   //[m2]
-        assign("average_attenuation", average_attenuation); //[%]
-        assign("A_sf", (ssc_number_t)A_sf);         //[m2]
+        assign("refl_image_error", refl_image_error);           //[mrad]
+        assign("heliostat_area", heliostat_area);               //[m2]
+        assign("average_attenuation", average_attenuation);     //[%]
         assign("land_min_abs", (ssc_number_t)land_min_abs);     //[m]
         assign("land_max_abs", (ssc_number_t)land_max_abs);     //[m]
         assign("land_area_base_calc", (ssc_number_t)land_area_base);          //[acre]
         assign("total_land_area_calc", (ssc_number_t)total_land_area);        //[acre]
-        
+
+        ssc_number_t* p_N_hel_calc = allocate("N_hel_calc", num_recs);  //[-]
+        ssc_number_t* p_A_sf = allocate("A_sf", num_recs);              //[m2]
+        for (size_t i = 0; i < num_recs; i++) {
+            p_N_hel_calc[i] = (ssc_number_t)N_hel[i];
+            p_A_sf[i] = (ssc_number_t)A_sf[i];
+        }
+
+        // TODO: Do we need rec assignment?
         size_t n_helio_pos_rows = helio_pos.nrows();
         ssc_number_t* p_helio_positions_calc = allocate("helio_positions_calc", n_helio_pos_rows, 2);
         for (size_t i = 0; i < n_helio_pos_rows; i++) {
@@ -1674,9 +1795,15 @@ public:
             // *************************
             // Tower and receiver
         assign("h_tower_calc", (ssc_number_t)THT);   //[m]
-        assign("rec_height_calc", (ssc_number_t)rec_height);        //[m]
-        assign("rec_width_calc", (ssc_number_t)rec_width);          //[m]
-        assign("rec_aspect", (ssc_number_t)rec_height/rec_width);   //[-]
+        ssc_number_t* rec_height_calc = allocate("rec_height_calc", num_recs);
+        ssc_number_t* rec_width_calc = allocate("rec_width_calc", num_recs);
+        ssc_number_t* rec_aspect = allocate("rec_aspect", num_recs);
+        for (size_t i = 0; i < num_recs; i++) { // TODO: Is there a better way to do this?
+            rec_height_calc[i] = rec_height[i];                 //[m]
+            rec_width_calc[i] = rec_width[i];                   //[m]
+            rec_aspect[i] = rec_height[i] / rec_width[i];       //[-]
+        }
+
         assign("A_rec", A_rec_aperture);     //[m2]
         assign("A_rec_curtain", A_rec_curtain);     //[m2]
 
@@ -1805,24 +1932,41 @@ public:
 
             // *****************************
             // ******* System Costs ********
+        double tot_A_sf = std::accumulate(A_sf.begin(), A_sf.end(), 0.0);   // Total solar field area
 
         double site_improvement_cost =
-            N_mspt::site_improvement_cost(A_sf, as_double("site_spec_cost"));
+            N_mspt::site_improvement_cost(tot_A_sf, as_double("site_spec_cost"));
         assign("csp.pt.cost.site_improvements", (ssc_number_t)site_improvement_cost);
 
         double heliostat_cost =
-            N_mspt::heliostat_cost(A_sf, as_double("heliostat_spec_cost"), as_double("cost_sf_fixed"));
+            N_mspt::heliostat_cost(tot_A_sf, as_double("heliostat_spec_cost"), as_double("cost_sf_fixed"));
         assign("csp.pt.cost.heliostats", (ssc_number_t)heliostat_cost);
 
-        double tower_cost = N_mspt::tower_cost(THT, rec_height, h_helio, as_double("tower_fixed_cost"), as_double("tower_exp"));
-        assign("h_rec_input_to_cost_model", (ssc_number_t)rec_height);       //[m]
+        // Handle curtain height and receiver z offset (if applicable)
+        util::matrix_t<double> rec_tower_offset = as_matrix("rec_tower_offset");  // [-]
+        double max_rec_height_offset = 0.0;
+        for (size_t i = 0; i < num_recs; i++) {
+            input_idx = duplicate_recs ? 0 : i;
+            double half_ap_height = (norm_curtain_height[input_idx] - 0.5) * rec_height[input_idx];   // height of curtain above half aperture 
+            if (rec_tower_offset.ncols() == 3) {
+                max_rec_height_offset = max(max_rec_height_offset, half_ap_height + rec_tower_offset.at(i, 2));
+            }
+            else {
+                max_rec_height_offset = max(max_rec_height_offset, half_ap_height);
+            }
+        }
+
+        // Calculating tower height based on MAX height of tower (i.e., top of curtain to ground)
+        double tower_cost =
+            N_mspt::tower_cost(THT + max_rec_height_offset, 0.0, h_helio, as_double("tower_fixed_cost"), as_double("tower_exp"));
+        assign("h_rec_input_to_cost_model", (ssc_number_t)max_rec_height_offset);       //[m]
         assign("csp.pt.cost.tower", (ssc_number_t)tower_cost);
 
         double receiver_cost =
             N_mspt::receiver_cost(A_rec_aperture, as_double("rec_ref_cost"), as_double("rec_ref_area"), as_double("rec_cost_exp"));
         assign("csp.pt.cost.receiver", (ssc_number_t)receiver_cost);
 
-        double rec_lift_height = THT + rec_height / 2. + h_helio / 2.;
+        double rec_lift_height = THT + max_rec_height_offset + h_helio / 2.;
         double rec_lift_cost =
             N_mspt::lift_cost(m_dot_htf_rec_des, rec_lift_height, as_double("rec_lift_spec_cost"), 1.0);
         assign("receiver_lift_cost", (ssc_number_t)rec_lift_cost);
@@ -2039,14 +2183,13 @@ public:
             log("At least one m_dot array is a different length than 'n_steps_fixed'.", SSC_WARNING);
             return;
         }
-        for (size_t i = 0; i < n_steps_fixed; i++)
-        {
+        for (size_t i = 0; i < n_steps_fixed; i++) {
             p_m_dot_rec[i] = (ssc_number_t)(p_m_dot_rec[i] / 3600.0);   //[kg/s] convert from kg/hr
             p_m_dot_pc[i] = (ssc_number_t)(p_m_dot_pc[i] / 3600.0);     //[kg/s] convert from kg/hr
             p_m_dot_water_pc[i] = (ssc_number_t)(p_m_dot_water_pc[i] / 3600.0); //[kg/s] convert from kg/hr
         }
 
-        // Set output data from heliostat class
+        // Set output data from heliostat class     // TODO: Update for multi-receivers e
         size_t n_rows_eta_map = heliostatfield.ms_params.m_eta_map.nrows();             // Number of solar positions
         ssc_number_t *eta_map_out = allocate("eta_map_out", n_rows_eta_map, 3);
         size_t n_rows_flux_maps = heliostatfield.ms_params.m_flux_maps.nrows();         // solar positions * number of y flux points
@@ -2173,7 +2316,7 @@ public:
         accumulate_annual_for_year("m_dot_water_pc", "annual_total_water_use", sim_setup.m_report_step / 1000.0, steps_per_hour, 1, n_steps_fixed/steps_per_hour); //[m^3], convert from kg
             // Then, add water usage from mirror cleaning
         ssc_number_t V_water_cycle = as_number("annual_total_water_use");
-        double V_water_mirrors = as_double("water_usage_per_wash") / 1000.0*A_sf*as_double("washing_frequency");
+        double V_water_mirrors = as_double("water_usage_per_wash") / 1000.0 * tot_A_sf * as_double("washing_frequency");
         assign("annual_total_water_use", (ssc_number_t)(V_water_cycle + V_water_mirrors));
 
         ssc_number_t ae = as_number("annual_energy");           //[kWe-hr]

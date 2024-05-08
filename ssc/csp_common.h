@@ -63,7 +63,6 @@ public:
     sp_receivers recs;*/
     sp_layout layout;
     sp_flux_table fluxtab;
-    sp_layout_table heliotab;
 
     solarpilot_invoke( compute_module *cm );
     ~solarpilot_invoke();

@@ -658,10 +658,10 @@ void AutoPilot::PostProcessLayout(sp_layout &layout)
 
 		hp.focal_length = hpos->at(i)->getFocalX();
 		hp.template_number = -1;
+        hp.which_rec = hpos->at(i)->getWhichReceiver()->getVarMap()->id.val;
 		//hp.user_optics = false;
 		layout.heliostat_positions.push_back( hp );
 	}
-
 
     var_map *V = _SF->getVarMap();
     _SF->updateAllCalculatedParameters( *V );
@@ -739,10 +739,12 @@ void AutoPilot::PrepareFluxSimulation(sp_flux_table &fluxtab, int flux_res_x, in
 	}
 	fluxtab.flux_surfaces.resize(nsurftot);
 	//resize the flux surfaces to match the flux data and the number of annual simulation positions
+    int surf_idx = 0;
     for (int i = 0; i < (int)_SF->getReceivers()->size(); i++) {//for all receivers
         for (int j = 0; j < (int)_SF->getReceivers()->at(i)->getFluxSurfaces()->size(); j++) {//for all receiver flux surfaces
             FluxSurface *fs = &_SF->getReceivers()->at(i)->getFluxSurfaces()->at(j);
-            fluxtab.flux_surfaces.at(i+j).flux_data.resize(fs->getFluxNY(), fs->getFluxNX(), nflux_sim);
+            fluxtab.flux_surfaces.at(surf_idx).flux_data.resize(fs->getFluxNY(), fs->getFluxNX(), nflux_sim);
+            surf_idx++;
         }
     }
 }
@@ -1065,45 +1067,6 @@ void AutoPilot::PostEvaluationUpdate(int iter, vector<double> &pos, /*vector<dou
 
 }
 
-bool AutoPilot::CalculateFluxMapsOV1(vector<vector<double> > &sunpos, vector<vector<double> > &fluxtab, vector<double> &efficiency, int flux_res_x, int flux_res_y, bool is_normalized)
-{
-	/* 
-	overload to provide the flux data in a simple 2D vector arrangement. Each flux map is provided 
-	in a continuous sequence, and it is up to the user to separate out the data based on knowledge
-	of the number of flux maps and dimension of each flux map.
-
-    NOTE: This function does not support multiple flux surfaces
-    This is not used in current production code...
-	*/
-
-	//Call the main algorithm
-	sp_flux_table fluxtab_s;
-	if(! CalculateFluxMaps(fluxtab_s, flux_res_x, flux_res_y, is_normalized) )
-		return false;
-
-	block_t<double> *flux_data = &fluxtab_s.flux_surfaces.front().flux_data;
-
-	//convert data structure
-	fluxtab.clear();
-	efficiency.clear();
-	for(int i=0; i<(int)flux_data->nlayers(); i++){
-		sunpos.push_back( vector<double>(2) );
-		sunpos.back().at(0) = fluxtab_s.azimuths.at(i);
-		sunpos.back().at(1) = fluxtab_s.zeniths.at(i);
-		efficiency.push_back( fluxtab_s.efficiency.at(i) );
-
-		for(int j=0; j<flux_res_y; j++){
-			vector<double> newline;
-			for(int k=0; k<flux_res_x; k++){
-				newline.push_back(flux_data->at(j, k, i));
-			}
-			fluxtab.push_back( newline );
-		}
-	}
-
-	return true;
-}
-
 //---------------- API_S --------------------------
 bool AutoPilot_S::CreateLayout(sp_layout &layout, bool do_post_process)
 {
@@ -1115,8 +1078,9 @@ bool AutoPilot_S::CreateLayout(sp_layout &layout, bool do_post_process)
 
 	if(! _cancel_simulation){
 		bool simok = _SF->FieldLayout();			
-        
-        if(_SF->ErrCheck() || !simok) return false;
+
+        // TODO: ErrCheck() doesn't work...
+        if(_SF->ErrCheck() || !simok || _SF->getHeliostats()->size() == 0) return false;
 	}
 	if(do_post_process){
 		if(! _cancel_simulation)
@@ -1277,9 +1241,7 @@ bool AutoPilot_S::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int 
 		_sim_complete++;  //increment
 
 		if(_has_summary_callback)
-			if( ! 
-				_summary_siminfo->setCurrentSimulation(_sim_complete) 
-				) 
+			if( !_summary_siminfo->setCurrentSimulation(_sim_complete) ) 
 				CancelSimulation();
 
         double azzen[2];
@@ -1290,35 +1252,50 @@ bool AutoPilot_S::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int 
 			_SF->Simulate(azzen[0], azzen[1], P);
 		if(! _cancel_simulation)
 			_SF->HermiteFluxSimulation( *_SF->getHeliostats() );
-			
-		sim_result result;
+
+        // Get Results
+        sim_result result;
+        int num_recs = _SF->getActiveReceiverCount();
+
 		if(! _cancel_simulation){
-			result.process_analytical_simulation(*_SF, P, 2, azzen);	
-			fluxtab.efficiency.push_back( result.eff_total_sf.ave );
+            //if we have more than 1 receiver, create performance summaries for each and append to the results vector
+            if (num_recs > 1){
+                //which heliostats are aiming at which receiver?
+                Hvector helios = *_SF->getHeliostats();
+                unordered_map<Receiver*, Hvector> aim_map;
+                for (Hvector::iterator h = helios.begin(); h != helios.end(); h++)
+                    aim_map[(*h)->getWhichReceiver()].push_back(*h);
+
+                std::vector<double> sf_eff;
+                for (Rvector::iterator rec = _SF->getReceivers()->begin(); rec != _SF->getReceivers()->end(); rec++){
+                    Rvector recs = { *rec };
+                    result.process_analytical_simulation(*_SF, P, 2, azzen, &aim_map[*rec], &recs);
+                    sf_eff.push_back(result.eff_total_sf.ave);
+                }
+                fluxtab.efficiency.push_back(sf_eff);
+                result.process_analytical_simulation(*_SF, P, 2, azzen); // process with all heliostats and receivers for flux maps
+            }
+            else {
+                result.process_analytical_simulation(*_SF, P, 2, azzen);
+                fluxtab.efficiency.push_back({ result.eff_total_sf.ave });
+            }
 		}
 						
 		//Collect flux results here
-		if(! _cancel_simulation)
-			result.process_flux( _SF, is_normalized);
+        if (!_cancel_simulation) {
+            result.process_flux(_SF, is_normalized);
+        }
 						
 		//Collect the results for each flux surface
-
 		if(! _cancel_simulation){
 			PostProcessFlux(result, fluxtab, i);
-				
 		} //end cancel 
 
 		if(_cancel_simulation)
-				return false;
+			return false;
 	}
 	
 	return true;
-}
-
-bool AutoPilot_S::CalculateFluxMaps(vector<vector<double> > &sunpos, vector<vector<double> > &fluxtab, vector<double> &efficiency, int flux_res_x, int flux_res_y, bool is_normalized)
-{
-	PreSimCallbackUpdate();
-	return CalculateFluxMapsOV1(sunpos, fluxtab, efficiency, flux_res_x, flux_res_y, is_normalized);
 }
 
 //---------------- API_MT --------------------------
@@ -1862,17 +1839,11 @@ bool AutoPilot_MT::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int
 
 	for(int i=0; i<_sim_total; i++){
 		PostProcessFlux(results.at(i), fluxtab, i);
-		fluxtab.efficiency.at(i) = results.at(i).eff_total_sf.ave;
+        fluxtab.efficiency.at(i) = { results.at(i).eff_total_sf.ave };
 	}
 
 
 	return true;
-}
-
-bool AutoPilot_MT::CalculateFluxMaps(vector<vector<double> > &sunpos, vector<vector<double> > &fluxtab, vector<double> &efficiency, int flux_res_x, int flux_res_y, bool is_normalized)
-{
-	PreSimCallbackUpdate();
-	return CalculateFluxMapsOV1(sunpos, fluxtab, efficiency, flux_res_x, flux_res_y, is_normalized);
 }
 
 void AutoPilot_MT::CancelSimulation()

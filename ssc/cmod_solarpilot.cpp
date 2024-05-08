@@ -287,7 +287,7 @@ public:
                 {
 					opteff[i * 3] = (ssc_number_t)(spi.fluxtab.azimuths[i] * 180. / pi - 180.);      //Convention is usually S=0, E<0, W>0 
 					opteff[i * 3 + 1] = (ssc_number_t)(spi.fluxtab.zeniths[i] * 180. / pi);          //Provide zenith angle
-					opteff[i * 3 + 2] = (ssc_number_t)spi.fluxtab.efficiency[i];
+					opteff[i * 3 + 2] = (ssc_number_t)spi.fluxtab.efficiency[i][0];
                 }
 			}
 			else
