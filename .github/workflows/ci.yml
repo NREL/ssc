@@ -194,7 +194,8 @@ jobs:
         cd ${SSCDIR}/build
         cmake .. -DSAM_SKIP_TOOLS=1
         cmake --build . --config Release -j4
-        cp ${SSCDIR}/build/ssc/Release/*  ${SSCDIR}/build/test/Release
+        ls ssc/Release
+        cp ssc/Release/* test/Release
 
     - name: Test
       shell: bash
