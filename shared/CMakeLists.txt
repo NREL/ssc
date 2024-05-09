@@ -5,7 +5,7 @@
 #####################################################################################################################
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-include_directories(. ../splinter/include $ENV{ORTOOLSDIR}/include/eigen3  $ENV{ORTOOLSDIR}/include ../)
+include_directories(. ../splinter/include $ENV{ORTOOLSDIR}/include/eigen3 $ENV{ORTOOLSDIR}/include ../)
 
 set(SHARED_SRC
         6par_gamma.h
