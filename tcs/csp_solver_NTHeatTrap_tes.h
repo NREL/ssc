@@ -60,12 +60,14 @@ private:
     double m_T_prev;		    //[K] Temperature of storage fluid in tank
     double m_m_prev;		    //[kg] Mass of storage fluid in tank
     double m_E_prev;            //[MJ] Internal energy (including tank walll)
+    double m_m_wall_prev;       //[kg] Mass of storage tank wall
 
     // Calculated values for current timestep
     double m_V_calc;		    //[m^3] Volume of storage fluid in tank
     double m_T_calc;		    //[K] Temperature of storage fluid in tank
     double m_m_calc;		    //[kg] Mass of storage fluid in tank
     double m_E_calc;            //[MJ] Internal energy (including tank wall)
+    double m_m_wall_calc;       //[kg] Mass of storage tank wall
 
     // Added TMB 12.15.2023
     double m_radius;   //[m]
@@ -129,6 +131,10 @@ public:
     double get_SA_calc();        //m2
 
     double calc_mass_wall(double T_fluid, double mass_fluid);   // kg
+
+    double get_m_m_wall_prev();
+
+    double get_m_m_wall_calc();
 
     void init(HTFProperties htf_class_in, double V_tank /*m3*/,
         double h_tank /*m*/, double h_min /*m*/, double u_tank /*W/m2-K*/,
@@ -248,7 +254,8 @@ public:
         E_LEAK_ERROR,
         E_E_HOT,
         E_E_COLD,
-        E_ERROR_LEAK_CORRECTED
+        E_ERROR_LEAK_CORRECTED,
+        E_WALL_ERROR
 	};
 
 

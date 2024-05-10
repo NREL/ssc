@@ -122,6 +122,7 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_E_hot",                 "TES hot side internal energy",                                                     "MJ",           "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_E_cold",                "TES cold side internal energy",                                                    "MJ",           "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_error_leak_corrected",  "TES energy balance error, removing leakage assumption error",                      "MW",           "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_wall_error",            "TES energy balance error due to wall temperature assumption",                      "MW",           "",               "TES",            "tes_type=1",              "",                      "" },
 
 
     var_info_invalid };
@@ -350,6 +351,7 @@ public:
         vector<double> tes_E_hot_vec;
         vector<double> tes_E_cold_vec;
         vector<double> tes_error_leak_corrected_vec;
+        vector<double> tes_wall_error_vec;
 
         // Simulate
         for (size_t i = 0; i < n_steps; i++) {
@@ -400,6 +402,7 @@ public:
                 double tes_E_hot = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_E_HOT);
                 double tes_E_cold = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_E_COLD);
                 double tes_error_leak_corrected = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_ERROR_LEAK_CORRECTED);
+                double tes_wall_error = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_WALL_ERROR);
 
                 tes_error_vec.push_back(tes_error);
                 tes_error_percent_vec.push_back(tes_error_percent);
@@ -409,6 +412,7 @@ public:
                 tes_E_hot_vec.push_back(tes_E_hot);
                 tes_E_cold_vec.push_back(tes_E_cold);
                 tes_error_leak_corrected_vec.push_back(tes_error_leak_corrected);
+                tes_wall_error_vec.push_back(tes_wall_error);
             }
 
             // Simulate Analytically
@@ -471,6 +475,7 @@ public:
             set_vector("tes_E_hot", tes_E_hot_vec);
             set_vector("tes_E_cold", tes_E_cold_vec);
             set_vector("tes_error_leak_corrected", tes_error_leak_corrected_vec);
+            set_vector("tes_wall_error", tes_wall_error_vec);
         }
 
 

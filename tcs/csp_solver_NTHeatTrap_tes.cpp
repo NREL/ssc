@@ -63,6 +63,7 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
     {C_csp_NTHeatTrap_tes::E_E_HOT, C_csp_reported_outputs::TS_LAST},	//[MJ]
     {C_csp_NTHeatTrap_tes::E_E_COLD, C_csp_reported_outputs::TS_LAST},	//[MJ]
     {C_csp_NTHeatTrap_tes::E_ERROR_LEAK_CORRECTED, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[MW]
+    {C_csp_NTHeatTrap_tes::E_WALL_ERROR, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[MW]
     csp_info_invalid
 };
 
@@ -219,6 +220,16 @@ double C_storage_tank_dynamic_NT::calc_mass_wall(double T_fluid, double mass_flu
     return mass_wall;
 }
 
+double C_storage_tank_dynamic_NT::get_m_m_wall_prev()
+{
+    return m_m_wall_prev;
+}
+
+double C_storage_tank_dynamic_NT::get_m_m_wall_calc()
+{
+    return m_m_wall_calc;
+}
+
 double C_storage_tank_dynamic_NT::m_dot_available(double f_unavail, double timestep)
 {
     //double rho = mc_htf.dens(m_T_prev, 1.0);		//[kg/m^3]
@@ -242,6 +253,7 @@ void C_storage_tank_dynamic_NT::converged()
     m_m_prev = m_m_calc;		//[kg]
     m_SA_prev = m_SA_calc;      //[m2]
     m_E_prev = m_E_calc;        //[MJ]
+    m_m_wall_prev = m_m_wall_calc;  //[kg]
 }
 
 void C_storage_tank_dynamic_NT::energy_balance_core(double timestep /*s*/, double mdot_fluid_in_before_leak /*kg/s*/, double mdot_fluid_out_before_leak /*kg/s*/,
@@ -333,6 +345,7 @@ void C_storage_tank_dynamic_NT::energy_balance_core(double timestep /*s*/, doubl
     double mass_wall_calc = m_tank_wall_dens * V_wall_calc;
     double mass_wall_change = m_tank_wall_dens * V_wall_change;
     double mdot_wall_change = mass_wall_change / timestep;
+    m_m_wall_calc = mass_wall_calc;
 
     // Calculate Wall Surface Areas
     double SA_wall_prev = L_prev * 2.0 * CSP::pi * (m_radius + m_tank_wall_thick);
@@ -1342,9 +1355,10 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
 
     // TOTAL Energy Balance for total system here
     double energy_balance_error = 0;    // [MW]
-    double energy_error_leakage = 0;    // MW
+    double energy_error_leakage = 0;    // [MW]
     double total_error_leakage_corrected = 0;   //[MW]
     double energy_balance_error_percent = 0; // Percent error of total internal energy change
+    double energy_error_wall = 0;   // [MW]
     {
         // Positive is Charge, Negative is Discharge
         double mdot_net = m_dot_cr_to_cv_hot - m_dot_cv_hot_to_sink;
@@ -1481,9 +1495,10 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
 
         double test = 0;
 
-        // Leakage Discrepancy
-        
+        // Leakage Temperature Discrepancy
         {
+            // Leakage is assumed at a constant temp, while the other side has variable temps
+            // i.e. During charge, cold side takes on leakage at constant temp, while hot is leaking variable temp
             double mdot_leakage;
             {
                 double N_terms = m_piston_loss_poly.size();
@@ -1512,7 +1527,7 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
                 energy_error_leakage = Q_dot_leakage_actual - Q_dot_leakage_assumed;    // [MW]
             }
             // Discharge
-            if (mdot_net < 0)
+            else if (mdot_net < 0)
             {
                 double T_leakage_assumed = mc_cold_tank_NT.get_m_T_prev();   // [K] Hot tank assumes leakage is constant temp at prev timestep from cold tank
                 double cp_leakage_assumed = mc_store_htfProps.Cp(T_leakage_assumed) * 1e-3;   // [MJ/kg K]
@@ -1524,6 +1539,32 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
                 double Q_dot_leakage_actual = T_leakage_actual * cp_leakage_actual * mdot_leakage;      // [MW]
 
                 energy_error_leakage = Q_dot_leakage_actual - Q_dot_leakage_assumed;    // [MW]
+            }
+        }
+
+        // Wall Temperature Discrepancy
+        {
+            // Tank wall mass is assumed at a constant temp, while the other side has variable temp
+            // i.e. During charge, hot side takes on cold mass at constant temp. Cold side actually has variable temp
+
+            // Charge
+            if (mdot_net > 0)
+            {
+                // Hot side is expanding, taking on cold wall
+                double T_wall_assumed = mc_cold_tank_NT.get_m_T_prev(); //[K]
+                double T_wall_actual = T_cold_ave;  //[K]
+                double mdot_wall = (mc_hot_tank_NT.get_m_m_wall_calc() - mc_hot_tank_NT.get_m_m_wall_prev()) / timestep;
+
+                energy_error_wall = mdot_wall * m_tank_wall_cp * (T_wall_actual - T_wall_assumed) * 1e-6;   //[MW]
+            }
+            else if (mdot_net < 0)
+            {
+                // Cold side is expanding, taking on hot wall
+                double T_wall_assumed = mc_hot_tank_NT.get_m_T_prev(); //[K]
+                double T_wall_actual = T_hot_ave;  //[K]
+                double mdot_wall = (mc_hot_tank_NT.get_m_m_wall_calc() - mc_hot_tank_NT.get_m_m_wall_prev()) / timestep;
+
+                energy_error_wall = mdot_wall * m_tank_wall_cp * (T_wall_actual - T_wall_assumed) * 1e-6;   //[MW]
             }
         }
 
@@ -1600,6 +1641,7 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
     mc_reported_outputs.value(E_E_COLD, mc_cold_tank_NT.get_m_E_calc());//[MJ]
     mc_reported_outputs.value(E_E_COLD, mc_cold_tank_NT.get_m_E_calc());//[MJ]
     mc_reported_outputs.value(E_ERROR_LEAK_CORRECTED, total_error_leakage_corrected); //[MW]
+    mc_reported_outputs.value(E_WALL_ERROR, energy_error_leakage);  //[MWt]
 
     return 0;
 }
