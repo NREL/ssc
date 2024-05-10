@@ -186,6 +186,8 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_INPUT,     SSC_NUMBER, "rec_adv_model_type",                 "Receiver advection model type (0 = Fixed advective loss coefficient, 1 = Correlations from Sandia)",                                      "",             "",                                  "Tower and Receiver",                       "?=1",                                                              "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "rec_eta_fixed",                      "User-provided fixed receiver efficiency (fraction)",                                                                                      "",             "",                                  "Tower and Receiver",                       "rec_model_type=0",                                                 "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "rec_hadv_fixed",                     "User-provided fixed receiver advective loss coefficient",                                                                                 "W/m2/K",       "",                                  "Tower and Receiver",                       "rec_adv_model_type=0",                                             "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "rec_ny",                             "Number of curtain elements in the vertical dimension",                                                                                    "",             "",                                  "Tower and Receiver",                       "?=12",                                                             "",              "" },
+    { SSC_INPUT,     SSC_NUMBER, "rec_nx",                             "Number of curtain elements in the width dimension",                                                                                       "",             "",                                  "Tower and Receiver",                       "?=1",                                                              "",              "" },
     { SSC_INPUT,     SSC_NUMBER, "rec_rad_ny",                         "Number of curtain element groups in vertical dimension for radiative exchange",                                                           "",             "",                                  "Tower and Receiver",                       "?=5",                                                              "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "rec_rad_nx",                         "Number of curtain element groups in width dimension for radiative exchange",                                                              "",             "",                                  "Tower and Receiver",                       "?=3",                                                              "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "particle_dp",                        "Particle diameter",                                                                                                                       "m",            "",                                  "Tower and Receiver",                       "?=350e-6",                                                         "",              ""},
@@ -1154,7 +1156,7 @@ public:
         double user_hadv = as_integer("rec_adv_model_type") == 0 ? as_double("rec_hadv_fixed") : 0.0;
 
         int input_idx;
-        double ap_height, ap_width, curtain_height, curtain_width, ap_curtain_depth_ratio;
+        double ap_height, ap_width, curtain_height, curtain_width, ap_curtain_depth_ratio, rec_orientation;
         for (int i = 0; i < num_recs; i++) {    // loop through receivers
             input_idx = duplicate_recs ? 0 : i; // Use the first element if duplicate receivers
             ap_height = rec_height[input_idx];
@@ -1164,11 +1166,14 @@ public:
             A_rec_curtain = curtain_height * curtain_width;  // This receiver area is used to define the flux distribution.  Particle receiver model assumes that the flux distribution is defined based on the curtain area.
             A_rec_aperture = ap_height * ap_width;           // The aperture area should be used in cost calculations
             ap_curtain_depth_ratio = max_curtain_depth[input_idx] / ap_height;
+            rec_orientation = rec_azimuth[input_idx];
+            if (rec_orientation < 0)
+                rec_orientation += 360;  // Relative wind directions in receiver code require receiver orientation witin [0,360]
 
             // TODO (Janna): update to initialize individual receivers
         }
-        int n_x = mt_flux_maps.ncols() / num_recs;
-        int n_y = (mt_flux_maps.nrows() / mt_eta_map.nrows()) + 1;
+        int n_x = as_integer("rec_nx"); //mt_flux_maps.ncols() / num_recs;
+        int n_y = as_integer("rec_ny"); //(mt_flux_maps.nrows() / mt_eta_map.nrows()) + 1;
 
 
         if (as_integer("curtain_type") == 1) { 
@@ -1183,7 +1188,7 @@ public:
             as_double("csp.pt.rec.max_oper_frac"), as_double("eta_lift"),
             as_integer("rec_htf"), as_matrix("field_fl_props"),
             as_integer("rec_model_type"), user_efficiency, as_integer("rec_rad_model_type"), as_integer("rec_adv_model_type"), user_hadv,
-            ap_height, ap_width, norm_curtain_height[input_idx], norm_curtain_width[input_idx], ap_curtain_depth_ratio,
+            ap_height, ap_width, norm_curtain_height[input_idx], norm_curtain_width[input_idx], ap_curtain_depth_ratio, rec_orientation,
             as_double("particle_dp"), as_double("particle_abs"), as_double("curtain_emis"), as_double("curtain_dthdy"),
             as_double("cav_abs"), as_double("cav_twall"), as_double("cav_kwall"), as_double("cav_hext"),
             as_double("transport_deltaT_cold"), as_double("transport_deltaT_hot"),

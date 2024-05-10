@@ -47,7 +47,7 @@ C_falling_particle_receiver::C_falling_particle_receiver(double h_tower /*m*/,
     double m_dot_htf_max_frac /*-*/, double eta_pump /*-*/,
     int field_fl, util::matrix_t<double> field_fl_props,
     int model_type /*-*/, double fixed_efficiency /*-*/, int rad_model_type /*-*/, int hadv_model_type /*-*/, double hadv_user  /*-*/,
-    double ap_height /*m*/, double ap_width /*m*/, double ap_height_ratio /*-*/, double ap_width_ratio /*-*/, double ap_curtain_depth_ratio /*-*/, 
+    double ap_height /*m*/, double ap_width /*m*/, double ap_height_ratio /*-*/, double ap_width_ratio /*-*/, double ap_curtain_depth_ratio /*-*/, double rec_orientation /*deg*/,
     double particle_dp /*m*/, double particle_abs /*-*/, double curtain_emis /*-*/, double dthdy /*-*/, 
     double cav_emis /*-*/, double cav_twall /*m*/, double cav_kwall /*m*/, double cav_hext /*W/m2/K*/,
     double deltaT_transport_cold /*K*/, double deltaT_transport_hot /*K*/,
@@ -80,6 +80,7 @@ C_falling_particle_receiver::C_falling_particle_receiver(double h_tower /*m*/,
     m_ap_height_ratio = ap_height_ratio;
     m_ap_width_ratio = ap_width_ratio;
     m_ap_curtain_depth_ratio = ap_curtain_depth_ratio;
+    m_rec_orientation = rec_orientation;
 
     m_is_ap_at_bot = true;          // Hard-coded to true to match SolarPILOT
     m_is_curtain_flat = true;       // Curved curtain is not implemented yet
@@ -124,6 +125,7 @@ C_falling_particle_receiver::C_falling_particle_receiver(double h_tower /*m*/,
     m_eta_therm_des_est = 0.9;  //[-] Estimated and used to calculate min incident flux
     m_include_back_wall_convection = false;
     m_include_wall_axial_conduction = false;
+    
 
     m_invert_matrices = true;  // Invert coefficient matrix for radiative exchange?  Used multiple times during temperature iterations - test case solution time was faster when the coefficient matrix was inverted up front
 
@@ -312,16 +314,9 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
         throw(C_csp_exception("Wind direction is not defined", "Falling particle receiver timestep performance call"));
     }
 
-    // Check resolution of flux map input compared to resolution of the particle curtain discretization
-    // TODO: Generalize to allow different resolution
+    // Calculate total flux input prior to interpolation
     int n_flux_y = (int)flux_map_input->nrows();
     int n_flux_x = (int)flux_map_input->ncols();
-    if (n_flux_y + 1 != m_n_y || n_flux_x != m_n_x) {
-        error_msg = "The falling particle receiver model flux map input must match the specified discretization resolution of the particle curtain";
-        throw(C_csp_exception(error_msg, "Falling particle receiver timestep performance call"));
-    }
-
-
     double flux_sum = 0.0;
     for (int i = 0; i < n_flux_y; i++) {
         for (int j = 0; j < n_flux_x; j++) {
@@ -841,39 +836,125 @@ int C_falling_particle_receiver::use_previous_solution(const s_steady_state_soln
 
 }
 
+util::matrix_t<double> C_falling_particle_receiver::interpolate_flux_1d(util::matrix_t<double>& flux_input, int n, bool is_rows)
+{
+    int n1, n2, nflux, nc, i0, i1, nelem;
+    double dx, dxflux, d1, d2, x;
+    util::matrix_t<double> flux_input_loc, flux_interp, flux;
 
-// Calculate flux profiles (interpolated to curtain elements at specified DNI)
-// TODO: Update with interpolation to allow the curtain discretization resolution to differ from the provided flux profile resolution
+    flux_input_loc = flux_input;
+    if (!is_rows)  // Transpose input array
+    {
+        n1 = flux_input.nrows();
+        n2 = flux_input.ncols();
+        flux_input_loc.resize_fill(n2, n1, 0.0);
+        for (int i = 0; i < n2; i++)
+        {
+            for (int j = 0; j < n1; j++)
+                flux_input_loc.at(i, j) = flux_input.at(j, i);
+        }
+    }
+    
+    nflux = flux_input_loc.nrows();
+    nc = flux_input_loc.ncols();
+    flux_interp.resize_fill(n, nc, 0.0);
+    dx = 1.0 / n;
+    dxflux = 1.0 / nflux;
+    for (int i = 0; i < n; i++)
+    {
+        if (n <= nflux)  // Curtain resolution < flux profile resolution
+        {
+            i0 = fmin(floor(i * dx / dxflux), nflux - 1);           // Flux profile element containing lower bound of element j
+            i1 = fmin(floor((i + 1) * dx / dxflux), nflux - 1);     // Flux profile element containing upper bound of element j
+            d1 = ((i0 + 1) * dxflux - (i * dx));                    // Distance from upper bound of flux element j0 to lower bound of element j
+            d2 = ((i + 1) * dx - i1 * dxflux);                      // Distance from upper bound of element j to lower bound of element j1
+            nelem = i1 - i0;
+            for (int j = 0; j < nc; j++)
+            {
+                if (nelem < 1)
+                    flux_interp.at(i, j) = flux_input_loc.at(i0, j);
+                else
+                {
+                    flux_interp.at(i, j) = d1 * flux_input_loc.at(i0, j) + d2 * flux_input_loc.at(i1, j);
+                    for (int k = 0; k < nelem - 1; k++)
+                        flux_interp.at(i, j) += dxflux * flux_input_loc.at(i0+1+k, j);
+                    flux_interp.at(i, j) /= dx;
+                    flux_interp.at(i, j) = fmax(flux_interp.at(i, j), 0.0);
+                }
+            }
+        }
+        else  // Curtain resolution > flux profile resolution
+        {
+            x = (i + 0.5) * dx;
+            i0 = fmax(fmin(floor(x / dxflux - 0.5), nflux - 2), 0);
+            for (int j = 0; j < nc; j++)
+            {
+                if (x < 0.5 * dxflux)
+                    flux_interp.at(i, j) = flux_input_loc.at(0, j);
+                else if (x > 1 - 0.5 * dxflux)
+                    flux_interp.at(i, j) = flux_input_loc.at(nflux - 1, j);
+                else
+                    flux_interp.at(i, j) = flux_input_loc.at(i0, j) + (flux_input_loc.at(i0+1, j) - flux_input_loc.at(i0, j)) / dxflux * (x - (i0 + 0.5) * dxflux);
+                flux_interp.at(i, j) = fmax(flux_interp.at(i, j), 0.0);
+            }
+        }
+    }
+
+    // Transpose interpolated array
+    flux = flux_interp;
+    if (!is_rows)  // Tranpose interpolated array
+    {
+        n1 = flux_interp.nrows();
+        n2 = flux_interp.ncols();
+        flux.resize_fill(n2, n1, 0.0);
+        for (int i = 0; i < n2; i++)
+        {
+            for (int j = 0; j < n1; j++)
+                flux.at(i, j) = flux_interp.at(j, i);
+        }
+    }
+    return flux;
+}
+
+
+
+// Calculate flux profiles (interpolated to curtain elements)
 util::matrix_t<double> C_falling_particle_receiver::calculate_flux_profiles(double flux_sum /*W/m2*/, double flux_scale /*-*/, double plant_defocus /*-*/,
     double od_control, const util::matrix_t<double>* flux_map_input)
 {
     util::matrix_t<double> q_dot_inc;
-    int n_flux_y = (int)flux_map_input->nrows();
-    int n_flux_x = (int)flux_map_input->ncols();
-    q_dot_inc.resize_fill(m_n_y, m_n_x, 0.0);
-
-    double total_defocus = plant_defocus * od_control;
+    q_dot_inc.resize_fill(m_n_y, m_n_x, 0.0);    
+    double total_defocus = plant_defocus * od_control;  // Combine controller-specified defocus (plant_defocus) and receiver defocus (od_control)
 
     if (flux_sum > 1.0)
     {
-        for (int i = 0; i < n_flux_x; i++)
+        //--- Scale input flux
+        int n_flux_y = (int)flux_map_input->nrows();
+        int n_flux_x = (int)flux_map_input->ncols();
+        util::matrix_t<double>flux_scaled(n_flux_y, n_flux_x);
+        for (int j = 0; j < n_flux_y; j++)
         {
-            for (int j = 0; j < n_flux_y; j++)
+            for (int i = 0; i < n_flux_x; i++)
             {
-                q_dot_inc.at(j, i) = (*flux_map_input)(j, i) * total_defocus * flux_scale * 1000; // Flux incident on curtain (assuming curtain discretization resolution and flux profile resolution match)  [W/m^2];
-
+                flux_scaled.at(j,i) = (*flux_map_input)(j, i) * total_defocus * flux_scale * 1000;  // Incident flux adjusted for DNI and defocus [W/m2]
             }
+        }
 
-            // Fill in interpolated value at last axial node in fall direction.  This doesn't count toward energy balance, value here is just to define reasonable wall temperature
-            int j = m_n_y - 1;
-            q_dot_inc.at(j, i) = q_dot_inc.at(j-1, i) + (q_dot_inc.at(j-1,i) - q_dot_inc.at(j-2, i));
-            
+        //--- Interpolate
+        util::matrix_t<double> flux_x = (m_n_y-1 == n_flux_y) ? flux_scaled : interpolate_flux_1d(flux_scaled, m_n_y - 1, true);    // Interpolate to curtain y-resolution
+        util::matrix_t<double> flux = (m_n_x == n_flux_x) ? flux_x : interpolate_flux_1d(flux_x, m_n_x, false);                    // Interpolate to curtain x-resolution
+        for (int j = 0; j < m_n_y; j++)
+        {
+            for (int i = 0; i < m_n_x; i++)
+            {
+                if (j < m_n_y - 1)
+                    q_dot_inc.at(j, i) = flux.at(j, i);
+                else
+                    q_dot_inc.at(j, i) = flux.at(j - 1, i);  // Note the flux at the last height node doesn't contribute to the energy balance, this value will only be used to calculation the wall temperature solution at the last node (which also doesn't contribute to the energy balance)
+            }
         }
     }
-    else
-    {
-        q_dot_inc.fill(0.0);
-    }
+
     return q_dot_inc;
 }
 
@@ -1670,8 +1751,13 @@ double C_falling_particle_receiver::sandia_efficiency_correlation(bool is_multis
         H = 5000.;
     }
 
+    // Adjust wind direction relative to receiver orientation
+    double wdir_eff = wind_direc - m_rec_orientation;  
+    if (wdir_eff < 0)
+        wdir_eff = 360 + wdir_eff;
+
     q = exp(-Q_inc * 1.e-6 / m_ap_area);
-    val = 180 - fabs(180 - wind_direc);
+    val = 180 - fabs(180 - wdir_eff);
     theta = pow(val, F) * exp(-val / G) / H;
     eta = A + B * q + C * pow(q, 2) + D * q * v_wind * theta + E * pow(v_wind, 2) * theta;
     eta = fmax(eta, 0.0);
@@ -1765,12 +1851,15 @@ void C_falling_particle_receiver::calculate_advection_coeff_sandia(double vel, d
     hadv = Nu * k_air / m_curtain_height;   // Advective loss coefficient without wind (W/m2/K)
 
     double wind_factor = 1.0;
-    double phi_wind = exp(-pow((std::abs(wdir - F) - G) / H, 2));
+    double wdir_eff = wdir - m_rec_orientation;  // Adjust wind direction relative to receiver orientation
+    if (wdir_eff < 0)
+        wdir_eff = 360 + wdir_eff;
+    double phi_wind = exp(-pow((std::abs(wdir_eff - F) - G) / H, 2));
     fwind = 1.0 + (D - E * m_ap_height) * wspd * phi_wind;
 
     // Scale loss coefficient to account for differences in aperture and curtain area
     // Loss coefficient from Gonzalez et al. assumes equal aperture area and curtain area and will overestimate convective losses if the loss coefficient is applied for cases where curtain area > aperture area
-    hadv *= m_ap_height / m_curtain_height; 
+    hadv *= m_ap_area / m_curtain_area;
 
     return;
 }

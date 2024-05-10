@@ -155,6 +155,9 @@ protected:
     double m_initial_fall_height_fixed;         // Fixed initial fall height [m]
     double m_initial_fall_height_fraction;      // Initial fall height of particle curtain before reaching top of cavity / cavity height [-]
 
+    // Receiver orientation
+    double m_rec_orientation;    // Receiver orientation (0 = north, 90 = east, 180 = south, 270 = west
+
 
     // Particle and curtain properties
     double m_particle_dp;       // Particle diameter [m]
@@ -262,8 +265,12 @@ protected:
     double scale_wind_speed(double v_wind_10);
 
     int use_previous_solution(const s_steady_state_soln& soln, const std::vector<s_steady_state_soln>& stored_solns);
+
+    util::matrix_t<double> interpolate_flux_1d(util::matrix_t<double>& flux_input, int n, bool is_rows);
+
     util::matrix_t<double> calculate_flux_profiles(double flux_sum /*W/m2*/, double dni_scale /*-*/, double plant_defocus /*-*/,
         double od_control /*-*/, const util::matrix_t<double>* flux_map_input);
+
     void calculate_steady_state_soln(s_steady_state_soln& soln, double tol = 1.0e-4, bool init_from_existing = false, int max_iter = 50);
     void solve_for_mass_flow(s_steady_state_soln& soln);
     void solve_for_mass_flow_and_defocus(s_steady_state_soln& soln, double m_dot_htf_max, const util::matrix_t<double>* flux_map_input);
@@ -322,7 +329,7 @@ public:
         double m_dot_htf_max_frac /*-*/, double eta_pump /*-*/,
         int field_fl, util::matrix_t<double> field_fl_props,
         int model_type /*-*/, double fixed_efficiency /*-*/, int rad_model_type /*-*/, int hadv_model_type /*-*/, double hadv_user  /*-*/,
-        double ap_height /*m*/, double ap_width /*m*/, double ap_height_ratio /*-*/, double ap_width_ratio /*-*/, double ap_curtain_depth_ratio /*-*/,
+        double ap_height /*m*/, double ap_width /*m*/, double ap_height_ratio /*-*/, double ap_width_ratio /*-*/, double ap_curtain_depth_ratio /*-*/, double rec_orientation,
         double particle_dp /*m*/, double particle_abs /*-*/, double curtain_emis /*-*/, double dthdy /*-*/,
         double cav_emis /*-*/, double cav_twall /*m*/, double cav_kwall /*m*/, double cav_hext /*W/m2/K*/,
         double deltaT_transport_cold /*K*/, double deltaT_transport_hot /*K*/,
