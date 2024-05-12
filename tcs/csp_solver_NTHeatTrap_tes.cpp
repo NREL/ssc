@@ -1357,7 +1357,7 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
     double energy_balance_error = 0;    // [MW]
     double energy_error_leakage = 0;    // [MW]
     double total_error_leakage_corrected = 0;   //[MW]
-    double energy_balance_error_percent = 0; // Percent error of total internal energy change
+    double energy_balance_error_percent = 0; // Energy balance power Error / design heat rate
     double energy_error_wall = 0;   // [MW]
     {
         // Positive is Charge, Negative is Discharge
@@ -1481,10 +1481,8 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
 
         // Balance
         energy_balance_error = (dQ_total - Q_net) / timestep; // MW (should be zero)
-        if (std::abs(dQ_total) >= 0.1)
-            energy_balance_error_percent = (energy_balance_error / (dQ_total/timestep)) * 100.0;
-        else
-            energy_balance_error_percent = 0;
+        energy_balance_error_percent = (energy_balance_error / m_q_dot_design) * 100.0;
+
 
 
         // Tank Wall Energy
