@@ -64,6 +64,7 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
     {C_csp_NTHeatTrap_tes::E_E_COLD, C_csp_reported_outputs::TS_LAST},	//[MJ]
     {C_csp_NTHeatTrap_tes::E_ERROR_LEAK_CORRECTED, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[MW]
     {C_csp_NTHeatTrap_tes::E_WALL_ERROR, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[MW]
+    {C_csp_NTHeatTrap_tes::E_ERROR_CORRECTED, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[MW]
     csp_info_invalid
 };
 
@@ -130,6 +131,7 @@ void C_storage_tank_dynamic_NT::init(HTFProperties htf_class_in, double V_tank /
     m_V_prev = V_ini;
     m_T_prev = T_ini;
     m_m_prev = calc_mass_at_prev();
+    m_m_wall_prev = calc_mass_wall(m_T_prev, m_m_prev);
 }
 
 double C_storage_tank_dynamic_NT::calc_mass_at_prev()
@@ -1357,6 +1359,7 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
     double energy_balance_error = 0;    // [MW]
     double energy_error_leakage = 0;    // [MW]
     double total_error_leakage_corrected = 0;   //[MW]
+    double total_error_leakage_wall_corrected = 0;  //[MW]
     double energy_balance_error_percent = 0; // Energy balance power Error / design heat rate
     double energy_error_wall = 0;   // [MW]
     {
@@ -1555,6 +1558,7 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
 
                 energy_error_wall = mdot_wall * m_tank_wall_cp * (T_wall_actual - T_wall_assumed) * 1e-6;   //[MW]
             }
+            // Discharge
             else if (mdot_net < 0)
             {
                 // Cold side is expanding, taking on hot wall
@@ -1568,9 +1572,9 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
 
         total_error_leakage_corrected = std::abs(energy_balance_error) - std::abs(energy_error_leakage);
 
+        total_error_leakage_wall_corrected = std::abs(energy_balance_error) - std::abs(energy_error_leakage + energy_error_wall);
+
     }
-
-
 
 
     // Solve pumping power here
@@ -1639,7 +1643,9 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
     mc_reported_outputs.value(E_E_COLD, mc_cold_tank_NT.get_m_E_calc());//[MJ]
     mc_reported_outputs.value(E_E_COLD, mc_cold_tank_NT.get_m_E_calc());//[MJ]
     mc_reported_outputs.value(E_ERROR_LEAK_CORRECTED, total_error_leakage_corrected); //[MW]
-    mc_reported_outputs.value(E_WALL_ERROR, energy_error_leakage);  //[MWt]
+    mc_reported_outputs.value(E_WALL_ERROR, energy_error_wall);  //[MWt]
+    mc_reported_outputs.value(E_ERROR_CORRECTED, total_error_leakage_wall_corrected);   //[MW]
+    
 
     return 0;
 }

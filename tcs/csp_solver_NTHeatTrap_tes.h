@@ -255,7 +255,8 @@ public:
         E_E_HOT,
         E_E_COLD,
         E_ERROR_LEAK_CORRECTED,
-        E_WALL_ERROR
+        E_WALL_ERROR,
+        E_ERROR_CORRECTED
 	};
 
 
