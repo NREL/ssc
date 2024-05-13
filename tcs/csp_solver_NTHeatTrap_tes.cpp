@@ -1366,9 +1366,7 @@ int C_csp_NTHeatTrap_tes::solve_tes_off_design(double timestep /*s*/, double  T_
     }
 
     // TOTAL Energy Balance for total system here
-    double energy_balance_error_percent = 0; // Energy balance power Error / design heat rate
-
-    energy_balance_error_percent = (q_dot_error_total / m_q_dot_design) * 100.0;
+     double energy_balance_error_percent = (q_dot_error_total / m_q_dot_design) * 100.0; // [%] Energy balance power Error / design heat rate
 
 
     // Solve pumping power here
@@ -2033,8 +2031,6 @@ void C_csp_NTHeatTrap_tes::solve_tanks_iterative(double timestep /*s*/, double n
         error_leak_avg += energy_error_leakage * (ministep / timestep);  //[MW]
         error_wall_avg += energy_error_wall * (ministep / timestep);     //[MW]
         error_corrected_avg += energy_error_corrected * (ministep / timestep);  //[MW]
-
-        double x = 5;
     }
 
     T_ave_cold = T_ave_weighted_cold;
