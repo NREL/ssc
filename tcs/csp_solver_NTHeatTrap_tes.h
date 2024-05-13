@@ -220,7 +220,14 @@ private:
     double m_radius;        //[m] radius of tank
     double m_length_total;  //[m] Total length of tank (two tanks combined)
 
-    
+    void solve_tanks_iterative(double timestep /*s*/, double n_substep /**/, double mdot_charge /*kg/s*/,
+        double mdot_discharge /*kg/s*/, double T_charge /*K*/, double T_discharge /*K*/, double T_amb /*K*/,
+        double& T_ave_cold /*K*/, double& q_heater_cold /*MW*/, double& q_dot_loss_cold /*MW*/,
+        double& q_dot_out_cold /*MW*/, double& q_dot_error_cold /*MW*/,
+        double& T_ave_hot /*K*/, double& q_heater_hot /*MW*/, double& q_dot_loss_hot /*MW*/,
+        double& q_dot_out_hot /*MW*/, double& q_dot_error_hot /*MW*/,
+        double& q_dot_error_total /*MW*/, double& q_dot_error_leak /*MW*/, double& q_dot_error_wall /*MW*/,
+        double& q_dot_error_corrected /*MW*/);
 
 public:
 
@@ -254,7 +261,6 @@ public:
         E_LEAK_ERROR,
         E_E_HOT,
         E_E_COLD,
-        E_ERROR_LEAK_CORRECTED,
         E_WALL_ERROR,
         E_ERROR_CORRECTED
 	};
@@ -412,14 +418,18 @@ public:
         double& q_dot_heater /*MWe*/, double& m_dot /*kg/s*/, double& W_dot_rhtf_pump /*MWe*/,
         double& q_dot_loss /*MWt*/, double& q_dot_dc_to_htf /*MWt*/, double& q_dot_ch_from_htf /*MWt*/,
         double& T_hot_ave /*K*/, double& T_cold_ave /*K*/, double& T_hot_final /*K*/, double& T_cold_final /*K*/,
-        double& q_dot_out_cold /*MW*/, double& q_dot_out_hot /*MW*/, double& q_dot_error_cold, double& q_dot_error_hot);
+        double& q_dot_out_cold /*MW*/, double& q_dot_out_hot /*MW*/, double& q_dot_error_cold, double& q_dot_error_hot,
+        double& q_dot_error_total /*MW*/, double& q_dot_error_leak /*MW*/, double& q_dot_error_wall /*MW*/,
+        double& q_dot_error_corrected /*MW*/);
 
     bool discharge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/,
         double T_htf_cold_in, double& T_htf_hot_out /*K*/,
         double& q_dot_heater /*MWe*/, double& m_dot /*kg/s*/, double& W_dot_rhtf_pump /*MWe*/,
         double& q_dot_loss /*MWt*/, double& q_dot_dc_to_htf /*MWt*/, double& q_dot_ch_from_htf /*MWt*/,
         double& T_hot_ave /*K*/, double& T_cold_ave /*K*/, double& T_hot_final /*K*/, double& T_cold_final /*K*/,
-        double& q_dot_out_cold /*MW*/, double& q_dot_out_hot /*MW*/, double& q_dot_error_cold, double& q_dot_error_hot);
+        double& q_dot_out_cold /*MW*/, double& q_dot_out_hot /*MW*/, double& q_dot_error_cold, double& q_dot_error_hot,
+        double& q_dot_error_total /*MW*/, double& q_dot_error_leak /*MW*/, double& q_dot_error_wall /*MW*/,
+        double& q_dot_error_corrected /*MW*/);
 
     int pressure_drops(double m_dot_sf, double m_dot_pb,
         double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating,
