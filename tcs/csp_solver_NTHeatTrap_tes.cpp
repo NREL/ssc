@@ -424,6 +424,13 @@ void C_storage_tank_dynamic_NT::energy_balance_core(double timestep /*s*/, doubl
                                  (cp_wall_stagnant * mass_wall_stagnant))
                                  / mass_total_calc;
 
+        double cp_bulk_weighted_prev = ((cp_fluid_prev * mass_fluid_prev_inner) +
+                                        (m_tank_wall_cp * mass_wall_prev))
+                                        / (mass_wall_prev + mass_fluid_prev_inner);
+
+        double avg_cp = 0.5 * (cp_bulk_weighted_calc + cp_bulk_weighted_prev);
+
+        int x = 0;
     }
 
     // If Fluid is leaving (leak coming in)
@@ -518,12 +525,26 @@ void C_storage_tank_dynamic_NT::energy_balance_core(double timestep /*s*/, doubl
         double b_coef = mdot_in_total + UA_calc / cp_bulk_weighted_calc;
         double c_coef = diff_m_dot_total;
 
-        /*double a_coef = ((cp_in_weighted / cp_bulk_weighted_calc) * mdot_in_total * T_in_weighted)
+        double a_coef_beta = ((cp_in_weighted / cp_bulk_weighted_calc) * mdot_in_total * T_in_weighted)
                         + ((UA_calc / cp_bulk_weighted_calc) * T_amb);
-        double b_coef = mdot_in_total - mdot_out_total
+        double b_coef_beta = mdot_in_total - mdot_out_total
                         + ((cp_out_weighted / cp_bulk_weighted_calc) * mdot_out_total)
                         + (UA_calc / cp_bulk_weighted_calc);
-        double c_coef = mdot_in_total - mdot_out_total;*/
+        double c_coef_beta = mdot_in_total - mdot_out_total;
+
+
+        /*if (std::abs(a_coef - a_coef_beta) > 1e-4)
+        {
+            int l = 0;
+        }
+        if (std::abs(b_coef - b_coef_beta) > 1e-4)
+        {
+            int l = 0;
+        }
+        if (std::abs(c_coef - c_coef_beta) > 1e-4)
+        {
+            int l = 0;
+        }*/
 
 
         T_calc_inner = a_coef / b_coef;
