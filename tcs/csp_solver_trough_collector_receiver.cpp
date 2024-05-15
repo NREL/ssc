@@ -1197,6 +1197,10 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
     m_T_loop[0] = m_T_loop_in;
     IntcOutputs intc_state = m_interconnects[0].State(m_dot_htf_loop * 2, m_T_loop[0], T_db, P_intc_in);
     m_T_loop[1] = intc_state.temp_out;
+    if (m_T_loop[1] < 0 || isnan(m_T_loop[1]) || m_T_loop[1] > 10000)
+    {
+        int break_here = 0;
+    }
     intc_state = m_interconnects[1].State(m_dot_htf_loop, m_T_loop[1], T_db, intc_state.pressure_out);
     m_T_htf_in_t_int[0] = intc_state.temp_out;
 
