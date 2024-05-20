@@ -606,6 +606,15 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
     double rho_cold = m_htfProps.dens(m_T_loop_in_des, 10.e5); //kg/m3
     double rho_hot = m_htfProps.dens(m_T_loop_out_des, 10.e5); //kg/m3
 	double rho_ave = m_htfProps.dens((m_T_loop_out_des + m_T_loop_in_des) / 2.0, 10.e5); //kg/m3
+
+    // Calculate Design velocity
+    {
+        m_loop_velocity_min_des = m_m_dot_loop_des * 4.0 / (rho_ave * M_PI * m_min_inner_diameter * m_min_inner_diameter); //[m/s]
+        m_loop_velocity_min_des = m_m_dot_loop_des * 4.0 / (rho_ave * M_PI * m_max_inner_diameter * m_max_inner_diameter); //[m/s]
+
+        int x = 0;
+    }
+
     //Calculate the header design
     m_nrunsec = (int)floor(float(m_nfsec) / 4.0) + 1;  //The number of unique runner diameters
     m_D_runner.resize(2 * m_nrunsec);
@@ -4298,6 +4307,33 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
         }
     }
 
+    // Max_inner_diameter
+    m_max_inner_diameter = 0;
+    {
+        m_max_inner_diameter = m_D_2[0];
+        int hce_t = -1;
+        for (int i = 0; i < static_cast<int>(m_trough_loop_control.at(0)); i++)
+        {
+            hce_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(i * 3 + 2)), 1), 4) - 1;
+            if (m_D_2[hce_t] > m_max_inner_diameter) {
+                m_max_inner_diameter = m_D_2[hce_t];
+            }
+        }
+    }
+    
+
+    double hce_type = 0;
+    double d = 0;
+    size_t nrow, ncol;
+    m_SCAInfoArray.size(nrow, ncol);
+
+    for (int i = 0; i < nrow; i++)
+    {
+        hce_type = m_SCAInfoArray.at(i, 1);
+        d = m_D_2[hce_type];
+        int x = 0;
+    }
+
     // SCADefocusArray
     m_SCADefocusArray = vector<int>();
     {
@@ -4508,8 +4544,6 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
         m_c_htf_ave = m_htfProps.Cp_ave(m_T_loop_in_des, m_T_loop_out_des) * 1000.;    //[J/kg-K] Specific heat
         m_m_dot_design = (m_Ap_tot * m_I_bn_des * m_opteff_des - loss_tot * float(m_nLoops)) / (m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des));
     }
-
-
 
     // Interconnect component minor loss coefficients
     m_K_cpnt = util::matrix_t<double>(m_nSCA + 3, 11, std::numeric_limits<double>::quiet_NaN());

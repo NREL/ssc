@@ -495,6 +495,7 @@ public:
     double m_field_htf_cp_avg_des = std::numeric_limits<double>::quiet_NaN();                  //[kJ/kg-K] Field average htf cp value at design
     double m_single_loop_aperture = std::numeric_limits<double>::quiet_NaN();                  //[m2] Aperture of single loop
     double m_min_inner_diameter = std::numeric_limits<double>::quiet_NaN();                    //[m] Min inner diameter
+    double m_max_inner_diameter = std::numeric_limits<double>::quiet_NaN();                    //[m] Max inner diameter
     std::vector<double> m_HCE_heat_loss_des;        //[W/m]
     double m_HCE_heat_loss_loop_des = std::numeric_limits<double>::quiet_NaN();                //[W/m] Loop Heat Loss from HCE at Design
     std::vector<double> m_csp_dtr_sca_calc_sca_effs; // SCA optical efficiencies at design
@@ -521,6 +522,8 @@ public:
     double m_fixed_land_area = std::numeric_limits<double>::quiet_NaN();                       //[acre] Fixed Land Area
     double m_total_land_area = std::numeric_limits<double>::quiet_NaN();                       //[acre] Total Land Area
     double m_opteff_des = std::numeric_limits<double>::quiet_NaN();	                           //[-] Design-point optical efficieny (theta = 0) from the solar field
+    double m_loop_velocity_max_des = std::numeric_limits<double>::quiet_NaN();               //[m/s] Maximum Loop velocity at design
+    double m_loop_velocity_min_des = std::numeric_limits<double>::quiet_NaN();               //[m/s] Maximum Loop velocity at design
 
 	// **************************************************************************
 	// **************************************************************************
