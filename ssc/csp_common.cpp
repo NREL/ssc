@@ -272,6 +272,8 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
             rf->rec_azimuth.val = rec_azimuth[i];       // Required to provide an azimuth for each receiver
             rf->power_fraction.val = power_fraction[input_idx];
             rf->absorptance.val = 1.0;      // Don't apply absorptivity for falling particle receivers - performance model will do this
+            rf->therm_loss_base.val = m_cmod->as_double("rec_hl_perm2");    // TODO: Single input for all...
+            rf->piping_loss_coef.val = 0.0;  // Assume no piping losses for now TODO
 
             // Receiver offsets from tower center
             rf->rec_offset_x.val = rec_tower_offset.at(i, 0);
