@@ -48,8 +48,6 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
     csp_info_invalid
 };
 
-
-
 C_csp_particlecline_tes::C_csp_particlecline_tes(
     int external_fl,                             // [-] external fluid identifier
     util::matrix_t<double> external_fl_props,    // [-] external fluid properties
@@ -76,21 +74,8 @@ C_csp_particlecline_tes::C_csp_particlecline_tes(
     double f_V_hot_ini,                          // [%] Initial fraction of available volume that is hot
     double htf_pump_coef,		                 // [kW/kg/s] Pumping power to move 1 kg/s of HTF through sink
     bool tanks_in_parallel,                      // [-] Whether the tanks are in series or parallel with the external system. Series means external htf must go through storage tanks.
-    double V_tes_des,                            // [m/s] Design-point velocity for sizing the diameters of the TES piping
-    bool calc_design_pipe_vals,                  // [-] Should the HTF state be calculated at design conditions
-    double tes_pump_coef,		                 // [kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
-    double eta_pump,                             // [-] Pump efficiency, for newer pumping calculations
-    bool has_hot_tank_bypass,                    // [-] True if the bypass valve causes the source htf to bypass just the hot tank and enter the cold tank before flowing back to the external system.
-    double T_tank_hot_inlet_min,                 // [C] Minimum source htf temperature that may enter the hot tank
-    bool custom_tes_p_loss,                      // [-] True if the TES piping losses should be calculated using the TES pipe lengths and minor loss coeffs, false if using the pumping loss parameters
-    bool custom_tes_pipe_sizes,                  // [-] True if the TES diameters and wall thicknesses parameters should be used instead of calculating them
-    util::matrix_t<double> k_tes_loss_coeffs,    // [-] Combined minor loss coefficients of the fittings and valves in the collection (including bypass) and generation loops in the TES 
-    util::matrix_t<double> tes_diams,            // [m] Imported inner diameters for the TES piping as read from the modified output files
-    util::matrix_t<double> tes_wallthicks,       // [m] Imported wall thicknesses for the TES piping as read from the modified output files
-    util::matrix_t<double> tes_lengths,          // [m] Imported lengths for the TES piping as read from the modified output files
-    double pipe_rough,                           // [m] Pipe absolute roughness
-    double dP_discharge                          // [bar] Pressure drop on the TES discharge side (e.g., within the steam generator)
-)
+    double V_tes_des                             // [m/s] Design-point velocity for sizing the diameters of the TES piping
+    )
     :
     m_external_fl(external_fl), m_external_fl_props(external_fl_props), m_tes_fl(tes_fl), m_tes_fl_props(tes_fl_props),
     m_q_dot_design(q_dot_design), m_frac_max_q_dot(frac_max_q_dot), m_Q_tes_des(Q_tes_des),
@@ -99,11 +84,7 @@ C_csp_particlecline_tes::C_csp_particlecline_tes(
     m_cold_tank_Thtr(cold_tank_Thtr), m_cold_tank_max_heat(cold_tank_max_heat), m_dt_hot(dt_hot), m_T_cold_des(T_cold_des),
     m_T_hot_des(T_hot_des), m_T_tank_hot_ini(T_tank_hot_ini), m_T_tank_cold_ini(T_tank_cold_ini),
     m_h_tank_min(h_tank_min), m_f_V_hot_ini(f_V_hot_ini), m_htf_pump_coef(htf_pump_coef), tanks_in_parallel(tanks_in_parallel),
-    V_tes_des(V_tes_des), calc_design_pipe_vals(calc_design_pipe_vals), m_tes_pump_coef(tes_pump_coef),
-    eta_pump(eta_pump), has_hot_tank_bypass(has_hot_tank_bypass), T_tank_hot_inlet_min(T_tank_hot_inlet_min),
-    custom_tes_p_loss(custom_tes_p_loss), custom_tes_pipe_sizes(custom_tes_pipe_sizes), k_tes_loss_coeffs(k_tes_loss_coeffs),
-    tes_diams(tes_diams), tes_wallthicks(tes_wallthicks), tes_lengths(tes_lengths),
-    pipe_rough(pipe_rough), dP_discharge(dP_discharge)
+    V_tes_des(V_tes_des)
 {
 
     if (tes_lengths.ncells() < 11) {
@@ -125,12 +106,168 @@ C_csp_particlecline_tes::C_csp_particlecline_tes()
         m_V_tank_hot_ini = m_mass_total_active = m_h_tank_calc = m_d_tank_calc = m_q_dot_loss_des =
         m_cp_external_avg = m_rho_store_avg = m_m_dot_tes_des_over_m_dot_external_des = std::numeric_limits<double>::quiet_NaN();
 
+    m_q_dot_design = m_frac_max_q_dot = m_h_tank_in = m_d_tank_in = m_u_tank = m_cold_tank_Thtr = m_hot_tank_Thtr
+        = m_hot_tank_max_heat = m_cold_tank_max_heat = m_cold_tank_max_heat = m_dt_hot = m_T_cold_des = m_T_hot_des
+        = m_dP_src_des = m_T_tank_hot_ini = m_T_tank_cold_ini = m_h_tank_min = m_f_V_hot_ini = m_htf_pump_coef
+        = m_tes_pump_coef = eta_pump = V_tes_des = P_in_des
+        = pipe_vol_tot
+        = std::numeric_limits<double>::quiet_NaN();
+
+
+    m_ts_hours = std::numeric_limits<double>::quiet_NaN();
+
+    m_external_fl_props = m_tes_fl_props = util::matrix_t<double>();
+
+    m_is_h_fixed = m_is_cr_to_cold_tank_allowed = m_is_hx = m_is_tes = tanks_in_parallel = false;
+    m_tank_pairs = 0;
+
     mc_reported_outputs.construct(S_output_info);
 }
 
 
 void C_csp_particlecline_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs)
 {
+    if (!(m_Q_tes_des > 0.0))
+    {
+        m_is_tes = false;
+        return;		// No storage!
+    }
+
+    m_is_tes = true;
+
+    // Declare instance of fluid class for EXTERNAL fluid
+    // Set fluid number and copy over fluid matrix if it makes sense
+    if (m_external_fl != HTFProperties::User_defined && m_external_fl < HTFProperties::End_Library_Fluids)
+    {
+        if (!mc_external_htfProps.SetFluid(m_external_fl))
+        {
+            throw(C_csp_exception("External HTF code is not recognized", "Two Tank TES Initialization"));
+        }
+    }
+    else if (m_external_fl == HTFProperties::User_defined)
+    {
+        int n_rows = (int)m_external_fl_props.nrows();
+        int n_cols = (int)m_external_fl_props.ncols();
+        if (n_rows > 2 && n_cols == 7)
+        {
+            if (!mc_external_htfProps.SetUserDefinedFluid(m_external_fl_props))
+            {
+                error_msg = util::format(mc_external_htfProps.UserFluidErrMessage(), n_rows, n_cols);
+                throw(C_csp_exception(error_msg, "Two Tank TES Initialization"));
+            }
+        }
+        else
+        {
+            error_msg = util::format("The user defined external HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", n_rows, n_cols);
+            throw(C_csp_exception(error_msg, "Two Tank TES Initialization"));
+        }
+    }
+    else
+    {
+        throw(C_csp_exception("External HTF code is not recognized", "Two Tank TES Initialization"));
+    }
+
+
+    // Declare instance of fluid class for STORAGE fluid.
+    // Set fluid number and copy over fluid matrix if it makes sense.
+    if (m_tes_fl != HTFProperties::User_defined && m_tes_fl < HTFProperties::End_Library_Fluids)
+    {
+        if (!mc_store_htfProps.SetFluid(m_tes_fl))
+        {
+            throw(C_csp_exception("Storage HTF code is not recognized", "Two Tank TES Initialization"));
+        }
+    }
+    else if (m_tes_fl == HTFProperties::User_defined)
+    {
+        int n_rows = (int)m_tes_fl_props.nrows();
+        int n_cols = (int)m_tes_fl_props.ncols();
+        if (n_rows > 2 && n_cols == 7)
+        {
+            if (!mc_store_htfProps.SetUserDefinedFluid(m_tes_fl_props))
+            {
+                error_msg = util::format(mc_store_htfProps.UserFluidErrMessage(), n_rows, n_cols);
+                throw(C_csp_exception(error_msg, "Two Tank TES Initialization"));
+            }
+        }
+        else
+        {
+            error_msg = util::format("The user defined storage HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", n_rows, n_cols);
+            throw(C_csp_exception(error_msg, "Two Tank TES Initialization"));
+        }
+    }
+    else
+    {
+        throw(C_csp_exception("Storage HTF code is not recognized", "Two Tank TES Initialization"));
+    }
+
+    bool is_hx_calc = true;
+
+    if (m_tes_fl != m_external_fl)
+        is_hx_calc = true;
+    else if (m_external_fl != HTFProperties::User_defined)
+        is_hx_calc = false;
+    else
+    {
+        is_hx_calc = !mc_external_htfProps.equals(&mc_store_htfProps);
+    }
+
+    m_is_hx = is_hx_calc;
+
+    if (m_is_hx && !tanks_in_parallel)
+    {
+        mc_csp_messages.add_message(C_csp_messages::NOTICE, "The inputs specified serial TES operation, but the external and storage fluids are different."
+            " The simulation modeled parallel TES operation.\n");
+        tanks_in_parallel = true;
+    }
+
+    if (tanks_in_parallel) {
+        m_is_cr_to_cold_tank_allowed = false;
+    }
+    else {
+        m_is_cr_to_cold_tank_allowed = true;
+    }
+
+    // Calculate thermal power to PC at design
+    m_q_pb_design = m_q_dot_design * 1.E6;	//[Wt]
+
+    // Convert parameter units
+    m_hot_tank_Thtr += 273.15;		//[K] convert from C
+    m_cold_tank_Thtr += 273.15;		//[K] convert from C
+    m_T_cold_des += 273.15;		    //[K] convert from C
+    m_T_hot_des += 273.15;		    //[K] convert from C
+    m_T_tank_hot_ini += 273.15;		//[K] convert from C
+    m_T_tank_cold_ini += 273.15;		//[K] convert from C
+
+    m_ts_hours = m_Q_tes_des / m_q_dot_design;
+
+    double T_tes_hot_des, T_tes_cold_des;
+    if (m_is_hx) {
+        T_tes_hot_des = m_T_hot_des - m_dt_hot;
+        T_tes_cold_des = m_T_cold_des + m_dt_hot;
+    }
+    else {
+        T_tes_hot_des = m_T_hot_des;
+        T_tes_cold_des = m_T_cold_des;
+    }
+
+    // SIZE
+    if (m_is_h_fixed)
+    {
+
+    }
+    else
+    {
+
+    }
+
+    // 5.13.15, twn: also be sure that hx is sized such that it can supply full load to sink
+    double duty = m_q_pb_design * std::max(1.0, m_frac_max_q_dot);		//[W] Allow all energy from the source to go into storage at any time
+
+    // Initial storage charge based on % mass 
+    double T_tes_ave = 0.5 * (T_tes_hot_des + T_tes_cold_des);
+    double cp_ave = mc_store_htfProps.Cp_ave(T_tes_cold_des, T_tes_hot_des);				//[kJ/kg-K] Specific heat at average temperature
+    m_rho_store_avg = mc_store_htfProps.dens(T_tes_ave, 1.0);
+    m_mass_total_active = m_Q_tes_des * 3600.0 / (cp_ave / 1000.0 * (T_tes_hot_des - T_tes_cold_des));  //[kg] Total HTF mass at design point inlet/outlet T
 
 }
 

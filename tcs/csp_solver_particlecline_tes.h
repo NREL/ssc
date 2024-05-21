@@ -42,16 +42,15 @@ class C_csp_particlecline_tes : public C_csp_tes
 {
 private:
 
+    HTFProperties mc_external_htfProps;		// Instance of HTFProperties class for external HTF
+    HTFProperties mc_store_htfProps;		// Instance of HTFProperties class for storage HTF
+
 	// member string for exception messages
 	std::string error_msg;
 
-	// Timestep data
-	// double m_m_dot_tes_dc_max;  //[kg/s] TES discharge available from the SYSTEM (external side of HX if there is one)
-	// double m_m_dot_tes_ch_max;  //[kg/s] TES charge that can be sent to the SYSTEM (external side of HX if there is one)
-
 	// Member data
-	bool m_is_tes;
-	bool m_is_cr_to_cold_tank_allowed;
+	bool m_is_tes;              // Is there TES? (signifier for controller)
+	bool m_is_cr_to_cold_tank_allowed;  // Allow outlet of field to go straight to cold tank
 	double m_vol_tank;			//[m3] volume of *one temperature*, i.e. vol_tank = total cold storage = total hot storage
 	double m_V_tank_active;		//[m^3] available volume (considering h_min) of *one temperature*
 	double m_q_pb_design;		//[Wt] thermal power to sink at design
@@ -66,6 +65,8 @@ private:
 	double m_rho_store_avg;     //[kg/m3]
 
 	double m_m_dot_tes_des_over_m_dot_external_des;	//[-]
+
+    bool m_is_hx;   // Is there a hx between field fluid and TES
 
 public:
 
@@ -111,18 +112,9 @@ public:
     double m_tes_pump_coef;		              //[kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
     double eta_pump;                          //[-] Pump efficiency, for newer pumping calculations
     bool tanks_in_parallel;                   //[-] Whether the tanks are in series or parallel with the external system. ALWAYS TRUE for NT Heat Trap
-    bool has_hot_tank_bypass;                 //[-] True if the bypass valve causes the external htf to bypass just the hot tank and enter the cold tank before flowing back to the external system.
-    double T_tank_hot_inlet_min;              //[C] Minimum external htf temperature that may enter the hot tank
     double V_tes_des;                         //[m/s] Design-point velocity for sizing the diameters of the TES piping
-    bool custom_tes_p_loss;                   //[-] True if the TES piping losses should be calculated using the TES pipe lengths and minor loss coeffs, false if using the pumping loss parameters
-    bool custom_tes_pipe_sizes;               //[-] True if the TES diameters and wall thicknesses parameters should be used instead of calculating them
-    util::matrix_t<double> k_tes_loss_coeffs; //[-] Combined minor loss coefficients of the fittings and valves in the collection (including bypass) and generation loops in the TES 
-    util::matrix_t<double> tes_diams;         //[m] Imported inner diameters for the TES piping as read from the modified output files
-    util::matrix_t<double> tes_wallthicks;    //[m] Imported wall thicknesses for the TES piping as read from the modified output files
     util::matrix_t<double> tes_lengths;       //[m] Imported lengths for the TES piping as read from the modified output files
-    bool calc_design_pipe_vals;               //[-] Should the HTF state be calculated at design conditions
-    double pipe_rough;                        //[m] Pipe absolute roughness
-    double dP_discharge;                      //[bar] Pressure drop on the TES discharge side (e.g., within the steam generator)
+
 
     C_csp_reported_outputs mc_reported_outputs;
 
@@ -157,21 +149,8 @@ public:
         double f_V_hot_ini,                          // [%] Initial fraction of available volume that is hot
         double htf_pump_coef,		                 // [kW/kg/s] Pumping power to move 1 kg/s of HTF through sink
         bool tanks_in_parallel,                      // [-] Whether the tanks are in series or parallel with the external system. Series means external htf must go through storage tanks.
-        double V_tes_des = 1.85,                     // [m/s] Design-point velocity for sizing the diameters of the TES piping
-        bool calc_design_pipe_vals = true,           // [-] Should the HTF state be calculated at design conditions
-        double tes_pump_coef = std::numeric_limits<double>::quiet_NaN(),		// [kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
-        double eta_pump = std::numeric_limits<double>::quiet_NaN(),             // [-] Pump efficiency, for newer pumping calculations
-        bool has_hot_tank_bypass = false,                                       // [-] True if the bypass valve causes the external htf to bypass just the hot tank and enter the cold tank before flowing back to the external system.
-        double T_tank_hot_inlet_min = std::numeric_limits<double>::quiet_NaN(), // [C] Minimum source htf temperature that may enter the hot tank
-        bool custom_tes_p_loss = false,                                         // [-] True if the TES piping losses should be calculated using the TES pipe lengths and minor loss coeffs, false if using the pumping loss parameters
-        bool custom_tes_pipe_sizes = false,                                     // [-] True if the TES diameters and wall thicknesses parameters should be used instead of calculating them
-        util::matrix_t<double> k_tes_loss_coeffs = util::matrix_t<double>(),    // [-] Combined minor loss coefficients of the fittings and valves in the collection (including bypass) and generation loops in the TES 
-        util::matrix_t<double> tes_diams = util::matrix_t<double>(),            // [m] Imported inner diameters for the TES piping as read from the modified output files
-        util::matrix_t<double> tes_wallthicks = util::matrix_t<double>(),       // [m] Imported wall thicknesses for the TES piping as read from the modified output files
-        util::matrix_t<double> tes_lengths = util::matrix_t<double>(),          // [m] Imported lengths for the TES piping as read from the modified output files
-        double pipe_rough = std::numeric_limits<double>::quiet_NaN(),           // [m] Pipe absolute roughness
-        double dP_discharge = std::numeric_limits<double>::quiet_NaN()          // [bar] Pressure drop on the TES discharge side (e.g., within the steam generator)
-    );
+        double V_tes_des = 1.85                      // [m/s] Design-point velocity for sizing the diameters of the TES piping
+        );
 
     C_csp_particlecline_tes();
 

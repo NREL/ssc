@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "core.h"
 #include "csp_solver_two_tank_tes.h"
 #include "csp_solver_NTHeatTrap_tes.h"
+#include "csp_solver_particlecline_tes.h"
 
 // Forward declarations
 double C_to_K(double T);
@@ -160,11 +161,13 @@ public:
         C_csp_tes* storage_pointer;
         C_csp_two_tank_tes storage_two_tank;
         C_csp_NTHeatTrap_tes storage_NT;
+        C_csp_particlecline_tes storage_particle;
 
         double P_ref = as_double("P_ref");
         double eta_ref = as_double("eta_ref");
         double tshours = as_double("tshours");
 
+        // Two Tank
         if (tes_type == 0)
         {
             storage_two_tank = C_csp_two_tank_tes(
@@ -211,6 +214,7 @@ public:
 
             storage_pointer = &storage_two_tank;
         }
+        // Norwich HeatTrap
         else if (tes_type == 1)
         {
 
@@ -283,6 +287,38 @@ public:
             );
 
             storage_pointer = &storage_NT;
+        }
+        // Particle Thermocline
+        else if (tes_type == 2)
+        {
+            storage_particle = C_csp_particlecline_tes(
+                as_integer("Fluid"),                                                // [-] field fluid identifier
+                as_matrix("field_fl_props"),                                        // [-] field fluid properties
+                as_integer("store_fluid"),                                          // [-] tes fluid identifier
+                as_matrix("store_fl_props"),                                        // [-] tes fluid properties
+                as_double("P_ref") / as_double("eta_ref"),                          // [MWt] Design heat rate in and out of tes
+                as_double("solar_mult"),                                            // [-] the max design heat rate as a fraction of the nominal
+                as_double("P_ref") / as_double("eta_ref") * as_double("tshours"),   // [MWt-hr] design storage capacity
+                true,                                                               // Use input height
+                as_double("h_tank"),                                                // [m] tank height input
+                0.0,                                                                // [m] tank diameter input
+                as_double("u_tank"),                                                // [W/m^2-K]
+                as_integer("tank_pairs"),                                           // [-]
+                as_double("hot_tank_Thtr"),                                         // [C] convert to K in init()
+                as_double("hot_tank_max_heat"),                                     // [MW]
+                as_double("cold_tank_Thtr"),                                        // [C] convert to K in init()
+                as_double("cold_tank_max_heat"),                                    // [MW]
+                as_double("dt_hot"),                                                // [C] Temperature difference across heat exchanger - assume hot and cold deltaTs are equal
+                as_double("T_loop_in_des"),                                         // [C] convert to K in init()
+                as_double("T_loop_out"),                                            // [C] convert to K in init()
+                as_double("T_tank_hot_ini"),                                        // [C] Initial temperature in hot storage tank
+                as_double("T_tank_cold_ini"),                                       // [C] Initial temperature in cold storage cold
+                as_double("h_tank_min"),                                            // [m] Minimum allowable HTF height in storage tank
+                as_double("init_hot_htf_percent"),                                  // [%] Initial fraction of available volume that is hot
+                as_double("pb_pump_coef"),                                          // [kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle
+                as_boolean("tanks_in_parallel"),                                    // [-] Whether the tanks are in series or parallel with the solar field. Series means field htf must go through storage tanks.
+                as_double("V_tes_des")                                              // [m/s] Design-point velocity for sizing the diameters of the TES piping
+                );
         }
         else
         {
