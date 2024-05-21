@@ -369,7 +369,7 @@ int multi_rec_opt_helper::run(SolarField *SF)
                 {
                     int id = helios.at(i)->getId();
                     col[i] = O.column("x", i, 0);
-                    row[i] = power_allocs.at(id).at(0) / gamma_0;
+                    row[i] = power_allocs.at(id).at(0) / rec_design_power.at(0) / gamma_0;
                 }
 
                 double gamma_r = SF->getVarMap()->recs.at(j).q_rec_des.Val() / SF->getVarMap()->sf.q_des.val;
@@ -378,7 +378,7 @@ int multi_rec_opt_helper::run(SolarField *SF)
                 {
                     int id = helios.at(i)->getId();
                     col[Nh + i] = O.column("x", i, j);
-                    row[Nh + i] = -power_allocs.at(id).at(j) / gamma_r;
+                    row[Nh + i] = -power_allocs.at(id).at(j) / rec_design_power.at(j) / gamma_r;
                 }
                 //the constraint means sum of power from receiver 0 minus sum of power from receiver 'r' equals zero when scaled by their power fractions.
                 add_constraintex(lp, Nh*2, row, col, EQ, 0.);
@@ -394,10 +394,12 @@ int multi_rec_opt_helper::run(SolarField *SF)
             {
                 int id = helios.at(i)->getId();
                 col[i] = O.column("x", i, j);
-                row[i] = power_allocs[id].at(j);
+                row[i] = power_allocs[id].at(j) / rec_design_power.at(j);
             }
             //minimum power must be met. If insufficient power is available for any receiver, the problem fails as infeasible
-            add_constraintex(lp, Nh, row, col, GE, rec_design_power.at(j));
+            //add_constraintex(lp, Nh, row, col, GE, rec_design_power.at(j));
+            add_constraintex(lp, Nh, row, col, GE, 1.0);
+
         }
     }
 
@@ -437,9 +439,10 @@ int multi_rec_opt_helper::run(SolarField *SF)
 
 #ifdef _DEBUG
     set_outputfile(lp, "aimpoint_optimization_log.txt");
-#endif
-
+    set_verbose(lp, FULL);
+#else
     set_verbose(lp, IMPORTANT); //DETAILED //http://web.mit.edu/lpsolve/doc/set_verbose.htm
+#endif
     set_timeout(lp, timeout_sec);  //max solution time
     set_presolve(lp, PRESOLVE_NONE, get_presolveloops(lp));
     set_scaling(lp, SCALE_EXTREME | SCALE_FUTURE2);
@@ -539,7 +542,7 @@ int multi_rec_opt_helper::run(SolarField *SF)
                 if (prec > 0.)
                 {
                     h->setPowerToReceiver(h->getPowerToReceiver() + prec);
-                    heliostat_set.insert(h);
+                    heliostat_set.insert(h);        // If heliostat is all zeros, than is not included here
 
                     if (prec > most_rec_power)
                     {
@@ -553,7 +556,7 @@ int multi_rec_opt_helper::run(SolarField *SF)
         h->setWhichReceiver( recs->at(best_rec) );
     }
 
-    if (!is_performance)
+    if (!is_performance || is_field_assigned)
     {
         included_heliostats.clear();
         included_heliostats.reserve(heliostat_set.size());

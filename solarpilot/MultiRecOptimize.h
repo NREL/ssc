@@ -49,6 +49,7 @@ struct multi_rec_opt_helper
 
     bool is_abort_flag;
     bool is_performance;
+    bool is_field_assigned;
     int result_status;
     double objective;
     Hvector included_heliostats;
@@ -61,8 +62,9 @@ struct multi_rec_opt_helper
 
     multi_rec_opt_helper()
     {
-        is_performance = false;
         is_abort_flag = false;
+        is_performance = false;
+        is_field_assigned = false;
         result_status = RESULT_STATUS::RS_NOSIM;
         timeout_sec = 10000;
         objective = 0.;

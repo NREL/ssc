@@ -1856,6 +1856,13 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
         multi_rec_opt_helper mroh;
         mroh.timeout_sec = _var_map->opt.multirec_opt_timeout.val;
         mroh.is_performance = false;
+
+		// If layout was assigned, than just run performance to assign heliostats to receivers
+		if (_var_map->sf.layout_method.mapval() == var_solarfield::LAYOUT_METHOD::USERDEFINED) {
+			mroh.is_performance = true;	// to not remove heliostats from input field
+			mroh.is_field_assigned = true;
+		}
+
         mroh.sim_info = &_sim_info;
         mroh.problem_name = " heliostat assignments for multiple receivers ";
         mroh.run(this);         //run the optimization
