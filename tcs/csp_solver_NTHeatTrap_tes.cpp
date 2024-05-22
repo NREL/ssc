@@ -389,6 +389,10 @@ void C_storage_tank_dynamic_NT::energy_balance_core(double timestep /*s*/, doubl
         double mass_wall_in = mdot_in_wall * timestep;
         double T_wall_in = T_tank_in;
 
+        // Adjust Wall Mass IN (to allow for cp correction)
+        double cp_wall_in_corrected = cp_fluid_in; // J/kg K
+        double mass_wall_in_corrected = mass_wall_in * (cp_wall_in / cp_wall_in_corrected);   // kg
+
         // Stagnant Fluid
         //double cp_fluid_prev = cp_fluid_prev;
         double mass_fluid_stagnant = mass_fluid_prev_inner;
@@ -399,16 +403,20 @@ void C_storage_tank_dynamic_NT::energy_balance_core(double timestep /*s*/, doubl
         double mass_wall_stagnant = mass_wall_prev;
         double T_wall_stagnant = T_prev_inner;
 
+        // Adjust Wall Mass STAGNANT (to allow for cp correction)
+        double cp_wall_stagnant_corrected = cp_fluid_prev;  // J/kg K
+        double mass_wall_stagnant_corrected = mass_wall_stagnant * (cp_wall_stagnant / cp_wall_stagnant_corrected); // kg
+
         // Total Inlet
-        double mass_in_total = mass_fluid_in + mass_wall_in;
+        double mass_in_total = mass_fluid_in + mass_wall_in_corrected;
         mdot_in_total = mass_in_total / timestep;
-        double mass_cp_in_total = (mass_fluid_in * cp_fluid_in) + (mass_wall_in * cp_wall_in);
+        double mass_cp_in_total = (mass_fluid_in * cp_fluid_in) + (mass_wall_in_corrected * cp_wall_in_corrected);
         cp_in_weighted = ((cp_fluid_in * mass_fluid_in) +
-                          (cp_wall_in * mass_wall_in))
+                          (cp_wall_in_corrected * mass_wall_in_corrected))
                           / mass_in_total;
 
         T_in_weighted = ((T_fluid_in * cp_fluid_in * mass_fluid_in) +
-                         (T_wall_in * cp_wall_in * mass_wall_in))
+                         (T_wall_in * cp_wall_in_corrected * mass_wall_in_corrected))
                          / (mass_cp_in_total);
 
         // Total Outlet
@@ -417,20 +425,12 @@ void C_storage_tank_dynamic_NT::energy_balance_core(double timestep /*s*/, doubl
 
 
         // Total Bulk at end of timestep
-        double mass_total_calc = mass_fluid_in + mass_wall_in + mass_fluid_stagnant + mass_wall_stagnant;
+        double mass_total_calc = mass_fluid_in + mass_wall_in_corrected + mass_fluid_stagnant + mass_wall_stagnant_corrected;
         cp_bulk_weighted_calc = ((cp_fluid_in * mass_fluid_in) +
-                                 (cp_wall_in * mass_wall_in) +
+                                 (cp_wall_in_corrected * mass_wall_in_corrected) +
                                  (cp_fluid_prev * mass_fluid_stagnant) +
-                                 (cp_wall_stagnant * mass_wall_stagnant))
+                                 (cp_wall_stagnant_corrected * mass_wall_stagnant_corrected))
                                  / mass_total_calc;
-
-        double cp_bulk_weighted_prev = ((cp_fluid_prev * mass_fluid_prev_inner) +
-                                        (m_tank_wall_cp * mass_wall_prev))
-                                        / (mass_wall_prev + mass_fluid_prev_inner);
-
-        double avg_cp = 0.5 * (cp_bulk_weighted_calc + cp_bulk_weighted_prev);
-
-        int x = 0;
     }
 
     // If Fluid is leaving (leak coming in)
@@ -448,6 +448,10 @@ void C_storage_tank_dynamic_NT::energy_balance_core(double timestep /*s*/, doubl
         double cp_wall_stagnant = m_tank_wall_cp;
         double mass_wall_stagnant = mass_wall_calc;
 
+        // Corrected Stagnant Wall
+        double cp_wall_stagnant_corrected = cp_fluid_stagnant;
+        double mass_wall_stagnant_corrected = mass_wall_stagnant * (cp_wall_stagnant / cp_wall_stagnant_corrected);
+
         // Fluid Out
         double mass_fluid_out = mdot_fluid_out_adj * timestep;
         double cp_fluid_out = cp_fluid_prev;
@@ -456,6 +460,10 @@ void C_storage_tank_dynamic_NT::energy_balance_core(double timestep /*s*/, doubl
         double mass_wall_out = mdot_out_wall * timestep;
         double cp_wall_out = m_tank_wall_cp;
 
+        // Corrected Wall Mass Out
+        double cp_wall_out_corrected = cp_fluid_out;
+        double mass_wall_out_corrected = mass_wall_out * (cp_wall_out / cp_wall_out_corrected);
+
         // Total Inlet
         double mass_in_total = mass_leak_in;
         mdot_in_total = mass_leak_in / timestep;
@@ -463,29 +471,32 @@ void C_storage_tank_dynamic_NT::energy_balance_core(double timestep /*s*/, doubl
         T_in_weighted = T_leak_in;
 
         // Total Outlet
-        double mass_out_total = mass_fluid_out + mass_wall_out;
+        double mass_out_total = mass_fluid_out + mass_wall_out_corrected;
         mdot_out_total = mass_out_total / timestep;
         cp_out_weighted = ((cp_fluid_out * mass_fluid_out) +
-                           (cp_wall_out * mass_wall_out))
+                           (cp_wall_out_corrected * mass_wall_out_corrected))
                            / mass_out_total;
 
         // Total Bulk at end of timestep
-        double mass_total_calc = mass_leak_in + mass_fluid_stagnant + mass_wall_stagnant;
+        double mass_total_calc = mass_leak_in + mass_fluid_stagnant + mass_wall_stagnant_corrected;
         cp_bulk_weighted_calc = ((cp_leak_in * mass_leak_in) +
                                  (cp_fluid_stagnant * mass_fluid_stagnant) +
-                                 (cp_wall_stagnant * mass_wall_stagnant))
+                                 (cp_wall_stagnant_corrected * mass_wall_stagnant_corrected))
                                  / mass_total_calc;
-
-        double cp_bulk_weighted_prev = ((cp_fluid_prev * mass_fluid_prev_inner) +
-                                        (m_tank_wall_cp * mass_wall_prev))
-                                        / (mass_wall_prev + mass_fluid_prev_inner);
-
-        cp_bulk_weighted_calc = 0.5 * (cp_bulk_weighted_calc + cp_bulk_weighted_prev);
-
-        double x = 0;
-
     }
         
+    // Terms used in final calculation
+    double diff_m_dot_total = mdot_in_total - mdot_out_total;
+    double mass_total_prev = mass_fluid_prev_inner + mass_wall_prev;
+    double UA_calc = m_u_tank * m_SA_calc;
+
+    // Adjust Wall Mass Prev Term
+    double cp_wall_prev_corrected = cp_fluid_prev;
+    double mass_wall_prev_corrected = mass_wall_prev * (m_tank_wall_cp / cp_wall_prev_corrected);
+
+    // OVERWRITE mass_total_prev
+    mass_total_prev = mass_fluid_prev_inner + mass_wall_prev_corrected;
+
     // Validate Mass Balance
     {
         double mass_total_prev = mass_wall_prev + mass_fluid_prev_inner;
@@ -500,12 +511,6 @@ void C_storage_tank_dynamic_NT::energy_balance_core(double timestep /*s*/, doubl
         }
 
     }
-
-
-    // Terms used in final calculation
-    double diff_m_dot_total = mdot_in_total - mdot_out_total;
-    double mass_total_prev = mass_fluid_prev_inner + mass_wall_prev;
-    double UA_calc = m_u_tank * m_SA_calc;
 
     // Tank is either expanding or contracting
     if (diff_m_dot_total != 0.0)
