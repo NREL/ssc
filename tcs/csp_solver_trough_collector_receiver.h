@@ -89,7 +89,10 @@ public:
         E_REC_OP_MODE_FINAL,        //[-] Final receiver operating mode
         E_DEFOCUS_FINAL,            //[-]
         E_T_IN_LOOP_FINAL,          //[C]
-        E_T_OUT_LOOP_FINAL          //[C]
+        E_T_OUT_LOOP_FINAL,         //[C]
+
+        E_VEL_LOOP_MIN,             //[m/s]
+        E_VEL_LOOP_MAX              //[m/w]
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
