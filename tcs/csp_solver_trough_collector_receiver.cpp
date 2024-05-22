@@ -269,7 +269,7 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 
     // If solar multiple is not yet calculated
     if (m_is_solar_mult_designed == false)
-        this->design_solar_mult();
+        throw(C_csp_exception("design_solar_mult() must be called before init()", "Trough collector solver"));
 	
 	// double some_calc = m_nSCA + m_nHCEt;
 	/*
@@ -4217,7 +4217,7 @@ double C_csp_trough_collector_receiver::get_collector_area()
 
 // ------------------------------------------ supplemental methods -----------------------------------------------------------
 
-bool C_csp_trough_collector_receiver::design_solar_mult()
+bool C_csp_trough_collector_receiver::design_solar_mult(std::vector<double> trough_loop_control)
 {
     if (m_is_solar_mult_designed == true)
         return false;
@@ -4255,14 +4255,26 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
         throw(C_csp_exception("Receiver HTF code is not recognized", "Trough Collector Solver"));
     }
 
+    // Process trough_loop_control
+    m_nSCA = trough_loop_control.at(0);
+
     // SCAInfoArray
-    m_SCAInfoArray = util::matrix_t<double>(static_cast<int>(m_trough_loop_control.at(0)), 2);
+    m_SCAInfoArray = util::matrix_t<double>(static_cast<int>(trough_loop_control.at(0)), 2);
     {
-        int assemblies = static_cast<int>(m_trough_loop_control.at(0));
+        int assemblies = static_cast<int>(trough_loop_control.at(0));
 
         for (int i = 0; i < assemblies; i++) {
-            m_SCAInfoArray.at(i, 1) = static_cast<int>(m_trough_loop_control.at(1 + 3 * i));
-            m_SCAInfoArray.at(i, 0) = static_cast<int>(m_trough_loop_control.at(2 + 3 * i));
+            m_SCAInfoArray.at(i, 1) = static_cast<int>(trough_loop_control.at(1 + 3 * i));
+            m_SCAInfoArray.at(i, 0) = static_cast<int>(trough_loop_control.at(2 + 3 * i));
+        }
+    }
+    // SCADefocusArray
+    m_SCADefocusArray = vector<int>();
+    {
+        int assemblies = static_cast<int>(trough_loop_control.at(0));
+        m_SCADefocusArray.resize(assemblies);
+        for (int i = 0; i < assemblies; i++) {
+            m_SCADefocusArray[i] = static_cast<int>(trough_loop_control.at(3 + 3 * i));
         }
     }
 
@@ -4280,69 +4292,52 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
         m_L_tot += m_L_actSCA[ct - 1];
     }
 
+    size_t nSCA, ncol;
+    m_SCAInfoArray.size(nSCA, ncol);
+
     // Single Loop Aperture
     m_single_loop_aperture = 0;
     {
-        int nsca = static_cast<int>(m_trough_loop_control.at(0));
-
-        int sca_t = -1;
-        for (int i = 0; i < nsca; i++)
+        int sca_type = 0;
+        double aperture = 0;
+        for (int i = 0; i < nSCA; i++)
         {
-            sca_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
-            m_single_loop_aperture += + m_A_aperture[sca_t];
+            sca_type = m_SCAInfoArray.at(i, 1) - 1;
+            aperture = m_A_aperture[sca_type];
+            m_single_loop_aperture += aperture;
         }
     }
 
+
     // Min_inner_diameter
-    m_min_inner_diameter = 0;
+    m_min_inner_diameter = m_D_2.at(0, 0);
     {
-        m_min_inner_diameter = m_D_2[0];
-        int hce_t = -1;
-        for (int i = 0; i < static_cast<int>(m_trough_loop_control.at(0)); i++)
+        int hce_type = 0;
+        double d = 0;
+        for (int i = 0; i < nSCA; i++)
         {
-            hce_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(i * 3 + 2)), 1), 4) - 1;
-            if (m_D_2[hce_t] < m_min_inner_diameter) {
-                m_min_inner_diameter = m_D_2[hce_t];
-            }
+            hce_type = m_SCAInfoArray.at(i, 0) - 1;
+            d = m_D_2.at(hce_type, 0);
+            if (d < m_min_inner_diameter)
+                m_min_inner_diameter = d;
         }
     }
 
     // Max_inner_diameter
-    m_max_inner_diameter = 0;
+    m_max_inner_diameter = m_D_2.at(0, 0);
     {
-        m_max_inner_diameter = m_D_2[0];
-        int hce_t = -1;
-        for (int i = 0; i < static_cast<int>(m_trough_loop_control.at(0)); i++)
+        int hce_type = 0;
+        double d = 0;
+        for (int i = 0; i < nSCA; i++)
         {
-            hce_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(i * 3 + 2)), 1), 4) - 1;
-            if (m_D_2[hce_t] > m_max_inner_diameter) {
-                m_max_inner_diameter = m_D_2[hce_t];
-            }
+            hce_type = m_SCAInfoArray.at(i, 0) - 1;
+            d = m_D_2.at(hce_type, 0);
+            if (d > m_max_inner_diameter)
+                m_max_inner_diameter = d;
         }
     }
+
     
-
-    double hce_type = 0;
-    double d = 0;
-    size_t nrow, ncol;
-    m_SCAInfoArray.size(nrow, ncol);
-
-    for (int i = 0; i < nrow; i++)
-    {
-        hce_type = m_SCAInfoArray.at(i, 1);
-        d = m_D_2[hce_type];
-        int x = 0;
-    }
-
-    // SCADefocusArray
-    m_SCADefocusArray = vector<int>();
-    {
-        int assemblies = static_cast<int>(m_trough_loop_control.at(0));
-        m_SCADefocusArray.resize(assemblies);
-        for (int i = 0; i < assemblies; i++) {
-            m_SCADefocusArray[i] = static_cast<int>(m_trough_loop_control.at(3 + 3 * i));
-        }
-    }
 
     // Max Field Flow Velocity
     m_max_field_flow_velocity = 0;
@@ -4377,13 +4372,20 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
     // HCE *loop* design heat loss
     m_HCE_heat_loss_loop_des = 0;
     {
-        int ncol = static_cast<int>(m_trough_loop_control.at(0));
+        int ncol = static_cast<int>(trough_loop_control.at(0));
         double total_len = 0.;
 
         for (int i = 0; i < ncol; i++)
         {
-            int sca_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
-            int hce_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(2 + i * 3)), 1), 4) - 1;
+
+            // This should not use trough_loop_control
+            int sca_t_old = std::min(std::max(static_cast<int>(trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
+            int hce_t_old = std::min(std::max(static_cast<int>(trough_loop_control.at(2 + i * 3)), 1), 4) - 1;
+
+            int sca_t = m_SCAInfoArray.at(i, 1) - 1;
+            int hce_t = m_SCAInfoArray.at(i, 0) - 1;
+
+
             total_len = total_len + m_L_SCA[sca_t];
             m_HCE_heat_loss_loop_des = m_HCE_heat_loss_loop_des + m_L_SCA[sca_t]
                 * (1 - (m_HCE_heat_loss_des[hce_t] / (m_I_bn_des * m_A_aperture[sca_t] / m_L_SCA[sca_t])));

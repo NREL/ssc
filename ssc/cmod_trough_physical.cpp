@@ -847,13 +847,13 @@ public:
                 c_trough.m_specified_total_aperture = as_double("specified_total_aperture");    //[m2] User specified total aperture
 
                 // ADDED Trough Inputs (TMB 10/06/2023) for design point calculations
-                std::vector<double> trough_loop_vec = as_vector_double("trough_loop_control");
-                c_trough.m_trough_loop_control.assign(&trough_loop_vec[0], trough_loop_vec.size());
+                //std::vector<double> trough_loop_vec = as_vector_double("trough_loop_control");
+                //c_trough.m_trough_loop_control.assign(&trough_loop_vec[0], trough_loop_vec.size());
 
-                int actual_nSCA = trough_loop_vec[0];
+                //int actual_nSCA = trough_loop_vec[0];
 
 
-                c_trough.m_nSCA = actual_nSCA;                              //[-] Number of SCA's in a loop
+                //c_trough.m_nSCA = actual_nSCA;                              //[-] Number of SCA's in a loop
                 c_trough.m_nHCEt = as_integer("nHCEt");                     //[-] Number of HCE types
                 c_trough.m_nColt = as_integer("nColt");                     //[-] Number of collector types
                 c_trough.m_nHCEVar = as_integer("nHCEVar");                 //[-] Number of HCE variants per t
@@ -1093,7 +1093,7 @@ public:
             }
 
             // Calculate solar multiple (needed for other component constructors)
-            c_trough.design_solar_mult();
+            c_trough.design_solar_mult(as_vector_double("trough_loop_control"));
 
             // Allocate trough outputs
             {

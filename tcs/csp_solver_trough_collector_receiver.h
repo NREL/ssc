@@ -486,7 +486,7 @@ public:
     double m_specified_solar_mult = std::numeric_limits<double>::quiet_NaN();                  // User specified solar mult
     double m_specified_total_aperture = std::numeric_limits<double>::quiet_NaN();              //[m2] User specified total aperture
     bool m_is_solar_mult_designed = false;          // Flag for whether solar multiple has been calculated
-    util::matrix_t<double> m_trough_loop_control;
+    //util::matrix_t<double> m_trough_loop_control;
     double m_P_ref = std::numeric_limits<double>::quiet_NaN();                                 //[W] Design Turbine Net Output
     double m_eta_ref = std::numeric_limits<double>::quiet_NaN();                               //[] Design Cycle Thermal Efficiency
     double m_non_solar_field_land_area_multiplier = std::numeric_limits<double>::quiet_NaN();  //[]
@@ -601,7 +601,7 @@ public:
 	virtual double get_collector_area();
 
 	// ------------------------------------------ supplemental methods -----------------------------------------------------------
-    bool design_solar_mult();
+    bool design_solar_mult(std::vector<double> trough_loop_control);
 
 	class E_piping_config
 	{

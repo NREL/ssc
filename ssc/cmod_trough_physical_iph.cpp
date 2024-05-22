@@ -737,15 +737,15 @@ public:
             // Collect Inputs
             {
                 // ADDED Trough Inputs (TMB 10/06/2023) for design point calculations
-                std::vector<double> trough_loop_vec = as_vector_double("trough_loop_control");
-                c_trough.m_trough_loop_control.assign(&trough_loop_vec[0], trough_loop_vec.size());
+                //std::vector<double> trough_loop_vec = as_vector_double("trough_loop_control");
+                //c_trough.m_trough_loop_control.assign(&trough_loop_vec[0], trough_loop_vec.size());
 
-                int actual_nSCA = trough_loop_vec[0];
+                //int actual_nSCA = trough_loop_vec[0];
 
                 c_trough.m_use_solar_mult_or_aperture_area = as_number("use_solar_mult_or_aperture_area"); // Use specified solar mult (0) or total aperture (1)
                 c_trough.m_specified_solar_mult = as_number("specified_solar_multiple");            // User specified solar mult
                 c_trough.m_specified_total_aperture = as_number("specified_total_aperture");    //[m2] User specified total aperture
-                c_trough.m_nSCA = actual_nSCA;                              //[-] Number of SCA's in a loop
+                //c_trough.m_nSCA = actual_nSCA;   CALCULATED INTERNAL                           //[-] Number of SCA's in a loop
                 c_trough.m_nHCEt = as_integer("nHCEt");                     //[-] Number of HCE types
                 c_trough.m_nColt = as_integer("nColt");                     //[-] Number of collector types
                 c_trough.m_nHCEVar = as_integer("nHCEVar");                 //[-] Number of HCE variants per t
@@ -967,7 +967,7 @@ public:
             }
 
             // Calculate solar multiple (needed for other component constructors)
-            bool success = c_trough.design_solar_mult();
+            bool success = c_trough.design_solar_mult(as_vector_double("trough_loop_control"));
             if (success == false)
                 throw exec_error("trough_physical_iph", "Negative solar mult or total aperture.");
 
