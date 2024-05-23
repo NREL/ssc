@@ -401,6 +401,10 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "SCADefocusArray",                  "Order in which the SCA's should be defocused",                              "",              "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "max_field_flow_velocity",          "Maximum field flow velocity",                                               "m/s",           "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "min_field_flow_velocity",          "Minimum field flow velocity",                                               "m/s",           "",               "Solar Field",    "*",                                "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "max_loop_flow_vel_des",            "Maximum loop flow velocity at design",                                      "m/s",           "",               "Solar Field",    "*",                                "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "min_loop_flow_vel_des",            "Minimum loop flow velocity at design",                                      "m/s",           "",               "Solar Field",    "*",                                "",                      "" },
+
+
 
     { SSC_OUTPUT,       SSC_NUMBER,      "total_loop_conversion_efficiency", "Total Loop Conversion Efficiency at Design",                                "",              "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "total_required_aperture_for_SM1",  "Aperture required for solar mult = 1",                                      "m2",            "",               "Solar Field",    "*",                                "",                      "" },
@@ -529,7 +533,10 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "T_rec_hot_out",             "Loop timestep-averaged outlet temperature",                                        "C",            "",               "solar_field",    "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "T_field_hot_out",           "Field timestep-averaged outlet temperature",                                       "C",            "",               "solar_field",    "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "deltaP_field",              "Field pressure drop",                                                              "bar",          "",               "solar_field",    "sim_type=1",                       "",                      "" },
-                                                                                                                                                                                                                                                               
+    { SSC_OUTPUT,       SSC_ARRAY,       "vel_loop_min",              "Receiver min HTF velocity in loop",                                                         "m/s",          "",               "solar_field",    "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "vel_loop_max",              "Receiver max HTF velocity in loop",                                                         "m/s",          "",               "solar_field",    "sim_type=1",                       "",                      "" },
+
+
     { SSC_OUTPUT,       SSC_ARRAY,       "W_dot_sca_track",           "Field collector tracking power",                                                   "MWe",          "",               "solar_field",    "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "W_dot_field_pump",          "Field htf pumping power",                                                          "MWe",          "",               "solar_field",    "sim_type=1",                       "",                      "" },
 
@@ -1135,6 +1142,11 @@ public:
                 c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_DEFOCUS_FINAL, allocate("defocus_final", n_steps_fixed), n_steps_fixed);                     //[-]
                 c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_IN_LOOP_FINAL, allocate("T_in_loop_final", n_steps_fixed), n_steps_fixed);                 //[C]
                 c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_T_OUT_LOOP_FINAL, allocate("T_out_loop_final", n_steps_fixed), n_steps_fixed);               //[C]
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_VEL_LOOP_MIN, allocate("vel_loop_min", n_steps_fixed), n_steps_fixed);               //[C]
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_VEL_LOOP_MAX, allocate("vel_loop_max", n_steps_fixed), n_steps_fixed);               //[C]
+
+
+
             }
             
         }
@@ -1792,6 +1804,9 @@ public:
                 set_vector("SCADefocusArray", c_trough.m_SCADefocusArray);
                 assign("max_field_flow_velocity", c_trough.m_max_field_flow_velocity);  //[m/s]
                 assign("min_field_flow_velocity", c_trough.m_min_field_flow_velocity);  //[m/s]
+                assign("max_loop_flow_vel_des", c_trough.m_max_loop_flow_vel_des);      //[m/s]
+                assign("min_loop_flow_vel_des", c_trough.m_min_loop_flow_vel_des);      //[m/s]
+
                 assign("total_loop_conversion_efficiency", c_trough.m_total_loop_conversion_efficiency_des);
                 assign("total_required_aperture_for_SM1", c_trough.m_total_required_aperture_for_SM1);
                 assign("required_number_of_loops_for_SM1", c_trough.m_required_number_of_loops_for_SM1);

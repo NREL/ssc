@@ -142,6 +142,8 @@ private:
 	// Variables that are passed between methods, but not necessary to carry over timesteps
 	double m_m_dot_htf_tot;	//[kg/s] The total flow rate through the entire field (m_dot_loop * N_loops)
 	double m_c_htf_ave;		//[J/kg-K] Average solar field specific heat
+    double m_vel_loop_max;  //[m/s] Max htf velocity in loop
+    double m_vel_loop_min;  //[m/s] Min htf velocity in loop
 
 	std::vector<double> m_E_int_loop;	//[J] Energy relative to ambient for each receiver
 	std::vector<double> m_E_accum;		//[J] Internal energy change in timestep for each receiver
@@ -525,8 +527,8 @@ public:
     double m_fixed_land_area = std::numeric_limits<double>::quiet_NaN();                       //[acre] Fixed Land Area
     double m_total_land_area = std::numeric_limits<double>::quiet_NaN();                       //[acre] Total Land Area
     double m_opteff_des = std::numeric_limits<double>::quiet_NaN();	                           //[-] Design-point optical efficieny (theta = 0) from the solar field
-    double m_loop_velocity_max_des = std::numeric_limits<double>::quiet_NaN();               //[m/s] Maximum Loop velocity at design
-    double m_loop_velocity_min_des = std::numeric_limits<double>::quiet_NaN();               //[m/s] Maximum Loop velocity at design
+    double m_max_loop_flow_vel_des = std::numeric_limits<double>::quiet_NaN();               //[m/s] Maximum Loop velocity at design
+    double m_min_loop_flow_vel_des = std::numeric_limits<double>::quiet_NaN();               //[m/s] Maximum Loop velocity at design
 
 	// **************************************************************************
 	// **************************************************************************

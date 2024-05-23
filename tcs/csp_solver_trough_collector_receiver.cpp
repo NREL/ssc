@@ -611,8 +611,8 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 
     // Calculate Design velocity
     {
-        m_loop_velocity_max_des = m_m_dot_loop_des * 4.0 / (rho_ave * M_PI * m_min_inner_diameter * m_min_inner_diameter); //[m/s]
-        m_loop_velocity_min_des = m_m_dot_loop_des * 4.0 / (rho_ave * M_PI * m_max_inner_diameter * m_max_inner_diameter); //[m/s]
+        m_max_loop_flow_vel_des = m_m_dot_loop_des * 4.0 / (rho_ave * M_PI * m_min_inner_diameter * m_min_inner_diameter); //[m/s]
+        m_min_loop_flow_vel_des = m_m_dot_loop_des * 4.0 / (rho_ave * M_PI * m_max_inner_diameter * m_max_inner_diameter); //[m/s]
     }
 
     //Calculate the header design
@@ -1261,6 +1261,9 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
     double q_abs_htf_total = 0.;
     std::vector<double> m_EqOpteffs(m_nSCA, 0.);
 
+    m_vel_loop_min = std::numeric_limits<double>::quiet_NaN();
+    m_vel_loop_max = std::numeric_limits<double>::quiet_NaN();
+
 	//---------------------
 	for( int i = 0; i<m_nSCA; i++ )
 	{
@@ -1312,7 +1315,19 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 
 		//Calculate the specific heat for the node
 		c_htf_i *= 1000.0;	//[J/kg-K]
-		
+
+        // Calculate Velocity of Node
+        double vel_htf_i = m_dot_htf_loop * 4.0 / (rho_htf_i * M_PI * m_D_2.at(HT, 0) * m_D_2.at(HT, 0));
+
+        if (std::isnan(m_vel_loop_min) || (vel_htf_i < m_vel_loop_min))
+        {
+            m_vel_loop_min = vel_htf_i;
+        }
+        if (std::isnan(m_vel_loop_max) || (vel_htf_i > m_vel_loop_max))
+        {
+            m_vel_loop_max = vel_htf_i;
+        }
+
 		//Calculate the average node outlet temperature, including transient effects
 		double m_node = rho_htf_i * m_A_cs(HT, 1)*m_L_actSCA[CT];
 
@@ -2075,6 +2090,8 @@ void C_csp_trough_collector_receiver::set_output_value()
 	mc_reported_outputs.value(E_W_DOT_SCA_TRACK, m_W_dot_sca_tracking);		//[MWe]
 	mc_reported_outputs.value(E_W_DOT_PUMP, m_W_dot_pump);					//[MWe]
 
+    mc_reported_outputs.value(E_VEL_LOOP_MIN, m_vel_loop_min);  //[m/s]
+    mc_reported_outputs.value(E_VEL_LOOP_MAX, m_vel_loop_max);  //[m/s]
 
 	return;
 }
