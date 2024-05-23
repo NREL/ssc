@@ -46,9 +46,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_core.h"
 #include "csp_solver_pt_sf_perf_interp.h"
 #include "csp_solver_falling_particle_receiver.h"
-//#include "csp_solver_mspt_receiver_222.h"
-//#include "csp_solver_mspt_receiver.h"
-#include "csp_solver_mspt_collector_receiver.h"
+#include "csp_solver_falling_particle_collector_receiver.h"
 #include "csp_solver_pc_Rankine_indirect_224.h"
 #include "csp_solver_two_tank_tes.h"
 #include "csp_solver_tou_block_schedules.h"
@@ -562,6 +560,20 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_OUTPUT,    SSC_ARRAY,  "P_tower_lift",                       "Receiver and tower particle lift power",                                                                                                  "MWe",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
                                                                                                                                                                                                                                                                                                          
 	{ SSC_OUTPUT,    SSC_ARRAY,  "clearsky",						   "Predicted clear-sky beam normal irradiance",																							  "W/m2",         "",                                  "CR",                                       "sim_type=1&rec_clearsky_fraction>0",                               "",              ""},
+
+        // Collector-receiver outputs from individual receivers (only reported if > 1 receiver)
+    { SSC_OUTPUT,    SSC_ARRAY,  "q_dot_rec_inc_1",                    "Receiver 1 incident thermal power on particle curtain",                                                                                   "MWt",          "",                                  "",                                         "sim_type=1&num_recs>1",                                            "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "q_dot_rec_inc_2",                    "Receiver 2 incident thermal power on particle curtain, if applicable",                                                                    "MWt",          "",                                  "",                                         "sim_type=1&num_recs>1",                                            "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "q_dot_rec_inc_3",                    "Receiver 3 incident thermal power on particle curtain, if applicable",                                                                    "MWt",          "",                                  "",                                         "sim_type=1&num_recs>2",                                            "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "Q_thermal_1",                        "Receiver 1 thermal power to HTF less particle transport loss",                                                                            "MWt",          "",                                  "",                                         "sim_type=1&num_recs>1",                                            "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "Q_thermal_2",                        "Receiver 2 thermal power to HTF less particle transport loss, if applicable",                                                             "MWt",          "",                                  "",                                         "sim_type=1&num_recs>1",                                            "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "Q_thermal_3",                        "Receiver 3 thermal power to HTF less particle transport loss, if applicable",                                                             "MWt",          "",                                  "",                                         "sim_type=1&num_recs>2",                                            "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "eta_therm_1",                        "Receiver 1 efficiency",                                                                                                                   "",             "",                                  "",                                         "sim_type=1&num_recs>1",                                            "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "eta_therm_2",                        "Receiver 2 efficiency, if applicable",                                                                                                    "",             "",                                  "",                                         "sim_type=1&num_recs>1",                                            "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "eta_therm_3",                        "Receiver 3 efficiency, if applicable",                                                                                                    "",             "",                                  "",                                         "sim_type=1&num_recs>2",                                            "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "eta_field_1",                        "Field 1 optical efficiency",                                                                                                              "",             "",                                  "",                                         "sim_type=1&num_recs>1",                                            "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "eta_field_2",                        "Field 2 optical efficiency, if applicable",                                                                                               "",             "",                                  "",                                         "sim_type=1&num_recs>1",                                            "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "eta_field_3",                        "Field 3 optical efficiency, if applicable",                                                                                               "",             "",                                  "",                                         "sim_type=1&num_recs>2",                                            "",              "" },
 
         // Heater outputs is_parallel_htr
     { SSC_OUTPUT,    SSC_ARRAY,  "W_dot_heater",                       "Parallel heater electricity consumption",                                                                                                 "MWe",          "",                                  "Parallel Heater",                          "sim_type=1&is_parallel_htr=1",                                     "",              ""},
@@ -1110,8 +1122,7 @@ public:
         //      Receiver model
         // *********************************************************
 
-        double A_rec_curtain = std::numeric_limits<double>::quiet_NaN();
-        double A_rec_aperture = std::numeric_limits<double>::quiet_NaN();
+
 
         bool is_rec_model_clearsky = as_double("rec_clearsky_fraction") > 0.0;
         int rec_clearsky_model = as_integer("rec_clearsky_model");
@@ -1151,54 +1162,68 @@ public:
                 || count_max_curtain_depth != num_recs)
                 throw exec_error("csp_tower_particle", "Invalid receiver input. For nonduplicate receivers input array must have a length of " + util::to_string(num_recs));
         }
+
+
         // setting receiver parameters
         double user_efficiency = as_integer("rec_model_type") == 0 ? as_double("rec_eta_fixed") : 0.0;
         double user_hadv = as_integer("rec_adv_model_type") == 0 ? as_double("rec_hadv_fixed") : 0.0;
+        int n_x = as_integer("rec_nx"); //mt_flux_maps.ncols() / num_recs;
+        int n_y = as_integer("rec_ny"); //(mt_flux_maps.nrows() / mt_eta_map.nrows()) + 1;
+        if (as_integer("curtain_type") == 1) {
+            std::string err_msg = "Curved particle curtain is not currently implemented in the falling particle receiver performance model. Simulated performance will assume a flat curtain.\n";
+            log(err_msg, SSC_WARNING);
+        }
 
         int input_idx;
-        double ap_height, ap_width, curtain_height, curtain_width, ap_curtain_depth_ratio, rec_orientation;
-        for (int i = 0; i < num_recs; i++) {    // loop through receivers
+        double ap_height, ap_width, curtain_height, curtain_width, ap_curtain_depth_ratio, rec_orientation, q_dot_des_per_rec;
+        double A_rec_curtain_total = 0.0;
+        double A_rec_aperture_total = 0.0;
+        double power_fraction_sum = 0.0;
+        std::vector<double> A_rec_aperture(num_recs);
+        std::vector<double> A_rec_curtain(num_recs);
+        std:vector<std::shared_ptr<C_pt_receiver>> receivers(num_recs);
+        for (int i = 0; i < num_recs; i++)
+        {
+            input_idx = duplicate_recs ? 0 : i;
+            power_fraction_sum += power_fraction[input_idx];
+        }
+
+        for (int i = 0; i < num_recs; i++)   // loop through receivers
+        {   
             input_idx = duplicate_recs ? 0 : i; // Use the first element if duplicate receivers
             ap_height = rec_height[input_idx];
             ap_width = rec_width[input_idx];
             curtain_height = ap_height * norm_curtain_height[input_idx];
             curtain_width = ap_width * norm_curtain_width[input_idx];     // TODO: Update curtain width when curved curtains are allowed
-            A_rec_curtain = curtain_height * curtain_width;  // This receiver area is used to define the flux distribution.  Particle receiver model assumes that the flux distribution is defined based on the curtain area.
-            A_rec_aperture = ap_height * ap_width;           // The aperture area should be used in cost calculations
+            A_rec_curtain.at(i) = curtain_height * curtain_width;  // This receiver area is used to define the flux distribution.  Particle receiver model assumes that the flux distribution is defined based on the curtain area.
+            A_rec_aperture.at(i) = ap_height * ap_width;           // The aperture area should be used in cost calculations
+            A_rec_aperture_total += A_rec_aperture.at(i);
+            A_rec_curtain_total += A_rec_curtain.at(i);
             ap_curtain_depth_ratio = max_curtain_depth[input_idx] / ap_height;
-            rec_orientation = rec_azimuth[input_idx];
+            q_dot_des_per_rec = q_dot_rec_des * (power_fraction[input_idx] / power_fraction_sum);  // Receiver design point power
+            rec_orientation = rec_azimuth[i];
             if (rec_orientation < 0)
                 rec_orientation += 360;  // Relative wind directions in receiver code require receiver orientation witin [0,360]
 
             // TODO (Janna): update to initialize individual receivers
+            receivers.at(i) = std::shared_ptr<C_falling_particle_receiver>(new C_falling_particle_receiver(
+                    THT, as_double("T_htf_hot_des"), as_double("T_htf_cold_des"),
+                    as_double("f_rec_min"), q_dot_des_per_rec,
+                    as_double("rec_su_delay"), as_double("rec_qf_delay"),
+                    as_double("csp.pt.rec.max_oper_frac"), as_double("eta_lift"),
+                    as_integer("rec_htf"), as_matrix("field_fl_props"),
+                    as_integer("rec_model_type"), user_efficiency, as_integer("rec_rad_model_type"), as_integer("rec_adv_model_type"), user_hadv,
+                    ap_height, ap_width, norm_curtain_height[input_idx], norm_curtain_width[input_idx], ap_curtain_depth_ratio, rec_orientation,
+                    as_double("particle_dp"), as_double("particle_abs"), as_double("curtain_emis"), as_double("curtain_dthdy"),
+                    as_double("cav_abs"), as_double("cav_twall"), as_double("cav_kwall"), as_double("cav_hext"),
+                    as_double("transport_deltaT_cold"), as_double("transport_deltaT_hot"),
+                    as_double("rec_tauc_mult"), as_double("rec_hadv_mult"),
+                    n_x, n_y, as_integer("rec_rad_nx"), as_integer("rec_rad_ny"),
+                    as_double("T_htf_hot_des"), as_double("rec_clearsky_fraction")));
         }
-        int n_x = as_integer("rec_nx"); //mt_flux_maps.ncols() / num_recs;
-        int n_y = as_integer("rec_ny"); //(mt_flux_maps.nrows() / mt_eta_map.nrows()) + 1;
 
 
-        if (as_integer("curtain_type") == 1) { 
-            std::string err_msg = "Curved particle curtain is not currently implemented in the falling particle receiver performance model. Simulated performance will assume a flat curtain.\n";
-            log(err_msg, SSC_WARNING);
-        }
 
-        std::unique_ptr<C_pt_receiver> receiver = std::unique_ptr<C_falling_particle_receiver>(new C_falling_particle_receiver(
-            THT, as_double("T_htf_hot_des"), as_double("T_htf_cold_des"),
-            as_double("f_rec_min"), q_dot_rec_des,
-            as_double("rec_su_delay"), as_double("rec_qf_delay"),
-            as_double("csp.pt.rec.max_oper_frac"), as_double("eta_lift"),
-            as_integer("rec_htf"), as_matrix("field_fl_props"),
-            as_integer("rec_model_type"), user_efficiency, as_integer("rec_rad_model_type"), as_integer("rec_adv_model_type"), user_hadv,
-            ap_height, ap_width, norm_curtain_height[input_idx], norm_curtain_width[input_idx], ap_curtain_depth_ratio, rec_orientation,
-            as_double("particle_dp"), as_double("particle_abs"), as_double("curtain_emis"), as_double("curtain_dthdy"),
-            as_double("cav_abs"), as_double("cav_twall"), as_double("cav_kwall"), as_double("cav_hext"),
-            as_double("transport_deltaT_cold"), as_double("transport_deltaT_hot"),
-            as_double("rec_tauc_mult"), as_double("rec_hadv_mult"),
-            n_x, n_y, as_integer("rec_rad_nx"), as_integer("rec_rad_ny"),
-            as_double("T_htf_hot_des"), as_double("rec_clearsky_fraction")
-        ));   // steady-state receiver
-
-        // Test mspt_receiver initialization
-        //receiver.init();
 
         // *******************************************************
         // Formatting efficiency data and flux maps for heliostat field class
@@ -1236,31 +1261,11 @@ public:
         // *******************************************************
         // Construct heliostat field class after receiver
         //    so it can use the active receiver area
-        C_pt_sf_perf_interp heliostatfield(A_rec_curtain);
 
-        heliostatfield.ms_params.m_p_start = as_double("p_start");      //[kWe-hr] Heliostat startup energy
-        heliostatfield.ms_params.m_p_track = as_double("p_track");      //[kWe] Heliostat tracking power
-        heliostatfield.ms_params.m_hel_stow_deploy = as_double("hel_stow_deploy");  // N/A
-        heliostatfield.ms_params.m_v_wind_max = as_double("v_wind_max");            // N/A
-        heliostatfield.ms_params.m_eta_map = eta_maps[0];
-        heliostatfield.ms_params.m_flux_maps = rec_flux_maps[0];
-        heliostatfield.ms_params.m_n_flux_x = rec_flux_maps[0].ncols();
-        heliostatfield.ms_params.m_n_flux_y = rec_flux_maps[0].nrows() / eta_maps[0].nrows();
-        heliostatfield.ms_params.m_N_hel = N_hel[0];
-        heliostatfield.ms_params.m_A_sf = A_sf[0];        //[m2]
-        if (field_model_type < 3)
-        {
-            heliostatfield.ms_params.m_eta_map_aod_format = false;
-        }
-        else
-        {
-            heliostatfield.ms_params.m_eta_map_aod_format = as_boolean("eta_map_aod_format");
-        }
-        heliostatfield.ms_params.m_clearsky_model = as_integer("rec_clearsky_model");
-
+        // Calculate clear-sky DNI (if relevant)
         size_t n_steps_full = weather_reader.m_weather_data_provider->nrecords();
         std::vector<double> clearsky_data;
-        if (heliostatfield.ms_params.m_clearsky_model == 0)
+        if (as_integer("rec_clearsky_model") == 0)
         {
             size_t n_csky = 0;
             ssc_number_t* csky = as_array("rec_clearsky_dni", &n_csky);
@@ -1271,55 +1276,105 @@ public:
             for (size_t i = 0; i < n_steps_full; i++)
                 clearsky_data.at(i) = (double)csky[i];
         }
-        heliostatfield.ms_params.mv_clearsky_data = clearsky_data;
 
-        //Load the solar field adjustment factors
+        //Load the solar field adjustment factors.  Assume the same adjustment factors apply to each heliostat field
         adjustment_factors sf_haf(this, "sf_adjust");
         if (!sf_haf.setup((int)n_steps_full))
             throw exec_error("csp_tower_particle", "failed to setup sf adjustment factors: " + sf_haf.error());
-        //allocate array to pass to tcs
-        heliostatfield.ms_params.m_sf_adjust.resize(sf_haf.size());
-        for (int i = 0; i < sf_haf.size(); i++)
-            heliostatfield.ms_params.m_sf_adjust.at(i) = sf_haf(i);
 
-        // Set callback information
-        heliostatfield.mf_callback = ssc_cmod_solarpilot_callback;
-        heliostatfield.m_cdata = (void*)this;
 
-        // Try running pt heliostat init() call just for funsies
-            // What happens when no callback to reference?
-        //heliostatfield.init();
+
+        std::vector<C_pt_sf_perf_interp*> heliostatfields(num_recs);
+        for (int i = 0; i < num_recs; i++)   // loop through receivers
+        {
+            heliostatfields.at(i) = new C_pt_sf_perf_interp(A_rec_curtain.at(i));
+            heliostatfields.at(i)->ms_params.m_p_start = as_double("p_start");      //[kWe-hr] Heliostat startup energy
+            heliostatfields.at(i)->ms_params.m_p_track = as_double("p_track");      //[kWe] Heliostat tracking power
+            heliostatfields.at(i)->ms_params.m_hel_stow_deploy = as_double("hel_stow_deploy");  // N/A
+            heliostatfields.at(i)->ms_params.m_v_wind_max = as_double("v_wind_max");            // N/A
+            heliostatfields.at(i)->ms_params.m_eta_map = eta_maps[i];
+            heliostatfields.at(i)->ms_params.m_flux_maps = rec_flux_maps[i];
+            heliostatfields.at(i)->ms_params.m_n_flux_x = rec_flux_maps[i].ncols();
+            heliostatfields.at(i)->ms_params.m_n_flux_y = rec_flux_maps[i].nrows() / eta_maps[i].nrows();
+            heliostatfields.at(i)->ms_params.m_N_hel = N_hel[i];
+            heliostatfields.at(i)->ms_params.m_A_sf = A_sf[i];        //[m2]
+            if (field_model_type < 3)
+            {
+                heliostatfields.at(i)->ms_params.m_eta_map_aod_format = false;
+            }
+            else
+            {
+                heliostatfields.at(i)->ms_params.m_eta_map_aod_format = as_boolean("eta_map_aod_format");
+            }
+
+            //Clearsky DNI
+            heliostatfields.at(i)->ms_params.m_clearsky_model = as_integer("rec_clearsky_model");
+            heliostatfields.at(i)->ms_params.mv_clearsky_data = clearsky_data;
+
+            //Solar field adjustment factors
+            heliostatfields.at(i)->ms_params.m_sf_adjust.resize(sf_haf.size());
+            for (int j = 0; j < sf_haf.size(); j++)  // TODO: Could do this just one for all receivers
+                heliostatfields.at(i)->ms_params.m_sf_adjust.at(j) = sf_haf(j);
+
+            // TODO: do we need this?
+            //heliostatfields.at(i)->mf_callback = ssc_cmod_solarpilot_callback;
+            //heliostatfields.at(i)->m_cdata = (void*)this;
+ 
+        }
 
         // Now try to instantiate mspt_collector_receiver
-        C_csp_mspt_collector_receiver collector_receiver(heliostatfield, *receiver);
+        C_csp_falling_particle_collector_receiver collector_receiver(heliostatfields, receivers);
+
         // Then try init() call here, which should call inits from both classes
         //collector_receiver.init();
 
         // *******************************************************
         // Set receiver outputs
         //float *p_q_thermal_copy = allocate("Q_thermal_123", n_steps_fixed);
-        collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_FIELD_Q_DOT_INC, allocate("q_sf_inc", n_steps_fixed), n_steps_fixed);
-        collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_FIELD_ETA_OPT, allocate("eta_field", n_steps_fixed), n_steps_fixed);
-        collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_FIELD_ADJUST, allocate("sf_adjust_out", n_steps_fixed), n_steps_fixed);
-        collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_REC_DEFOCUS, allocate("rec_defocus", n_steps_fixed), n_steps_fixed);
-        collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_INC, allocate("q_dot_rec_inc", n_steps_fixed), n_steps_fixed);
-        collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_ETA_THERMAL, allocate("eta_therm", n_steps_fixed), n_steps_fixed);
-        collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_THERMAL, allocate("Q_thermal", n_steps_fixed), n_steps_fixed);
-        collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_M_DOT_HTF, allocate("m_dot_rec", n_steps_fixed), n_steps_fixed);
-        collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_STARTUP, allocate("q_startup", n_steps_fixed), n_steps_fixed);
-        collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_T_HTF_IN, allocate("T_rec_in", n_steps_fixed), n_steps_fixed);
-        collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_T_HTF_OUT, allocate("T_rec_out", n_steps_fixed), n_steps_fixed);
-        collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_PIPE_LOSS, allocate("q_transport_loss", n_steps_fixed), n_steps_fixed);
-        collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_LOSS, allocate("q_thermal_loss", n_steps_fixed), n_steps_fixed);
-        collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_Q_DOT_REFL_LOSS, allocate("q_reflection_loss", n_steps_fixed), n_steps_fixed);
-        collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_W_DOT_TRACKING, allocate("pparasi", n_steps_fixed), n_steps_fixed);
-        collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_W_DOT_PUMP, allocate("P_tower_lift", n_steps_fixed), n_steps_fixed);
-
+        collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_FIELD_Q_DOT_INC, allocate("q_sf_inc", n_steps_fixed), n_steps_fixed);
+        collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_FIELD_ETA_OPT, allocate("eta_field", n_steps_fixed), n_steps_fixed);
+        collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_FIELD_ADJUST, allocate("sf_adjust_out", n_steps_fixed), n_steps_fixed);
+        collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_REC_DEFOCUS, allocate("rec_defocus", n_steps_fixed), n_steps_fixed);
+        collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_Q_DOT_INC, allocate("q_dot_rec_inc", n_steps_fixed), n_steps_fixed);
+        collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_ETA_THERMAL, allocate("eta_therm", n_steps_fixed), n_steps_fixed);
+        collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_Q_DOT_THERMAL, allocate("Q_thermal", n_steps_fixed), n_steps_fixed);
+        collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_M_DOT_HTF, allocate("m_dot_rec", n_steps_fixed), n_steps_fixed);
+        collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_Q_DOT_STARTUP, allocate("q_startup", n_steps_fixed), n_steps_fixed);
+        collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_T_HTF_IN, allocate("T_rec_in", n_steps_fixed), n_steps_fixed);
+        collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_T_HTF_OUT, allocate("T_rec_out", n_steps_fixed), n_steps_fixed);
+        collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_Q_DOT_PIPE_LOSS, allocate("q_transport_loss", n_steps_fixed), n_steps_fixed);
+        collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_Q_DOT_LOSS, allocate("q_thermal_loss", n_steps_fixed), n_steps_fixed);
+        collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_Q_DOT_REFL_LOSS, allocate("q_reflection_loss", n_steps_fixed), n_steps_fixed);
+        collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_W_DOT_TRACKING, allocate("pparasi", n_steps_fixed), n_steps_fixed);
+        collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_W_DOT_PUMP, allocate("P_tower_lift", n_steps_fixed), n_steps_fixed);
 
         if (is_rec_model_clearsky) {
-            collector_receiver.mc_reported_outputs.assign(C_csp_mspt_collector_receiver::E_CLEARSKY, allocate("clearsky", n_steps_fixed), n_steps_fixed);
-
+            collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_CLEARSKY, allocate("clearsky", n_steps_fixed), n_steps_fixed);
         }
+
+        if (num_recs > 1)
+        {
+            collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_Q_DOT_INC_1, allocate("q_dot_rec_inc_1", n_steps_fixed), n_steps_fixed);
+            collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_Q_DOT_THERMAL_1, allocate("Q_thermal_1", n_steps_fixed), n_steps_fixed);
+            collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_ETA_THERMAL_1, allocate("eta_therm_1", n_steps_fixed), n_steps_fixed);
+            collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_FIELD_ETA_OPT_1, allocate("eta_field_1", n_steps_fixed), n_steps_fixed);
+
+            collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_Q_DOT_INC_2, allocate("q_dot_rec_inc_2", n_steps_fixed), n_steps_fixed);
+            collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_Q_DOT_THERMAL_2, allocate("Q_thermal_2", n_steps_fixed), n_steps_fixed);
+            collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_ETA_THERMAL_2, allocate("eta_therm_2", n_steps_fixed), n_steps_fixed);
+            collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_FIELD_ETA_OPT_2, allocate("eta_field_2", n_steps_fixed), n_steps_fixed);
+        }
+        if (num_recs > 2)
+        {
+            collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_Q_DOT_INC_3, allocate("q_dot_rec_inc_3", n_steps_fixed), n_steps_fixed);
+            collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_Q_DOT_THERMAL_3, allocate("Q_thermal_3", n_steps_fixed), n_steps_fixed);
+            collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_ETA_THERMAL_3, allocate("eta_therm_3", n_steps_fixed), n_steps_fixed);
+            collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_FIELD_ETA_OPT_3, allocate("eta_field_3", n_steps_fixed), n_steps_fixed);
+        }
+
+
+
+
 
         // *****************************************************
         // Electric Heater
@@ -1809,12 +1864,12 @@ public:
             rec_aspect[i] = rec_height[i] / rec_width[i];       //[-]
         }
 
-        assign("A_rec", A_rec_aperture);     //[m2]
-        assign("A_rec_curtain", A_rec_curtain);     //[m2]
+        assign("A_rec", A_rec_aperture_total);     //[m2]
+        assign("A_rec_curtain", A_rec_curtain_total);     //[m2]
 
         double L_tower_piping = std::numeric_limits<double>::quiet_NaN();
         double od_tube_NA = std::numeric_limits<double>::quiet_NaN();
-        receiver->get_design_geometry(L_tower_piping, od_tube_NA);
+        receivers.at(0)->get_design_geometry(L_tower_piping, od_tube_NA); 
         assign("L_tower_piping_calc", L_tower_piping);      //[m]
 
         double eta_rec_thermal_des;     //[-]
@@ -1826,9 +1881,24 @@ public:
         double rec_pump_coef_des;              // Undefined for particle receiver
         double rec_vel_htf_des;                // Undefined for particle receiver
         double q_dot_piping_loss_des;
-        receiver->get_design_performance(eta_rec_thermal_des,
-            W_dot_rec_lift_des, W_dot_rec_pump_tower_share_des, W_dot_rec_pump_rec_share_des,
-            rec_pump_coef_des, rec_vel_htf_des, m_dot_htf_rec_des, m_dot_htf_rec_max, q_dot_piping_loss_des);
+
+        double eta_rec_thermal_des_per_rec, W_dot_rec_lift_des_per_rec, q_dot_piping_loss_des_per_rec, m_dot_htf_rec_des_per_rec, m_dot_htf_rec_max_per_rec, q_dot_inc, q_dot_inc_per_rec;
+        eta_rec_thermal_des = W_dot_rec_lift_des = q_dot_piping_loss_des = m_dot_htf_rec_des = m_dot_htf_rec_max = q_dot_inc = 0.0;
+        for (int i = 0; i < num_recs; i++)   // loop through receivers
+        {
+            receivers.at(i)->get_design_performance(eta_rec_thermal_des_per_rec, W_dot_rec_lift_des_per_rec, W_dot_rec_pump_tower_share_des, W_dot_rec_pump_rec_share_des,
+                rec_pump_coef_des, rec_vel_htf_des, m_dot_htf_rec_des_per_rec, m_dot_htf_rec_max_per_rec, q_dot_piping_loss_des_per_rec);
+
+            q_dot_inc_per_rec = receivers.at(i)->get_q_dot_rec_des() / eta_rec_thermal_des_per_rec;
+            q_dot_inc += q_dot_inc_per_rec;
+            eta_rec_thermal_des += eta_rec_thermal_des_per_rec * q_dot_inc_per_rec;
+            W_dot_rec_lift_des += W_dot_rec_lift_des_per_rec;
+            q_dot_piping_loss_des += q_dot_piping_loss_des_per_rec;
+            m_dot_htf_rec_des += m_dot_htf_rec_des_per_rec;
+            m_dot_htf_rec_max += m_dot_htf_rec_max_per_rec;
+          
+        }
+        eta_rec_thermal_des /= q_dot_inc;
         assign("q_dot_rec_des", q_dot_rec_des);                 //[MWt]
         assign("eta_rec_thermal_des", eta_rec_thermal_des);     //[-]
         assign("P_tower_lift_des", W_dot_rec_lift_des);         //[MWe]
@@ -1967,8 +2037,9 @@ public:
         assign("h_rec_input_to_cost_model", (ssc_number_t)max_rec_height_offset);       //[m]
         assign("csp.pt.cost.tower", (ssc_number_t)tower_cost);
 
-        double receiver_cost =
-            N_mspt::receiver_cost(A_rec_aperture, as_double("rec_ref_cost"), as_double("rec_ref_area"), as_double("rec_cost_exp"));
+        double receiver_cost = 0.0;
+        for (int i = 0; i<num_recs; i++)
+            receiver_cost += N_mspt::receiver_cost(A_rec_aperture.at(i), as_double("rec_ref_cost"), as_double("rec_ref_area"), as_double("rec_cost_exp"));
         assign("csp.pt.cost.receiver", (ssc_number_t)receiver_cost);
 
         double rec_lift_height = THT + max_rec_height_offset + h_helio / 2.;
@@ -2194,41 +2265,53 @@ public:
             p_m_dot_water_pc[i] = (ssc_number_t)(p_m_dot_water_pc[i] / 3600.0); //[kg/s] convert from kg/hr
         }
 
-        // Set output data from heliostat class     // TODO: Update for multi-receivers e
-        size_t n_rows_eta_map = heliostatfield.ms_params.m_eta_map.nrows();             // Number of solar positions
-        ssc_number_t *eta_map_out = allocate("eta_map_out", n_rows_eta_map, 3);
-        size_t n_rows_flux_maps = heliostatfield.ms_params.m_flux_maps.nrows();         // solar positions * number of y flux points
-        size_t n_cols_flux_maps = heliostatfield.ms_params.m_flux_maps.ncols() + 2;
-        ssc_number_t *flux_maps_out = allocate("flux_maps_out", n_rows_flux_maps, n_cols_flux_maps);
-        ssc_number_t *flux_maps_for_import = allocate("flux_maps_for_import", n_rows_flux_maps, n_cols_flux_maps);
-        size_t rec_n_flux_x = heliostatfield.ms_params.m_n_flux_x;
-        size_t rec_n_flux_y = heliostatfield.ms_params.m_n_flux_y;
 
-        if(n_rows_eta_map * rec_n_flux_y != n_rows_flux_maps) {
+        // Set output data from heliostat class  
+        size_t n_rows_eta_map = heliostatfields.at(0)->ms_params.m_eta_map.nrows();                     // Number of solar positions (same for all receivers)
+        size_t n_rows_flux_maps = heliostatfields.at(0)->ms_params.m_flux_maps.nrows();                 // solar positions * number of y flux points
+        size_t n_cols_flux_maps = heliostatfields.at(0)->ms_params.m_flux_maps.ncols() * num_recs + 2;  // 2 + number of x flux points * number of receivers
+        size_t rec_n_flux_x = heliostatfields.at(0)->ms_params.m_n_flux_x;
+        size_t rec_n_flux_y = heliostatfields.at(0)->ms_params.m_n_flux_y;
+
+        ssc_number_t* eta_map_out = allocate("eta_map_out", n_rows_eta_map, 2+num_recs);
+        ssc_number_t* flux_maps_out = allocate("flux_maps_out", n_rows_flux_maps, n_cols_flux_maps);
+        ssc_number_t* flux_maps_for_import = allocate("flux_maps_for_import", n_rows_flux_maps, n_cols_flux_maps);
+
+        if (n_rows_eta_map * rec_n_flux_y != n_rows_flux_maps) {
             log("The number of rows in the field efficiency and receiver flux map matrices are not equal. This is unexpected, and the flux maps may be inaccurate.");
         }
 
-        // [W/m2 * m2] * [1 kW/ 1000 W] / [m2 per flux node] == [kW/m2]
-        double flux_scaling_mult = as_double("dni_des")*heliostatfield.ms_params.m_A_sf / 1000.0 /
-            (A_rec_curtain / double(rec_n_flux_x * rec_n_flux_y));
+        double flux_scaling_mult;
+        size_t idx;
+        size_t ncol = 2 + num_recs;
+        for (size_t i = 0; i < n_rows_eta_map; i++)  // for each solar position
+        {
+            for (size_t rec = 0; rec < num_recs; rec++)
+            {
+                eta_map_out[ncol * i] = (ssc_number_t)heliostatfields.at(rec)->ms_params.m_eta_map(i, 0);               //[deg] Solar azimuth angle
+                eta_map_out[ncol * i + 1] = (ssc_number_t)heliostatfields.at(rec)->ms_params.m_eta_map(i, 1);           //[deg] Solar zenith angle
+                eta_map_out[ncol * i + 2 + rec] = (ssc_number_t)heliostatfields.at(rec)->ms_params.m_eta_map(i, 2);     //[deg] Solar field optical efficiency
+            }
 
-        for (size_t i = 0; i < n_rows_eta_map; i++) { // for each solar position
-            eta_map_out[3 * i] = (ssc_number_t)heliostatfield.ms_params.m_eta_map(i, 0);         //[deg] Solar azimuth angle
-            eta_map_out[3 * i + 1] = (ssc_number_t)heliostatfield.ms_params.m_eta_map(i, 1);     //[deg] Solar zenith angle
-            eta_map_out[3 * i + 2] = (ssc_number_t)heliostatfield.ms_params.m_eta_map(i, 2);     //[deg] Solar field optical efficiency
-            size_t idx;
-            for (size_t j = 0; j < rec_n_flux_y; j++) { // for all y flux positions
+            for (size_t j = 0; j < rec_n_flux_y; j++)  // for all y flux positions
+            {
                 idx = rec_n_flux_y * n_cols_flux_maps * i + n_cols_flux_maps * j;
-                flux_maps_for_import[idx] = flux_maps_out[idx] = eta_map_out[3 * i];             //[deg] Solar azimuth angle
+                flux_maps_for_import[idx] = flux_maps_out[idx] = eta_map_out[ncol * i];             //[deg] Solar azimuth angle
                 idx++;
-                flux_maps_for_import[idx] = flux_maps_out[idx] = eta_map_out[3 * i + 1];         //[deg] Solar zenith angle
+                flux_maps_for_import[idx] = flux_maps_out[idx] = eta_map_out[ncol * i + 1];         //[deg] Solar zenith angle
                 idx++;
-                for (size_t k = 0; k < n_cols_flux_maps-2; k++) {
-                    flux_maps_out[idx + k] = (ssc_number_t)(heliostatfield.ms_params.m_flux_maps(rec_n_flux_y * i + j, k) * heliostatfield.ms_params.m_eta_map(i, 2) * flux_scaling_mult);      //[kW/m^2]
-                    flux_maps_for_import[idx + k] = (ssc_number_t)heliostatfield.ms_params.m_flux_maps(rec_n_flux_y * i + j, k);
+                for (size_t rec = 0; rec < num_recs; rec++)
+                {
+                    flux_scaling_mult = as_double("dni_des") * heliostatfields.at(rec)->ms_params.m_A_sf / 1000.0 / (A_rec_curtain.at(rec) / double(rec_n_flux_x * rec_n_flux_y));
+                    for (size_t k = 0; k < rec_n_flux_x; k++)
+                    {
+                        flux_maps_out[idx + rec * rec_n_flux_x + k] = (ssc_number_t)(heliostatfields.at(rec)->ms_params.m_flux_maps(rec_n_flux_y * i + j, k) * heliostatfields.at(rec)->ms_params.m_eta_map(i, 2) * flux_scaling_mult);      //[kW/m^2]
+                        flux_maps_for_import[idx + rec * rec_n_flux_x + k] = (ssc_number_t)heliostatfields.at(rec)->ms_params.m_flux_maps(rec_n_flux_y * i + j, k);
+                    }
                 }
             }
         }
+
 
         size_t count;
         ssc_number_t *p_W_dot_net = as_array("P_out_net", &count);

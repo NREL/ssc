@@ -387,7 +387,7 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
 
 
 
-    if (rec_is_off)
+    if (rec_is_off)  // Receiver either called in "OFF" mode, or set to off above because no solar flux 
     {
         soln.q_dot_inc.resize_fill(m_n_y, m_n_x, 0.0);
     }
@@ -674,6 +674,7 @@ void C_falling_particle_receiver::off(const C_csp_weatherreader::S_outputs &weat
 	outputs.m_W_dot_pump = 0.0;			//[MW] convert from W
 	outputs.m_q_conv_sum = 0.0;			//[MW] convert from W
 	outputs.m_q_rad_sum = 0.0;			//[MW] convert from W
+    outputs.m_q_dot_refl_loss = 0.0;
 	outputs.m_Q_thermal = 0.0;			//[MW] convert from W
 	outputs.m_T_salt_hot = 0.0;			//[C] convert from K
 	outputs.m_component_defocus = 1.0;	//[-]
@@ -682,7 +683,7 @@ void C_falling_particle_receiver::off(const C_csp_weatherreader::S_outputs &weat
 	outputs.m_dP_receiver = 0.0;			//[bar] receiver pressure drop, convert from Pa
 	outputs.m_dP_total = 0.0;			//[bar] total pressure drop, convert from MPa
 	outputs.m_vel_htf = 0.0;				//[m/s]
-	outputs.m_T_salt_cold = 0.0;			//[C] convert from K
+	outputs.m_T_salt_cold = htf_state_in.m_temp;	//[C] convert from K
 	outputs.m_time_required_su = sim_info.ms_ts.m_step;	//[s], convert from hr in code
 	outputs.m_q_dot_piping_loss = 0.0;	//[MWt]
     outputs.m_q_heattrace = 0.0;
@@ -704,7 +705,8 @@ void C_falling_particle_receiver::overwrite_startup_requirements_to_on()
 
 double C_falling_particle_receiver::get_pumping_parasitic_coef()
 {
-    return 0.0;
+    double W_lift = calculate_lift_power(m_m_dot_htf_des); // [W]
+    return W_lift / m_q_rec_des; //[W/Wt]
 }
 
 double C_falling_particle_receiver::area_proj()
@@ -720,10 +722,6 @@ double C_falling_particle_receiver::calculate_lift_power(double m_dot_tot)
 
 void C_falling_particle_receiver::converged()
 {
-	// Check HTF props?
-	//!MJW 9.8.2010 :: Call the property range check subroutine with the inlet and outlet HTF temps to make sure they're in the valid range
-	//call check_htf(Coolant,T_salt_hot)
-	//call check_htf(Coolant,T_salt_cold)
 
 	if( m_mode == C_csp_collector_receiver::STEADY_STATE )
 	{
@@ -1570,7 +1568,15 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
 
 
         //--- Next solution guess
-        m_dot_guess_new = soln.Q_thermal / (cp * (T_target_out_rec - T_cold_in_rec));			//[kg/s]
+        if (qq<2)  
+            m_dot_guess_new = soln.Q_thermal / (cp * (T_target_out_rec - T_cold_in_rec));			//[kg/s]
+        else  // Solution can converge slowly, after a few iterations switch to approximation for mass flow using linear approximation for efficiency from last two guesses
+        {
+            double c1 = (eta_history.at(qq) - eta_history.at(qq - 1)) / (mflow_history.at(qq) - mflow_history.at(qq - 1));  // Slope of linear equation for eta = f(m)
+            double c2 = soln.eta - c1 * soln.m_dot_tot;                                                                     // Intercept of linear equation for eta = f(m)
+            m_dot_guess_new = (soln.Q_inc * c2) / (cp * (T_target_out_rec - T_cold_in_rec) - c1 * soln.Q_inc);              // Solution for m from: (c1*m+c2)*Qinc = m*Cp*dT
+        }
+
         if (is_upper_bound && (m_dot_guess_new < lower_bound || m_dot_guess_new > upper_bound))  // New guess is out of bounds and lower/upper bounds are both defined
             m_dot_guess_new = 0.5 * (lower_bound + upper_bound);
         else if (m_dot_guess_new < lower_bound)  // New guess is below lower bound with no defined upper bound
@@ -1580,7 +1586,7 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
 
         //--- Stopping criteria
 
-        if (m_dot_guess < 1.E-5 || qq >= nmax)
+        if (m_dot_guess < 1.E-5 || qq >= nmax-1)
         {
             soln.rec_is_off = true;
             break;
