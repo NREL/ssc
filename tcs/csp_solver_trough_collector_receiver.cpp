@@ -527,8 +527,8 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 	m_Ap_tot = 0.;
 	for (int i = 0; i<m_nSCA; i++)
 	{
-		int ct = (int)m_SCAInfoArray.at(i, 1);
-		m_Ap_tot += m_A_aperture[ct - 1];
+		int ct = (int)m_SCAInfoArray.at(i, 1) - 1; // SCA type Adjust index (SCAInfoArray starts at 1) 
+		m_Ap_tot += m_A_aperture[ct];
 	}
 
 	//Calculate the cross-sectional flow area of the receiver piping
@@ -612,7 +612,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
     // Calculate Design velocity
     {
         m_max_loop_flow_vel_des = m_m_dot_loop_des * 4.0 / (rho_ave * M_PI * m_min_inner_diameter * m_min_inner_diameter); //[m/s]
-        m_min_loop_flow_vel_des = m_m_dot_loop_des * 4.0 / (rho_ave * M_PI * m_max_inner_diameter * m_max_inner_diameter); //[m/s]
+        m_min_loop_flow_vel_des = m_m_dot_loop_des * 4.0 / (rho_ave * M_PI * m_min_inner_diameter * m_min_inner_diameter); //[m/s]
     }
 
     //Calculate the header design
@@ -4469,7 +4469,7 @@ bool C_csp_trough_collector_receiver::design_solar_mult(std::vector<double> trou
 
             for (int j = 0; j < m_nHCEVar; j++)
             {
-                int HT = (int)m_SCAInfoArray.at(i, 0);    //HCE type Adjust index (SCAInfoArray starts at 1) 
+                int HT = (int)m_SCAInfoArray.at(i, 0) - 1;    //HCE type Adjust index (SCAInfoArray starts at 1) 
                 //Calculate optical efficiency approximating use of the first collector only
                 m_opteff_des += m_Shadowing.at(HT, j) * m_TrackingError[CT] * m_GeomEffects[CT] * m_Rho_mirror_clean[CT] * m_Dirt_mirror[CT] *
                     m_Dirt_HCE.at(HT, j) * m_Error[CT] * (m_L_actSCA[CT] / m_L_tot) * m_HCE_FieldFrac.at(HT, j)
@@ -6670,7 +6670,7 @@ int C_csp_trough_collector_receiver::size_rnr_lengths(int Nfieldsec, double L_rn
     // Nfieldsec				number of field sections
     // L_rnr_pb				    length of runner piping in and around the power block
     // Nrnrsec					the number of unique runner diameters
-    // ColType	                the collector type
+    // ColType	                the collector type (INDEX STARTS AT 1)
     // northsouth_field_sep	    north-south separation between subfields. 0=SCAs are touching
     // L_SCA[]					the length of the SCAs
     // min_rnr_xpans			minimum number of expansion loops per single-diameter runner section
