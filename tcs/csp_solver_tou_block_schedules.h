@@ -151,6 +151,10 @@ public:
 
 	C_csp_tou_block_schedules(){};
 
+    C_csp_tou_block_schedules(C_timeseries_schedule_inputs c_offtaker_schedule,
+        C_timeseries_schedule_inputs c_elec_pricing_schedule) :
+        C_csp_tou(c_offtaker_schedule, c_elec_pricing_schedule) {};
+
 	~C_csp_tou_block_schedules(){};
 
 	virtual void init();

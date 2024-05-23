@@ -227,6 +227,52 @@ public:
 	std::string get_error(){ return m_error_msg; }
 };
 
+struct S_timeseries_schedule_data
+{
+    double value;
+    int tou_period;
+
+    S_timeseries_schedule_data()
+    {
+        value = std::numeric_limits<double>::quiet_NaN();
+        tou_period = -1;
+    }
+};
+
+class C_timeseries_schedule_inputs
+{
+public:
+    enum E_timeseries_input_type
+    {
+        UNDEFINED,
+        BLOCK,
+        TIMESERIES,
+        CONSTANT
+    };
+
+    util::matrix_t<double> mc_weekdays;
+    util::matrix_t<double> mc_weekends;
+    std::vector<double> mv_tod_factors;
+    E_timeseries_input_type input_type;
+
+    std::vector<S_timeseries_schedule_data> mv_timeseries_schedule_data;
+
+    C_timeseries_schedule_inputs(const util::matrix_t<double>& weekdays, const util::matrix_t<double>& weekends,
+        std::vector<double> tod_factors);
+
+    C_timeseries_schedule_inputs(std::vector<double>& timeseries_values_in);
+
+    C_timeseries_schedule_inputs(double const_val);
+
+    C_timeseries_schedule_inputs() { input_type = UNDEFINED; };
+
+    void get_timestep_data(double time_s, double& val, int& tou);
+};
+
+bool build_timeseries_from_block(std::vector<S_timeseries_schedule_data>& v_timeseries_inputs,
+    const util::matrix_t<double>& weekdays, const util::matrix_t<double>& weekends,
+    std::vector<double> tod_factors);
+
 class C_csp_tou
 {
 
@@ -236,7 +282,7 @@ public:
         bool m_is_block_dispatch;
         bool m_is_arbitrage_policy;
         bool m_isleapyear;
-		std::vector<double> m_w_lim_full;
+		//std::vector<double> m_w_lim_full;
 
         bool m_is_tod_pc_target_also_pc_max;
         bool m_is_purchase_mult_same_as_price;
@@ -267,8 +313,8 @@ public:
             m_is_dispatch_targets = false;      
 
             m_isleapyear = false;
-			m_w_lim_full.resize(8760);
-			m_w_lim_full.assign(8760, 9.e99);
+			//m_w_lim_full.resize(8760);
+			//m_w_lim_full.assign(8760, 9.e99);
 
             m_is_tod_pc_target_also_pc_max = false;
             m_is_purchase_mult_same_as_price = true;
@@ -294,6 +340,8 @@ public:
 
     } mc_dispatch_params;   // TODO: Remove this 
 
+    bool m_is_new_timeseries_code;
+
 	struct S_csp_tou_outputs
 	{
         int m_csp_op_tou;
@@ -309,7 +357,18 @@ public:
 		}
 	};
 
-	C_csp_tou(){};
+    C_timeseries_schedule_inputs mc_offtaker_schedule;
+    C_timeseries_schedule_inputs mc_elec_pricing_schedule;
+
+    C_csp_tou() { m_is_new_timeseries_code = false; };
+
+    C_csp_tou(C_timeseries_schedule_inputs c_offtaker_schedule,
+        C_timeseries_schedule_inputs c_elec_pricing_schedule)
+    {
+        m_is_new_timeseries_code = true;
+        mc_offtaker_schedule = c_offtaker_schedule;
+        mc_elec_pricing_schedule = c_elec_pricing_schedule;
+    }
 
 	~C_csp_tou(){};
 
