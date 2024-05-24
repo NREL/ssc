@@ -490,8 +490,7 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
     m_dot_tot = soln.m_dot_tot;
     T_particle_hot = soln.T_particle_hot;
     T_particle_hot_rec = soln.T_particle_hot_rec;
-    eta = soln.eta;
-
+    eta = soln.eta;     // Efficiency not including transport loss
 
     T_htf_prop = (T_particle_hot + T_particle_cold_in) / 2.0;
     cp_htf = field_htfProps.Cp(T_htf_prop) * 1000.0;
@@ -502,7 +501,7 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
     Q_rad = soln.Q_rad;
     Q_cond = soln.Q_cond;
     Q_transport = soln.Q_transport;
-    Q_thermal = soln.Q_thermal;
+    Q_thermal = soln.Q_thermal;  // Thermal power including transport loss
 
     // Calculate total absorbed solar energy and minimum absorbed per panel if not calculated in the steady state solutions
     if (soln.Q_inc != soln.Q_inc)
@@ -628,7 +627,7 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
 
 
     outputs.m_m_dot_salt_tot = m_dot_tot * 3600.0;		//[kg/hr] convert from kg/s
-    outputs.m_eta_therm = eta;						    //[-] Receiver efficiency (includes curtain reflection, radiation and convective losses) 
+    outputs.m_eta_therm = eta;						    //[-] Receiver efficiency (includes curtain reflection, radiation and convective losses)
     outputs.m_W_dot_pump =  W_lift / 1.E6;				//[MW] convert from W
     outputs.m_q_conv_sum = (Q_adv+Q_cond) / 1.E6;		//[MW] convert from W  // TODO: Lumping reported advection loss and conduction loss for now, would be better to separate
     outputs.m_q_rad_sum = Q_rad / 1.E6;					//[MW] convert from W
@@ -781,20 +780,20 @@ void C_falling_particle_receiver::design_point_steady_state(double v_wind_10, do
         soln_des.q_dot_inc.resize_fill(m_n_y, m_n_x, q_dot_inc_avg);
         solve_for_mass_flow(soln_des);
         
-        if (soln_des.eta_with_transport < 1e-6) // Thermal model failed to solve
+        if (soln_des.eta < 1e-6) // Thermal model failed to solve
             break;
 
-        Qtot = soln_des.Q_thermal - soln_des.Q_transport;
+        Qtot = soln_des.Q_thermal;      // Thermal power including transport loss
         if (fabs(Qtot - m_q_rec_des)/m_q_rec_des < tol)
         {
-            eta_thermal = soln_des.eta;
-            q_dot_loss_per_m2_ap = (soln_des.Q_inc - soln_des.Q_thermal) / m_ap_area;
+            eta_thermal = soln_des.eta;  // Efficiency without transport loss
+            q_dot_loss_per_m2_ap = (soln_des.Q_inc - soln_des.Q_thermal_without_transport) / m_ap_area;  // Loss only from receiver, not including particle transport
             W_lift = calculate_lift_power(soln_des.m_dot_tot);
             Q_transport_loss = soln_des.Q_transport;
             tauc_avg = soln_des.tauc_avg;
             break;
         }
-        q_dot_inc_avg = (m_q_rec_des / soln_des.eta_with_transport) / m_curtain_area;
+        q_dot_inc_avg = ((m_q_rec_des + soln_des.Q_transport) / soln_des.eta) / m_curtain_area;
     }
 
     return;
@@ -1389,14 +1388,15 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
 
 	// Save solution
     soln.Q_inc = Q_inc;
-    soln.Q_thermal = Q_thermal;
+    soln.Q_thermal = Q_thermal - Q_dot_transport_loss_cold - Q_dot_transport_loss_hot;
+    soln.Q_thermal_without_transport = Q_thermal;
 	soln.Q_refl = Q_refl;
 	soln.Q_rad = Q_rad;
 	soln.Q_adv = Q_adv;
     soln.Q_cond = Q_cond;
     soln.Q_transport = Q_dot_transport_loss_cold + Q_dot_transport_loss_hot;
-    soln.eta = soln.Q_inc>0 ? soln.Q_thermal / soln.Q_inc : 0.0;
-    soln.eta_with_transport = soln.Q_inc > 0 ? (soln.Q_thermal - Q_dot_transport_loss_cold - Q_dot_transport_loss_hot) / soln.Q_inc : 0.0;
+    soln.eta = soln.Q_inc>0 ? soln.Q_thermal_without_transport / soln.Q_inc : 0.0;
+    soln.eta_with_transport = soln.Q_inc > 0 ? soln.Q_thermal / soln.Q_inc : 0.0;
     soln.hadv = hadv_with_wind;
     soln.converged = converged;
 	soln.rec_is_off = rec_is_off;
@@ -1484,7 +1484,7 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
 		err = (soln.T_particle_hot - m_T_particle_hot_target) / m_T_particle_hot_target;
         mflow_history.at(qq) = soln.m_dot_tot;
         Tout_history.at(qq) = soln.T_particle_hot_rec;   // Outlet temperature from receiver (before hot particle transport)
-        eta_history.at(qq) = soln.eta;
+        eta_history.at(qq) = soln.eta;                   // Efficiency not including transport losses
         converged_history.at(qq) = soln.converged;
 
         init_from_existing = false;
@@ -1569,7 +1569,7 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
 
         //--- Next solution guess
         if (qq<2)  
-            m_dot_guess_new = soln.Q_thermal / (cp * (T_target_out_rec - T_cold_in_rec));			//[kg/s]
+            m_dot_guess_new = soln.Q_thermal_without_transport / (cp * (T_target_out_rec - T_cold_in_rec));			//[kg/s]
         else  // Solution can converge slowly, after a few iterations switch to approximation for mass flow using linear approximation for efficiency from last two guesses
         {
             double c1 = (eta_history.at(qq) - eta_history.at(qq - 1)) / (mflow_history.at(qq) - mflow_history.at(qq - 1));  // Slope of linear equation for eta = f(m)

@@ -78,8 +78,10 @@ protected:
         double Q_cond;              // Total conduction loss (W)
         double Q_transport;         // Total thermal loss from particle transport (W)
         double Q_thermal;           // Total thermal power delivered to the particles (including losses from particle transport) (W)
-        double eta;                 // Receiver efficiency (energy to particles / solar energy incident on curtain)
-        double eta_with_transport;  // Receiver efficiency including loss from particle transport (energy to particles / solar energy incident on curtain)
+        double Q_thermal_without_transport;  // Thermal power delivered to the particles (excluding losses from particle transport) (W)
+        double eta_with_transport;           // Receiver efficiency including loss from particle transport (energy to particles including transport loss / solar energy incident on curtain)
+        double eta;                 // Receiver efficiency (energy to particles in receiver / solar energy incident on curtain)
+
         double hadv;                // Advective loss coefficient (including wind effects) (W/m2/K)
         double T_back_wall_avg;     // Average back wall temperature (K)
         double T_back_wall_max;     // Maximum back wall temperature (K)
