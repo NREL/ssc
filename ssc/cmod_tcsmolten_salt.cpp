@@ -2054,7 +2054,8 @@ public:
         C_timeseries_schedule_inputs offtaker_schedule;
         bool is_load_fraction_by_timestep = is_assigned("timestep_load_fractions");
         if (is_load_fraction_by_timestep) {  // Timeseries
-            C_timeseries_schedule_inputs offtaker_series = C_timeseries_schedule_inputs(as_vector_double("timestep_load_fractions"));
+            auto vec = as_vector_double("timestep_load_fractions");
+            C_timeseries_schedule_inputs offtaker_series = C_timeseries_schedule_inputs(vec);
             offtaker_schedule = offtaker_series;
         }
         else {      // Block schedules
@@ -2105,7 +2106,8 @@ public:
                 if (ppa_mult_model == 1)        // use dispatch_ts input
                 {
                     if (is_assigned("dispatch_factors_ts") || is_dispatch) {
-                        elec_pricing_schedule = C_timeseries_schedule_inputs(as_vector_double("dispatch_factors_ts"));
+                        auto vec = as_vector_double("dispatch_factors_ts");
+                        elec_pricing_schedule = C_timeseries_schedule_inputs(vec);
                     }
                     else { // if no dispatch optimization, don't need an input pricing schedule
                         elec_pricing_schedule = C_timeseries_schedule_inputs(1.0);
