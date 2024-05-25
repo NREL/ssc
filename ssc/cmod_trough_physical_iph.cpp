@@ -1134,7 +1134,7 @@ public:
         C_timeseries_schedule_inputs offtaker_schedule;
         bool is_timestep_load_fractions = as_boolean("is_timestep_load_fractions");
         if (is_timestep_load_fractions) {
-            auto vec = as_boolean("is_timestep_load_fractions");
+            auto vec = as_vector_double("timestep_load_fractions");
             C_timeseries_schedule_inputs offtaker_series = C_timeseries_schedule_inputs(vec);
             offtaker_schedule = offtaker_series;
         }

@@ -854,6 +854,25 @@ public:
 
         }
 
+        // *******************************************
+        // Schedules
+
+        // Off-taker schedule
+        //C_timeseries_schedule_inputs offtaker_schedule;
+        //bool is_timestep_load_fractions = as_boolean("is_timestep_load_fractions");
+        //if (is_timestep_load_fractions) {
+        //    auto vec = as_vector_double("timestep_load_fractions");
+        //    C_timeseries_schedule_inputs offtaker_series = C_timeseries_schedule_inputs(vec);
+        //    offtaker_schedule = offtaker_series;
+        //}
+        //else {      // Block schedules
+        //    C_timeseries_schedule_inputs offtaker_block = C_timeseries_schedule_inputs(as_matrix("weekday_schedule"),
+        //        as_matrix("weekend_schedule"), as_vector_double("f_turb_tou_periods"));
+        //    offtaker_schedule = offtaker_block;
+        //}
+
+        // Electricity pricing schedule
+
         // TOU
         C_csp_tou_block_schedules tou;
         C_csp_tou_block_schedules::S_params* tou_params = &tou.ms_params;
