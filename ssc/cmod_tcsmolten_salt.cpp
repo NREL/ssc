@@ -2052,8 +2052,12 @@ public:
 
         // Off-taker schedule
         C_timeseries_schedule_inputs offtaker_schedule;
-        bool is_load_fraction_by_timestep = is_assigned("timestep_load_fractions");
-        if (is_load_fraction_by_timestep) {  // Timeseries
+        bool assigned_is_timestep_fractions = is_assigned("is_timestep_load_fractions");
+        bool is_timestep_load_fractions = false;
+        if (assigned_is_timestep_fractions) {
+            is_timestep_load_fractions = as_boolean("is_timestep_load_fractions");
+        }
+        if (is_timestep_load_fractions) {
             auto vec = as_vector_double("timestep_load_fractions");
             C_timeseries_schedule_inputs offtaker_series = C_timeseries_schedule_inputs(vec);
             offtaker_schedule = offtaker_series;
