@@ -149,7 +149,7 @@ public:
 
 	S_params ms_params;
 
-	C_csp_tou_block_schedules(){};
+	//C_csp_tou_block_schedules(){};
 
     C_csp_tou_block_schedules(C_timeseries_schedule_inputs c_offtaker_schedule,
         C_timeseries_schedule_inputs c_elec_pricing_schedule) :

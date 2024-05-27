@@ -457,8 +457,16 @@ public:
 		// Now add the TOU class
 		// ********************************
 		// ********************************
-		C_csp_tou_block_schedules tou;
-		tou.setup_block_uniform_tod();
+
+        // No input schedules in UI/cmod yet...
+
+        // Off-taker schedule
+        C_timeseries_schedule_inputs offtaker_schedule = C_timeseries_schedule_inputs(1.0);
+
+        // Electricity pricing schedule
+        C_timeseries_schedule_inputs elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0);
+
+        C_csp_tou_block_schedules tou(offtaker_schedule, elec_pricing_schedule);
 
 		// System parameters
 		C_csp_solver::S_csp_system_params system;
