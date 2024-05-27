@@ -46,6 +46,27 @@ TEST_F(SolescaTest, sam_pv_test) {
 
     Test("pvsamv1", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
+// results from SOL-853 branch of Solesca app and tests in pvsamv1.rs
+TEST_F(SolescaTest, test_fixed_tilt_racking) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/solesca/test_fixed_tilt_racking.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/solesca/test_fixed_tilt_racking_out.json";
+    std::vector<std::string> compare_number_variables = { "annual_dc_net,annual_energy"};
+    std::vector<std::string> compare_array_variables;
+
+    Test("pvsamv1", file_inputs, file_outputs, compare_number_variables, compare_array_variables, 0.001, "tucson_az_32.116521_-110.933042_psmv3_60_tmy.csv");
+}
+TEST_F(SolescaTest, test_flush_mount_racking) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/solesca/test_flush_mount_racking.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/solesca/test_flush_mount_racking_out.json";
+    std::vector<std::string> compare_number_variables = { "annual_dc_net,annual_energy"};
+    std::vector<std::string> compare_array_variables;
+
+    Test("pvsamv1", file_inputs, file_outputs, compare_number_variables, compare_array_variables, 0.001, "des_moines_ia_41.586835_-93.624959_psmv3_60_tmy.csv");
+}
 
 
 
