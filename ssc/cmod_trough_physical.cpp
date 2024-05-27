@@ -1332,27 +1332,159 @@ public:
         }
         
 
+        // *************************************************************************
+        // Schedules
+
+        // Off-taker schedule
+        C_timeseries_schedule_inputs offtaker_schedule;
+        bool assigned_is_timestep_fractions = is_assigned("is_timestep_load_fractions");
+        bool is_timestep_load_fractions = false;
+        if (assigned_is_timestep_fractions) {
+            is_timestep_load_fractions = as_boolean("is_timestep_load_fractions");
+        }
+        if (is_timestep_load_fractions) {
+            auto vec = as_vector_double("timestep_load_fractions");
+            C_timeseries_schedule_inputs offtaker_series = C_timeseries_schedule_inputs(vec);
+            offtaker_schedule = offtaker_series;
+        }
+        else {      // Block schedules
+            C_timeseries_schedule_inputs offtaker_block = C_timeseries_schedule_inputs(as_matrix("weekday_schedule"),
+                as_matrix("weekend_schedule"), as_vector_double("f_turb_tou_periods"));
+            offtaker_schedule = offtaker_block;
+        }
+
+        // Electricity pricing schedule
+        C_timeseries_schedule_inputs elec_pricing_schedule;
+
+        double ppa_price_year1 = std::numeric_limits<double>::quiet_NaN();
+
+        if (sim_type == 1)
+        {
+            if (csp_financial_model > 0 && csp_financial_model < 5) {   // Single Owner financial models
+
+                // Get first year base ppa price
+                bool is_ppa_price_input_assigned = is_assigned("ppa_price_input");
+                if (is_dispatch && !is_ppa_price_input_assigned) {
+                    throw exec_error("trough_physical", "\n\nYou selected dispatch optimization which requires that the array input ppa_price_input is defined\n");
+                }
+
+                if (is_ppa_price_input_assigned) {
+                    size_t count_ppa_price_input;
+                    ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
+                    ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
+                }
+                else {
+                    ppa_price_year1 = 1.0;      //[-] don't need ppa multiplier if not optimizing
+                }
+
+                int ppa_soln_mode = as_integer("ppa_soln_mode");    // PPA solution mode (0=Specify IRR target, 1=Specify PPA price)
+                if (ppa_soln_mode == 0 && is_dispatch) {
+                    throw exec_error("trough_physical", "\n\nYou selected dispatch optimization and the Specify IRR Target financial solution mode, "
+                        "but dispatch optimization requires known absolute electricity prices. Dispatch optimization requires "
+                        "the Specify PPA Price financial solution mode. You can continue using dispatch optimization and iteratively "
+                        "solve for the PPA that results in a target IRR by running a SAM Parametric analysis or script.\n");
+                }
+
+                int en_electricity_rates = as_integer("en_electricity_rates");  // 0 = Use PPA, 1 = Use Retail
+                if (en_electricity_rates == 1 && is_dispatch) {
+                    throw exec_error("trough_physical", "\n\nYou selected dispatch optimization and the option to Use Retail Electricity Rates on the Electricity Purchases page, "
+                        "but the dispatch optimization model currently does not accept separate buy and sell prices. Please use the Use PPA or Market Prices option "
+                        "on the Electricity Purchases page.\n");
+                }
+
+                // Time-of-Delivery factors by time step:
+                int ppa_mult_model = as_integer("ppa_multiplier_model");
+                if (ppa_mult_model == 1)    // use dispatch_ts input
+                {
+                    if (is_assigned("dispatch_factors_ts") || is_dispatch) {
+                        auto vec = as_vector_double("dispatch_factors_ts");
+                        elec_pricing_schedule = C_timeseries_schedule_inputs(vec);
+                    }
+                    else { // if no dispatch optimization, don't need an input pricing schedule
+                        elec_pricing_schedule = C_timeseries_schedule_inputs(1.0);
+                    }
+                }
+                else if (ppa_mult_model == 0) // standard diuranal input
+                {
+                    // Most likely use case is to use schedules and TOD. So assume if at least one is provided, then user intended to use this approach
+                        // the 'else' option applies non-feasible electricity prices, so we want to guard against selecting that it appears users
+                        // are trying to use the schedules. 
+                    bool is_one_assigned = is_assigned("dispatch_sched_weekday") || is_assigned("dispatch_sched_weekend") || is_assigned("dispatch_tod_factors");
+
+                    if (is_one_assigned || is_dispatch) {
+
+                        elec_pricing_schedule = C_timeseries_schedule_inputs(as_matrix("dispatch_sched_weekday"), as_matrix("dispatch_sched_weekend"),
+                            as_vector_double("dispatch_tod_factors"));
+                    }
+                    else {
+                        // If electricity pricing data is not available, then dispatch to a uniform schedule
+                        elec_pricing_schedule = C_timeseries_schedule_inputs(1.0);
+                    }
+                }
+            }
+            else if (csp_financial_model == 5) {    // Commercial
+                if (is_dispatch) {
+                    throw exec_error("trough_physical", "\nDispatch optimization current not enabled for the Commercial financial model\n");
+                    // need to add pricing lookup for Commercial financial model
+                }
+                else {
+                    elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0);
+                }
+            }
+            else if (csp_financial_model == 6) {     // use 'mp_energy_market_revenue' -> from Merchant Plant model
+
+                ppa_price_year1 = 1.0;      //[-] This should be 1.0 because pricing array is in absolute units?
+
+                if (is_dispatch) {
+                    util::matrix_t<double> mp_energy_market_revenue = as_matrix("mp_energy_market_revenue"); // col 0 = cleared capacity, col 1 = $/MWh
+                    size_t n_rows = mp_energy_market_revenue.nrows();
+                    if (n_rows < n_steps_fixed) {
+                        string ppa_msg = util::format("mp_energy_market_revenue input has %d rows but there are %d number of timesteps", n_rows, n_steps_fixed);
+                        throw exec_error("trough_physical", ppa_msg);
+                    }
+
+                    double conv_dolmwh_to_centkwh = 0.1;
+
+                    std::vector<double> prices;
+                    prices.resize(n_steps_fixed);
+                    for (size_t ii = 0; ii < n_steps_fixed; ii++) {
+                        prices[ii] = mp_energy_market_revenue(ii, 1) * conv_dolmwh_to_centkwh;
+                    }
+
+                    elec_pricing_schedule = C_timeseries_schedule_inputs(prices);
+                }
+                else { // if no dispatch optimization, don't need an input pricing schedule
+                    elec_pricing_schedule = C_timeseries_schedule_inputs(1.0);
+                }
+            }
+            else if (csp_financial_model == 7 || csp_financial_model == 8) {    // LCOE (7) and None (8)
+
+                if (is_dispatch) {
+                    throw exec_error("fresnel_physical", "Can't select dispatch optimization if No Financial model");
+                }
+                else { // if no dispatch optimization, don't need an input pricing schedule
+                    // If electricity pricing data is not available, then dispatch to a uniform schedule
+                    elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0);
+                }
+            }
+            else {
+                throw exec_error("trough_physical", "csp_financial_model must be 1-8");
+            }
+        }
+        else if (sim_type == 2)
+        {
+            elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0);
+        }
 
         // ********************************
         // ********************************
         // TOU
         // ********************************
         // ********************************
-        C_csp_tou_block_schedules tou;
+        C_csp_tou_block_schedules tou(offtaker_schedule, elec_pricing_schedule);
         C_csp_tou_block_schedules::S_params *tou_params = &tou.ms_params;
-        double ppa_price_year1 = std::numeric_limits<double>::quiet_NaN();
-        {
-            tou_params->mc_csp_ops.mc_weekdays = as_matrix("weekday_schedule");
-            tou_params->mc_csp_ops.mc_weekends = as_matrix("weekend_schedule");
-            if (tou_params->mc_pricing.mc_weekdays.ncells() == 1) {
-                // Resize default value from var table to proper dimensions
-                tou_params->mc_pricing.mc_weekdays = util::matrix_t<double>(12, 24, 1.0);
-            }
-            if (tou_params->mc_pricing.mc_weekends.ncells() == 1) {
-                // Resize default value from var table to proper dimensions
-                tou_params->mc_pricing.mc_weekends = util::matrix_t<double>(12, 24, 1.0);
-            }
 
+        {
             tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = as_boolean("is_tod_pc_target_also_pc_max");
             tou.mc_dispatch_params.m_is_block_dispatch = !(as_boolean("is_dispatch") || as_boolean("is_dispatch_targets"));
             tou.mc_dispatch_params.m_use_rule_1 = true;
@@ -1415,155 +1547,7 @@ public:
                 }
             }
 
-            size_t n_f_turbine = 0;
-            ssc_number_t* p_f_turbine = as_array("f_turb_tou_periods", &n_f_turbine);
-            tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(n_f_turbine, 0.0);
-            //tou_params->mv_t_frac.resize(n_f_turbine, 0.0);
-            for (size_t i = 0; i < n_f_turbine; i++)
-                tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC][i] = (double)p_f_turbine[i];
-
-            // Load fraction by time step:
-            bool is_load_fraction_by_timestep = is_assigned("timestep_load_fractions");
-            tou_params->mc_csp_ops.mv_is_diurnal = !(is_load_fraction_by_timestep);
-            if (is_load_fraction_by_timestep) {
-                size_t N_load_fractions;
-                ssc_number_t* load_fractions = as_array("timestep_load_fractions", &N_load_fractions);
-                std::copy(load_fractions, load_fractions + N_load_fractions, std::back_inserter(tou_params->mc_csp_ops.timestep_load_fractions));
-            }
-
             
-
-            if (sim_type == 1)
-            {
-                if (csp_financial_model > 0 && csp_financial_model < 5) {   // Single Owner financial models
-
-                    // Get first year base ppa price
-                    bool is_ppa_price_input_assigned = is_assigned("ppa_price_input");
-                    if (is_dispatch && !is_ppa_price_input_assigned) {
-                        throw exec_error("trough_physical", "\n\nYou selected dispatch optimization which requires that the array input ppa_price_input is defined\n");
-                    }
-
-                    if (is_ppa_price_input_assigned) {
-                        size_t count_ppa_price_input;
-                        ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
-                        ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
-                    }
-                    else {
-                        ppa_price_year1 = 1.0;      //[-] don't need ppa multiplier if not optimizing
-                    }
-
-                    int ppa_soln_mode = as_integer("ppa_soln_mode");    // PPA solution mode (0=Specify IRR target, 1=Specify PPA price)
-                    if (ppa_soln_mode == 0 && is_dispatch) {
-                        throw exec_error("trough_physical", "\n\nYou selected dispatch optimization and the Specify IRR Target financial solution mode, "
-                            "but dispatch optimization requires known absolute electricity prices. Dispatch optimization requires "
-                            "the Specify PPA Price financial solution mode. You can continue using dispatch optimization and iteratively "
-                            "solve for the PPA that results in a target IRR by running a SAM Parametric analysis or script.\n");
-                    }
-
-                    int en_electricity_rates = as_integer("en_electricity_rates");  // 0 = Use PPA, 1 = Use Retail
-                    if (en_electricity_rates == 1 && is_dispatch) {
-                        throw exec_error("trough_physical", "\n\nYou selected dispatch optimization and the option to Use Retail Electricity Rates on the Electricity Purchases page, "
-                            "but the dispatch optimization model currently does not accept separate buy and sell prices. Please use the Use PPA or Market Prices option "
-                            "on the Electricity Purchases page.\n");
-                    }
-
-                    // Time-of-Delivery factors by time step:
-                    int ppa_mult_model = as_integer("ppa_multiplier_model");
-                    if (ppa_mult_model == 1)    // use dispatch_ts input
-                    {
-                        tou_params->mc_pricing.mv_is_diurnal = false;
-
-                        if (is_assigned("dispatch_factors_ts") || is_dispatch) {
-                            size_t nmultipliers;
-                            ssc_number_t* multipliers = as_array("dispatch_factors_ts", &nmultipliers);
-                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(nmultipliers, 0.0);
-                            for (size_t ii = 0; ii < nmultipliers; ii++)
-                                tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][ii] = multipliers[ii];
-                        }
-                        else {
-                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
-                        }
-                    }
-                    else if (ppa_mult_model == 0) // standard diuranal input
-                    {
-                        tou_params->mc_pricing.mv_is_diurnal = true;
-
-                        // Most likely use case is to use schedules and TOD. So assume if at least one is provided, then user intended to use this approach
-                            // the 'else' option applies non-feasible electricity prices, so we want to guard against selecting that it appears users
-                            // are trying to use the schedules. 
-                        bool is_one_assigned = is_assigned("dispatch_sched_weekday") || is_assigned("dispatch_sched_weekend") || is_assigned("dispatch_tod_factors");
-
-                        if (is_one_assigned || is_dispatch) {
-
-                            tou_params->mc_pricing.mc_weekdays = as_matrix("dispatch_sched_weekday");
-                            tou_params->mc_pricing.mc_weekends = as_matrix("dispatch_sched_weekend");
-
-                            auto dispatch_tod_factors = as_vector_double("dispatch_tod_factors");
-                            if (dispatch_tod_factors.size() != 9)
-                                throw exec_error("trough_physical", util::format("\n\nDispatch TOD factors has %d periods instead of the expected 9.\n", (int)dispatch_tod_factors.size()));
-
-                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, 0.0);
-                            for (size_t i = 0; i < 9; i++)
-                                tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][i] = dispatch_tod_factors[i];
-
-                        }
-                        else {
-                            tou_params->mc_pricing.mc_weekdays.resize_fill(12, 24, 1.);
-                            tou_params->mc_pricing.mc_weekends.resize_fill(12, 24, 1.);
-                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, -1.0);
-                        }
-                    }
-                }
-                else if (csp_financial_model == 5) {    // Commercial
-                    if (is_dispatch) {
-                        throw exec_error("trough_physical", "\nDispatch optimization current not enabled for the Commercial financial model\n");
-                        // need to add pricing lookup for Commercial financial model
-                    }
-                    else {
-                        tou_params->mc_pricing.mv_is_diurnal = false;
-
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
-                    }
-                }
-                else if (csp_financial_model == 6) {     // use 'mp_energy_market_revenue' -> from Merchant Plant model
-
-                    tou_params->mc_pricing.mv_is_diurnal = false;
-
-                    if (is_dispatch) {
-                        util::matrix_t<double> mp_energy_market_revenue = as_matrix("mp_energy_market_revenue"); // col 0 = cleared capacity, col 1 = $/MWh
-                        size_t n_rows = mp_energy_market_revenue.nrows();
-                        if (n_rows < n_steps_fixed) {
-                            string ppa_msg = util::format("mp_energy_market_revenue input has %d rows but there are %d number of timesteps", n_rows, n_steps_fixed);
-                            throw exec_error("trough_physical", ppa_msg);
-                        }
-
-                        double conv_dolmwh_to_centkwh = 0.1;
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, 0.0);
-                        for (size_t ii = 0; ii < n_steps_fixed; ii++) {
-                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][ii] = mp_energy_market_revenue(ii, 1) * conv_dolmwh_to_centkwh; //[cents/kWh]
-                        }
-                    }
-                    else { // if no dispatch optimization, don't need an input pricing schedule
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
-                    }
-                }
-                else if (csp_financial_model == 7 || csp_financial_model == 8) {    // LCOE (7) and None (8)
-
-                    tou_params->mc_pricing.mv_is_diurnal = false;
-
-                    // No hourly electricity pricing in these financial models
-                    // However, may still want to solve with dispatch optimization to avoid rapid startup/shutdown, so set to uniform schedule
-                    tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, 1.0);
-                }
-                else {
-                    throw exec_error("trough_physical", "csp_financial_model must be 1-8");
-                }
-            }
-            else if (sim_type == 2)
-            {
-                tou_params->mc_pricing.mv_is_diurnal = false;
-                tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
-            }
         }
         
         
