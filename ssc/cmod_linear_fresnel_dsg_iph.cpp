@@ -466,7 +466,7 @@ public:
         // Electricity pricing schedule
         C_timeseries_schedule_inputs elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0);
 
-        C_csp_tou_block_schedules tou(offtaker_schedule, elec_pricing_schedule);
+        C_csp_tou tou(offtaker_schedule, elec_pricing_schedule);
 
 		// System parameters
 		C_csp_solver::S_csp_system_params system;

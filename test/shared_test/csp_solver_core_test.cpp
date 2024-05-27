@@ -236,7 +236,7 @@ protected:
     C_csp_power_cycle* pc;
     C_pc_Rankine_indirect_224 rankine;
     C_csp_two_tank_tes tes;
-    C_csp_tou_block_schedules tou;
+    C_csp_tou tou;
     C_csp_solver::S_sim_setup sim_setup;
     C_csp_solver::S_csp_system_params system;
     csp_dispatch_opt dispatch;

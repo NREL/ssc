@@ -1670,8 +1670,7 @@ public:
         }
 
         // TOU parameters
-        C_csp_tou_block_schedules tou(offtaker_schedule, elec_pricing_schedule);
-        C_csp_tou_block_schedules::S_params* tou_params = &tou.ms_params;
+        C_csp_tou tou(offtaker_schedule, elec_pricing_schedule);
 
         tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = as_boolean("is_tod_pc_target_also_pc_max");
         tou.mc_dispatch_params.m_is_block_dispatch = !as_boolean("is_dispatch");      //mw

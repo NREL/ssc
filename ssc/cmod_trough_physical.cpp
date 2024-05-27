@@ -1481,8 +1481,7 @@ public:
         // TOU
         // ********************************
         // ********************************
-        C_csp_tou_block_schedules tou(offtaker_schedule, elec_pricing_schedule);
-        C_csp_tou_block_schedules::S_params *tou_params = &tou.ms_params;
+        C_csp_tou tou(offtaker_schedule, elec_pricing_schedule);
 
         {
             tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = as_boolean("is_tod_pc_target_also_pc_max");
@@ -1721,16 +1720,16 @@ public:
             //    throw exec_error("trough_physical", "Invalid dispatch pricing series dimension. Array length must match number of simulation time steps ("+my_to_string(n_steps_fixed)+").");
 
             //resize the m_hr_tou array
-            if (tou_params->mc_pricing.m_hr_tou != 0)
-                delete[] tou_params->mc_pricing.m_hr_tou;
-            tou_params->mc_pricing.m_hr_tou = new double[n_steps_fixed];
-            //set the tou period as unique for each time step
-            for (int i = 0; i < n_steps_fixed; i++)
-                tou_params->mc_pricing.m_hr_tou[i] = i + 1;
-            //allocate reported arrays
-            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed);
-            for (int i = 0; i < n_steps_fixed; i++)
-                tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][i] = dispatch_series[i];
+            //if (tou_params->mc_pricing.m_hr_tou != 0)
+            //    delete[] tou_params->mc_pricing.m_hr_tou;
+            //tou_params->mc_pricing.m_hr_tou = new double[n_steps_fixed];
+            ////set the tou period as unique for each time step
+            //for (int i = 0; i < n_steps_fixed; i++)
+            //    tou_params->mc_pricing.m_hr_tou[i] = i + 1;
+            ////allocate reported arrays
+            //tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed);
+            //for (int i = 0; i < n_steps_fixed; i++)
+            //    tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][i] = dispatch_series[i];
         }
 
         update("Begin timeseries simulation...", 0.0);

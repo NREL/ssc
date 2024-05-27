@@ -374,9 +374,9 @@ public:
 
 	void init_parent(bool dispatch_optimize);
 
-	virtual void init() = 0;
+	virtual void init();
 
-	virtual void call(double time_s, C_csp_tou::S_csp_tou_outputs & tou_outputs) = 0;
+	virtual void call(double time_s, C_csp_tou::S_csp_tou_outputs & tou_outputs);
 };
 
 class C_csp_collector_receiver
