@@ -444,8 +444,7 @@ void C_csp_solver::init()
     }
 		// TOU
     mc_tou.mc_dispatch_params.m_isleapyear = mc_weather.ms_solved_params.m_leapyear;
-	mc_tou.init();
-	mc_tou.init_parent(mc_dispatch.solver_params.dispatch_optimize);
+	mc_tou.init(mc_dispatch.solver_params.dispatch_optimize);
 		// Thermal Storage
 	m_is_tes = mc_tes.does_tes_exist();
     bool m_does_tes_enable_cr_to_cold_tank = mc_tes.is_cr_to_cold_allowed();
@@ -1534,47 +1533,6 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
         is_PAR_HTR_allowed = mc_dispatch.disp_outputs.is_eh_su_allowed;
         q_dot_elec_to_PAR_HTR = mc_dispatch.disp_outputs.q_eh_target;
     }
-}
-
-void C_csp_tou::init_parent(bool dispatch_optimize)
-{
-	// Check that dispatch logic is reasonable
-	if( !(dispatch_optimize || mc_dispatch_params.m_is_block_dispatch || mc_dispatch_params.m_is_arbitrage_policy || mc_dispatch_params.m_is_dispatch_targets) )
-	{
-		throw(C_csp_exception("Must select a plant control strategy", "TOU initialization"));
-	}
-
-	if( (dispatch_optimize && mc_dispatch_params.m_is_block_dispatch) ||
-        (dispatch_optimize && mc_dispatch_params.m_is_arbitrage_policy) ||
-        (dispatch_optimize && mc_dispatch_params.m_is_dispatch_targets) ||
-        (mc_dispatch_params.m_is_block_dispatch && mc_dispatch_params.m_is_arbitrage_policy) ||
-        (mc_dispatch_params.m_is_block_dispatch && mc_dispatch_params.m_is_dispatch_targets) ||
-        (mc_dispatch_params.m_is_arbitrage_policy && mc_dispatch_params.m_is_dispatch_targets) )
-	{
-		throw(C_csp_exception("Multiple plant control strategies were selected. Please select one.", "TOU initialization"));
-	}
-
-	if( mc_dispatch_params.m_is_block_dispatch )
-	{
-		if( mc_dispatch_params.m_use_rule_1 )
-		{
-			if( mc_dispatch_params.m_standby_off_buffer < 0.0 )
-			{
-				throw(C_csp_exception("Block Dispatch Rule 1 was selected, but the time entered was invalid."
-					" Please select a time >= 0", "TOU initialization"));
-			}
-		}
-
-		if( mc_dispatch_params.m_use_rule_2 )
-		{
-			if( mc_dispatch_params.m_f_q_dot_pc_overwrite <= 0.0 || 
-				mc_dispatch_params.m_q_dot_rec_des_mult <= 0.0 )
-			{
-				throw(C_csp_exception("Block Dispatch Rule 2 was selected, but the parameters entered were invalid."
-					" Both values must be greater than 0", "TOU initialization"));
-			}
-		}
-	}
 }
 
 void C_csp_solver::C_operating_mode_core::turn_off_mode_availability()

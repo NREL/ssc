@@ -250,9 +250,6 @@ public:
         CONSTANT
     };
 
-    util::matrix_t<double> mc_weekdays;
-    util::matrix_t<double> mc_weekends;
-    std::vector<double> mv_tod_factors;
     E_timeseries_input_type input_type;
 
     std::vector<S_timeseries_schedule_data> mv_timeseries_schedule_data;
@@ -268,10 +265,6 @@ public:
 
     void get_timestep_data(double time_s, double& val, int& tou);
 };
-
-bool build_timeseries_from_block(std::vector<S_timeseries_schedule_data>& v_timeseries_inputs,
-    const util::matrix_t<double>& weekdays, const util::matrix_t<double>& weekends,
-    std::vector<double> tod_factors);
 
 class C_csp_tou
 {
@@ -372,11 +365,9 @@ public:
 
 	~C_csp_tou(){};
 
-	void init_parent(bool dispatch_optimize);
+	void init(bool dispatch_optimize);
 
-	virtual void init();
-
-	virtual void call(double time_s, C_csp_tou::S_csp_tou_outputs & tou_outputs);
+	void call(double time_s, C_csp_tou::S_csp_tou_outputs & tou_outputs);
 };
 
 class C_csp_collector_receiver
