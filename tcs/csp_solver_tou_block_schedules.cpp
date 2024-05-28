@@ -116,25 +116,9 @@ void C_timeseries_schedule_inputs::get_timestep_data(double time_s, double& val,
     tou = mv_timeseries_schedule_data[ndx].tou_period;
 }
 
-void C_csp_tou::init(bool dispatch_optimize)
+void C_csp_tou::init(bool is_leapyear)
 {
-    // Check that dispatch logic is reasonable
-    if (!(dispatch_optimize || mc_dispatch_params.m_is_block_dispatch || mc_dispatch_params.m_is_arbitrage_policy || mc_dispatch_params.m_is_dispatch_targets))
-    {
-        throw(C_csp_exception("Must select a plant control strategy", "TOU initialization"));
-    }
-
-    if ((dispatch_optimize && mc_dispatch_params.m_is_block_dispatch) ||
-        (dispatch_optimize && mc_dispatch_params.m_is_arbitrage_policy) ||
-        (dispatch_optimize && mc_dispatch_params.m_is_dispatch_targets) ||
-        (mc_dispatch_params.m_is_block_dispatch && mc_dispatch_params.m_is_arbitrage_policy) ||
-        (mc_dispatch_params.m_is_block_dispatch && mc_dispatch_params.m_is_dispatch_targets) ||
-        (mc_dispatch_params.m_is_arbitrage_policy && mc_dispatch_params.m_is_dispatch_targets))
-    {
-        throw(C_csp_exception("Multiple plant control strategies were selected. Please select one.", "TOU initialization"));
-    }
-
-    if (mc_dispatch_params.m_is_block_dispatch)
+    if (m_dispatch_model_type == C_dispatch_model_type::E_dispatch_model_type::HEURISTIC)
     {
         if (mc_dispatch_params.m_use_rule_1)
         {
@@ -155,6 +139,11 @@ void C_csp_tou::init(bool dispatch_optimize)
             }
         }
     }
+
+    m_isleapyear = is_leapyear;
+    if (m_isleapyear) {
+        throw(C_csp_exception("CSP timeseries schedules not configured to handle leap years", "TOU initialization"));
+    }
 }
 
 void C_csp_tou::call(double time_s, C_csp_tou::S_csp_tou_outputs& tou_outputs)
@@ -162,7 +151,7 @@ void C_csp_tou::call(double time_s, C_csp_tou::S_csp_tou_outputs& tou_outputs)
     mc_offtaker_schedule.get_timestep_data(time_s, tou_outputs.m_f_turbine, tou_outputs.m_csp_op_tou);
     mc_elec_pricing_schedule.get_timestep_data(time_s, tou_outputs.m_price_mult, tou_outputs.m_pricing_tou);
 
-    if (mc_dispatch_params.m_is_tod_pc_target_also_pc_max) {
+    if (m_is_tod_pc_target_also_pc_max) {
         tou_outputs.m_wlim_dispatch = tou_outputs.m_f_turbine;
     }
     else {

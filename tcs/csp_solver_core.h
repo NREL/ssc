@@ -270,15 +270,29 @@ class C_csp_tou
 {
 
 public:
+
+    class C_dispatch_model_type
+    {
+    public:
+        enum E_dispatch_model_type
+        {
+            UNDEFINED,
+            HEURISTIC,
+            ARBITRAGE_CUTOFF,
+            IMPORT_DISPATCH_TARGETS,
+            DISPATCH_OPTIMIZATION
+        };
+    };
+
+
     struct S_csp_tou_params
     {
-        bool m_is_block_dispatch;
-        bool m_is_arbitrage_policy;
-        bool m_isleapyear;
+        //bool m_is_block_dispatch;
+        //bool m_is_arbitrage_policy;
+        //bool m_isleapyear;
 		//std::vector<double> m_w_lim_full;
 
-        bool m_is_tod_pc_target_also_pc_max;
-        bool m_is_purchase_mult_same_as_price;
+        //bool m_is_purchase_mult_same_as_price;
 
 		bool m_use_rule_1;
 		double m_standby_off_buffer;
@@ -288,7 +302,7 @@ public:
 		double m_f_q_dot_pc_overwrite;
 
         // Outside dispatch targets
-        bool m_is_dispatch_targets;                 // Pass in external dispatch targets
+        //bool m_is_dispatch_targets;                 // Pass in external dispatch targets
         std::vector<double> m_q_pc_target_su_in;
         std::vector<double> m_q_pc_target_on_in;
         std::vector<double> m_q_pc_max_in;
@@ -301,16 +315,16 @@ public:
 
         S_csp_tou_params()
         {
-            m_is_block_dispatch = true;			// Either this or m_dispatch_optimize must be true
-            m_is_arbitrage_policy = false;
-            m_is_dispatch_targets = false;      
+            //m_is_block_dispatch = true;			// Either this or m_dispatch_optimize must be true
+            //m_is_arbitrage_policy = false;
+            //m_is_dispatch_targets = false;      
 
-            m_isleapyear = false;
+            //m_isleapyear = false;
 			//m_w_lim_full.resize(8760);
 			//m_w_lim_full.assign(8760, 9.e99);
 
-            m_is_tod_pc_target_also_pc_max = false;
-            m_is_purchase_mult_same_as_price = true;
+            //m_is_tod_pc_target_also_pc_max = false;
+            //m_is_purchase_mult_same_as_price = true;
 
 			// Rule 1: if the sun sets (or does not rise) in m_standby_off_buffer [hours], then do not allow power cycle standby
 			m_use_rule_1 = false;				
@@ -333,8 +347,6 @@ public:
 
     } mc_dispatch_params;   // TODO: Remove this 
 
-    bool m_is_new_timeseries_code;
-
 	struct S_csp_tou_outputs
 	{
         int m_csp_op_tou;
@@ -352,22 +364,29 @@ public:
 		}
 	};
 
+    bool m_isleapyear;
+
+    bool m_is_tod_pc_target_also_pc_max;
+
+    C_dispatch_model_type::E_dispatch_model_type m_dispatch_model_type;
+
     C_timeseries_schedule_inputs mc_offtaker_schedule;
     C_timeseries_schedule_inputs mc_elec_pricing_schedule;
 
-    C_csp_tou() { m_is_new_timeseries_code = false; };
-
     C_csp_tou(C_timeseries_schedule_inputs c_offtaker_schedule,
-        C_timeseries_schedule_inputs c_elec_pricing_schedule)
+        C_timeseries_schedule_inputs c_elec_pricing_schedule,
+        C_csp_tou::C_dispatch_model_type::E_dispatch_model_type dispatch_model_type,
+        bool is_offtaker_frac_also_max)
     {
-        m_is_new_timeseries_code = true;
         mc_offtaker_schedule = c_offtaker_schedule;
         mc_elec_pricing_schedule = c_elec_pricing_schedule;
+        m_dispatch_model_type = dispatch_model_type;
+        m_is_tod_pc_target_also_pc_max = is_offtaker_frac_also_max;
     }
 
 	~C_csp_tou(){};
 
-	void init(bool dispatch_optimize);
+	void init(bool is_leapyear);
 
 	void call(double time_s, C_csp_tou::S_csp_tou_outputs & tou_outputs);
 };

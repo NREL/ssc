@@ -443,8 +443,7 @@ void C_csp_solver::init()
         m_is_CT_tes = false;
     }
 		// TOU
-    mc_tou.mc_dispatch_params.m_isleapyear = mc_weather.ms_solved_params.m_leapyear;
-	mc_tou.init(mc_dispatch.solver_params.dispatch_optimize);
+	mc_tou.init(mc_weather.ms_solved_params.m_leapyear);
 		// Thermal Storage
 	m_is_tes = mc_tes.does_tes_exist();
     bool m_does_tes_enable_cr_to_cold_tank = mc_tes.is_cr_to_cold_allowed();
@@ -465,11 +464,8 @@ void C_csp_solver::init()
 
     m_is_cr_config_recirc = true;
 
-    if (!mc_tou.mc_dispatch_params.m_is_block_dispatch &&
-        !mc_dispatch.solver_params.dispatch_optimize &&
-        !mc_tou.mc_dispatch_params.m_is_arbitrage_policy &&
-        !mc_tou.mc_dispatch_params.m_is_dispatch_targets) {
-        throw(C_csp_exception("Either block dispatch or dispatch optimization must be specified", "CSP Solver"));
+    if (mc_tou.m_dispatch_model_type == C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::UNDEFINED) {
+        throw(C_csp_exception("Either heuristic, imported dispatch targets, or dispatch optimization must be specified", "CSP Solver"));
     }
 
     if (mc_dispatch.solver_params.dispatch_optimize)
@@ -619,9 +615,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
         double f_turbine_tou = mc_tou_outputs.m_f_turbine;	//[-]
 		double pricing_mult = mc_tou_outputs.m_price_mult;	//[-]
         double purchase_mult = pricing_mult;
-        if (!mc_tou.mc_dispatch_params.m_is_purchase_mult_same_as_price) {
-            throw(C_csp_exception("CSP Solver not yet setup to handle purchase schedule separate from price schedule"));
-        }
+        //if (!mc_tou.mc_dispatch_params.m_is_purchase_mult_same_as_price) {
+        //    throw(C_csp_exception("CSP Solver not yet setup to handle purchase schedule separate from price schedule"));
+        //}
 
 		// Get collector/receiver & power cycle operating states at start of time step (end of last time step)
             // collector/receiver
@@ -1331,7 +1327,7 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
     double& q_dot_elec_to_PAR_HTR /*MWt*/, bool& is_PAR_HTR_allowed)
 {
     // Optional rules for TOD Block Plant Control
-    if (mc_tou.mc_dispatch_params.m_is_block_dispatch)
+    if (mc_tou.m_dispatch_model_type == C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::HEURISTIC)
     {
         is_rec_su_allowed = true;
         is_pc_su_allowed = true;
@@ -1339,7 +1335,7 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
 
         // Set PC target and max thermal power
         q_dot_pc_target = f_turbine_tou * m_cycle_q_dot_des;	//[MW]
-        if (mc_tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max) {
+        if (mc_tou.m_is_tod_pc_target_also_pc_max) {
             q_dot_pc_max = q_dot_pc_target;     //[MW]
         }
         else {
@@ -1395,7 +1391,7 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
         }
     }
     // Use simply policy to govern arbitrage operation
-    else if (mc_tou.mc_dispatch_params.m_is_arbitrage_policy) {
+    else if (mc_tou.m_dispatch_model_type == C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::ARBITRAGE_CUTOFF) {
 
         // Check purchase multiplier
         // If less than 1, then allow charging
@@ -1421,7 +1417,7 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
             is_pc_sb_allowed = false;
 
             q_dot_pc_target = m_cycle_q_dot_des;	//[MWt]
-            if (mc_tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max) {
+            if (mc_tou.m_is_tod_pc_target_also_pc_max) {
                 q_dot_pc_max = q_dot_pc_target;     //[MWt]
             }
             else {
@@ -1437,7 +1433,7 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
         }
     }
     // Use external dispatch targets
-    else if (mc_tou.mc_dispatch_params.m_is_dispatch_targets) {
+    else if (mc_tou.m_dispatch_model_type == C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::IMPORT_DISPATCH_TARGETS) {
         int p = (int)ceil((mc_kernel.mc_sim_info.ms_ts.m_time - mc_kernel.get_sim_setup()->m_sim_time_start) / baseline_step) - 1;
 
         if (pc_operating_state == C_csp_power_cycle::OFF || pc_operating_state == C_csp_power_cycle::STARTUP) {
@@ -1458,7 +1454,7 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
 
     }
     // Run dispatch optimization?
-    else if (mc_dispatch.solver_params.dispatch_optimize) {
+    else if (mc_tou.m_dispatch_model_type == C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::DISPATCH_OPTIMIZATION) {
         q_dot_elec_to_PAR_HTR = 0.0;
         is_PAR_HTR_allowed = false;
 

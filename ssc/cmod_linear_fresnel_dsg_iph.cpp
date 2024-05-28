@@ -465,7 +465,12 @@ public:
         // Electricity pricing schedule
         C_timeseries_schedule_inputs elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0);
 
-        C_csp_tou tou(offtaker_schedule, elec_pricing_schedule);
+        // Dispatch model type
+        C_csp_tou::C_dispatch_model_type::E_dispatch_model_type dispatch_model_type = C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::HEURISTIC;
+
+        bool is_offtaker_frac_also_max = true;
+
+        C_csp_tou tou(offtaker_schedule, elec_pricing_schedule, dispatch_model_type, is_offtaker_frac_also_max);   //heuristic 
 
 		// System parameters
 		C_csp_solver::S_csp_system_params system;

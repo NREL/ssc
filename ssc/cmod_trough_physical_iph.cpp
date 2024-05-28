@@ -1218,11 +1218,22 @@ public:
             elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0);
         }
 
-        C_csp_tou tou(offtaker_schedule, elec_pricing_schedule);
+        // Set dispatch model type
+        C_csp_tou::C_dispatch_model_type::E_dispatch_model_type dispatch_model_type = C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::UNDEFINED;
+        if (is_dispatch) {
+            dispatch_model_type = C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::DISPATCH_OPTIMIZATION;
+        }
+        else {
+            dispatch_model_type = C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::HEURISTIC;
+        }
+
+        bool is_offtaker_frac_also_max = as_boolean("is_tod_pc_target_also_pc_max");
+
+        C_csp_tou tou(offtaker_schedule, elec_pricing_schedule, dispatch_model_type, is_offtaker_frac_also_max);
 
         {
-            tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = as_boolean("is_tod_pc_target_also_pc_max");
-            tou.mc_dispatch_params.m_is_block_dispatch = !is_dispatch;      //mw
+            //tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = as_boolean("is_tod_pc_target_also_pc_max");
+            //tou.mc_dispatch_params.m_is_block_dispatch = !is_dispatch;      //mw
             tou.mc_dispatch_params.m_use_rule_1 = true;
             tou.mc_dispatch_params.m_standby_off_buffer = 2.0;
             tou.mc_dispatch_params.m_use_rule_2 = false;

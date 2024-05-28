@@ -2174,23 +2174,39 @@ public:
         // *****************************************************
         //
 
-        C_csp_tou tou(offtaker_schedule, elec_pricing_schedule);
-
-        tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = as_boolean("is_tod_pc_target_also_pc_max");
-        tou.mc_dispatch_params.m_is_block_dispatch = !(as_boolean("is_dispatch") || as_boolean("is_dispatch_targets"));
-        tou.mc_dispatch_params.m_use_rule_1 = true;
-        tou.mc_dispatch_params.m_standby_off_buffer = 2.0;
-        tou.mc_dispatch_params.m_use_rule_2 = false;
-        tou.mc_dispatch_params.m_q_dot_rec_des_mult = -1.23;
-        tou.mc_dispatch_params.m_f_q_dot_pc_overwrite = -1.23;
-
+        // Figure out dispatch model type
         // User-specified dispatch targets (specified at weather-file resolution)
         bool is_dispatch_targets = as_boolean("is_dispatch_targets");
         if (is_dispatch_targets && is_dispatch) {
             log("Both 'is_dispatch' and 'is_dispatch_targets' were set to true. Plant dispatch will be optimized and all user-specified dispatch target arrays will be ignored", SSC_WARNING);
             is_dispatch_targets = false;
         }
-        tou.mc_dispatch_params.m_is_dispatch_targets = is_dispatch_targets;
+
+        C_csp_tou::C_dispatch_model_type::E_dispatch_model_type dispatch_model_type = C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::UNDEFINED;
+        if (is_dispatch) {
+            dispatch_model_type = C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::DISPATCH_OPTIMIZATION;
+        }
+        else if (is_dispatch_targets) {
+            dispatch_model_type = C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::IMPORT_DISPATCH_TARGETS;
+        }
+        else {
+            dispatch_model_type = C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::HEURISTIC;
+        }
+
+        bool is_offtaker_frac_also_max = as_boolean("is_tod_pc_target_also_pc_max");
+
+        C_csp_tou tou(offtaker_schedule, elec_pricing_schedule, dispatch_model_type, is_offtaker_frac_also_max);
+
+        //tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = as_boolean("is_tod_pc_target_also_pc_max");
+        //tou.mc_dispatch_params.m_is_block_dispatch = !(as_boolean("is_dispatch") || as_boolean("is_dispatch_targets"));
+        tou.mc_dispatch_params.m_use_rule_1 = true;
+        tou.mc_dispatch_params.m_standby_off_buffer = 2.0;
+        tou.mc_dispatch_params.m_use_rule_2 = false;
+        tou.mc_dispatch_params.m_q_dot_rec_des_mult = -1.23;
+        tou.mc_dispatch_params.m_f_q_dot_pc_overwrite = -1.23;
+
+        
+        //tou.mc_dispatch_params.m_is_dispatch_targets = is_dispatch_targets;
         if (is_dispatch_targets) {
             int n_expect = (int)ceil((sim_setup.m_sim_time_end - sim_setup.m_sim_time_start) / 3600. * steps_per_hour);
 
