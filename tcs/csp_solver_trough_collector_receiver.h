@@ -491,6 +491,9 @@ public:
     std::vector<int> m_SCADefocusArray;             //[-] Order in which the SCA's should be defocused
     double m_m_dot_htfmin = std::numeric_limits<double>::quiet_NaN();	                        //[kg/s] Minimum loop HTF flow rate
     double m_m_dot_htfmax = std::numeric_limits<double>::quiet_NaN();	                        //[kg/s] Maximum loop HTF flow rate
+    double m_f_htfmin = std::numeric_limits<double>::quiet_NaN();	                            // Minimum loop HTF fraction of mdot design
+    double m_f_htfmax = std::numeric_limits<double>::quiet_NaN();	                            // Maximum loop HTF fraction of mdot design
+
     double m_max_field_flow_velocity = std::numeric_limits<double>::quiet_NaN();               //[m/s] Maximum Field Flow Velocity
     double m_min_field_flow_velocity = std::numeric_limits<double>::quiet_NaN();               //[m/s] Minimum Field Flow Velocity
     double m_total_loop_conversion_efficiency_des = std::numeric_limits<double>::quiet_NaN();  //[] Total Loop Conversion Efficiency at Design

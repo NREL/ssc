@@ -558,33 +558,35 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
     // TMB 12.7.23 Calculated in design_solar_mult()
 	//m_m_dot_design = (m_Ap_tot*m_I_bn_des*m_opteff_des - loss_tot*float(m_nLoops)) / (m_c_htf_ave*(m_T_loop_out_des - m_T_loop_in_des));
 
-
-    double m_dot_max = m_m_dot_htfmax * m_nLoops;
-    double m_dot_min = m_m_dot_htfmin * m_nLoops;
     m_q_design_ideal = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
 
-    if (m_m_dot_design > m_dot_max) {
-        const char *msg = "The calculated field design mass flow rate of %.2f kg/s is greater than the maximum defined by the max single loop flow rate and number of loops (%.2f kg/s). "
-            "The design mass flow rate is reset to the latter.";
-        m_error_msg = util::format(msg, m_m_dot_design, m_dot_max);
-        mc_csp_messages.add_message(C_csp_messages::NOTICE, m_error_msg);
-        m_m_dot_design = m_dot_max;
-    }
-    else if (m_m_dot_design < m_dot_min) {
-        const char *msg = "The calculated field design mass flow rate of %.2f kg/s is less than the minimum defined by the min single loop flow rate and number of loops (%.2f kg/s). "
-            "The design mass flow rate is reset to the latter.";
-        m_error_msg = util::format(msg, m_m_dot_design, m_dot_min);
-        mc_csp_messages.add_message(C_csp_messages::NOTICE, m_error_msg);
-        m_m_dot_design = m_dot_min;
-    }
-
-	m_m_dot_loop_des = m_m_dot_design/(double)m_nLoops;	//[kg/s]
+    // Calculate Max and Min Mass Flow
+    m_m_dot_loop_des = m_m_dot_design / (double)m_nLoops;	//[kg/s]
+    m_m_dot_htfmax = m_f_htfmax * m_m_dot_loop_des;         //[kg/s]
+    m_m_dot_htfmin = m_f_htfmin * m_m_dot_loop_des;         //[kg/s]
+	
 	//mjw 1.16.2011 Design field thermal power 
 	//m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
 	m_q_design_actual = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
 	//mjw 1.16.2011 Convert the thermal inertia terms here
 	m_mc_bal_hot = m_mc_bal_hot_per_MW * 3.6 * m_q_design_actual;    //[J/K]
 	m_mc_bal_cold = m_mc_bal_cold_per_MW * 3.6 * m_q_design_actual;  //[J/K]
+
+    // Max Field Flow Velocity
+    m_max_field_flow_velocity = 0;
+    {
+        double density = m_htfProps.dens(m_T_loop_out_des + 273.15, std::numeric_limits<double>::quiet_NaN());
+
+        m_max_field_flow_velocity = m_m_dot_htfmax * 4 / (density * M_PI * m_min_inner_diameter * m_min_inner_diameter);
+    }
+
+    // Min Field Flow Velocity
+    m_min_field_flow_velocity = 0;
+    {
+        double density = m_htfProps.dens(m_T_loop_in_des + 273.15, std::numeric_limits<double>::quiet_NaN());
+
+        m_min_field_flow_velocity = m_m_dot_htfmin * 4 / (density * M_PI * m_min_inner_diameter * m_min_inner_diameter);
+    }
 
 	//need to provide fluid density
     double rho_cold = m_htfProps.dens(m_T_loop_in_des, 10.e5); //kg/m3
@@ -4258,23 +4260,6 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
             m_SCADefocusArray[i] = static_cast<int>(m_trough_loop_control.at(3 + 3 * i));
         }
     }
-
-    // Max Field Flow Velocity
-    m_max_field_flow_velocity = 0;
-    {
-        double density = m_htfProps.dens(m_T_loop_out_des + 273.15, std::numeric_limits<double>::quiet_NaN());
-
-        m_max_field_flow_velocity = m_m_dot_htfmax * 4 / (density * M_PI * m_min_inner_diameter * m_min_inner_diameter);
-    }
-
-    // Min Field Flow Velocity
-    m_min_field_flow_velocity = 0;
-    {
-        double density = m_htfProps.dens(m_T_loop_in_des + 273.15, std::numeric_limits<double>::quiet_NaN());
-
-        m_min_field_flow_velocity = m_m_dot_htfmin * 4 / (density * M_PI * m_min_inner_diameter * m_min_inner_diameter);
-    }
-
 
     // HCE design heat loss
     m_HCE_heat_loss_des = std::vector<double>();
