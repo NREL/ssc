@@ -36,7 +36,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "csp_solver_fresnel_collector_receiver.h"
 #include "csp_solver_pc_heat_sink.h"
-#include "csp_solver_tou_block_schedules.h"
 #include "csp_dispatch.h"
 #include "csp_system_costs.h"
 #include "csp_solver_two_tank_tes.h"

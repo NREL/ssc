@@ -38,7 +38,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_core.h"
 #include "csp_solver_cr_electric_resistance.h"
 #include "csp_solver_pc_Rankine_indirect_224.h"
-#include "csp_solver_tou_block_schedules.h"
 #include "etes_dispatch.h"
 
 #include "csp_system_costs.h"

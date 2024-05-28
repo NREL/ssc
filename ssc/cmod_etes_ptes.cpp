@@ -39,7 +39,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_pc_ptes.h"
 #include "csp_solver_cr_heat_pump.h"
 #include "csp_solver_two_tank_tes.h"
-#include "csp_solver_tou_block_schedules.h"
 #include "etes_dispatch.h"
 
 #include "csp_system_costs.h"

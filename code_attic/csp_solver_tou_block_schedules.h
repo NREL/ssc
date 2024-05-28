@@ -38,11 +38,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "sam_csp_util.h"
 
-class C_blahahaha
-{
-    double abc;
-};
-
 //class C_block_schedule
 //{
 //

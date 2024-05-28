@@ -30,8 +30,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "csp_solver_tou_block_schedules.h"
 #include "csp_solver_util.h"
+#include "csp_solver_core.h"
 #include <algorithm>
 
 #include "lib_util.h"
