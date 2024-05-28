@@ -161,4 +161,11 @@ void C_csp_tou::call(double time_s, C_csp_tou::S_csp_tou_outputs& tou_outputs)
 {
     mc_offtaker_schedule.get_timestep_data(time_s, tou_outputs.m_f_turbine, tou_outputs.m_csp_op_tou);
     mc_elec_pricing_schedule.get_timestep_data(time_s, tou_outputs.m_price_mult, tou_outputs.m_pricing_tou);
+
+    if (mc_dispatch_params.m_is_tod_pc_target_also_pc_max) {
+        tou_outputs.m_wlim_dispatch = tou_outputs.m_f_turbine;
+    }
+    else {
+        tou_outputs.m_wlim_dispatch = 9.e99;
+    }
 }

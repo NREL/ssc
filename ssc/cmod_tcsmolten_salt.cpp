@@ -878,7 +878,7 @@ public:
                 " results in these minor non-intuitive ways, we decided to hardcode the valu to 100 bar.");
         }
 
-        if (is_dispatch) {
+        if (is_dispatch && sim_type == 1) {
             // Cycle startup cost disp_csu_cost
             bool is_disp_csu_cost_assigned = is_assigned("disp_csu_cost");
             bool is_disp_csu_cost_rel_assigned = is_assigned("disp_csu_cost_rel");
@@ -2291,7 +2291,9 @@ public:
         // System dispatch
         csp_dispatch_opt dispatch;
 
-        if (as_boolean("is_dispatch")){
+        dispatch.solver_params.dispatch_optimize = is_dispatch;
+
+        if (is_dispatch && sim_type == 1){
 
             double heater_startup_cost = 0.0;
             if (is_parallel_heater) {
@@ -2300,7 +2302,7 @@ public:
                 heater_startup_cost = as_double("disp_hsu_cost_rel") * q_dot_heater_des;    //[$/start]
             }
 
-            dispatch.solver_params.set_user_inputs(as_boolean("is_dispatch"), as_integer("disp_steps_per_hour"), as_integer("disp_frequency"), as_integer("disp_horizon"),
+            dispatch.solver_params.set_user_inputs(is_dispatch, as_integer("disp_steps_per_hour"), as_integer("disp_frequency"), as_integer("disp_horizon"),
                 as_integer("disp_max_iter"), as_double("disp_mip_gap"), as_double("disp_timeout"),
                 as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_spec_scaling"), as_integer("disp_reporting"),
                 as_boolean("is_write_ampl_dat"), as_boolean("is_ampl_engine"), as_string("ampl_data_dir"), as_string("ampl_exec_call"));
@@ -2310,9 +2312,6 @@ public:
             dispatch.params.set_user_params(as_boolean("can_cycle_use_standby"), as_double("disp_time_weighting"),
                 disp_rsu_cost_calc, heater_startup_cost, disp_csu_cost_calc, as_double("disp_pen_ramping"),
                 as_double("disp_inventory_incentive"), as_double("q_rec_standby"), as_double("q_rec_heattrace"), ppa_price_year1);
-        }
-        else {
-            dispatch.solver_params.dispatch_optimize = false;
         }
 
         // Instantiate Solver       

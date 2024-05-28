@@ -196,7 +196,7 @@ bool csp_dispatch_opt::update_horizon_parameters(C_csp_tou& mc_tou)
             double W_dot_max = params.q_pb_max * params.eta_pb_des;     //[kWe]
             C_csp_tou::S_csp_tou_outputs tou_outputs;
             mc_tou.call((hour_start + t + 1)*3600.0, tou_outputs);
-            params.w_lim.at(t * solver_params.steps_per_hour + d) = tou_outputs.m_f_turbine * W_dot_max;
+            params.w_lim.at(t * solver_params.steps_per_hour + d) = tou_outputs.m_wlim_dispatch * W_dot_max;
                 //params.w_lim.at(t * solver_params.steps_per_hour + d) = mc_tou.mc_dispatch_params.m_w_lim_full.at(hour_start + t);
         }
     }

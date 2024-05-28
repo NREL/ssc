@@ -342,11 +342,13 @@ public:
 		double m_f_turbine;
 		double m_price_mult;
 
+        double m_wlim_dispatch; //[-]
+
 		S_csp_tou_outputs()
 		{
             m_csp_op_tou = m_pricing_tou = -1;
 
-			m_f_turbine = m_price_mult = std::numeric_limits<double>::quiet_NaN();
+			m_f_turbine = m_price_mult = m_wlim_dispatch = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
