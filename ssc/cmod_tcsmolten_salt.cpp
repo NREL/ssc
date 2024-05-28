@@ -353,10 +353,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_NUMBER, "disp_inventory_incentive",           "Dispatch storage terminal inventory incentive multiplier",                                                                                "",             "",                                  "System Control",                           "?=0.0",                                                            "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_NUMBER, "q_rec_standby",                      "Receiver standby energy consumption",                                                                                                     "kWt",          "",                                  "System Control",                           "?=9e99",                                                           "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_NUMBER, "q_rec_heattrace",                    "Receiver heat trace energy consumption during startup",                                                                                   "kWe-hr",       "",                                  "System Control",                           "?=0.0",                                                            "",              "SIMULATION_PARAMETER"},
-    { SSC_INPUT,     SSC_NUMBER, "is_wlim_design",                     "Use fixed design-point net electricity generation limits (dispatch opt only)",                                                            "",             "",                                  "System Control",                           "?=0",                                                              "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "disp_wlim_maxspec",                  "Fixed design-point max net power to the grid (dispatch opt only)",                                                                        "",             "",                                  "System Control",                           "is_wlim_design=1",                                                 "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "is_wlim_series",                     "Use time-series net electricity generation limits (dispatch opt only)",                                                                   "",             "",                                  "System Control",                           "?=0",                                                              "",              "SIMULATION_PARAMETER"},
-    { SSC_INPUT,     SSC_ARRAY,  "wlim_series",                        "Time series net electricity generation limits (dispatch opt only)",                                                                        "kWe",          "",                                  "System Control",                           "is_wlim_series=1",                                                 "",              "SIMULATION_PARAMETER"},
 
     // Pricing schedules and multipliers
         // Ideally this would work with sim_type = 2, but UI inputs availability depends on financial mode
@@ -369,8 +365,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_ARRAY,  "dispatch_tod_factors",               "TOD factors for periods 1 through 9",                                                                                                     "",
         "We added this array input after SAM 2022.12.21 to replace the functionality of former single value inputs dispatch_factor1 through dispatch_factor9",                                                                                                         "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
 
-    { SSC_INPUT,     SSC_NUMBER, "is_dispatch_series",                 "Use time-series dispatch factors",                                                                                                        "",             "",                                  "System Control",                           "?=0",                                                                         "",              "SIMULATION_PARAMETER"},
-    { SSC_INPUT,     SSC_ARRAY,  "dispatch_series",                    "Time series dispatch factors",                                                                                                            "",             "",                                  "System Control",                           "",                                                                            "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_ARRAY,  "ppa_price_input",			           "PPA prices - yearly",			                                                                                                          "$/kWh",	      "",	                               "Revenue",			                       "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",      	       "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_MATRIX, "mp_energy_market_revenue",           "Energy market revenue input",                                                                                                             "",             "Lifetime x 2[Cleared Capacity(MW),Price($/MWh)]", "Revenue",                    "csp_financial_model=6&is_dispatch=1&sim_type=1",                              "",              "SIMULATION_PARAMETER"},
 
@@ -2183,27 +2177,6 @@ public:
         C_csp_tou tou(offtaker_schedule, elec_pricing_schedule);
 
         tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = as_boolean("is_tod_pc_target_also_pc_max");
-
-        //if (is_dispatch)
-        //{
-        //    tou.mc_dispatch_params.m_w_lim_full.resize(n_steps_full);
-        //    std::fill(tou.mc_dispatch_params.m_w_lim_full.begin(), tou.mc_dispatch_params.m_w_lim_full.end(), 9.e99);
-        //    if (as_boolean("is_wlim_series"))
-        //    {
-        //        size_t n_wlim_series = 0;
-        //        ssc_number_t* wlim_series = as_array("wlim_series", &n_wlim_series);
-        //        if (n_wlim_series != n_steps_full)
-        //            throw exec_error("tcsmolten_salt", "Invalid net electricity generation limit series dimension. Matrix must have " + util::to_string((int)n_steps_full) + " rows.");
-        //        for (size_t i = 0; i < n_steps_full; i++)
-        //            tou.mc_dispatch_params.m_w_lim_full.at(i) = (double)wlim_series[i];
-        //    }
-        //    else if (as_boolean("is_wlim_design")) {
-        //        double wlim_design = as_double("disp_wlim_maxspec");
-        //        for (size_t i = 0; i < n_steps_full; i++)
-        //            tou.mc_dispatch_params.m_w_lim_full.at(i) = wlim_design;
-        //    }
-        //}
-
         tou.mc_dispatch_params.m_is_block_dispatch = !(as_boolean("is_dispatch") || as_boolean("is_dispatch_targets"));
         tou.mc_dispatch_params.m_use_rule_1 = true;
         tou.mc_dispatch_params.m_standby_off_buffer = 2.0;
@@ -2431,30 +2404,6 @@ public:
         {
             log(out_msg, out_type);
         }
-
-
-        //if the pricing schedule is provided as hourly, overwrite the tou schedule
-        if( as_boolean("is_dispatch_series") )
-        {
-            size_t n_dispatch_series;
-            ssc_number_t *dispatch_series = as_array("dispatch_series", &n_dispatch_series);
-
-       //     if( n_dispatch_series != n_steps_fixed)
-                //throw exec_error("tcsmolten_salt", "Invalid dispatch pricing series dimension. Array length must match number of simulation time steps ("+my_to_string(n_steps_fixed)+").");
-                
-            //resize the m_hr_tou array
-            //if( tou_params->mc_pricing.m_hr_tou != 0 )
-            //    delete [] tou_params->mc_pricing.m_hr_tou;
-            //tou_params->mc_pricing.m_hr_tou = new double[n_steps_fixed];
-            ////set the tou period as unique for each time step
-            //for(size_t i=0; i<n_steps_fixed; i++)
-            //    tou_params->mc_pricing.m_hr_tou[i] = i+1;
-            ////allocate reported arrays
-            //tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed);
-            //for( size_t i=0; i<n_steps_fixed; i++)
-            //    tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][i] = dispatch_series[i];
-        }
-
 
         // *****************************************************
         // System design is complete, get design parameters from component models as necessary

@@ -272,8 +272,6 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_ARRAY,       "dispatch_tod_factors",      "TOD factors for periods 1 through 9",                                              "",
         "We added this array input after SAM 2022.12.21 to replace the functionality of former single value inputs dispatch_factor1 through dispatch_factor9",                              "Time of Delivery Factors","sim_type=1&ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1","",  "SIMULATION_PARAMETER" },
 
-    { SSC_INPUT,        SSC_NUMBER,      "is_dispatch_series",        "Use time-series dispatch factors",                                                 "",             "",               "tou",                     "?=1",                                                       "",             "" },
-    { SSC_INPUT,        SSC_ARRAY,       "dispatch_series",           "Time series dispatch factors",                                                     "",             "",               "tou",                     "",                                                          "",             "" },
     { SSC_INPUT,        SSC_ARRAY,       "timestep_load_fractions",   "Turbine load fraction for each timestep, alternative to block dispatch",           "",             "",               "tou",                     "?",                                                         "",             "SIMULATION_PARAMETER" },
     { SSC_INPUT,        SSC_ARRAY,       "ppa_price_input",			  "PPA prices - yearly",			                                                  "$/kWh",	      "",	            "Revenue",			       "sim_type=1&ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1","",      	    "SIMULATION_PARAMETER" },
     { SSC_INPUT,        SSC_MATRIX,      "mp_energy_market_revenue",  "Energy market revenue input",                                                      "",             "Lifetime x 2[Cleared Capacity(MW),Price($/MWh)]", "Revenue", "sim_type=1&csp_financial_model=6&is_dispatch=1",      "",             "SIMULATION_PARAMETER" },
@@ -331,8 +329,6 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "specified_total_aperture",            "specified_total_aperture",                                               "-",            "",               "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "non_solar_field_land_area_multiplier", "non_solar_field_land_area_multiplier",                                  "-",            "",               "controller",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "trough_loop_control",                 "trough_loop_control",                                                    "-",            "",               "controller",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "disp_wlim_maxspec",                   "disp_wlim_maxspec",                                                      "-",            "",               "controller",     "*",                       "",                      "" },
-
 
     // ****************************************************************************************************************************************
     //     DEPRECATED INPUTS -- exec() checks if a) variable is assigned and b) if replacement variable is assigned. throws exception if a=true and b=false
@@ -446,11 +442,7 @@ static var_info _cm_vtab_trough_physical[] = {
     // Power Cycle
     { SSC_OUTPUT,       SSC_NUMBER,      "m_dot_htf_cycle_des",              "PC mass flow rate at design",                                              "kg/s",          "",               "Power Cycle",    "*",                                "",                      "" },
 
-
     // System Control
-    { SSC_OUTPUT,       SSC_NUMBER,      "is_wlim_series",                   "Use time-series net electricity generation limits",                        "",              "",               "System Control", "?=0",                              "",                      "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "disp_wlim_max",                    "Max. net power to the grid (incl. availability)",                          "MWe",           "",               "System Control", "*",                                "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "wlim_series",                      "Time series net electricity generation limits",                             "kWe",           "",               "System Control", "is_dispatch=1",                    "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "bop_design",                       "BOP parasitic at design",                                                 "MWe",           "",               "System Control", "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "aux_design",                       "Aux parasitic at design",                                                 "MWe",           "",               "System Control", "*",                                "",                      "" },
 
@@ -1708,29 +1700,6 @@ public:
             log(out_msg, out_type);
         }
 
-
-        //if the pricing schedule is provided as hourly, overwrite the tou schedule
-        if (as_boolean("is_dispatch_series"))
-        {
-            size_t n_dispatch_series;
-            ssc_number_t *dispatch_series = as_array("dispatch_series", &n_dispatch_series);
-
-            //if( n_dispatch_series != n_steps_fixed)
-            //    throw exec_error("trough_physical", "Invalid dispatch pricing series dimension. Array length must match number of simulation time steps ("+my_to_string(n_steps_fixed)+").");
-
-            //resize the m_hr_tou array
-            //if (tou_params->mc_pricing.m_hr_tou != 0)
-            //    delete[] tou_params->mc_pricing.m_hr_tou;
-            //tou_params->mc_pricing.m_hr_tou = new double[n_steps_fixed];
-            ////set the tou period as unique for each time step
-            //for (int i = 0; i < n_steps_fixed; i++)
-            //    tou_params->mc_pricing.m_hr_tou[i] = i + 1;
-            ////allocate reported arrays
-            //tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed);
-            //for (int i = 0; i < n_steps_fixed; i++)
-            //    tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][i] = dispatch_series[i];
-        }
-
         update("Begin timeseries simulation...", 0.0);
 
         // ********************************
@@ -1954,28 +1923,13 @@ public:
             // System Control
             {
                 double adjust_constant = as_double("adjust_constant");
-                double disp_wlim_maxspec = as_double("disp_wlim_maxspec");
-                double disp_wlim_max = disp_wlim_maxspec * (1.0 - (adjust_constant / 100.0)); // MWe
                 double W_dot_bop_design, W_dot_fixed_parasitic_design;    //[MWe]
                 csp_solver.get_design_parameters(W_dot_bop_design, W_dot_fixed_parasitic_design);
                 vector<double> aux_vec = as_vector_double("aux_array");
                 double aux_design = aux_vec[0] * aux_vec[1] * (aux_vec[2] + aux_vec[3] + aux_vec[4]) * W_dot_cycle_des;
 
-
-                int kHoursInYear = 8760;
-                double disp_wlim_max_kW = disp_wlim_max * 1000.0;
-                std::vector<double> wlim_series(kHoursInYear, disp_wlim_max_kW);
-
-
-
-                assign("is_wlim_series", is_dispatch);
-                assign("disp_wlim_max", disp_wlim_max); // MWe
                 assign("bop_design", W_dot_bop_design); // MWe
                 assign("aux_design", aux_design);       // MWe
-
-                if (is_dispatch)
-                    set_vector("wlim_series", wlim_series); // kWe
-
             }
         }
 
