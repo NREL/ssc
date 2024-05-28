@@ -49,11 +49,9 @@ static var_info _cm_vtab_fresnel_physical[] = {
     /* VARTYPE          DATATYPE         NAME                         LABEL                                                                               UNITS           META              GROUP             REQUIRED_IF                CONSTRAINTS         UI_HINTS*/
     { SSC_INPUT,        SSC_NUMBER,      "sim_type",                    "1 (default): timeseries, 2: design only",                                          "",             "",               "System Control", "?=1",                    "",                       "SIMULATION_PARAMETER"},
 
-    
     // Weather Reader
 
     { SSC_INPUT,        SSC_STRING,      "file_name",                 "Local weather file with path",                                                     "none",         "",               "weather",        "*",                       "LOCAL_FILE",            "" },
-
 
     // System Design
 
@@ -208,8 +206,6 @@ static var_info _cm_vtab_fresnel_physical[] = {
               /*Sys Control*/{ SSC_INPUT,    SSC_ARRAY,          "aux_array",                   "Aux heater, boiler parasitic",                                                          "",                    "",                             "Sys_Control",          "*",                "",                 "" },
       
               /*Sys Control*/{ SSC_INPUT,    SSC_NUMBER,         "is_dispatch",                 "Allow dispatch optimization?",  /*TRUE=1*/                                              "-",                   "",                             "Sys_Control",          "?=0",              "",                 "" },
-              /*Sys Control*/{ SSC_INPUT,    SSC_NUMBER,         "is_dispatch_series",          "Use time-series dispatch factors",                                                      "",                    "",                             "Sys_Control",          "?=1",              "",                 "" },
-              /*Sys Control*/{ SSC_INPUT,    SSC_ARRAY,          "dispatch_series",             "Time series dispatch factors",                                                          "",                    "",                             "Sys_Control",          "*",                 "",                 "" },
               /*Sys Control*/{ SSC_INPUT,    SSC_NUMBER,         "disp_frequency",              "Frequency for dispatch optimization calculations",                                      "hour",                "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
               /*Sys Control*/{ SSC_INPUT,    SSC_NUMBER,         "disp_horizon",                "Time horizon for dispatch optimization",                                                "hour",                "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
               /*Sys Control*/{ SSC_INPUT,    SSC_NUMBER,         "disp_max_iter",               "Max. no. dispatch optimization iterations",                                             "-",                   "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
@@ -1349,28 +1345,6 @@ public:
         while (csp_solver.mc_csp_messages.get_message(&out_type, &out_msg))
         {
             log(out_msg, out_type);
-        }
-
-        //if the pricing schedule is provided as hourly, overwrite the tou schedule
-        if(as_boolean("is_dispatch_series"))
-        {
-            size_t n_dispatch_series;
-            ssc_number_t* dispatch_series = as_array("dispatch_series", &n_dispatch_series);
-
-            //if( n_dispatch_series != n_steps_fixed)
-            //    throw exec_error("trough_physical", "Invalid dispatch pricing series dimension. Array length must match number of simulation time steps ("+my_to_string(n_steps_fixed)+").");
-
-            //resize the m_hr_tou array
-            //if (tou_params->mc_pricing.m_hr_tou != 0)
-            //    delete[] tou_params->mc_pricing.m_hr_tou;
-            //tou_params->mc_pricing.m_hr_tou = new double[n_steps_fixed];
-            ////set the tou period as unique for each time step
-            //for (int i = 0; i < n_steps_fixed; i++)
-            //    tou_params->mc_pricing.m_hr_tou[i] = i + 1;
-            ////allocate reported arrays
-            //tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed);
-            //for (int i = 0; i < n_steps_fixed; i++)
-            //    tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][i] = dispatch_series[i];
         }
 
         // Design point is complete, assign technology design outputs
