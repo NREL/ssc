@@ -612,7 +612,7 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
     // Calculate Design velocity
     {
         m_max_loop_flow_vel_des = m_m_dot_loop_des * 4.0 / (rho_ave * M_PI * m_min_inner_diameter * m_min_inner_diameter); //[m/s]
-        m_min_loop_flow_vel_des = m_m_dot_loop_des * 4.0 / (rho_ave * M_PI * m_min_inner_diameter * m_min_inner_diameter); //[m/s]
+        m_min_loop_flow_vel_des = m_m_dot_loop_des * 4.0 / (rho_ave * M_PI * m_max_inner_diameter * m_max_inner_diameter); //[m/s]
     }
 
     //Calculate the header design
