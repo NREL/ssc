@@ -99,7 +99,7 @@ set(SHARED_SRC
         lib_util.h
         lib_utility_rate.cpp
         lib_utility_rate.h
-		lib_utility_rate_equations.cpp
+        lib_utility_rate_equations.cpp
         lib_utility_rate_equations.h
         lib_weatherfile.cpp
         lib_weatherfile.h
@@ -233,6 +233,16 @@ elseif(MSVC)
             "$<$<CONFIG:DEBUG>:${LIB_UTF8_DEBUG}>")
     target_link_libraries(shared ${LIB_UTF8_LIBS})
 
+    # get ZLIB
+    find_library( ZLIB
+            NAMES zlib.lib
+            PATHS $ENV{ORTOOLSDIR}/lib)
+    find_library( ZLIBD
+            NAMES zlibd.lib
+            PATHS $ENV{ORTOOLSDBDIR}/lib)
+    target_link_libraries(shared debug ${ZLIBD})
+    target_link_libraries(shared optimized ${ZLIB})
+
     # get protobuf
     find_package(protobuf
             HINTS "$ENV{ORTOOLSDIR}/cmake"
@@ -261,16 +271,6 @@ elseif(MSVC)
             "$<$<CONFIG:DEBUG>:${LIB_SCIP_DEBUG}>"
     )
     target_link_libraries(shared ${LIB_SCIP_LIBRARIES})
-
-    # get ZLIB
-    find_library( ZLIB
-            NAMES zlib.lib
-            PATHS $ENV{ORTOOLSDIR}/lib)
-    find_library( ZLIBD
-            NAMES zlibd.lib
-            PATHS $ENV{ORTOOLSDBDIR}/lib)
-    target_link_libraries(shared debug ${ZLIBD})
-    target_link_libraries(shared optimized ${ZLIB})
 
     # get or-tools
     find_package(ortools
