@@ -810,12 +810,6 @@ public:
         //tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = true;
         //tou.mc_dispatch_params.m_is_block_dispatch = false;
         //tou.mc_dispatch_params.m_is_arbitrage_policy = !as_boolean("is_dispatch");
-        tou.mc_dispatch_params.m_use_rule_1 = false;
-        tou.mc_dispatch_params.m_standby_off_buffer = 2.0;          //[hr] Applies if m_use_rule_1 is true
-        tou.mc_dispatch_params.m_use_rule_2 = false;
-        tou.mc_dispatch_params.m_q_dot_rec_des_mult = -1.23;        //[-] Applies if m_use_rule_2 is true
-        tou.mc_dispatch_params.m_f_q_dot_pc_overwrite = -1.23;      //[-] Applies if m_use_rule_2 is true
-
         
         // *****************************************************
         // *****************************************************

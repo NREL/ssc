@@ -1344,16 +1344,16 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
 
         // Rule 1: if the sun sets (or does not rise) in __ [hours], then do not allow power cycle standby
             //double standby_time_buffer = 2.0;
-        if (mc_tou.mc_dispatch_params.m_use_rule_1 &&
-            (mc_weather.ms_outputs.m_hour + mc_tou.mc_dispatch_params.m_standby_off_buffer <= mc_weather.ms_outputs.m_time_rise ||
-                mc_weather.ms_outputs.m_hour + mc_tou.mc_dispatch_params.m_standby_off_buffer >= mc_weather.ms_outputs.m_time_set))
+        if (mc_tou.m_use_rule_1 &&
+            (mc_weather.ms_outputs.m_hour + mc_tou.m_standby_off_buffer <= mc_weather.ms_outputs.m_time_rise ||
+                mc_weather.ms_outputs.m_hour + mc_tou.m_standby_off_buffer >= mc_weather.ms_outputs.m_time_set))
         {
             is_pc_sb_allowed = false;
         }
 
         // Rule 2:
-        if (mc_tou.mc_dispatch_params.m_use_rule_2 &&
-            ((q_dot_pc_target < q_dot_pc_min && q_dot_tes_ch < m_q_dot_rec_des * mc_tou.mc_dispatch_params.m_q_dot_rec_des_mult) ||
+        if (mc_tou.m_use_rule_2 &&
+            ((q_dot_pc_target < q_dot_pc_min && q_dot_tes_ch < m_q_dot_rec_des * mc_tou.m_q_dot_rec_des_mult) ||
                 is_q_dot_pc_target_overwrite))
         {
             // If overwrite was previously true, but now power cycle is off, set to false
@@ -1369,7 +1369,7 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
 
             if (is_q_dot_pc_target_overwrite)
             {
-                q_dot_pc_target = mc_tou.mc_dispatch_params.m_f_q_dot_pc_overwrite * m_cycle_q_dot_des;
+                q_dot_pc_target = mc_tou.m_f_q_dot_pc_overwrite * m_cycle_q_dot_des;
             }
         }
 

@@ -120,19 +120,19 @@ void C_csp_tou::init(bool is_leapyear)
 {
     if (m_dispatch_model_type == C_dispatch_model_type::E_dispatch_model_type::HEURISTIC)
     {
-        if (mc_dispatch_params.m_use_rule_1)
+        if (m_use_rule_1)
         {
-            if (mc_dispatch_params.m_standby_off_buffer < 0.0)
+            if (m_standby_off_buffer < 0.0)
             {
                 throw(C_csp_exception("Block Dispatch Rule 1 was selected, but the time entered was invalid."
                     " Please select a time >= 0", "TOU initialization"));
             }
         }
 
-        if (mc_dispatch_params.m_use_rule_2)
+        if (m_use_rule_2)
         {
-            if (mc_dispatch_params.m_f_q_dot_pc_overwrite <= 0.0 ||
-                mc_dispatch_params.m_q_dot_rec_des_mult <= 0.0)
+            if (m_f_q_dot_pc_overwrite <= 0.0 ||
+                m_q_dot_rec_des_mult <= 0.0)
             {
                 throw(C_csp_exception("Block Dispatch Rule 2 was selected, but the parameters entered were invalid."
                     " Both values must be greater than 0", "TOU initialization"));

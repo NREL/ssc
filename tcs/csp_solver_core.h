@@ -294,12 +294,12 @@ public:
 
         //bool m_is_purchase_mult_same_as_price;
 
-		bool m_use_rule_1;
-		double m_standby_off_buffer;
-
-		bool m_use_rule_2;
-		double m_q_dot_rec_des_mult;
-		double m_f_q_dot_pc_overwrite;
+		//bool m_use_rule_1;
+		//double m_standby_off_buffer;
+        //
+		//bool m_use_rule_2;
+		//double m_q_dot_rec_des_mult;
+		//double m_f_q_dot_pc_overwrite;
 
         // Outside dispatch targets
         //bool m_is_dispatch_targets;                 // Pass in external dispatch targets
@@ -313,8 +313,8 @@ public:
         std::vector<double> m_q_dot_elec_to_PAR_HTR_in;
         std::vector<bool> m_is_PAR_HTR_allowed_in;
 
-        S_csp_tou_params()
-        {
+        //S_csp_tou_params()
+        //{
             //m_is_block_dispatch = true;			// Either this or m_dispatch_optimize must be true
             //m_is_arbitrage_policy = false;
             //m_is_dispatch_targets = false;      
@@ -327,8 +327,8 @@ public:
             //m_is_purchase_mult_same_as_price = true;
 
 			// Rule 1: if the sun sets (or does not rise) in m_standby_off_buffer [hours], then do not allow power cycle standby
-			m_use_rule_1 = false;				
-			m_standby_off_buffer = -1.23;		//[hr]
+			//m_use_rule_1 = false;				
+			//m_standby_off_buffer = -1.23;		//[hr]
 
 
 			// Rule 2: If both:
@@ -339,11 +339,11 @@ public:
 			//   1) the Block Dispatch target fraction calls for PC ON
 			//   2) the PC shuts off due to lack of thermal resource
 			//   
-			m_use_rule_2 = false;
-			m_q_dot_rec_des_mult = -1.23;
-			m_f_q_dot_pc_overwrite = 1.23;
+			//m_use_rule_2 = false;
+			//m_q_dot_rec_des_mult = -1.23;
+			//m_f_q_dot_pc_overwrite = 1.23;
 
-        };
+        //};
 
     } mc_dispatch_params;   // TODO: Remove this 
 
@@ -364,6 +364,13 @@ public:
 		}
 	};
 
+    bool m_use_rule_1;
+    double m_standby_off_buffer;
+
+    bool m_use_rule_2;
+    double m_q_dot_rec_des_mult;
+    double m_f_q_dot_pc_overwrite;
+
     bool m_isleapyear;
 
     bool m_is_tod_pc_target_also_pc_max;
@@ -372,6 +379,9 @@ public:
 
     C_timeseries_schedule_inputs mc_offtaker_schedule;
     C_timeseries_schedule_inputs mc_elec_pricing_schedule;
+    C_timeseries_schedule_inputs mc_gas_pricing_whatever;
+
+    bool m_is_output_elec;
 
     C_csp_tou(C_timeseries_schedule_inputs c_offtaker_schedule,
         C_timeseries_schedule_inputs c_elec_pricing_schedule,
@@ -382,6 +392,13 @@ public:
         mc_elec_pricing_schedule = c_elec_pricing_schedule;
         m_dispatch_model_type = dispatch_model_type;
         m_is_tod_pc_target_also_pc_max = is_offtaker_frac_also_max;
+
+        // Set defaults on heuristic rule values. No one at the cmod level knows what to do with these
+        m_use_rule_1 = true;
+        m_standby_off_buffer = 2.0;
+        m_use_rule_2 = false;
+        m_q_dot_rec_des_mult = -1.23;
+        m_f_q_dot_pc_overwrite = -1.23;
     }
 
 	~C_csp_tou(){};
