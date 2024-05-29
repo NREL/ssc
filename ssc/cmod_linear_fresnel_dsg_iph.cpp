@@ -444,12 +444,9 @@ public:
 		steam_heat_sink.ms_params.m_m_dot_max_frac = c_lf_dsg.m_cycle_max_fraction;	//[-]
 		steam_heat_sink.ms_params.m_pump_eta_isen = as_double("eta_pump");			//[-] 
 
-
 		// Allocate heat sink outputs
 		steam_heat_sink.mc_reported_outputs.assign(C_pc_steam_heat_sink::E_Q_DOT_HEAT_SINK, allocate("q_dot_to_heat_sink", n_steps_fixed), n_steps_fixed);
 		steam_heat_sink.mc_reported_outputs.assign(C_pc_steam_heat_sink::E_W_DOT_PUMPING, allocate("W_dot_heat_sink_pump", n_steps_fixed), n_steps_fixed);
-
-
 
 		// ********************************
 		// ********************************
@@ -468,7 +465,7 @@ public:
         // Dispatch model type
         C_csp_tou::C_dispatch_model_type::E_dispatch_model_type dispatch_model_type = C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::HEURISTIC;
 
-        bool is_offtaker_frac_also_max = true;
+        bool is_offtaker_frac_also_max = false;
 
         C_csp_tou tou(offtaker_schedule, elec_pricing_schedule, dispatch_model_type, is_offtaker_frac_also_max);   //heuristic 
 
