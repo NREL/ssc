@@ -243,6 +243,11 @@ elseif(MSVC)
     target_link_libraries(shared debug ${ZLIBD})
     target_link_libraries(shared optimized ${ZLIB})
 
+    find_package(zlib
+            HINTS "$ENV{ORTOOLSDIR}/lib/cmake/ZLIB"
+            REQUIRED
+    )
+
     # get protobuf
     find_package(protobuf
             HINTS "$ENV{ORTOOLSDIR}/cmake"
