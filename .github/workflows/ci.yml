@@ -7,6 +7,7 @@ on:
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
+  GTEST_REF: b85864c64758dec007208e56af933fc3f52044ee
 
 jobs:
   build-on-ubuntu:
@@ -14,7 +15,7 @@ jobs:
 
     steps:
     - name: Setup cmake
-      uses: jwlawson/actions-setup-cmake@v2
+      uses: jwlawson/actions-setup-cmake@v1.12
       with:
         cmake-version: '3.24.x'
     - name: Test cmake version
@@ -26,15 +27,26 @@ jobs:
         echo "GTEST=$GTEST" >> $GITHUB_ENV
         SSCDIR=$GITHUB_WORKSPACE/ssc
         echo "SSCDIR=$SSCDIR" >> $GITHUB_ENV
+        ORTOOLSDIR=$GITHUB_WORKSPACE/or-tools
+        echo "ORTOOLSDIR=$ORTOOLSDIR" >> $GITHUB_ENV
     
+    - name: Get cached GTest
+      uses: actions/cache@v4
+      id: cachedgtest
+      with:
+        path: ${{env.GTEST}}/
+        key: gtest-ubuntu
+
     - name: Clone Gtest
+      if: steps.cachedgtest.outputs.cache-hit != 'true'
       uses: actions/checkout@v4
       with:
         repository: google/googletest
         path: googletest
-        ref: b85864c64758dec007208e56af933fc3f52044ee
+        ref: ${{env.GTEST_REF}}
     
     - name: build Gtest
+      if: steps.cachedgtest.outputs.cache-hit != 'true'
       run: | 
           export 
           mkdir ${GTEST}/build
@@ -68,7 +80,7 @@ jobs:
         ${SSCDIR}/build/test/Test
     
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v2
       with:
           name: SSC Linux Shared Libraries
           path: |
@@ -83,7 +95,7 @@ jobs:
 
     steps:
     - name: Setup cmake
-      uses: jwlawson/actions-setup-cmake@v2
+      uses: jwlawson/actions-setup-cmake@v1.12
       with:
         cmake-version: '3.24.x'
     - name: Test cmake version
@@ -95,15 +107,25 @@ jobs:
         echo "GTEST=$GTEST" >> $GITHUB_ENV
         SSCDIR=$GITHUB_WORKSPACE/ssc
         echo "SSCDIR=$SSCDIR" >> $GITHUB_ENV
+        ORTOOLSDIR=$GITHUB_WORKSPACE/or-tools
+        echo "ORTOOLSDIR=$ORTOOLSDIR" >> $GITHUB_ENV
     
+    - name: Get cached GTest
+      uses: actions/cache@v4
+      id: cachedgtest
+      with:
+        path: ${{env.GTEST}}/
+        key: ortools-${{ matrix.os }}
     - name: Clone Gtest
+      if: steps.cachedgtest.outputs.cache-hit != 'true'
       uses: actions/checkout@v4
       with:
         repository: google/googletest
         path: googletest
-        ref: b85864c64758dec007208e56af933fc3f52044ee
+        ref: ${{env.GTEST_REF}}
     
     - name: build Gtest
+      if: steps.cachedgtest.outputs.cache-hit != 'true'
       run: | 
           export 
           mkdir ${GTEST}/build
@@ -138,7 +160,7 @@ jobs:
     
     - name: Upload Artifacts
       if: ${{ matrix.os == 'macos-latest' }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v2
       with:
           name: SSC Mac Arm Shared Libraries
           path: |
@@ -147,7 +169,7 @@ jobs:
 
     - name: Upload Artifacts
       if: ${{ matrix.os != 'macos-latest' }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v2
       with:
           name: SSC Mac Intel Shared Libraries
           path: |
@@ -173,23 +195,30 @@ jobs:
         SSCDIR=$GITHUB_WORKSPACE/ssc
         echo "SSCDIR=$SSCDIR" >> $GITHUB_ENV
     
+    - name: Get cached GTest
+      uses: actions/cache@v4
+      id: cachedgtest
+      with:
+        path: ${{env.GTEST}}/
+        key: ortools-windows
+
     - name: Clone Gtest
+      if: steps.cachedgtest.outputs.cache-hit != 'true'
       uses: actions/checkout@v4
       with:
         repository: google/googletest
         path: googletest
-        ref: b85864c64758dec007208e56af933fc3f52044ee
+        ref: ${{env.GTEST_REF}}
     
     - name: build Gtest
+      if: steps.cachedgtest.outputs.cache-hit != 'true'
       shell: bash
-      # Need to build both Release and Debug for the SSC CMake below
       run: | 
           export 
           mkdir ${GTEST}/build
           cd ${GTEST}/build
           cmake -Dgtest_force_shared_crt=ON ..
           cmake --build . --config Release -j4
-          cmake --build . --config Debug -j4
     
     - name: Checkout SSC
       uses: actions/checkout@v4
