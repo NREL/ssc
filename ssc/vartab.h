@@ -144,6 +144,7 @@ public:
 
 	var_data &operator=(const var_data &rhs) { copy(rhs); return *this; }
 	void copy( const var_data &rhs ) {
+        clear();
 	    type=rhs.type;
 	    num=rhs.num;
 	    str=rhs.str;

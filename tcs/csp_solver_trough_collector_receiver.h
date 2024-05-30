@@ -89,7 +89,10 @@ public:
         E_REC_OP_MODE_FINAL,        //[-] Final receiver operating mode
         E_DEFOCUS_FINAL,            //[-]
         E_T_IN_LOOP_FINAL,          //[C]
-        E_T_OUT_LOOP_FINAL          //[C]
+        E_T_OUT_LOOP_FINAL,         //[C]
+
+        E_VEL_LOOP_MIN,             //[m/s]
+        E_VEL_LOOP_MAX              //[m/w]
 	};
 
 	C_csp_reported_outputs mc_reported_outputs;
@@ -139,6 +142,8 @@ private:
 	// Variables that are passed between methods, but not necessary to carry over timesteps
 	double m_m_dot_htf_tot;	//[kg/s] The total flow rate through the entire field (m_dot_loop * N_loops)
 	double m_c_htf_ave;		//[J/kg-K] Average solar field specific heat
+    double m_vel_loop_max;  //[m/s] Max htf velocity in loop
+    double m_vel_loop_min;  //[m/s] Min htf velocity in loop
 
 	std::vector<double> m_E_int_loop;	//[J] Energy relative to ambient for each receiver
 	std::vector<double> m_E_accum;		//[J] Internal energy change in timestep for each receiver
@@ -486,7 +491,7 @@ public:
     double m_specified_solar_mult = std::numeric_limits<double>::quiet_NaN();                  // User specified solar mult
     double m_specified_total_aperture = std::numeric_limits<double>::quiet_NaN();              //[m2] User specified total aperture
     bool m_is_solar_mult_designed = false;          // Flag for whether solar multiple has been calculated
-    util::matrix_t<double> m_trough_loop_control;
+    //util::matrix_t<double> m_trough_loop_control;
     double m_P_ref = std::numeric_limits<double>::quiet_NaN();                                 //[W] Design Turbine Net Output
     double m_eta_ref = std::numeric_limits<double>::quiet_NaN();                               //[] Design Cycle Thermal Efficiency
     double m_non_solar_field_land_area_multiplier = std::numeric_limits<double>::quiet_NaN();  //[]
@@ -495,6 +500,7 @@ public:
     double m_field_htf_cp_avg_des = std::numeric_limits<double>::quiet_NaN();                  //[kJ/kg-K] Field average htf cp value at design
     double m_single_loop_aperture = std::numeric_limits<double>::quiet_NaN();                  //[m2] Aperture of single loop
     double m_min_inner_diameter = std::numeric_limits<double>::quiet_NaN();                    //[m] Min inner diameter
+    double m_max_inner_diameter = std::numeric_limits<double>::quiet_NaN();                    //[m] Max inner diameter
     std::vector<double> m_HCE_heat_loss_des;        //[W/m]
     double m_HCE_heat_loss_loop_des = std::numeric_limits<double>::quiet_NaN();                //[W/m] Loop Heat Loss from HCE at Design
     std::vector<double> m_csp_dtr_sca_calc_sca_effs; // SCA optical efficiencies at design
@@ -521,6 +527,8 @@ public:
     double m_fixed_land_area = std::numeric_limits<double>::quiet_NaN();                       //[acre] Fixed Land Area
     double m_total_land_area = std::numeric_limits<double>::quiet_NaN();                       //[acre] Total Land Area
     double m_opteff_des = std::numeric_limits<double>::quiet_NaN();	                           //[-] Design-point optical efficieny (theta = 0) from the solar field
+    double m_max_loop_flow_vel_des = std::numeric_limits<double>::quiet_NaN();               //[m/s] Maximum Loop velocity at design
+    double m_min_loop_flow_vel_des = std::numeric_limits<double>::quiet_NaN();               //[m/s] Maximum Loop velocity at design
 
 	// **************************************************************************
 	// **************************************************************************
@@ -598,7 +606,7 @@ public:
 	virtual double get_collector_area();
 
 	// ------------------------------------------ supplemental methods -----------------------------------------------------------
-    bool design_solar_mult();
+    bool design_solar_mult(std::vector<double> trough_loop_control);
 
 	class E_piping_config
 	{

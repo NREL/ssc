@@ -14,7 +14,7 @@ jobs:
 
     steps:
     - name: Setup cmake
-      uses: jwlawson/actions-setup-cmake@v1.12
+      uses: jwlawson/actions-setup-cmake@v2
       with:
         cmake-version: '3.24.x'
     - name: Test cmake version
@@ -68,7 +68,7 @@ jobs:
         ${SSCDIR}/build/test/Test
     
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
           name: SSC Linux Shared Libraries
           path: |
@@ -76,11 +76,14 @@ jobs:
             ${{env.SSCDIR}}/build/ssc/ssc.so
       
   build-on-mac:
-    runs-on: macos-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-14-large, macos-latest]
 
     steps:
     - name: Setup cmake
-      uses: jwlawson/actions-setup-cmake@v1.12
+      uses: jwlawson/actions-setup-cmake@v2
       with:
         cmake-version: '3.24.x'
     - name: Test cmake version
@@ -124,7 +127,7 @@ jobs:
       # Build your program with the given configuration
       run: |
         cd ${SSCDIR}/build
-        make -j4
+        make -j3
 
     - name: Test
       # Turn off fast fail for when the landbosse tests write to cerr
@@ -134,10 +137,85 @@ jobs:
       shell: bash      
     
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v3
+      if: ${{ matrix.os == 'macos-latest' }}
+      uses: actions/upload-artifact@v4
       with:
-          name: SSC Mac Shared Libraries
+          name: SSC Mac Arm Shared Libraries
           path: |
             ${{env.SSCDIR}}/build/ssc/libssc.dylib
             ${{env.SSCDIR}}/build/ssc/ssc.dylib 
 
+    - name: Upload Artifacts
+      if: ${{ matrix.os != 'macos-latest' }}
+      uses: actions/upload-artifact@v4
+      with:
+          name: SSC Mac Intel Shared Libraries
+          path: |
+            ${{env.SSCDIR}}/build/ssc/libssc.dylib
+            ${{env.SSCDIR}}/build/ssc/ssc.dylib 
+
+  build-on-windows:
+    runs-on: windows-2019
+
+    steps:
+    - name: Setup cmake
+      uses: jwlawson/actions-setup-cmake@v1.12
+      with:
+        cmake-version: '3.24.x'
+    - name: Test cmake version
+      run: cmake --version
+    
+    - name: Set relative paths
+      shell: bash
+      run: | 
+        GTEST=$GITHUB_WORKSPACE/googletest
+        echo "GTEST=$GTEST" >> $GITHUB_ENV
+        SSCDIR=$GITHUB_WORKSPACE/ssc
+        echo "SSCDIR=$SSCDIR" >> $GITHUB_ENV
+    
+    - name: Clone Gtest
+      uses: actions/checkout@v2
+      with:
+        repository: google/googletest
+        path: googletest
+        ref: b85864c64758dec007208e56af933fc3f52044ee
+    
+    - name: build Gtest
+      shell: bash
+      # Need to build both Release and Debug for the SSC CMake below
+      run: | 
+          export 
+          mkdir ${GTEST}/build
+          cd ${GTEST}/build
+          cmake -Dgtest_force_shared_crt=ON ..
+          cmake --build . --config Release -j4
+          cmake --build . --config Debug -j4
+    
+    - name: Checkout SSC
+      uses: actions/checkout@v2
+      with:
+          path: ssc
+
+    - name: Configure CMake
+      shell: bash
+      # Configure cmake to build ssc tests but not tools
+      run: |
+        mkdir ${SSCDIR}/build
+        cd ${SSCDIR}/build
+        cmake .. -DSAM_SKIP_TOOLS=1
+        cmake --build . --config Release -j4
+        cp ssc/Release/* test/Release
+
+    - name: Test
+      shell: bash
+      # Turn off fast fail for when the landbosse tests write to cerr
+      run: |
+        cd ${SSCDIR}/build/test/Release
+        ./Test.exe
+  
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+          name: SSC Windows Shared Libraries
+          path: |
+            ${{env.SSCDIR}}\build\ssc\Release\ssc.dll
