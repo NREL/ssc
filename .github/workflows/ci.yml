@@ -15,7 +15,7 @@ jobs:
 
     steps:
     - name: Setup cmake
-      uses: jwlawson/actions-setup-cmake@v1.12
+      uses: jwlawson/actions-setup-cmake@v2
       with:
         cmake-version: '3.24.x'
     - name: Test cmake version
@@ -44,8 +44,10 @@ jobs:
           sudo apt install -y build-essential cmake lsb-release
           cd $GITHUB_WORKSPACE
           wget -q https://github.com/google/or-tools/releases/download/v9.9/or-tools_amd64_ubuntu-23.04_cpp_v9.9.3963.tar.gz
-          tar -xvf or-tools_amd64_ubuntu-23.04_cpp_v9.9.3963.tar.gz -C or-tools --strip-components=1
-          
+          tar -xvf or-tools_amd64_ubuntu-23.04_cpp_v9.9.3963.tar.gz
+          mkdir or-tools
+          mv or-tools*/* or-tools
+
     - name: Get cached GTest
       uses: actions/cache@v4
       id: cachedgtest
@@ -111,7 +113,7 @@ jobs:
 
     steps:
     - name: Setup cmake
-      uses: jwlawson/actions-setup-cmake@v1.12
+      uses: jwlawson/actions-setup-cmake@v2
       with:
         cmake-version: '3.24.x'
     - name: Test cmake version
@@ -139,14 +141,16 @@ jobs:
           cd $GITHUB_WORKSPACE
           curl -LJO https://github.com/google/or-tools/releases/download/v9.9/or-tools_arm64_macOS-14.3.1_cpp_v9.9.3963.tar.gz
           tar -xvf or-tools_arm64*.tar.gz
-          mv or-tools* or-tools
+          mkdir or-tools
+          mv or-tools*/* or-tools
     - name: download OR-Tools for Intel
       if: ${{ matrix.os == 'macos-14-large' && steps.cachedortools.outputs.cache-hit != 'true'}}
       run: |
           cd $GITHUB_WORKSPACE
           curl -LJO https://github.com/google/or-tools/releases/download/v9.9/or-tools_x86_64_macOS-14.3.1_cpp_v9.9.3963.tar.gz
           tar -xvf or-tools_x86_64*tar.gz
-          mv or-tools* or-tools
+          mkdir or-tools
+          mv or-tools*/* or-tools
 
     - name: Get cached GTest
       uses: actions/cache@v4
@@ -219,7 +223,7 @@ jobs:
 
     steps:
     - name: Setup cmake
-      uses: jwlawson/actions-setup-cmake@v1.12
+      uses: jwlawson/actions-setup-cmake@v2
       with:
         cmake-version: '3.24.x'
     - name: Test cmake version
