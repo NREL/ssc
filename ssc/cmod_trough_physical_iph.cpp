@@ -1162,18 +1162,7 @@ public:
                     size_t count_ppa_price_input;
                     ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
                     ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
-                }
-                else if (csp_financial_model == 5) {    // Commercial
-
-                    bool is_ur_assigned = is_assigned("ur_en_ts_sell_rate");
-
-                    // rate data setup from ~ line 1336 in cmod_battery.cpp
-                    rate_data* util_rate_data = new rate_data();
-                    rate_setup::setup(m_vartab, 8760, 1, *util_rate_data, "cmod_trough_physical_iph");
-
-                    // Need to figure out dispatch, but for now, just use something so that annual simulation solves
-                    elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0);
-                }
+                }                
                 else {
                     ppa_price_year1 = 1.0;      //[-] don't need ppa multiplier if not optimizing
                 }
@@ -1216,6 +1205,17 @@ public:
                     }
                 }
 
+            }
+            else if (csp_financial_model == 5) {    // Commercial
+
+                bool is_ur_assigned = is_assigned("ur_en_ts_sell_rate");
+
+                // rate data setup from ~ line 1336 in cmod_battery.cpp
+                rate_data* util_rate_data = new rate_data();
+                rate_setup::setup(m_vartab, 8760, 1, *util_rate_data, "cmod_trough_physical_iph");
+
+                // Need to figure out dispatch, but for now, just use something so that annual simulation solves
+                elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0);
             }
             else {
                 throw exec_error("trough_physical_iph", "csp_financial_model must be 1, 7, or 8");
