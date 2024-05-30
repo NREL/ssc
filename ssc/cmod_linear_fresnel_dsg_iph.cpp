@@ -40,7 +40,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_lf_dsg_collector_receiver.h"
 
 #include "csp_solver_pc_steam_heat_sink.h"
-#include "csp_solver_tou_block_schedules.h"
 #include "csp_solver_two_tank_tes.h"
 #include "csp_dispatch.h"
 
@@ -445,20 +444,30 @@ public:
 		steam_heat_sink.ms_params.m_m_dot_max_frac = c_lf_dsg.m_cycle_max_fraction;	//[-]
 		steam_heat_sink.ms_params.m_pump_eta_isen = as_double("eta_pump");			//[-] 
 
-
 		// Allocate heat sink outputs
 		steam_heat_sink.mc_reported_outputs.assign(C_pc_steam_heat_sink::E_Q_DOT_HEAT_SINK, allocate("q_dot_to_heat_sink", n_steps_fixed), n_steps_fixed);
 		steam_heat_sink.mc_reported_outputs.assign(C_pc_steam_heat_sink::E_W_DOT_PUMPING, allocate("W_dot_heat_sink_pump", n_steps_fixed), n_steps_fixed);
-
-
 
 		// ********************************
 		// ********************************
 		// Now add the TOU class
 		// ********************************
 		// ********************************
-		C_csp_tou_block_schedules tou;
-		tou.setup_block_uniform_tod();
+
+        // No input schedules in UI/cmod yet...
+
+        // Off-taker schedule
+        C_timeseries_schedule_inputs offtaker_schedule = C_timeseries_schedule_inputs(1.0);
+
+        // Electricity pricing schedule
+        C_timeseries_schedule_inputs elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0);
+
+        // Dispatch model type
+        C_csp_tou::C_dispatch_model_type::E_dispatch_model_type dispatch_model_type = C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::HEURISTIC;
+
+        bool is_offtaker_frac_also_max = false;
+
+        C_csp_tou tou(offtaker_schedule, elec_pricing_schedule, dispatch_model_type, is_offtaker_frac_also_max);   //heuristic 
 
 		// System parameters
 		C_csp_solver::S_csp_system_params system;
