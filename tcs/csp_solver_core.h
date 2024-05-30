@@ -284,25 +284,8 @@ public:
         };
     };
 
-
     struct S_csp_tou_params
     {
-        //bool m_is_block_dispatch;
-        //bool m_is_arbitrage_policy;
-        //bool m_isleapyear;
-		//std::vector<double> m_w_lim_full;
-
-        //bool m_is_purchase_mult_same_as_price;
-
-		//bool m_use_rule_1;
-		//double m_standby_off_buffer;
-        //
-		//bool m_use_rule_2;
-		//double m_q_dot_rec_des_mult;
-		//double m_f_q_dot_pc_overwrite;
-
-        // Outside dispatch targets
-        //bool m_is_dispatch_targets;                 // Pass in external dispatch targets
         std::vector<double> m_q_pc_target_su_in;
         std::vector<double> m_q_pc_target_on_in;
         std::vector<double> m_q_pc_max_in;
@@ -312,38 +295,6 @@ public:
         // electric heater control
         std::vector<double> m_q_dot_elec_to_PAR_HTR_in;
         std::vector<bool> m_is_PAR_HTR_allowed_in;
-
-        //S_csp_tou_params()
-        //{
-            //m_is_block_dispatch = true;			// Either this or m_dispatch_optimize must be true
-            //m_is_arbitrage_policy = false;
-            //m_is_dispatch_targets = false;      
-
-            //m_isleapyear = false;
-			//m_w_lim_full.resize(8760);
-			//m_w_lim_full.assign(8760, 9.e99);
-
-            //m_is_tod_pc_target_also_pc_max = false;
-            //m_is_purchase_mult_same_as_price = true;
-
-			// Rule 1: if the sun sets (or does not rise) in m_standby_off_buffer [hours], then do not allow power cycle standby
-			//m_use_rule_1 = false;				
-			//m_standby_off_buffer = -1.23;		//[hr]
-
-
-			// Rule 2: If both:
-			//   1) Block Dispatch calls for PC OFF
-			//   2) Thermal storage charge capacity is less than the product of 'm_q_dot_rec_des_mult' and the receiver design output
-			//
-			//   THEN: Run power cycle at 'm_f_q_dot_pc_overwrite' until either:
-			//   1) the Block Dispatch target fraction calls for PC ON
-			//   2) the PC shuts off due to lack of thermal resource
-			//   
-			//m_use_rule_2 = false;
-			//m_q_dot_rec_des_mult = -1.23;
-			//m_f_q_dot_pc_overwrite = 1.23;
-
-        //};
 
     } mc_dispatch_params;   // TODO: Remove this 
 
@@ -364,12 +315,14 @@ public:
 		}
 	};
 
+    // Rules for heuristic control
     bool m_use_rule_1;
     double m_standby_off_buffer;
 
     bool m_use_rule_2;
     double m_q_dot_rec_des_mult;
     double m_f_q_dot_pc_overwrite;
+    // ****************************
 
     bool m_isleapyear;
 
@@ -379,9 +332,6 @@ public:
 
     C_timeseries_schedule_inputs mc_offtaker_schedule;
     C_timeseries_schedule_inputs mc_elec_pricing_schedule;
-    C_timeseries_schedule_inputs mc_gas_pricing_whatever;
-
-    bool m_is_output_elec;
 
     C_csp_tou(C_timeseries_schedule_inputs c_offtaker_schedule,
         C_timeseries_schedule_inputs c_elec_pricing_schedule,
