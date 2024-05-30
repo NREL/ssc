@@ -231,7 +231,7 @@ jobs:
       run: |
         mkdir ${SSCDIR}/build
         cd ${SSCDIR}/build
-        cmake .. -DSAM_SKIP_TOOLS=1
+        cmake .. -DSAM_SKIP_TOOLS=1 -DCMAKE_CONFIGURATION_TYPES="Release"
         cmake --build . --config Release -j4
         cp ssc/Release/* test/Release
 
