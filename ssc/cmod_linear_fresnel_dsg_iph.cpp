@@ -457,10 +457,10 @@ public:
         // No input schedules in UI/cmod yet...
 
         // Off-taker schedule
-        C_timeseries_schedule_inputs offtaker_schedule = C_timeseries_schedule_inputs(1.0);
+        C_timeseries_schedule_inputs offtaker_schedule = C_timeseries_schedule_inputs(1.0, std::numeric_limits<double>::quiet_NaN());
 
         // Electricity pricing schedule
-        C_timeseries_schedule_inputs elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0);
+        C_timeseries_schedule_inputs elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0, std::numeric_limits<double>::quiet_NaN());
 
         // Dispatch model type
         C_csp_tou::C_dispatch_model_type::E_dispatch_model_type dispatch_model_type = C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::HEURISTIC;

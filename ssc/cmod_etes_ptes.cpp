@@ -739,7 +739,7 @@ public:
         // **********************************************************
 
         // Off-taker schedule
-        C_timeseries_schedule_inputs offtaker_schedule = C_timeseries_schedule_inputs(1.0);
+        C_timeseries_schedule_inputs offtaker_schedule = C_timeseries_schedule_inputs(1.0, std::numeric_limits<double>::quiet_NaN());
 
         // Electricity pricing schedule
         C_timeseries_schedule_inputs elec_pricing_schedule;
@@ -747,9 +747,10 @@ public:
         int etes_financial_model = as_integer("etes_financial_model");
         bool is_dispatch = as_boolean("is_dispatch");
 
-        double ppa_price_year1 = std::numeric_limits<double>::quiet_NaN();
         if (sim_type == 1) {    // if sim_type = 2, skip this until ui call back is ironed out
             if (etes_financial_model > 0 && etes_financial_model < 5) { // Single Owner financial models
+
+                double ppa_price_year1 = std::numeric_limits<double>::quiet_NaN();
 
                 // Get first year base ppa price
                 size_t count_ppa_price_input;
@@ -762,10 +763,10 @@ public:
 
                     if (is_assigned("dispatch_factors_ts") || is_dispatch) {
                         auto vec = as_vector_double("dispatch_factors_ts");
-                        elec_pricing_schedule = C_timeseries_schedule_inputs(vec);
+                        elec_pricing_schedule = C_timeseries_schedule_inputs(vec, ppa_price_year1);
                     }
                     else { // if no dispatch optimization, don't need an input pricing schedule
-                        elec_pricing_schedule = C_timeseries_schedule_inputs(1.0);
+                        elec_pricing_schedule = C_timeseries_schedule_inputs(1.0, std::numeric_limits<double>::quiet_NaN());
                     }
                 }
                 else if (ppa_mult_model == 0) { // standard diuranal input
@@ -778,11 +779,11 @@ public:
                     if (is_one_assigned || is_dispatch) {
 
                         elec_pricing_schedule = C_timeseries_schedule_inputs(as_matrix("dispatch_sched_weekday"), as_matrix("dispatch_sched_weekend"),
-                            as_vector_double("dispatch_tod_factors"));
+                            as_vector_double("dispatch_tod_factors"), ppa_price_year1);
                     }
                     else {
                         // If electricity pricing data is not available, then dispatch to a uniform schedule
-                        elec_pricing_schedule = C_timeseries_schedule_inputs(1.0);
+                        elec_pricing_schedule = C_timeseries_schedule_inputs(1.0, std::numeric_limits<double>::quiet_NaN());
                     }
                 }
             }
@@ -791,7 +792,7 @@ public:
             }
         }
         else if (sim_type == 2) { // if sim_type = 2, skip this until ui call back is ironed out
-            elec_pricing_schedule = C_timeseries_schedule_inputs(1.0);
+            elec_pricing_schedule = C_timeseries_schedule_inputs(1.0, std::numeric_limits<double>::quiet_NaN());
         }
 
         // Set dispatch model type
@@ -839,7 +840,7 @@ public:
                 as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_spec_scaling"), as_integer("disp_reporting"),
                 false, false, "", "");
             dispatch.params.set_user_params(as_double("disp_time_weighting"), as_double("disp_csu_cost")*W_dot_gen_thermo, as_double("disp_pen_delta_w"),
-                as_double("disp_hsu_cost")*q_dot_hot_out_charge, as_double("disp_down_time_min"), as_double("disp_up_time_min"), ppa_price_year1);
+                as_double("disp_hsu_cost") * q_dot_hot_out_charge, as_double("disp_down_time_min"), as_double("disp_up_time_min")); // , ppa_price_year1);
         }
         else {
             dispatch.solver_params.dispatch_optimize = false;
