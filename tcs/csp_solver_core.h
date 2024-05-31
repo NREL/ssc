@@ -229,12 +229,14 @@ public:
 
 struct S_timeseries_schedule_data
 {
-    double value;
-    int tou_period;
+    double nondim_value;        //[-]
+    double dimensional_value;   //[dimensional]
+    int tou_period;             //[-]
 
     S_timeseries_schedule_data()
     {
-        value = std::numeric_limits<double>::quiet_NaN();
+        nondim_value = std::numeric_limits<double>::quiet_NaN();
+        dimensional_value = std::numeric_limits<double>::quiet_NaN();
         tou_period = -1;
     }
 };
@@ -255,15 +257,15 @@ public:
     std::vector<S_timeseries_schedule_data> mv_timeseries_schedule_data;
 
     C_timeseries_schedule_inputs(const util::matrix_t<double>& weekdays, const util::matrix_t<double>& weekends,
-        std::vector<double> tod_factors);
+        std::vector<double> tod_factors, double base_value /*dimensional*/);
 
-    C_timeseries_schedule_inputs(std::vector<double>& timeseries_values_in);
+    C_timeseries_schedule_inputs(std::vector<double>& timeseries_values_in, double base_value /*dimensional*/);
 
-    C_timeseries_schedule_inputs(double const_val);
+    C_timeseries_schedule_inputs(double const_val, double base_value /*dimensional*/);
 
     C_timeseries_schedule_inputs() { input_type = UNDEFINED; };
 
-    void get_timestep_data(double time_s, double& val, int& tou);
+    void get_timestep_data(double time_s, double& nondim_val, double& dim_value, int& tou);
 };
 
 class C_csp_tou
@@ -301,9 +303,11 @@ public:
 	struct S_csp_tou_outputs
 	{
         int m_csp_op_tou;
-		int m_pricing_tou;
 		double m_f_turbine;
-		double m_price_mult;
+
+        int m_pricing_tou;
+        double m_price_mult;    //[-]
+        double m_elec_price;    //[$/kWhe]
 
         double m_wlim_dispatch; //[-]
 
@@ -311,7 +315,7 @@ public:
 		{
             m_csp_op_tou = m_pricing_tou = -1;
 
-			m_f_turbine = m_price_mult = m_wlim_dispatch = std::numeric_limits<double>::quiet_NaN();
+			m_f_turbine = m_price_mult = m_elec_price = m_wlim_dispatch = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
