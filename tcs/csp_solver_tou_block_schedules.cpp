@@ -158,6 +158,9 @@ void C_csp_tou::call(double time_s, C_csp_tou::S_csp_tou_outputs& tou_outputs)
     mc_elec_pricing_schedule.get_timestep_data(time_s, tou_outputs.m_price_mult, tou_outputs.m_elec_price,
         tou_outputs.m_pricing_tou);
 
+    mc_heat_pricing_schedule.get_timestep_data(time_s, tou_outputs.m_heat_mult, tou_outputs.m_heat_price,
+        tou_outputs.m_heat_tou);
+
     if (m_is_tod_pc_target_also_pc_max) {
         tou_outputs.m_wlim_dispatch = tou_outputs.m_f_turbine;
     }

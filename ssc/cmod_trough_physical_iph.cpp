@@ -1261,7 +1261,12 @@ public:
         bool is_offtaker_frac_also_max = as_boolean("is_tod_pc_target_also_pc_max");
 
         C_csp_tou tou(offtaker_schedule, elec_pricing_schedule, dispatch_model_type, is_offtaker_frac_also_max);
-            
+
+        // Placeholder for heat price schedule
+        double heat_price = 0.02;   //[$/kWh-t]
+        C_timeseries_schedule_inputs heat_pricing_schedule = C_timeseries_schedule_inputs(1.0, heat_price);
+        tou.mc_heat_pricing_schedule = heat_pricing_schedule;
+
         // System parameters
         C_csp_solver::S_csp_system_params system;
         {

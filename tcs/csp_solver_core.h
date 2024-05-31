@@ -309,13 +309,18 @@ public:
         double m_price_mult;    //[-]
         double m_elec_price;    //[$/kWhe]
 
+        int m_heat_tou;
+        double m_heat_mult;     //[-]
+        double m_heat_price;    //[$/kWh-t]
+
         double m_wlim_dispatch; //[-]
 
 		S_csp_tou_outputs()
 		{
-            m_csp_op_tou = m_pricing_tou = -1;
+            m_csp_op_tou = m_pricing_tou = m_heat_tou = -1;
 
-			m_f_turbine = m_price_mult = m_elec_price = m_wlim_dispatch = std::numeric_limits<double>::quiet_NaN();
+			m_f_turbine = m_price_mult = m_elec_price =
+                m_heat_mult = m_heat_price = m_wlim_dispatch = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -336,6 +341,8 @@ public:
 
     C_timeseries_schedule_inputs mc_offtaker_schedule;
     C_timeseries_schedule_inputs mc_elec_pricing_schedule;
+
+    C_timeseries_schedule_inputs mc_heat_pricing_schedule;
 
     C_csp_tou(C_timeseries_schedule_inputs c_offtaker_schedule,
         C_timeseries_schedule_inputs c_elec_pricing_schedule,
