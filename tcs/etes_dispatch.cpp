@@ -114,17 +114,17 @@ bool etes_dispatch_opt::check_setup(int nstep)
 bool etes_dispatch_opt::update_horizon_parameters(C_csp_tou& mc_tou)
 {
     //get the new price signal
+    int num_steps = solver_params.optimize_horizon * solver_params.steps_per_hour;
     params.sell_price.clear();
-    params.sell_price.resize(solver_params.optimize_horizon * solver_params.steps_per_hour, 1.);
+    params.sell_price.resize(num_steps, 1.);
     params.buy_price.clear();
-    params.buy_price.resize(solver_params.optimize_horizon * solver_params.steps_per_hour, 1.);
+    params.buy_price.resize(num_steps, 1.);
 
-    for (int t = 0; t < solver_params.optimize_horizon * solver_params.steps_per_hour; t++)
-    {
-        C_csp_tou::S_csp_tou_outputs mc_tou_outputs;
-
-        mc_tou.call(pointers.siminfo->ms_ts.m_time + t * 3600. / (double)solver_params.steps_per_hour, mc_tou_outputs);
-        params.sell_price.at(t) = mc_tou_outputs.m_elec_price * 1000.0; // $/kWhe -> $/Mhe mc_tou_outputs.m_price_mult * params.ppa_price_y1;
+    double sec_per_step = 3600. / (double)solver_params.steps_per_hour;
+    for (int t = 0; t < num_steps; t++) {
+        C_csp_tou::S_csp_tou_outputs tou_outputs;
+        mc_tou.call(pointers.siminfo->ms_ts.m_time + t * sec_per_step, tou_outputs);
+        params.sell_price.at(t) = tou_outputs.m_elec_price * 1000.0; // $/kWhe -> $/MWhe
         params.buy_price.at(t) = params.sell_price.at(t);     //TODO: make these unique if specified by user
     }
     return true;

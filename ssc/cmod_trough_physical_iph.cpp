@@ -1274,11 +1274,11 @@ public:
             size_t nval_bop_array = 0;
             ssc_number_t* bop_array = as_array("bop_array", &nval_bop_array);
             if (nval_bop_array != 5) throw exec_error("trough_physical", "Should be 5 elements in bop_array, has " + util::to_string((int)nval_bop_array) + ".");
-            system.m_bop_par = bop_array[0];    //as_double("bop_par");
-            system.m_bop_par_f = bop_array[1];    //as_double("bop_par_f");
-            system.m_bop_par_0 = bop_array[2];    //as_double("bop_par_0");
-            system.m_bop_par_1 = bop_array[3];    //as_double("bop_par_1");
-            system.m_bop_par_2 = bop_array[4];    //as_double("bop_par_2");
+            system.m_bop_par = bop_array[0];
+            system.m_bop_par_f = bop_array[1];
+            system.m_bop_par_0 = bop_array[2];
+            system.m_bop_par_1 = bop_array[3];
+            system.m_bop_par_2 = bop_array[4];
         }
         
 
