@@ -844,6 +844,7 @@ public:
 			// **************************************************************
 			TOU_PERIOD,                 //[-] CSP operating TOU period
 			PRICING_MULT,               //[-] PPA price multiplier
+            ELEC_PRICE,                 //[$/kWh-e] Electricity price in absolute units
 			PC_Q_DOT_SB,                //[MWt] PC required standby thermal power
 			PC_Q_DOT_MIN,               //[MWt] PC required min thermal power
 			PC_Q_DOT_TARGET,            //[MWt] PC target thermal power

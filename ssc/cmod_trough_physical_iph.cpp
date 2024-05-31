@@ -570,6 +570,7 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "n_op_modes",                "Operating modes in reporting timestep",                                            "",             "",               "solver",         "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tou_value",                 "CSP operating Time-of-use value",                                                  "",             "",               "solver",         "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "pricing_mult",              "PPA price multiplier",                                                             "",             "",               "solver",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "elec_price_out",            "Electricity price at timestep",                                                    "",             "",               "solver",         "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_pc_sb",               "Thermal power for PC standby",                                                     "MWt",          "",               "solver",         "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_pc_min",              "Thermal power for PC min operation",                                               "MWt",          "",               "solver",         "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_pc_target",           "Target thermal power to PC",                                                       "MWt",          "",               "solver",         "sim_type=1",                       "",                      "" },
@@ -628,6 +629,8 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_P_dsn",            "Pressure in TES pipes at design conditions",                                       "bar",          "",               "TES",            "sim_type=1",                       "",                      "" },
 
     //{ SSC_OUTPUT,       SSC_ARRAY,       "defocus",                   "Field optical focus fraction",                                                     "",             "",               "solver",         "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "electricity_rate",         "Electricity price = calculated annual elec cost / total elec energy consusmed",    "$/kWe-hr",       "",               "Post-process",   "sim_type=1&csp_financial_model=7",                       "",                      "" },
+
 
     var_info_invalid };
     
@@ -1140,7 +1143,7 @@ public:
 
         if (sim_type == 1)
         {
-            if (csp_financial_model == 8 || csp_financial_model == 7) {        // No Financial Model or LCOH; Single Owner in progress 9/2023
+            if (csp_financial_model == 8) {        // No Financial Model
                 if (is_dispatch) {
                     throw exec_error("trough_physical_iph", "Can't select dispatch optimization if No Financial model");
                 }
@@ -1148,6 +1151,25 @@ public:
                     // If electricity pricing data is not available, then dispatch to a uniform schedule
                     elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0, std::numeric_limits<double>::quiet_NaN());
                 }
+            }
+            else if (csp_financial_model == 7) {    // LCOH
+
+                size_t count_ppa_price_input;
+                ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
+                double ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
+
+                // Time-of-Delivery factors by time step:
+                int ppa_mult_model = as_integer("ppa_multiplier_model");
+                if (ppa_mult_model == 1)    // use dispatch_ts input
+                {
+                    auto vec = as_vector_double("dispatch_factors_ts");
+                    elec_pricing_schedule = C_timeseries_schedule_inputs(vec, ppa_price_year1);
+                }
+                else if (ppa_mult_model == 0) // standard diuranal input
+                {
+                    elec_pricing_schedule = C_timeseries_schedule_inputs(as_matrix("dispatch_sched_weekday"),
+                        as_matrix("dispatch_sched_weekend"), as_vector_double("dispatch_tod_factors"), ppa_price_year1);
+                }             
             }
             else if (csp_financial_model == 1) {    // Single Owner
 
@@ -1337,6 +1359,7 @@ public:
             csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::N_OP_MODES, allocate("n_op_modes", n_steps_fixed), n_steps_fixed);
             csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TOU_PERIOD, allocate("tou_value", n_steps_fixed), n_steps_fixed);
             csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PRICING_MULT, allocate("pricing_mult", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::ELEC_PRICE, allocate("elec_price_out", n_steps_fixed), n_steps_fixed);
             csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_Q_DOT_SB, allocate("q_dot_pc_sb", n_steps_fixed), n_steps_fixed);
             csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_Q_DOT_MIN, allocate("q_dot_pc_min", n_steps_fixed), n_steps_fixed);
             csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PC_Q_DOT_TARGET, allocate("q_dot_pc_target", n_steps_fixed), n_steps_fixed);
@@ -1817,6 +1840,10 @@ public:
         if ((int)count != n_steps_fixed)
             throw exec_error("trough_physical", "The number of fixed steps does not match the length of output data arrays3");
 
+        ssc_number_t* p_elec_price_out = as_array("elec_price_out", &count);
+        if((int)count != n_steps_fixed)
+            throw exec_error("trough_physical", "The number of fixed steps does not match the length of output data arrays4");
+
         //ssc_number_t *p_m_dot_tes_dc = as_array("m_dot_tes_dc", &count);
         //if ((int)count != n_steps_fixed)
         //    throw exec_error("trough_physical", "The number of fixed steps for 'm_dot_tes_dc' does not match the length of output data arrays");
@@ -1824,6 +1851,11 @@ public:
         //ssc_number_t *p_m_dot_tes_ch = as_array("m_dot_tes_ch", &count);
         //if ((int)count != n_steps_fixed)
         //    throw exec_error("trough_physical", "The number of fixed steps for 'm_dot_tes_ch' does not match the length of output data arrays");
+
+        ssc_number_t* p_elec_purchase_cost = allocate("elec_purchase_cost", n_steps_fixed);
+
+        double annual_elec_cost = 0.0;      //[$]
+        double i_elec_cost = std::numeric_limits<double>::quiet_NaN();
         for(int i = 0; i < n_steps_fixed; i++)
         {
             size_t hour = (size_t)ceil(p_time_final_hr[i]);
@@ -1833,8 +1865,13 @@ public:
             p_q_dot_defocus_est[i] = (ssc_number_t)(1.0 - p_SCAs_def[i])*p_q_dot_htf_sf_out[i]; //[MWt]
             //p_m_dot_tes_dc[i] = (ssc_number_t)(p_m_dot_tes_dc[i] / 3600.0);     //[kg/s] convert from kg/hr
             //p_m_dot_tes_ch[i] = (ssc_number_t)(p_m_dot_tes_ch[i] / 3600.0);     //[kg/s] convert from kg/hr
-           
+
+            i_elec_cost = p_elec_price_out[i] * p_W_dot_par_tot_haf[i];     //[$]
+            p_elec_purchase_cost[i] = i_elec_cost;                          //[$]
+            annual_elec_cost += i_elec_cost;                                //[$]
         }
+
+
         ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
         // Non-timeseries array outputs
         double P_adj = storage.P_in_des; // slightly adjust all field design pressures to account for pressure drop in TES before hot tank
@@ -1913,6 +1950,10 @@ public:
 
         // This term currently includes TES freeze protection
         accumulate_annual_for_year("W_dot_par_tot_haf", "annual_electricity_consumption", sim_setup.m_report_step / 3600.0, steps_per_hour);	//[kWe-hr]
+
+        double annual_electricity_consumption = as_double("annual_electricity_consumption");    //[kWe-hr]
+        double electricity_rate_calc = annual_elec_cost / annual_electricity_consumption;       //[$/kWe-hr]
+        assign("electricity_rate", electricity_rate_calc);
 
         ssc_number_t annual_field_fp = accumulate_annual_for_year("q_dot_freeze_prot", "annual_field_freeze_protection", sim_setup.m_report_step / 3600.0*1.E3, steps_per_hour);    //[kWt-hr]
         ssc_number_t annual_tes_fp = accumulate_annual_for_year("q_tes_heater", "annual_tes_freeze_protection", sim_setup.m_report_step / 3600.0*1.E3, steps_per_hour); //[kWt-hr]

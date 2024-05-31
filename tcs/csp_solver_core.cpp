@@ -185,7 +185,8 @@ static C_csp_reported_outputs::S_output_info S_solver_output_info[] =
 	{C_csp_solver::C_solver_outputs::OP_MODE_2, C_csp_reported_outputs::TS_1ST},		          //[-] Operating mode in second subtimestep
 	{C_csp_solver::C_solver_outputs::OP_MODE_3, C_csp_reported_outputs::TS_1ST},		          //[-] Operating mode in third subtimestep
 	{C_csp_solver::C_solver_outputs::TOU_PERIOD, C_csp_reported_outputs::TS_1ST},                 //[-] CSP operating TOU period
-	{C_csp_solver::C_solver_outputs::PRICING_MULT, C_csp_reported_outputs::TS_1ST},				  //[-] PPA price multiplier
+    {C_csp_solver::C_solver_outputs::PRICING_MULT, C_csp_reported_outputs::TS_1ST},				  //[-] PPA price multiplier
+    {C_csp_solver::C_solver_outputs::ELEC_PRICE, C_csp_reported_outputs::TS_1ST},				  //[-] Electricity price in absolute units
 	{C_csp_solver::C_solver_outputs::PC_Q_DOT_SB, C_csp_reported_outputs::TS_1ST},				  //[MWt] PC required standby thermal power
 	{C_csp_solver::C_solver_outputs::PC_Q_DOT_MIN, C_csp_reported_outputs::TS_1ST},				  //[MWt] PC required min thermal power
 	{C_csp_solver::C_solver_outputs::PC_Q_DOT_TARGET, C_csp_reported_outputs::TS_WEIGHTED_AVE},	  //[MWt] PC target thermal power
@@ -614,6 +615,7 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
         mc_kernel.mc_sim_info.m_tou = f_turb_tou_period;	    //[base 1] used ONLY by power cycle model for hybrid cooling - may also want to move this to controller
         double f_turbine_tou = mc_tou_outputs.m_f_turbine;	//[-]
 		double pricing_mult = mc_tou_outputs.m_price_mult;	//[-]
+        double elec_price = mc_tou_outputs.m_elec_price;    //[$/kWh-e]
         double purchase_mult = pricing_mult;
         //if (!mc_tou.mc_dispatch_params.m_is_purchase_mult_same_as_price) {
         //    throw(C_csp_exception("CSP Solver not yet setup to handle purchase schedule separate from price schedule"));
@@ -1075,7 +1077,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 		mc_reported_outputs.value(C_solver_outputs::TOU_PERIOD, (double)f_turb_tou_period);             //[-]       
 		mc_reported_outputs.value(C_solver_outputs::PRICING_MULT, pricing_mult);	                    //[-] 
-		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_SB, q_pc_sb);                              //[MW]     
+        mc_reported_outputs.value(C_solver_outputs::ELEC_PRICE, elec_price);	                        //[$/kWh-e] 
+        mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_SB, q_pc_sb);                              //[MW]     
 		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_MIN, q_pc_min);                            //[MW]    
 		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_TARGET, q_pc_target);                      //[MW]
 		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_MAX, m_q_dot_pc_max);                      //[MW]
