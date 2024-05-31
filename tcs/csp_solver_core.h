@@ -354,6 +354,9 @@ public:
         m_dispatch_model_type = dispatch_model_type;
         m_is_tod_pc_target_also_pc_max = is_offtaker_frac_also_max;
 
+        mc_heat_pricing_schedule = C_timeseries_schedule_inputs(std::numeric_limits<double>::quiet_NaN(),
+            std::numeric_limits<double>::quiet_NaN());
+
         // Set defaults on heuristic rule values. No one at the cmod level knows what to do with these
         m_use_rule_1 = true;
         m_standby_off_buffer = 2.0;
