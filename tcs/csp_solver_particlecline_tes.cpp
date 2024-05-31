@@ -48,58 +48,6 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
     csp_info_invalid
 };
 
-C_csp_particlecline_tes::C_csp_particlecline_tes(
-    int external_fl,                             // [-] external fluid identifier
-    util::matrix_t<double> external_fl_props,    // [-] external fluid properties
-    int tes_fl,                                  // [-] tes fluid identifier
-    util::matrix_t<double> tes_fl_props,         // [-] tes fluid properties
-    double q_dot_design,                         // [MWt] Design heat rate in and out of tes
-    double frac_max_q_dot,                       // [-] the max design heat rate as a fraction of the nominal
-    double Q_tes_des,			                 // [MWt-hr] design storage capacity
-    bool is_h_fixed,                             // [] [true] Height is input, calculate diameter, [false] diameter input, calculate height
-    double h_tank_in,			                 // [m] tank height input
-    double d_tank_in,                            // [m] tank diameter input
-    double u_tank,			                     // [W/m^2-K]
-    int tank_pairs,			                     // [-]
-    double hot_tank_Thtr,		                 // [C] convert to K in init()
-    double hot_tank_max_heat,	                 // [MW]
-    double cold_tank_Thtr,	                     // [C] convert to K in init()
-    double cold_tank_max_heat,                   // [MW]
-    double dt_hot,			                     // [C] Temperature difference across heat exchanger - assume hot and cold deltaTs are equal
-    double T_cold_des,	                         // [C] convert to K in init()
-    double T_hot_des,	                         // [C] convert to K in init()
-    double T_tank_hot_ini,	                     // [C] Initial temperature in hot storage tank
-    double T_tank_cold_ini,	                     // [C] Initial temperature in cold storage cold
-    double h_tank_min,		                     // [m] Minimum allowable HTF height in storage tank
-    double f_V_hot_ini,                          // [%] Initial fraction of available volume that is hot
-    double htf_pump_coef,		                 // [kW/kg/s] Pumping power to move 1 kg/s of HTF through sink
-    bool tanks_in_parallel,                      // [-] Whether the tanks are in series or parallel with the external system. Series means external htf must go through storage tanks.
-    double V_tes_des                             // [m/s] Design-point velocity for sizing the diameters of the TES piping
-    )
-    :
-    m_external_fl(external_fl), m_external_fl_props(external_fl_props), m_tes_fl(tes_fl), m_tes_fl_props(tes_fl_props),
-    m_q_dot_design(q_dot_design), m_frac_max_q_dot(frac_max_q_dot), m_Q_tes_des(Q_tes_des),
-    m_is_h_fixed(is_h_fixed), m_h_tank_in(h_tank_in), m_d_tank_in(d_tank_in),
-    m_u_tank(u_tank), m_tank_pairs(tank_pairs), m_hot_tank_Thtr(hot_tank_Thtr), m_hot_tank_max_heat(hot_tank_max_heat),
-    m_cold_tank_Thtr(cold_tank_Thtr), m_cold_tank_max_heat(cold_tank_max_heat), m_dt_hot(dt_hot), m_T_cold_des(T_cold_des),
-    m_T_hot_des(T_hot_des), m_T_tank_hot_ini(T_tank_hot_ini), m_T_tank_cold_ini(T_tank_cold_ini),
-    m_h_tank_min(h_tank_min), m_f_V_hot_ini(f_V_hot_ini), m_htf_pump_coef(htf_pump_coef), tanks_in_parallel(tanks_in_parallel),
-    V_tes_des(V_tes_des)
-{
-
-    if (tes_lengths.ncells() < 11) {
-        double lengths[11] = { 0., 90., 100., 120., 0., 30., 90., 80., 80., 120., 80. };
-        this->tes_lengths.assign(lengths, 11);
-    }
-
-    m_vol_tank = m_V_tank_active = m_q_pb_design = m_ts_hours =
-        m_V_tank_hot_ini = m_mass_total_active = m_h_tank_calc = m_d_tank_calc = m_q_dot_loss_des =
-        m_cp_external_avg = m_rho_store_avg = m_m_dot_tes_des_over_m_dot_external_des = std::numeric_limits<double>::quiet_NaN();
-
-    mc_reported_outputs.construct(S_output_info);
-}
-
-
 C_csp_particlecline_tes::C_csp_particlecline_tes()
 {
     m_vol_tank = m_V_tank_active = m_q_pb_design = m_Q_tes_des =
@@ -250,16 +198,6 @@ void C_csp_particlecline_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_i
         T_tes_cold_des = m_T_cold_des;
     }
 
-    // SIZE
-    if (m_is_h_fixed)
-    {
-
-    }
-    else
-    {
-
-    }
-
     // 5.13.15, twn: also be sure that hx is sized such that it can supply full load to sink
     double duty = m_q_pb_design * std::max(1.0, m_frac_max_q_dot);		//[W] Allow all energy from the source to go into storage at any time
 
@@ -339,6 +277,68 @@ int C_csp_particlecline_tes::solve_tes_off_design(double timestep /*s*/, double 
     double& T_sink_htf_in_hot /*K*/, double& T_cr_in_cold /*K*/,
     C_csp_tes::S_csp_tes_outputs& s_outputs)		//, C_csp_solver_htf_state & s_tes_ch_htf, C_csp_solver_htf_state & s_tes_dc_htf)
 {
+    // Case Parameters
+    double mdot = 85.5;         // [kg/s]
+    double T_in = 500;          // [C]
+
+    // Inputs
+    double void_frac = 0.4;
+    double dens_fluid = 1.204;  // [kg/m3] density of air at room temp
+    double cp_fluid = 1005;     // [J/kg K] specific heat of air at room temp
+    double dens_solid = 5175;   // [kg/m3] density of magnetite
+    double cp_solid = 874.2;    // [J/kg K] specific heat of magnetite
+    double k_eff = 1.0;         // [W/m K] effective conductivity of magnetite
+
+    // Storage Dimensions
+    double L = 8.4; // [m] tank length (height)
+    double D = 8.4; // [m] tank diameter
+    double Ac = M_PI * std::pow(0.5 * D, 2.0);  // [m2] tank cross section area
+
+    // Define timestep and spatial step
+    double n_tstep = 50;            // number sub timesteps
+    double n_xstep = 50;            // number spatial zones
+    double dt = timestep / n_tstep;  // [s] subtimestep
+    double dx = L / n_xstep;         // [m]
+
+    // Calculate Coefficients (assume constant for now)
+    double cp_eff = void_frac * dens_fluid * cp_fluid
+        + (1.0 - void_frac) * dens_solid * cp_solid;  // [J/m3 K]
+    double u0 = mdot / Ac;          // [kg/s m3]
+    double alpha = (dens_fluid * u0 * cp_fluid * dt) / (cp_eff * dx);
+    double beta = (k_eff * dt) / (cp_eff * std::pow(dx, 2.0));
+
+    // Initialize Temperature Vectors
+    double T_particle_ini = 50;     // [C]
+    std::vector<double> T_calc_vec(n_xstep + 1);
+    std::vector<double> T_prev_vec(n_xstep + 1, T_particle_ini);
+
+    // Loop through subtimesteps
+    for (int n = 0; n <= n_tstep; n++)
+    {
+        // Loop through space
+        for (int i = 0; i <= n_xstep; i++)
+        {
+            if (i == 0)
+            {
+                T_calc_vec[i] = (T_prev_vec[0] + (alpha * T_in) + (beta * (T_prev_vec[i + 1] - (2.0 * T_prev_vec[i]) + T_in)))
+                    / (1.0 + alpha);
+            }
+            else if (i == n_xstep)
+            {
+                T_calc_vec[i] = (T_prev_vec[i] + (alpha * T_calc_vec[i - 1]) + (beta * (T_prev_vec[i] - 2.0 * T_prev_vec[i - 1] + T_prev_vec[i - 2])))
+                    / (1.0 + alpha);
+            }
+            else
+            {
+                T_calc_vec[i] = (T_prev_vec[i] + (alpha * T_calc_vec[i - 1]) + (beta * (T_prev_vec[i + 1] - 2.0 * T_prev_vec[i] + T_prev_vec[i - 1])))
+                    / (1.0 + alpha);
+            }
+        }
+
+        // Reset Prev Vec
+        T_prev_vec = T_calc_vec;
+    }
+
     return std::numeric_limits<double>::quiet_NaN();
 }
 

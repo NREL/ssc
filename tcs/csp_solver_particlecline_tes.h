@@ -122,36 +122,6 @@ public:
     util::matrix_t<double> pipe_v_dot_rel;       //[-]
     double P_in_des;                             //[bar] Pressure at the inlet to the TES, at the external system side
 
-
-    C_csp_particlecline_tes(
-        int external_fl,
-        util::matrix_t<double> external_fl_props,
-        int tes_fl,
-        util::matrix_t<double> tes_fl_props,
-        double q_dot_design,                         // [MWt] Design heat rate in and out of tes
-        double frac_max_q_dot,                       // [-] the max design heat rate as a fraction of the nominal
-        double Q_tes_des,                            // [MWt-hr] design storage capacity
-        bool is_h_fixed,                             // [] [true] Height is input, calculate diameter, [false] diameter input, calculate height
-        double h_tank_in,			                 // [m] tank height input
-        double d_tank_in,                            // [m] tank diameter input
-        double u_tank,			                     // [W/m^2-K]
-        int tank_pairs,			                     // [-]
-        double hot_tank_Thtr,		                 // [C] convert to K in init()
-        double hot_tank_max_heat,	                 // [MW]
-        double cold_tank_Thtr,	                     // [C] convert to K in init()
-        double cold_tank_max_heat,                   // [MW]
-        double dt_hot,			                     // [C] Temperature difference across heat exchanger - assume hot and cold deltaTs are equal
-        double T_cold_des,	                         // [C] convert to K in init()
-        double T_hot_des,	                         // [C] convert to K in init()
-        double T_tank_hot_ini,	                     // [C] Initial temperature in hot storage tank
-        double T_tank_cold_ini,	                     // [C] Initial temperature in cold storage cold
-        double h_tank_min,		                     // [m] Minimum allowable HTF height in storage tank
-        double f_V_hot_ini,                          // [%] Initial fraction of available volume that is hot
-        double htf_pump_coef,		                 // [kW/kg/s] Pumping power to move 1 kg/s of HTF through sink
-        bool tanks_in_parallel,                      // [-] Whether the tanks are in series or parallel with the external system. Series means external htf must go through storage tanks.
-        double V_tes_des = 1.85                      // [m/s] Design-point velocity for sizing the diameters of the TES piping
-        );
-
     C_csp_particlecline_tes();
 
     ~C_csp_particlecline_tes() {};
