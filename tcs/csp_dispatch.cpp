@@ -183,7 +183,7 @@ bool csp_dispatch_opt::update_horizon_parameters(C_csp_tou& mc_tou)
         C_csp_tou::S_csp_tou_outputs mc_tou_outputs;
 
         mc_tou.call(pointers.siminfo->ms_ts.m_time + t * 3600. / (double)solver_params.steps_per_hour, mc_tou_outputs);
-        params.sell_price.at(t) = mc_tou_outputs.m_price_mult * params.ppa_price_y1;
+        params.sell_price.at(t) = mc_tou_outputs.m_elec_price * 1000.0; // $/kWhe -> $/Mhe     //.m_price_mult * params.ppa_price_y1;
     }
 
     // get the new electricity generation limits

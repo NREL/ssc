@@ -1038,24 +1038,25 @@ public:
         }
         if (is_timestep_load_fractions) {
             auto vec = as_vector_double("timestep_load_fractions");
-            C_timeseries_schedule_inputs offtaker_series = C_timeseries_schedule_inputs(vec);
+            C_timeseries_schedule_inputs offtaker_series = C_timeseries_schedule_inputs(vec, std::numeric_limits<double>::quiet_NaN());
             offtaker_schedule = offtaker_series;
         }
         else {      // Block schedules
             C_timeseries_schedule_inputs offtaker_block = C_timeseries_schedule_inputs(as_matrix("weekday_schedule"),
-                as_matrix("weekend_schedule"), as_vector_double("f_turb_tou_periods"));
+                as_matrix("weekend_schedule"), as_vector_double("f_turb_tou_periods"), std::numeric_limits<double>::quiet_NaN());
             offtaker_schedule = offtaker_block;
         }
 
         // Electricity pricing schedule
         C_timeseries_schedule_inputs elec_pricing_schedule;
 
-        double ppa_price_year1 = std::numeric_limits<double>::quiet_NaN();
         int csp_financial_model = as_integer("csp_financial_model");
 
         if (sim_type == 1) {
 
             if (csp_financial_model > 0 && csp_financial_model < 5) {   // Single Owner financial models
+
+                double ppa_price_year1 = std::numeric_limits<double>::quiet_NaN();
 
                 // Get first year base ppa price
                 bool is_ppa_price_input_assigned = is_assigned("ppa_price_input");
@@ -1093,10 +1094,10 @@ public:
                 {
                     if (is_assigned("dispatch_factors_ts") || is_dispatch) {
                         auto vec = as_vector_double("dispatch_factors_ts");
-                        elec_pricing_schedule = C_timeseries_schedule_inputs(vec);
+                        elec_pricing_schedule = C_timeseries_schedule_inputs(vec, ppa_price_year1);
                     }
                     else { // if no dispatch optimization, don't need an input pricing schedule
-                        elec_pricing_schedule = C_timeseries_schedule_inputs(1.0);
+                        elec_pricing_schedule = C_timeseries_schedule_inputs(1.0, std::numeric_limits<double>::quiet_NaN());
                     }
                 }
                 else if (ppa_mult_model == 0) // standard diuranal input
@@ -1109,11 +1110,11 @@ public:
                     if (is_one_assigned || is_dispatch) {
 
                         elec_pricing_schedule = C_timeseries_schedule_inputs(as_matrix("dispatch_sched_weekday"), as_matrix("dispatch_sched_weekend"),
-                            as_vector_double("dispatch_tod_factors"));
+                            as_vector_double("dispatch_tod_factors"), ppa_price_year1);
                     }
                     else {
                         // If electricity pricing data is not available, then dispatch to a uniform schedule
-                        elec_pricing_schedule = C_timeseries_schedule_inputs(1.0);
+                        elec_pricing_schedule = C_timeseries_schedule_inputs(1.0, std::numeric_limits<double>::quiet_NaN());
                     }
                 }
             }
@@ -1123,12 +1124,10 @@ public:
                     // need to add pricing lookup for Commercial financial model
                 }
                 else {
-                    elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0);
+                    elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0, std::numeric_limits<double>::quiet_NaN());
                 }
             }
             else if (csp_financial_model == 6) {     // use 'mp_energy_market_revenue' -> from Merchant Plant model
-
-                ppa_price_year1 = 1.0;      //[-] This should be 1.0 because pricing array is in absolute units?
 
                 if (is_dispatch) {
                     util::matrix_t<double> mp_energy_market_revenue = as_matrix("mp_energy_market_revenue"); // col 0 = cleared capacity, col 1 = $/MWh
@@ -1148,10 +1147,11 @@ public:
                         prices[ii] = mp_energy_market_revenue(ii, 1) * conv_dolmwh_to_centkwh;
                     }
 
-                    elec_pricing_schedule = C_timeseries_schedule_inputs(prices);
+                    // prices is already dimensional for mp_energy_market_revenue, so use multiplier of 1
+                    elec_pricing_schedule = C_timeseries_schedule_inputs(prices, 1.0);
                 }
                 else { // if no dispatch optimization, don't need an input pricing schedule
-                    elec_pricing_schedule = C_timeseries_schedule_inputs(1.0);
+                    elec_pricing_schedule = C_timeseries_schedule_inputs(1.0, std::numeric_limits<double>::quiet_NaN());
                 }
             }
             else if (csp_financial_model == 7 || csp_financial_model == 8) {    // LCOE (7) and None (8)
@@ -1161,7 +1161,7 @@ public:
                 }
                 else { // if no dispatch optimization, don't need an input pricing schedule
                     // If electricity pricing data is not available, then dispatch to a uniform schedule
-                    elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0);
+                    elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0, std::numeric_limits<double>::quiet_NaN());
                 }
             }
             else {
@@ -1169,7 +1169,7 @@ public:
             }
         }
         else if (sim_type == 2) {
-            elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0);
+            elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0, std::numeric_limits<double>::quiet_NaN());
         }
 
         // *****************************************************
@@ -1226,7 +1226,7 @@ public:
                 double disp_rsu_cost_calc = as_double("disp_rsu_cost_rel") * q_dot_rec_des;   //[$/start]
                 dispatch.params.set_user_params(as_boolean("can_cycle_use_standby"), as_double("disp_time_weighting"),
                     disp_rsu_cost_calc, 0.0, disp_csu_cost_calc, as_double("disp_pen_ramping"),
-                    as_double("disp_inventory_incentive"), as_double("q_rec_standby"), as_double("q_rec_heattrace"), ppa_price_year1);
+                    as_double("disp_inventory_incentive"), as_double("q_rec_standby"), as_double("q_rec_heattrace")); // , ppa_price_year1);
             }
             else {
                 dispatch.solver_params.dispatch_optimize = false;

@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_util.h"
 
 C_timeseries_schedule_inputs::C_timeseries_schedule_inputs(const util::matrix_t<double>& weekdays, const util::matrix_t<double>& weekends,
-    std::vector<double> tod_factors)
+    std::vector<double> tod_factors, double base_value /*dimensional*/)
 {
     input_type = BLOCK;
 
@@ -56,12 +56,14 @@ C_timeseries_schedule_inputs::C_timeseries_schedule_inputs(const util::matrix_t<
     for (size_t i = 0; i < 8760; i++)
     {
         mv_timeseries_schedule_data[i].tou_period = tod[i];
-        mv_timeseries_schedule_data[i].value = tod_factors[tod[i] - 1];
+        mv_timeseries_schedule_data[i].nondim_value = tod_factors[tod[i] - 1];
+        mv_timeseries_schedule_data[i].dimensional_value = mv_timeseries_schedule_data[i].nondim_value * base_value;    //[dimensional]
     }
 
 }
 
-C_timeseries_schedule_inputs::C_timeseries_schedule_inputs(std::vector<double>& timeseries_values_in)
+C_timeseries_schedule_inputs::C_timeseries_schedule_inputs(std::vector<double>& timeseries_values_in,
+    double base_value /*dimensional*/)
 {
     input_type = TIMESERIES;
 
@@ -76,11 +78,12 @@ C_timeseries_schedule_inputs::C_timeseries_schedule_inputs(std::vector<double>& 
 
     for (size_t i = 0; i < nrecs; i++) {
         mv_timeseries_schedule_data[i].tou_period = 1;
-        mv_timeseries_schedule_data[i].value = timeseries_values_in[i];
+        mv_timeseries_schedule_data[i].nondim_value = timeseries_values_in[i];
+        mv_timeseries_schedule_data[i].dimensional_value = timeseries_values_in[i] * base_value;    //[dimensional]
     }
 }
 
-C_timeseries_schedule_inputs::C_timeseries_schedule_inputs(double const_val)
+C_timeseries_schedule_inputs::C_timeseries_schedule_inputs(double const_val, double base_value /*dimensional*/)
 {
     input_type = CONSTANT;
 
@@ -88,11 +91,12 @@ C_timeseries_schedule_inputs::C_timeseries_schedule_inputs(double const_val)
 
     for (size_t i = 0; i < 8760; i++) {
         mv_timeseries_schedule_data[i].tou_period = 1;
-        mv_timeseries_schedule_data[i].value = const_val;
+        mv_timeseries_schedule_data[i].nondim_value = const_val;
+        mv_timeseries_schedule_data[i].dimensional_value = const_val*base_value;    //[dimensional]
     }
 }
 
-void C_timeseries_schedule_inputs::get_timestep_data(double time_s, double& val, int& tou)
+void C_timeseries_schedule_inputs::get_timestep_data(double time_s, double& nondim_val, double& dim_value, int& tou)
 {
     size_t nrecs = mv_timeseries_schedule_data.size();
 
@@ -112,7 +116,8 @@ void C_timeseries_schedule_inputs::get_timestep_data(double time_s, double& val,
         throw(C_csp_exception(m_error_msg, "TOU timestep call"));
     }
 
-    val = mv_timeseries_schedule_data[ndx].value;
+    nondim_val = mv_timeseries_schedule_data[ndx].nondim_value;
+    dim_value = mv_timeseries_schedule_data[ndx].dimensional_value;
     tou = mv_timeseries_schedule_data[ndx].tou_period;
 }
 
@@ -148,8 +153,10 @@ void C_csp_tou::init(bool is_leapyear)
 
 void C_csp_tou::call(double time_s, C_csp_tou::S_csp_tou_outputs& tou_outputs)
 {
-    mc_offtaker_schedule.get_timestep_data(time_s, tou_outputs.m_f_turbine, tou_outputs.m_csp_op_tou);
-    mc_elec_pricing_schedule.get_timestep_data(time_s, tou_outputs.m_price_mult, tou_outputs.m_pricing_tou);
+    double offtaker_power;
+    mc_offtaker_schedule.get_timestep_data(time_s, tou_outputs.m_f_turbine, offtaker_power, tou_outputs.m_csp_op_tou);
+    mc_elec_pricing_schedule.get_timestep_data(time_s, tou_outputs.m_price_mult, tou_outputs.m_elec_price,
+        tou_outputs.m_pricing_tou);
 
     if (m_is_tod_pc_target_also_pc_max) {
         tou_outputs.m_wlim_dispatch = tou_outputs.m_f_turbine;
