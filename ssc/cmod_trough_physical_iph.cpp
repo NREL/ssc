@@ -1216,7 +1216,7 @@ public:
                 rate_setup::setup(m_vartab, 8760, 1, *util_rate_data, "cmod_trough_physical_iph");
 
                 // Need to figure out dispatch, but for now, just use something so that annual simulation solves
-                elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0);
+                elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0, std::numeric_limits<double>::quiet_NaN());
             }
             else {
                 throw exec_error("trough_physical_iph", "csp_financial_model must be 1, 7, or 8");
