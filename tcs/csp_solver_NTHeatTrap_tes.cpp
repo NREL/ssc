@@ -1076,6 +1076,7 @@ void C_csp_NTHeatTrap_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inpu
     double V_inactive = m_vol_tank - m_V_tank_active;
 
 
+
     // UPDATE INITIAL MASS
     double rho_hot_des = mc_store_htfProps.dens(T_tes_hot_des, 1.0);
     double rho_cold_des = mc_store_htfProps.dens(T_tes_cold_des, 1.0);
@@ -1092,6 +1093,9 @@ void C_csp_NTHeatTrap_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inpu
     // TMB 12.15.2023 Calculate Total Length
     m_length_total = m_h_tank_calc + m_h_tank_calc;
     double volume_combined = m_vol_tank * 2;
+
+
+    double mass_back_calc = volume_combined * mc_store_htfProps.dens(T_tes_cold_des, 1.0);
 
     // Initialize cold and hot tanks
             // Hot tank

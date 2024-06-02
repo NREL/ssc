@@ -62,7 +62,9 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_INPUT,        SSC_NUMBER,      "eta_ref",                   "Power cycle efficiency at design",                                                 "none",         "",               "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "solar_mult",                "Actual solar multiple of system",                                                  "-",            "",               "system",         "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tshours",                   "Equivalent full-load thermal storage hours",                                       "hr",           "",               "TES",            "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "h_tank",                    "Total height of tank (height of HTF when tank is full",                            "m",            "",               "TES",            "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "is_h_tank_fixed",           "[1] Use fixed height (calculate diameter) [0] Use fixed diameter",                 "-",            "",               "TES",            "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "h_tank_in",                    "Total height of tank (height of HTF when tank is full",                            "m",            "",               "TES",            "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "d_tank_in",                 "Tank diameter input",                                                              "m",            "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "u_tank",                    "Loss coefficient from the tank",                                                   "W/m2-K",       "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tank_pairs",                "Number of equivalent tank pairs",                                                  "-",            "",               "TES",            "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "hot_tank_Thtr",             "Minimum allowable hot tank HTF temp",                                              "C",            "",               "TES",            "*",                       "",                      "" },
@@ -175,9 +177,9 @@ public:
                 as_double("P_ref") / as_double("eta_ref"),                          // [MWt] Design heat rate in and out of tes
                 as_double("solar_mult"),                                            // [-] the max design heat rate as a fraction of the nominal
                 as_double("P_ref") / as_double("eta_ref") * as_double("tshours"),   // [MWt-hr] design storage capacity
-                true,                                                               // Use input height
-                as_double("h_tank"),                                                // [m] tank height input
-                0.0,                                                                // [m] tank diameter input
+                as_boolean("is_h_tank_fixed"),                                      // Use input height
+                as_double("h_tank_in"),                                             // [m] tank height input
+                as_double("d_tank_in"),                                             // [m] tank diameter input
                 as_double("u_tank"),                                                // [W/m^2-K]
                 as_integer("tank_pairs"),                                           // [-]
                 as_double("hot_tank_Thtr"),                                         // [C] convert to K in init()
@@ -245,7 +247,7 @@ public:
                 as_double("solar_mult"),                                            // [-] the max design heat rate as a fraction of the nominal
                 as_double("P_ref") / as_double("eta_ref") * as_double("tshours"),   // [MWt-hr] design storage capacity
                 true,   // use input height                                         // Use input height
-                as_double("h_tank"),                                                // [m] tank height input
+                as_double("h_tank_in"),                                                // [m] tank height input
                 0.0,    // no input diameter                                        // [m] tank diameter input
                 as_double("u_tank"),                                                // [W/m^2-K]
                 as_integer("tank_pairs"),                                           // [-]
