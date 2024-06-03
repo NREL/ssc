@@ -123,8 +123,14 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_leak_error",            "TES energy balance error due to leakage assumption",                               "MWt",          "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_E_hot",                 "TES hot side internal energy",                                                     "MJ",           "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_E_cold",                "TES cold side internal energy",                                                    "MJ",           "",               "TES",            "tes_type=1",              "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "tes_wall_error",            "TES energy balance error due to wall temperature assumption",                      "MWt",           "",              "TES",            "tes_type=1",              "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "tes_error_corrected",       "TES energy balance error, accounting for wall and temperature assumption error",   "MWt",           "",              "TES",            "tes_type=1",              "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_wall_error",            "TES energy balance error due to wall temperature assumption",                      "MWt",          "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_error_corrected",       "TES energy balance error, accounting for wall and temperature assumption error",   "MWt",          "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_exp_wall_mass",         "TES expansion tank effective wall mass",                                           "kg",           "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_exp_length",            "TES expansion tank effective length",                                              "m",            "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_mass_cold",             "TES cold fluid mass",                                                              "kg",           "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_mass_hot",              "TES hot fluid mass",                                                               "kg",           "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_V_cold",                "TES cold fluid volume",                                                              "kg",           "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_V_hot",                 "TES hot fluid volume",                                                               "kg",           "",               "TES",            "tes_type=1",              "",                      "" },
 
 
     var_info_invalid };
@@ -340,6 +346,13 @@ public:
         double* T_tank_cold = allocate("T_tank_cold", n_steps);
         double* T_tank_hot = allocate("T_tank_hot", n_steps);
         double* hot_tank_vol_frac = allocate("hot_tank_vol_frac", n_steps);
+        double* hot_tank_mass_perc = allocate("hot_tank_mass_perc", n_steps);
+        double* exp_wall_mass = allocate("tes_exp_wall_mass", n_steps);
+        double* exp_length = allocate("tes_exp_length", n_steps);
+        double* mass_hot = allocate("tes_mass_hot", n_steps);
+        double* mass_cold = allocate("tes_mass_cold", n_steps);
+        double* V_hot = allocate("tes_V_hot", n_steps);
+        double* V_cold = allocate("tes_V_cold", n_steps);
 
         vector<double> piston_loc_vec;
         vector<double> piston_frac_vec;
@@ -382,6 +395,7 @@ public:
             T_tank_hot[i] = K_to_C(storage_pointer->get_hot_temp());
             assign("tes_diameter", d_tank_calc);
             assign("tes_radius", d_tank_calc / 2.0);
+            
 
             hot_tank_vol_frac[i] = storage_pointer->get_hot_tank_vol_frac();
 
@@ -415,6 +429,14 @@ public:
                 tes_E_cold_vec.push_back(tes_E_cold);
                 tes_wall_error_vec.push_back(tes_wall_error);
                 tes_error_corrected_vec.push_back(tes_error_corrected);
+
+                hot_tank_mass_perc[i] = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_HOT_TANK_HTF_PERC_FINAL);
+                exp_wall_mass[i] = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_EXP_WALL_MASS);
+                exp_length[i] = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_EXP_LENGTH);
+                mass_hot[i] = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_MASS_HOT_TANK);
+                mass_cold[i] = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_MASS_COLD_TANK);
+                V_cold[i] = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_VOL_COLD);
+                V_hot[i] = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_VOL_HOT);
             }
 
             // Simulate Analytically

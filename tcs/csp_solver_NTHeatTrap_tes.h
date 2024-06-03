@@ -68,6 +68,7 @@ private:
     double m_m_calc;		    //[kg] Mass of storage fluid in tank
     double m_E_calc;            //[MJ] Internal energy (including tank wall)
     double m_m_wall_calc;       //[kg] Mass of storage tank wall
+    double m_L_calc;            //[m] Length of tank at end of timestep
 
     // Added TMB 12.15.2023
     double m_radius;   //[m]
@@ -135,6 +136,8 @@ public:
     double get_m_m_wall_prev();
 
     double get_m_m_wall_calc();
+
+    double get_m_L_calc();  // m
 
     void init(HTFProperties htf_class_in, double V_tank /*m3*/,
         double h_tank /*m*/, double h_min /*m*/, double u_tank /*W/m2-K*/,
@@ -264,7 +267,9 @@ public:
         E_E_HOT,
         E_E_COLD,
         E_WALL_ERROR,
-        E_ERROR_CORRECTED
+        E_ERROR_CORRECTED,
+        E_EXP_WALL_MASS,
+        E_EXP_LENGTH
 	};
 
 
