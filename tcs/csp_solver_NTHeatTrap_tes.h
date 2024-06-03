@@ -217,8 +217,10 @@ private:
     std::vector<double> m_piston_loss_poly;  //[] Coefficients to piston loss polynomial (0*x^0 + 1*x^1 ....)    
 
     // Added for NT, calc in init
-    double m_radius;        //[m] radius of tank
-    double m_length_total;  //[m] Total length of tank (two tanks combined)
+    double m_radius;            //[m] radius of tank
+    double m_length_total;      //[m] Total length of tank (two tanks combined)
+    double m_V_wall_nominal;    //[m3] Total wall volume of tank
+    double m_mass_wall_nominal;//[kg] Total wall mass of tank (wall mass 'changes' as density of fluid changes)
 
     void solve_tanks_iterative(double timestep /*s*/, double n_substep /**/, double mdot_charge /*kg/s*/,
         double mdot_discharge /*kg/s*/, double T_charge /*K*/, double T_discharge /*K*/, double T_amb /*K*/,

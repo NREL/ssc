@@ -902,7 +902,7 @@ C_csp_NTHeatTrap_tes::C_csp_NTHeatTrap_tes(
         eta_pump(eta_pump), has_hot_tank_bypass(has_hot_tank_bypass), T_tank_hot_inlet_min(T_tank_hot_inlet_min),
         custom_tes_p_loss(custom_tes_p_loss), custom_tes_pipe_sizes(custom_tes_pipe_sizes), k_tes_loss_coeffs(k_tes_loss_coeffs),
         tes_diams(tes_diams), tes_wallthicks(tes_wallthicks), tes_lengths(tes_lengths),
-        pipe_rough(pipe_rough), dP_discharge(dP_discharge)
+        pipe_rough(pipe_rough), dP_discharge(dP_discharge), tanks_in_parallel(true)
 {
 
     if (tes_lengths.ncells() < 11) {
@@ -1070,9 +1070,9 @@ void C_csp_NTHeatTrap_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inpu
     double cp_ave = mc_store_htfProps.Cp_ave(T_tes_cold_des, T_tes_hot_des);				//[kJ/kg-K] Specific heat at average temperature
     m_rho_store_avg = mc_store_htfProps.dens(T_tes_ave, 1.0);
 
-
     //m_mass_total_active = m_Q_tes_des * 3600.0 / (cp_ave / 1000.0 * (T_tes_hot_des - T_tes_cold_des));  //[kg] Total HTF mass at design point inlet/outlet T
-    m_mass_total_active = m_Q_tes_des * 3600.0 / (mc_store_htfProps.Cp(T_tes_cold_des) / 1000.0 * (T_tes_hot_des - T_tes_cold_des));  //[kg] Total HTF mass at design point inlet/outlet T
+    m_mass_total_active = m_V_tank_active * mc_store_htfProps.dens(T_tes_cold_des, 1.0);    // [kg] total mass is cold fluid that fills tank
+
     double V_inactive = m_vol_tank - m_V_tank_active;
 
 
@@ -1091,11 +1091,8 @@ void C_csp_NTHeatTrap_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inpu
     double T_cold_ini = m_T_tank_cold_ini;	//[K]
 
     // TMB 12.15.2023 Calculate Total Length
-    m_length_total = m_h_tank_calc + m_h_tank_calc;
-    double volume_combined = m_vol_tank * 2;
-
-
-    double mass_back_calc = volume_combined * mc_store_htfProps.dens(T_tes_cold_des, 1.0);
+    m_length_total = m_h_tank_calc;
+    double volume_combined = m_vol_tank;    // Total volume is actually volume of one tank (total mass can fill 1 'two tank' tank)
 
     // Initialize cold and hot tanks
             // Hot tank
@@ -1116,6 +1113,11 @@ void C_csp_NTHeatTrap_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inpu
     }
 
     m_radius = hot_radius;
+
+    // Calculate 'nominal' wall mass / volume
+    double Ac_wall = (CSP::pi * std::pow(m_radius + m_tank_wall_thick, 2.0)) - (CSP::pi * std::pow(m_radius, 2.0));
+    m_V_wall_nominal = Ac_wall * m_length_total;   //[m3]
+    m_mass_wall_nominal = m_tank_wall_dens * m_V_wall_nominal;  //[kg]
 
 }
 
