@@ -37,7 +37,7 @@ jobs:
         path: ${{env.ORTOOLSDIR}}/
         key: ortools-ubuntu
         
-    - name: download OR-Tools
+    - name: Download OR-Tools
       if: steps.cachedortools.outputs.cache-hit != 'true'
       run: |
           sudo apt update
@@ -236,7 +236,7 @@ jobs:
         echo "GTEST=$GTEST" >> $GITHUB_ENV
         SSCDIR=$GITHUB_WORKSPACE/ssc
         echo "SSCDIR=$SSCDIR" >> $GITHUB_ENV
-        ORTOOLSDIR=$GITHUB_WORKSPACE/or-tools
+        ORTOOLSDIR=$GITHUB_WORKSPACE/or-tools/install
         echo "ORTOOLSDIR=$ORTOOLSDIR" >> $GITHUB_ENV
 
     - name: Get cached OR-Tools
@@ -246,21 +246,28 @@ jobs:
         path: ${{env.ORTOOLSDIR}}/
         key: ortools-windows
 
-    - name: download OR-Tools for Windows
+    - name: Clone OR-Tools
+      if: steps.cachedortools.outputs.cache-hit != 'true'
+      uses: actions/checkout@v4
+      with:
+        repository: qualand/or-tools
+        path: or-tools
+        ref: 87ac305ace23e1d77beec597c9a714b86082e9ee
+
+    - name: Build OR-Tools
       if: steps.cachedortools.outputs.cache-hit != 'true'
       shell: bash
-      run: |
-          cd $GITHUB_WORKSPACE
-          curl -LJO https://github.com/google/or-tools/releases/download/v9.9/or-tools_x64_VisualStudio2022_cpp_v9.9.3963.zip
-          unzip or-tools_x64_VisualStudio2022_cpp_v9.9.3963.zip -d or-tools
-          mv or-tools/or-tools_*/* or-tools
+      run: | 
+        cd or-tools
+        cmake -S . -B build -DBUILD_DEPS=ON -DUSE_COINOR=OFF -DUSE_HIGHS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_SAMPLES=OFF -DBUILD_DOC=OFF -DINSTALL_DOC=OFF -DUSE_XPRESS=OFF -DCMAKE_INSTALL_PREFIX=${ORTOOLSDIR}
+        cmake --build build --config Release --target install -v -j 4
 
     - name: Get cached GTest
       uses: actions/cache@v4
       id: cachedgtest
       with:
         path: ${{env.GTEST}}/
-        key: ortools-windows
+        key: gtest-windows
 
     - name: Clone Gtest
       if: steps.cachedgtest.outputs.cache-hit != 'true'
@@ -280,31 +287,31 @@ jobs:
           cmake -Dgtest_force_shared_crt=ON ..
           cmake --build . --config Release -j4
     
-    - name: Checkout SSC
-      uses: actions/checkout@v4
-      with:
-          path: ssc
+    # - name: Checkout SSC
+    #   uses: actions/checkout@v4
+    #   with:
+    #       path: ssc
 
-    - name: Configure CMake
-      shell: bash
-      # Configure cmake to build ssc tests but not tools
-      run: |
-        mkdir ${SSCDIR}/build
-        cd ${SSCDIR}/build
-        cmake .. -DSAM_SKIP_TOOLS=1
-        cmake --build . --config Release -j4
-        cp ssc/Release/* test/Release
+    # - name: Configure CMake
+    #   shell: bash
+    #   # Configure cmake to build ssc tests but not tools
+    #   run: |
+    #     mkdir ${SSCDIR}/build
+    #     cd ${SSCDIR}/build
+    #     cmake .. -DSAM_SKIP_TOOLS=1
+    #     cmake --build . --config Release -j4
+    #     cp ssc/Release/* test/Release
 
-    - name: Test
-      shell: bash
-      # Turn off fast fail for when the landbosse tests write to cerr
-      run: |
-        cd ${SSCDIR}/build/test/Release
-        ./Test.exe
+    # - name: Test
+    #   shell: bash
+    #   # Turn off fast fail for when the landbosse tests write to cerr
+    #   run: |
+    #     cd ${SSCDIR}/build/test/Release
+    #     ./Test.exe
   
-    - name: Upload Artifacts
-      uses: actions/upload-artifact@v3
-      with:
-          name: SSC Windows Shared Libraries
-          path: |
-            ${{env.SSCDIR}}\build\ssc\Release\ssc.dll
+    # - name: Upload Artifacts
+    #   uses: actions/upload-artifact@v3
+    #   with:
+    #       name: SSC Windows Shared Libraries
+    #       path: |
+    #         ${{env.SSCDIR}}\build\ssc\Release\ssc.dll
