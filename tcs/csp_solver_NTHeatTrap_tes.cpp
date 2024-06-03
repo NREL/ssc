@@ -1053,7 +1053,7 @@ void C_csp_NTHeatTrap_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inpu
     // Size Tank with Fixed Height
     if (m_is_h_fixed)
     {
-        two_tank_tes_sizing(mc_store_htfProps, m_Q_tes_des, T_tes_hot_des, T_tes_cold_des,
+        heattrap_tes_sizing(mc_store_htfProps, m_Q_tes_des, T_tes_hot_des, T_tes_cold_des,
             m_h_tank_min, m_h_tank_in, m_tank_pairs, m_u_tank,
             m_V_tank_active, m_vol_tank, m_d_tank_calc, m_q_dot_loss_des);
         m_h_tank_calc = m_h_tank_in;
@@ -1061,7 +1061,7 @@ void C_csp_NTHeatTrap_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inpu
     // Size Tank with Fixed Diameter
     else
     {
-        two_tank_tes_sizing_fixed_diameter(mc_store_htfProps, m_Q_tes_des, T_tes_hot_des, T_tes_cold_des,
+        heattrap_tes_sizing_fixed_diameter(mc_store_htfProps, m_Q_tes_des, T_tes_hot_des, T_tes_cold_des,
             m_h_tank_min, m_d_tank_in, m_tank_pairs, m_u_tank,
             m_V_tank_active, m_vol_tank, m_h_tank_calc, m_q_dot_loss_des);
         m_d_tank_calc = m_d_tank_in;
