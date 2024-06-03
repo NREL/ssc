@@ -2026,16 +2026,6 @@ public:
 
         C_csp_tou tou(offtaker_schedule, elec_pricing_schedule, dispatch_model_type, is_offtaker_frac_also_max);
 
-        //tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = as_boolean("is_tod_pc_target_also_pc_max");
-        //tou.mc_dispatch_params.m_is_block_dispatch = !(as_boolean("is_dispatch") || as_boolean("is_dispatch_targets"));
-        //tou.mc_dispatch_params.m_use_rule_1 = true;
-        //tou.mc_dispatch_params.m_standby_off_buffer = 2.0;
-        //tou.mc_dispatch_params.m_use_rule_2 = false;
-        //tou.mc_dispatch_params.m_q_dot_rec_des_mult = -1.23;
-        //tou.mc_dispatch_params.m_f_q_dot_pc_overwrite = -1.23;
-
-        
-        //tou.mc_dispatch_params.m_is_dispatch_targets = is_dispatch_targets;
         if (is_dispatch_targets) {
             int n_expect = (int)ceil((sim_setup.m_sim_time_end - sim_setup.m_sim_time_start) / 3600. * steps_per_hour);
 
@@ -2129,7 +2119,7 @@ public:
             double disp_rsu_cost_calc = as_double("disp_rsu_cost_rel")*q_dot_rec_des;   //[$/start]
             dispatch.params.set_user_params(as_boolean("can_cycle_use_standby"), as_double("disp_time_weighting"),
                 disp_rsu_cost_calc, heater_startup_cost, disp_csu_cost_calc, as_double("disp_pen_ramping"),
-                as_double("disp_inventory_incentive"), as_double("q_rec_standby"), as_double("q_rec_heattrace")); // , ppa_price_year1);
+                as_double("disp_inventory_incentive"), as_double("q_rec_standby"), as_double("q_rec_heattrace"));
         }
 
         // Instantiate Solver       
