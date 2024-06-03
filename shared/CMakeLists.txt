@@ -234,19 +234,17 @@ elseif(MSVC)
     target_link_libraries(shared ${LIB_UTF8_LIBS})
 
     # get ZLIB
-    find_library( ZLIB
-            NAMES zlib.lib
-            PATHS $ENV{ORTOOLSDIR}/lib)
     find_library( ZLIBD
             NAMES zlibd.lib
             PATHS $ENV{ORTOOLSDBDIR}/lib)
-    target_link_libraries(shared debug ${ZLIBD})
-    target_link_libraries(shared optimized ${ZLIB})
 
     find_package(zlib
             HINTS "$ENV{ORTOOLSDIR}/lib/cmake/ZLIB"
             REQUIRED
     )
+    get_target_property(LIB_ZLIB_RELEASE ZLIB::ZLIB LOCATION)
+    target_link_libraries(shared debug ${ZLIBD})
+    target_link_libraries(shared optimized ${LIB_ZLIB_RELEASE})
 
     # get protobuf
     find_package(protobuf

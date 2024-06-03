@@ -264,8 +264,10 @@ public:
         
         std::clock_t clock_start = std::clock();
 
-        char input_data_path[512];
-        sprintf(input_data_path, "%s/test/input_cases/ortools/", std::getenv("SSCDIR"));
+        //char input_data_path[512];
+        //sprintf(input_data_path, "%s/test/input_cases/ortools/", std::getenv("SSCDIR"));
+
+        char* input_data_path = "C:\\SAM\\2023.12.17.ortools\\ortools\\";
 
         bool run_rolling_horizon_cases = false;
 
