@@ -128,7 +128,6 @@ set(TCS_SRC
 		csp_solver_pt_receiver.h
 		csp_solver_pt_sf_perf_interp.h
 		csp_solver_stratified_tes.h
-		csp_solver_tou_block_schedules.h
 		csp_solver_trough_collector_receiver.h
 		csp_solver_two_tank_tes.h
 		csp_solver_util.h
