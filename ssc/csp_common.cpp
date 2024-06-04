@@ -326,7 +326,9 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
         throw exec_error("SolarPILOT cmod", "receiver type must be 0 (external), 1 (cavity), or 3 (falling particle)");
     }
 
-    sf.sun_loc_des.combo_select_by_choice_index(m_cmod->as_integer("sun_loc_des"));  // Summer solstice=0; Equinox=1; Winter solstice=2
+    if (m_cmod->is_assigned("sun_loc_des")) {
+        sf.sun_loc_des.combo_select_by_choice_index(m_cmod->as_integer("sun_loc_des"));  // Summer solstice=0; Equinox=1; Winter solstice=2
+    }
     sf.q_des.val = m_cmod->as_double("q_design");       //[MWt]
 	sf.dni_des.val = m_cmod->as_double("dni_des");
     land.is_bounds_scaled.val = true;
