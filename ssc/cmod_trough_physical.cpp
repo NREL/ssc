@@ -219,6 +219,7 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "tes_tank_dens",             "Tank wall thickness (used for Norwich HeatTrap)",                                  "kg/m3",        "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tes_NT_nstep",              "Number of time steps for energy balance (used for Norwich HeatTrap)",              "",             "",               "TES",            "?=1",                     "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "tes_NT_piston_loss_poly",   "Polynomial coefficients describing piston heat loss function (f(kg/s)=%)",         "",             "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_tank_insul_percent",    "Percent additional wall mass due to insulation",                                   "%",            "",               "TES",            "?=0",                     "",                      "" },
 
 
     // TOU
@@ -1324,6 +1325,12 @@ public:
                 throw exec_error("trough_physical", "TES model requires tanks in parallel");
             }
 
+            // Modify wall density to account for insulation mass
+            double mass_factor = 1.0 + (0.01 * as_double("tes_tank_insul_percent"));
+            double dens_orig = as_double("tes_tank_dens");
+            double dens_w_insulation = dens_orig * mass_factor;
+            
+
             storage_NT = C_csp_NTHeatTrap_tes(
                 c_trough.m_Fluid,
                 c_trough.m_field_fl_props,
@@ -1350,7 +1357,7 @@ public:
                 as_double("init_hot_htf_percent"),
                 as_double("pb_pump_coef"),
                 as_double("tes_tank_cp") * 1000, // convert to J/kgK
-                as_double("tes_tank_dens"),
+                dens_w_insulation,
                 as_double("tes_tank_thick"),
                 nstep,
                 as_vector_double("tes_NT_piston_loss_poly"),
