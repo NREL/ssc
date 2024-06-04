@@ -187,10 +187,6 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_INPUT,        SSC_NUMBER,      "disp_mip_gap",              "Dispatch optimization solution tolerance",                                         "-",            "",               "Sys_Control",    "is_dispatch=1",           "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "disp_time_weighting",       "Dispatch optimization future time discounting factor",                             "-",            "",               "Sys_Control",    "?=0.99",                  "",                      "" },
 
-    { SSC_INPUT,        SSC_NUMBER,      "is_write_ampl_dat",         "Write AMPL data files for dispatch run",                                           "-",            "",               "tou",            "?=0",                     "",                      "SIMULATION_PARAMETER" },
-    { SSC_INPUT,        SSC_NUMBER,      "is_ampl_engine",            "Run dispatch optimization with external AMPL engine",                              "-",            "",               "tou",            "?=0",                     "",                      "SIMULATION_PARAMETER" },
-    { SSC_INPUT,        SSC_STRING,      "ampl_data_dir",             "AMPL data file directory",                                                         "-",            "",               "tou",            "?=''",                    "",                      "SIMULATION_PARAMETER" },
-    { SSC_INPUT,        SSC_STRING,      "ampl_exec_call",            "System command to run AMPL code",                                                  "-",            "",               "tou",            "?='ampl sdk_solution.run'", "",                    "SIMULATION_PARAMETER" },
     { SSC_INPUT,        SSC_NUMBER,      "disp_steps_per_hour",       "Time steps per hour for dispatch optimization calculations",                            "-",                   "",                             "tou",                                      "?=1",                     "",                      "SIMULATION_PARAMETER" },
     { SSC_INPUT,        SSC_NUMBER,      "disp_spec_presolve",        "Dispatch optimization presolve heuristic",                                              "-",                   "",                             "tou",                                      "?=-1",                    "",                      "SIMULATION_PARAMETER" },
     { SSC_INPUT,        SSC_NUMBER,      "disp_spec_bb",              "Dispatch optimization B&B heuristic",                                                   "-",                   "",                             "tou",                                      "?=-1",                    "",                      "SIMULATION_PARAMETER" },
@@ -661,8 +657,8 @@ public:
         double T_htf_cold_des = as_double("T_loop_in_des");    //[C]
         double T_htf_hot_des = as_double("T_loop_out");      //[C]
         double tshours = as_double("tshours");                  //[-]
-        double q_dot_pc_des = as_double("q_pb_design");         //[MWt] HEAT SINK design thermal power
-        double Q_tes = q_dot_pc_des * tshours;                  //[MWt-hr]
+        double q_dot_hs_des = as_double("q_pb_design");         //[MWt] HEAT SINK design thermal power
+        double Q_tes = q_dot_hs_des * tshours;                  //[MWt-hr]
         int is_dispatch = as_boolean("is_dispatch");
 
         // *****************************************************
@@ -784,7 +780,7 @@ public:
                 c_trough.m_mc_bal_cold_per_MW = as_double("mc_bal_cold");   //[kWht/K-MWt] The heat capacity of the balance of plant on the cold side
                 c_trough.m_mc_bal_sca = as_double("mc_bal_sca");            //[Wht/K-m] Non-HTF heat capacity associated with each SCA - per meter basis
 
-                c_trough.m_P_ref = q_dot_pc_des * 1e6;                      //[W] Design Turbine Net Output
+                c_trough.m_P_ref = q_dot_hs_des * 1e6;                      //[W] Design Turbine Net Output
                 c_trough.m_eta_ref = 1;                                     //[] Design cycle thermal efficiency
                 c_trough.m_non_solar_field_land_area_multiplier = as_double("non_solar_field_land_area_multiplier");    //[]
 
@@ -1016,7 +1012,7 @@ public:
 
             c_heat_sink.ms_params.m_T_htf_hot_des = T_htf_hot_des;		//[C] FIELD design outlet temperature
             c_heat_sink.ms_params.m_T_htf_cold_des = T_htf_cold_des;	//[C] FIELD design inlet temperature
-            c_heat_sink.ms_params.m_q_dot_des = q_dot_pc_des;			//[MWt] HEAT SINK design thermal power (could have field solar multiple...)
+            c_heat_sink.ms_params.m_q_dot_des = q_dot_hs_des;			//[MWt] HEAT SINK design thermal power (could have field solar multiple...)
             // 9.18.2016 twn: assume for now there's no pressure drop though heat sink
             c_heat_sink.ms_params.m_htf_pump_coef = as_double("pb_pump_coef");		//[kWe/kg/s]
             c_heat_sink.ms_params.m_max_frac = f_turbine_max1;
@@ -1070,7 +1066,7 @@ public:
                 c_trough.m_field_fl_props,
                 as_integer("store_fluid"),
                 as_matrix("store_fl_props"),
-                q_dot_pc_des,
+                q_dot_hs_des,
                 c_trough.m_solar_mult,
                 Q_tes,
                 as_double("h_tank"),
@@ -1287,14 +1283,12 @@ public:
 
         if (is_dispatch) {
 
-            double heater_startup_cost = 0.0;
+            double heater_startup_cost = 0.0;       // TODO: Should we add an heater to this model?
+            double q_dot_rec_des = q_dot_hs_des * c_trough.m_solar_mult; //[MWt]
 
-            double q_dot_rec_des = q_dot_pc_des * c_trough.m_solar_mult; //[MWt]
-
-            dispatch.solver_params.set_user_inputs(is_dispatch, as_integer("disp_steps_per_hour"), as_integer("disp_frequency"), as_integer("disp_horizon"),
+            dispatch.solver_params.set_user_inputs(as_integer("disp_steps_per_hour"), as_integer("disp_frequency"), as_integer("disp_horizon"),
                 as_integer("disp_max_iter"), as_double("disp_mip_gap"), as_double("disp_timeout"),
-                as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_spec_scaling"), as_integer("disp_reporting"),
-                as_boolean("is_write_ampl_dat"), as_boolean("is_ampl_engine"), as_string("ampl_data_dir"), as_string("ampl_exec_call"));
+                as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_spec_scaling"), as_integer("disp_reporting"));
 
             bool can_cycle_use_standby = false;
             double disp_csu_cost_calc = 0.0;
@@ -1304,9 +1298,6 @@ public:
             dispatch.params.set_user_params(can_cycle_use_standby, as_double("disp_time_weighting"),
                 disp_rsu_cost_calc, heater_startup_cost, disp_csu_cost_calc, disp_pen_ramping,
                 as_double("disp_inventory_incentive"), as_double("q_rec_standby"), as_double("q_rec_heattrace"));
-        }
-        else {
-            dispatch.solver_params.dispatch_optimize = false;
         }
 
         // Instantiate Solver
@@ -1439,7 +1430,7 @@ public:
         double nameplate = std::numeric_limits<double>::quiet_NaN();
         {
             // System Design
-            nameplate = q_dot_pc_des;
+            nameplate = q_dot_hs_des;
             {
                 assign("nameplate", nameplate); // [MWt]
                 assign("system_capacity", nameplate * 1.E3);    //[kWt]
@@ -1630,9 +1621,9 @@ public:
                 //csp_solver.get_design_parameters(W_dot_bop_design, W_dot_fixed_parasitic_design);
 
                 vector<double> bop_vec = as_vector_double("bop_array");
-                double bop_design = bop_vec[0] * bop_vec[1] * (bop_vec[2] + bop_vec[3] + bop_vec[4]) * q_dot_pc_des;
+                double bop_design = bop_vec[0] * bop_vec[1] * (bop_vec[2] + bop_vec[3] + bop_vec[4]) * q_dot_hs_des;
                 vector<double> aux_vec = as_vector_double("aux_array");
-                double aux_design = aux_vec[0] * aux_vec[1] * (aux_vec[2] + aux_vec[3] + aux_vec[4]) * q_dot_pc_des;
+                double aux_design = aux_vec[0] * aux_vec[1] * (aux_vec[2] + aux_vec[3] + aux_vec[4]) * q_dot_hs_des;
 
                 assign("bop_design", bop_design);       // MWe
                 assign("aux_design", aux_design);       // MWe
@@ -1668,8 +1659,8 @@ public:
             double solar_field_area = c_trough.m_Ap_tot;
             double htf_system_area = c_trough.m_Ap_tot;
             //Q_tes
-            double heat_sink_mwe = q_dot_pc_des;         // MWe
-            double bop_mwe = q_dot_pc_des;                 // MWe
+            double heat_sink_mwe = q_dot_hs_des;         // MWe
+            double bop_mwe = q_dot_hs_des;                 // MWe
             // total_land_area                      // m2
             double sales_tax_rate = as_double("sales_tax_rate");
 

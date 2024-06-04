@@ -35,17 +35,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <algorithm>
 #include "csp_dispatch.h"
-//#include "lp_lib.h" 
-//#include "lib_util.h"
-
-// TODO: get rid of all the defines
-//#define _WRITE_AMPL_DATA 1
-#define SOS_NONE            // What does this do?
-//#define SOS_SEQUENCE
-//#define SOS_MANUAL
-//#define SOS_LPSOLVE
-
-//#define MOD_CYCLE_SHUTDOWN
 
 /*
 
@@ -1579,10 +1568,6 @@ bool csp_dispatch_opt::optimize()
         delete_lp(lp);
         lp = NULL;
         print_dispatch_update();
-
-        //TODO: why is this here?
-        //if(return_ok)
-        //    write_ampl(); 
 
         return return_ok;
     }

@@ -37,9 +37,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lp_lib.h" 
 #include "lib_util.h"
 
-#define SOS_NONE
-//#define ALT_ETES_FORM
-
 #undef min
 #undef max
 
@@ -1156,37 +1153,6 @@ bool etes_dispatch_opt::optimize()
         return false;
     }
 
-    return false;
-}
-
-// ========================================
-//       Exporting the problem to AMPL
-// ========================================
-
-std::string etes_dispatch_opt::write_ampl()
-{
-    /* 
-    Write the par file for ampl input
-
-    return name of output file, if error, return empty string.
-    */
-    throw std::runtime_error((std::string)__func__ + " is not implemented.");
-    return "";
-}
-
-bool etes_dispatch_opt::optimize_ampl()
-{
-    /* 
-    handle the process of writing an input file, running ampl, handling results, and loading solution
-
-    writes
-        dat_<day #>.dat
-    runs
-        sdk_dispatch.run
-    expects
-        sdk_solution.txt input file
-    */
-    throw std::runtime_error((std::string)__func__ + " is not implemented.");
     return false;
 }
 

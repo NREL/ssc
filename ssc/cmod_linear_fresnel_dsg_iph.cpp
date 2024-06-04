@@ -482,7 +482,6 @@ public:
         // *****************************************************
         // System dispatch
         csp_dispatch_opt dispatch;
-        dispatch.solver_params.dispatch_optimize = false;
 
 		// ********************************
 		// ********************************
