@@ -645,7 +645,6 @@ public:
         add_var_info( _cm_vtab_trough_physical_iph );
         add_var_info( vtab_adjustment_factors );
         add_var_info(vtab_technology_outputs);
-
         add_var_info(vtab_utility_rate_common); // Required for dispatch w/ utility rates
 
     }
@@ -1304,7 +1303,7 @@ public:
             double disp_rsu_cost_calc = as_double("disp_rsu_cost_rel") * q_dot_rec_des;   //[$/start]
             dispatch.params.set_user_params(can_cycle_use_standby, as_double("disp_time_weighting"),
                 disp_rsu_cost_calc, heater_startup_cost, disp_csu_cost_calc, disp_pen_ramping,
-                as_double("disp_inventory_incentive"), as_double("q_rec_standby"), as_double("q_rec_heattrace")); // , ppa_price_year1);
+                as_double("disp_inventory_incentive"), as_double("q_rec_standby"), as_double("q_rec_heattrace"));
         }
         else {
             dispatch.solver_params.dispatch_optimize = false;

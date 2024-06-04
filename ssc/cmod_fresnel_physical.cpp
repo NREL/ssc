@@ -1187,9 +1187,6 @@ public:
 
         C_csp_tou tou(offtaker_schedule, elec_pricing_schedule, dispatch_model_type, is_offtaker_frac_also_max);
 
-        //tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = as_boolean("is_tod_pc_target_also_pc_max");
-        //tou.mc_dispatch_params.m_is_block_dispatch = !is_dispatch;    
-
         // System Parameters
         C_csp_solver::S_csp_system_params system;
         {
@@ -1197,11 +1194,11 @@ public:
             size_t nval_bop_array = 0;
             ssc_number_t* bop_array = as_array("bop_array", &nval_bop_array);
             if (nval_bop_array != 5) throw exec_error("fresnel_physical", "Should be 5 elements in bop_array, has " + util::to_string((int)nval_bop_array) + ".");
-            system.m_bop_par = bop_array[0];        //as_double("bop_par");
-            system.m_bop_par_f = bop_array[1];      //as_double("bop_par_f");
-            system.m_bop_par_0 = bop_array[2];      //as_double("bop_par_0");
-            system.m_bop_par_1 = bop_array[3];      //as_double("bop_par_1");
-            system.m_bop_par_2 = bop_array[4];      //as_double("bop_par_2");
+            system.m_bop_par = bop_array[0];
+            system.m_bop_par_f = bop_array[1];
+            system.m_bop_par_0 = bop_array[2];
+            system.m_bop_par_1 = bop_array[3];
+            system.m_bop_par_2 = bop_array[4];
         }
 
         // System Dispatch

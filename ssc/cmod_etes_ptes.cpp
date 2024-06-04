@@ -807,10 +807,6 @@ public:
         bool is_offtaker_frac_also_max = true;
 
         C_csp_tou tou(offtaker_schedule, elec_pricing_schedule, dispatch_model_type, is_offtaker_frac_also_max);
-
-        //tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = true;
-        //tou.mc_dispatch_params.m_is_block_dispatch = false;
-        //tou.mc_dispatch_params.m_is_arbitrage_policy = !as_boolean("is_dispatch");
         
         // *****************************************************
         // *****************************************************
