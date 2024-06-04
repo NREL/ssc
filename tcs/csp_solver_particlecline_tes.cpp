@@ -48,175 +48,71 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
     csp_info_invalid
 };
 
+C_csp_particlecline_tes::C_csp_particlecline_tes(
+    double T_tank_hot_ini_C,	                     // [C] Initial temperature in hot storage tank
+    double T_tank_cold_ini_C,	                     // [C] Initial temperature in cold storage cold
+    double f_V_hot_ini,                          // [%] Initial fraction of available volume that is hot
+    int n_xstep,                                 // number spatial sub steps
+    int n_subtimestep                            // number subtimesteps
+)
+    :
+    m_f_V_hot_ini(f_V_hot_ini),
+    m_n_xstep(n_xstep), m_n_subtimestep(n_subtimestep)
+{
+    // Convert Temperature Units
+    m_T_tank_hot_ini = T_tank_hot_ini_C + 273.15;
+    m_T_tank_cold_ini = T_tank_cold_ini_C + 273.15;
+
+    // Temporary Sizing Info
+    m_height = 8.4;     // [m]
+    m_diameter = 8.4;   // [m]
+
+    // Temporary Hard Code
+    m_k_eff = 1.0;         // [W/m K] effective conductivity of magnetite
+    m_void_frac = 0.4;
+    m_dens_solid = 5175;   // [kg/m3] density of magnetite
+    m_cp_solid = 874.2;    // [J/kg K] specific heat of magnetite
+
+    mc_reported_outputs.construct(S_output_info);
+}
+
 C_csp_particlecline_tes::C_csp_particlecline_tes()
 {
-    m_vol_tank = m_V_tank_active = m_q_pb_design = m_Q_tes_des =
-        m_V_tank_hot_ini = m_mass_total_active = m_h_tank_calc = m_d_tank_calc = m_q_dot_loss_des =
-        m_cp_external_avg = m_rho_store_avg = m_m_dot_tes_des_over_m_dot_external_des = std::numeric_limits<double>::quiet_NaN();
-
-    m_q_dot_design = m_frac_max_q_dot = m_h_tank_in = m_d_tank_in = m_u_tank = m_cold_tank_Thtr = m_hot_tank_Thtr
-        = m_hot_tank_max_heat = m_cold_tank_max_heat = m_cold_tank_max_heat = m_dt_hot = m_T_cold_des = m_T_hot_des
-        = m_dP_src_des = m_T_tank_hot_ini = m_T_tank_cold_ini = m_h_tank_min = m_f_V_hot_ini = m_htf_pump_coef
-        = m_tes_pump_coef = eta_pump = V_tes_des = P_in_des
-        = pipe_vol_tot
-        = std::numeric_limits<double>::quiet_NaN();
-
-
-    m_ts_hours = std::numeric_limits<double>::quiet_NaN();
-
-    m_external_fl_props = m_tes_fl_props = util::matrix_t<double>();
-
-    m_is_h_fixed = m_is_cr_to_cold_tank_allowed = m_is_hx = m_is_tes = tanks_in_parallel = false;
-    m_tank_pairs = 0;
-
     mc_reported_outputs.construct(S_output_info);
 }
 
 
 void C_csp_particlecline_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs)
 {
-    if (!(m_Q_tes_des > 0.0))
-    {
-        m_is_tes = false;
-        return;		// No storage!
-    }
+    // Define Cross Sectional Area
+    m_Ac = M_PI * std::pow(0.5 * m_diameter, 2.0);
 
-    m_is_tes = true;
-
-    // Declare instance of fluid class for EXTERNAL fluid
-    // Set fluid number and copy over fluid matrix if it makes sense
-    if (m_external_fl != HTFProperties::User_defined && m_external_fl < HTFProperties::End_Library_Fluids)
+    // Define initial temperatures
+    double dx = m_height / m_n_xstep;               // [m]
+    m_T_prev_vec = std::vector<double>(m_n_xstep + 1);
+    // Loop through space
+    for (int i = 0; i <= m_n_xstep; i++)
     {
-        if (!mc_external_htfProps.SetFluid(m_external_fl))
-        {
-            throw(C_csp_exception("External HTF code is not recognized", "Two Tank TES Initialization"));
-        }
-    }
-    else if (m_external_fl == HTFProperties::User_defined)
-    {
-        int n_rows = (int)m_external_fl_props.nrows();
-        int n_cols = (int)m_external_fl_props.ncols();
-        if (n_rows > 2 && n_cols == 7)
-        {
-            if (!mc_external_htfProps.SetUserDefinedFluid(m_external_fl_props))
-            {
-                error_msg = util::format(mc_external_htfProps.UserFluidErrMessage(), n_rows, n_cols);
-                throw(C_csp_exception(error_msg, "Two Tank TES Initialization"));
-            }
-        }
+        double frac = (i * dx) / m_height;
+        if (frac < m_f_V_hot_ini * 0.01)
+            m_T_prev_vec[i] = m_T_tank_hot_ini;
         else
-        {
-            error_msg = util::format("The user defined external HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", n_rows, n_cols);
-            throw(C_csp_exception(error_msg, "Two Tank TES Initialization"));
-        }
-    }
-    else
-    {
-        throw(C_csp_exception("External HTF code is not recognized", "Two Tank TES Initialization"));
+            m_T_prev_vec[i] = m_T_tank_cold_ini;
     }
 
+    double x = 0;
 
-    // Declare instance of fluid class for STORAGE fluid.
-    // Set fluid number and copy over fluid matrix if it makes sense.
-    if (m_tes_fl != HTFProperties::User_defined && m_tes_fl < HTFProperties::End_Library_Fluids)
-    {
-        if (!mc_store_htfProps.SetFluid(m_tes_fl))
-        {
-            throw(C_csp_exception("Storage HTF code is not recognized", "Two Tank TES Initialization"));
-        }
-    }
-    else if (m_tes_fl == HTFProperties::User_defined)
-    {
-        int n_rows = (int)m_tes_fl_props.nrows();
-        int n_cols = (int)m_tes_fl_props.ncols();
-        if (n_rows > 2 && n_cols == 7)
-        {
-            if (!mc_store_htfProps.SetUserDefinedFluid(m_tes_fl_props))
-            {
-                error_msg = util::format(mc_store_htfProps.UserFluidErrMessage(), n_rows, n_cols);
-                throw(C_csp_exception(error_msg, "Two Tank TES Initialization"));
-            }
-        }
-        else
-        {
-            error_msg = util::format("The user defined storage HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", n_rows, n_cols);
-            throw(C_csp_exception(error_msg, "Two Tank TES Initialization"));
-        }
-    }
-    else
-    {
-        throw(C_csp_exception("Storage HTF code is not recognized", "Two Tank TES Initialization"));
-    }
-
-    bool is_hx_calc = true;
-
-    if (m_tes_fl != m_external_fl)
-        is_hx_calc = true;
-    else if (m_external_fl != HTFProperties::User_defined)
-        is_hx_calc = false;
-    else
-    {
-        is_hx_calc = !mc_external_htfProps.equals(&mc_store_htfProps);
-    }
-
-    m_is_hx = is_hx_calc;
-
-    if (m_is_hx && !tanks_in_parallel)
-    {
-        mc_csp_messages.add_message(C_csp_messages::NOTICE, "The inputs specified serial TES operation, but the external and storage fluids are different."
-            " The simulation modeled parallel TES operation.\n");
-        tanks_in_parallel = true;
-    }
-
-    if (tanks_in_parallel) {
-        m_is_cr_to_cold_tank_allowed = false;
-    }
-    else {
-        m_is_cr_to_cold_tank_allowed = true;
-    }
-
-    // Calculate thermal power to PC at design
-    m_q_pb_design = m_q_dot_design * 1.E6;	//[Wt]
-
-    // Convert parameter units
-    m_hot_tank_Thtr += 273.15;		//[K] convert from C
-    m_cold_tank_Thtr += 273.15;		//[K] convert from C
-    m_T_cold_des += 273.15;		    //[K] convert from C
-    m_T_hot_des += 273.15;		    //[K] convert from C
-    m_T_tank_hot_ini += 273.15;		//[K] convert from C
-    m_T_tank_cold_ini += 273.15;		//[K] convert from C
-
-    m_ts_hours = m_Q_tes_des / m_q_dot_design;
-
-    double T_tes_hot_des, T_tes_cold_des;
-    if (m_is_hx) {
-        T_tes_hot_des = m_T_hot_des - m_dt_hot;
-        T_tes_cold_des = m_T_cold_des + m_dt_hot;
-    }
-    else {
-        T_tes_hot_des = m_T_hot_des;
-        T_tes_cold_des = m_T_cold_des;
-    }
-
-    // 5.13.15, twn: also be sure that hx is sized such that it can supply full load to sink
-    double duty = m_q_pb_design * std::max(1.0, m_frac_max_q_dot);		//[W] Allow all energy from the source to go into storage at any time
-
-    // Initial storage charge based on % mass 
-    double T_tes_ave = 0.5 * (T_tes_hot_des + T_tes_cold_des);
-    double cp_ave = mc_store_htfProps.Cp_ave(T_tes_cold_des, T_tes_hot_des);				//[kJ/kg-K] Specific heat at average temperature
-    m_rho_store_avg = mc_store_htfProps.dens(T_tes_ave, 1.0);
-    m_mass_total_active = m_Q_tes_des * 3600.0 / (cp_ave / 1000.0 * (T_tes_hot_des - T_tes_cold_des));  //[kg] Total HTF mass at design point inlet/outlet T
 
 }
 
 bool C_csp_particlecline_tes::does_tes_exist()
 {
-	return m_is_tes;
+	return false;
 }
 
 bool C_csp_particlecline_tes::is_cr_to_cold_allowed()
 {
-	return m_is_cr_to_cold_tank_allowed;
+	return false;
 }
 
 double C_csp_particlecline_tes::get_hot_temp()
@@ -277,73 +173,79 @@ int C_csp_particlecline_tes::solve_tes_off_design(double timestep /*s*/, double 
     double& T_sink_htf_in_hot /*K*/, double& T_cr_in_cold /*K*/,
     C_csp_tes::S_csp_tes_outputs& s_outputs)		//, C_csp_solver_htf_state & s_tes_ch_htf, C_csp_solver_htf_state & s_tes_dc_htf)
 {
-    // Case Parameters
-    double mdot = 85.5;         // [kg/s]
-    double T_in = 500;          // [C]
+    double q_dot_heater = std::numeric_limits<double>::quiet_NaN();			//[MWe]  Heating power required to keep tanks at a minimum temperature
+    double m_dot_cold_tank_to_hot_tank = std::numeric_limits<double>::quiet_NaN();	//[kg/s] Hot tank mass flow rate, valid for direct and indirect systems
+    double W_dot_rhtf_pump = std::numeric_limits<double>::quiet_NaN();		//[MWe]  Pumping power, just for tank-to-tank in indirect storage
+    double q_dot_loss = std::numeric_limits<double>::quiet_NaN();			//[MWt]  Storage thermal losses
+    double q_dot_dc_to_htf = std::numeric_limits<double>::quiet_NaN();		//[MWt]  Thermal power to the HTF from storage
+    double q_dot_ch_from_htf = std::numeric_limits<double>::quiet_NaN();	//[MWt]  Thermal power from the HTF to storage
+    double T_hot_ave = std::numeric_limits<double>::quiet_NaN();		    //[K]    Average hot tank temperature over timestep
+    double T_cold_ave = std::numeric_limits<double>::quiet_NaN();			//[K]    Average cold tank temperature over timestep
+    double T_hot_final = std::numeric_limits<double>::quiet_NaN();			//[K]    Hot tank temperature at end of timestep
+    double T_cold_final = std::numeric_limits<double>::quiet_NaN();			//[K]    Cold tank temperature at end of timestep
 
-    // Inputs
-    double void_frac = 0.4;
-    double dens_fluid = 1.204;  // [kg/m3] density of air at room temp
-    double cp_fluid = 1005;     // [J/kg K] specific heat of air at room temp
-    double dens_solid = 5175;   // [kg/m3] density of magnetite
-    double cp_solid = 874.2;    // [J/kg K] specific heat of magnetite
-    double k_eff = 1.0;         // [W/m K] effective conductivity of magnetite
-
-    // Storage Dimensions
-    double L = 8.4; // [m] tank length (height)
-    double D = 8.4; // [m] tank diameter
-    double Ac = M_PI * std::pow(0.5 * D, 2.0);  // [m2] tank cross section area
-
-    // Define timestep and spatial step
-    double n_tstep = 50;            // number sub timesteps
-    double n_xstep = 50;            // number spatial zones
-    double dt = timestep / n_tstep;  // [s] subtimestep
-    double dx = L / n_xstep;         // [m]
-
-    // Calculate Coefficients (assume constant for now)
-    double cp_eff = void_frac * dens_fluid * cp_fluid
-        + (1.0 - void_frac) * dens_solid * cp_solid;  // [J/m3 K]
-    double u0 = mdot / Ac;          // [kg/s m3]
-    double alpha = (dens_fluid * u0 * cp_fluid * dt) / (cp_eff * dx);
-    double beta = (k_eff * dt) / (cp_eff * std::pow(dx, 2.0));
-
-    // Initialize Temperature Vectors
-    double T_particle_ini = 50;     // [C]
-    std::vector<double> T_calc_vec(n_xstep + 1);
-    std::vector<double> T_prev_vec(n_xstep + 1, T_particle_ini);
-
-    // Loop through subtimesteps
-    for (int n = 0; n <= n_tstep; n++)
+    if (m_dot_cr_to_cv_hot >= m_dot_cv_hot_to_sink) // Charging
     {
-        // Loop through space
-        for (int i = 0; i <= n_xstep; i++)
+        T_sink_htf_in_hot = T_cr_out_hot;       //[K]
+        double m_dot_tes_ch = m_dot_cr_to_cv_hot - m_dot_cv_hot_to_sink;    //[kg/s]
+        double T_htf_tes_cold = std::numeric_limits<double>::quiet_NaN();   //[K]
+        bool ch_solved = charge(timestep,
+            T_amb,
+            m_dot_tes_ch,
+            T_cr_out_hot,
+            T_htf_tes_cold,
+            q_dot_heater, m_dot_cold_tank_to_hot_tank, W_dot_rhtf_pump,
+            q_dot_loss, q_dot_dc_to_htf, q_dot_ch_from_htf,
+            T_hot_ave, T_cold_ave, T_hot_final, T_cold_final);
+
+        // Check if TES.charge method solved
+        if (!ch_solved)
         {
-            if (i == 0)
-            {
-                T_calc_vec[i] = (T_prev_vec[0] + (alpha * T_in) + (beta * (T_prev_vec[i + 1] - (2.0 * T_prev_vec[i]) + T_in)))
-                    / (1.0 + alpha);
-            }
-            else if (i == n_xstep)
-            {
-                T_calc_vec[i] = (T_prev_vec[i] + (alpha * T_calc_vec[i - 1]) + (beta * (T_prev_vec[i] - 2.0 * T_prev_vec[i - 1] + T_prev_vec[i - 2])))
-                    / (1.0 + alpha);
-            }
-            else
-            {
-                T_calc_vec[i] = (T_prev_vec[i] + (alpha * T_calc_vec[i - 1]) + (beta * (T_prev_vec[i + 1] - 2.0 * T_prev_vec[i] + T_prev_vec[i - 1])))
-                    / (1.0 + alpha);
-            }
+            return -3;
         }
 
-        // Reset Prev Vec
-        T_prev_vec = T_calc_vec;
+        // Enthalpy balance to calculate T_htf_cold to CR
+        if (m_dot_cr_to_cv_hot == 0.0)
+        {
+            T_cr_in_cold = T_htf_tes_cold;       //[K]
+        }
+        else
+        {
+            T_cr_in_cold = (m_dot_tes_ch * T_htf_tes_cold + m_dot_cv_hot_to_sink * T_sink_out_cold) / m_dot_cr_to_cv_hot;       //[K]
+        }
     }
+    else
+    {
+        T_cr_in_cold = T_sink_out_cold;     //[K]
+        double m_dot_tes_dc = m_dot_cv_hot_to_sink - m_dot_cr_to_cv_hot;    //[kg/s]
+        double T_htf_tes_hot = std::numeric_limits<double>::quiet_NaN();
+        bool is_tes_success = discharge(timestep,
+            T_amb,
+            m_dot_tes_dc,
+            T_sink_out_cold,
+            T_htf_tes_hot,
+            q_dot_heater, m_dot_cold_tank_to_hot_tank, W_dot_rhtf_pump,
+            q_dot_loss, q_dot_dc_to_htf, q_dot_ch_from_htf,
+            T_hot_ave, T_cold_ave, T_hot_final, T_cold_final);
+
+        m_dot_cold_tank_to_hot_tank *= -1.0;
+
+        // Check if discharge method solved
+        if (!is_tes_success)
+        {
+            return -4;
+        }
+
+        T_sink_htf_in_hot = (m_dot_tes_dc * T_htf_tes_hot + m_dot_cr_to_cv_hot * T_cr_out_hot) / m_dot_cv_hot_to_sink;   //[K]
+    }
+    
 
     return std::numeric_limits<double>::quiet_NaN();
 }
 
 void C_csp_particlecline_tes::converged()
 {
+    m_T_prev_vec = m_T_calc_vec;
     return;
 }
 
@@ -377,24 +279,142 @@ bool C_csp_particlecline_tes::charge(double timestep /*s*/, double T_amb /*K*/, 
     double T_htf_hot_in /*K*/, double& T_htf_cold_out /*K*/,
     double& q_dot_heater /*MWe*/, double& m_dot_tank_to_tank /*kg/s*/, double& W_dot_rhtf_pump /*MWe*/,
     double& q_dot_loss /*MWt*/, double& q_dot_dc_to_htf /*MWt*/, double& q_dot_ch_from_htf /*MWt*/,
-    double& T_hot_ave /*K*/, double& T_cold_ave /*K*/, double& T_hot_final /*K*/, double& T_cold_final /*K*/,
-    double& q_dot_out_cold /*MW*/, double& q_dot_out_hot /*MW*/, double& q_dot_error_cold, double& q_dot_error_hot,
-    double& q_dot_error_total /*MW*/, double& q_dot_error_leak /*MW*/, double& q_dot_error_wall /*MW*/,
-    double& q_dot_error_corrected /*MW*/)
+    double& T_hot_ave /*K*/, double& T_cold_ave /*K*/, double& T_hot_final /*K*/, double& T_cold_final /*K*/
+    )
 {
-    return std::numeric_limits<bool>::quiet_NaN();
+    // Inputs
+    double dens_fluid = 1.204;  // [kg/m3] density of air at room temp
+    double cp_fluid = 1005;     // [J/kg K] specific heat of air at room temp
+
+    // Define timestep and spatial step
+    double dt = timestep / m_n_subtimestep;  // [s] subtimestep
+    double dx = m_height / m_n_xstep;               // [m]
+
+    // Calculate Coefficients (assume constant for now)
+    double cp_eff = m_void_frac * dens_fluid * cp_fluid
+        + (1.0 - m_void_frac) * m_dens_solid * m_cp_solid;  // [J/m3 K]
+    double u0 = m_dot_htf_in / m_Ac;          // [kg/s m3]
+    double alpha = (dens_fluid * u0 * cp_fluid * dt) / (cp_eff * dx);
+    double beta = (m_k_eff * dt) / (cp_eff * std::pow(dx, 2.0));
+
+    // Initialize Temperature Vectors
+    std::vector<double> T_calc_vec(m_n_xstep + 1);
+    std::vector<double> T_prev_vec_subtime = m_T_prev_vec;
+    std::vector<double> T_out_vec(m_n_xstep, 0.0);
+
+    // Loop through subtimesteps
+    for (int n = 0; n < m_n_subtimestep; n++)
+    {
+        // Loop through space
+        for (int i = 0; i <= m_n_xstep; i++)
+        {
+            // Charge INLET
+            if (i == 0)
+            {
+                T_calc_vec[i] = (T_prev_vec_subtime[0] + (alpha * T_htf_hot_in)
+                    + (beta * (T_prev_vec_subtime[i + 1] - (2.0 * T_prev_vec_subtime[i]) + T_htf_hot_in)))
+                    / (1.0 + alpha);
+            }
+
+            // Charge OUTLET
+            else if (i == m_n_xstep)
+            {
+                T_calc_vec[i] = (T_prev_vec_subtime[i] + (alpha * T_calc_vec[i - 1])
+                    + (beta * (T_prev_vec_subtime[i] - 2.0 * T_prev_vec_subtime[i - 1] + T_prev_vec_subtime[i - 2])))
+                    / (1.0 + alpha);
+            }
+            else
+            {
+                T_calc_vec[i] = (T_prev_vec_subtime[i] + (alpha * T_calc_vec[i - 1])
+                    + (beta * (T_prev_vec_subtime[i + 1] - 2.0 * T_prev_vec_subtime[i] + T_prev_vec_subtime[i - 1])))
+                    / (1.0 + alpha);
+            }
+        }
+
+        // Reset Prev Vec
+        T_prev_vec_subtime = T_calc_vec;
+
+        // Save outlet temp
+        T_out_vec[n] = T_calc_vec[m_n_xstep];
+    }
+
+    m_T_calc_vec = T_calc_vec;
+
+    // Calculate Time Average Outlet Temp
+    double T_out_avg = std::accumulate(T_out_vec.begin(), T_out_vec.end(), 0.0) / T_out_vec.size();
+
+    return true;
 }
 
 bool C_csp_particlecline_tes::discharge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/,
     double T_htf_cold_in /*K*/, double& T_htf_hot_out /*K*/,
     double& q_dot_heater /*MWe*/, double& m_dot_tank_to_tank /*kg/s*/, double& W_dot_rhtf_pump /*MWe*/,
     double& q_dot_loss /*MWt*/, double& q_dot_dc_to_htf /*MWt*/, double& q_dot_ch_from_htf /*MWt*/,
-    double& T_hot_ave /*K*/, double& T_cold_ave /*K*/, double& T_hot_final /*K*/, double& T_cold_final /*K*/,
-    double& q_dot_out_cold /*MW*/, double& q_dot_out_hot /*MW*/, double& q_dot_error_cold, double& q_dot_error_hot,
-    double& q_dot_error_total /*MW*/, double& q_dot_error_leak /*MW*/, double& q_dot_error_wall /*MW*/,
-    double& q_dot_error_corrected /*MW*/)
+    double& T_hot_ave /*K*/, double& T_cold_ave /*K*/, double& T_hot_final /*K*/, double& T_cold_final /*K*/
+    )
 {
-    return std::numeric_limits<bool>::quiet_NaN();
+    // Inputs
+    double dens_fluid = 1.204;  // [kg/m3] density of air at room temp
+    double cp_fluid = 1005;     // [J/kg K] specific heat of air at room temp
+
+    // Define timestep and spatial step
+    double dt = timestep / m_n_subtimestep;  // [s] subtimestep
+    double dx = m_height / m_n_xstep;               // [m]
+
+    // Calculate Coefficients (assume constant for now)
+    double cp_eff = m_void_frac * dens_fluid * cp_fluid
+        + (1.0 - m_void_frac) * m_dens_solid * m_cp_solid;  // [J/m3 K]
+    double u0 = m_dot_htf_in / m_Ac;          // [kg/s m3]
+    double alpha = (dens_fluid * u0 * cp_fluid * dt) / (cp_eff * dx);
+    double beta = (m_k_eff * dt) / (cp_eff * std::pow(dx, 2.0));
+
+    // Initialize Temperature Vectors
+    std::vector<double> T_calc_vec(m_n_xstep + 1);
+    std::vector<double> T_prev_vec_subtime = m_T_prev_vec;
+    std::vector<double> T_out_vec(m_n_xstep, 0.0);
+
+    // Loop through subtimesteps
+    for (int n = 0; n < m_n_subtimestep; n++)
+    {
+        // Loop through space
+        for (int i = m_n_xstep; i >= 0; i--)
+        {
+            // Discharge OUTLET
+            if (i == 0)
+            {
+                T_calc_vec[i] = (T_prev_vec_subtime[i] + (alpha * T_calc_vec[i + 1])
+                    + (beta * (T_prev_vec_subtime[i] - 2.0 * T_prev_vec_subtime[i + 1] + T_prev_vec_subtime[i + 2])))
+                    / (1.0 + alpha);
+            }
+            // Discharge INLET
+            else if (i == m_n_xstep)
+            {
+                T_calc_vec[i] = (T_prev_vec_subtime[i] + (alpha * T_htf_cold_in)
+                    + (beta * (T_prev_vec_subtime[i - 1] - (2.0 * T_prev_vec_subtime[i]) + T_htf_cold_in)))
+                    / (1.0 + alpha);
+            }
+            // Middle space
+            else
+            {
+                T_calc_vec[i] = (T_prev_vec_subtime[i] + (alpha * T_calc_vec[i + 1])
+                    + (beta * (T_prev_vec_subtime[i - 1] - 2.0 * T_prev_vec_subtime[i] + T_prev_vec_subtime[i + 1])))
+                    / (1.0 + alpha);
+            }
+        }
+
+        // Reset Prev Vec
+        T_prev_vec_subtime = T_calc_vec;
+
+        // Save outlet temp
+        T_out_vec[n] = T_calc_vec[0];
+    }
+
+    m_T_calc_vec = T_calc_vec;
+
+    // Calculate Time Average Outlet Temp
+    double T_out_avg = std::accumulate(T_out_vec.begin(), T_out_vec.end(), 0.0) / T_out_vec.size();
+
+    return true;
 }
 
 int C_csp_particlecline_tes::pressure_drops(double m_dot_sf, double m_dot_pb,

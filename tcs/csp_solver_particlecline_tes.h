@@ -42,31 +42,28 @@ class C_csp_particlecline_tes : public C_csp_tes
 {
 private:
 
-    HTFProperties mc_external_htfProps;		// Instance of HTFProperties class for external HTF
-    HTFProperties mc_store_htfProps;		// Instance of HTFProperties class for storage HTF
-
 	// member string for exception messages
 	std::string error_msg;
 
-	// Member data
-	bool m_is_tes;              // Is there TES? (signifier for controller)
-	bool m_is_cr_to_cold_tank_allowed;  // Allow outlet of field to go straight to cold tank
-	double m_vol_tank;			//[m3] volume of *one temperature*, i.e. vol_tank = total cold storage = total hot storage
-	double m_V_tank_active;		//[m^3] available volume (considering h_min) of *one temperature*
-	double m_q_pb_design;		//[Wt] thermal power to sink at design
-	double m_V_tank_hot_ini;	//[m^3] Initial volume in hot storage tank
-	double m_mass_total_active; //[kg] Total HTF mass at design point inlet/outlet T
-    double m_h_tank_calc;       //[m] Actual height (length) of tank
-    double m_d_tank_calc;       //[m] diameter of a single tank
-	double m_q_dot_loss_des;    //[MWt] design tank heat loss
-	double m_ts_hours;          //[hr] hours of storage at design sink operation		
+    // Constructor Inputs
+    double m_T_tank_hot_ini;    // [K] Initial hot temperature
+    double m_T_tank_cold_ini;   // [K] Initial cold temperature
+    double m_f_V_hot_ini;       // [] Initial fraction of hot storage
+    int m_n_xstep;              // [] Number spatial steps
+    int m_n_subtimestep;        // [] Number sub timesteps
+    double m_k_eff;             // [W/m K] effective conductivity
+    double m_void_frac;         // [] Void fraction
+    double m_dens_solid;        // [kg/m3] density of particles
+    double m_cp_solid;          // [J/kg K] specific heat of particles
 
-	double m_cp_external_avg;	//[kJ/kg-K]
-	double m_rho_store_avg;     //[kg/m3]
+    // Time step carryover
+    std::vector<double> m_T_prev_vec;   // [K] Temperatures in space, starting at CHARGE inlet (hot)
+    std::vector<double> m_T_calc_vec;   // [K] Temperatures in space, starting at CHARGE inlet (hot)
 
-	double m_m_dot_tes_des_over_m_dot_external_des;	//[-]
-
-    bool m_is_hx;   // Is there a hx between field fluid and TES
+    // Calculated in init()
+    double m_height;    // [m] Tank Height
+    double m_diameter;  // [m] Tank diameter
+    double m_Ac;        // [m2] Tank cross sectional area
 
 public:
 
@@ -84,43 +81,19 @@ public:
 	};
 
 
-    int m_external_fl;
-    util::matrix_t<double> m_external_fl_props;
-    int m_tes_fl;
-    util::matrix_t<double> m_tes_fl_props;
-    double m_q_dot_design;                    //[MWe] Design heat rate in and out of tes
-    double m_frac_max_q_dot;                  //[-] the max design heat rate as a fraction of the nominal
-    double m_Q_tes_des;                       //[MWt-hr] design storage capacity
-    bool m_is_h_fixed;                        //[true] Height is input, calculate diameter, [false] diameter input, calculate height
-    double m_h_tank_in;			              //[m] tank height input
-    double m_d_tank_in;                       //[m] tank diameter input
-    double m_u_tank;			              //[W/m^2-K]
-    int m_tank_pairs;			              //[-]
-    double m_hot_tank_Thtr;		              //[C] convert to K in init()
-    double m_hot_tank_max_heat;	              //[MW]
-    double m_cold_tank_Thtr;	              //[C] convert to K in init()
-    double m_cold_tank_max_heat;              //[MW]
-    double m_dt_hot;			              //[C] Temperature difference across heat exchanger - assume hot and cold deltaTs are equal
-    double m_T_cold_des;	                  //[C] convert to K in init()
-    double m_T_hot_des;	                      //[C] convert to K in init()
-    double m_dP_src_des;                      //[bar] Total source pressure drop at design
-    double m_T_tank_hot_ini;	              //[C] Initial temperature in hot storage tank
-    double m_T_tank_cold_ini;	              //[C] Initial temperature in cold storage cold
-    double m_h_tank_min;		              //[m] Minimum allowable HTF height in storage tank
-    double m_f_V_hot_ini;                     //[%] Initial fraction of available volume that is hot
-    double m_htf_pump_coef;		              //[kW/kg/s] Pumping power to move 1 kg/s of HTF through sink
-    double m_tes_pump_coef;		              //[kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
-    double eta_pump;                          //[-] Pump efficiency, for newer pumping calculations
-    bool tanks_in_parallel;                   //[-] Whether the tanks are in series or parallel with the external system. ALWAYS TRUE for NT Heat Trap
-    double V_tes_des;                         //[m/s] Design-point velocity for sizing the diameters of the TES piping
-    util::matrix_t<double> tes_lengths;       //[m] Imported lengths for the TES piping as read from the modified output files
-
-
     C_csp_reported_outputs mc_reported_outputs;
 
     double pipe_vol_tot;	                     //[m^3]
     util::matrix_t<double> pipe_v_dot_rel;       //[-]
     double P_in_des;                             //[bar] Pressure at the inlet to the TES, at the external system side
+
+    C_csp_particlecline_tes(
+        double T_tank_hot_ini_C,	                // [C] Initial temperature in hot storage tank
+        double T_tank_cold_ini_C,	                // [C] Initial temperature in cold storage cold
+        double f_V_hot_ini,                         // [%] Initial fraction of available volume that is hot
+        int n_xstep,                                // number spatial sub steps
+        int n_subtimestep                           // number subtimesteps
+            );
 
     C_csp_particlecline_tes();
 
@@ -178,19 +151,13 @@ public:
         double T_htf_hot_in, double& T_htf_cold_out /*K*/,
         double& q_dot_heater /*MWe*/, double& m_dot /*kg/s*/, double& W_dot_rhtf_pump /*MWe*/,
         double& q_dot_loss /*MWt*/, double& q_dot_dc_to_htf /*MWt*/, double& q_dot_ch_from_htf /*MWt*/,
-        double& T_hot_ave /*K*/, double& T_cold_ave /*K*/, double& T_hot_final /*K*/, double& T_cold_final /*K*/,
-        double& q_dot_out_cold /*MW*/, double& q_dot_out_hot /*MW*/, double& q_dot_error_cold, double& q_dot_error_hot,
-        double& q_dot_error_total /*MW*/, double& q_dot_error_leak /*MW*/, double& q_dot_error_wall /*MW*/,
-        double& q_dot_error_corrected /*MW*/);
+        double& T_hot_ave /*K*/, double& T_cold_ave /*K*/, double& T_hot_final /*K*/, double& T_cold_final /*K*/);
 
     bool discharge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/,
         double T_htf_cold_in, double& T_htf_hot_out /*K*/,
         double& q_dot_heater /*MWe*/, double& m_dot /*kg/s*/, double& W_dot_rhtf_pump /*MWe*/,
         double& q_dot_loss /*MWt*/, double& q_dot_dc_to_htf /*MWt*/, double& q_dot_ch_from_htf /*MWt*/,
-        double& T_hot_ave /*K*/, double& T_cold_ave /*K*/, double& T_hot_final /*K*/, double& T_cold_final /*K*/,
-        double& q_dot_out_cold /*MW*/, double& q_dot_out_hot /*MW*/, double& q_dot_error_cold, double& q_dot_error_hot,
-        double& q_dot_error_total /*MW*/, double& q_dot_error_leak /*MW*/, double& q_dot_error_wall /*MW*/,
-        double& q_dot_error_corrected /*MW*/);
+        double& T_hot_ave /*K*/, double& T_cold_ave /*K*/, double& T_hot_final /*K*/, double& T_cold_final /*K*/);
 
     int pressure_drops(double m_dot_sf, double m_dot_pb,
         double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating,

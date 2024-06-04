@@ -290,7 +290,13 @@ public:
         // Particle Thermocline
         else if (tes_type == 2)
         {
-            storage_particle = C_csp_particlecline_tes();
+            storage_particle = C_csp_particlecline_tes(
+                as_double("T_tank_hot_ini"),                                        // [C] Initial temperature in hot storage tank
+                as_double("T_tank_cold_ini"),                                       // [C] Initial temperature in cold storage cold
+                as_double("init_hot_htf_percent"),                                  // [%] Initial fraction of available volume that is hot
+                2,
+                2
+                );
             storage_pointer = &storage_particle;
         }
         else
