@@ -478,6 +478,12 @@ public:
     double m_P_ref = std::numeric_limits<double>::quiet_NaN();                                 //[W] Design Turbine Net Output
     double m_eta_ref = std::numeric_limits<double>::quiet_NaN();                               //[] Design Cycle Thermal Efficiency
     double m_non_solar_field_land_area_multiplier = std::numeric_limits<double>::quiet_NaN();  //[]
+    int m_use_abs_or_rel_mdot_limit = 0;            // Use mass flow abs (0) or relative (1) limits
+    double m_m_dot_htfmin_in = std::numeric_limits<double>::quiet_NaN();	                        //[kg/s] Minimum loop HTF flow rate INPUT
+    double m_m_dot_htfmax_in = std::numeric_limits<double>::quiet_NaN();	                        //[kg/s] Maximum loop HTF flow rate INPUT
+    double m_f_htfmin_in = std::numeric_limits<double>::quiet_NaN();	                            // Minimum loop HTF fraction of mdot design INPUT
+    double m_f_htfmax_in = std::numeric_limits<double>::quiet_NaN();	                            // Maximum loop HTF fraction of mdot design INPUT
+
 
     // Design Point Outputs
     double m_field_htf_cp_avg_des = std::numeric_limits<double>::quiet_NaN();                  //[kJ/kg-K] Field average htf cp value at design
@@ -489,6 +495,7 @@ public:
     std::vector<double> m_csp_dtr_hce_optical_effs;  // HCE optical efficiencies at design
     util::matrix_t<double> m_SCAInfoArray;          //[-] Receiver (,1) and collector (,2) type for each assembly in loop
     std::vector<int> m_SCADefocusArray;             //[-] Order in which the SCA's should be defocused
+
     double m_m_dot_htfmin = std::numeric_limits<double>::quiet_NaN();	                        //[kg/s] Minimum loop HTF flow rate
     double m_m_dot_htfmax = std::numeric_limits<double>::quiet_NaN();	                        //[kg/s] Maximum loop HTF flow rate
     double m_f_htfmin = std::numeric_limits<double>::quiet_NaN();	                            // Minimum loop HTF fraction of mdot design
