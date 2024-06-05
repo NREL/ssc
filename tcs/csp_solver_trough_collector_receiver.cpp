@@ -564,7 +564,25 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
     m_m_dot_loop_des = m_m_dot_design / (double)m_nLoops;	//[kg/s]
     m_m_dot_htfmax = m_f_htfmax * m_m_dot_loop_des;         //[kg/s]
     m_m_dot_htfmin = m_f_htfmin * m_m_dot_loop_des;         //[kg/s]
-	
+
+    double m_dot_max = m_m_dot_htfmax * (double)m_nLoops;   //[kg/s]
+    double m_dot_min = m_m_dot_htfmin * (double)m_nLoops;   //[kg/s]
+
+    if (m_m_dot_design > m_dot_max) {
+        const char* msg = "The calculated field design mass flow rate of %.2f kg/s is greater than the maximum defined by the max single loop flow rate and number of loops (%.2f kg/s). "
+            "The design mass flow rate is reset to the latter.";
+        m_error_msg = util::format(msg, m_m_dot_design, m_dot_max);
+        mc_csp_messages.add_message(C_csp_messages::NOTICE, m_error_msg);
+        m_m_dot_design = m_dot_max;
+    }
+    else if (m_m_dot_design < m_dot_min) {
+        const char* msg = "The calculated field design mass flow rate of %.2f kg/s is less than the minimum defined by the min single loop flow rate and number of loops (%.2f kg/s). "
+            "The design mass flow rate is reset to the latter.";
+        m_error_msg = util::format(msg, m_m_dot_design, m_dot_min);
+        mc_csp_messages.add_message(C_csp_messages::NOTICE, m_error_msg);
+        m_m_dot_design = m_dot_min;
+    }
+
 	//mjw 1.16.2011 Design field thermal power 
 	//m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
 	m_q_design_actual = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
