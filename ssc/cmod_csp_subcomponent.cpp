@@ -107,8 +107,8 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "T_sink_in",                 "Temperature to heat sink or power block",                                          "C",            "",               "TES",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "T_tank_cold",               "Temperature of cold tank (average)",                                               "C",            "",               "TES",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "T_tank_hot",                "Temperature of hot tank (average)",                                                "C",            "",               "TES",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "tes_diameter",              "TES Diameter",                                                                     "m",            "",               "TES",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "tes_radius",                "TES Radius",                                                                       "m",            "",               "TES",            "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_NUMBER,      "tes_diameter",              "TES Diameter",                                                                     "m",            "",               "TES",            "*",                       "",                      "" },
+    //{ SSC_OUTPUT,       SSC_NUMBER,      "tes_radius",                "TES Radius",                                                                       "m",            "",               "TES",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "hot_tank_vol_frac",         "Hot tank volume fraction of total",                                                "",             "",               "TES",            "*",                       "",                      "" },
 
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_error",                 "TES energy balance error",                                                         "MW",           "",               "TES",            "tes_type=1",              "",                      "" },
@@ -122,8 +122,10 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_leak_error",            "TES energy balance error due to leakage assumption",                               "MWt",          "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_E_hot",                 "TES hot side internal energy",                                                     "MJ",           "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_E_cold",                "TES cold side internal energy",                                                    "MJ",           "",               "TES",            "tes_type=1",              "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "tes_wall_error",            "TES energy balance error due to wall temperature assumption",                      "MWt",           "",              "TES",            "tes_type=1",              "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "tes_error_corrected",       "TES energy balance error, accounting for wall and temperature assumption error",   "MWt",           "",              "TES",            "tes_type=1",              "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_wall_error",            "TES energy balance error due to wall temperature assumption",                      "MWt",          "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_error_corrected",       "TES energy balance error, accounting for wall and temperature assumption error",   "MWt",          "",               "TES",            "tes_type=1",              "",                      "" },
+                                                                                                                                                                                            
+    { SSC_OUTPUT,       SSC_MATRIX,      "T_grad_final",              "TES Temperature gradient at end of timestep",                                      "C",            "",               "TES",            "tes_type=2",              "",                      "" },
 
 
     var_info_invalid };
@@ -165,6 +167,9 @@ public:
         double P_ref = as_double("P_ref");
         double eta_ref = as_double("eta_ref");
         double tshours = as_double("tshours");
+
+        // HARDCODE Particle defaults for now
+        int n_xsteps = 2;
 
         // Two Tank
         if (tes_type == 0)
@@ -294,10 +299,11 @@ public:
                 as_double("T_tank_hot_ini"),                                        // [C] Initial temperature in hot storage tank
                 as_double("T_tank_cold_ini"),                                       // [C] Initial temperature in cold storage cold
                 as_double("init_hot_htf_percent"),                                  // [%] Initial fraction of available volume that is hot
-                2,
+                n_xsteps,
                 2
                 );
             storage_pointer = &storage_particle;
+
         }
         else
         {
@@ -367,6 +373,13 @@ public:
         vector<double> tes_E_cold_vec;
         vector<double> tes_wall_error_vec;
         vector<double> tes_error_corrected_vec;
+        util::matrix_t<ssc_number_t> tes_T_grad_mat;
+
+
+        if (tes_type == 2)
+        {
+            tes_T_grad_mat.resize(n_steps, n_xsteps + 1);
+        }
 
         // Simulate
         for (size_t i = 0; i < n_steps; i++) {
@@ -393,12 +406,10 @@ public:
             T_sink_in[i] = K_to_C(T_sink_in_K);
             T_tank_cold[i] = K_to_C(storage_pointer->get_cold_temp());
             T_tank_hot[i] = K_to_C(storage_pointer->get_hot_temp());
-            assign("tes_diameter", d_tank_calc);
-            assign("tes_radius", d_tank_calc / 2.0);
+            //assign("tes_diameter", d_tank_calc);
+            //assign("tes_radius", d_tank_calc / 2.0);
 
             hot_tank_vol_frac[i] = storage_pointer->get_hot_tank_vol_frac();
-
-
 
             // Add NT specific outputs
             if (tes_type == 1)
@@ -428,6 +439,15 @@ public:
                 tes_E_cold_vec.push_back(tes_E_cold);
                 tes_wall_error_vec.push_back(tes_wall_error);
                 tes_error_corrected_vec.push_back(tes_error_corrected);
+            }
+
+            // Add Particle specific outputs
+            {
+                std::vector<double> T_prev_vec = storage_particle.get_T_prev_vec();
+                for (int j = 0; j < T_prev_vec.size(); j++)
+                {
+                    tes_T_grad_mat.at(i, j) = T_prev_vec[j];
+                }
             }
 
             // Simulate Analytically
@@ -493,6 +513,10 @@ public:
             set_vector("tes_error_corrected", tes_error_corrected_vec);
         }
 
+        if (tes_type == 2)
+        {
+            assign("T_grad_final", tes_T_grad_mat);
+        }
 
     }
 

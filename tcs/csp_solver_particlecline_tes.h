@@ -170,6 +170,8 @@ public:
     double get_storage_htf_density();
 
     double get_storage_htf_cp();
+
+    std::vector<double> get_T_prev_vec() { return m_T_prev_vec; };
 };
 
 
