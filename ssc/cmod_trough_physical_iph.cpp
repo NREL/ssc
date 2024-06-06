@@ -1957,18 +1957,8 @@ public:
         assign("annual_thermal_consumption", annual_thermal_consumption);
 
         // Reporting dispatch solution counts
-        size_t n_flag, n_gap = 0;
-        ssc_number_t* subopt_flag = as_array("disp_subopt_flag", &n_flag);
-        ssc_number_t* rel_mip_gap = as_array("disp_rel_mip_gap", &n_gap);
-
-        std::vector<int> flag;
-        std::vector<double> gap;
-        flag.resize(n_flag);
-        gap.resize(n_flag);
-        for (size_t i = 0; i < n_flag; i++) {
-            flag[i] = (int)subopt_flag[i];
-            gap[i] = (double)rel_mip_gap[i];
-        }
+        std::vector<int> flag = as_vector_integer("disp_subopt_flag");
+        std::vector<double> gap = as_vector_double("disp_rel_mip_gap");
 
         double avg_gap = 0;
         if (is_dispatch) {
