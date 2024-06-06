@@ -17,7 +17,7 @@ set(TCS_SRC
 		csp_solver_core.cpp
 		csp_solver_cr_electric_resistance.cpp
 		csp_solver_cr_heat_pump.cpp
-        csp_solver_fresnel_collector_receiver.cpp
+        	csp_solver_fresnel_collector_receiver.cpp
 		csp_solver_gen_collector_receiver.cpp
 		csp_solver_lf_dsg_collector_receiver.cpp
 		csp_solver_mono_eq_methods.cpp
@@ -38,6 +38,7 @@ set(TCS_SRC
 		csp_solver_util.cpp
 		csp_solver_weatherreader.cpp
 		csp_system_costs.cpp
+		cst_iph_dispatch.cpp
 		direct_steam_receivers.cpp
 		dispatch_builder.cpp
 		etes_dispatch.cpp
@@ -48,7 +49,7 @@ set(TCS_SRC
 		interconnect.cpp
 		nlopt_callbacks.cpp
 		numeric_solvers.cpp
-        ptes_solver_design_point.cpp
+        	ptes_solver_design_point.cpp
 		sam_type250_input_generator.cpp
 		sco2_cycle_components.cpp
 		sco2_partialcooling_cycle.cpp
@@ -110,7 +111,7 @@ set(TCS_SRC
 		csp_solver_core.h
 		csp_solver_cr_electric_resistance.h
 		csp_solver_cr_heat_pump.h
-        csp_solver_fresnel_collector_receiver.h
+        	csp_solver_fresnel_collector_receiver.h
 		csp_solver_gen_collector_receiver.h
 		csp_solver_lf_dsg_collector_receiver.h
 		csp_solver_mspt_collector_receiver.h
@@ -128,6 +129,7 @@ set(TCS_SRC
 		csp_solver_two_tank_tes.h
 		csp_solver_util.h
 		csp_system_costs.h
+		cst_iph_dispatch.h
 		direct_steam_receivers.h
 		dispatch_builder.h
 		etes_dispatch.h

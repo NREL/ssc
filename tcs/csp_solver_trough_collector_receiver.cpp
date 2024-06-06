@@ -825,7 +825,9 @@ double C_csp_trough_collector_receiver::get_startup_energy()
 {
     // Note: C_csp_trough_collector_receiver::startup() is called after this function
     return m_rec_qf_delay * m_q_design_actual * 1.e-6;       // MWh
+    // TODO: can we better estimate the energy based on the loop temperature at midnight? This is not easy...
 }
+
 double C_csp_trough_collector_receiver::get_pumping_parasitic_coef()
 {
     double T_amb_des = 42. + 273.15;
