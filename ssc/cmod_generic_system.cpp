@@ -273,12 +273,13 @@ public:
         
         std::clock_t clock_start = std::clock();
 
-        // char input_data_path[512];
-        // sprintf(input_data_path, "%s/test/input_cases/ortools/", std::getenv("SSCDIR"));
+        char input_data_path[512];
+        sprintf(input_data_path, "%s/test/input_cases/ortools/", std::getenv("SSCDIR"));
+		std::string input_dir = input_data_path;
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
  		char* input_data_path = "C:\\SAM\\2023.12.17.ortools\\ortools\\";
-		std::string input_dir = input_data_path;
+		input_dir = input_data_path;
 #elif __APPLE__
 		CFURLRef appUrlRef;
 		appUrlRef = CFBundleCopyResourceURL(CFBundleGetMainBundle(), CFSTR("ortools"), NULL, NULL);
