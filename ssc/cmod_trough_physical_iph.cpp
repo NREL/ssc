@@ -604,6 +604,7 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_OUTPUT,       SSC_NUMBER,      "sim_duration",              "Computational time of timeseries simulation",                                      "s",            "",               "system",         "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "W_dot_par_tot_haf",         "Adjusted parasitic power",                                                         "kWe",          "",               "system",         "sim_type=1",                       "",                      "" },
     //{ SSC_OUTPUT,       SSC_NUMBER,      "q_dot_defocus_est",         "Thermal energy intentionally lost by defocusing",                                  "MWt",          "",               "system",         "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "heat_load_capacity_factor", "Percentage of heat load met",                                                      "%",            "",               "system",         "sim_type=1",                       "",                      "" },
 
     { SSC_OUTPUT,       SSC_ARRAY,       "recirculating",             "Field recirculating (bypass valve open)",                                          "-",            "",               "solar_field",    "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_diams",            "Pipe diameters in TES",                                                            "m",            "",               "TES",            "sim_type=1",                       "",                      "" },
@@ -1962,6 +1963,21 @@ public:
 
         assign("capacity_factor", (ssc_number_t)(kWh_per_kW / ((double)n_steps_fixed / (double)steps_per_hour)*100.));
         assign("kwh_per_kw", (ssc_number_t)kWh_per_kW);
+
+        // Calculate percentage of heat load met
+        std::vector<double> gen = as_vector_double("gen");
+        double tot_heat_load = 0.0, heat_load = 0.0, load_met = 0.0;
+        double step_s, hl_nondim_val, temp;
+        int temp_int;
+        double sec_per_ts = 3600. / steps_per_hour;
+        for (int i = 0; i < gen.size(); i++) {
+            step_s = (i+1) * sec_per_ts;
+            offtaker_schedule.get_timestep_data(step_s, hl_nondim_val, temp, temp_int);
+            heat_load = hl_nondim_val * nameplate * 1.e3;
+            tot_heat_load += heat_load;
+            load_met += gen[i] > heat_load ? heat_load : gen[i];    // Only get credit for the load itself
+        }
+        assign("heat_load_capacity_factor", (ssc_number_t)load_met * 100. / tot_heat_load);        
     }
 
     template <typename T>
