@@ -520,6 +520,10 @@ public:
     double m_total_land_area = std::numeric_limits<double>::quiet_NaN();                       //[acre] Total Land Area
     double m_opteff_des = std::numeric_limits<double>::quiet_NaN();	                           //[-] Design-point optical efficieny (theta = 0) from the solar field
 
+    // Design Point Steady State Outputs
+    double m_dP_sf_SS = std::numeric_limits<double>::quiet_NaN();
+    double m_W_dot_pump_SS = std::numeric_limits<double>::quiet_NaN();
+
 	// **************************************************************************
 	// **************************************************************************
 	// **************************************************************************

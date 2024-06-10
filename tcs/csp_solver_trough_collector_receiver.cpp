@@ -482,6 +482,15 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
         solved_params.m_T_htf_hot_des = m_T_field_out;
         solved_params.m_dP_sf = troughOutputs.m_dP_sf;
 
+        // Get steady state pumping power
+        double W_dot_pump_SS = m_W_dot_pump;    //[MWe]
+
+        // Assign steady state outputs
+        {
+            m_W_dot_pump_SS = m_W_dot_pump;     //[MWe]
+            m_dP_sf_SS = troughOutputs.m_dP_sf; //[bar]
+        }
+
         // Restore original settings
         m_accept_mode = accept_mode_orig;
         m_accept_init = accept_init_orig;
