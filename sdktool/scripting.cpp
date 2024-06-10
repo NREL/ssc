@@ -348,6 +348,20 @@ void fcall_tsview( lk::invoke_t &cxt )
 	}
 }
 
+void fcall_json_to_ssc(lk::invoke_t & cxt)
+{
+    LK_DOC("json_to_ssc", "read in json file to ssc var table", "(filename):table");
+    wxString file = cxt.arg(0).as_string();
+    wxString str = lk::read_file(file);
+
+    auto dat = json_to_ssc_data(str.c_str());
+    auto table = ssc_data_get_table(dat, "input");
+    auto vt =  app_frame->GetVarTable();
+    vt = (var_table*)dat;
+//    vt->merge(dat,true);
+}
+
+
 void fcall_freeze( lk::invoke_t &cxt )
 {
 	LK_DOC( "freeze", "Freeze the data view for improved processing speed", "(none):none");
@@ -368,6 +382,7 @@ lk::fcall_t* ssc_funcs()
 		fcall_save,
 		fcall_load,
 		fcall_tsview,
+        fcall_json_to_ssc,
 		fcall_freeze,
 		fcall_thaw,
 		0 };
