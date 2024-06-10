@@ -75,8 +75,11 @@ ssc_data_t trough_physical_defaults()
     ssc_data_set_number(data, "Row_Distance", 15);
     ssc_data_set_number(data, "T_loop_in_des", 293);
     ssc_data_set_number(data, "T_loop_out", 391);
+    ssc_data_set_number(data, "use_abs_or_rel_mdot_limit", 0);
     ssc_data_set_number(data, "m_dot_htfmin", 1);
     ssc_data_set_number(data, "m_dot_htfmax", 12);
+    ssc_data_set_number(data, "f_htfmin", 0);
+    ssc_data_set_number(data, "f_htfmax", 0);
     ssc_number_t p_field_fl_props[1] = { 0 };
     ssc_data_set_matrix(data, "field_fl_props", p_field_fl_props, 1, 1);
     ssc_data_set_number(data, "T_fp", 150);
