@@ -75,8 +75,6 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
     { SSC_INPUT,    SSC_NUMBER,         "theta_stow",                  "stow angle",                                                                            "deg",                 "",                             "Solar_Field",          "*",                "",                 "" },
     { SSC_INPUT,    SSC_NUMBER,         "theta_dep",                   "deploy angle",                                                                          "deg",                 "",                             "Solar_Field",          "*",                "",                 "" },
     { SSC_INPUT,    SSC_NUMBER,         "FieldConfig",                 "Number of subfield headers",                                                            "",                    "",                             "Solar_Field",          "*",                "",                 "" },
-    { SSC_INPUT,    SSC_NUMBER,         "m_dot_htfmin",                "Minimum loop HTF flow rate",                                                            "kg/s",                "",                             "Solar_Field",          "*",                "",                 "" },
-    { SSC_INPUT,    SSC_NUMBER,         "m_dot_htfmax",                "Maximum loop HTF flow rate",                                                            "kg/s",                "",                             "Solar_Field",          "*",                "",                 "" },
     { SSC_INPUT,    SSC_NUMBER,         "Fluid",                       "Field HTF fluid number",                                                                "",                    "",                             "Solar_Field",          "*",                "INTEGER",          "" },
     { SSC_INPUT,    SSC_NUMBER,         "T_fp",                        "Freeze protection temperature (heat trace activation temperature)",                     "C",                   "",                             "Solar_Field",          "*",                "",                 "" },
     { SSC_INPUT,    SSC_NUMBER,         "V_hdr_max",                   "Maximum HTF velocity in the header at design",                                          "m/s",                 "",                             "Solar_Field",          "*",                "",                 "" },
@@ -98,6 +96,13 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
     { SSC_INPUT,    SSC_NUMBER,         "rec_qf_delay",                "Energy-based receiver startup delay (fraction of rated thermal power)",                 "-",                   "",                             "Solar_Field",          "*",                "",                 "" },
     { SSC_INPUT,    SSC_NUMBER,         "p_start",                     "Collector startup energy, per SCA",                                                     "kWe-hr",              "",                             "Solar_Field",          "*",                "",                 "" },
     { SSC_INPUT,    SSC_NUMBER,         "L_rnr_pb",                    "Length of runner pipe in power block",                                                  "m",                   "",                             "Solar_Field",          "*",                "",                 "" },
+
+    { SSC_INPUT,    SSC_NUMBER,         "use_abs_or_rel_mdot_limit",   "Use mass flow abs (0) or relative (1) limits",                                          "",                    "",                             "solar_field",          "?=0",                          "",     "" },
+    { SSC_INPUT,    SSC_NUMBER,         "m_dot_htfmin",                "Minimum loop HTF flow rate",                                                            "kg/s",                "",                             "solar_field",          "use_abs_or_rel_mdot_limit=0",  "",     "" },
+    { SSC_INPUT,    SSC_NUMBER,         "m_dot_htfmax",                "Maximum loop HTF flow rate",                                                            "kg/s",                "",                             "solar_field",          "use_abs_or_rel_mdot_limit=0",  "",     "" },
+    { SSC_INPUT,    SSC_NUMBER,         "f_htfmin",                    "Minimum loop mass flow rate fraction of design",                                        "",                    "",                             "solar_field",          "use_abs_or_rel_mdot_limit=1",  "",     "" },
+    { SSC_INPUT,    SSC_NUMBER,         "f_htfmax",                    "Maximum loop mass flow rate fraction of design",                                        "",                    "",                             "solar_field",          "use_abs_or_rel_mdot_limit=1",  "",     "" },
+
 
     // Collector and Receiver
 
@@ -306,7 +311,7 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
     { SSC_OUTPUT,       SSC_NUMBER,     "mdot_field_des",                   "Field design HTF mass flow rate",                                      "kg/s",         "",         "Receiver",                       "*",                                                                "",              "" },
     
     { SSC_OUTPUT,       SSC_NUMBER,     "dP_field_des_SS",                  "Steady State Field design total pressure drop",                        "bar",          "",          "Receiver",                       "*",                                                                "",              "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "Q_field_des_SS",                   "Steady State Field design thermal power",                              "MWt",           "",          "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "Q_field_des_SS",                   "Steady State Field design thermal power",                              "MWt",          "",          "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "T_field_out_des_SS",               "Steady State Field design outlet temperature",                         "C",            "",          "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "m_dot_des_SS",                     "Steady State Field mass flow rate",                                    "kg/s",         "",          "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "m_dot_loop_des_SS",                "Steady State Loop mass flow rate",                                     "kg/s",         "",          "Receiver",                       "*",                                                                "",              "" },
@@ -315,8 +320,13 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
     { SSC_OUTPUT,       SSC_NUMBER,     "eta_optical_des_SS",               "Steady State optical efficiency",                                      "",             "",          "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "therm_eff_des_SS",                 "Steady State field optical efficiency",                                "",             "",          "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "eff_des_SS",                       "Steady State field total efficiency",                                  "",             "",          "Receiver",                       "*",                                                                "",              "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "W_dot_pump_des_SS",                "Steady State field pumping power",                                           "MWe",             "",          "Receiver",                       "*",                                                                "",              "" },
-    
+    { SSC_OUTPUT,       SSC_NUMBER,     "W_dot_pump_des_SS",                "Steady State field pumping power",                                     "MWe",          "",          "Receiver",                       "*",                                                                "",              "" },
+
+    { SSC_OUTPUT,       SSC_NUMBER,     "m_dot_htfmin_actual",              "Actual minimum loop HTF flow rate",                                    "kg/s",         "",          "solar_field",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "m_dot_htfmax_actual",              "Actual maximum loop HTF flow rate",                                    "kg/s",         "",          "solar_field",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "f_htfmin_actual",                  "Actual minimum loop mass flow rate fraction of design",                "",             "",          "solar_field",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "f_htfmax_actual",                  "Actual maximum loop mass flow rate fraction of design",                "",             "",          "solar_field",                    "*",                                                                "",              "" },
+
     
     { SSC_OUTPUT,       SSC_NUMBER,     "T_loop_out_des_SS",                "Steady State loop design outlet temperature",                          "C",            "",          "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "Q_loop_des_SS",                    "Steady State loop design thermal power",                               "MWt",          "",          "Receiver",                       "*",                                                                "",              "" },
@@ -657,10 +667,14 @@ public:
                 c_fresnel.m_P_ref = as_double("q_pb_design") * 1e6;
                 c_fresnel.m_eta_ref = 1;
 
-                c_fresnel.m_m_dot_htfmin = as_number("m_dot_htfmin");
-                c_fresnel.m_m_dot_htfmax = as_number("m_dot_htfmax");
-                c_fresnel.m_T_loop_in_des = as_number("T_loop_in_des");
+                c_fresnel.m_use_abs_or_rel_mdot_limit = as_integer("use_abs_or_rel_mdot_limit"); // Use mass flow abs (0) or relative (1) limits
+                c_fresnel.m_m_dot_htfmin_in = as_double("m_dot_htfmin");        //[kg/s] Minimum loop HTF flow rate
+                c_fresnel.m_m_dot_htfmax_in = as_double("m_dot_htfmax");        //[kg/s] Maximum loop HTF flow rate
+                c_fresnel.m_f_htfmin_in = as_double("f_htfmin");                //[] Minimum loop htf flow rate fraction
+                c_fresnel.m_f_htfmax_in = as_double("f_htfmax");                //[] Maximum loop htf flow rate fraction
 
+
+                c_fresnel.m_T_loop_in_des = as_number("T_loop_in_des");
                 c_fresnel.m_T_loop_out_des = as_number("T_loop_out");
                 c_fresnel.m_Fluid = as_integer("Fluid");
 
@@ -1230,6 +1244,11 @@ public:
                 assign("field_htf_min_temp", field_htf_min_temp);
                 assign("field_htf_max_temp", field_htf_max_temp);
                 assign("mdot_field_des", mdot_field_des);
+
+                assign("m_dot_htfmin_actual", c_fresnel.m_m_dot_htfmin);    //[kg/s]
+                assign("m_dot_htfmax_actual", c_fresnel.m_m_dot_htfmax);    //[kg/s]
+                assign("f_htfmin_actual", c_fresnel.m_f_htfmin);
+                assign("f_htfmax_actual", c_fresnel.m_f_htfmax);
 
                 assign("dP_field_des_SS", dP_field_des_SS);
                 assign("Q_field_des_SS", Q_field_des_SS);
