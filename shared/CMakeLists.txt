@@ -180,6 +180,10 @@ if (UNIX)
     find_package(Eigen3
                 HINTS $ENV{ORTOOLSDIR}
                 CONFIG REQUIRED)
+    find_package(scip
+                HINTS "$ENV{ORTOOLSDIR}/lib/cmake/scip"
+                REQUIRED
+    )
     find_package(ortools
                 HINTS $ENV{ORTOOLSDIR}
                 CONFIG REQUIRED)
