@@ -52,6 +52,8 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_INPUT,        SSC_ARRAY,       "T_sink_out",                "Temperature from heat sink or power block",                                        "C",            "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_tank_hot_ini",            "Temperature of fluid in hot tank at beginning of step",                            "C",            "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_tank_cold_ini",           "Temperature of fluid in cold tank at beginning of step",                           "C",            "",               "TES",            "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "n_xsteps",                  "Number of spatial segments",                                                       "",             "",               "TES",            "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "n_tsteps",                  "Number of subtimesteps",                                                           "",             "",               "TES",            "*",                       "",                      "" },
 
 
     // TES
@@ -101,14 +103,15 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_INPUT,        SSC_ARRAY,       "tes_NT_piston_loss_poly",   "Polynomial coefficients describing piston heat loss function (f(kg/s)=%)",         "",             "",               "TES",            "tes_type=1",              "",                      "" },
 
 
+    // Particle Specific Inputs
+    { SSC_INPUT,        SSC_ARRAY,       "T_grad_ini",                "TES Temperature gradient at beginning of timestep",                                "C",            "",               "TES",            "?=[-274]",              "",                      "" },
+
 
     // Outputs
     { SSC_OUTPUT,       SSC_ARRAY,       "T_src_in",                  "Temperature to heat source",                                                       "C",            "",               "TES",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "T_sink_in",                 "Temperature to heat sink or power block",                                          "C",            "",               "TES",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "T_tank_cold",               "Temperature of cold tank (average)",                                               "C",            "",               "TES",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "T_tank_hot",                "Temperature of hot tank (average)",                                                "C",            "",               "TES",            "*",                       "",                      "" },
-    //{ SSC_OUTPUT,       SSC_NUMBER,      "tes_diameter",              "TES Diameter",                                                                     "m",            "",               "TES",            "*",                       "",                      "" },
-    //{ SSC_OUTPUT,       SSC_NUMBER,      "tes_radius",                "TES Radius",                                                                       "m",            "",               "TES",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "hot_tank_vol_frac",         "Hot tank volume fraction of total",                                                "",             "",               "TES",            "*",                       "",                      "" },
 
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_error",                 "TES energy balance error",                                                         "MW",           "",               "TES",            "tes_type=1",              "",                      "" },
@@ -140,6 +143,7 @@ public:
 
     void exec()
     {
+        std::vector<double> x = as_vector_double("T_grad_ini");
 
         int tes_type = as_integer("tes_type");
 
@@ -299,15 +303,30 @@ public:
                 as_double("T_tank_hot_ini"),                                        // [C] Initial temperature in hot storage tank
                 as_double("T_tank_cold_ini"),                                       // [C] Initial temperature in cold storage cold
                 as_double("init_hot_htf_percent"),                                  // [%] Initial fraction of available volume that is hot
-                n_xsteps,
-                2
+                as_integer("n_xsteps"),
+                as_integer("n_tsteps")
                 );
+
+
+            vector<double> T_grad_ini = as_vector_double("T_grad_ini");
+            if (T_grad_ini.size() > 1 && T_grad_ini[0] != -274)
+            {
+                if (T_grad_ini.size() != as_integer("n_xsteps") + 1)
+                {
+                    throw exec_error("csp_subcomponent", "Initial temperature gradient should be length n_xsteps + 1");
+                }
+                else
+                {
+                    storage_particle.set_T_grad_init(T_grad_ini);
+                }
+            }
+
             storage_pointer = &storage_particle;
 
         }
         else
         {
-            throw exec_error("trough_physical", "tes_type must be 0-2");
+            throw exec_error("csp_subcomponent", "tes_type must be 0-2");
         }
 
         
@@ -378,7 +397,7 @@ public:
 
         if (tes_type == 2)
         {
-            tes_T_grad_mat.resize(n_steps, n_xsteps + 1);
+            tes_T_grad_mat.resize(n_steps, as_integer("n_xsteps") + 1);
         }
 
         // Simulate

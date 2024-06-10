@@ -65,6 +65,8 @@ private:
     double m_diameter;  // [m] Tank diameter
     double m_Ac;        // [m2] Tank cross sectional area
 
+    bool m_use_T_grad_init = false;
+
 public:
 
 	enum
@@ -98,6 +100,8 @@ public:
     C_csp_particlecline_tes();
 
     ~C_csp_particlecline_tes() {};
+
+    void set_T_grad_init(std::vector<double> T_grad_init);
 
 	virtual void init(const C_csp_tes::S_csp_tes_init_inputs init_inputs);
 

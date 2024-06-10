@@ -81,6 +81,11 @@ C_csp_particlecline_tes::C_csp_particlecline_tes()
     mc_reported_outputs.construct(S_output_info);
 }
 
+void C_csp_particlecline_tes::set_T_grad_init(std::vector<double> T_grad_init)
+{
+    m_T_prev_vec = T_grad_init;
+    m_use_T_grad_init = true;
+}
 
 void C_csp_particlecline_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs)
 {
@@ -88,21 +93,20 @@ void C_csp_particlecline_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_i
     m_Ac = M_PI * std::pow(0.5 * m_diameter, 2.0);
 
     // Define initial temperatures
-    double dx = m_height / m_n_xstep;               // [m]
-    m_T_prev_vec = std::vector<double>(m_n_xstep + 1);
-    // Loop through space
-    for (int i = 0; i <= m_n_xstep; i++)
+    if (m_use_T_grad_init == false)
     {
-        double frac = (i * dx) / m_height;
-        if (frac < m_f_V_hot_ini * 0.01)
-            m_T_prev_vec[i] = m_T_tank_hot_ini;
-        else
-            m_T_prev_vec[i] = m_T_tank_cold_ini;
+        double dx = m_height / m_n_xstep;               // [m]
+        m_T_prev_vec = std::vector<double>(m_n_xstep + 1);
+        // Loop through space
+        for (int i = 0; i <= m_n_xstep; i++)
+        {
+            double frac = (i * dx) / m_height;
+            if (frac < m_f_V_hot_ini * 0.01)
+                m_T_prev_vec[i] = m_T_tank_hot_ini;
+            else
+                m_T_prev_vec[i] = m_T_tank_cold_ini;
+        }
     }
-
-    double x = 0;
-
-
 }
 
 bool C_csp_particlecline_tes::does_tes_exist()
