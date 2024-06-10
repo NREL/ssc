@@ -111,9 +111,8 @@ void heattrap_tes_sizing(HTFProperties& tes_htf_props, double Q_tes_des /*MWt-hr
     // Calculate required mass to store design hours of thermal energy storage
     double mass_avail = (Q_tes_des * 3600.0) / (cp_ave * 1E-3 * (T_tes_hot - T_tes_cold));
 
-    // Calculate Main Tank Volume using cold density
-    vol_one_temp_avail = mass_avail / tes_htf_props.dens(T_tes_cold, 1.0);
-
+    // Calculate Main Tank Volume using hot density (so full charge can store hot density)
+    vol_one_temp_avail = mass_avail / tes_htf_props.dens(T_tes_hot, 1.0);
 
 
     // Volume required to supply design hours of thermal energy storage
@@ -149,8 +148,8 @@ void heattrap_tes_sizing_fixed_diameter(HTFProperties& tes_htf_props, double Q_t
     // Calculate required mass to store design hours of thermal energy storage
     double mass_avail = (Q_tes_des * 3600.0) / (cp_ave * 1E-3 * (T_tes_hot - T_tes_cold));
 
-    // Calculate Main Tank Volume using cold density
-    vol_one_temp_avail = mass_avail / tes_htf_props.dens(T_tes_cold, 1.0);
+    // Calculate Main Tank Volume using hot density (so full charge can store hot density)
+    vol_one_temp_avail = mass_avail / tes_htf_props.dens(T_tes_hot, 1.0);
 
     // Volume required to supply design hours of thermal energy storage
         //[m^3] = [MJ/s-hr] * [sec]/[hr] = [MJ] / (kg/m^3 * MJ/kg-K * K 
