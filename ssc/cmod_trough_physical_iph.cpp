@@ -383,8 +383,12 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_OUTPUT,       SSC_MATRIX,      "L_cpnt",                           "Lengths of the components in each loop interconnect",                      "m",             "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_MATRIX,      "Type_cpnt",                        "Type of component in each loop interconnect [0=fitting | 1=pipe | 2=flex_hose]",  "Wm",     "",               "Solar Field",    "*",                                "",                      "" },
 
-    { SSC_OUTPUT,       SSC_NUMBER,      "field_thermal_output_actual",      "Design-point thermal power from the solar field limited by mass flow", "MW",           "",         "Receiver",                       "*",                                                                "",              "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "field_thermal_output_ideal",       "Design-point thermal power from the solar field with no limit",        "MW",           "",         "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "field_thermal_output_actual",      "Design-point thermal power from the solar field limited by mass flow",     "MW",            "",               "Solar Field",    "*",                                "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "field_thermal_output_ideal",       "Design-point thermal power from the solar field with no limit",            "MW",            "",               "Solar Field",    "*",                                "",                      "" },
+
+        // Solar Field STEADY STATE
+    { SSC_OUTPUT,       SSC_NUMBER,      "dP_sf_SS",                         "Steady State field pressure drop",                                         "bar",           "",               "Solar Field",    "*",                                "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "W_dot_pump_SS",                    "Steady State pumping power",                                               "MWe",           "",               "Solar Field",    "*",                                "",                      "" },
 
 
     // Thermal Storage
@@ -1521,6 +1525,9 @@ public:
                 assign("m_dot_htfmax_actual", c_trough.m_m_dot_htfmax); //[kg/s]
                 assign("f_htfmin_actual", c_trough.m_f_htfmin);         //[]
                 assign("f_htfmax_actual", c_trough.m_f_htfmax);         //[]
+
+                assign("dP_sf_SS", c_trough.m_dP_sf_SS);                //[bar]
+                assign("W_dot_pump_SS", c_trough.m_W_dot_pump_SS);      //[MWe]
             }
 
             // Thermal Storage
