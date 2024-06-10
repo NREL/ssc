@@ -608,6 +608,9 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
         m_m_dot_design = m_dot_field_min;
     }
 
+    // Recalculate design loop mass flow with bounded field mass flow
+    m_m_dot_loop_des = m_m_dot_design / (double)m_nLoops;	//[kg/s]
+
 	//mjw 1.16.2011 Design field thermal power 
 	//m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
 	m_q_design_actual = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]

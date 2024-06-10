@@ -757,10 +757,4 @@ public:
     double m_dot_header(double m_dot_field, int nfieldsec, int nLoopsField, int ihdr);
 };
 
-
-
-
-
-
-
 #endif
