@@ -163,8 +163,8 @@ std::unique_ptr<Trough> TroughFactory::MakeTrough(TroughSpecifications* trough_s
     trough->m_T_loop_in_des = trough_specifications->T_loop_in_des;
     trough->m_T_loop_out_des = trough_specifications->T_loop_out_des;
     trough->m_T_startup = trough_specifications->T_startup;
-    trough->m_m_dot_htfmin = trough_specifications->m_dot_htfmin;
-    trough->m_m_dot_htfmax = trough_specifications->m_dot_htfmax;
+    trough->m_m_dot_htfmin_in = trough_specifications->m_dot_htfmin_in;
+    trough->m_m_dot_htfmax_in = trough_specifications->m_dot_htfmax_in;
     trough->m_field_fl_props = trough_specifications->field_fl_props;
     trough->m_T_fp = trough_specifications->T_fp;
     trough->m_I_bn_des = trough_specifications->I_bn_des;
@@ -326,8 +326,9 @@ std::unique_ptr<TroughSpecifications> DefaultTroughFactory::MakeSpecifications()
     trough_specifications->T_loop_in_des = 293.;
     trough_specifications->T_loop_out_des = 391.;
     trough_specifications->T_startup = 0.67 * trough_specifications->T_loop_in_des + 0.33 * trough_specifications->T_loop_out_des; //[C]
-    trough_specifications->m_dot_htfmin = 1.;
-    trough_specifications->m_dot_htfmax = 12.;
+
+    trough_specifications->m_dot_htfmin_in = 1.;
+    trough_specifications->m_dot_htfmax_in = 12.;
     double vals[] = { 0 };
     trough_specifications->field_fl_props.assign(vals, 1, 1);
     trough_specifications->T_fp = 150.;
