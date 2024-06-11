@@ -99,7 +99,7 @@ public:
 		double w_cycle_pump;		        //[kWe/kWt] Cycle HTF pumping power per thermal energy consumed
 
         double inventory_incentive;         //[-]   Terminal storage inventory objective incentive multiplier
-        double ppa_price_y1;                //[$/MWh] Assumed ppa price for year 1 dispatch
+        //double ppa_price_y1;                //[$/MWh] Assumed ppa price for year 1 dispatch
 
         s_efftable eff_table_load, eff_table_Tdb, wcondcoef_table_Tdb;  //Efficiency of the power cycle, condenser power coefs
 
@@ -145,7 +145,7 @@ public:
             eta_eh = 1.0;
             hsu_cost = 10.;
             can_cycle_use_standby = false;
-            ppa_price_y1 = std::numeric_limits<double>::quiet_NaN();
+            //ppa_price_y1 = std::numeric_limits<double>::quiet_NaN();
         }
 
         void clear()
@@ -163,7 +163,7 @@ public:
 
         void set_user_params(bool cycle_use_standby, double disp_time_weighting,
             double disp_rsu_cost, double disp_hsu_cost, double disp_csu_cost, double disp_pen_delta_w, double disp_inventory_incentive,
-            double rec_standby_loss, double rec_heattrace, double ppa_price_year1/*$/kWh*/)
+            double rec_standby_loss, double rec_heattrace) //, double ppa_price_year1/*$/kWh*/)
         {
             can_cycle_use_standby = cycle_use_standby;
             time_weighting = disp_time_weighting;
@@ -174,7 +174,7 @@ public:
             inventory_incentive = disp_inventory_incentive;
             q_rec_standby = rec_standby_loss;   //TODO: why are these grouped here?
             w_rec_ht = rec_heattrace;           //TODO: why are these grouped here?
-            ppa_price_y1 = ppa_price_year1 * 1000.0;    // $/kWh -> $/MWh
+            //ppa_price_y1 = ppa_price_year1 * 1000.0;    // $/kWh -> $/MWh
         }
     } params;
 

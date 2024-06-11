@@ -77,6 +77,8 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
     {C_csp_trough_collector_receiver::E_DEFOCUS_FINAL, C_csp_reported_outputs::TS_LAST},
     {C_csp_trough_collector_receiver::E_T_IN_LOOP_FINAL, C_csp_reported_outputs::TS_LAST},
     {C_csp_trough_collector_receiver::E_T_OUT_LOOP_FINAL, C_csp_reported_outputs::TS_LAST},
+    {C_csp_trough_collector_receiver::E_VEL_LOOP_MIN, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_csp_trough_collector_receiver::E_VEL_LOOP_MAX, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
 	csp_info_invalid
 };
@@ -269,7 +271,7 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 
     // If solar multiple is not yet calculated
     if (m_is_solar_mult_designed == false)
-        this->design_solar_mult();
+        throw(C_csp_exception("design_solar_mult() must be called before init()", "Trough collector solver"));
 	
 	// double some_calc = m_nSCA + m_nHCEt;
 	/*
@@ -491,6 +493,15 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
         solved_params.m_T_htf_hot_des = m_T_field_out;
         solved_params.m_dP_sf = troughOutputs.m_dP_sf;
 
+        // Get steady state pumping power
+        double W_dot_pump_SS = m_W_dot_pump;    //[MWe]
+
+        // Assign steady state outputs
+        {
+            m_W_dot_pump_SS = m_W_dot_pump;     //[MWe]
+            m_dP_sf_SS = troughOutputs.m_dP_sf; //[bar]
+        }
+
         // Restore original settings
         m_accept_mode = accept_mode_orig;
         m_accept_init = accept_init_orig;
@@ -525,8 +536,8 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 	m_Ap_tot = 0.;
 	for (int i = 0; i<m_nSCA; i++)
 	{
-		int ct = (int)m_SCAInfoArray.at(i, 1);
-		m_Ap_tot += m_A_aperture[ct - 1];
+		int ct = (int)m_SCAInfoArray.at(i, 1) - 1; // SCA type Adjust index (SCAInfoArray starts at 1) 
+		m_Ap_tot += m_A_aperture[ct];
 	}
 
 	//Calculate the cross-sectional flow area of the receiver piping
@@ -574,27 +585,59 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
     // TMB 12.7.23 Calculated in design_solar_mult()
 	//m_m_dot_design = (m_Ap_tot*m_I_bn_des*m_opteff_des - loss_tot*float(m_nLoops)) / (m_c_htf_ave*(m_T_loop_out_des - m_T_loop_in_des));
 
-
-    double m_dot_max = m_m_dot_htfmax * m_nLoops;
-    double m_dot_min = m_m_dot_htfmin * m_nLoops;
     m_q_design_ideal = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
 
-    if (m_m_dot_design > m_dot_max) {
-        const char *msg = "The calculated field design mass flow rate of %.2f kg/s is greater than the maximum defined by the max single loop flow rate and number of loops (%.2f kg/s). "
-            "The design mass flow rate is reset to the latter.";
-        m_error_msg = util::format(msg, m_m_dot_design, m_dot_max);
-        mc_csp_messages.add_message(C_csp_messages::NOTICE, m_error_msg);
-        m_m_dot_design = m_dot_max;
+    // Calculate Max and Min Mass Flow
+    m_m_dot_loop_des = m_m_dot_design / (double)m_nLoops;	//[kg/s]
+
+    double m_dot_field_min = 0.0;
+    double m_dot_field_max = 0.0;
+
+    // Use absolute mdot limit
+    if (m_use_abs_or_rel_mdot_limit == 0)
+    {
+        m_dot_field_min = m_m_dot_htfmin_in * (double)m_nLoops; //[kg/s]
+        m_dot_field_max = m_m_dot_htfmax_in * (double)m_nLoops; //[kg/s]
+        m_m_dot_htfmin = m_m_dot_htfmin_in;
+        m_m_dot_htfmax = m_m_dot_htfmax_in;
+        m_f_htfmin = m_m_dot_htfmin_in / m_m_dot_loop_des;
+        m_f_htfmax = m_m_dot_htfmax_in / m_m_dot_loop_des;
     }
-    else if (m_m_dot_design < m_dot_min) {
-        const char *msg = "The calculated field design mass flow rate of %.2f kg/s is less than the minimum defined by the min single loop flow rate and number of loops (%.2f kg/s). "
-            "The design mass flow rate is reset to the latter.";
-        m_error_msg = util::format(msg, m_m_dot_design, m_dot_min);
-        mc_csp_messages.add_message(C_csp_messages::NOTICE, m_error_msg);
-        m_m_dot_design = m_dot_min;
+    // Use relative mdot limit
+    else
+    {
+        m_dot_field_min = m_f_htfmin_in * m_m_dot_design;   //[kg/s]
+        m_dot_field_max = m_f_htfmax_in * m_m_dot_design;   //[kg/s]
+        m_m_dot_htfmin = m_dot_field_min / (double)m_nLoops;
+        m_m_dot_htfmax = m_dot_field_max / (double)m_nLoops;
+        m_f_htfmin = m_f_htfmin_in;
+        m_f_htfmax = m_f_htfmax_in;
     }
 
-	m_m_dot_loop_des = m_m_dot_design/(double)m_nLoops;	//[kg/s]
+    //m_m_dot_htfmax = m_f_htfmax * m_m_dot_loop_des;         //[kg/s]
+    //m_m_dot_htfmin = m_f_htfmin * m_m_dot_loop_des;         //[kg/s]
+
+    //double m_dot_max = m_m_dot_htfmax * (double)m_nLoops;   //[kg/s]
+    //double m_dot_min = m_m_dot_htfmin * (double)m_nLoops;   //[kg/s]
+
+    if (m_m_dot_design > m_dot_field_max) {
+        const char* msg = "The calculated field design mass flow rate of %.2f kg/s is greater than the maximum defined by the max single loop flow rate and number of loops (%.2f kg/s). "
+            "The design mass flow rate is reset to the latter.";
+        m_error_msg = util::format(msg, m_m_dot_design, m_dot_field_max);
+        mc_csp_messages.add_message(C_csp_messages::NOTICE, m_error_msg);
+        m_m_dot_design = m_dot_field_max;
+    }
+    else if (m_m_dot_design < m_dot_field_min) {
+        const char* msg = "The calculated field design mass flow rate of %.2f kg/s is less than the minimum defined by the min single loop flow rate and number of loops (%.2f kg/s). "
+            "The design mass flow rate is reset to the latter.";
+        m_error_msg = util::format(msg, m_m_dot_design, m_dot_field_min);
+        mc_csp_messages.add_message(C_csp_messages::NOTICE, m_error_msg);
+        m_m_dot_design = m_dot_field_min;
+    }
+
+    // Recalculate design loop mass flow with bounded field mass flow
+    m_m_dot_loop_des = m_m_dot_design / (double)m_nLoops;	//[kg/s]
+
 	//mjw 1.16.2011 Design field thermal power 
 	//m_q_design = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
 	m_q_design_actual = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
@@ -602,10 +645,33 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 	m_mc_bal_hot = m_mc_bal_hot_per_MW * 3.6 * m_q_design_actual;    //[J/K]
 	m_mc_bal_cold = m_mc_bal_cold_per_MW * 3.6 * m_q_design_actual;  //[J/K]
 
+    // Max Field Flow Velocity
+    m_max_field_flow_velocity = 0;
+    {
+        double density = m_htfProps.dens(m_T_loop_out_des + 273.15, std::numeric_limits<double>::quiet_NaN());
+
+        m_max_field_flow_velocity = m_m_dot_htfmax * 4 / (density * M_PI * m_min_inner_diameter * m_min_inner_diameter);
+    }
+
+    // Min Field Flow Velocity
+    m_min_field_flow_velocity = 0;
+    {
+        double density = m_htfProps.dens(m_T_loop_in_des + 273.15, std::numeric_limits<double>::quiet_NaN());
+
+        m_min_field_flow_velocity = m_m_dot_htfmin * 4 / (density * M_PI * m_min_inner_diameter * m_min_inner_diameter);
+    }
+
 	//need to provide fluid density
     double rho_cold = m_htfProps.dens(m_T_loop_in_des, 10.e5); //kg/m3
     double rho_hot = m_htfProps.dens(m_T_loop_out_des, 10.e5); //kg/m3
 	double rho_ave = m_htfProps.dens((m_T_loop_out_des + m_T_loop_in_des) / 2.0, 10.e5); //kg/m3
+
+    // Calculate Design velocity
+    {
+        m_max_loop_flow_vel_des = m_m_dot_loop_des * 4.0 / (rho_ave * M_PI * m_min_inner_diameter * m_min_inner_diameter); //[m/s]
+        m_min_loop_flow_vel_des = m_m_dot_loop_des * 4.0 / (rho_ave * M_PI * m_max_inner_diameter * m_max_inner_diameter); //[m/s]
+    }
+
     //Calculate the header design
     m_nrunsec = (int)floor(float(m_nfsec) / 4.0) + 1;  //The number of unique runner diameters
     m_D_runner.resize(2 * m_nrunsec);
@@ -1252,6 +1318,9 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
     double q_abs_htf_total = 0.;
     std::vector<double> m_EqOpteffs(m_nSCA, 0.);
 
+    m_vel_loop_min = std::numeric_limits<double>::quiet_NaN();
+    m_vel_loop_max = std::numeric_limits<double>::quiet_NaN();
+
 	//---------------------
 	for( int i = 0; i<m_nSCA; i++ )
 	{
@@ -1303,7 +1372,19 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 
 		//Calculate the specific heat for the node
 		c_htf_i *= 1000.0;	//[J/kg-K]
-		
+
+        // Calculate Velocity of Node
+        double vel_htf_i = m_dot_htf_loop * 4.0 / (rho_htf_i * M_PI * m_D_2.at(HT, 0) * m_D_2.at(HT, 0));
+
+        if (std::isnan(m_vel_loop_min) || (vel_htf_i < m_vel_loop_min))
+        {
+            m_vel_loop_min = vel_htf_i;
+        }
+        if (std::isnan(m_vel_loop_max) || (vel_htf_i > m_vel_loop_max))
+        {
+            m_vel_loop_max = vel_htf_i;
+        }
+
 		//Calculate the average node outlet temperature, including transient effects
 		double m_node = rho_htf_i * m_A_cs(HT, 1)*m_L_actSCA[CT];
 
@@ -2044,6 +2125,7 @@ void C_csp_trough_collector_receiver::set_output_value()
 	mc_reported_outputs.value(E_Q_DOT_FREEZE_PROT, m_q_dot_freeze_protection);			//[MWt]
 
 	mc_reported_outputs.value(E_M_DOT_LOOP, m_m_dot_htf_tot/(double)m_nLoops);		//[kg/s]
+
     mc_reported_outputs.value(E_IS_RECIRCULATING, m_is_m_dot_recirc);		    //[-]
 	if (m_is_m_dot_recirc)
 	{
@@ -2064,6 +2146,9 @@ void C_csp_trough_collector_receiver::set_output_value()
 
 	mc_reported_outputs.value(E_W_DOT_SCA_TRACK, m_W_dot_sca_tracking);		//[MWe]
 	mc_reported_outputs.value(E_W_DOT_PUMP, m_W_dot_pump);					//[MWe]
+
+    mc_reported_outputs.value(E_VEL_LOOP_MIN, m_vel_loop_min);  //[m/s]
+    mc_reported_outputs.value(E_VEL_LOOP_MAX, m_vel_loop_max);  //[m/s]
 
 	return;
 }
@@ -4208,7 +4293,7 @@ double C_csp_trough_collector_receiver::get_collector_area()
 
 // ------------------------------------------ supplemental methods -----------------------------------------------------------
 
-bool C_csp_trough_collector_receiver::design_solar_mult()
+bool C_csp_trough_collector_receiver::design_solar_mult(std::vector<double> trough_loop_control)
 {
     if (m_is_solar_mult_designed == true)
         return false;
@@ -4246,14 +4331,26 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
         throw(C_csp_exception("Receiver HTF code is not recognized", "Trough Collector Solver"));
     }
 
+    // Process trough_loop_control
+    m_nSCA = trough_loop_control.at(0);
+
     // SCAInfoArray
-    m_SCAInfoArray = util::matrix_t<double>(static_cast<int>(m_trough_loop_control.at(0)), 2);
+    m_SCAInfoArray = util::matrix_t<double>(static_cast<int>(trough_loop_control.at(0)), 2);
     {
-        int assemblies = static_cast<int>(m_trough_loop_control.at(0));
+        int assemblies = static_cast<int>(trough_loop_control.at(0));
 
         for (int i = 0; i < assemblies; i++) {
-            m_SCAInfoArray.at(i, 1) = static_cast<int>(m_trough_loop_control.at(1 + 3 * i));
-            m_SCAInfoArray.at(i, 0) = static_cast<int>(m_trough_loop_control.at(2 + 3 * i));
+            m_SCAInfoArray.at(i, 1) = static_cast<int>(trough_loop_control.at(1 + 3 * i));
+            m_SCAInfoArray.at(i, 0) = static_cast<int>(trough_loop_control.at(2 + 3 * i));
+        }
+    }
+    // SCADefocusArray
+    m_SCADefocusArray = vector<int>();
+    {
+        int assemblies = static_cast<int>(trough_loop_control.at(0));
+        m_SCADefocusArray.resize(assemblies);
+        for (int i = 0; i < assemblies; i++) {
+            m_SCADefocusArray[i] = static_cast<int>(trough_loop_control.at(3 + 3 * i));
         }
     }
 
@@ -4267,44 +4364,51 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
     m_L_tot = 0.0;
     for (int i = 0; i < m_nSCA; i++)
     {
-        int ct = (int)m_SCAInfoArray.at(i, 1);
-        m_L_tot += m_L_actSCA[ct - 1];
+        int ct = (int)m_SCAInfoArray.at(i, 1) - 1; // Adjust index (SCAInfoArray starts at 1)
+        m_L_tot += m_L_actSCA[ct];
     }
+
+    size_t nSCA, dummy;
+    m_SCAInfoArray.size(nSCA, dummy);
 
     // Single Loop Aperture
     m_single_loop_aperture = 0;
     {
-        int nsca = static_cast<int>(m_trough_loop_control.at(0));
-
-        int sca_t = -1;
-        for (int i = 0; i < nsca; i++)
+        int sca_type = 0;
+        double aperture = 0;
+        for (int i = 0; i < nSCA; i++)
         {
-            sca_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
-            m_single_loop_aperture += + m_A_aperture[sca_t];
+            sca_type = m_SCAInfoArray.at(i, 1) - 1; // Adjust index (SCAInfoArray starts at 1)
+            aperture = m_A_aperture[sca_type];
+            m_single_loop_aperture += aperture;
         }
     }
 
     // Min_inner_diameter
-    m_min_inner_diameter = 0;
+    m_min_inner_diameter = m_D_2.at(0, 0);
     {
-        m_min_inner_diameter = m_D_2[0];
-        int hce_t = -1;
-        for (int i = 0; i < static_cast<int>(m_trough_loop_control.at(0)); i++)
+        int hce_type = 0;
+        double d = 0;
+        for (int i = 0; i < nSCA; i++)
         {
-            hce_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(i * 3 + 2)), 1), 4) - 1;
-            if (m_D_2[hce_t] < m_min_inner_diameter) {
-                m_min_inner_diameter = m_D_2[hce_t];
-            }
+            hce_type = m_SCAInfoArray.at(i, 0) - 1; // Adjust index (SCAInfoArray starts at 1)
+            d = m_D_2.at(hce_type, 0);
+            if (d < m_min_inner_diameter)
+                m_min_inner_diameter = d;
         }
     }
 
-    // SCADefocusArray
-    m_SCADefocusArray = vector<int>();
+    // Max_inner_diameter
+    m_max_inner_diameter = m_D_2.at(0, 0);
     {
-        int assemblies = static_cast<int>(m_trough_loop_control.at(0));
-        m_SCADefocusArray.resize(assemblies);
-        for (int i = 0; i < assemblies; i++) {
-            m_SCADefocusArray[i] = static_cast<int>(m_trough_loop_control.at(3 + 3 * i));
+        int hce_type = 0;
+        double d = 0;
+        for (int i = 0; i < nSCA; i++)
+        {
+            hce_type = m_SCAInfoArray.at(i, 0) - 1;
+            d = m_D_2.at(hce_type, 0);
+            if (d > m_max_inner_diameter)
+                m_max_inner_diameter = d;
         }
     }
 
@@ -4321,9 +4425,8 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
     {
         double density = m_htfProps.dens(m_T_loop_in_des + 273.15, std::numeric_limits<double>::quiet_NaN());
 
-        m_min_field_flow_velocity = m_m_dot_htfmin * 4 / (density * M_PI * m_min_inner_diameter * m_min_inner_diameter);
+        m_min_field_flow_velocity = m_m_dot_htfmin * 4 / (density * M_PI * m_max_inner_diameter * m_max_inner_diameter);
     }
-
 
     // HCE design heat loss
     m_HCE_heat_loss_des = std::vector<double>();
@@ -4341,13 +4444,13 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
     // HCE *loop* design heat loss
     m_HCE_heat_loss_loop_des = 0;
     {
-        int ncol = static_cast<int>(m_trough_loop_control.at(0));
         double total_len = 0.;
 
-        for (int i = 0; i < ncol; i++)
+        for (int i = 0; i < nSCA; i++)
         {
-            int sca_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
-            int hce_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(2 + i * 3)), 1), 4) - 1;
+            int sca_t = m_SCAInfoArray.at(i, 1) - 1;    // Adjust index (SCAInfoArray starts at 1)
+            int hce_t = m_SCAInfoArray.at(i, 0) - 1;    // Adjust index (SCAInfoArray starts at 1)
+
             total_len = total_len + m_L_SCA[sca_t];
             m_HCE_heat_loss_loop_des = m_HCE_heat_loss_loop_des + m_L_SCA[sca_t]
                 * (1 - (m_HCE_heat_loss_des[hce_t] / (m_I_bn_des * m_A_aperture[sca_t] / m_L_SCA[sca_t])));
@@ -4418,20 +4521,20 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
 
         for (int i = 0; i < m_nSCA; i++)
         {
-            int CT = (int)m_SCAInfoArray.at(i, 1);    //Collector type    
+            int CT = (int)m_SCAInfoArray.at(i, 1) - 1;    // Collector Type Adjust index (SCAInfoArray starts at 1) 
             double loss_col = 0;
 
             for (int j = 0; j < m_nHCEVar; j++)
             {
-                int HT = (int)m_SCAInfoArray.at(i, 0);    //HCE type
+                int HT = (int)m_SCAInfoArray.at(i, 0) - 1;    //HCE type Adjust index (SCAInfoArray starts at 1) 
                 //Calculate optical efficiency approximating use of the first collector only
-                m_opteff_des += m_Shadowing.at(HT - 1, j) * m_TrackingError[CT - 1] * m_GeomEffects[CT - 1] * m_Rho_mirror_clean[CT - 1] * m_Dirt_mirror[CT - 1] *
-                    m_Dirt_HCE.at(HT - 1, j) * m_Error[CT - 1] * (m_L_actSCA[CT - 1] / m_L_tot) * m_HCE_FieldFrac.at(HT - 1, j)
-                    * m_alpha_abs.at(HT - 1, j) * m_Tau_envelope.at(HT - 1, j);
-                loss_col += m_Design_loss.at(HT - 1, j) * m_L_actSCA[CT - 1] * m_HCE_FieldFrac.at(HT - 1, j);
+                m_opteff_des += m_Shadowing.at(HT, j) * m_TrackingError[CT] * m_GeomEffects[CT] * m_Rho_mirror_clean[CT] * m_Dirt_mirror[CT] *
+                    m_Dirt_HCE.at(HT, j) * m_Error[CT] * (m_L_actSCA[CT] / m_L_tot) * m_HCE_FieldFrac.at(HT, j)
+                    * m_alpha_abs.at(HT, j) * m_Tau_envelope.at(HT, j);
+                loss_col += m_Design_loss.at(HT, j) * m_L_actSCA[CT] * m_HCE_FieldFrac.at(HT, j);
             }
 
-            double L_col = m_L_actSCA[CT - 1];
+            double L_col = m_L_actSCA[CT];
             double avg_col_design_loss = loss_col / L_col;
 
             L_tot += L_col;
@@ -4443,7 +4546,6 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
 
         m_total_loop_conversion_efficiency_des = q_loop_actual / q_loop_ideal;
     }
-
 
     // Design Power cycle thermal input
     m_q_pb_design = 0;
@@ -4508,8 +4610,6 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
         m_c_htf_ave = m_htfProps.Cp_ave(m_T_loop_in_des, m_T_loop_out_des) * 1000.;    //[J/kg-K] Specific heat
         m_m_dot_design = (m_Ap_tot * m_I_bn_des * m_opteff_des - loss_tot * float(m_nLoops)) / (m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des));
     }
-
-
 
     // Interconnect component minor loss coefficients
     m_K_cpnt = util::matrix_t<double>(m_nSCA + 3, 11, std::numeric_limits<double>::quiet_NaN());
@@ -6627,7 +6727,7 @@ int C_csp_trough_collector_receiver::size_rnr_lengths(int Nfieldsec, double L_rn
     // Nfieldsec				number of field sections
     // L_rnr_pb				    length of runner piping in and around the power block
     // Nrnrsec					the number of unique runner diameters
-    // ColType	                the collector type
+    // ColType	                the collector type (INDEX STARTS AT 1)
     // northsouth_field_sep	    north-south separation between subfields. 0=SCAs are touching
     // L_SCA[]					the length of the SCAs
     // min_rnr_xpans			minimum number of expansion loops per single-diameter runner section
