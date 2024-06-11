@@ -126,9 +126,10 @@ class SPEXPORT AutoPilot_S : public AutoPilot
 	
 public:
 	//methods
-	bool CreateLayout(sp_layout &layout, bool do_post_process = true);
-	bool CalculateOpticalEfficiencyTable(sp_optical_table &opttab);
-	bool CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true);
+    bool CreateLayout(sp_layout &layout, bool do_post_process = true);
+    bool CalculateOpticalEfficiencyTable(sp_optical_table &opttab);
+    bool SimulateAimPointsAtDesign();
+    bool CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x = 12, int flux_res_y = 10, bool is_normalized = true);
 };
 
 #ifdef SP_USE_THREADS

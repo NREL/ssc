@@ -592,8 +592,9 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
 		
         string aim_method_save = flux.aim_method.val;
         flux.aim_method.combo_select("Simple aim points");
-        if (rec_type == 3)  // Falling particle 
-            flux.aim_method.combo_select( "Keep existing" );
+        if (rec_type == 3)  // Falling particle
+            m_sapi->SimulateAimPointsAtDesign();                // Required to set the aimpoints at design conditions
+            flux.aim_method.combo_select( "Keep existing" );    // Fix aimpoints for simulation points
 
 		int nflux_x = m_cmod->as_integer("n_flux_x");
 		int nflux_y = m_cmod->as_integer("n_flux_y");

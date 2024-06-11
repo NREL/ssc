@@ -1183,6 +1183,27 @@ bool AutoPilot_S::CalculateOpticalEfficiencyTable(sp_optical_table &opttab)
 	return true;
 }
 
+bool AutoPilot_S::SimulateAimPointsAtDesign()
+{
+    /*
+    Sets the aimpoints based on the design point conditions (for multi-receiver cases).
+    */
+    var_map* vars = _SF->getVarMap();
+
+    sim_result result;
+    double azzen[2];
+    _SF->CalcDesignPtSunPosition(vars->sf.sun_loc_des.mapval(), azzen[0], azzen[1]);
+
+    sim_params P;
+    P.dni = vars->sf.dni_des.val;
+    P.is_layout = false;
+
+    if (!_cancel_simulation)
+        _SF->Simulate(azzen[0] * D2R, azzen[1] * D2R, P);
+
+    return true;
+}
+
 bool AutoPilot_S::CalculateFluxMaps(sp_flux_table &fluxtab, int flux_res_x, int flux_res_y, bool is_normalized)
 {
 	/* 
