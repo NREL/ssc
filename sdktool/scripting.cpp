@@ -350,14 +350,12 @@ void fcall_tsview( lk::invoke_t &cxt )
 
 void fcall_json_to_ssc(lk::invoke_t & cxt)
 {
-    LK_DOC("json_to_ssc", "read in json file to ssc var table", "(filename):table");
+    LK_DOC("json_to_ssc", "Read in json file to ssc var table in SDKtool", "(filename):none");
     wxString file = cxt.arg(0).as_string();
     wxString str = lk::read_file(file);
 
     auto dat = json_to_ssc_data(str.c_str());
- //   auto table = ssc_data_get_table(dat, "input");
     var_table *vt =  app_frame->GetVarTable();
- //   vt = (var_table*)dat; // setting but not deep copying
     vt->merge(*((var_table *)dat),true);
 }
 
