@@ -355,10 +355,10 @@ void fcall_json_to_ssc(lk::invoke_t & cxt)
     wxString str = lk::read_file(file);
 
     auto dat = json_to_ssc_data(str.c_str());
-    auto table = ssc_data_get_table(dat, "input");
-    auto vt =  app_frame->GetVarTable();
-    vt = (var_table*)dat; // setting but not deep copying
-//    vt->merge(dat,true);
+ //   auto table = ssc_data_get_table(dat, "input");
+    var_table *vt =  app_frame->GetVarTable();
+ //   vt = (var_table*)dat; // setting but not deep copying
+    vt->merge(*((var_table *)dat),true);
 }
 
 
