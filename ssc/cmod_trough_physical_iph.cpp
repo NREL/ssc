@@ -667,7 +667,7 @@ public:
         //write_cmod_to_lk_script(fp, m_vartab);
 
         // Common Parameters
-        int sim_type = as_number("sim_type");
+        int sim_type = as_integer("sim_type");
         int csp_financial_model = as_integer("csp_financial_model");
         double T_htf_cold_des = as_double("T_loop_in_des");    //[C]
         double T_htf_hot_des = as_double("T_loop_out");      //[C]
@@ -742,7 +742,7 @@ public:
 
                 //int actual_nSCA = trough_loop_vec[0];
 
-                c_trough.m_use_solar_mult_or_aperture_area = as_number("use_solar_mult_or_aperture_area"); // Use specified solar mult (0) or total aperture (1)
+                c_trough.m_use_solar_mult_or_aperture_area = as_integer("use_solar_mult_or_aperture_area"); // Use specified solar mult (0) or total aperture (1)
                 c_trough.m_specified_solar_mult = as_number("specified_solar_multiple");            // User specified solar mult
                 c_trough.m_specified_total_aperture = as_number("specified_total_aperture");    //[m2] User specified total aperture
                 //c_trough.m_nSCA = actual_nSCA;   CALCULATED INTERNAL                           //[-] Number of SCA's in a loop
@@ -1965,9 +1965,9 @@ public:
     template <typename T>
     void set_vector(const std::string& name, const vector<T> vec)
     {
-        int size = vec.size();
+        size_t size = vec.size();
         ssc_number_t* alloc_vals = allocate(name, size);
-        for (int i = 0; i < size; i++)
+        for (size_t i = 0; i < size; i++)
             alloc_vals[i] = vec[i];    // []
     }
 

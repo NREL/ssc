@@ -895,7 +895,7 @@ public:
                     c_trough.m_T_out_loop_initial = as_double("T_out_loop_initial");
                 }
                 if (is_assigned("T_out_scas_initial")) {
-                    size_t n_T_out_scas_last_initial = -1;
+                    size_t n_T_out_scas_last_initial = 0;
                     ssc_number_t* T_out_scas_last_initial = as_array("T_out_scas_initial", &n_T_out_scas_last_initial);
                     std::copy(T_out_scas_last_initial, T_out_scas_last_initial + n_T_out_scas_last_initial, back_inserter(c_trough.m_T_out_scas_last_initial));
                 }
@@ -1260,8 +1260,6 @@ public:
         // ********************************
         C_csp_two_tank_tes storage;
         {
-
-            bool custom_tes_pipe_sizes = as_boolean("custom_tes_pipe_sizes");
             util::matrix_t<double> tes_lengths;
             if (is_assigned("tes_lengths")) {
                 tes_lengths = as_matrix("tes_lengths");               //[m]
@@ -1950,7 +1948,6 @@ public:
 
             // System Control
             {
-                double adjust_constant = as_double("adjust_constant");
                 double W_dot_bop_design, W_dot_fixed_parasitic_design;    //[MWe]
                 csp_solver.get_design_parameters(W_dot_bop_design, W_dot_fixed_parasitic_design);
                 vector<double> aux_vec = as_vector_double("aux_array");
@@ -2121,7 +2118,7 @@ public:
 
         // 'adjustment_factors' class stores factors in hourly array, so need to index as such
         adjustment_factors haf(this, "adjust");
-        if( !haf.setup(n_steps_full) )
+        if( !haf.setup((int)n_steps_full) )
             throw exec_error("trough_physical", "failed to setup adjustment factors: " + haf.error());
 
         ssc_number_t *p_gen = allocate("gen", n_steps_fixed);
@@ -2337,9 +2334,9 @@ public:
     template <typename T>
     void set_vector(const std::string& name, const vector<T> vec)
     {
-        int size = vec.size();
+        size_t size = vec.size();
         ssc_number_t* alloc_vals = allocate(name, size);
-        for (int i = 0; i < size; i++)
+        for (size_t i = 0; i < size; i++)
             alloc_vals[i] = vec[i];    // []
     }
 

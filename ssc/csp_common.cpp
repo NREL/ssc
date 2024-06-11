@@ -1035,6 +1035,16 @@ bool are_values_sig_different(double v1, double v2, double tol)
     return false;
 }
 
+void importFluxMaps(util::matrix_t<double> flux_maps_in, util::matrix_t<double>* flux_maps_out) {
+    /* Removes solar position columns from imported flux maps*/
+    flux_maps_out->resize(flux_maps_in.nrows(), flux_maps_in.ncols() - 2);  // remove solar position information (zenith and azimuth)
+    for (size_t i = 0; i < flux_maps_out->nrows(); i++) {
+        for (size_t j = 0; j < flux_maps_out->ncols(); j++) {
+            flux_maps_out->at(i, j) = flux_maps_in.at(i, j + 2);
+        }
+    }
+}
+
 var_info vtab_sco2_design[] = {
 
 	/*   VARTYPE   DATATYPE         NAME               LABEL                                                    UNITS     META  GROUP REQUIRED_IF CONSTRAINTS     UI_HINTS*/

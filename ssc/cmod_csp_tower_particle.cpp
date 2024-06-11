@@ -121,7 +121,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_INPUT,     SSC_NUMBER, "washing_frequency",                  "Mirror washing frequency",                                                                                                                "none",         "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "check_max_flux",                     "Check max flux at design point",                                                                                                          "",             "",                                  "Heliostat Field",                          "?=0",                                                              "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "sf_excess",                          "Heliostat field multiple",                                                                                                                "",             "",                                  "System Design",                            "?=1.0",                                                            "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "sun_loc_des",                        "Sun location at design point (0 = Summer solstice, 1 = Equinox, 2 = Winter solstice)",                                                    "",             "",                                  "Heliostat Field",                          "?=0",                                                              "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "sun_loc_des",                        "Sun location at design point (0 = Summer solstice, 1 = Equinox, 2 = Winter solstice)",                                                    "",             "",                                  "Heliostat Field",                          "?=0",                                                              "",              "SIMULATION_PARAMETER"},
 
     // Inputs required for user-defined SF performance when field_model_type = 4
     // Values can be defined by mapping to equivalent _calc output for simulation results with field_model_type < 3
@@ -743,13 +743,12 @@ public:
         // *****************************************************
         double W_dot_cycle_des = as_double("P_ref");                // [MWe]
         double eta_cycle = as_double("design_eff");                 // [-]
-        double tshours = as_double("tshours");                      // [-]
 
         // System Design calculations
         double q_dot_pc_des = W_dot_cycle_des / eta_cycle;          // [MWt]
         double q_dot_rec_des = q_dot_pc_des * as_number("solarm");  // [MWt]
 
-        int num_recs = as_integer("num_recs");
+        size_t num_recs = as_integer("num_recs");
         bool duplicate_recs = as_boolean("is_recs_duplicate");
 
         // *****************************************************
@@ -841,30 +840,9 @@ public:
                 size_t n_h_rows = helio_pos_temp.nrows();
                 ssc_number_t* p_helio_positions_in = allocate("helio_positions_in", n_h_rows, 2);
 
-                // Try to determine whether heliostat positions represent surround or cavity field
-                double y_h_min = 1.E5;
-                double y_h_max = -1.E5;
                 for (size_t i = 0; i < n_h_rows; i++) {
                     p_helio_positions_in[i * 2] = (ssc_number_t)helio_pos_temp(i, 0);       //[m] x
                     p_helio_positions_in[i * 2 + 1] = (ssc_number_t)helio_pos_temp(i, 1);   //[m] y
-
-                    y_h_min = min(y_h_min, p_helio_positions_in[i * 2 + 1]);
-                    y_h_max = max(y_h_max, p_helio_positions_in[i * 2 + 1]);
-                }
-
-                bool is_cavity_field = false;
-                if ((y_h_max - y_h_min) / max(std::abs(y_h_max), std::abs(y_h_min)) < 1.25) {
-                    is_cavity_field = true;
-                }
-
-                // Check determined field type against user-specified receiver type
-                if (sim_type == 1) {
-                    if (!is_cavity_field) {
-                        throw exec_error("tower_particle compute module", "\n Falling particle receiver specified, but surround field detected. Try one of the following options:\n"
-                            "1) Run field layout macro on Heliostat Field page\n"
-                            "2) Select option for simulation to layout field and tower/receiver design\n"
-                            "3) Enter new heliostat positions\n");
-                    }
                 }
             }
             spi.run(weather_reader.m_weather_data_provider);    // Runs SolarPILOT
@@ -890,7 +868,10 @@ public:
             }
             else if (field_model_type == 3) { // Read in user efficiency and flux maps
                 mt_eta_map = as_matrix("eta_map");
-                mt_flux_maps = as_matrix("flux_maps");
+
+                // Remove the solar position from flux_maps
+                util::matrix_t<double> raw_flux_maps = as_matrix("flux_maps");
+                importFluxMaps(raw_flux_maps, &mt_flux_maps);
             }
             else {
                 string msg = util::format("Invalid combination of field_model_type and sim_type");
@@ -910,7 +891,7 @@ public:
 
             THT = spi.sf.tht.val;
 
-            int sp_num_recs = spi.recs.size();
+            size_t sp_num_recs = spi.recs.size();
             if (sp_num_recs != num_recs)
                 throw exec_error("csp_tower_particle", "Unexpected error: SolarPILOT's receivers count is inconsistent with user input.");
 
@@ -938,7 +919,9 @@ public:
         else if (field_model_type == 4) {
             // User input flux and efficiency maps, no SolarPILOT needed
             mt_eta_map = as_matrix("eta_map");
-            mt_flux_maps = as_matrix("flux_maps");
+            // Remove the solar position from flux_maps
+            util::matrix_t<double> raw_flux_maps = as_matrix("flux_maps");
+            importFluxMaps(raw_flux_maps, &mt_flux_maps);
 
             // Need to specify:
             // 1) reflective area (scale flux map)
@@ -950,6 +933,7 @@ public:
             // Get tower/receiver dimensions through cmod
             THT = as_double("h_tower");             //[m]
             h_helio = 0.0;                          //[m] Need a finite value for cost model
+            //h_helio = as_double("helio_height");        // TODO: This does impact system cost...
 
             size_t count_N_hel, count_A_sf, count_rec_height, count_rec_width;
             ssc_number_t* N_hel_in = as_array("N_hel", &count_N_hel);
@@ -957,7 +941,7 @@ public:
             if (count_N_hel != num_recs
                 || count_A_sf != num_recs)
                 throw exec_error("csp_tower_particle",
-                    "Invalid field input. Either N_hel or A_sf_in length is not equal to the number of receivers: " + util::to_string(num_recs));
+                    "Invalid field input. Either N_hel or A_sf_in length is not equal to the number of receivers: " + util::to_string((int)num_recs));
             ssc_number_t* rec_height_in = as_array("rec_height", &count_rec_height);   // [m]
             ssc_number_t* rec_width_in = as_array("rec_width", &count_rec_width);      // [m]
 
@@ -969,16 +953,16 @@ public:
             else {
                 if (count_rec_height != num_recs
                     || count_rec_width != num_recs)
-                    throw exec_error("csp_tower_particle", "Invalid receiver height and/or width input. For non-duplicate receivers, input arrays must have a length of " + util::to_string(num_recs));
+                    throw exec_error("csp_tower_particle", "Invalid receiver height and/or width input. For non-duplicate receivers, input arrays must have a length of " + util::to_string((int)num_recs));
             }
 
             N_hel.resize(num_recs);
             A_sf.resize(num_recs);
             rec_height.resize(num_recs);
             rec_width.resize(num_recs);
-            int input_idx;
-            for (int i = 0; i < num_recs; i++) {    // loop through receivers
-                N_hel.at(i) = N_hel_in[i];
+            size_t input_idx;
+            for (size_t i = 0; i < num_recs; i++) {    // loop through receivers
+                N_hel.at(i) = (int)N_hel_in[i];
                 A_sf.at(i) = A_sf_in[i];
                 input_idx = duplicate_recs ? 0 : i; // Use the first element if duplicate receivers
                 rec_height.at(i) = rec_height_in[input_idx];
@@ -1122,8 +1106,6 @@ public:
         //      Receiver model
         // *********************************************************
 
-
-
         bool is_rec_model_clearsky = as_double("rec_clearsky_fraction") > 0.0;
         int rec_clearsky_model = as_integer("rec_clearsky_model");
 
@@ -1134,8 +1116,7 @@ public:
 
         // Reading in multi-receiver geometry inputs
         size_t count_rec_azimuth, count_power_fraction,
-            count_norm_curtain_height, count_norm_curtain_width, count_max_curtain_depth, count_is_snout,
-            count_snout_depth, count_snout_horiz_angle, count_snout_vert_bot_angle, count_snout_vert_top_angle;
+            count_norm_curtain_height, count_norm_curtain_width, count_max_curtain_depth;
         ssc_number_t* rec_azimuth = as_array("rec_azimuth", &count_rec_azimuth);
         ssc_number_t* power_fraction = as_array("power_fraction", &count_power_fraction);
         ssc_number_t* norm_curtain_height = as_array("norm_curtain_height", &count_norm_curtain_height);
@@ -1160,7 +1141,7 @@ public:
                 || count_norm_curtain_height != num_recs
                 || count_norm_curtain_width != num_recs
                 || count_max_curtain_depth != num_recs)
-                throw exec_error("csp_tower_particle", "Invalid receiver input. For nonduplicate receivers input array must have a length of " + util::to_string(num_recs));
+                throw exec_error("csp_tower_particle", "Invalid receiver input. For nonduplicate receivers input array must have a length of " + util::to_string((int)num_recs));
         }
 
 
@@ -1174,21 +1155,21 @@ public:
             log(err_msg, SSC_WARNING);
         }
 
-        int input_idx;
+        size_t input_idx;
         double ap_height, ap_width, curtain_height, curtain_width, ap_curtain_depth_ratio, rec_orientation, q_dot_des_per_rec;
         double A_rec_curtain_total = 0.0;
         double A_rec_aperture_total = 0.0;
         double power_fraction_sum = 0.0;
         std::vector<double> A_rec_aperture(num_recs);
         std::vector<double> A_rec_curtain(num_recs);
-        std:vector<std::shared_ptr<C_pt_receiver>> receivers(num_recs);
-        for (int i = 0; i < num_recs; i++)
+        std::vector<std::shared_ptr<C_pt_receiver>> receivers(num_recs);
+        for (size_t i = 0; i < num_recs; i++)
         {
             input_idx = duplicate_recs ? 0 : i;
             power_fraction_sum += power_fraction[input_idx];
         }
 
-        for (int i = 0; i < num_recs; i++)   // loop through receivers
+        for (size_t i = 0; i < num_recs; i++)   // loop through receivers
         {   
             input_idx = duplicate_recs ? 0 : i; // Use the first element if duplicate receivers
             ap_height = rec_height[input_idx];
@@ -1245,7 +1226,7 @@ public:
 
         std::vector<util::matrix_t<double>> rec_flux_maps;
         {// scope for temp_flux_map
-            int nx = as_integer("n_flux_x");
+            size_t nx = as_integer("n_flux_x");
             util::matrix_t<double> temp_flux_map;
             temp_flux_map.resize(mt_flux_maps.nrows(), nx );
             for (size_t rec = 0; rec < num_recs; rec++) {
@@ -1285,7 +1266,7 @@ public:
 
 
         std::vector<C_pt_sf_perf_interp*> heliostatfields(num_recs);
-        for (int i = 0; i < num_recs; i++)   // loop through receivers
+        for (size_t i = 0; i < num_recs; i++)   // loop through receivers
         {
             heliostatfields.at(i) = new C_pt_sf_perf_interp(A_rec_curtain.at(i));
             heliostatfields.at(i)->ms_params.m_p_start = as_double("p_start");      //[kWe-hr] Heliostat startup energy
@@ -1294,8 +1275,8 @@ public:
             heliostatfields.at(i)->ms_params.m_v_wind_max = as_double("v_wind_max");            // N/A
             heliostatfields.at(i)->ms_params.m_eta_map = eta_maps[i];
             heliostatfields.at(i)->ms_params.m_flux_maps = rec_flux_maps[i];
-            heliostatfields.at(i)->ms_params.m_n_flux_x = rec_flux_maps[i].ncols();
-            heliostatfields.at(i)->ms_params.m_n_flux_y = rec_flux_maps[i].nrows() / eta_maps[i].nrows();
+            heliostatfields.at(i)->ms_params.m_n_flux_x = (int)rec_flux_maps[i].ncols();
+            heliostatfields.at(i)->ms_params.m_n_flux_y = (int)(rec_flux_maps[i].nrows() / eta_maps[i].nrows());
             heliostatfields.at(i)->ms_params.m_N_hel = N_hel[i];
             heliostatfields.at(i)->ms_params.m_A_sf = A_sf[i];        //[m2]
             if (field_model_type < 3)
@@ -1313,7 +1294,7 @@ public:
 
             //Solar field adjustment factors
             heliostatfields.at(i)->ms_params.m_sf_adjust.resize(sf_haf.size());
-            for (int j = 0; j < sf_haf.size(); j++)  // TODO: Could do this just one for all receivers
+            for (size_t j = 0; j < sf_haf.size(); j++)  // TODO: Could do this just one for all receivers
                 heliostatfields.at(i)->ms_params.m_sf_adjust.at(j) = sf_haf(j);
 
             // TODO: do we need this?
@@ -1396,7 +1377,6 @@ public:
             heater_spec_cost = as_double("heater_spec_cost");   //[$/kWt]
 
             q_dot_heater_des = q_dot_pc_des*heater_mult;     //[MWt]
-            //double q_dot_heater_des = receiver->m_q_rec_des * 2.0;  // / 4.0;      //[MWt]
 
             double heater_efficiency = as_double("heater_efficiency") / 100.0;          //[-] convert from % input
             double f_q_dot_des_allowable_su = as_double("f_q_dot_des_allowable_su");    //[-] fraction of design power allowed during startup
@@ -1620,8 +1600,6 @@ public:
 
             double heater_startup_cost = 0.0;
             if (is_parallel_heater) {
-                double heater_mult = as_double("heater_mult");            //[-]
-                double q_dot_heater_des = q_dot_pc_des * heater_mult;     //[MWt]
                 heater_startup_cost = as_double("disp_hsu_cost_rel") * q_dot_heater_des;    //[$/start]
             }
 
@@ -1788,7 +1766,6 @@ public:
             p_helio_positions_calc[i * 2 + 1] = (ssc_number_t)helio_pos(i, 1);   //[m] y
         }
 
-
         double W_dot_col_tracking_des = collector_receiver.get_tracking_power();    //[MWe]
         assign("W_dot_col_tracking_des", W_dot_col_tracking_des);       //[MWe]
 
@@ -1824,7 +1801,7 @@ public:
 
         double eta_rec_thermal_des_per_rec, W_dot_rec_lift_des_per_rec, q_dot_piping_loss_des_per_rec, m_dot_htf_rec_des_per_rec, m_dot_htf_rec_max_per_rec, q_dot_inc, q_dot_inc_per_rec;
         eta_rec_thermal_des = W_dot_rec_lift_des = q_dot_piping_loss_des = m_dot_htf_rec_des = m_dot_htf_rec_max = q_dot_inc = 0.0;
-        for (int i = 0; i < num_recs; i++)   // loop through receivers
+        for (size_t i = 0; i < num_recs; i++)   // loop through receivers
         {
             receivers.at(i)->get_design_performance(eta_rec_thermal_des_per_rec, W_dot_rec_lift_des_per_rec, W_dot_rec_pump_tower_share_des, W_dot_rec_pump_rec_share_des,
                 rec_pump_coef_des, rec_vel_htf_des, m_dot_htf_rec_des_per_rec, m_dot_htf_rec_max_per_rec, q_dot_piping_loss_des_per_rec);
@@ -1978,7 +1955,7 @@ public:
         assign("csp.pt.cost.tower", (ssc_number_t)tower_cost);
 
         double receiver_cost = 0.0;
-        for (int i = 0; i<num_recs; i++)
+        for (size_t i = 0; i<num_recs; i++)
             receiver_cost += N_mspt::receiver_cost(A_rec_aperture.at(i), as_double("rec_ref_cost"), as_double("rec_ref_area"), as_double("rec_cost_exp"));
         assign("csp.pt.cost.receiver", (ssc_number_t)receiver_cost);
 
@@ -2367,7 +2344,7 @@ public:
          
         ssc_number_t* p_pricing_mult = as_array("pricing_mult", &count);
 
-        std::vector<pair<int, double>> ppa_pairs;
+        std::vector<pair<size_t, double>> ppa_pairs;
         ppa_pairs.resize(count);
         for (size_t i = 0; i < count; i++) {
             ppa_pairs[i].first = i;
@@ -2375,7 +2352,7 @@ public:
         }
 
         //std::sort(ppa_pairs.begin(), ppa_pairs.end(), SortByPPAPrice);
-        int n_ppa_steps = 1000;
+        size_t n_ppa_steps = 1000;
 
         double total_energy_in_sub_period = 0.0;
         for (size_t i = 0; i < n_ppa_steps; i++) {

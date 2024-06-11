@@ -921,15 +921,11 @@ public:
 
         // *****************************************************
         // System Design Parameters
-        double T_htf_cold_des = as_double("T_htf_cold_des");    //[C]
-        double T_htf_hot_des = as_double("T_htf_hot_des");      //[C]
         double W_dot_cycle_des = as_double("P_ref");            //[MWe]
         double eta_cycle = as_double("design_eff");             //[-]
-        double tshours = as_double("tshours");                  //[-]
 
         // System Design Calcs
         double q_dot_pc_des = W_dot_cycle_des / eta_cycle;      //[MWt]
-        double Q_tes = q_dot_pc_des * tshours;                  //[MWt-hr]
         double solar_mult = as_number("solarm");                //[-]
         double q_dot_rec_des = q_dot_pc_des * solar_mult;       //[MWt]
 
@@ -957,9 +953,6 @@ public:
         // Initialize to get weather file info
         weather_reader.init();
         if (weather_reader.has_error()) throw exec_error("tcsmolten_salt", weather_reader.get_error());
-
-        // Get info from the weather reader initialization
-        double site_elevation = weather_reader.ms_solved_params.m_elev;     //[m]
 
         int tes_type = 1;
         
@@ -1067,10 +1060,6 @@ public:
                         }
                     }
                 }
-
-                // receiver calculations
-                double H_rec = spi.recs.front().rec_height.val;
-
                 //collect the optical efficiency data and sun positions
                 spi.getHeliostatFieldEfficiency(mt_eta_map);
 
@@ -1138,7 +1127,8 @@ public:
                 else if (field_model_type == 3) {
 
                     mt_eta_map = as_matrix("eta_map");
-                    mt_flux_maps = as_matrix("flux_maps");
+                    util::matrix_t<double> raw_flux_maps = as_matrix("flux_maps");
+                    importFluxMaps(raw_flux_maps, &mt_flux_maps);
                 }
                 else if (field_model_type == 2 && sim_type == 2) {
 
@@ -1206,7 +1196,8 @@ public:
         {
             // Use input flux and efficiency maps
             mt_eta_map = as_matrix("eta_map");
-            mt_flux_maps = as_matrix("flux_maps");
+            util::matrix_t<double> raw_flux_maps = as_matrix("flux_maps");
+            importFluxMaps(raw_flux_maps, &mt_flux_maps);
 
             // Need to specify:
             // 1) reflective area (scale flux map)
@@ -1716,7 +1707,7 @@ public:
             throw exec_error("tcsmolten_salt", "failed to setup sf adjustment factors: " + sf_haf.error());
         //allocate array to pass to tcs
         heliostatfield.ms_params.m_sf_adjust.resize(sf_haf.size());
-        for (int i = 0; i < sf_haf.size(); i++)
+        for (size_t i = 0; i < sf_haf.size(); i++)
             heliostatfield.ms_params.m_sf_adjust.at(i) = sf_haf(i);
 
         // Set callback information
@@ -2027,7 +2018,7 @@ public:
         C_csp_tou tou(offtaker_schedule, elec_pricing_schedule, dispatch_model_type, is_offtaker_frac_also_max);
 
         if (is_dispatch_targets) {
-            int n_expect = (int)ceil((sim_setup.m_sim_time_end - sim_setup.m_sim_time_start) / 3600. * steps_per_hour);
+            size_t n_expect = (size_t)ceil((sim_setup.m_sim_time_end - sim_setup.m_sim_time_start) / 3600. * steps_per_hour);
 
             size_t inputs_len = 0;
             ssc_number_t* q_pc_target_su_in = as_array("q_pc_target_su_in", &inputs_len);
@@ -2048,40 +2039,30 @@ public:
             ssc_number_t* is_pc_sb_allowed_in = as_array("is_pc_sb_allowed_in", &inputs_len);
             if (inputs_len != n_expect) throw exec_error("tcsmolten_salt", "The length of dispatch target is_pc_sb_allowed_in array does not match the value expected from the simulation start time, end time, and time steps per hour");
 
-            ssc_number_t *q_dot_elec_to_PAR_HTR_in, *is_PAR_HTR_allowed_in;
-            if (is_parallel_heater) {
-                q_dot_elec_to_PAR_HTR_in = as_array("q_dot_elec_to_PAR_HTR_in", &inputs_len);
-                if (inputs_len != n_expect) throw exec_error("tcsmolten_salt", "The length of dispatch target q_dot_elec_to_PAR_HTR_in array does not match the value expected from the simulation start time, end time, and time steps per hour");
-
-                is_PAR_HTR_allowed_in = as_array("is_PAR_HTR_allowed_in", &inputs_len);
-                if (inputs_len != n_expect) throw exec_error("tcsmolten_salt", "The length of dispatch target is_PAR_HTR_allowed_in array does not match the value expected from the simulation start time, end time, and time steps per hour");
-            }
-
-            tou.mc_dispatch_params.m_q_pc_target_su_in.resize(inputs_len);
-            tou.mc_dispatch_params.m_q_pc_target_on_in.resize(inputs_len);
-            tou.mc_dispatch_params.m_q_pc_max_in.resize(inputs_len);
-            tou.mc_dispatch_params.m_is_rec_su_allowed_in.resize(inputs_len);
-            tou.mc_dispatch_params.m_is_pc_su_allowed_in.resize(inputs_len);
-            tou.mc_dispatch_params.m_is_pc_sb_allowed_in.resize(inputs_len);
-
-            tou.mc_dispatch_params.m_q_dot_elec_to_PAR_HTR_in.resize(inputs_len);
-            tou.mc_dispatch_params.m_is_PAR_HTR_allowed_in.resize(inputs_len);
-
-            for (int i = 0; i < inputs_len; i++) {
+            tou.mc_dispatch_params.resize(inputs_len);
+            for (size_t i = 0; i < inputs_len; i++) {
                 tou.mc_dispatch_params.m_q_pc_target_su_in.at(i) = q_pc_target_su_in[i];
                 tou.mc_dispatch_params.m_q_pc_target_on_in.at(i) = q_pc_target_on_in[i];
                 tou.mc_dispatch_params.m_q_pc_max_in.at(i) = q_pb_max[i];
                 tou.mc_dispatch_params.m_is_rec_su_allowed_in.at(i) = (bool)is_rec_su_allowed_in[i];
                 tou.mc_dispatch_params.m_is_pc_su_allowed_in.at(i) = (bool)is_pc_su_allowed_in[i];
                 tou.mc_dispatch_params.m_is_pc_sb_allowed_in.at(i) = (bool)is_pc_sb_allowed_in[i];
+                tou.mc_dispatch_params.m_q_dot_elec_to_PAR_HTR_in.at(i) = 0.0;      // Defaults values for heater
+                tou.mc_dispatch_params.m_is_PAR_HTR_allowed_in.at(i) = false;
+            }
 
-                if (is_parallel_heater) {
+            if (is_parallel_heater) {
+                ssc_number_t* q_dot_elec_to_PAR_HTR_in, * is_PAR_HTR_allowed_in;
+
+                q_dot_elec_to_PAR_HTR_in = as_array("q_dot_elec_to_PAR_HTR_in", &inputs_len);
+                if (inputs_len != n_expect) throw exec_error("tcsmolten_salt", "The length of dispatch target q_dot_elec_to_PAR_HTR_in array does not match the value expected from the simulation start time, end time, and time steps per hour");
+
+                is_PAR_HTR_allowed_in = as_array("is_PAR_HTR_allowed_in", &inputs_len);
+                if (inputs_len != n_expect) throw exec_error("tcsmolten_salt", "The length of dispatch target is_PAR_HTR_allowed_in array does not match the value expected from the simulation start time, end time, and time steps per hour");
+
+                for (size_t i = 0; i < inputs_len; i++) {
                     tou.mc_dispatch_params.m_q_dot_elec_to_PAR_HTR_in.at(i) = q_dot_elec_to_PAR_HTR_in[i];
                     tou.mc_dispatch_params.m_is_PAR_HTR_allowed_in.at(i) = (bool)is_PAR_HTR_allowed_in[i];
-                }
-                else {
-                    tou.mc_dispatch_params.m_q_dot_elec_to_PAR_HTR_in.at(i) = 0.0;
-                    tou.mc_dispatch_params.m_is_PAR_HTR_allowed_in.at(i) = false;
                 }
             }
         }
@@ -2105,8 +2086,6 @@ public:
 
             double heater_startup_cost = 0.0;
             if (is_parallel_heater) {
-                double heater_mult = as_double("heater_mult");            //[-]
-                double q_dot_heater_des = q_dot_pc_des * heater_mult;     //[MWt]
                 heater_startup_cost = as_double("disp_hsu_cost_rel") * q_dot_heater_des;    //[$/start]
             }
 
@@ -2412,8 +2391,6 @@ public:
             double W_dot_pc_cooling_des_for_cap_calcs = rankine_pc.get_design_input_cooling_power();
             plant_net_capacity_calc = W_dot_cycle_des - W_dot_pc_cooling_des_for_cap_calcs;
         }
-
-        double plant_net_conv_calc = plant_net_capacity_calc / W_dot_cycle_des; //[-]
 
         double system_capacity = plant_net_capacity_calc * 1.E3;         //[kWe], convert from MWe
 
@@ -2778,10 +2755,13 @@ public:
         double flux_scaling_mult = as_double("dni_des")*heliostatfield.ms_params.m_A_sf / 1000.0 /
             (A_rec / double(heliostatfield.ms_params.m_n_flux_x));
 
-        for( size_t i = 0; i < n_rows_eta_map; i++ )
-        {
-            flux_maps_for_import[n_cols_flux_maps * i] = flux_maps_out[n_cols_flux_maps*i] = eta_map_out[3 * i] = (ssc_number_t)heliostatfield.ms_params.m_eta_map(i, 0);        //[deg] Solar azimuth angle
-            flux_maps_for_import[n_cols_flux_maps * i + 1] = flux_maps_out[n_cols_flux_maps*i + 1] = eta_map_out[3 * i + 1] = (ssc_number_t)heliostatfield.ms_params.m_eta_map(i, 1);    //[deg] Solar zenith angle
+        for( size_t i = 0; i < n_rows_eta_map; i++ ) {
+            flux_maps_for_import[n_cols_flux_maps * i] =
+                flux_maps_out[n_cols_flux_maps*i] =
+                eta_map_out[3 * i] = (ssc_number_t)heliostatfield.ms_params.m_eta_map(i, 0);        //[deg] Solar azimuth angle
+            flux_maps_for_import[n_cols_flux_maps * i + 1] =
+                flux_maps_out[n_cols_flux_maps*i + 1] =
+                eta_map_out[3 * i + 1] = (ssc_number_t)heliostatfield.ms_params.m_eta_map(i, 1);    //[deg] Solar zenith angle
             eta_map_out[3 * i + 2] = (ssc_number_t)heliostatfield.ms_params.m_eta_map(i, 2);                            //[deg] Solar field optical efficiency
             for( size_t j = 2; j < n_cols_flux_maps; j++ )
             {
@@ -2796,7 +2776,7 @@ public:
 
         // 'adjustment_factors' class stores factors in hourly array, so need to index as such
         adjustment_factors haf(this, "adjust");
-        if( !haf.setup(n_steps_full) )
+        if( !haf.setup((int)n_steps_full) )
             throw exec_error("tcsmolten_salt", "failed to setup adjustment factors: " + haf.error());
 
         ssc_number_t *p_gen = allocate("gen", count);
@@ -2939,7 +2919,7 @@ public:
         ssc_number_t* p_tdry = as_array("tdry", &count);
         if (!as_boolean("vacuum_arrays")) {
             // Capacity factors based on highest pricing hours
-            std::vector<pair<int, double>> ppa_pairs;
+            std::vector<pair<size_t, double>> ppa_pairs;
             ppa_pairs.resize(count);
             for (size_t i = 0; i < count; i++) {
                 ppa_pairs[i].first = i;
@@ -2947,7 +2927,7 @@ public:
             }
 
             std::sort(ppa_pairs.begin(), ppa_pairs.end(), SortByDouble);
-            int n_ppa_steps = 1000;
+            size_t n_ppa_steps = 1000;
 
             double total_energy_in_sub_period = 0.0;
             for (size_t i = 0; i < n_ppa_steps; i++) {
@@ -2985,9 +2965,7 @@ public:
             // **********************************************************
 
             // Capacity factors based on warmest ambient temperatures
-            ssc_number_t* p_tdry = as_array("tdry", &count);
-
-            std::vector<pair<int, double>> tdry_pairs;
+            std::vector<pair<size_t, double>> tdry_pairs;
             tdry_pairs.resize(count);
             for (size_t i = 0; i < count; i++) {
                 tdry_pairs[i].first = i;
@@ -2995,7 +2973,7 @@ public:
             }
 
             std::sort(tdry_pairs.begin(), tdry_pairs.end(), SortByDouble);
-            int n_tdry_steps = 100;
+            size_t n_tdry_steps = 100;
 
             double total_energy_in_sub_period_tdry = 0.0;
             for (size_t i = 0; i < n_tdry_steps; i++) {

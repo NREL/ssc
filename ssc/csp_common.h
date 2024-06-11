@@ -78,6 +78,8 @@ public:
 
 bool are_values_sig_different(double v1, double v2, double tol);
 
+void importFluxMaps(util::matrix_t<double> flux_maps_in, util::matrix_t<double>* flux_maps_out);
+
 bool ssc_cmod_solarpilot_callback(simulation_info *siminfo, void *data);
 
 extern var_info vtab_sco2_design[];

@@ -872,7 +872,8 @@ public:
                 else if (field_model_type == 3) {
 
                     mt_eta_map = as_matrix("eta_map");
-                    mt_flux_maps = as_matrix("flux_maps");
+                    util::matrix_t<double> raw_flux_maps = as_matrix("flux_maps");
+                    importFluxMaps(raw_flux_maps, &mt_flux_maps);
                 }
                 else if (field_model_type == 2 && sim_type == 2) {
 
@@ -940,7 +941,8 @@ public:
         {
             // Use input flux and efficiency maps
             mt_eta_map = as_matrix("eta_map");
-            mt_flux_maps = as_matrix("flux_maps");
+            util::matrix_t<double> raw_flux_maps = as_matrix("flux_maps");
+            importFluxMaps(raw_flux_maps, &mt_flux_maps);
 
             // Need to specify:
             // 1) reflective area (scale flux map)
@@ -2186,10 +2188,12 @@ public:
 
         for (size_t i = 0; i < n_rows_eta_map; i++)
         {
-            flux_maps_out[n_cols_flux_maps * i] = eta_map_out[3 * i] = (ssc_number_t)heliostatfield.ms_params.m_eta_map(i, 0);        //[deg] Solar azimuth angle
-            flux_maps_out[n_cols_flux_maps * i + 1] = eta_map_out[3 * i + 1] = (ssc_number_t)heliostatfield.ms_params.m_eta_map(i, 1);    //[deg] Solar zenith angle
-            flux_maps_for_import[n_cols_flux_maps * i] = eta_map_out[3 * i] = (ssc_number_t)heliostatfield.ms_params.m_eta_map(i, 0);        //[deg] Solar azimuth angle
-            flux_maps_for_import[n_cols_flux_maps * i + 1] = eta_map_out[3 * i + 1] = (ssc_number_t)heliostatfield.ms_params.m_eta_map(i, 1);    //[deg] Solar zenith angle
+            flux_maps_for_import[n_cols_flux_maps * i] =
+                flux_maps_out[n_cols_flux_maps * i] =
+                eta_map_out[3 * i] = (ssc_number_t)heliostatfield.ms_params.m_eta_map(i, 0);        //[deg] Solar azimuth angle
+            flux_maps_for_import[n_cols_flux_maps * i + 1] =
+                flux_maps_out[n_cols_flux_maps * i + 1] =
+                eta_map_out[3 * i + 1] = (ssc_number_t)heliostatfield.ms_params.m_eta_map(i, 1);    //[deg] Solar zenith angle
             eta_map_out[3 * i + 2] = (ssc_number_t)heliostatfield.ms_params.m_eta_map(i, 2);                            //[deg] Solar field optical efficiency
             for (size_t j = 2; j < n_cols_flux_maps; j++)
             {
