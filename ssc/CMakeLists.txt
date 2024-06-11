@@ -100,14 +100,12 @@ set(SSC_SRC
 		cmod_tcsmslf.cpp
 		cmod_tcstrough_empirical.cpp
 		cmod_tcstrough_physical.cpp
-		cmod_tcstrough_physical_csp_solver.cpp
 		cmod_test_ud_power_cycle.cpp
 		cmod_thermalrate.cpp
 		cmod_thirdpartyownership.cpp
 		cmod_timeseq.cpp
 		cmod_trough_physical.cpp
 		cmod_trough_physical_iph.cpp
-        	cmod_trough_physical_iph_old.cpp
 		cmod_ui_tes_calcs.cpp
 		cmod_ui_udpc_checks.cpp
 		cmod_user_htf_comparison.cpp

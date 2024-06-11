@@ -210,7 +210,7 @@ namespace csp_trough
         util::matrix_t<double> sf_hdr_lengths;                    //[m] Imported header lengths, used if custom_sf_pipe_sizes is true
 
         // TMB 11-28-2023 Added parameters for updated Trough
-        util::matrix_t<double> trough_loop_control;
+        std::vector<double> trough_loop_control;
         bool use_solar_mult_or_aperture_area;
         double specified_solar_mult;
         double P_ref;

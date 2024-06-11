@@ -73,6 +73,13 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_trough_collector_receiver::E_W_DOT_SCA_TRACK, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_trough_collector_receiver::E_W_DOT_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
+    {C_csp_trough_collector_receiver::E_REC_OP_MODE_FINAL, C_csp_reported_outputs::TS_LAST},
+    {C_csp_trough_collector_receiver::E_DEFOCUS_FINAL, C_csp_reported_outputs::TS_LAST},
+    {C_csp_trough_collector_receiver::E_T_IN_LOOP_FINAL, C_csp_reported_outputs::TS_LAST},
+    {C_csp_trough_collector_receiver::E_T_OUT_LOOP_FINAL, C_csp_reported_outputs::TS_LAST},
+    {C_csp_trough_collector_receiver::E_VEL_LOOP_MIN, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_csp_trough_collector_receiver::E_VEL_LOOP_MAX, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+
 	csp_info_invalid
 };
 
@@ -242,6 +249,10 @@ C_csp_trough_collector_receiver::C_csp_trough_collector_receiver()
 	m_AnnulusGasMat.fill(NULL);
 	m_AbsorberPropMat.fill(NULL);
 
+    m_operating_mode_initial = C_csp_collector_receiver::OFF;
+    m_defocus_initial = std::numeric_limits<double>::quiet_NaN();
+    m_T_in_loop_initial = std::numeric_limits<double>::quiet_NaN();
+    m_T_out_loop_initial = std::numeric_limits<double>::quiet_NaN();
 }
 
 C_csp_trough_collector_receiver::~C_csp_trough_collector_receiver()
@@ -260,7 +271,7 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
 
     // If solar multiple is not yet calculated
     if (m_is_solar_mult_designed == false)
-        this->design_solar_mult();
+        throw(C_csp_exception("design_solar_mult() must be called before init()", "Trough collector solver"));
 	
 	// double some_calc = m_nSCA + m_nHCEt;
 	/*
@@ -498,8 +509,15 @@ void C_csp_trough_collector_receiver::init(const C_csp_collector_receiver::S_csp
         m_is_using_input_gen = is_using_input_gen_orig;
     }
 
-	// Set previous operating mode
-	m_operating_mode_converged = C_csp_collector_receiver::OFF;					//[-] 0 = requires startup, 1 = starting up, 2 = running
+    // Set previous operating mode
+    m_operating_mode = m_operating_mode_initial;
+    m_operating_mode_converged = m_operating_mode_initial;
+    m_defocus_old = m_defocus_initial;
+
+    // Set initial state if configured
+    if (isfinite(m_T_in_loop_initial) && isfinite(m_T_out_loop_initial) && !m_T_out_scas_last_initial.empty()) {
+        set_state(m_T_in_loop_initial, m_T_out_loop_initial, m_T_out_scas_last_initial);
+    }
 
 	return;
 }
@@ -518,8 +536,8 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
 	m_Ap_tot = 0.;
 	for (int i = 0; i<m_nSCA; i++)
 	{
-		int ct = (int)m_SCAInfoArray.at(i, 1);
-		m_Ap_tot += m_A_aperture[ct - 1];
+		int ct = (int)m_SCAInfoArray.at(i, 1) - 1; // SCA type Adjust index (SCAInfoArray starts at 1) 
+		m_Ap_tot += m_A_aperture[ct];
 	}
 
 	//Calculate the cross-sectional flow area of the receiver piping
@@ -647,6 +665,13 @@ bool C_csp_trough_collector_receiver::init_fieldgeom()
     double rho_cold = m_htfProps.dens(m_T_loop_in_des, 10.e5); //kg/m3
     double rho_hot = m_htfProps.dens(m_T_loop_out_des, 10.e5); //kg/m3
 	double rho_ave = m_htfProps.dens((m_T_loop_out_des + m_T_loop_in_des) / 2.0, 10.e5); //kg/m3
+
+    // Calculate Design velocity
+    {
+        m_max_loop_flow_vel_des = m_m_dot_loop_des * 4.0 / (rho_ave * M_PI * m_min_inner_diameter * m_min_inner_diameter); //[m/s]
+        m_min_loop_flow_vel_des = m_m_dot_loop_des * 4.0 / (rho_ave * M_PI * m_max_inner_diameter * m_max_inner_diameter); //[m/s]
+    }
+
     //Calculate the header design
     m_nrunsec = (int)floor(float(m_nfsec) / 4.0) + 1;  //The number of unique runner diameters
     m_D_runner.resize(2 * m_nrunsec);
@@ -897,6 +922,11 @@ double C_csp_trough_collector_receiver::get_tracking_power()
         return std::numeric_limits<double>::quiet_NaN();
 
     return m_SCA_drives_elec * 1.e-6 * m_nSCA * m_nLoops;     //MWe
+}
+
+std::vector<double> C_csp_trough_collector_receiver::get_scas_outlet_temps()
+{
+    return m_T_htf_out_t_end_converged;
 }
 
 double C_csp_trough_collector_receiver::get_col_startup_power()
@@ -1288,6 +1318,9 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
     double q_abs_htf_total = 0.;
     std::vector<double> m_EqOpteffs(m_nSCA, 0.);
 
+    m_vel_loop_min = std::numeric_limits<double>::quiet_NaN();
+    m_vel_loop_max = std::numeric_limits<double>::quiet_NaN();
+
 	//---------------------
 	for( int i = 0; i<m_nSCA; i++ )
 	{
@@ -1339,7 +1372,19 @@ int C_csp_trough_collector_receiver::loop_energy_balance_T_t_int(const C_csp_wea
 
 		//Calculate the specific heat for the node
 		c_htf_i *= 1000.0;	//[J/kg-K]
-		
+
+        // Calculate Velocity of Node
+        double vel_htf_i = m_dot_htf_loop * 4.0 / (rho_htf_i * M_PI * m_D_2.at(HT, 0) * m_D_2.at(HT, 0));
+
+        if (std::isnan(m_vel_loop_min) || (vel_htf_i < m_vel_loop_min))
+        {
+            m_vel_loop_min = vel_htf_i;
+        }
+        if (std::isnan(m_vel_loop_max) || (vel_htf_i > m_vel_loop_max))
+        {
+            m_vel_loop_max = vel_htf_i;
+        }
+
 		//Calculate the average node outlet temperature, including transient effects
 		double m_node = rho_htf_i * m_A_cs(HT, 1)*m_L_actSCA[CT];
 
@@ -2080,6 +2125,7 @@ void C_csp_trough_collector_receiver::set_output_value()
 	mc_reported_outputs.value(E_Q_DOT_FREEZE_PROT, m_q_dot_freeze_protection);			//[MWt]
 
 	mc_reported_outputs.value(E_M_DOT_LOOP, m_m_dot_htf_tot/(double)m_nLoops);		//[kg/s]
+
     mc_reported_outputs.value(E_IS_RECIRCULATING, m_is_m_dot_recirc);		    //[-]
 	if (m_is_m_dot_recirc)
 	{
@@ -2100,6 +2146,9 @@ void C_csp_trough_collector_receiver::set_output_value()
 
 	mc_reported_outputs.value(E_W_DOT_SCA_TRACK, m_W_dot_sca_tracking);		//[MWe]
 	mc_reported_outputs.value(E_W_DOT_PUMP, m_W_dot_pump);					//[MWe]
+
+    mc_reported_outputs.value(E_VEL_LOOP_MIN, m_vel_loop_min);  //[m/s]
+    mc_reported_outputs.value(E_VEL_LOOP_MAX, m_vel_loop_max);  //[m/s]
 
 	return;
 }
@@ -2918,7 +2967,8 @@ void C_csp_trough_collector_receiver::estimates(const C_csp_weatherreader::S_out
 	{
 		if( weather.m_beam > 1.0 )
 		{
-			est_out.m_q_startup_avail = 1.0;	//[MWt] Trough is recirculating, so going into startup isn't significantly different than OFF
+            double opt_eff_approx = calculate_optical_efficiency(weather, sim_info);
+            est_out.m_q_startup_avail = max(get_collector_area() * opt_eff_approx * weather.m_beam * 1e-6, 1.0); //[MWt] Trough is recirculating, so going into startup isn't significantly different than OFF
 		}
 		else
 		{
@@ -2930,6 +2980,26 @@ void C_csp_trough_collector_receiver::estimates(const C_csp_weatherreader::S_out
 	}
 	
 	return;
+}
+
+void C_csp_trough_collector_receiver::set_state(double T_in_loop, double T_out_loop, std::vector<double> T_out_scas)
+{
+    std::size_t N_scas_trough = m_T_htf_out_t_end_converged.size();
+    std::size_t N_scas_state = T_out_scas.size();
+    if (N_scas_trough != N_scas_state) {
+        throw "Incorrect trough state array length.";
+    }
+
+    // Set converged values so reset_last_temps() propagates the temps in time
+    m_T_sys_c_t_end_converged = m_T_sys_c_t_end_last = T_in_loop;       // this ends up setting m_T_sys_c_t_end_last
+    m_T_sys_h_t_end_converged = m_T_sys_h_t_end_last = T_out_loop;      // this ends up setting m_T_sys_h_t_end_last
+
+    // SCA temperatures - these end up setting m_T_htf_out_t_end_last[i]
+    for (std::vector<int>::size_type i = 0; i != T_out_scas.size(); i++) {
+        m_T_htf_out_t_end_converged[i] = T_out_scas[i];
+        m_T_htf_out_t_end[i] = T_out_scas[i];
+        m_T_htf_out_t_int[i] = T_out_scas[i];
+    }
 }
 
 void C_csp_trough_collector_receiver::update_last_temps()
@@ -4075,6 +4145,13 @@ void C_csp_trough_collector_receiver::converged()
 	// Reset the optical efficiency member data
 	loop_optical_eta_off();
 
+    // Set reported converged values
+    mc_reported_outputs.value(E_REC_OP_MODE_FINAL, m_operating_mode_converged);
+    mc_reported_outputs.value(E_DEFOCUS_FINAL, m_defocus_old);
+    mc_reported_outputs.value(E_T_IN_LOOP_FINAL, m_T_sys_c_t_end_converged);
+    mc_reported_outputs.value(E_T_OUT_LOOP_FINAL, m_T_sys_h_t_end_converged);
+    // NOTE: m_T_htf_out_t_end_converged is returned in the compute module;
+
 	mc_reported_outputs.set_timestep_outputs();
 
 	return;
@@ -4216,7 +4293,7 @@ double C_csp_trough_collector_receiver::get_collector_area()
 
 // ------------------------------------------ supplemental methods -----------------------------------------------------------
 
-bool C_csp_trough_collector_receiver::design_solar_mult()
+bool C_csp_trough_collector_receiver::design_solar_mult(std::vector<double> trough_loop_control)
 {
     if (m_is_solar_mult_designed == true)
         return false;
@@ -4254,14 +4331,26 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
         throw(C_csp_exception("Receiver HTF code is not recognized", "Trough Collector Solver"));
     }
 
+    // Process trough_loop_control
+    m_nSCA = trough_loop_control.at(0);
+
     // SCAInfoArray
-    m_SCAInfoArray = util::matrix_t<double>(static_cast<int>(m_trough_loop_control.at(0)), 2);
+    m_SCAInfoArray = util::matrix_t<double>(static_cast<int>(trough_loop_control.at(0)), 2);
     {
-        int assemblies = static_cast<int>(m_trough_loop_control.at(0));
+        int assemblies = static_cast<int>(trough_loop_control.at(0));
 
         for (int i = 0; i < assemblies; i++) {
-            m_SCAInfoArray.at(i, 1) = static_cast<int>(m_trough_loop_control.at(1 + 3 * i));
-            m_SCAInfoArray.at(i, 0) = static_cast<int>(m_trough_loop_control.at(2 + 3 * i));
+            m_SCAInfoArray.at(i, 1) = static_cast<int>(trough_loop_control.at(1 + 3 * i));
+            m_SCAInfoArray.at(i, 0) = static_cast<int>(trough_loop_control.at(2 + 3 * i));
+        }
+    }
+    // SCADefocusArray
+    m_SCADefocusArray = vector<int>();
+    {
+        int assemblies = static_cast<int>(trough_loop_control.at(0));
+        m_SCADefocusArray.resize(assemblies);
+        for (int i = 0; i < assemblies; i++) {
+            m_SCADefocusArray[i] = static_cast<int>(trough_loop_control.at(3 + 3 * i));
         }
     }
 
@@ -4275,45 +4364,68 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
     m_L_tot = 0.0;
     for (int i = 0; i < m_nSCA; i++)
     {
-        int ct = (int)m_SCAInfoArray.at(i, 1);
-        m_L_tot += m_L_actSCA[ct - 1];
+        int ct = (int)m_SCAInfoArray.at(i, 1) - 1; // Adjust index (SCAInfoArray starts at 1)
+        m_L_tot += m_L_actSCA[ct];
     }
+
+    size_t nSCA, dummy;
+    m_SCAInfoArray.size(nSCA, dummy);
 
     // Single Loop Aperture
     m_single_loop_aperture = 0;
     {
-        int nsca = static_cast<int>(m_trough_loop_control.at(0));
-
-        int sca_t = -1;
-        for (int i = 0; i < nsca; i++)
+        int sca_type = 0;
+        double aperture = 0;
+        for (int i = 0; i < nSCA; i++)
         {
-            sca_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
-            m_single_loop_aperture += + m_A_aperture[sca_t];
+            sca_type = m_SCAInfoArray.at(i, 1) - 1; // Adjust index (SCAInfoArray starts at 1)
+            aperture = m_A_aperture[sca_type];
+            m_single_loop_aperture += aperture;
         }
     }
 
     // Min_inner_diameter
-    m_min_inner_diameter = 0;
+    m_min_inner_diameter = m_D_2.at(0, 0);
     {
-        m_min_inner_diameter = m_D_2[0];
-        int hce_t = -1;
-        for (int i = 0; i < static_cast<int>(m_trough_loop_control.at(0)); i++)
+        int hce_type = 0;
+        double d = 0;
+        for (int i = 0; i < nSCA; i++)
         {
-            hce_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(i * 3 + 2)), 1), 4) - 1;
-            if (m_D_2[hce_t] < m_min_inner_diameter) {
-                m_min_inner_diameter = m_D_2[hce_t];
-            }
+            hce_type = m_SCAInfoArray.at(i, 0) - 1; // Adjust index (SCAInfoArray starts at 1)
+            d = m_D_2.at(hce_type, 0);
+            if (d < m_min_inner_diameter)
+                m_min_inner_diameter = d;
         }
     }
 
-    // SCADefocusArray
-    m_SCADefocusArray = vector<int>();
+    // Max_inner_diameter
+    m_max_inner_diameter = m_D_2.at(0, 0);
     {
-        int assemblies = static_cast<int>(m_trough_loop_control.at(0));
-        m_SCADefocusArray.resize(assemblies);
-        for (int i = 0; i < assemblies; i++) {
-            m_SCADefocusArray[i] = static_cast<int>(m_trough_loop_control.at(3 + 3 * i));
+        int hce_type = 0;
+        double d = 0;
+        for (int i = 0; i < nSCA; i++)
+        {
+            hce_type = m_SCAInfoArray.at(i, 0) - 1;
+            d = m_D_2.at(hce_type, 0);
+            if (d > m_max_inner_diameter)
+                m_max_inner_diameter = d;
         }
+    }
+
+    // Max Field Flow Velocity
+    m_max_field_flow_velocity = 0;
+    {
+        double density = m_htfProps.dens(m_T_loop_out_des + 273.15, std::numeric_limits<double>::quiet_NaN());
+
+        m_max_field_flow_velocity = m_m_dot_htfmax * 4 / (density * M_PI * m_min_inner_diameter * m_min_inner_diameter);
+    }
+
+    // Min Field Flow Velocity
+    m_min_field_flow_velocity = 0;
+    {
+        double density = m_htfProps.dens(m_T_loop_in_des + 273.15, std::numeric_limits<double>::quiet_NaN());
+
+        m_min_field_flow_velocity = m_m_dot_htfmin * 4 / (density * M_PI * m_max_inner_diameter * m_max_inner_diameter);
     }
 
     // HCE design heat loss
@@ -4332,13 +4444,13 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
     // HCE *loop* design heat loss
     m_HCE_heat_loss_loop_des = 0;
     {
-        int ncol = static_cast<int>(m_trough_loop_control.at(0));
         double total_len = 0.;
 
-        for (int i = 0; i < ncol; i++)
+        for (int i = 0; i < nSCA; i++)
         {
-            int sca_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(1 + i * 3)), 1), 4) - 1;
-            int hce_t = std::min(std::max(static_cast<int>(m_trough_loop_control.at(2 + i * 3)), 1), 4) - 1;
+            int sca_t = m_SCAInfoArray.at(i, 1) - 1;    // Adjust index (SCAInfoArray starts at 1)
+            int hce_t = m_SCAInfoArray.at(i, 0) - 1;    // Adjust index (SCAInfoArray starts at 1)
+
             total_len = total_len + m_L_SCA[sca_t];
             m_HCE_heat_loss_loop_des = m_HCE_heat_loss_loop_des + m_L_SCA[sca_t]
                 * (1 - (m_HCE_heat_loss_des[hce_t] / (m_I_bn_des * m_A_aperture[sca_t] / m_L_SCA[sca_t])));
@@ -4409,20 +4521,20 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
 
         for (int i = 0; i < m_nSCA; i++)
         {
-            int CT = (int)m_SCAInfoArray.at(i, 1);    //Collector type    
+            int CT = (int)m_SCAInfoArray.at(i, 1) - 1;    // Collector Type Adjust index (SCAInfoArray starts at 1) 
             double loss_col = 0;
 
             for (int j = 0; j < m_nHCEVar; j++)
             {
-                int HT = (int)m_SCAInfoArray.at(i, 0);    //HCE type
+                int HT = (int)m_SCAInfoArray.at(i, 0) - 1;    //HCE type Adjust index (SCAInfoArray starts at 1) 
                 //Calculate optical efficiency approximating use of the first collector only
-                m_opteff_des += m_Shadowing.at(HT - 1, j) * m_TrackingError[CT - 1] * m_GeomEffects[CT - 1] * m_Rho_mirror_clean[CT - 1] * m_Dirt_mirror[CT - 1] *
-                    m_Dirt_HCE.at(HT - 1, j) * m_Error[CT - 1] * (m_L_actSCA[CT - 1] / m_L_tot) * m_HCE_FieldFrac.at(HT - 1, j)
-                    * m_alpha_abs.at(HT - 1, j) * m_Tau_envelope.at(HT - 1, j);
-                loss_col += m_Design_loss.at(HT - 1, j) * m_L_actSCA[CT - 1] * m_HCE_FieldFrac.at(HT - 1, j);
+                m_opteff_des += m_Shadowing.at(HT, j) * m_TrackingError[CT] * m_GeomEffects[CT] * m_Rho_mirror_clean[CT] * m_Dirt_mirror[CT] *
+                    m_Dirt_HCE.at(HT, j) * m_Error[CT] * (m_L_actSCA[CT] / m_L_tot) * m_HCE_FieldFrac.at(HT, j)
+                    * m_alpha_abs.at(HT, j) * m_Tau_envelope.at(HT, j);
+                loss_col += m_Design_loss.at(HT, j) * m_L_actSCA[CT] * m_HCE_FieldFrac.at(HT, j);
             }
 
-            double L_col = m_L_actSCA[CT - 1];
+            double L_col = m_L_actSCA[CT];
             double avg_col_design_loss = loss_col / L_col;
 
             L_tot += L_col;
@@ -4434,7 +4546,6 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
 
         m_total_loop_conversion_efficiency_des = q_loop_actual / q_loop_ideal;
     }
-
 
     // Design Power cycle thermal input
     m_q_pb_design = 0;
@@ -4499,8 +4610,6 @@ bool C_csp_trough_collector_receiver::design_solar_mult()
         m_c_htf_ave = m_htfProps.Cp_ave(m_T_loop_in_des, m_T_loop_out_des) * 1000.;    //[J/kg-K] Specific heat
         m_m_dot_design = (m_Ap_tot * m_I_bn_des * m_opteff_des - loss_tot * float(m_nLoops)) / (m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des));
     }
-
-
 
     // Interconnect component minor loss coefficients
     m_K_cpnt = util::matrix_t<double>(m_nSCA + 3, 11, std::numeric_limits<double>::quiet_NaN());
@@ -6618,7 +6727,7 @@ int C_csp_trough_collector_receiver::size_rnr_lengths(int Nfieldsec, double L_rn
     // Nfieldsec				number of field sections
     // L_rnr_pb				    length of runner piping in and around the power block
     // Nrnrsec					the number of unique runner diameters
-    // ColType	                the collector type
+    // ColType	                the collector type (INDEX STARTS AT 1)
     // northsouth_field_sep	    north-south separation between subfields. 0=SCAs are touching
     // L_SCA[]					the length of the SCAs
     // min_rnr_xpans			minimum number of expansion loops per single-diameter runner section
