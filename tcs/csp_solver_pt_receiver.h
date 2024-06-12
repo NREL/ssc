@@ -176,6 +176,9 @@ public:
         double& m_dot_htf_rec /*kg/s*/, double& m_dot_htf_max /*kg/s*/,
         double& q_dot_piping_loss_des /*MWt*/);
 
+    virtual void set_state_requirement(bool) {};       // Only implemented in falling particle receiver class
+    virtual void set_fixed_mflow(double) {};     // Only implemented in falling particle receiver class
+
 protected:
 
     C_pt_receiver(double h_tower /*m*/, double m_epsilon /*-*/,

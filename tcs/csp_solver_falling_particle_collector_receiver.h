@@ -38,7 +38,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_pt_receiver.h"
 
 
-
 class C_csp_falling_particle_collector_receiver : public C_csp_collector_receiver
 {
 
@@ -92,16 +91,16 @@ private:
     combined_outputs m_combined_outputs;
 
     // Receiver and field results from the most recent estimates call
-    std::vector<double> m_sf_qinc_from_estimates;
-    std::vector<double> m_rec_qthermal_from_estimates;
-    std::vector<double> m_eta_field_from_estimates;
-    std::vector<double> m_eta_rec_from_estimates;
-    std::vector<C_csp_collector_receiver::E_csp_cr_modes> m_rec_state_from_estimates;
+    bool m_fix_mode_from_estimates;     // Require receiver state to match that from estimates call, even if receiver can't achieve target exit temperature?
+    bool m_fixed_mode_mflow_method;     // Method for setting mass flow when m_is_mode_fixed_to_input_mode = True.   0 = fix mass flow rate, 1 = solve for mass flow rate at maximum exit temperature
+    std::vector<double> m_sf_qinc_from_estimates;       // Incident solar power from estimates call (MWt)
+    std::vector<double> m_rec_qthermal_from_estimates;  // Receiver Qthermal from estimates call (MWt)
+    std::vector<double> m_eta_rec_from_estimates;       // Receiver efficiency from estimates call
+    std::vector<double> m_mdot_from_estimates;          // REceiver mass flow from estimates call (kg/s)
     
 
     void combine_results();
     void set_outputs(C_csp_collector_receiver::S_csp_cr_out_solver& cr_out_solver);
-
 
 
 public:
@@ -206,7 +205,8 @@ public:
 		const C_csp_collector_receiver::S_csp_cr_inputs &inputs,
 		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 		//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
-		const C_csp_solver_sim_info &sim_info);
+		const C_csp_solver_sim_info &sim_info,
+        bool is_fixed_states);
 
 };
 
