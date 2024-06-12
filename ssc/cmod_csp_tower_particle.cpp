@@ -89,7 +89,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     // Solar field
     { SSC_INPUT,     SSC_NUMBER, "field_model_type",                   "0=optimize field and tower/receiver geometry, 1=design field, 2=user specified field, 3=user flux and eta map, pass heliostat_positions to SolarPILOT for layout, 4=user flux and eta maps, no SolarPILOT, input A_sf_in, total_land_area_in, and N_hel", "", "", "Heliostat Field", "*",                      "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "helio_width",                        "Heliostat width",                                                                                                                         "m",            "",                                  "Heliostat Field",                          "field_model_type<4",                                               "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "helio_height",                       "Heliostat height",                                                                                                                        "m",            "",                                  "Heliostat Field",                          "field_model_type<4",                                               "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "helio_height",                       "Heliostat height",                                                                                                                        "m",            "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "helio_optical_error_mrad",           "Heliostat optical error",                                                                                                                 "mrad",         "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "helio_active_fraction",              "Heliostat active fraction",                                                                                                               "",             "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "dens_mirror",                        "Ratio of heliostat reflective area to profile",                                                                                           "",             "",                                  "Heliostat Field",                          "field_model_type<4",                                               "",              ""},
@@ -172,7 +172,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_INPUT,     SSC_ARRAY,  "snout_vert_bot_angle",               "SNOUT bottom surface angle from aperture normal",                                                                                         "deg",          "",                                  "Tower and Receiver",                       "?",                                                                "",              ""},
     { SSC_INPUT,     SSC_ARRAY,  "snout_vert_top_angle",               "SNOUT top surface angle from aperture normal",                                                                                            "deg",          "",                                  "Tower and Receiver",                       "?",                                                                "",              ""},
 
-    { SSC_INPUT,     SSC_NUMBER, "rec_hl_perm2",                       "Receiver design heat loss",                                                                                                               "kW/m2",        "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
+    //{ SSC_INPUT,     SSC_NUMBER, "rec_hl_perm2",                       "Receiver design heat loss",                                                                                                               "kW/m2",        "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "n_flux_days",                        "Number of days in flux map lookup",                                                                                                       "",             "",                                  "Tower and Receiver",                       "?=8",                                                              "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "delta_flux_hrs",                     "Hourly frequency in flux map lookup",                                                                                                     "",             "",                                  "Tower and Receiver",                       "?=1",                                                              "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "n_flux_x",                           "Flux map X resolution",                                                                                                                   "",             "",                                  "Tower and Receiver",                       "?=1",                                                              "",              ""},
@@ -771,6 +771,107 @@ public:
         weather_reader.init();
         if (weather_reader.has_error()) throw exec_error("csp_tower_particle", weather_reader.get_error());
 
+        // *********************************************************
+        //      Receiver model
+        // *********************************************************
+
+        // Using cmod inputs as initial guesses for receiver
+        double THT = as_double("h_tower");                                  // [m] tower height
+        std::vector<double> rec_height = as_vector_double("rec_height");    // [m] receiver height
+        std::vector<double> rec_width = as_vector_double("rec_width");      // [m] receiver width
+        if (!duplicate_recs && (rec_height.size() != num_recs || rec_width.size() != num_recs))
+            throw exec_error("csp_tower_particle", "Invalid receiver height and/or width input. For non-duplicate receivers, input arrays must have a length of " + util::to_string((int)num_recs));
+
+        bool is_rec_model_clearsky = as_double("rec_clearsky_fraction") > 0.0;
+        int rec_clearsky_model = as_integer("rec_clearsky_model");
+
+        if (rec_clearsky_model > 4)
+            throw exec_error("csp_tower_particle", "Invalid specification for 'rec_clearsky_model'");
+        if (rec_clearsky_model == -1 && as_double("rec_clearsky_fraction") >= 0.0001)
+            throw exec_error("csp_tower_particle", "'rec_clearsky_model' must be specified when 'rec_clearsky_fraction' > 0.0.");
+
+        // Reading in multi-receiver geometry inputs
+        std::vector<double> rec_azimuth = as_vector_double("rec_azimuth");
+        std::vector<double> power_fraction = as_vector_double("power_fraction");
+        std::vector<double> norm_curtain_height = as_vector_double("norm_curtain_height");
+        std::vector<double> norm_curtain_width = as_vector_double("norm_curtain_width");
+        std::vector<double> max_curtain_depth = as_vector_double("max_curtain_depth");
+
+        // Checking array lengths 
+        if (!duplicate_recs
+            && (rec_azimuth.size() != num_recs
+                || power_fraction.size() != num_recs
+                || norm_curtain_height.size() != num_recs
+                || norm_curtain_width.size() != num_recs
+                || max_curtain_depth.size() != num_recs))
+                throw exec_error("csp_tower_particle", "Invalid receiver input. For nonduplicate receivers input array must have a length of " + util::to_string((int)num_recs));
+
+        // setting receiver parameters
+        double user_efficiency = as_integer("rec_model_type") == 0 ? as_double("rec_eta_fixed") : 0.0;
+        double user_hadv = as_integer("rec_adv_model_type") == 0 ? as_double("rec_hadv_fixed") : 0.0;
+        int n_x = as_integer("rec_nx");
+        int n_y = as_integer("rec_ny");
+        if (as_integer("curtain_type") == 1) {
+            std::string err_msg = "Curved particle curtain is not currently implemented in the falling particle receiver performance model. Simulated performance will assume a flat curtain.\n";
+            log(err_msg, SSC_WARNING);
+        }
+
+        size_t input_idx;
+        double ap_height, ap_width, curtain_height, curtain_width, ap_curtain_depth_ratio, rec_orientation, q_dot_des_per_rec;
+        double A_rec_curtain_total = 0.0, A_rec_aperture_total = 0.0, power_fraction_sum = 0.0;
+        std::vector<double> A_rec_aperture(num_recs);
+        std::vector<double> A_rec_curtain(num_recs);
+        std::vector<double> design_heat_loss(num_recs);
+        std::vector<std::shared_ptr<C_pt_receiver>> receivers(num_recs);
+        for (size_t i = 0; i < num_recs; i++) {
+            input_idx = duplicate_recs ? 0 : i;
+            power_fraction_sum += power_fraction[input_idx];
+        }
+
+        for (size_t i = 0; i < num_recs; i++) {  // loop through receivers
+            input_idx = duplicate_recs ? 0 : i; // Use the first element if duplicate receivers
+            ap_height = rec_height[input_idx];
+            ap_width = rec_width[input_idx];
+            curtain_height = ap_height * norm_curtain_height[input_idx];
+            curtain_width = ap_width * norm_curtain_width[input_idx];     // TODO: Update curtain width when curved curtains are allowed
+            A_rec_curtain.at(i) = curtain_height * curtain_width;  // This receiver area is used to define the flux distribution.  Particle receiver model assumes that the flux distribution is defined based on the curtain area.
+            A_rec_aperture.at(i) = ap_height * ap_width;           // The aperture area should be used in cost calculations
+            A_rec_aperture_total += A_rec_aperture.at(i);
+            A_rec_curtain_total += A_rec_curtain.at(i);
+            ap_curtain_depth_ratio = max_curtain_depth[input_idx] / ap_height;
+            q_dot_des_per_rec = q_dot_rec_des * (power_fraction[input_idx] / power_fraction_sum);  // Receiver design point power
+            rec_orientation = rec_azimuth[i];
+            if (rec_orientation < 0)
+                rec_orientation += 360;  // Relative wind directions in receiver code require receiver orientation within [0,360]
+
+            receivers.at(i) = std::shared_ptr<C_falling_particle_receiver>(new C_falling_particle_receiver(
+                THT, as_double("T_htf_hot_des"), as_double("T_htf_cold_des"),
+                as_double("f_rec_min"), q_dot_des_per_rec,
+                as_double("rec_su_delay"), as_double("rec_qf_delay"),
+                as_double("csp.pt.rec.max_oper_frac"), as_double("eta_lift"),
+                as_integer("rec_htf"), as_matrix("field_fl_props"),
+                as_integer("rec_model_type"), user_efficiency, as_integer("rec_rad_model_type"), as_integer("rec_adv_model_type"), user_hadv,
+                ap_height, ap_width, norm_curtain_height[input_idx], norm_curtain_width[input_idx], ap_curtain_depth_ratio, rec_orientation,
+                as_double("particle_dp"), as_double("particle_abs"), as_double("curtain_emis"), as_double("curtain_dthdy"),
+                as_double("cav_abs"), as_double("cav_twall"), as_double("cav_kwall"), as_double("cav_hext"),
+                as_double("transport_deltaT_cold"), as_double("transport_deltaT_hot"),
+                as_double("rec_tauc_mult"), as_double("rec_hadv_mult"),
+                n_x, n_y, as_integer("rec_rad_nx"), as_integer("rec_rad_ny"),
+                as_double("T_htf_hot_des"), as_double("rec_clearsky_fraction")));
+
+            receivers.at(i)->init();
+            design_heat_loss.at(i) = receivers.at(i)->getHeatLossPerApertureArea() / 1000.0;    // [W/m^2] -> [kW/m^2]
+        }
+
+        // Assign design receiver heat loss for SolarPILOT
+        //std::string hl_msg;
+        ssc_number_t* p_rec_hl = allocate("design_rec_hl", design_heat_loss.size());
+        for (size_t i = 0; i < design_heat_loss.size(); i++) {
+            p_rec_hl[i] = (ssc_number_t)design_heat_loss.at(i);
+            //hl_msg = util::format("Initial receiver (%d) heat loss: %f [MWt]", i, design_heat_loss.at(i));
+            //log(hl_msg, SSC_NOTICE);
+        }
+
         // *****************************************************
         // Heliostat Field Model
         // *****************************************************
@@ -789,19 +890,14 @@ public:
         // Run SolarPILOT right away to update values as needed
         assign("receiver_type", var_receiver::REC_TYPE::FALLING_PARTICLE);
         // SolarPILOT outputs
-        // TODO: Update these for multi-receivers
         util::matrix_t<double> mt_eta_map;         // [deg, deg, -] Azimuth, zenith, solar field efficiency (per receiver)
         util::matrix_t<double> mt_flux_maps;       // Receiver flux maps
-        util::matrix_t<double> helio_pos;       // [m, m] X, Y positions of heliostats
+        util::matrix_t<double> helio_pos;          // [m, m] X, Y positions of heliostats
         std::vector<int> N_hel;                                                 // [-] Number of heliostats
         std::vector<double> A_sf;                                               // [m^2] Solar field area 
-        double THT = std::numeric_limits<double>::quiet_NaN();                  // [m] tower height
-        std::vector<double> rec_height;                                         // [m] receiver height
-        std::vector<double> rec_width;                                          // [m] receiver width
         double land_area_base = std::numeric_limits<double>::quiet_NaN();       // [acres] base land area
         double total_land_area = std::numeric_limits<double>::quiet_NaN();      // [acres] Total land area
         double heliostat_area = std::numeric_limits<double>::quiet_NaN();       // [m^2] heliostat reflective area
-        double h_helio = std::numeric_limits<double>::quiet_NaN();              // [m] Heliostat height
         double average_attenuation = std::numeric_limits<double>::quiet_NaN();  // [%] average attenuation loss
         double refl_image_error = std::numeric_limits<double>::quiet_NaN();     // [mrad] Reflected image conical error 
         double land_max_abs = std::numeric_limits<double>::quiet_NaN();         // [m] maximum distance from tower
@@ -814,9 +910,81 @@ public:
 
         if (field_model_type < 4) {
             // Field types 0-3 Requires solarPILOT
+            if (field_model_type == 0 && sim_type == 1) {
+                // Run heliostat field / receiver optimization first
+                solarpilot_invoke spi_opt(this);
+                assign("q_design", q_dot_rec_des);       //[MWt]
+
+                assign("is_optimize", 1); // Optimize design field and tower/receiver geometry
+
+                // Run optimization without flux_maps calculations
+                assign("calc_fluxmaps", 0);
+                spi_opt.run(weather_reader.m_weather_data_provider);    // Runs SolarPILOT
+                weather_reader.m_weather_data_provider->rewind();       // Reset for next SolarPILOT run
+
+                // Get optimized sizing
+                THT = spi_opt.sf.tht.val;
+                size_t sp_num_recs = spi_opt.recs.size();
+                if (sp_num_recs != num_recs)
+                    throw exec_error("csp_tower_particle", "Unexpected error: SolarPILOT's receivers count is inconsistent with user input.");
+
+                rec_height.resize(num_recs);
+                rec_width.resize(num_recs);
+                for (size_t i = 0; i < spi_opt.recs.size(); i++) {
+                    rec_height[i] = spi_opt.recs.at(i).rec_height.val;
+                    rec_width[i] = spi_opt.recs.at(i).rec_width.val;
+                }
+
+                // TODO: create a update specific the specific optimization variables values function
+            
+                // Re-initialize receivers 
+                A_rec_aperture_total = A_rec_curtain_total = 0.0;
+                for (size_t i = 0; i < num_recs; i++) {  // loop through receivers
+                    input_idx = duplicate_recs ? 0 : i; // Use the first element if duplicate receivers
+                    ap_height = rec_height[input_idx];
+                    ap_width = rec_width[input_idx];
+                    curtain_height = ap_height * norm_curtain_height[input_idx];
+                    curtain_width = ap_width * norm_curtain_width[input_idx];     // TODO: Update curtain width when curved curtains are allowed
+                    A_rec_curtain.at(i) = curtain_height * curtain_width;  // This receiver area is used to define the flux distribution.  Particle receiver model assumes that the flux distribution is defined based on the curtain area.
+                    A_rec_aperture.at(i) = ap_height * ap_width;           // The aperture area should be used in cost calculations
+                    A_rec_aperture_total += A_rec_aperture.at(i);
+                    A_rec_curtain_total += A_rec_curtain.at(i);
+                    ap_curtain_depth_ratio = max_curtain_depth[input_idx] / ap_height;
+                    q_dot_des_per_rec = q_dot_rec_des * (power_fraction[input_idx] / power_fraction_sum);  // Receiver design point power
+                    rec_orientation = rec_azimuth[i];
+                    if (rec_orientation < 0)
+                        rec_orientation += 360;  // Relative wind directions in receiver code require receiver orientation within [0,360]
+
+                    receivers.at(i) = std::shared_ptr<C_falling_particle_receiver>(new C_falling_particle_receiver(
+                        THT, as_double("T_htf_hot_des"), as_double("T_htf_cold_des"),
+                        as_double("f_rec_min"), q_dot_des_per_rec,
+                        as_double("rec_su_delay"), as_double("rec_qf_delay"),
+                        as_double("csp.pt.rec.max_oper_frac"), as_double("eta_lift"),
+                        as_integer("rec_htf"), as_matrix("field_fl_props"),
+                        as_integer("rec_model_type"), user_efficiency, as_integer("rec_rad_model_type"), as_integer("rec_adv_model_type"), user_hadv,
+                        ap_height, ap_width, norm_curtain_height[input_idx], norm_curtain_width[input_idx], ap_curtain_depth_ratio, rec_orientation,
+                        as_double("particle_dp"), as_double("particle_abs"), as_double("curtain_emis"), as_double("curtain_dthdy"),
+                        as_double("cav_abs"), as_double("cav_twall"), as_double("cav_kwall"), as_double("cav_hext"),
+                        as_double("transport_deltaT_cold"), as_double("transport_deltaT_hot"),
+                        as_double("rec_tauc_mult"), as_double("rec_hadv_mult"),
+                        n_x, n_y, as_integer("rec_rad_nx"), as_integer("rec_rad_ny"),
+                        as_double("T_htf_hot_des"), as_double("rec_clearsky_fraction")));
+
+                    receivers.at(i)->init();
+                    design_heat_loss.at(i) = receivers.at(i)->getHeatLossPerApertureArea() / 1000.0;    // [W/m^2] -> [kW/m^2]
+                }
+
+                // Re-assign heat loss
+                for (size_t i = 0; i < design_heat_loss.size(); i++) {
+                    p_rec_hl[i] = (ssc_number_t)design_heat_loss.at(i);
+                    //hl_msg = util::format("Final receiver (%d) heat loss: %f [MWt]", i, design_heat_loss.at(i));
+                    //log(hl_msg, SSC_NOTICE);
+                }
+
+            }
+
             solarpilot_invoke spi(this);
             assign("q_design", q_dot_rec_des);       //[MWt]
-            h_helio = as_double("helio_height");     //[m] Heliostat height - for system costing
 
             // TODO: Check 'n_flux_x' and 'n_flux_y'?
             //      - n_flux_y must be greater than the number of troughs in the curtain
@@ -826,14 +994,12 @@ public:
             // Default configuration specific case will overwrite these values
             assign("is_optimize", 0);            // Turn-off heliostat layout and tower optimization
             assign("calc_fluxmaps", 1);          // Include flux map calculations
-            if (field_model_type == 0 && sim_type == 1) {
-                assign("is_optimize", 1); // Optimize design field and tower/receiver geometry
-            }
-            else if (field_model_type == 3 || sim_type == 2) {
+
+            if (field_model_type == 3 || sim_type == 2) {
                 assign("calc_fluxmaps", 0); // efficiency and flux maps are provide by the user
             }
 
-            // Process user provided solar field and check if it's for a cavity receiver
+            // Process user provided solar field
             if (field_model_type == 2 || field_model_type == 3) { 
                 // Only calculates a flux map, so need to "assign" 'helio_positions_in' for SolarPILOT cmod
                 util::matrix_t<double> helio_pos_temp = as_matrix("helio_positions");
@@ -845,25 +1011,19 @@ public:
                     p_helio_positions_in[i * 2 + 1] = (ssc_number_t)helio_pos_temp(i, 1);   //[m] y
                 }
             }
+
             spi.run(weather_reader.m_weather_data_provider);    // Runs SolarPILOT
 
             // Collect the optical efficiency and flux map data
             if (field_model_type <= 2) {
                 if (sim_type == 1) {
-                    // Collect the optical efficiency data and sun positions
                     spi.getHeliostatFieldEfficiency(mt_eta_map);
-
-                    // Collect the flux map data
                     spi.getReceiverFluxMaps(mt_flux_maps);
                 }
-                else {
-                    // sim_type == 2
+                else { // sim_type == 2
                     // Filling maps with dummy values
-                    int n_y = as_integer("n_flux_y");
-                    int n_x = as_integer("n_flux_x");
-                     
                     mt_eta_map.resize_fill(1, (size_t)(2 + num_recs), std::numeric_limits<double>::quiet_NaN());
-                    mt_flux_maps.resize_fill(n_y, n_x, std::numeric_limits<double>::quiet_NaN());
+                    mt_flux_maps.resize_fill(as_integer("n_flux_y"), as_integer("n_flux_x"), std::numeric_limits<double>::quiet_NaN());
                 }
             }
             else if (field_model_type == 3) { // Read in user efficiency and flux maps
@@ -929,45 +1089,12 @@ public:
             // 3) total land area
             // 4) tower and receiver dimensions
             total_land_area = as_double("total_land_area_in");  //[acres]
-
-            // Get tower/receiver dimensions through cmod
-            THT = as_double("h_tower");             //[m]
-            h_helio = 0.0;                          //[m] Need a finite value for cost model
-            //h_helio = as_double("helio_height");        // TODO: This does impact system cost...
-
-            size_t count_N_hel, count_A_sf, count_rec_height, count_rec_width;
-            ssc_number_t* N_hel_in = as_array("N_hel", &count_N_hel);
-            ssc_number_t* A_sf_in = as_array("A_sf_in", &count_A_sf);
-            if (count_N_hel != num_recs
-                || count_A_sf != num_recs)
+            N_hel = as_vector_integer("N_hel");
+            A_sf = as_vector_double("A_sf_in");
+            if (N_hel.size() != num_recs
+                || A_sf.size() != num_recs)
                 throw exec_error("csp_tower_particle",
                     "Invalid field input. Either N_hel or A_sf_in length is not equal to the number of receivers: " + util::to_string((int)num_recs));
-            ssc_number_t* rec_height_in = as_array("rec_height", &count_rec_height);   // [m]
-            ssc_number_t* rec_width_in = as_array("rec_width", &count_rec_width);      // [m]
-
-            if (duplicate_recs) { // Receivers are duplicates
-                if (count_rec_height < 1
-                    || count_rec_width < 1)
-                    throw exec_error("csp_tower_particle", "Invalid receiver height and/or width input. A receiver height or width is has an array length of zero.");
-            }
-            else {
-                if (count_rec_height != num_recs
-                    || count_rec_width != num_recs)
-                    throw exec_error("csp_tower_particle", "Invalid receiver height and/or width input. For non-duplicate receivers, input arrays must have a length of " + util::to_string((int)num_recs));
-            }
-
-            N_hel.resize(num_recs);
-            A_sf.resize(num_recs);
-            rec_height.resize(num_recs);
-            rec_width.resize(num_recs);
-            size_t input_idx;
-            for (size_t i = 0; i < num_recs; i++) {    // loop through receivers
-                N_hel.at(i) = (int)N_hel_in[i];
-                A_sf.at(i) = A_sf_in[i];
-                input_idx = duplicate_recs ? 0 : i; // Use the first element if duplicate receivers
-                rec_height.at(i) = rec_height_in[input_idx];
-                rec_width.at(i) = rec_width_in[input_idx];
-            }
 
             helio_pos.resize_fill(1, 2, std::numeric_limits<double>::quiet_NaN());
 
@@ -1102,110 +1229,9 @@ public:
         p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_P_COND_ITER_ERR, allocate("P_cond_iter_err", n_steps_fixed), n_steps_fixed);
         p_csp_power_cycle->assign(C_pc_Rankine_indirect_224::E_ETA_THERMAL, allocate("eta", n_steps_fixed), n_steps_fixed);
 
+
         // *********************************************************
-        //      Receiver model
-        // *********************************************************
-
-        bool is_rec_model_clearsky = as_double("rec_clearsky_fraction") > 0.0;
-        int rec_clearsky_model = as_integer("rec_clearsky_model");
-
-        if (rec_clearsky_model > 4)
-            throw exec_error("csp_tower_particle", "Invalid specification for 'rec_clearsky_model'");
-        if (rec_clearsky_model == -1 && as_double("rec_clearsky_fraction") >= 0.0001)
-            throw exec_error("csp_tower_particle", "'rec_clearsky_model' must be specified when 'rec_clearsky_fraction' > 0.0.");
-
-        // Reading in multi-receiver geometry inputs
-        size_t count_rec_azimuth, count_power_fraction,
-            count_norm_curtain_height, count_norm_curtain_width, count_max_curtain_depth;
-        ssc_number_t* rec_azimuth = as_array("rec_azimuth", &count_rec_azimuth);
-        ssc_number_t* power_fraction = as_array("power_fraction", &count_power_fraction);
-        ssc_number_t* norm_curtain_height = as_array("norm_curtain_height", &count_norm_curtain_height);
-        ssc_number_t* norm_curtain_width = as_array("norm_curtain_width", &count_norm_curtain_width);
-        ssc_number_t* max_curtain_depth = as_array("max_curtain_depth", &count_max_curtain_depth);
-
-
-        // TODO: Remove height and width based on SolarPILOT output (optimization)
-
-        // Checking array lengths 
-        if (duplicate_recs) { // Receivers are duplicates -> TODO: Do we need this test? Check if an array can be initialize to empty
-            if (count_rec_azimuth < 1
-                || count_power_fraction < 1
-                || count_norm_curtain_height < 1
-                || count_norm_curtain_width < 1
-                || count_max_curtain_depth < 1)
-                throw exec_error("csp_tower_particle", "Invalid receiver input. A receiver input is has an array length of zero.");
-        }
-        else {  // Receivers are unique
-            if (count_rec_azimuth != num_recs
-                || count_power_fraction != num_recs
-                || count_norm_curtain_height != num_recs
-                || count_norm_curtain_width != num_recs
-                || count_max_curtain_depth != num_recs)
-                throw exec_error("csp_tower_particle", "Invalid receiver input. For nonduplicate receivers input array must have a length of " + util::to_string((int)num_recs));
-        }
-
-
-        // setting receiver parameters
-        double user_efficiency = as_integer("rec_model_type") == 0 ? as_double("rec_eta_fixed") : 0.0;
-        double user_hadv = as_integer("rec_adv_model_type") == 0 ? as_double("rec_hadv_fixed") : 0.0;
-        int n_x = as_integer("rec_nx"); //mt_flux_maps.ncols() / num_recs;
-        int n_y = as_integer("rec_ny"); //(mt_flux_maps.nrows() / mt_eta_map.nrows()) + 1;
-        if (as_integer("curtain_type") == 1) {
-            std::string err_msg = "Curved particle curtain is not currently implemented in the falling particle receiver performance model. Simulated performance will assume a flat curtain.\n";
-            log(err_msg, SSC_WARNING);
-        }
-
-        size_t input_idx;
-        double ap_height, ap_width, curtain_height, curtain_width, ap_curtain_depth_ratio, rec_orientation, q_dot_des_per_rec;
-        double A_rec_curtain_total = 0.0;
-        double A_rec_aperture_total = 0.0;
-        double power_fraction_sum = 0.0;
-        std::vector<double> A_rec_aperture(num_recs);
-        std::vector<double> A_rec_curtain(num_recs);
-        std::vector<std::shared_ptr<C_pt_receiver>> receivers(num_recs);
-        for (size_t i = 0; i < num_recs; i++)
-        {
-            input_idx = duplicate_recs ? 0 : i;
-            power_fraction_sum += power_fraction[input_idx];
-        }
-
-        for (size_t i = 0; i < num_recs; i++)   // loop through receivers
-        {   
-            input_idx = duplicate_recs ? 0 : i; // Use the first element if duplicate receivers
-            ap_height = rec_height[input_idx];
-            ap_width = rec_width[input_idx];
-            curtain_height = ap_height * norm_curtain_height[input_idx];
-            curtain_width = ap_width * norm_curtain_width[input_idx];     // TODO: Update curtain width when curved curtains are allowed
-            A_rec_curtain.at(i) = curtain_height * curtain_width;  // This receiver area is used to define the flux distribution.  Particle receiver model assumes that the flux distribution is defined based on the curtain area.
-            A_rec_aperture.at(i) = ap_height * ap_width;           // The aperture area should be used in cost calculations
-            A_rec_aperture_total += A_rec_aperture.at(i);
-            A_rec_curtain_total += A_rec_curtain.at(i);
-            ap_curtain_depth_ratio = max_curtain_depth[input_idx] / ap_height;
-            q_dot_des_per_rec = q_dot_rec_des * (power_fraction[input_idx] / power_fraction_sum);  // Receiver design point power
-            rec_orientation = rec_azimuth[i];
-            if (rec_orientation < 0)
-                rec_orientation += 360;  // Relative wind directions in receiver code require receiver orientation witin [0,360]
-
-            // TODO (Janna): update to initialize individual receivers
-            receivers.at(i) = std::shared_ptr<C_falling_particle_receiver>(new C_falling_particle_receiver(
-                    THT, as_double("T_htf_hot_des"), as_double("T_htf_cold_des"),
-                    as_double("f_rec_min"), q_dot_des_per_rec,
-                    as_double("rec_su_delay"), as_double("rec_qf_delay"),
-                    as_double("csp.pt.rec.max_oper_frac"), as_double("eta_lift"),
-                    as_integer("rec_htf"), as_matrix("field_fl_props"),
-                    as_integer("rec_model_type"), user_efficiency, as_integer("rec_rad_model_type"), as_integer("rec_adv_model_type"), user_hadv,
-                    ap_height, ap_width, norm_curtain_height[input_idx], norm_curtain_width[input_idx], ap_curtain_depth_ratio, rec_orientation,
-                    as_double("particle_dp"), as_double("particle_abs"), as_double("curtain_emis"), as_double("curtain_dthdy"),
-                    as_double("cav_abs"), as_double("cav_twall"), as_double("cav_kwall"), as_double("cav_hext"),
-                    as_double("transport_deltaT_cold"), as_double("transport_deltaT_hot"),
-                    as_double("rec_tauc_mult"), as_double("rec_hadv_mult"),
-                    n_x, n_y, as_integer("rec_rad_nx"), as_integer("rec_rad_ny"),
-                    as_double("T_htf_hot_des"), as_double("rec_clearsky_fraction")));
-        }
-
-
-
-
+        //      Heliostat field class
         // *******************************************************
         // Formatting efficiency data and flux maps for heliostat field class
         std::vector<util::matrix_t<double>> eta_maps;
@@ -1949,6 +1975,8 @@ public:
         }
 
         // Calculating tower height based on MAX height of tower (i.e., top of curtain to ground)
+        // TODO: This does impact system cost... Discuss with Ty? and Janna?
+        double h_helio = as_double("helio_height");     //[m] Heliostat height - for system costing
         double tower_cost =
             N_mspt::tower_cost(THT + max_rec_height_offset, 0.0, h_helio, as_double("tower_fixed_cost"), as_double("tower_exp"));
         assign("h_rec_input_to_cost_model", (ssc_number_t)max_rec_height_offset);       //[m]

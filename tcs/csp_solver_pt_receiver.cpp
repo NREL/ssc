@@ -221,6 +221,12 @@ double C_pt_receiver::estimate_thermal_efficiency(const C_csp_weatherreader::S_o
 
 }
 
+
+double C_pt_receiver::getHeatLossPerApertureArea()
+{
+    throw std::runtime_error((std::string)__func__ + " is not implemented.");
+};
+
 double C_pt_receiver::get_min_power_delivery() //[MWt]
 {
     return m_f_rec_min * m_q_rec_des * 1.E-6;   //[MWt]

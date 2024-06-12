@@ -1201,6 +1201,8 @@ bool AutoPilot_S::SimulateAimPointsAtDesign()
     if (!_cancel_simulation)
         _SF->Simulate(azzen[0] * D2R, azzen[1] * D2R, P);
 
+    //result.process_analytical_simulation(*_SF, P, 0, azzen);
+
     return true;
 }
 

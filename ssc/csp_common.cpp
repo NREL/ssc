@@ -162,7 +162,6 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
     hf->focus_method.combo_select_by_choice_index( m_cmod->as_integer("focus_type") );
 
     var_receiver *rf = &recs.front();
-    rf->therm_loss_base.val = m_cmod->as_double("rec_hl_perm2");    // TODO: This doesn't work for multi-receiver systems
 
     int rec_type = m_cmod->as_integer("receiver_type");
     if (rec_type == 0) {
@@ -170,6 +169,7 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
         rf->rec_height.val = m_cmod->as_double("rec_height");
         rf->rec_width.val = rf->rec_diameter.val = rf->rec_height.val / m_cmod->as_double("rec_aspect");
         rf->absorptance.val = m_cmod->as_double("rec_absorptance");
+        rf->therm_loss_base.val = m_cmod->as_double("rec_hl_perm2");
     }
     else if (rec_type == 1) {
         rf->rec_type.val = "Cavity";
@@ -194,6 +194,7 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
         rf->rec_cav_rad.val = radius;
 
         rf->absorptance.val = 1.0;      // don't apply absorptivity in SolarPILOT for cavity receivers - performance model will do this
+        rf->therm_loss_base.val = m_cmod->as_double("rec_hl_perm2");
     }
     else if (rec_type == 3) {
         // Set-up for multi-receivers
@@ -208,58 +209,55 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
         }
         bool duplicate_recs = m_cmod->as_boolean("is_recs_duplicate");
         // Reading multi-receiver input data
-        size_t count_rec_height, count_rec_width, count_rec_azimuth, count_power_fraction,
-            count_norm_curtain_height, count_norm_curtain_width, count_max_curtain_depth, count_is_snout,
-            count_snout_depth, count_snout_horiz_angle, count_snout_vert_bot_angle, count_snout_vert_top_angle;
-        ssc_number_t* rec_height = m_cmod->as_array("rec_height", &count_rec_height);
-        ssc_number_t* rec_width = m_cmod->as_array("rec_width", &count_rec_width);
-        ssc_number_t* rec_azimuth = m_cmod->as_array("rec_azimuth", &count_rec_azimuth);
-        ssc_number_t* power_fraction = m_cmod->as_array("power_fraction", &count_power_fraction);
-        ssc_number_t* norm_curtain_height = m_cmod->as_array("norm_curtain_height", &count_norm_curtain_height);
-        ssc_number_t* norm_curtain_width = m_cmod->as_array("norm_curtain_width", &count_norm_curtain_width);
-        ssc_number_t* max_curtain_depth = m_cmod->as_array("max_curtain_depth", &count_max_curtain_depth);
-        ssc_number_t* is_snout = m_cmod->as_array("is_snout", &count_is_snout);
-        ssc_number_t* snout_depth = m_cmod->as_array("snout_depth", &count_snout_depth);
-        ssc_number_t* snout_horiz_angle = m_cmod->as_array("snout_horiz_angle", &count_snout_horiz_angle);
-        ssc_number_t* snout_vert_bot_angle = m_cmod->as_array("snout_vert_bot_angle", &count_snout_vert_bot_angle);
-        ssc_number_t* snout_vert_top_angle = m_cmod->as_array("snout_vert_top_angle", &count_snout_vert_top_angle);
+        std::vector<double> rec_height = m_cmod->as_vector_double("rec_height");
+        std::vector<double> rec_width = m_cmod->as_vector_double("rec_width");
+        std::vector<double> rec_azimuth = m_cmod->as_vector_double("rec_azimuth");
+        std::vector<double> power_fraction = m_cmod->as_vector_double("power_fraction");
+        std::vector<double> norm_curtain_height = m_cmod->as_vector_double("norm_curtain_height");
+        std::vector<double> norm_curtain_width = m_cmod->as_vector_double("norm_curtain_width");
+        std::vector<double> max_curtain_depth = m_cmod->as_vector_double("max_curtain_depth");
 
-        if (duplicate_recs) { // Receivers are duplicates -> TODO: Do we need this test? Check if an array can be initialize to empty
-            if (count_rec_height < 1
-                || count_rec_width < 1
-                || count_rec_azimuth < 1
-                || count_power_fraction < 1
-                || count_norm_curtain_height < 1
-                || count_norm_curtain_width < 1
-                || count_max_curtain_depth < 1
-                || count_is_snout < 1
-                || count_snout_depth < 1    // TODO: not required if no snout...
-                || count_snout_horiz_angle < 1
-                || count_snout_vert_bot_angle < 1
-                || count_snout_vert_top_angle < 1)
-                throw exec_error("SolarPILOT cmod", "Invalid receiver input. A receiver input is has an array length of zero.");
+        std::vector<bool> is_snout = m_cmod->as_vector_bool("is_snout");
+        bool is_snout_any = false; // Does any of the receivers have a snout?
+        for (size_t i = 0; i < is_snout.size(); i++) {
+            is_snout_any = is_snout_any || is_snout[i];
         }
-        else {
-            if (count_rec_height != num_recs
-                || count_rec_width != num_recs
-                || count_rec_azimuth != num_recs
-                || count_power_fraction != num_recs
-                || count_norm_curtain_height != num_recs
-                || count_norm_curtain_width != num_recs
-                || count_max_curtain_depth != num_recs
-                || count_is_snout != num_recs
-                || count_snout_depth != num_recs
-                || count_snout_horiz_angle != num_recs
-                || count_snout_vert_bot_angle != num_recs
-                || count_snout_vert_top_angle != num_recs)
-                throw exec_error("SolarPILOT cmod", "Invalid receiver input. For non-duplicate receivers, input array must have a length of " + util::to_string(num_recs));
+
+        std::vector<double> snout_depth, snout_horiz_angle, snout_vert_bot_angle, snout_vert_top_angle;
+        if (is_snout_any) {
+            snout_depth = m_cmod->as_vector_double("snout_depth");
+            snout_horiz_angle = m_cmod->as_vector_double("snout_horiz_angle");
+            snout_vert_bot_angle = m_cmod->as_vector_double("snout_vert_bot_angle");
+            snout_vert_top_angle = m_cmod->as_vector_double("snout_vert_top_angle");
         }
+
+        if (!duplicate_recs) {
+            if (rec_height.size() != num_recs
+                || rec_width.size() != num_recs
+                || rec_azimuth.size() != num_recs
+                || power_fraction.size() != num_recs
+                || norm_curtain_height.size() != num_recs
+                || norm_curtain_width.size() != num_recs
+                || max_curtain_depth.size() != num_recs
+                || is_snout.size() != num_recs)
+            throw exec_error("SolarPILOT cmod", "Invalid receiver input. For non-duplicate receivers, input array must have a length of " + util::to_string(num_recs));
+            else if (is_snout_any
+                && (snout_depth.size() != num_recs
+                    || snout_horiz_angle.size() != num_recs
+                    || snout_vert_bot_angle.size() != num_recs
+                    || snout_vert_top_angle.size() != num_recs))
+            throw exec_error("SolarPILOT cmod", "Invalid receiver input. For non-duplicate receivers, input array must have a length of " + util::to_string(num_recs));
+        }
+
         // Receiver offsets
         util::matrix_t<double> rec_tower_offset = m_cmod->as_matrix("rec_tower_offset");  // [-]
         if (rec_tower_offset.nrows() != num_recs)
             throw exec_error("SolarPILOT cmod", "Invalid receiver offsets. Receiver tower offset must have a row for each receiver.");
         if (rec_tower_offset.ncols() != 2 && rec_tower_offset.ncols() != 3)
             throw exec_error("SolarPILOT cmod", "Invalid receiver offsets. Receiver tower offset must have either two or three columns.");
+
+        // Get heat loss
+        std::vector<double> design_rec_hl = m_cmod->as_vector_double("design_rec_hl");
 
         // setting receiver parameters
         int input_idx;
@@ -269,11 +267,11 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
             rf->rec_type.val = "Falling particle";
             rf->rec_height.val = rec_height[input_idx];
             rf->rec_width.val = rec_width[input_idx];
-            rf->rec_azimuth.val = rec_azimuth[i];       // Required to provide an azimuth for each receiver
+            rf->rec_azimuth.val = rec_azimuth[i];               // Required to provide an azimuth for each receiver
             rf->power_fraction.val = power_fraction[input_idx];
-            rf->absorptance.val = 1.0;      // Don't apply absorptivity for falling particle receivers - performance model will do this
-            rf->therm_loss_base.val = m_cmod->as_double("rec_hl_perm2");    // TODO: Single input for all...
-            rf->piping_loss_coef.val = 0.0;  // Assume no piping losses for now TODO
+            rf->absorptance.val = 1.0;                          // Don't apply absorptivity for falling particle receivers - performance model will do this
+            rf->therm_loss_base.val = design_rec_hl[i];
+            rf->piping_loss_coef.val = 0.0;                     // Assume no piping losses for now TODO
 
             // Receiver offsets from tower center
             rf->rec_offset_x.val = rec_tower_offset.at(i, 0);
@@ -285,8 +283,8 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
             rf->norm_curtain_height.val = norm_curtain_height[input_idx];  // [-]
             rf->norm_curtain_width.val = norm_curtain_width[input_idx];    // [-]
             rf->max_curtain_depth.val = max_curtain_depth[input_idx];      // [m]
-            rf->curtain_total_height.Setval(norm_curtain_height[input_idx] * rec_height[input_idx]);    // TODO: Do I need to do this calculation?
-            rf->max_curtain_width.Setval(norm_curtain_width[input_idx] * rec_width[input_idx]);
+            //rf->curtain_total_height.Setval(norm_curtain_height[input_idx] * rec_height[input_idx]);    // TODO: Do I need to do this calculation?
+            //rf->max_curtain_width.Setval(norm_curtain_width[input_idx] * rec_width[input_idx]);
 
             int curtain_type = m_cmod->as_integer("curtain_type");
             if (curtain_type == 0) {
@@ -419,7 +417,7 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
 	    m_sapi->GenerateDesignPointSimulations( *this, wfdata );
 	
         if(isopt){  // Do tower height and receiver sizing optimization
-            m_cmod->log("Optimizing...", SSC_WARNING, 0.);
+            m_cmod->log("Optimizing...", SSC_NOTICE, 0.);
             m_sapi->SetSummaryCallback( optimize_callback, m_cmod);
 		    m_sapi->Setup(*this, true);
             
@@ -517,26 +515,26 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
                     // TODO: Update for multiple receiver problem... 
                     // TODO (Bill): Set-up receiver cost to use aperture area? Need to check if that is the case
                     int nv = 3;
-                    vector<double*> optvars(nv);
+                    vector<double*> opt_vars(nv);
                     vector<double> upper(nv, HUGE_VAL);
                     vector<double> lower(nv, 0);
-                    vector<double> stepsize(nv);
+                    vector<double> step_size(nv);
                     vector<string> names(nv);
 
                     //pointers
-                    optvars.at(0) = &sf.tht.val;
-                    optvars.at(1) = &recs.front().rec_height.val;
-                    optvars.at(2) = &recs.front().rec_width.val;
+                    opt_vars.at(0) = &sf.tht.val;
+                    opt_vars.at(1) = &recs.front().rec_height.val;
+                    opt_vars.at(2) = &recs.front().rec_width.val;
                     //names
                     names.at(0) = (split(sf.tht.name, ".")).back();
                     names.at(1) = (split(recs.front().rec_height.name, ".")).back();
                     names.at(2) = (split(recs.front().rec_width.name, ".")).back();
                     //step size
-                    stepsize.at(0) = sf.tht.val * opt.max_step.val;
-                    stepsize.at(1) = recs.front().rec_height.val * opt.max_step.val;
-                    stepsize.at(2) = recs.front().rec_width.val * opt.max_step.val;
+                    step_size.at(0) = sf.tht.val * opt.max_step.val;
+                    step_size.at(1) = recs.front().rec_height.val * opt.max_step.val;
+                    step_size.at(2) = recs.front().rec_width.val * opt.max_step.val;
 
-                    if (!m_sapi->Optimize(/*opt.algorithm.mapval(),*/ optvars, upper, lower, stepsize, &names))
+                    if (!m_sapi->Optimize(/*opt.algorithm.mapval(),*/ opt_vars, upper, lower, step_size, &names))
                         return false;
                 }
             }
@@ -1010,7 +1008,7 @@ static bool optimize_callback( simulation_info *siminfo, void *data )
     if(! cm) return false;
     
     std::string notices = *siminfo->getSimulationNotices();
-    cm->log( notices, SSC_WARNING, 0. );
+    cm->log( notices, SSC_NOTICE, 0. );
     
     return true;
 }

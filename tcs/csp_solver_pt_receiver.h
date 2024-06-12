@@ -160,6 +160,8 @@ public:
 
     virtual double estimate_thermal_efficiency(const C_csp_weatherreader::S_outputs& weather, double q_inc);
 
+    virtual double getHeatLossPerApertureArea(); // [W/m^2]
+
     double get_min_power_delivery(); //[MWt]
 
     double get_max_power_delivery(); //[MWt]

@@ -363,6 +363,9 @@ public:
 
     double estimate_thermal_efficiency(const C_csp_weatherreader::S_outputs& weather, double q_inc);
 
+    double getHeatLossPerApertureArea() { return m_q_dot_loss_per_m2_des_calc; }
+    
+
 };
 
 #endif // __csp_solver_mspt_receiver_222_
