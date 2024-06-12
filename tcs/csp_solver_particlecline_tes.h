@@ -101,7 +101,7 @@ public:
 
     ~C_csp_particlecline_tes() {};
 
-    void set_T_grad_init(std::vector<double> T_grad_init);
+    void set_T_grad_init(std::vector<double> T_grad_init_C);
 
 	virtual void init(const C_csp_tes::S_csp_tes_init_inputs init_inputs);
 

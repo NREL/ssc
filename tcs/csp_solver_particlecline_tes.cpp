@@ -81,9 +81,11 @@ C_csp_particlecline_tes::C_csp_particlecline_tes()
     mc_reported_outputs.construct(S_output_info);
 }
 
-void C_csp_particlecline_tes::set_T_grad_init(std::vector<double> T_grad_init)
+void C_csp_particlecline_tes::set_T_grad_init(std::vector<double> T_grad_init_C)
 {
-    m_T_prev_vec = T_grad_init;
+    for (double T_C : T_grad_init_C)
+        m_T_prev_vec.push_back(T_C + 273.15);
+
     m_use_T_grad_init = true;
 }
 
@@ -304,7 +306,7 @@ bool C_csp_particlecline_tes::charge(double timestep /*s*/, double T_amb /*K*/, 
     // Initialize Temperature Vectors
     std::vector<double> T_calc_vec(m_n_xstep + 1);
     std::vector<double> T_prev_vec_subtime = m_T_prev_vec;
-    std::vector<double> T_out_vec(m_n_xstep, 0.0);
+    std::vector<double> T_out_vec(m_n_subtimestep, 0.0);
 
     // Loop through subtimesteps
     for (int n = 0; n < m_n_subtimestep; n++)

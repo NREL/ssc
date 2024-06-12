@@ -465,7 +465,7 @@ public:
                 std::vector<double> T_prev_vec = storage_particle.get_T_prev_vec();
                 for (int j = 0; j < T_prev_vec.size(); j++)
                 {
-                    tes_T_grad_mat.at(i, j) = T_prev_vec[j];
+                    tes_T_grad_mat.at(i, j) = T_prev_vec[j] - 273.15;   // [C] Convert from K
                 }
             }
 
