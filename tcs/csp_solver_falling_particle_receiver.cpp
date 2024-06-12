@@ -147,6 +147,12 @@ C_falling_particle_receiver::C_falling_particle_receiver(double h_tower /*m*/,
     m_E_su = std::numeric_limits<double>::quiet_NaN();
 	m_t_su = std::numeric_limits<double>::quiet_NaN();
 
+    // Control variables
+    m_is_mode_fixed_to_input_mode = false;
+    m_fixed_mode_mflow_method = 1;  // Hard-coded for now, maybe try adding this option through collector-receiver class later
+    m_m_dot_htf_fixed = std::numeric_limits<double>::quiet_NaN();
+
+
     // Stored solutions
     m_n_max_stored_solns = 10;
 
@@ -309,7 +315,7 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
     }
 
     // Check that wind direction is defined
-    if (wind_direc != wind_direc) 
+    if (wind_direc != wind_direc)
     {
         throw(C_csp_exception("Wind direction is not defined", "Falling particle receiver timestep performance call"));
     }
@@ -377,6 +383,12 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
     soln.T_particle_cold_in = T_particle_cold_in;   //[K]	
     soln.od_control = od_control;           //[-] Initial component defocus control (may be adjusted during the solution)
     soln.rec_is_off = rec_is_off;
+
+    if (m_is_mode_fixed_to_input_mode)  // Require solution to keep the operating mode specified in input_operation_mode, even if the receiver can't achieve the target exit temperature
+    {
+        soln.require_operating_mode = true;
+        soln.required_mode = input_operation_mode;
+    }
 
     if ((std::isnan(clearsky_to_input_dni) || clearsky_to_input_dni < 0.9999) && m_csky_frac > 0.0001)
         throw(C_csp_exception("Clear-sky DNI to measured is NaN or less than 1 but is required >= 1 in the clear-sky receiver model"));
@@ -566,11 +578,10 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
 
             Q_thermal = m_dot_tot * cp_htf * (T_particle_hot - T_particle_cold_in);
 
+            // If output here is less than specified allowed minimum, then need to shut off receiver, unless state is required to be fixed to ON
             if (Q_inc < m_q_dot_inc_min)
             {
-                // If output here is less than specified allowed minimum, then need to shut off receiver
                 m_mode = C_csp_collector_receiver::OFF;
-
             }
 
             break;
@@ -750,7 +761,16 @@ void C_falling_particle_receiver::converged()
 }
 
 
+void C_falling_particle_receiver::set_state_requirement(bool is_mode_fixed_to_input_mode)
+{
+    m_is_mode_fixed_to_input_mode = is_mode_fixed_to_input_mode;
+}
 
+void C_falling_particle_receiver::set_fixed_mflow(double mflow)  // kg/s
+{
+    m_m_dot_htf_fixed = mflow;
+    return;
+}
 
 void C_falling_particle_receiver::design_point_steady_state(double v_wind_10, double wind_direc, double& eta_thermal, double& W_lift, double &Q_transport_loss, double& q_dot_loss_per_m2_ap, double& tauc_avg)
 {
@@ -1103,9 +1123,11 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
                     if (j < m_n_y - 1)
                     {
                         qabs_approx = (1.0 - soln.rhoc.at(j, i) - soln.tauc.at(j, i) + rhow * soln.tauc.at(j, i) + rhow * (1.0 - vf_to_ap) * soln.rhoc.at(j, i)) * soln.q_dot_inc.at(j, i); // Approximate solar energy absorbed by the particle curtain (W/m2)
-                        qnet_approx = qabs_approx - hadv_with_wind * (Tp.at(j, i) - soln.T_amb) - m_curtain_emis * CSP::sigma * pow(Tp.at(j, i), 4);  //Approximate net heat transfer rate using curtain temperature at prior element
+                        qnet_approx = qabs_approx - hadv_with_wind * (Tp.at(j, i) - soln.T_amb) - m_curtain_emis * CSP::sigma * (pow(Tp.at(j, i), 4) - pow(soln.T_amb,4));  //Approximate net heat transfer rate using curtain temperature at prior element
                         dh_approx = qnet_approx * (dy / (soln.phip.at(j + 1, i) * soln.thc.at(j + 1, i) * soln.vel.at(j + 1, i) * particle_density));
                         Tp.at(j + 1, i) = fmax(T_cold_in_rec, Tp.at(j, i) + dh_approx / cp);
+                        if (Tp.at(j + 1, i) < soln.T_amb)
+                            Tp.at(j + 1, i) = soln.T_amb;
                     }
 
                     qnet_approx = (1.0 - rhow)*(1.0 + rhow*soln.rhoc.at(j,i)) * (m_curtain_emis * CSP::sigma * pow(Tp.at(j, i), 4) + soln.tauc.at(j, i) * soln.q_dot_inc.at(j, i));     // Approximate radiative heat transfer incoming to the back wall (W/m2)
@@ -1433,6 +1455,9 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
     int nmax = 50;
 
     bool allow_Tmax_stopping = true;   // Allow mass flow iteration loop to stop based on estimated upper bound of particle outlet temperature (assumes efficiency increases monotonically with mass flow)
+    if (soln.require_operating_mode && soln.required_mode == C_csp_collector_receiver::E_csp_cr_modes::ON && m_fixed_mode_mflow_method == 1)
+        allow_Tmax_stopping = false;      // If receiver can't reach target exit temperature the solution will return the mass flow required for the maximum exit temperature
+
 
     //--- Set initial guess for particle flow
     double m_dot_guess, m_dot_guess_new;
@@ -1461,8 +1486,13 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
     bool is_upper_bound = false;                // Has upper bound been defined?
     bool is_lower_bound_above_Ttarget = false;  // Has a solution already been found with outlet T > target T?
 
-    double bound_tol = 0.0025;                  // Stopping tolerance based on distance between bounds (typically solution will terminate becuase of calculated maximum outlet T first)
+    double bound_tol = 0.01;                  // Stopping tolerance based on mass flow bounds (typically solution will terminate because of calculated maximum outlet T first)
+    double Tout_tol = 1;
+    double lower_bound_Tout = std::numeric_limits<double>::quiet_NaN();  // Outlet temperature at current lower bound for mass flow
+    double upper_bound_Tout = std::numeric_limits<double>::quiet_NaN();  // Outlet temperature at current upper bound for mass flow
+
     double Tout_max = std::numeric_limits<double>::quiet_NaN();  // Current maximum possible outlet temperature [K] (based on upper bound for efficiency, lower bound for mass flow)
+    double eta_max_sim = std::numeric_limits<double>::quiet_NaN();  // Maximum simulated receiver efficiency
 
     util::matrix_t<double> mflow_history, Tout_history, eta_history;
     util::matrix_t<bool> converged_history;
@@ -1470,6 +1500,7 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
     Tout_history.resize_fill(nmax, 0.0);        // Outlet temperature iteration history
     eta_history.resize_fill(nmax, 0.0);         // Receiver efficiency iteration history
     converged_history.resize_fill(nmax, false); // Steady state solution convergence history
+   
 
     int qq = -1;
     bool converged = false;
@@ -1486,6 +1517,7 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
         Tout_history.at(qq) = soln.T_particle_hot_rec;   // Outlet temperature from receiver (before hot particle transport)
         eta_history.at(qq) = soln.eta;                   // Efficiency not including transport losses
         converged_history.at(qq) = soln.converged;
+        eta_max_sim = (qq == 0) ? soln.eta : fmax(eta_max_sim, soln.eta);
 
         init_from_existing = false;
         if (qq>0 && !soln.rec_is_off && std::abs(soln.T_particle_hot_rec - Tout_history.at(qq - 1)) < 20)  
@@ -1524,6 +1556,12 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
 
 
         //--- Update mass flow bounds
+
+        // If efficiency is negative, this is always a lower bound for mass flow
+        if (soln.eta < 0.0)
+            lower_bound = soln.m_dot_tot;
+
+
         // If outlet temperature is above the target this is always a lower bound for mass flow 
         if (soln.T_particle_hot_rec > T_target_out_rec)
         {
@@ -1538,27 +1576,31 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
             {
                 if (converged_history.at(i))
                 {
-                    // Any given point with exit temperature below the target is a lower bound if another point has been sampled with higher mass flow and a higher outlet T
+                    // Any point with an exit temperature below the target is a lower bound if another point has been sampled with higher mass flow and a higher outlet T
                     if (soln.m_dot_tot < mflow_history.at(i) && soln.T_particle_hot_rec < Tout_history.at(i))
                     {
                         lower_bound = soln.m_dot_tot;
+                        lower_bound_Tout = soln.T_particle_hot_rec;
                     }
-                    if (Tout_history.at(i) < T_target_out_rec && mflow_history.at(i) < soln.m_dot_tot && Tout_history.at(i) < soln.T_particle_hot_rec)
+                    if (mflow_history.at(i) > lower_bound && Tout_history.at(i) < T_target_out_rec && mflow_history.at(i) < soln.m_dot_tot && Tout_history.at(i) < soln.T_particle_hot_rec)
                     {
-                        lower_bound = fmax(lower_bound, mflow_history.at(i));
+                        lower_bound = mflow_history.at(i);
+                        lower_bound_Tout = Tout_history.at(i);
                     }
 
-                    // Any given point with exit temperature below the target is an upper bound if another point has been sampled with lower mass flow and higher outlet temperature 
+                    // Any point with an exit temperature below the target is an upper bound if another point has been sampled with lower mass flow and higher outlet temperature 
                     if (soln.m_dot_tot > mflow_history.at(i) && soln.T_particle_hot_rec < Tout_history.at(i))
                     {
                         upper_bound = soln.m_dot_tot;
                         upper_bound_eta = soln.eta;
+                        upper_bound_Tout = soln.T_particle_hot_rec;
                         is_upper_bound = true;
                     }
-                    if (Tout_history.at(i) < T_target_out_rec && mflow_history.at(i) > soln.m_dot_tot && Tout_history.at(i) < soln.T_particle_hot_rec)
+                    if (mflow_history.at(i) < upper_bound && Tout_history.at(i) < T_target_out_rec && mflow_history.at(i) > soln.m_dot_tot && Tout_history.at(i) < soln.T_particle_hot_rec)
                     {
-                        upper_bound = min(upper_bound, mflow_history.at(i));
-                        upper_bound_eta = min(upper_bound_eta, eta_history.at(i));
+                        upper_bound = mflow_history.at(i);
+                        upper_bound_eta = eta_history.at(i);
+                        upper_bound_Tout = Tout_history.at(i);
                         is_upper_bound = true;
                     }    
                 }
@@ -1568,40 +1610,66 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
 
 
         //--- Next solution guess
-        if (qq<2)  
-            m_dot_guess_new = soln.Q_thermal_without_transport / (cp * (T_target_out_rec - T_cold_in_rec));			//[kg/s]
-        else  // Solution can converge slowly, after a few iterations switch to approximation for mass flow using linear approximation for efficiency from last two guesses
+        Tout_max = 5000;
+        if (lower_bound > 0.001)
+            Tout_max = T_cold_in_rec + (upper_bound_eta * soln.Q_inc) / (cp * lower_bound);  //  Maximum possible outlet temperature at current lower bound for flow and upper bound for efficiency
+
+        if (soln.eta < 0.0)  // If efficiency at current mass flow guess was negative, try again with a substantially higher flow
         {
-            double c1 = (eta_history.at(qq) - eta_history.at(qq - 1)) / (mflow_history.at(qq) - mflow_history.at(qq - 1));  // Slope of linear equation for eta = f(m)
-            double c2 = soln.eta - c1 * soln.m_dot_tot;                                                                     // Intercept of linear equation for eta = f(m)
-            m_dot_guess_new = (soln.Q_inc * c2) / (cp * (T_target_out_rec - T_cold_in_rec) - c1 * soln.Q_inc);              // Solution for m from: (c1*m+c2)*Qinc = m*Cp*dT
+            m_dot_guess_new = 2 * soln.m_dot_tot;
+        }
+        else if (Tout_max < T_target_out_rec - 0.01)  // If maximum possible outlet T is below the target, then the iterations need to find the maximum outlet T instead of the target outlet T
+        {
+            m_dot_guess_new = is_upper_bound ? 0.5 * (lower_bound + upper_bound) : 1.5 * soln.m_dot_tot;
+        }
+        else  // If it's still possible that the receiver can achieve the target exit temperature, guess new mass flow based on the value needed to hit the target
+        {
+            m_dot_guess_new = soln.Q_thermal_without_transport / (cp * (T_target_out_rec - T_cold_in_rec));   //[kg/s]
+            // Solution can converge slowly, after a few iterations switch to approximation for mass flow using linear approximation for efficiency from last two guesses
+            if (qq >= 2 && eta_history.at(qq) > 0 && eta_history.at(qq - 1) > 0 && fabs(eta_history.at(qq) - eta_history.at(qq - 1)) < 0.3)
+            {
+                double c1 = (eta_history.at(qq) - eta_history.at(qq - 1)) / (mflow_history.at(qq) - mflow_history.at(qq - 1));  // Slope of linear equation for eta = f(m)
+                double c2 = soln.eta - c1 * soln.m_dot_tot;                                                                     // Intercept of linear equation for eta = f(m)
+                m_dot_guess_new = (soln.Q_inc * c2) / (cp * (T_target_out_rec - T_cold_in_rec) - c1 * soln.Q_inc);              // Solution for m from: (c1*m+c2)*Qinc = m*Cp*dT
+            }
+
+            // Limit downward changed in mass flow (avoids excessive under-shoot that can happen with very low power)
+            if (m_dot_guess_new < soln.m_dot_tot)
+                m_dot_guess_new = fmax(0.5 * soln.m_dot_tot, m_dot_guess_new);
         }
 
-        if (is_upper_bound && (m_dot_guess_new < lower_bound || m_dot_guess_new > upper_bound))  // New guess is out of bounds and lower/upper bounds are both defined
+        //-- Check next solution guess relative to bounds
+        if (is_upper_bound && (m_dot_guess_new <= lower_bound || m_dot_guess_new >= upper_bound))  // New guess is out of bounds and lower/upper bounds are both defined
             m_dot_guess_new = 0.5 * (lower_bound + upper_bound);
-        else if (m_dot_guess_new < lower_bound)  // New guess is below lower bound with no defined upper bound
-            m_dot_guess_new = (m_dot_guess_new < m_dot_guess) ? fmax(1.25 * lower_bound, 0.75 * m_dot_guess) : 1.25 * m_dot_guess;
+        else if (m_dot_guess_new <= lower_bound)  // New guess is below lower bound with no defined upper bound
+            m_dot_guess_new = (m_dot_guess_new < m_dot_guess) ? fmax(1.5 * lower_bound, 0.5 * m_dot_guess) : 1.5 * m_dot_guess;
+
+        if (fabs((m_dot_guess_new - soln.m_dot_tot) / soln.m_dot_tot) < 0.001)  // Next guess is identical to the last one (this can occur with bisection when the new solution at the midpoint doesn't change the known bounds)
+            m_dot_guess_new *= 1.1;
+
+
         m_dot_guess = m_dot_guess_new;
 
 
         //--- Stopping criteria
-
         if (m_dot_guess < 1.E-5 || qq >= nmax-1)
         {
             soln.rec_is_off = true;
             break;
         }
 
-        if (soln.Q_thermal < 0.0 || soln.Q_thermal != soln.Q_thermal)
+        if (soln.Q_thermal != soln.Q_thermal) 
         {
             soln.rec_is_off = true;
             break;
         }
 
         // Stop solution if outlet temperature was not achieved and mass flow bounds are within tolerance
-        if (is_upper_bound && (upper_bound - lower_bound) <= bound_tol * lower_bound)
+        if (is_upper_bound && (upper_bound - lower_bound) <= bound_tol * lower_bound && fabs(lower_bound_Tout - upper_bound_Tout)<=Tout_tol)
         {
-            soln.rec_is_off = true;
+            // Shut off receiver unless the operating mode is required to remain ON. 
+            if (!soln.require_operating_mode || soln.required_mode != C_csp_collector_receiver::E_csp_cr_modes::ON || m_fixed_mode_mflow_method != 1)
+                soln.rec_is_off = true; 
             break;
         }
 
@@ -1619,6 +1687,18 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
         }
 
 	}
+
+    // Solve at fixed mass flow if receiver cannot achieve exit temperature, but is required to remain ON 
+    if (soln.rec_is_off && soln.require_operating_mode && soln.required_mode == C_csp_collector_receiver::E_csp_cr_modes::ON && m_fixed_mode_mflow_method == 0)
+    {
+        soln.m_dot_tot = m_m_dot_htf_fixed;
+        calculate_steady_state_soln(soln, tol, false, 50);
+        soln.rec_is_off = false;
+    }
+
+    // Require final solution to have positive energy to particles, regardless of operating state requirements
+    if (soln.Q_thermal_without_transport < 0.0)
+        soln.rec_is_off = true; 
 
 	return;
 }

@@ -48,7 +48,9 @@ protected:
 
     struct s_steady_state_soln
     {
-        C_csp_collector_receiver::E_csp_cr_modes mode;
+        bool require_operating_mode;
+        C_csp_collector_receiver::E_csp_cr_modes required_mode;
+
         bool rec_is_off;
         bool converged;
 
@@ -124,8 +126,8 @@ protected:
             Q_inc = Q_refl = Q_rad = Q_adv = Q_transport = Q_thermal = eta = hadv = T_back_wall_avg = T_back_wall_max = T_front_wall = std::numeric_limits<double>::quiet_NaN();
             tauc_avg = rhoc_avg = qnetc_sol_avg = qnetw_sol_avg = qnetc_avg = qnetw_avg = std::numeric_limits<double>::quiet_NaN();
             K_sum = Kinv_sum = std::numeric_limits<double>::quiet_NaN();
-
-            mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
+            require_operating_mode = false;
+            required_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
             rec_is_off = true;
             converged = false;
         }
@@ -228,6 +230,12 @@ protected:
     double m_t_su;              //[hr] startup time
     double m_t_su_prev;         //[hr] startup time requirement
 
+    //--- Control methods 
+    bool m_is_mode_fixed_to_input_mode;   // Is the operating mode required to be fixed to m_input_operation_mode (even if the receiver can achieve the target exit temperature)?
+    int m_fixed_mode_mflow_method;        // Method for setting mass flow when m_is_mode_fixed_to_input_mode = True.   0 = fix mass flow rate, 1 = solve for mass flow rate at maximum exit temperature
+    double m_m_dot_htf_fixed;             // Specified mass flow required if operating mode is fixed to "ON" and receiver can't meet exit temperature (used only if m_is_mass_flow_fixed = true)
+
+
     //--- Stored solutions
     int m_n_max_stored_solns;
     int m_stored_soln_idx;
@@ -255,13 +263,14 @@ private:
 
     public:
 
-        C_MEQ__q_dot_des(C_falling_particle_receiver* pc_rec);
+        //C_MEQ__q_dot_des(C_falling_particle_receiver* pc_rec);
 
         virtual int operator()(double flux_max /*kW/m2*/, double *q_dot_des /*MWt*/) override;
     };
 
 protected:
 
+    
     void design_point_steady_state(double v_wind_10, double wind_direc, double& eta_thermal, double& W_lift, double& Q_transport_loss, double& q_dot_loss_per_m2_ap, double& tauc_avg);
     double calculate_lift_power(double m_dot_tot);
     double scale_wind_speed(double v_wind_10);
@@ -365,6 +374,9 @@ public:
 
     double getHeatLossPerApertureArea() { return m_q_dot_loss_per_m2_des_calc; }
     
+    void set_state_requirement(bool is_mode_fixed_to_input_mode);
+
+    void set_fixed_mflow(double mflow);
 
 };
 
