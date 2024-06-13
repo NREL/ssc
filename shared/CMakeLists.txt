@@ -201,7 +201,6 @@ elseif(MSVC)
         set(lib_absl "LIB_${_absl_target_name}")
         get_target_property(lib_release ${_absl_target} LOCATION)
         if (NOT "${lib_release}" STREQUAL "lib_release-NOTFOUND")
-            #message("lib absl location ${lib_release}")
             string(REPLACE release debug lib_debug ${lib_release})
             set(lib_absl
                     "$<$<NOT:$<CONFIG:DEBUG>>:${lib_release}>"
@@ -238,16 +237,18 @@ elseif(MSVC)
     target_link_libraries(shared ${LIB_UTF8_LIBS})
 
     # get ZLIB
-    find_library( ZLIBD
-            NAMES zlibd.lib
-            PATHS $ENV{ORTOOLSDBDIR}/lib)
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR "Debug" IN_LIST CMAKE_CONFIGURATION_TYPES)
+        find_library( ZLIBD
+                NAMES zlibd.lib
+                PATHS $ENV{ORTOOLSDBDIR}/lib)
+        target_link_libraries(shared debug ${ZLIBD})
+    endif()
 
     find_package(zlib
             HINTS "$ENV{ORTOOLSDIR}/lib/cmake/ZLIB"
             REQUIRED
     )
     get_target_property(LIB_ZLIB_RELEASE ZLIB::ZLIB LOCATION)
-    target_link_libraries(shared debug ${ZLIBD})
     target_link_libraries(shared optimized ${LIB_ZLIB_RELEASE})
 
     # get protobuf
