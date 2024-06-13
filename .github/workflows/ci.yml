@@ -251,7 +251,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: google/or-tools
-        path: or-tools
+        path: ${{env.ORTOOLSDIR}}
         # ref: 87ac305ace23e1d77beec597c9a714b86082e9ee
 
     - name: Build OR-Tools
@@ -264,7 +264,7 @@ jobs:
         mkdir tmp
         mv or-tools/or-tools_*/* tmp
         rm -rf or-tools
-        mv tmp or-tools
+        mv tmp ${{env.ORTOOLSDIR}}
 
     - name: Get cached GTest
       uses: actions/cache@v4
