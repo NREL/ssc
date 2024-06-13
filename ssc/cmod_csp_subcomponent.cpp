@@ -294,9 +294,6 @@ public:
         // Particle Thermocline
         else if (tes_type == 2)
         {
-            // HARDCODED parameters (temporary)
-            double tes_pump_coef = 0.15;   //[kW/kg/s]
-
             storage_particle = C_csp_particlecline_tes(
                 as_integer("Fluid"),                                                // [-] field fluid identifier
                 as_matrix("field_fl_props"),                                        // [-] field fluid properties
@@ -305,9 +302,9 @@ public:
                 as_double("T_tank_hot_ini"),                                        // [C] Initial temperature in hot storage tank
                 as_double("T_tank_cold_ini"),                                       // [C] Initial temperature in cold storage cold
                 as_double("init_hot_htf_percent"),                                  // [%] Initial fraction of available volume that is hot
-                as_integer("n_xsteps"),
-                as_integer("n_tsteps"),
-                tes_pump_coef
+                as_integer("n_xsteps"),                                             // number spatial sub steps
+                as_integer("n_tsteps"),                                             // number subtimesteps
+                as_double("tes_pump_coef")                                          // [kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop 
                 );
 
 
