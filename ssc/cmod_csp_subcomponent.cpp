@@ -143,8 +143,6 @@ public:
 
     void exec()
     {
-        std::vector<double> x = as_vector_double("T_grad_ini");
-
         int tes_type = as_integer("tes_type");
 
         double_vec hot = as_vector_double("T_src_out");
@@ -171,9 +169,6 @@ public:
         double P_ref = as_double("P_ref");
         double eta_ref = as_double("eta_ref");
         double tshours = as_double("tshours");
-
-        // HARDCODE Particle defaults for now
-        int n_xsteps = 2;
 
         // Two Tank
         if (tes_type == 0)
@@ -299,12 +294,20 @@ public:
         // Particle Thermocline
         else if (tes_type == 2)
         {
+            // HARDCODED parameters (temporary)
+            double tes_pump_coef = 0.15;   //[kW/kg/s]
+
             storage_particle = C_csp_particlecline_tes(
+                as_integer("Fluid"),                                                // [-] field fluid identifier
+                as_matrix("field_fl_props"),                                        // [-] field fluid properties
+                as_double("T_loop_in_des"),                                         // [C] Cold design temperature
+                as_double("T_loop_out"),                                            // [C] hot design temperature
                 as_double("T_tank_hot_ini"),                                        // [C] Initial temperature in hot storage tank
                 as_double("T_tank_cold_ini"),                                       // [C] Initial temperature in cold storage cold
                 as_double("init_hot_htf_percent"),                                  // [%] Initial fraction of available volume that is hot
                 as_integer("n_xsteps"),
-                as_integer("n_tsteps")
+                as_integer("n_tsteps"),
+                tes_pump_coef
                 );
 
 

@@ -46,6 +46,10 @@ private:
 	std::string error_msg;
 
     // Constructor Inputs
+    int m_external_fl;
+    util::matrix_t<double> m_external_fl_props;
+    double m_T_cold_des;	    // [K] Design cold temperature
+    double m_T_hot_des;	        // [K] Design hot temperature
     double m_T_tank_hot_ini;    // [K] Initial hot temperature
     double m_T_tank_cold_ini;   // [K] Initial cold temperature
     double m_f_V_hot_ini;       // [] Initial fraction of hot storage
@@ -55,6 +59,7 @@ private:
     double m_void_frac;         // [] Void fraction
     double m_dens_solid;        // [kg/m3] density of particles
     double m_cp_solid;          // [J/kg K] specific heat of particles
+    double m_tes_pump_coef;		// [kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
 
     // Time step carryover
     std::vector<double> m_T_prev_vec;   // [K] Temperatures in space, starting at CHARGE inlet (hot)
@@ -65,7 +70,9 @@ private:
     double m_diameter;  // [m] Tank diameter
     double m_Ac;        // [m2] Tank cross sectional area
 
+    // Private members
     bool m_use_T_grad_init = false;
+    HTFProperties mc_external_htfProps;		// Instance of HTFProperties class for external HTF
 
 public:
 
@@ -90,11 +97,17 @@ public:
     double P_in_des;                             //[bar] Pressure at the inlet to the TES, at the external system side
 
     C_csp_particlecline_tes(
+        int external_fl,                            // [-] external fluid identifier
+        util::matrix_t<double> external_fl_props,   // [-] external fluid properties
+        double T_cold_des_C,	                    // [C] convert to K in constructor()
+        double T_hot_des_C,	                        // [C] convert to K in constructor()
         double T_tank_hot_ini_C,	                // [C] Initial temperature in hot storage tank
         double T_tank_cold_ini_C,	                // [C] Initial temperature in cold storage cold
         double f_V_hot_ini,                         // [%] Initial fraction of available volume that is hot
         int n_xstep,                                // number spatial sub steps
-        int n_subtimestep                           // number subtimesteps
+        int n_subtimestep,                          // number subtimesteps
+        double tes_pump_coef		                // [kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
+
             );
 
     C_csp_particlecline_tes();
