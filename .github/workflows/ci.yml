@@ -291,9 +291,7 @@ jobs:
       run: |
         mkdir $env:SSCDIR\build
         cd $env:SSCDIR\build
-        ORTOOLSDIR=$GITHUB_WORKSPACE\or-tools\install
-        echo "ORTOOLSDIR=$ORTOOLSDIR" >> $GITHUB_ENV
-        cmake .. -DCMAKE_SYSTEM_VERSION=10 -DSAM_SKIP_TOOLS=1 -DCMAKE_INSTALL_PREFIX=$env:ORTOOLSDIR -DCMAKE_CONFIGURATION_TYPES="Release"
+        cmake .. -DCMAKE_SYSTEM_VERSION=10 -DSAM_SKIP_TOOLS=1 -DCMAKE_INSTALL_PREFIX=$env:GITHUB_WORKSPACE\or-tools\install -DCMAKE_CONFIGURATION_TYPES="Release"
         msbuild system_advisor_model.sln /t:Build /p:Configuration=Release /p:Platform=x64
         cp ssc/Release/* test/Release
 
