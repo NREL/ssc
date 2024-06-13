@@ -160,7 +160,7 @@ void __WINAPI set_outputstream(lprec *lp, FILE *stream)
   lp->streamowned = FALSE;
 }
 
-MYBOOL __WINAPI set_outputfile(lprec *lp, char *filename)
+MYBOOL __WINAPI set_outputfile(lprec *lp, const char *filename)
 {
   MYBOOL ok;
   FILE   *output = stdout;
