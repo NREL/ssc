@@ -203,9 +203,18 @@ static var_info _cm_vtab_fresnel_physical[] = {
 
     { SSC_INPUT,    SSC_NUMBER,         "V_tes_des",                   "Design-point velocity to size the TES pipe diameters",                                  "m/s",                 "",                             "Storage",              "?=1.85",           "",                 "SIMULATION_PARAMETER" },
 
-
     // System Control
-              
+    { SSC_INPUT,    SSC_NUMBER,         "is_dispatch",                 "Allow dispatch optimization?",  /*TRUE=1*/                                              "-",                   "",                             "Sys_Control",          "?=0",              "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "disp_frequency",              "Frequency for dispatch optimization calculations",                                      "hour",                "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "disp_horizon",                "Time horizon for dispatch optimization",                                                "hour",                "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "disp_max_iter",               "Max. no. dispatch optimization iterations",                                             "-",                   "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "disp_timeout",                "Max. dispatch optimization solve duration",                                             "s",                   "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "disp_mip_gap",                "Dispatch optimization solution tolerance",                                              "-",                   "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "disp_time_weighting",         "Dispatch optimization future time discounting factor",                                  "-",                   "",                             "Sys_Control",          "?=0.99",           "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "disp_rsu_cost_rel",           "Receiver startup cost",                                                                 "$/MWt/start",         "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "disp_csu_cost_rel",           "Cycle startup cost",                                                                    "$/MWe-cycle/start",   "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "disp_pen_ramping",            "Dispatch cycle production change penalty",                                              "$/MWe-change",        "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
+
     { SSC_INPUT,    SSC_NUMBER,         "pb_fixed_par",                "Fixed parasitic load - runs at all times",                                              "",                    "",                             "Sys_Control",          "*",                "",                 "" },
     { SSC_INPUT,    SSC_ARRAY,          "bop_array",                   "Balance of plant parasitic power fraction",                                             "",                    "",                             "Sys_Control",          "*",                "",                 "" },
     { SSC_INPUT,    SSC_ARRAY,          "aux_array",                   "Aux heater, boiler parasitic",                                                          "",                    "",                             "Sys_Control",          "*",                "",                 "" },
