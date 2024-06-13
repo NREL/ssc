@@ -284,9 +284,6 @@ jobs:
       with:
           path: ssc
 
-    - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v2
-
     - name: Build SSC
       shell: bash
       run: |

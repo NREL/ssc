@@ -1021,7 +1021,7 @@ typedef void (__WINAPI set_obj_bound_func)(lprec *lp, REAL obj_bound);
 typedef MYBOOL (__WINAPI set_obj_fn_func)(lprec *lp, REAL *row);
 typedef MYBOOL (__WINAPI set_obj_fnex_func)(lprec *lp, int count, REAL *row, int *colno);
 typedef void (__WINAPI set_obj_in_basis_func)(lprec *lp, MYBOOL obj_in_basis);
-typedef MYBOOL (__WINAPI set_outputfile_func)(lprec *lp, char *filename);
+typedef MYBOOL (__WINAPI set_outputfile_func)(lprec *lp, const char *filename);
 typedef void (__WINAPI set_outputstream_func)(lprec *lp, FILE *stream);
 typedef MYBOOL (__WINAPI set_partialprice_func)(lprec *lp, int blockcount, int *blockstart, MYBOOL isrow);
 typedef void (__WINAPI set_pivoting_func)(lprec *lp, int piv_rule);
