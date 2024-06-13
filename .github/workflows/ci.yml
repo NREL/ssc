@@ -258,9 +258,10 @@ jobs:
       if: steps.cachedortools.outputs.cache-hit != 'true'
       shell: bash
       run: | 
-        cd or-tools
-        cmake -S . -B build -DBUILD_DEPS=ON -DUSE_COINOR=OFF -DUSE_HIGHS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_SAMPLES=OFF -DBUILD_DOC=OFF -DINSTALL_DOC=OFF -DUSE_XPRESS=OFF -DCMAKE_INSTALL_PREFIX=${ORTOOLSDIR}
-        cmake --build build --config Release --target install -v -j 4
+        cd $GITHUB_WORKSPACE
+        curl -LJO https://github.com/google/or-tools/releases/download/v9.9/or-tools_x64_VisualStudio2022_cpp_v9.9.3963.zip
+        unzip or-tools_x64_VisualStudio2022_cpp_v9.9.3963.zip -d or-tools
+        mv or-tools/or-tools_*/* or-tools
 
     - name: Get cached GTest
       uses: actions/cache@v4
@@ -298,7 +299,7 @@ jobs:
     #   run: |
     #     mkdir ${SSCDIR}/build
     #     cd ${SSCDIR}/build
-    #     cmake .. -DSAM_SKIP_TOOLS=1
+    #     cmake .. -DSAM_SKIP_TOOLS=1 -DCMAKE_INSTALL_PREFIX=${ORTOOLSDIR}
     #     cmake --build . --config Release -j4
     #     cp ssc/Release/* test/Release
 
