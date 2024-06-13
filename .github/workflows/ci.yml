@@ -286,14 +286,13 @@ jobs:
       with:
           path: ssc
 
-    - name: Configure CMake
+    - name: Build SSC
       shell: bash
-      # Configure cmake to build ssc tests but not tools
       run: |
         ls ${ORTOOLSDIR}
         mkdir ${SSCDIR}/build
         cd ${SSCDIR}/build
-        cmake .. -DSAM_SKIP_TOOLS=1 -DCMAKE_INSTALL_PREFIX=${ORTOOLSDIR} -DCMAKE_CONFIGURATION_TYPES="Release"
+        cmake .. -G "Visual Studio 17 2022" -DCMAKE_SYSTEM_VERSION=10.0 -DSAM_SKIP_TOOLS=1 -DCMAKE_INSTALL_PREFIX=${ORTOOLSDIR} -DCMAKE_CONFIGURATION_TYPES="Release"
         cmake --build . --config Release -j4
         cp ssc/Release/* test/Release
 
