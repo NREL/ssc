@@ -243,7 +243,7 @@ jobs:
       uses: actions/cache@v4
       id: cachedortools
       with:
-        path: ${{env.ORTOOLSDIR}}/
+        path: ${{env.ORTOOLSDIR}}
         key: ortools-windows
 
     - name: Clone OR-Tools
@@ -261,9 +261,10 @@ jobs:
         cd $GITHUB_WORKSPACE
         curl -LJO https://github.com/google/or-tools/releases/download/v9.9/or-tools_x64_VisualStudio2022_cpp_v9.9.3963.zip
         unzip or-tools_x64_VisualStudio2022_cpp_v9.9.3963.zip -d or-tools
-        mv or-tools/or-tools_*/* $GITHUB_WORKSPACE/tmp
+        mkdir tmp
+        mv or-tools/or-tools_*/* tmp
         rm -rf or-tools
-        mv $GITHUB_WORKSPACE/tmp or-tools
+        mv tmp or-tools
 
     - name: Get cached GTest
       uses: actions/cache@v4
