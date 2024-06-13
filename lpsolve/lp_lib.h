@@ -1989,7 +1989,7 @@ void __EXPORT_TYPE __WINAPI print_scales(lprec *lp);
 void __EXPORT_TYPE __WINAPI print_str(lprec *lp, char *str);
 
 void __EXPORT_TYPE __WINAPI set_outputstream(lprec *lp, FILE *stream);
-MYBOOL __EXPORT_TYPE __WINAPI set_outputfile(lprec *lp, char *filename);
+MYBOOL __EXPORT_TYPE __WINAPI set_outputfile(lprec *lp, const char *filename);
 
 void __EXPORT_TYPE __WINAPI set_verbose(lprec *lp, int verbose);
 int __EXPORT_TYPE __WINAPI get_verbose(lprec *lp);
