@@ -281,32 +281,32 @@ jobs:
           cmake -Dgtest_force_shared_crt=ON ..
           cmake --build . --config Release -j4
     
-    # - name: Checkout SSC
-    #   uses: actions/checkout@v4
-    #   with:
-    #       path: ssc
+    - name: Checkout SSC
+      uses: actions/checkout@v4
+      with:
+          path: ssc
 
-    # - name: Configure CMake
-    #   shell: bash
-    #   # Configure cmake to build ssc tests but not tools
-    #   run: |
-    #     ls ${ORTOOLSDIR}
-    #     mkdir ${SSCDIR}/build
-    #     cd ${SSCDIR}/build
-    #     cmake .. -DSAM_SKIP_TOOLS=1 -DCMAKE_INSTALL_PREFIX=${ORTOOLSDIR}
-    #     cmake --build . --config Release -j4
-    #     cp ssc/Release/* test/Release
+    - name: Configure CMake
+      shell: bash
+      # Configure cmake to build ssc tests but not tools
+      run: |
+        ls ${ORTOOLSDIR}
+        mkdir ${SSCDIR}/build
+        cd ${SSCDIR}/build
+        cmake .. -DSAM_SKIP_TOOLS=1 -DCMAKE_INSTALL_PREFIX=${ORTOOLSDIR}
+        cmake --build . --config Release -j4
+        cp ssc/Release/* test/Release
 
-    # - name: Test
-    #   shell: bash
-    #   # Turn off fast fail for when the landbosse tests write to cerr
-    #   run: |
-    #     cd ${SSCDIR}/build/test/Release
-    #     ./Test.exe
+    - name: Test
+      shell: bash
+      # Turn off fast fail for when the landbosse tests write to cerr
+      run: |
+        cd ${SSCDIR}/build/test/Release
+        ./Test.exe
   
-    # - name: Upload Artifacts
-    #   uses: actions/upload-artifact@v3
-    #   with:
-    #       name: SSC Windows Shared Libraries
-    #       path: |
-    #         ${{env.SSCDIR}}\build\ssc\Release\ssc.dll
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+          name: SSC Windows Shared Libraries
+          path: |
+            ${{env.SSCDIR}}\build\ssc\Release\ssc.dll
