@@ -254,7 +254,6 @@ jobs:
         curl -LJO https://github.com/google/or-tools/releases/download/v9.9/or-tools_x64_VisualStudio2022_cpp_v9.9.3963.zip
         unzip or-tools_x64_VisualStudio2022_cpp_v9.9.3963.zip -d or-tools
         mv or-tools/or-tools_* $ORTOOLSDIR
-        ls $ORTOOLSDIR
 
     - name: Get cached GTest
       uses: actions/cache@v4
@@ -275,7 +274,6 @@ jobs:
       if: steps.cachedgtest.outputs.cache-hit != 'true'
       shell: bash
       run: | 
-          export 
           mkdir ${GTEST}/build
           cd ${GTEST}/build
           cmake -Dgtest_force_shared_crt=ON ..
@@ -286,14 +284,15 @@ jobs:
       with:
           path: ssc
 
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v2
+
     - name: Build SSC
-      shell: bash
       run: |
-        ls ${ORTOOLSDIR}
         mkdir ${SSCDIR}/build
         cd ${SSCDIR}/build
-        cmake .. -G "Visual Studio 17 2022" -DCMAKE_SYSTEM_VERSION=10.0 -DSAM_SKIP_TOOLS=1 -DCMAKE_INSTALL_PREFIX=${ORTOOLSDIR} -DCMAKE_CONFIGURATION_TYPES="Release"
-        cmake --build . --config Release -j4
+        cmake .. -DCMAKE_SYSTEM_VERSION=10.0 -DSAM_SKIP_TOOLS=1 -DCMAKE_INSTALL_PREFIX=$env:ORTOOLSDIR -DCMAKE_CONFIGURATION_TYPES="Release"
+        msbuild system_advisor_model.sln /t:Build /p:Configuration=Release /p:Platform=x64
         cp ssc/Release/* test/Release
 
     - name: Test
