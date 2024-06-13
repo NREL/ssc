@@ -289,9 +289,9 @@ jobs:
 
     - name: Build SSC
       run: |
-        mkdir ${SSCDIR}/build
-        cd ${SSCDIR}/build
-        cmake .. -DCMAKE_SYSTEM_VERSION=10.0 -DSAM_SKIP_TOOLS=1 -DCMAKE_INSTALL_PREFIX=$env:ORTOOLSDIR -DCMAKE_CONFIGURATION_TYPES="Release"
+        mkdir $env:SSCDIR/build
+        cd $env:SSCDIR/build
+        cmake .. -DCMAKE_SYSTEM_VERSION=10 -DSAM_SKIP_TOOLS=1 -DCMAKE_INSTALL_PREFIX=$env:ORTOOLSDIR -DCMAKE_CONFIGURATION_TYPES="Release"
         msbuild system_advisor_model.sln /t:Build /p:Configuration=Release /p:Platform=x64
         cp ssc/Release/* test/Release
 
