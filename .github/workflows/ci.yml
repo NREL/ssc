@@ -297,6 +297,7 @@ jobs:
       shell: bash
       # Configure cmake to build ssc tests but not tools
       run: |
+        ls ${ORTOOLSDIR}
         mkdir ${SSCDIR}/build
         cd ${SSCDIR}/build
         cmake .. -DSAM_SKIP_TOOLS=1 -DCMAKE_INSTALL_PREFIX=${ORTOOLSDIR}
