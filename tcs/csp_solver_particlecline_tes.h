@@ -104,7 +104,11 @@ public:
         double f_V_hot_ini,                         // [%] Initial fraction of available volume that is hot
         int n_xstep,                                // number spatial sub steps
         int n_subtimestep,                          // number subtimesteps
-        double tes_pump_coef		                // [kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
+        double tes_pump_coef,		                // [kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
+        double k_eff_solid,                         // [W/m K] Solid effective thermal conductivity
+        double void_frac,                           // [] Packed bed void fraction
+        double dens_solid,                          // [kg/m3] solid specific heat 
+        double cp_solid                             // [J/kg K] solid specific heat
             );
 
     C_csp_particlecline_tes();

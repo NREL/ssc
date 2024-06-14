@@ -59,13 +59,18 @@ C_csp_particlecline_tes::C_csp_particlecline_tes(
     double f_V_hot_ini,                             // [%] Initial fraction of available volume that is hot
     int n_xstep,                                    // number spatial sub steps
     int n_subtimestep,                              // number subtimesteps
-    double tes_pump_coef		                    // [kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
-)
+    double tes_pump_coef,		                    // [kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
+    double k_eff,                                   // [W/m K] Effective thermal conductivity
+    double void_frac,                           // [] Packed bed void fraction
+    double dens_solid,                          // [kg/m3] solid specific heat 
+    double cp_solid                             // [J/kg K] solid specific heat
+    )
     :
     m_external_fl(external_fl), m_external_fl_props(external_fl_props),
     m_h_tank(h_tank),
     m_f_V_hot_ini(f_V_hot_ini),
-    m_n_xstep(n_xstep), m_n_subtimestep(n_subtimestep), m_tes_pump_coef(tes_pump_coef)
+    m_n_xstep(n_xstep), m_n_subtimestep(n_subtimestep), m_tes_pump_coef(tes_pump_coef),
+    m_k_eff(k_eff), m_void_frac(void_frac), m_dens_solid(dens_solid), m_cp_solid(cp_solid)
 {
     // Convert Temperature Units
     m_T_cold_des = T_cold_des_C + 273.15;
@@ -77,10 +82,10 @@ C_csp_particlecline_tes::C_csp_particlecline_tes(
     m_d_tank = m_h_tank;   // [m]
 
     // Temporary Hard Code
-    m_k_eff = 1.0;         // [W/m K] effective conductivity of magnetite
-    m_void_frac = 0.4;
-    m_dens_solid = 5175;   // [kg/m3] density of magnetite
-    m_cp_solid = 874.2;    // [J/kg K] specific heat of magnetite
+    //m_k_eff = 1.0;         // [W/m K] effective conductivity of magnetite
+    //m_void_frac = 0.4;
+    //m_dens_solid = 5175;   // [kg/m3] density of magnetite
+    //m_cp_solid = 874.2;    // [J/kg K] specific heat of magnetite
 
     mc_reported_outputs.construct(S_output_info);
 }

@@ -52,8 +52,6 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_INPUT,        SSC_ARRAY,       "T_sink_out",                "Temperature from heat sink or power block",                                        "C",            "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_tank_hot_ini",            "Temperature of fluid in hot tank at beginning of step",                            "C",            "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_tank_cold_ini",           "Temperature of fluid in cold tank at beginning of step",                           "C",            "",               "TES",            "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "n_xsteps",                  "Number of spatial segments",                                                       "",             "",               "TES",            "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "n_tsteps",                  "Number of subtimesteps",                                                           "",             "",               "TES",            "*",                       "",                      "" },
 
 
     // TES
@@ -103,8 +101,14 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_INPUT,        SSC_ARRAY,       "tes_NT_piston_loss_poly",   "Polynomial coefficients describing piston heat loss function (f(kg/s)=%)",         "",             "",               "TES",            "tes_type=1",              "",                      "" },
 
 
-    // Particle Specific Inputs
-    { SSC_INPUT,        SSC_ARRAY,       "T_grad_ini",                "TES Temperature gradient at beginning of timestep",                                "C",            "",               "TES",            "?=[-274]",              "",                      "" },
+    // Packed bed Specific Inputs
+    { SSC_INPUT,        SSC_NUMBER,      "packed_n_xsteps",           "Number of spatial segments",                                                       "",             "",               "TES",            "tes_type=2",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "packed_n_tsteps",           "Number of subtimesteps",                                                           "",             "",               "TES",            "tes_type=2",              "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "packed_T_grad_ini",         "TES Temperature gradient at beginning of timestep",                                "C",            "",               "TES",            "?=[-274]",                "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "packed_k_eff",              "TES packed bed effective conductivity",                                            "W/m K",        "",               "TES",            "tes_type=2",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "packed_void_frac",          "TES particle packed bed void fraction",                                            "",             "",               "TES",            "tes_type=2",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "packed_dens_solid",         "TES particle density",                                                             "kg/m3",        "",               "TES",            "tes_type=2",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "packed_cp_solid",           "TES particle specific heat",                                                       "J/kg K",       "",               "TES",            "tes_type=2",              "",                      "" },
 
 
     // Outputs
@@ -304,18 +308,22 @@ public:
                 as_double("T_tank_hot_ini"),                                        // [C] Initial temperature in hot storage tank
                 as_double("T_tank_cold_ini"),                                       // [C] Initial temperature in cold storage cold
                 as_double("init_hot_htf_percent"),                                  // [%] Initial fraction of available volume that is hot
-                as_integer("n_xsteps"),                                             // number spatial sub steps
-                as_integer("n_tsteps"),                                             // number subtimesteps
-                as_double("tes_pump_coef")                                          // [kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop 
-                );
+                as_integer("packed_n_xsteps"),                                      // number spatial sub steps
+                as_integer("packed_n_tsteps"),                                      // number subtimesteps
+                as_double("tes_pump_coef"),                                         // [kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop 
+                as_double("packed_k_eff"),                                          // [W/m K] Effective thermal conductivity
+                as_double("packed_void_frac"),                                      // [] Packed bed void fraction
+                as_double("packed_dens_solid"),                                     // [kg/m3] solid specific heat 
+                as_double("packed_cp_solid")                                        // [J/kg K] solid specific heat
+            );
 
 
-            vector<double> T_grad_ini = as_vector_double("T_grad_ini");
+            vector<double> T_grad_ini = as_vector_double("packed_T_grad_ini");
             if (T_grad_ini.size() > 1 && T_grad_ini[0] != -274)
             {
-                if (T_grad_ini.size() != as_integer("n_xsteps") + 1)
+                if (T_grad_ini.size() != as_integer("packed_n_xsteps") + 1)
                 {
-                    throw exec_error("csp_subcomponent", "Initial temperature gradient should be length n_xsteps + 1");
+                    throw exec_error("csp_subcomponent", "Initial temperature gradient should be length packed_n_xsteps + 1");
                 }
                 else
                 {
@@ -400,7 +408,7 @@ public:
 
         if (tes_type == 2)
         {
-            tes_T_grad_mat.resize(n_steps, as_integer("n_xsteps") + 1);
+            tes_T_grad_mat.resize(n_steps, as_integer("packed_n_xsteps") + 1);
         }
 
         // Simulate
