@@ -182,6 +182,7 @@ elseif(MSVC)
         find_package(${library}
             PATHS "$ENV{ORTOOLSDIR}/lib/cmake/${library}"
                   "$ENV{ORTOOLSDIR}/cmake"
+                  "$ENV{ORTOOLSDIR}/share/${library}/cmake"
                   $ENV{ORTOOLSDIR}
             REQUIRED
         )
@@ -238,11 +239,12 @@ elseif(MSVC)
     endif()
 
     find_ortools_package(re2)
+    find_ortools_package(Eigen3)
     find_ortools_package(utf8_range)
     find_ortools_package(scip)
     find_ortools_package(ortools)
 
-    foreach(_target IN ITEMS re2::re2 utf8_range::utf8_validity libscip ortools::ortools)
+    foreach(_target IN ITEMS re2::re2 Eigen3::Eigen utf8_range::utf8_validity libscip ortools::ortools)
         set_library_by_config(shared ${_target} FALSE)
     endforeach()
 endif()
