@@ -99,8 +99,6 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
         opt.flux_penalty.val = m_cmod->as_double("opt_flux_penalty");
     }
 
-	recs.front().peak_flux.val = m_cmod->as_double("flux_max");     //[kW/m2]
-
     var_heliostat *hf = &hels.front();
     //need to set up the template combo
     sf.temp_which.combo_clear();
@@ -162,6 +160,8 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
     hf->focus_method.combo_select_by_choice_index( m_cmod->as_integer("focus_type") );
 
     var_receiver *rf = &recs.front();
+    rf->peak_flux.val = m_cmod->as_double("flux_max");     //[kW/m2]
+
 
     int rec_type = m_cmod->as_integer("receiver_type");
     if (rec_type == 0) {
@@ -272,6 +272,7 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
             rf->absorptance.val = 1.0;                          // Don't apply absorptivity for falling particle receivers - performance model will do this
             rf->therm_loss_base.val = design_rec_hl[i];
             rf->piping_loss_coef.val = 0.0;                     // Assume no piping losses for now TODO
+            rf->peak_flux.val = m_cmod->as_double("flux_max");     //[kW/m2]
 
             // Receiver offsets from tower center
             rf->rec_offset_x.val = rec_tower_offset.at(i, 0);
@@ -512,27 +513,36 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
 
                 }
                 else if (rec_type == 3){
-                    // TODO: Update for multiple receiver problem... 
-                    // TODO (Bill): Set-up receiver cost to use aperture area? Need to check if that is the case
-                    int nv = 3;
+                    int nv;
+                    if (recs.size() == 1) // Single receiver case
+                        nv = 2;
+                    else if (recs.size() < 4)  // Multiple receiver case
+                        nv = 3;
+                    else
+                        throw exec_error("SolarPILOT", "Optimization method does not support more than 3 receivers.");
+
                     vector<double*> opt_vars(nv);
                     vector<double> upper(nv, HUGE_VAL);
                     vector<double> lower(nv, 0);
                     vector<double> step_size(nv);
                     vector<string> names(nv);
 
+                    // NOTE: If variable order changes, update Simulate_fp_rec() within AutoPilot_API.cpp
                     //pointers
                     opt_vars.at(0) = &sf.tht.val;
                     opt_vars.at(1) = &recs.front().rec_height.val;
-                    opt_vars.at(2) = &recs.front().rec_width.val;
                     //names
                     names.at(0) = (split(sf.tht.name, ".")).back();
                     names.at(1) = (split(recs.front().rec_height.name, ".")).back();
-                    names.at(2) = (split(recs.front().rec_width.name, ".")).back();
                     //step size
                     step_size.at(0) = sf.tht.val * opt.max_step.val;
                     step_size.at(1) = recs.front().rec_height.val * opt.max_step.val;
-                    step_size.at(2) = recs.front().rec_width.val * opt.max_step.val;
+
+                    if (nv == 3) {
+                        opt_vars.at(2) = &recs.front().rec_azimuth.val;     // Assumes the first receiver is "East"
+                        names.at(2) = (split(recs.front().rec_azimuth.name, ".")).back();
+                        step_size.at(2) = recs.front().rec_azimuth.val * opt.max_step.val;
+                    }
 
                     if (!m_sapi->Optimize(/*opt.algorithm.mapval(),*/ opt_vars, upper, lower, step_size, &names))
                         return false;

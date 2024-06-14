@@ -356,6 +356,68 @@ struct AutoOptHelper
                 
         return obj;
     };
+
+    double Simulate_fp_rec(const double* x, int /*n*/, std::string* note = 0)
+    {
+        /*
+        Run a simulation for multi-receivers and update points as needed. Report outcome from each step.
+        */
+        if (m_autopilot->IsSimulationCancelled())
+        {
+            m_opt_obj->force_stop();
+            return 0.;
+        }
+
+        m_iter += 1;
+
+        vector<double> current;
+
+        //update the objective variables
+        for (int i = 0; i < (int)m_opt_vars.size(); i++)
+        {
+            current.push_back(x[i]);
+            *m_opt_vars.at(i) = current.at(i)/* * m_normalizers.at(i)*/;
+        }
+        m_all_points.push_back(current);
+
+        // Update dependent variables based on current point
+        var_map* V = m_variables;
+        for (auto& rec : V->recs) {
+            rec.rec_height.val = x[1];
+            rec.rec_width.val = x[1];   // Assumes a square aspect ratio
+        }
+        // azimuth angle
+        if (V->recs.size() == 2 || V->recs.size() == 3) {
+            V->recs.front().rec_azimuth.val = x[2];   // "East"
+            V->recs.back().rec_azimuth.val = -x[2];   // "West"
+        }
+        if (V->recs.size() == 3) {
+            if (V->amb.latitude.val > 0.0)
+                V->recs.at(1).rec_azimuth.val = 0.0;     // "North"
+            else
+                V->recs.at(1).rec_azimuth.val = 180.0;   // "South"
+        }
+
+
+        double obj, cost;
+        std::vector<double> flux;
+
+        //Evaluate the objective function value
+        if (!
+            m_autopilot->EvaluateDesign(obj, flux, cost)
+            ) {
+            string errmsg = "Optimization failed at iteration " + my_to_string(m_iter) + ". Terminating simulation.";
+            throw spexception(errmsg.c_str());
+        }
+        //Update variables as needed
+        m_autopilot->PostEvaluationUpdate(m_iter, current/*, m_normalizers*/, obj, flux, cost, note);
+
+        m_objective.push_back(obj);
+        m_flux.push_back(flux);
+        m_history_map.add_call(current, obj, flux);
+
+        return obj;
+    };
 };
 
 double optimize_leastsq_eval(unsigned n, const double *x, double * /*grad*/, void *data)
@@ -427,6 +489,15 @@ double optimize_auto_eval(unsigned n, const double *x, double * /*grad*/, void *
 
     return D->Simulate(x, n);
 };
+
+double optimize_auto_eval_fp_rec(unsigned n, const double* x, double* /*grad*/, void* data)
+{
+    AutoOptHelper* D = static_cast<AutoOptHelper*>(data);
+    //Only calls to methods available in AutoPilot base class are allowed!
+
+    return D->Simulate_fp_rec(x, n);
+};
+
 
 
 void constraint_auto_eval(unsigned m, double *result, unsigned n, const double* x, double* /*gradient*/, void *data)
@@ -608,11 +679,11 @@ void AutoPilot::GenerateDesignPointSimulations(var_map &V, vector<string> &wdata
 	day, hour, month,  dni, tdry, pres, wspd
 	1..,  0..,  1-12, W/m2,    C,  bar,  m/s
 	*/
-#ifdef _DEBUG
-    interop::GenerateSimulationWeatherData(V, var_solarfield::DES_SIM_DETAIL::SINGLE_SIMULATION_POINT, wdata);	// Reduces number of cases to run in debug
-#else
+//#ifdef _DEBUG
+//    interop::GenerateSimulationWeatherData(V, var_solarfield::DES_SIM_DETAIL::SINGLE_SIMULATION_POINT, wdata);	// Reduces number of cases to run in debug
+//#else
 	interop::GenerateSimulationWeatherData(V, -1, wdata);
-#endif
+//#endif
 }
 
 void AutoPilot::PreSimCallbackUpdate()
@@ -903,7 +974,13 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
     AO.SetObjects( (void*)this,  *V, &nlobj);
     AO.m_opt_vars = optvars;
     //-------
-    nlobj.set_min_objective( optimize_auto_eval, &AO  );
+    if (V->recs.front().rec_type.mapval() == var_receiver::REC_TYPE::FALLING_PARTICLE) {
+        nlobj.set_min_objective(optimize_auto_eval_fp_rec, &AO);
+    }
+    else {
+        nlobj.set_min_objective(optimize_auto_eval, &AO);
+    }
+    
     nlobj.set_xtol_rel(1.e-4);
     nlobj.set_ftol_rel(V->opt.converge_tol.val);
     nlobj.set_initial_step( stepsize );

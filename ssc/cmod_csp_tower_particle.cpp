@@ -172,7 +172,6 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_INPUT,     SSC_ARRAY,  "snout_vert_bot_angle",               "SNOUT bottom surface angle from aperture normal",                                                                                         "deg",          "",                                  "Tower and Receiver",                       "?",                                                                "",              ""},
     { SSC_INPUT,     SSC_ARRAY,  "snout_vert_top_angle",               "SNOUT top surface angle from aperture normal",                                                                                            "deg",          "",                                  "Tower and Receiver",                       "?",                                                                "",              ""},
 
-    //{ SSC_INPUT,     SSC_NUMBER, "rec_hl_perm2",                       "Receiver design heat loss",                                                                                                               "kW/m2",        "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "n_flux_days",                        "Number of days in flux map lookup",                                                                                                       "",             "",                                  "Tower and Receiver",                       "?=8",                                                              "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "delta_flux_hrs",                     "Hourly frequency in flux map lookup",                                                                                                     "",             "",                                  "Tower and Receiver",                       "?=1",                                                              "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "n_flux_x",                           "Flux map X resolution",                                                                                                                   "",             "",                                  "Tower and Receiver",                       "?=1",                                                              "",              ""},
@@ -417,9 +416,10 @@ static var_info _cm_vtab_csp_tower_particle[] = {
         // Receiver Geometry
     { SSC_OUTPUT,    SSC_ARRAY,  "rec_height_calc",                    "Receiver height - out",                                                                                                                    "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "rec_width_calc",                     "Receiver width - out",                                                                                                                     "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
+    { SSC_OUTPUT,    SSC_ARRAY,  "rec_azimuth_calc",                   "Receiver azimuth - out",                                                                                                                   "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "h_tower_calc",                       "Tower height - out",                                                                                                                       "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
-    { SSC_OUTPUT,    SSC_NUMBER,  "A_rec",                              "Receiver aperture area",                                                                                                                   "m2",           "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
-    { SSC_OUTPUT,    SSC_NUMBER,  "A_rec_curtain",                      "Receiver particle curtain area",                                                                                                           "m2",           "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
+    { SSC_OUTPUT,    SSC_NUMBER, "A_rec",                              "Receiver aperture area",                                                                                                                   "m2",           "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
+    { SSC_OUTPUT,    SSC_NUMBER, "A_rec_curtain",                      "Receiver particle curtain area",                                                                                                           "m2",           "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "L_tower_piping_calc",                "Tower piping length",                                                                                                                      "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
 
         // Receiver Performance -> TODO: This will need to be arrays...
@@ -861,15 +861,21 @@ public:
 
             receivers.at(i)->init();
             design_heat_loss.at(i) = receivers.at(i)->getHeatLossPerApertureArea() / 1000.0;    // [W/m^2] -> [kW/m^2]
+            if (design_heat_loss.at(i) == 0.0) {// Receiver model failed to solve
+                std::string msg;
+                msg = util::format("Receiver (%d) failed to converge initially. Setting receiver heat loss to zero for SolarPILOT. \n"
+                    "Resulting heliostat field could be undersized.", i);
+                log(msg, SSC_WARNING);
+            }
         }
 
         // Assign design receiver heat loss for SolarPILOT
-        //std::string hl_msg;
+        std::string hl_msg;
         ssc_number_t* p_rec_hl = allocate("design_rec_hl", design_heat_loss.size());
         for (size_t i = 0; i < design_heat_loss.size(); i++) {
             p_rec_hl[i] = (ssc_number_t)design_heat_loss.at(i);
-            //hl_msg = util::format("Initial receiver (%d) heat loss: %f [MWt]", i, design_heat_loss.at(i));
-            //log(hl_msg, SSC_NOTICE);
+            hl_msg = util::format("Initial receiver (%d) heat loss: %f [MWt]", i, design_heat_loss.at(i));
+            log(hl_msg, SSC_NOTICE);
         }
 
         // *****************************************************
@@ -915,24 +921,37 @@ public:
                 solarpilot_invoke spi_opt(this);
                 assign("q_design", q_dot_rec_des);       //[MWt]
 
-                assign("is_optimize", 1); // Optimize design field and tower/receiver geometry
-
-                // Run optimization without flux_maps calculations
+                // Optimize design field and tower/receiver geometry without flux_map calculations
+                assign("is_optimize", 1); 
                 assign("calc_fluxmaps", 0);
+
+                // Check azimuth input for optimization:
+                if (num_recs > 1 && rec_azimuth.front() <= 0.0) {
+                    throw exec_error("csp_tower_particle", "The first receiver azimuth must be greater than zero"
+                        "when using the heliostat field optimization method for a multi-receiver system.");
+                }
+
                 spi_opt.run(weather_reader.m_weather_data_provider);    // Runs SolarPILOT
                 weather_reader.m_weather_data_provider->rewind();       // Reset for next SolarPILOT run
 
                 // Get optimized sizing
-                THT = spi_opt.sf.tht.val;
                 size_t sp_num_recs = spi_opt.recs.size();
                 if (sp_num_recs != num_recs)
                     throw exec_error("csp_tower_particle", "Unexpected error: SolarPILOT's receivers count is inconsistent with user input.");
 
+                // Allocate optimization variables so next solarPilot run can use the values
+                THT = spi_opt.sf.tht.val;
+                assign("h_tower", THT);
                 rec_height.resize(num_recs);
                 rec_width.resize(num_recs);
+                rec_azimuth.resize(num_recs);
+                ssc_number_t* p_rec_height_opt = allocate("rec_height", num_recs);
+                ssc_number_t* p_rec_width_opt = allocate("rec_width", num_recs);
+                ssc_number_t* p_rec_azimuth_opt = allocate("rec_azimuth", num_recs);
                 for (size_t i = 0; i < spi_opt.recs.size(); i++) {
-                    rec_height[i] = spi_opt.recs.at(i).rec_height.val;
-                    rec_width[i] = spi_opt.recs.at(i).rec_width.val;
+                    p_rec_height_opt[i] = rec_height[i] = spi_opt.recs.at(i).rec_height.val;
+                    p_rec_width_opt[i] = rec_width[i] = spi_opt.recs.at(i).rec_width.val;
+                    p_rec_azimuth_opt[i] = rec_azimuth[i] = spi_opt.recs.at(i).rec_azimuth.val;
                 }
 
                 // TODO: create a update specific the specific optimization variables values function
@@ -977,8 +996,8 @@ public:
                 // Re-assign heat loss
                 for (size_t i = 0; i < design_heat_loss.size(); i++) {
                     p_rec_hl[i] = (ssc_number_t)design_heat_loss.at(i);
-                    //hl_msg = util::format("Final receiver (%d) heat loss: %f [MWt]", i, design_heat_loss.at(i));
-                    //log(hl_msg, SSC_NOTICE);
+                    hl_msg = util::format("Final receiver (%d) heat loss: %f [MWt]", i, design_heat_loss.at(i));
+                    log(hl_msg, SSC_NOTICE);
                 }
 
             }
@@ -1057,9 +1076,11 @@ public:
 
             rec_height.resize(num_recs);
             rec_width.resize(num_recs);
+            rec_azimuth.resize(num_recs);
             for (size_t i = 0; i < spi.recs.size(); i++) {
                 rec_height[i] = spi.recs.at(i).rec_height.val;
                 rec_width[i] = spi.recs.at(i).rec_width.val;
+                rec_azimuth[i] = spi.recs.at(i).rec_azimuth.val;
             }
 
             A_sf.clear();
@@ -1801,10 +1822,12 @@ public:
         ssc_number_t* rec_height_calc = allocate("rec_height_calc", num_recs);
         ssc_number_t* rec_width_calc = allocate("rec_width_calc", num_recs);
         ssc_number_t* rec_aspect = allocate("rec_aspect", num_recs);
-        for (size_t i = 0; i < num_recs; i++) { // TODO: Is there a better way to do this?
+        ssc_number_t* rec_azimuth_calc = allocate("rec_azimuth_calc", num_recs);
+        for (size_t i = 0; i < num_recs; i++) {
             rec_height_calc[i] = rec_height[i];                 //[m]
             rec_width_calc[i] = rec_width[i];                   //[m]
             rec_aspect[i] = rec_height[i] / rec_width[i];       //[-]
+            rec_azimuth_calc[i] = rec_azimuth[i];               //[deg]
         }
 
         assign("A_rec", A_rec_aperture_total);     //[m2]
