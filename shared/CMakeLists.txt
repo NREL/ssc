@@ -213,9 +213,6 @@ elseif(MSVC)
     find_ortools_package(utf8_range)
     set_library_by_config(shared utf8_range::utf8_validity FALSE)
 
-    find_ortools_package(protobuf)
-    set_library_by_config(shared protobuf::libprotobuf TRUE)
-
     if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR "Debug" IN_LIST CMAKE_CONFIGURATION_TYPES)
         find_library( ZLIBD
                 NAMES zlibd.lib
@@ -225,6 +222,9 @@ elseif(MSVC)
     find_ortools_package(zlib)
     get_target_property(LIB_ZLIB_RELEASE ZLIB::ZLIB LOCATION)
     target_link_libraries(shared optimized ${LIB_ZLIB_RELEASE})
+
+    find_ortools_package(protobuf)
+    set_library_by_config(shared protobuf::libprotobuf TRUE)
 
     if(USE_COINOR)
         find_ortools_package(CoinUtils)
