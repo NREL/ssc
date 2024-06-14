@@ -84,7 +84,7 @@ C_csp_falling_particle_collector_receiver::C_csp_falling_particle_collector_rece
 {
 	mc_reported_outputs.construct(S_output_info);
     m_fix_mode_from_estimates = true;
-    m_fixed_mode_mflow_method = 1;  // TODO: Hard-coded here and in falling particle receiver class for now
+    m_fixed_mode_mflow_method = 0;  // TODO: Hard-coded here and in falling particle receiver class for now
 }
 
 C_csp_falling_particle_collector_receiver::~C_csp_falling_particle_collector_receiver()

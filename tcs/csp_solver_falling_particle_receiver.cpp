@@ -149,7 +149,7 @@ C_falling_particle_receiver::C_falling_particle_receiver(double h_tower /*m*/,
 
     // Control variables
     m_is_mode_fixed_to_input_mode = false;
-    m_fixed_mode_mflow_method = 1;  // Hard-coded for now, maybe try adding this option through collector-receiver class later
+    m_fixed_mode_mflow_method = 0;  // Hard-coded for now, maybe try adding this option through collector-receiver class later
     m_m_dot_htf_fixed = std::numeric_limits<double>::quiet_NaN();
 
 
