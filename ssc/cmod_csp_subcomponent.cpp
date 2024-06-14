@@ -113,6 +113,8 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "T_tank_cold",               "Temperature of cold tank (average)",                                               "C",            "",               "TES",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "T_tank_hot",                "Temperature of hot tank (average)",                                                "C",            "",               "TES",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "hot_tank_vol_frac",         "Hot tank volume fraction of total",                                                "",             "",               "TES",            "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "W_dot_elec_in_tot",         "TES power consumed",                                                               "MWe",          "",               "TES",            "tes_type=2",              "",                      "" },
+
 
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_error",                 "TES energy balance error",                                                         "MW",           "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_error_percent",         "TES energy balance error percent",                                                 "%",            "",               "TES",            "tes_type=1",              "",                      "" },
@@ -378,6 +380,7 @@ public:
         double* T_tank_cold = allocate("T_tank_cold", n_steps);
         double* T_tank_hot = allocate("T_tank_hot", n_steps);
         double* hot_tank_vol_frac = allocate("hot_tank_vol_frac", n_steps);
+        double* W_dot_elec_in_tot = allocate("W_dot_elec_in_tot", n_steps);
 
         vector<double> piston_loc_vec;
         vector<double> piston_frac_vec;
@@ -429,6 +432,7 @@ public:
             //assign("tes_radius", d_tank_calc / 2.0);
 
             hot_tank_vol_frac[i] = storage_pointer->get_hot_tank_vol_frac();
+            W_dot_elec_in_tot[i] = tes_outputs.m_W_dot_elec_in_tot;
 
             // Add NT specific outputs
             if (tes_type == 1)

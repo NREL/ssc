@@ -163,12 +163,14 @@ bool C_csp_particlecline_tes::is_cr_to_cold_allowed()
 
 double C_csp_particlecline_tes::get_hot_temp()
 {
-    return std::numeric_limits<double>::quiet_NaN();
+    // Return temperature closest to charge inlet (hot)
+    return m_T_prev_vec[0];
 }
 
 double C_csp_particlecline_tes::get_cold_temp()
 {
-	return std::numeric_limits<double>::quiet_NaN();
+    // Return temperature furthest from charge inlet (cold)
+    return m_T_prev_vec[m_T_prev_vec.size() - 1];
 }
 
 double C_csp_particlecline_tes::get_hot_tank_vol_frac()
@@ -219,6 +221,47 @@ int C_csp_particlecline_tes::solve_tes_off_design(double timestep /*s*/, double 
     double& T_sink_htf_in_hot /*K*/, double& T_cr_in_cold /*K*/,
     C_csp_tes::S_csp_tes_outputs& s_outputs)		//, C_csp_solver_htf_state & s_tes_ch_htf, C_csp_solver_htf_state & s_tes_dc_htf)
 {
+    // Enthalpy balance on inlet to cold cv
+    double T_htf_cold_cv_in = T_sink_out_cold;     //[K]
+    double m_dot_total_to_cv_cold = m_dot_cv_hot_to_sink + m_dot_cr_to_cv_cold;    //[kg/s]
+    if (m_dot_total_to_cv_cold > 0.0) {
+        T_htf_cold_cv_in = (m_dot_cv_hot_to_sink * T_sink_out_cold + m_dot_cr_to_cv_cold * T_cr_out_hot) / (m_dot_total_to_cv_cold);
+    }
+
+    s_outputs = S_csp_tes_outputs();
+
+    double m_dot_cr_to_tes_hot, m_dot_cr_to_tes_cold, m_dot_tes_hot_out, m_dot_pc_to_tes_cold, m_dot_tes_cold_out, m_dot_tes_cold_in;
+    m_dot_cr_to_tes_hot = m_dot_cr_to_tes_cold = m_dot_tes_hot_out = m_dot_pc_to_tes_cold = m_dot_tes_cold_out = m_dot_tes_cold_in = std::numeric_limits<double>::quiet_NaN();
+    double m_dot_src_to_sink, m_dot_sink_to_src;
+    m_dot_src_to_sink = m_dot_sink_to_src = std::numeric_limits<double>::quiet_NaN();
+
+    // Receiver bypass is possible in a parallel configuration,
+       //  but need to determine if it actually makes sense and how to model it
+    if (m_dot_cr_to_cv_cold != 0.0) {
+        throw(C_csp_exception("Receiver output to cold tank not allowed in parallel TES configuration"));
+    }
+    m_dot_cr_to_tes_cold = 0.0;
+
+    if (m_dot_cr_to_cv_hot >= m_dot_cv_hot_to_sink)
+    {
+        m_dot_cr_to_tes_hot = m_dot_cr_to_cv_hot - m_dot_cv_hot_to_sink;		//[kg/s]
+        m_dot_tes_hot_out = 0.0;							//[kg/s]
+        m_dot_pc_to_tes_cold = 0.0;							//[kg/s]
+        m_dot_tes_cold_out = m_dot_cr_to_tes_hot;			//[kg/s]
+        m_dot_src_to_sink = m_dot_cv_hot_to_sink;		//[kg/s]
+        m_dot_sink_to_src = m_dot_cv_hot_to_sink;		//[kg/s]
+    }
+    else
+    {
+        m_dot_cr_to_tes_hot = 0.0;							//[kg/s]
+        m_dot_tes_hot_out = m_dot_cv_hot_to_sink - m_dot_cr_to_cv_hot;		//[kg/s]
+        m_dot_pc_to_tes_cold = m_dot_tes_hot_out;			//[kg/s]
+        m_dot_tes_cold_out = 0.0;							//[kg/s]
+        m_dot_src_to_sink = m_dot_cr_to_cv_hot;			//[kg/s]
+        m_dot_sink_to_src = m_dot_cr_to_cv_hot;			//[kg/s]
+    }
+    m_dot_tes_cold_in = m_dot_pc_to_tes_cold;
+
     double q_dot_heater = std::numeric_limits<double>::quiet_NaN();			//[MWe]  Heating power required to keep tanks at a minimum temperature
     double m_dot_cold_tank_to_hot_tank = std::numeric_limits<double>::quiet_NaN();	//[kg/s] Hot tank mass flow rate, valid for direct and indirect systems
     double W_dot_rhtf_pump = std::numeric_limits<double>::quiet_NaN();		//[MWe]  Pumping power, just for tank-to-tank in indirect storage
@@ -284,9 +327,40 @@ int C_csp_particlecline_tes::solve_tes_off_design(double timestep /*s*/, double 
 
         T_sink_htf_in_hot = (m_dot_tes_dc * T_htf_tes_hot + m_dot_cr_to_cv_hot * T_cr_out_hot) / m_dot_cv_hot_to_sink;   //[K]
     }
-    
 
-    return std::numeric_limits<double>::quiet_NaN();
+    // Solve pumping power here
+    double W_dot_htf_pump = std::numeric_limits<double>::quiet_NaN();
+
+    s_outputs.m_q_heater = q_dot_heater;                        //[MWe] Heater
+    s_outputs.m_W_dot_elec_in_tot = W_dot_rhtf_pump;            //[MWe] Use this pumping power?
+
+    s_outputs.m_q_dot_dc_to_htf = q_dot_dc_to_htf;              //[MWt] Thermal power to the HTF from storage
+    s_outputs.m_q_dot_ch_from_htf = q_dot_ch_from_htf;          //[MWt]  Thermal power from the HTF to storage
+    s_outputs.m_m_dot_cr_to_tes_hot = m_dot_cr_to_tes_hot;		//[kg/s]
+    s_outputs.m_m_dot_cr_to_tes_cold = m_dot_cr_to_tes_cold;    //[kg/s]
+    s_outputs.m_m_dot_tes_hot_out = m_dot_tes_hot_out;			//[kg/s]
+    s_outputs.m_m_dot_pc_to_tes_cold = m_dot_pc_to_tes_cold;	//[kg/s]
+    s_outputs.m_m_dot_tes_cold_out = m_dot_tes_cold_out;		//[kg/s]
+    s_outputs.m_m_dot_tes_cold_in = m_dot_tes_cold_in;          //[kg/s]
+    s_outputs.m_m_dot_src_to_sink = m_dot_src_to_sink;	        //[kg/s]
+    s_outputs.m_m_dot_sink_to_src = m_dot_sink_to_src;	        //[kg/s]
+
+    s_outputs.m_T_tes_cold_in = T_htf_cold_cv_in;       //[K]
+
+    s_outputs.m_m_dot_cold_tank_to_hot_tank = m_dot_cold_tank_to_hot_tank;
+
+    mc_reported_outputs.value(E_Q_DOT_LOSS, q_dot_loss);		//[MWt]
+    mc_reported_outputs.value(E_W_DOT_HEATER, q_dot_heater);		//[MWt]
+    mc_reported_outputs.value(E_TES_T_HOT, T_hot_final - 273.15);	//[C]
+    mc_reported_outputs.value(E_TES_T_COLD, T_cold_final - 273.15);	//[C]
+    mc_reported_outputs.value(E_M_DOT_TANK_TO_TANK, m_dot_cold_tank_to_hot_tank);	//[kg/s]
+    //mc_reported_outputs.value(E_MASS_COLD_TANK, mc_cold_tank.get_m_m_calc());		//[kg]
+    //mc_reported_outputs.value(E_MASS_HOT_TANK, mc_hot_tank.get_m_m_calc());			//[kg]
+    mc_reported_outputs.value(E_W_DOT_HTF_PUMP, W_dot_htf_pump);    //[MWe]
+    //mc_reported_outputs.value(E_VOL_TOT, vol_total);    //[m3]
+    //mc_reported_outputs.value(E_MASS_TOT, mc_cold_tank.get_m_m_calc() + mc_hot_tank.get_m_m_calc());    //[m3]
+
+    return 0;
 }
 
 void C_csp_particlecline_tes::converged()

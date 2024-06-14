@@ -92,9 +92,6 @@ public:
 
     C_csp_reported_outputs mc_reported_outputs;
 
-    double pipe_vol_tot;	                     //[m^3]
-    util::matrix_t<double> pipe_v_dot_rel;       //[-]
-    double P_in_des;                             //[bar] Pressure at the inlet to the TES, at the external system side
 
     C_csp_particlecline_tes(
         int external_fl,                            // [-] external fluid identifier
