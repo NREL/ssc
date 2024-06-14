@@ -278,8 +278,10 @@ public:
 		std::string input_dir = input_data_path;
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
- 		const char* input_data_path_win = "C:\\SAM\\2023.12.17.ortools\\ortools\\";
-		input_dir = input_data_path_win;
+		if (!std::getenv("SSCDIR")) {
+			const char* input_data_path_win = "C:\\SAM\\2023.12.17.ortools\\ortools\\";
+			input_dir = input_data_path_win;
+		}
 #elif __APPLE__
 		CFURLRef appUrlRef;
 		appUrlRef = CFBundleCopyResourceURL(CFBundleGetMainBundle(), CFSTR("ortools"), NULL, NULL);
