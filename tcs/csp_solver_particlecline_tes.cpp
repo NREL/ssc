@@ -49,12 +49,13 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 };
 
 C_csp_particlecline_tes::C_csp_particlecline_tes(
-    int external_fl,                             // [-] external fluid identifier
-    util::matrix_t<double> external_fl_props,    // [-] external fluid properties
-    double T_cold_des_C,	                    // [C] convert to K in constructor()
-    double T_hot_des_C,	                        // [C] convert to K in constructor()
-    double T_tank_hot_ini_C,	                     // [C] Initial temperature in hot storage tank
-    double T_tank_cold_ini_C,	                     // [C] Initial temperature in cold storage cold
+    int external_fl,                                // [-] external fluid identifier
+    util::matrix_t<double> external_fl_props,       // [-] external fluid properties
+    double h_tank,			                        // [m] tank height input
+    double T_cold_des_C,	                        // [C] convert to K in constructor()
+    double T_hot_des_C,	                            // [C] convert to K in constructor()
+    double T_tank_hot_ini_C,	                    // [C] Initial temperature in hot storage tank
+    double T_tank_cold_ini_C,	                    // [C] Initial temperature in cold storage cold
     double f_V_hot_ini,                             // [%] Initial fraction of available volume that is hot
     int n_xstep,                                    // number spatial sub steps
     int n_subtimestep,                              // number subtimesteps
@@ -62,6 +63,7 @@ C_csp_particlecline_tes::C_csp_particlecline_tes(
 )
     :
     m_external_fl(external_fl), m_external_fl_props(external_fl_props),
+    m_h_tank(h_tank),
     m_f_V_hot_ini(f_V_hot_ini),
     m_n_xstep(n_xstep), m_n_subtimestep(n_subtimestep), m_tes_pump_coef(tes_pump_coef)
 {
@@ -72,8 +74,7 @@ C_csp_particlecline_tes::C_csp_particlecline_tes(
     m_T_tank_cold_ini = T_tank_cold_ini_C + 273.15;
 
     // Temporary Sizing Info
-    m_height = 8.4;     // [m]
-    m_diameter = 8.4;   // [m]
+    m_d_tank = m_h_tank;   // [m]
 
     // Temporary Hard Code
     m_k_eff = 1.0;         // [W/m K] effective conductivity of magnetite
@@ -132,17 +133,17 @@ void C_csp_particlecline_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_i
     }
 
     // Define Cross Sectional Area
-    m_Ac = M_PI * std::pow(0.5 * m_diameter, 2.0);
+    m_Ac = M_PI * std::pow(0.5 * m_d_tank, 2.0);
 
     // Define initial temperatures
     if (m_use_T_grad_init == false)
     {
-        double dx = m_height / m_n_xstep;               // [m]
+        double dx = m_h_tank / m_n_xstep;               // [m]
         m_T_prev_vec = std::vector<double>(m_n_xstep + 1);
         // Loop through space
         for (int i = 0; i <= m_n_xstep; i++)
         {
-            double frac = (i * dx) / m_height;
+            double frac = (i * dx) / m_h_tank;
             if (frac < m_f_V_hot_ini * 0.01)
                 m_T_prev_vec[i] = m_T_tank_hot_ini;
             else
@@ -410,8 +411,8 @@ bool C_csp_particlecline_tes::charge(double timestep /*s*/, double T_amb /*K*/, 
     double cp_fluid_avg = mc_external_htfProps.Cp_ave(m_T_cold_des, m_T_hot_des);
 
     // Define timestep and spatial step
-    double dt = timestep / m_n_subtimestep;  // [s] subtimestep
-    double dx = m_height / m_n_xstep;               // [m]
+    double dt = timestep / m_n_subtimestep;     // [s] subtimestep
+    double dx = m_h_tank / m_n_xstep;           // [m]
 
     // Calculate Coefficients (assume constant for now)
     double cp_eff = m_void_frac * dens_fluid_avg * cp_fluid_avg
@@ -485,8 +486,8 @@ bool C_csp_particlecline_tes::charge(double timestep /*s*/, double T_amb /*K*/, 
     // Cold out = Average Outlet Temp
     T_htf_cold_out = T_out_avg; //[K]
 
-    // Heat Loss (need to calculate)
-    q_dot_loss = std::numeric_limits<double>::quiet_NaN();  //[MWt]
+    // Heat Loss
+    q_dot_loss = 0;  //[MWt]
 
     // Heat transferred from storage to htf
     q_dot_dc_to_htf = 0.0;  //[MWt] <- should this be calculated?
@@ -528,8 +529,8 @@ bool C_csp_particlecline_tes::discharge(double timestep /*s*/, double T_amb /*K*
     double cp_fluid_avg = mc_external_htfProps.Cp_ave(m_T_cold_des, m_T_hot_des);
 
     // Define timestep and spatial step
-    double dt = timestep / m_n_subtimestep;  // [s] subtimestep
-    double dx = m_height / m_n_xstep;               // [m]
+    double dt = timestep / m_n_subtimestep;         // [s] subtimestep
+    double dx = m_h_tank / m_n_xstep;               // [m]
 
     // Calculate Coefficients (assume constant for now)
     double cp_eff = m_void_frac * dens_fluid_avg * cp_fluid_avg
@@ -604,7 +605,7 @@ bool C_csp_particlecline_tes::discharge(double timestep /*s*/, double T_amb /*K*
     T_htf_hot_out = T_out_avg; //[K]
 
     // Heat Loss (need to calculate)
-    q_dot_loss = std::numeric_limits<double>::quiet_NaN();  //[MWt]
+    q_dot_loss = 0;  //[MWt]
 
     // Heat transferred from storage to htf
     q_dot_dc_to_htf = 0.0;  //[MWt]

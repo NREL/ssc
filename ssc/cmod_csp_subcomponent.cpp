@@ -113,8 +113,7 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "T_tank_cold",               "Temperature of cold tank (average)",                                               "C",            "",               "TES",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "T_tank_hot",                "Temperature of hot tank (average)",                                                "C",            "",               "TES",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "hot_tank_vol_frac",         "Hot tank volume fraction of total",                                                "",             "",               "TES",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "W_dot_elec_in_tot",         "TES power consumed",                                                               "MWe",          "",               "TES",            "tes_type=2",              "",                      "" },
-
+    { SSC_OUTPUT,       SSC_ARRAY,       "W_dot_elec_in_tot",         "TES power consumed",                                                               "MWe",          "",               "TES",            "*",                       "",                      "" },
 
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_error",                 "TES energy balance error",                                                         "MW",           "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_error_percent",         "TES energy balance error percent",                                                 "%",            "",               "TES",            "tes_type=1",              "",                      "" },
@@ -299,6 +298,7 @@ public:
             storage_particle = C_csp_particlecline_tes(
                 as_integer("Fluid"),                                                // [-] field fluid identifier
                 as_matrix("field_fl_props"),                                        // [-] field fluid properties
+                as_double("h_tank"),                                                // [m] Tank height
                 as_double("T_loop_in_des"),                                         // [C] Cold design temperature
                 as_double("T_loop_out"),                                            // [C] hot design temperature
                 as_double("T_tank_hot_ini"),                                        // [C] Initial temperature in hot storage tank

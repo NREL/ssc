@@ -48,6 +48,7 @@ private:
     // Constructor Inputs
     int m_external_fl;
     util::matrix_t<double> m_external_fl_props;
+    double m_h_tank;            // [m] Tank height
     double m_T_cold_des;	    // [K] Design cold temperature
     double m_T_hot_des;	        // [K] Design hot temperature
     double m_T_tank_hot_ini;    // [K] Initial hot temperature
@@ -66,8 +67,7 @@ private:
     std::vector<double> m_T_calc_vec;   // [K] Temperatures in space, starting at CHARGE inlet (hot)
 
     // Calculated in init()
-    double m_height;    // [m] Tank Height
-    double m_diameter;  // [m] Tank diameter
+    double m_d_tank;    // [m] Tank diameter
     double m_Ac;        // [m2] Tank cross sectional area
 
     // Private members
@@ -96,6 +96,7 @@ public:
     C_csp_particlecline_tes(
         int external_fl,                            // [-] external fluid identifier
         util::matrix_t<double> external_fl_props,   // [-] external fluid properties
+        double h_tank_in,			                // [m] tank height input
         double T_cold_des_C,	                    // [C] convert to K in constructor()
         double T_hot_des_C,	                        // [C] convert to K in constructor()
         double T_tank_hot_ini_C,	                // [C] Initial temperature in hot storage tank
@@ -104,7 +105,6 @@ public:
         int n_xstep,                                // number spatial sub steps
         int n_subtimestep,                          // number subtimesteps
         double tes_pump_coef		                // [kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
-
             );
 
     C_csp_particlecline_tes();
