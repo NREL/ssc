@@ -174,125 +174,77 @@ endif()
 
 
 if (UNIX)
-    find_package(re2
-                HINTS $ENV{ORTOOLSDIR}
-                CONFIG REQUIRED)
-    find_package(Eigen3
-                HINTS $ENV{ORTOOLSDIR}
-                CONFIG REQUIRED)
-    find_package(scip
-                HINTS "$ENV{ORTOOLSDIR}/lib/cmake/scip"
-                REQUIRED
-    )
     find_package(ortools
-                HINTS $ENV{ORTOOLSDIR}
                 CONFIG REQUIRED)
     target_link_libraries(shared ortools::ortools)
 elseif(MSVC)
-    # get absl
-    find_package(absl
-            HINTS "$ENV{ORTOOLSDIR}/lib/cmake/absl"
+    function(find_ortools_package library)
+        find_package(${library}
+            PATHS "$ENV{ORTOOLSDIR}/lib/cmake/${library}"
+                  "$ENV{ORTOOLSDIR}/cmake"
+                  $ENV{ORTOOLSDIR}
             REQUIRED
-    )
-    foreach(_absl_target IN ITEMS absl::atomic_hook absl::errno_saver absl::log_severity absl::no_destructor absl::nullability absl::raw_logging_internal absl::spinlock_wait absl::config absl::dynamic_annotations absl::core_headers absl::malloc_internal absl::base_internal absl::base absl::throw_delegate absl::pretty_function absl::endian absl::scoped_set_env absl::strerror absl::fast_type_id absl::prefetch absl::algorithm absl::algorithm_container absl::cleanup_internal absl::cleanup absl::btree absl::compressed_tuple absl::fixed_array absl::inlined_vector_internal absl::inlined_vector absl::flat_hash_map absl::flat_hash_set absl::node_hash_map absl::node_hash_set absl::container_memory absl::hash_function_defaults absl::hash_policy_traits absl::common_policy_traits absl::hashtablez_sampler absl::hashtable_debug absl::hashtable_debug_hooks absl::node_slot_policy absl::raw_hash_map absl::container_common absl::raw_hash_set absl::layout absl::crc_cpu_detect absl::crc_internal absl::crc32c absl::non_temporal_arm_intrinsics absl::non_temporal_memcpy absl::crc_cord_state absl::stacktrace absl::symbolize absl::examine_stack absl::failure_signal_handler absl::debugging_internal absl::demangle_internal absl::leak_check absl::debugging absl::flags_path_util absl::flags_program_name absl::flags_config absl::flags_marshalling absl::flags_commandlineflag_internal absl::flags_commandlineflag absl::flags_private_handle_accessor absl::flags_reflection absl::flags_internal absl::flags absl::flags_usage_internal absl::flags_usage absl::flags_parse absl::any_invocable absl::bind_front absl::function_ref absl::overload absl::hash absl::city absl::low_level_hash absl::log_internal_check_impl absl::log_internal_check_op absl::log_internal_conditions absl::log_internal_config absl::log_internal_flags absl::log_internal_format absl::log_internal_globals absl::log_internal_log_impl absl::log_internal_proto absl::log_internal_message absl::log_internal_log_sink_set absl::log_internal_nullguard absl::log_internal_nullstream absl::log_internal_strip absl::log_internal_voidify absl::log_internal_append_truncated absl::absl_check absl::absl_log absl::check absl::die_if_null absl::log_flags absl::log_globals absl::log_initialize absl::log absl::log_entry absl::log_sink absl::log_sink_registry absl::log_streamer absl::log_internal_structured absl::log_structured absl::vlog_config_internal absl::absl_vlog_is_on absl::vlog_is_on absl::log_internal_fnmatch absl::memory absl::type_traits absl::meta absl::bits absl::int128 absl::numeric absl::numeric_representation absl::sample_recorder absl::exponential_biased absl::periodic_sampler absl::random_random absl::random_bit_gen_ref absl::random_internal_mock_helpers absl::random_distributions absl::random_seed_gen_exception absl::random_seed_sequences absl::random_internal_traits absl::random_internal_distribution_caller absl::random_internal_fast_uniform_bits absl::random_internal_seed_material absl::random_internal_pool_urbg absl::random_internal_salted_seed_seq absl::random_internal_iostream_state_saver absl::random_internal_generate_real absl::random_internal_wide_multiply absl::random_internal_fastmath absl::random_internal_nonsecure_base absl::random_internal_pcg_engine absl::random_internal_randen_engine absl::random_internal_platform absl::random_internal_randen absl::random_internal_randen_slow absl::random_internal_randen_hwaes absl::random_internal_randen_hwaes_impl absl::random_internal_distribution_test_util absl::random_internal_uniform_helper absl::status absl::statusor absl::string_view absl::strings absl::charset absl::has_ostream_operator absl::strings_internal absl::str_format absl::str_format_internal absl::cord_internal absl::cordz_update_tracker absl::cordz_functions absl::cordz_statistics absl::cordz_handle absl::cordz_info absl::cordz_sample_token absl::cordz_update_scope absl::cord absl::graphcycles_internal absl::kernel_timeout_internal absl::synchronization absl::time absl::civil_time absl::time_zone absl::any absl::bad_any_cast absl::bad_any_cast_impl absl::span absl::optional absl::bad_optional_access absl::bad_variant_access absl::variant absl::compare absl::utility absl::if_constexpr)
-        string(REPLACE "::" "_" _absl_target_name ${_absl_target})
-        set(lib_release "LIB_${_absl_target_name}_RELEASE")
-        set(lib_debug "LIB_${_absl_target_name}_DEBUG")
-        set(lib_absl "LIB_${_absl_target_name}")
-        get_target_property(lib_release ${_absl_target} LOCATION)
+        )
+    endfunction()
+
+    function(set_library_by_config target library has_d_suffix)
+        string(REPLACE "::" "_" library_name ${library})
+        set(lib_release "LIB_${library_name}_RELEASE")
+        set(lib_debug "LIB_${library_name}_DEBUG")
+        if (bas_d_suffix)
+            string(REPLACE ".lib" "d.lib" lib_debug ${lib_debug})
+        endif()
+        set(libs "LIB_${tlibrary_name}")
+        get_target_property(lib_release ${library} LOCATION)
         if (NOT "${lib_release}" STREQUAL "lib_release-NOTFOUND")
             string(REPLACE release debug lib_debug ${lib_release})
-            set(lib_absl
+            set(libs
                     "$<$<NOT:$<CONFIG:DEBUG>>:${lib_release}>"
                     "$<$<CONFIG:DEBUG>:${lib_debug}>")
-            target_link_libraries(shared ${lib_absl})
+        target_link_libraries(${target} ${libs})
         endif()
+    endfunction()
+
+    find_ortools_package(absl)
+    foreach(_absl_target IN ITEMS absl::atomic_hook absl::errno_saver absl::log_severity absl::no_destructor absl::nullability absl::raw_logging_internal absl::spinlock_wait absl::config absl::dynamic_annotations absl::core_headers absl::malloc_internal absl::base_internal absl::base absl::throw_delegate absl::pretty_function absl::endian absl::scoped_set_env absl::strerror absl::fast_type_id absl::prefetch absl::algorithm absl::algorithm_container absl::cleanup_internal absl::cleanup absl::btree absl::compressed_tuple absl::fixed_array absl::inlined_vector_internal absl::inlined_vector absl::flat_hash_map absl::flat_hash_set absl::node_hash_map absl::node_hash_set absl::container_memory absl::hash_function_defaults absl::hash_policy_traits absl::common_policy_traits absl::hashtablez_sampler absl::hashtable_debug absl::hashtable_debug_hooks absl::node_slot_policy absl::raw_hash_map absl::container_common absl::raw_hash_set absl::layout absl::crc_cpu_detect absl::crc_internal absl::crc32c absl::non_temporal_arm_intrinsics absl::non_temporal_memcpy absl::crc_cord_state absl::stacktrace absl::symbolize absl::examine_stack absl::failure_signal_handler absl::debugging_internal absl::demangle_internal absl::leak_check absl::debugging absl::flags_path_util absl::flags_program_name absl::flags_config absl::flags_marshalling absl::flags_commandlineflag_internal absl::flags_commandlineflag absl::flags_private_handle_accessor absl::flags_reflection absl::flags_internal absl::flags absl::flags_usage_internal absl::flags_usage absl::flags_parse absl::any_invocable absl::bind_front absl::function_ref absl::overload absl::hash absl::city absl::low_level_hash absl::log_internal_check_impl absl::log_internal_check_op absl::log_internal_conditions absl::log_internal_config absl::log_internal_flags absl::log_internal_format absl::log_internal_globals absl::log_internal_log_impl absl::log_internal_proto absl::log_internal_message absl::log_internal_log_sink_set absl::log_internal_nullguard absl::log_internal_nullstream absl::log_internal_strip absl::log_internal_voidify absl::log_internal_append_truncated absl::absl_check absl::absl_log absl::check absl::die_if_null absl::log_flags absl::log_globals absl::log_initialize absl::log absl::log_entry absl::log_sink absl::log_sink_registry absl::log_streamer absl::log_internal_structured absl::log_structured absl::vlog_config_internal absl::absl_vlog_is_on absl::vlog_is_on absl::log_internal_fnmatch absl::memory absl::type_traits absl::meta absl::bits absl::int128 absl::numeric absl::numeric_representation absl::sample_recorder absl::exponential_biased absl::periodic_sampler absl::random_random absl::random_bit_gen_ref absl::random_internal_mock_helpers absl::random_distributions absl::random_seed_gen_exception absl::random_seed_sequences absl::random_internal_traits absl::random_internal_distribution_caller absl::random_internal_fast_uniform_bits absl::random_internal_seed_material absl::random_internal_pool_urbg absl::random_internal_salted_seed_seq absl::random_internal_iostream_state_saver absl::random_internal_generate_real absl::random_internal_wide_multiply absl::random_internal_fastmath absl::random_internal_nonsecure_base absl::random_internal_pcg_engine absl::random_internal_randen_engine absl::random_internal_platform absl::random_internal_randen absl::random_internal_randen_slow absl::random_internal_randen_hwaes absl::random_internal_randen_hwaes_impl absl::random_internal_distribution_test_util absl::random_internal_uniform_helper absl::status absl::statusor absl::string_view absl::strings absl::charset absl::has_ostream_operator absl::strings_internal absl::str_format absl::str_format_internal absl::cord_internal absl::cordz_update_tracker absl::cordz_functions absl::cordz_statistics absl::cordz_handle absl::cordz_info absl::cordz_sample_token absl::cordz_update_scope absl::cord absl::graphcycles_internal absl::kernel_timeout_internal absl::synchronization absl::time absl::civil_time absl::time_zone absl::any absl::bad_any_cast absl::bad_any_cast_impl absl::span absl::optional absl::bad_optional_access absl::bad_variant_access absl::variant absl::compare absl::utility absl::if_constexpr)
+        set_library_by_config(shared ${_absl_target} FALSE)
     endforeach()
 
-    # get re2
-    find_package(re2
-            HINTS "$ENV{ORTOOLSDIR}/lib/cmake/re2"
-            REQUIRED
-    )
-    get_target_property(LIB_RE2_RELEASE re2::re2 LOCATION)
-    #message("lib re2 location ${LIB_RE2_RELEASE}")
-    string(REPLACE release debug LIB_RE2_DEBUG ${LIB_RE2_RELEASE})
-    set(LIB_RE2_LIBS
-            "$<$<NOT:$<CONFIG:DEBUG>>:${LIB_RE2_RELEASE}>"
-            "$<$<CONFIG:DEBUG>:${LIB_RE2_DEBUG}>")
-    target_link_libraries(shared ${LIB_RE2_LIBS})
+    find_ortools_package(utf8_range)
+    set_library_by_config(shared utf8_range::utf8_validity FALSE)
 
-    
-    # get utf8
-    find_package(utf8_range
-            HINTS "$ENV{ORTOOLSDIR}/lib/cmake/utf8_range"
-            REQUIRED
-    )
-    get_target_property(LIB_UTF8_RELEASE utf8_range::utf8_validity LOCATION)
-    #message("lib protobuf location ${LIB_UTF8_RELEASE}")
-    string(REPLACE release debug LIB_UTF8_DEBUG ${LIB_UTF8_RELEASE})
-    set(LIB_UTF8_LIBS
-            "$<$<NOT:$<CONFIG:DEBUG>>:${LIB_UTF8_RELEASE}>"
-            "$<$<CONFIG:DEBUG>:${LIB_UTF8_DEBUG}>")
-    target_link_libraries(shared ${LIB_UTF8_LIBS})
+    find_ortools_package(protobuf)
+    set_library_by_config(shared protobuf::libprotobuf TRUE)
 
-    # get ZLIB
     if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR "Debug" IN_LIST CMAKE_CONFIGURATION_TYPES)
         find_library( ZLIBD
                 NAMES zlibd.lib
                 PATHS $ENV{ORTOOLSDBDIR}/lib)
         target_link_libraries(shared debug ${ZLIBD})
     endif()
-
-    find_package(zlib
-            HINTS "$ENV{ORTOOLSDIR}/lib/cmake/ZLIB"
-            REQUIRED
-    )
+    find_ortools_package(zlib)
     get_target_property(LIB_ZLIB_RELEASE ZLIB::ZLIB LOCATION)
     target_link_libraries(shared optimized ${LIB_ZLIB_RELEASE})
 
-    # get protobuf
-    find_package(protobuf
-            HINTS "$ENV{ORTOOLSDIR}/cmake"
-            REQUIRED
-    )
-    get_target_property(LIB_PROTOBUF_RELEASE protobuf::libprotobuf LOCATION)
-    #message("lib protobuf location ${LIB_PROTOBUF_RELEASE}")
-    string(REPLACE release debug LIB_PROTOBUF_DEBUG ${LIB_PROTOBUF_RELEASE})
-    string(REPLACE ".lib" "d.lib" LIB_PROTOBUF_DEBUG ${LIB_PROTOBUF_DEBUG})
-    set(LIB_PROTOBUF_LIBS
-            "$<$<NOT:$<CONFIG:DEBUG>>:${LIB_PROTOBUF_RELEASE}>"
-            "$<$<CONFIG:DEBUG>:${LIB_PROTOBUF_DEBUG}>")
-    target_link_libraries(shared ${LIB_PROTOBUF_LIBS})
+    if(USE_COINOR)
+        find_ortools_package(CoinUtils)
+        find_ortools_package(Osi)
+        find_ortools_package(Clp)
+        find_ortools_package(Cgl)
+        find_ortools_package(Cbc)
+        foreach(_target IN ITEMS Coin::CoinUtils Coin::Osi Coin::Clp Coin::OsiClp Coin::ClpSolver Coin::Cbc Coin::OsiCbc Coin::CbcSolver Coin::Cgl)
+            set_library_by_config(shared ${_target} FALSE)
+        endforeach()
+    endif()
 
-     # get SCIP
-    set(SCIP_ROOT "$ENV{ORTOOLSDIR}/bin")
-    find_package(scip
-            HINTS "$ENV{ORTOOLSDIR}/lib/cmake/scip"
-            REQUIRED
-    )
-    get_target_property(LIB_SCIP_RELEASE libscip LOCATION)
-    #message("lib scip location ${LIB_SCIP_RELEASE}")
-    string(REPLACE release debug LIB_SCIP_DEBUG ${LIB_SCIP_RELEASE})
-    set(LIB_SCIP_LIBRARIES
-            "$<$<NOT:$<CONFIG:DEBUG>>:${LIB_SCIP_RELEASE}>"
-            "$<$<CONFIG:DEBUG>:${LIB_SCIP_DEBUG}>"
-    )
-    target_link_libraries(shared ${LIB_SCIP_LIBRARIES})
+    find_ortools_package(re2)
+    find_ortools_package(utf8_range)
+    find_ortools_package(scip)
+    find_ortools_package(ortools)
 
-    # get or-tools
-    find_package(ortools
-            HINTS "$ENV{ORTOOLSDIR}/lib/cmake/ortools"
-            REQUIRED
-    )
-    get_target_property(LIB_ORTOOLS_RELEASE ortools::ortools LOCATION)
-    #message("lib ortools location ${LIB_ORTOOLS_RELEASE}")
-    string(REPLACE release debug LIB_ORTOOLS_DEBUG ${LIB_ORTOOLS_RELEASE})
-    set(LIB_ORTOOLS_LIBRARIES
-            "$<$<NOT:$<CONFIG:DEBUG>>:${LIB_ORTOOLS_RELEASE}>"
-            "$<$<CONFIG:DEBUG>:${LIB_ORTOOLS_DEBUG}>"
-    )
-    target_link_libraries(shared ${LIB_ORTOOLS_LIBRARIES})
+    foreach(_target IN ITEMS re2::re2 utf8_range::utf8_validity libscip ortools::ortools)
+        set_library_by_config(shared ${_target} FALSE)
+    endforeach()
 endif()
 
 if (UNIX)

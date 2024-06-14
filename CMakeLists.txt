@@ -16,16 +16,16 @@ option(SAM_SKIP_TESTS "Skips building tests" OFF)
 
 option(SAMAPI_EXPORT "Export of ssc binaries to the SAM_api directory; for Unix, compile ssc libraries for SAM_api" ON)
 
-option(USE_XPRESS "Adds support for the XPRESS Solver" OFF)
-
 include(CMakeDependentOption)
 
 CMAKE_DEPENDENT_OPTION(BUILD_DEPS "Build OR-Tools dependencies" ON "NOT SKIP_ORTOOLS" OFF)
 CMAKE_DEPENDENT_OPTION(USE_COINOR "Use the COIN-OR solver" OFF "NOT SKIP_ORTOOLS" OFF)
 CMAKE_DEPENDENT_OPTION(USE_HIGHS "Use the HiGHS solver" OFF "NOT SKIP_ORTOOLS" OFF)
-option(BUILD_EXAMPLES "Build examples" OFF)
-option(BUILD_SAMPLES "Build samples" OFF)
+CMAKE_DEPENDENT_OPTION(BUILD_EXAMPLES "Build examples" OFF "NOT SKIP_ORTOOLS" OFF)
+CMAKE_DEPENDENT_OPTION(BUILD_SAMPLES "Build samples" OFF "NOT SKIP_ORTOOLS" OFF)
 CMAKE_DEPENDENT_OPTION(INSTALL_DOC "Install doc" OFF "NOT SKIP_ORTOOLS" OFF)
+CMAKE_DEPENDENT_OPTION(USE_COINOR "Use COINOR solvers" OFF "NOT SKIP_ORTOOLS" OFF)
+CMAKE_DEPENDENT_OPTION(USE_XPRESS "Adds support for the XPRESS Solver" OFF "NOT SKIP_ORTOOLS" OFF)
 
 
 #

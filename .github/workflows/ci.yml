@@ -249,7 +249,7 @@ jobs:
     - name: Download OR-Tools
       if: steps.cachedortools.outputs.cache-hit != 'true'
       shell: bash
-      run: | 
+      run: |
         cd $GITHUB_WORKSPACE
         curl -LJO https://github.com/google/or-tools/releases/download/v9.9/or-tools_x64_VisualStudio2022_cpp_v9.9.3963.zip
         unzip or-tools_x64_VisualStudio2022_cpp_v9.9.3963.zip -d or-tools
@@ -287,15 +287,15 @@ jobs:
     - name: Build SSC
       shell: bash
       run: |
+        # Downloaded OR-Tools has CoinOR enabled
         mkdir $SSCDIR/build
         cd $SSCDIR/build
-        cmake .. -DCMAKE_SYSTEM_VERSION=10.0 -DSAM_SKIP_TOOLS=1 -DCMAKE_INSTALL_PREFIX=$ORTOOLSDIR -DCMAKE_CONFIGURATION_TYPES="Release" -DCMAKE_GENERATOR_PLATFORM=x64
+        cmake .. -DSAM_SKIP_TOOLS=1 -DCMAKE_CONFIGURATION_TYPES="Release" -DCMAKE_GENERATOR_PLATFORM=x64 -DUSE_COINOR=1 
         cmake --build . --config Release -j4 --target Test
         cp ssc/Release/* test/Release
 
     - name: Test
       shell: bash
-      # Turn off fast fail for when the landbosse tests write to cerr
       run: |
         cd ${SSCDIR}/build/test/Release
         ./Test.exe
