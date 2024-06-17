@@ -108,7 +108,8 @@ public:
         double k_eff_solid,                         // [W/m K] Solid effective thermal conductivity
         double void_frac,                           // [] Packed bed void fraction
         double dens_solid,                          // [kg/m3] solid specific heat 
-        double cp_solid                             // [J/kg K] solid specific heat
+        double cp_solid,                            // [J/kg K] solid specific heat
+        double d_tank
             );
 
     C_csp_particlecline_tes();

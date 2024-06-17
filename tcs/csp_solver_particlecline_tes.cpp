@@ -61,31 +61,24 @@ C_csp_particlecline_tes::C_csp_particlecline_tes(
     int n_subtimestep,                              // number subtimesteps
     double tes_pump_coef,		                    // [kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
     double k_eff,                                   // [W/m K] Effective thermal conductivity
-    double void_frac,                           // [] Packed bed void fraction
-    double dens_solid,                          // [kg/m3] solid specific heat 
-    double cp_solid                             // [J/kg K] solid specific heat
+    double void_frac,                               // [] Packed bed void fraction
+    double dens_solid,                              // [kg/m3] solid specific heat 
+    double cp_solid,                                // [J/kg K] solid specific heat
+    double d_tank
     )
     :
     m_external_fl(external_fl), m_external_fl_props(external_fl_props),
     m_h_tank(h_tank),
     m_f_V_hot_ini(f_V_hot_ini),
     m_n_xstep(n_xstep), m_n_subtimestep(n_subtimestep), m_tes_pump_coef(tes_pump_coef),
-    m_k_eff(k_eff), m_void_frac(void_frac), m_dens_solid(dens_solid), m_cp_solid(cp_solid)
+    m_k_eff(k_eff), m_void_frac(void_frac), m_dens_solid(dens_solid), m_cp_solid(cp_solid),
+    m_d_tank(d_tank)
 {
     // Convert Temperature Units
     m_T_cold_des = T_cold_des_C + 273.15;
     m_T_hot_des = T_hot_des_C + 273.15;
     m_T_tank_hot_ini = T_tank_hot_ini_C + 273.15;
     m_T_tank_cold_ini = T_tank_cold_ini_C + 273.15;
-
-    // Temporary Sizing Info
-    m_d_tank = m_h_tank;   // [m]
-
-    // Temporary Hard Code
-    //m_k_eff = 1.0;         // [W/m K] effective conductivity of magnetite
-    //m_void_frac = 0.4;
-    //m_dens_solid = 5175;   // [kg/m3] density of magnetite
-    //m_cp_solid = 874.2;    // [J/kg K] specific heat of magnetite
 
     mc_reported_outputs.construct(S_output_info);
 }
@@ -137,6 +130,10 @@ void C_csp_particlecline_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_i
         throw(C_csp_exception("External HTF code is not recognized", "Two Tank TES Initialization"));
     }
 
+    // Temporary Sizing Info
+    if (m_d_tank == 0)
+        m_d_tank = m_h_tank;   // [m]
+
     // Define Cross Sectional Area
     m_Ac = M_PI * std::pow(0.5 * m_d_tank, 2.0);
 
@@ -155,6 +152,8 @@ void C_csp_particlecline_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_i
                 m_T_prev_vec[i] = m_T_tank_cold_ini;
         }
     }
+
+    
 }
 
 bool C_csp_particlecline_tes::does_tes_exist()
@@ -412,8 +411,8 @@ bool C_csp_particlecline_tes::charge(double timestep /*s*/, double T_amb /*K*/, 
     //double dens_fluid = 1.204;  // [kg/m3] density of air at room temp
     //double cp_fluid = 1005;     // [J/kg K] specific heat of air at room temp
 
-    double dens_fluid_avg = mc_external_htfProps.dens((m_T_cold_des + m_T_hot_des) * 0.5, 1); //[kg/m3]
-    double cp_fluid_avg = mc_external_htfProps.Cp_ave(m_T_cold_des, m_T_hot_des);
+    double dens_fluid_avg = mc_external_htfProps.dens((m_T_cold_des + m_T_hot_des) * 0.5, 1);   //[kg/m3]
+    double cp_fluid_avg = mc_external_htfProps.Cp_ave(m_T_cold_des, m_T_hot_des) * 1.E3;        //[J/kg-K]
 
     // Define timestep and spatial step
     double dt = timestep / m_n_subtimestep;     // [s] subtimestep
@@ -422,7 +421,7 @@ bool C_csp_particlecline_tes::charge(double timestep /*s*/, double T_amb /*K*/, 
     // Calculate Coefficients (assume constant for now)
     double cp_eff = m_void_frac * dens_fluid_avg * cp_fluid_avg
         + (1.0 - m_void_frac) * m_dens_solid * m_cp_solid;  // [J/m3 K]
-    double u0 = m_dot_htf_in / m_Ac;          // [kg/s m3]
+    double u0 = (m_dot_htf_in / m_Ac) / dens_fluid_avg;          // [kg/s m3] --> [m/s]
     double alpha = (dens_fluid_avg * u0 * cp_fluid_avg * dt) / (cp_eff * dx);
     double beta = (m_k_eff * dt) / (cp_eff * std::pow(dx, 2.0));
 
@@ -531,7 +530,7 @@ bool C_csp_particlecline_tes::discharge(double timestep /*s*/, double T_amb /*K*
     //double cp_fluid = 1005;     // [J/kg K] specific heat of air at room temp
 
     double dens_fluid_avg = mc_external_htfProps.dens((m_T_cold_des + m_T_hot_des) * 0.5, 1); //[kg/m3]
-    double cp_fluid_avg = mc_external_htfProps.Cp_ave(m_T_cold_des, m_T_hot_des);
+    double cp_fluid_avg = mc_external_htfProps.Cp_ave(m_T_cold_des, m_T_hot_des) * 1.E3; //[J/kg-K]
 
     // Define timestep and spatial step
     double dt = timestep / m_n_subtimestep;         // [s] subtimestep
@@ -540,7 +539,7 @@ bool C_csp_particlecline_tes::discharge(double timestep /*s*/, double T_amb /*K*
     // Calculate Coefficients (assume constant for now)
     double cp_eff = m_void_frac * dens_fluid_avg * cp_fluid_avg
         + (1.0 - m_void_frac) * m_dens_solid * m_cp_solid;  // [J/m3 K]
-    double u0 = m_dot_htf_in / m_Ac;          // [kg/s m3]
+    double u0 = (m_dot_htf_in / m_Ac) / dens_fluid_avg;          // [kg/s m3] --> [m/s]
     double alpha = (dens_fluid_avg * u0 * cp_fluid_avg * dt) / (cp_eff * dx);
     double beta = (m_k_eff * dt) / (cp_eff * std::pow(dx, 2.0));
 
