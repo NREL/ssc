@@ -955,7 +955,7 @@ bool SolarField::FieldLayout(){
 
 		//For the map-to-annual case, run a simulation here
 		if(_var_map->sf.des_sim_detail.mapval() == var_solarfield::DES_SIM_DETAIL::EFFICIENCY_MAP__ANNUAL)
-			SolarField::AnnualEfficiencySimulation( _var_map->amb.weather_file.val, this, results); //, (double*)NULL, (double*)NULL, (double*)NULL);
+			SolarField::AnnualEfficiencySimulation( _var_map->amb.weather_file.val, this, results);
 
 
 		ProcessLayoutResults(&results, sim_last - sim_first);
@@ -1867,9 +1867,18 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
         mroh.problem_name = " heliostat assignments for multiple receivers ";
         mroh.run(this);         //run the optimization
         
-        if (mroh.result_status == multi_rec_opt_helper::RS_INFEASIBLE)
-            _sim_error.addSimulationError("The field can't provide enough power to meet receiver input power requirements.", true, false);
-        else if (mroh.result_status == multi_rec_opt_helper::RS_OPTIMAL || mroh.result_status == multi_rec_opt_helper::RS_SUBOPTIMAL)
+        if (mroh.result_status == multi_rec_opt_helper::RS_INFEASIBLE) {
+            _sim_error.addSimulationError("The field can't provide enough power to meet receiver input power requirements.", false, false);
+            // Re-run optimization with field "assigned"
+            mroh.is_performance = true;
+            mroh.is_field_assigned = true;
+            mroh.problem_name = " infeasible design problem, heliostat assignment - only ";
+            mroh.run(this);         //run the optimization
+            if (mroh.result_status == multi_rec_opt_helper::RS_INFEASIBLE)
+                _sim_error.addSimulationError("Infeasible heliostat assignment problem.", true, false);
+        }
+
+        if (mroh.result_status == multi_rec_opt_helper::RS_OPTIMAL || mroh.result_status == multi_rec_opt_helper::RS_SUBOPTIMAL)
             (void*)0;
         else
         {
