@@ -98,7 +98,7 @@ bool tidal_turbine_calculate_powercurve(ssc_data_t data)
 
     double rotor_diameter, cut_in,
         cut_out, rotor_area, number_rotors = 0;
-    double target_cf = 0;
+    double target_cf = 0.3;
     double rated_power_rotor = 0;
     double generator_rated_capacity = 0;
     util::matrix_t<double> tidal_resource;
@@ -114,7 +114,7 @@ bool tidal_turbine_calculate_powercurve(ssc_data_t data)
         vt_get_number(vt, "cut_out", &cut_out);
         vt_get_matrix(vt, "tidal_resource", tidal_resource);
         //vt_get_number(vt, "generator_rated_capacity", &generator_rated_capacity);
-        vt_get_number(vt, "tidal_turbine_target_cf", &target_cf);
+        //vt_get_number(vt, "tidal_turbine_target_cf", &target_cf);
 
     }
     catch (std::runtime_error& e) {
@@ -162,7 +162,7 @@ bool tidal_turbine_calculate_powercurve(ssc_data_t data)
         if (tidal_vel > cut_out) eff = 0;
         p_electric = eff * p_rotor;
         powercurve_powerout[i] = p_electric;
-        generator_rated_capacity += p_electric * tidal_freq;
+        generator_rated_capacity += p_electric * tidal_freq / 100.0;
         powercurve_tidespeeds[i] = tidal_vel;
 
     }
