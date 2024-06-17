@@ -107,10 +107,10 @@ void C_csp_falling_particle_collector_receiver::init(const C_csp_collector_recei
     solved_params.m_A_aper_total = A_aper_total;	                              //[m^2]
 
     size_t nrec = mc_pt_receivers.size();
-    m_sf_qinc_from_estimates.resize(nrec);
-    m_rec_qthermal_from_estimates.resize(nrec);
-    m_eta_rec_from_estimates.resize(nrec);
+    m_qthermal_from_estimates.resize(nrec);
     m_mdot_from_estimates.resize(nrec);
+    m_is_on_from_estimates.resize(nrec);
+    m_n_on_from_estimates = 0;
 	return;
 }
 
@@ -308,6 +308,57 @@ void C_csp_falling_particle_collector_receiver::set_outputs(C_csp_collector_rece
     return;
 }
 
+std::vector<double> C_csp_falling_particle_collector_receiver::split_defocus(double avg_defocus, std::vector<bool>& is_rec_on)
+{
+    // 'avg_defocus' = average focus fraction for receivers that are on (defined by is_rec_on).
+    
+    size_t nrec = mc_pt_receivers.size();
+    std::vector<double> heliostat_field_control_per_rec(nrec, 0.0);
+    int n_rec_on = 0;
+    for (size_t i = 0; i < nrec; i++)
+    {
+        if (is_rec_on.at(i))
+            n_rec_on += 1;
+    }
+
+    bool is_uniform_split = false;
+    if (avg_defocus > 0.99)
+        is_uniform_split = true;
+
+    if (!is_uniform_split && nrec > 1)  // Try to split the defocus signal unevenly between operating receivers
+    {
+        double dfmin = 0.4;  // Min allowable initial focus fraction to be applied to any receiver
+        double mtot = 0.0;  // Total mass flow from estimates (no defocus), counting only those receivers that are still operating
+        for (size_t i = 0; i < nrec; i++)
+        {
+            if (is_rec_on.at(i))
+                mtot += m_mdot_from_estimates.at(i);   
+        }
+
+        for (size_t i = 0; i < nrec; i++)
+        {
+            if (is_rec_on.at(i))
+            {
+                heliostat_field_control_per_rec.at(i) = 1.0 - (m_mdot_from_estimates.at(i) / mtot) * n_rec_on * (1.0 - avg_defocus);
+                if (heliostat_field_control_per_rec.at(i) < dfmin || heliostat_field_control_per_rec.at(i) > 1.0)
+                {
+                    is_uniform_split = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (is_uniform_split)
+    {
+        for (size_t i = 0; i < nrec; i++)
+            heliostat_field_control_per_rec.at(i) = is_rec_on.at(i) ? avg_defocus : 0.0;
+    }
+
+    return heliostat_field_control_per_rec;
+}
+
+
 
 
 void C_csp_falling_particle_collector_receiver::call(const C_csp_weatherreader::S_outputs &weather,
@@ -318,64 +369,70 @@ void C_csp_falling_particle_collector_receiver::call(const C_csp_weatherreader::
 	const C_csp_solver_sim_info &sim_info,
     bool is_fixed_states)
 {
-
-    //--- Set defocus for each field
-	double heliostat_field_control = inputs.m_field_control;
     size_t nrec = mc_pt_receivers.size();
-    std::vector<double> heliostat_field_control_per_rec(nrec, heliostat_field_control);
+    double heliostat_field_control = inputs.m_field_control;
 
-    if (nrec > 1 && heliostat_field_control < 0.99)
+    int n_split_iter = 1;
+    if (nrec > 1 && heliostat_field_control < 0.99 && is_fixed_states)
+        n_split_iter = 2;
+
+
+    //--- Set initial defocus for each field
+    //    The focus fraction provided by the controller is defined relative to the initial solution with focus fraction = 1, which may have some receivers already off.
+    //    Assume receivers that were off in estimates are also off in the intial solution with focus fraction 1, and apply the controll defocus to the remaining receivers
+    std::vector<double> heliostat_field_control_per_rec = split_defocus(heliostat_field_control, m_is_on_from_estimates);
+
+    //--- Iterate over defocus for each field
+    for (int q = 0; q < n_split_iter; q++)
     {
-        double dfmin = 0.4;
-        double mtot = std::accumulate(m_mdot_from_estimates.begin(), m_mdot_from_estimates.end(), 0.0);   // Total mass flow from estimates (no defocus)
-        bool is_uniform_split = false;
+        // Run models for each heliostat field and receiver
         for (size_t i = 0; i < nrec; i++)
         {
-            heliostat_field_control_per_rec.at(i) = 1.0 - (m_mdot_from_estimates.at(i) / mtot) * nrec * (1.0 - heliostat_field_control);
-            if (heliostat_field_control_per_rec.at(i) < dfmin || heliostat_field_control_per_rec.at(i) > 1.0)
+            if (heliostat_field_control_per_rec.at(i) < 0.001 || (is_fixed_states && !m_is_on_from_estimates.at(i))) // Receiver i is not able to operate
             {
-                is_uniform_split = true;
-                break;
+                mc_pt_heliostatfields.at(i)->off(weather, sim_info);
+                mc_pt_receivers.at(i)->off(weather, htf_state_in, sim_info);
+            }
+            else
+            {
+                // First call heliostat field class, then use its outputs as inputs to receiver class
+                mc_pt_heliostatfields.at(i)->call(weather, heliostat_field_control_per_rec.at(i), sim_info);
+
+                // Get heliostat field outputs and set corresponding receiver inputs
+                C_pt_receiver::S_inputs receiver_inputs;
+                receiver_inputs.m_plant_defocus = mc_pt_heliostatfields.at(i)->ms_outputs.m_plant_defocus_out;  //[-]
+                receiver_inputs.m_input_operation_mode = inputs.m_input_operation_mode;                         // TODO: This uses the reported state of the aggregated receiver for each individual receiver.  Should be fine when startup requirements are zero?
+                receiver_inputs.m_flux_map_input = &mc_pt_heliostatfields.at(i)->ms_outputs.m_flux_map_out;
+                receiver_inputs.m_clearsky_dni = mc_pt_heliostatfields.at(i)->ms_outputs.m_clearsky_dni;        //[W/m2]
+                if (is_fixed_states && m_fixed_mode_mflow_method == 0)  // Set receiver fixed mass flow (this mass flow will be used ONLY if the receiver mass flow iterations can't achieve the target temperature).
+                    mc_pt_receivers.at(i)->set_fixed_mflow(heliostat_field_control_per_rec.at(i) * m_mdot_from_estimates.at(i));
+                mc_pt_receivers.at(i)->call(weather, htf_state_in, receiver_inputs, sim_info);
             }
         }
-        if (is_uniform_split)
-            std::fill(heliostat_field_control_per_rec.begin(), heliostat_field_control_per_rec.end(), heliostat_field_control);
-    }
 
-
-    //--- Set receiver fixed mass flow (this mass flow will be used ONLY if the receiver mass flow iterations can't achieve the target temperature).
-    if (is_fixed_states && m_fixed_mode_mflow_method == 0)
-    {
-        for (size_t i = 0; i < nrec; i++)
+        // Check if any receivers turned off (even if the state is "fixed" to on, this can happen if the thermal output is negative).
+        //  If so, keep that subset of receivers off and re-split the defocus signal between the remaining receivers
+        //  TODO: If the receivers that are on are at temperature, add iterations to try to reduce the focus fraction of those receivers and increase the focus fraction of the receivers that shut off
+        if (q < n_split_iter - 1)
         {
-            mc_pt_receivers.at(i)->set_fixed_mflow(heliostat_field_control_per_rec.at(i) * m_mdot_from_estimates.at(i)); 
+            std:vector<bool> is_rec_on_after_soln(nrec, false);
+            int n_on_after_soln = 0;
+            for (size_t i = 0; i < nrec; i++)
+            {
+                if (mc_pt_receivers.at(i)->ms_outputs.m_Q_thermal > 0)
+                {
+                    is_rec_on_after_soln.at(i) = true;
+                    n_on_after_soln += 1;
+                }
+            }
+
+            if (n_on_after_soln < m_n_on_from_estimates)
+            {
+                double avg_defocus = std::min(1.0, heliostat_field_control * m_n_on_from_estimates / n_on_after_soln); // Average focus fraction only for those receivers that are operating
+                heliostat_field_control_per_rec = split_defocus(avg_defocus, is_rec_on_after_soln);
+            }
         }
     }
-
-    // Run models for each heliostat field and receiver
-    for (size_t i = 0; i < nrec; i++)
-    {
-
-        if (is_fixed_states && m_rec_qthermal_from_estimates.at(i) <= 1.e-3) // Receiver was unable to operate in initial estimates call, keep receiver off here
-        {
-            mc_pt_heliostatfields.at(i)->off(weather, sim_info);  
-            mc_pt_receivers.at(i)->off(weather, htf_state_in, sim_info);
-        }
-        else
-        {
-            // First call heliostat field class, then use its outputs as inputs to receiver class
-            mc_pt_heliostatfields.at(i)->call(weather, heliostat_field_control_per_rec.at(i), sim_info);
-
-            // Get heliostat field outputs and set corresponding receiver inputs
-            C_pt_receiver::S_inputs receiver_inputs;
-            receiver_inputs.m_plant_defocus = mc_pt_heliostatfields.at(i)->ms_outputs.m_plant_defocus_out;  //[-]
-            receiver_inputs.m_input_operation_mode = inputs.m_input_operation_mode;                         // TODO: This uses the reported state of the aggregated receiver for each individual receiver.  Should be fine when startup requirements are zero?
-            receiver_inputs.m_flux_map_input = &mc_pt_heliostatfields.at(i)->ms_outputs.m_flux_map_out;
-            receiver_inputs.m_clearsky_dni = mc_pt_heliostatfields.at(i)->ms_outputs.m_clearsky_dni;        //[W/m2]
-            mc_pt_receivers.at(i)->call(weather, htf_state_in, receiver_inputs, sim_info);
-        }
-    }
-
 
     // Aggregate results and set outputs
     combine_results();
@@ -469,17 +526,22 @@ void C_csp_falling_particle_collector_receiver::estimates(const C_csp_weatherrea
 
 	C_csp_collector_receiver::S_csp_cr_out_solver cr_out_solver;
 
+    // Reset any fixed state requirements to allow the receiver to choose it's own state during estimates
+    size_t nrec = mc_pt_receivers.size();
     if (m_fix_mode_from_estimates)
     {
-        for (size_t i = 0; i < mc_pt_receivers.size(); i++)
+        for (size_t i = 0; i < nrec; i++)
         {
             mc_pt_receivers.at(i)->set_state_requirement(false); // Allow receiver to choose it's own state during estimates
             if (m_fixed_mode_mflow_method == 0)
                 mc_pt_receivers.at(i)->set_fixed_mflow(std::numeric_limits<double>::quiet_NaN());
         }
     }
+    // Set nominal values used in "call" when splitting the defocus signal to allow all receivers to try to operate
+    m_n_on_from_estimates = nrec;  
+    std::fill(m_is_on_from_estimates.begin(), m_is_on_from_estimates.end(), true); 
 
-
+    // Run field/receiver models with no defocus
 	call(weather, htf_state_in, inputs, cr_out_solver, sim_info, false);
 
 	int mode = get_operating_state();
@@ -500,13 +562,14 @@ void C_csp_falling_particle_collector_receiver::estimates(const C_csp_weatherrea
 	}
 
     // Collect expected receiver performance before defocus (called from controller with receiver inlet T = cycle return temperature assuming design point hot temperature and current time step ambient conditions)
-    size_t nrec = mc_pt_receivers.size();
+    m_n_on_from_estimates = 0;
     for (size_t i = 0; i < mc_pt_receivers.size(); i++)
     {
-        m_sf_qinc_from_estimates.at(i) = mc_pt_heliostatfields.at(i)->ms_outputs.m_q_dot_field_inc;  //MWt
-        m_rec_qthermal_from_estimates.at(i) = mc_pt_receivers.at(i)->ms_outputs.m_Q_thermal;
-        m_eta_rec_from_estimates.at(i) = mc_pt_receivers.at(i)->ms_outputs.m_eta_therm;
+        m_qthermal_from_estimates.at(i) = mc_pt_receivers.at(i)->ms_outputs.m_Q_thermal;
         m_mdot_from_estimates.at(i) = mc_pt_receivers.at(i)->ms_outputs.m_m_dot_salt_tot/3600.;    // kg/s
+        m_is_on_from_estimates.at(i) = m_qthermal_from_estimates.at(i) > 1e-3;
+        if (m_is_on_from_estimates.at(i))
+            m_n_on_from_estimates += 1;
         if (m_fix_mode_from_estimates)
             mc_pt_receivers.at(i)->set_state_requirement(true); // Require receiver state to be fixed to that in inputs.m_input_operation_mode in subsequent calls
     }
