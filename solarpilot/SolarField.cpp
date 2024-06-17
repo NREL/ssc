@@ -1867,7 +1867,7 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
         mroh.problem_name = " heliostat assignments for multiple receivers ";
         mroh.run(this);         //run the optimization
 
-        // Recover by assigning heliostats
+        // Recover bad design problem by assigning heliostats to receivers
         if (mroh.result_status == multi_rec_opt_helper::RS_INFEASIBLE
             || mroh.result_status == multi_rec_opt_helper::RS_TIMED_OUT
             || mroh.result_status == multi_rec_opt_helper::RS_UNKNOWN_ERROR) {
