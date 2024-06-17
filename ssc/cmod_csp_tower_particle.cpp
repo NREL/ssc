@@ -292,14 +292,6 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_INPUT,     SSC_NUMBER, "disp_pen_ramping",                   "Dispatch cycle production change penalty",                                                                                                "$/MWe-change", "",                                  "System Control",                           "",                                                                 "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "disp_inventory_incentive",           "Dispatch storage terminal inventory incentive multiplier",                                                                                "",             "",                                  "System Control",                           "?=0.0",                                                            "",              "SIMULATION_PARAMETER"},
 
-    // TODO (bill): check these values? 
-    { SSC_INPUT,     SSC_NUMBER, "q_rec_standby",                      "Receiver standby energy consumption",                                                                                                     "kWt",          "",                                  "System Control",                           "?=9e99",                                                           "",              "SIMULATION_PARAMETER"},
-    { SSC_INPUT,     SSC_NUMBER, "q_rec_heattrace",                    "Receiver heat trace energy consumption during startup",                                                                                   "kWe-hr",       "",                                  "System Control",                           "?=0.0",                                                            "",              "SIMULATION_PARAMETER"},
-    { SSC_INPUT,     SSC_NUMBER, "is_wlim_design",                     "Use fixed design-point net electricity generation limits (dispatch opt only)",                                                            "",             "",                                  "System Control",                           "?=0",                                                              "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "disp_wlim_maxspec",                  "Fixed design-point max net power to the grid (dispatch opt only)",                                                                        "",             "",                                  "System Control",                           "is_wlim_design=1",                                                 "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "is_wlim_series",                     "Use time-series net electricity generation limits (dispatch opt only)",                                                                   "",             "",                                  "System Control",                           "?=0",                                                              "",              "SIMULATION_PARAMETER"},
-    { SSC_INPUT,     SSC_ARRAY,  "wlim_series",                        "Time series net electricity generation limits (dispatch opt only)",                                                                       "kWe",          "",                                  "System Control",                           "is_wlim_series=1",                                                 "",              "SIMULATION_PARAMETER"},
-
     // Pricing schedules and multipliers
         // Ideally this would work with sim_type = 2, but UI inputs availability depends on financial mode
     { SSC_INPUT,     SSC_NUMBER, "ppa_multiplier_model",               "PPA multiplier model 0: dispatch factors dispatch_factorX, 1: hourly multipliers dispatch_factors_ts",                                    "0/1",          "0=diurnal,1=timestep",              "Time of Delivery Factors",                 "?=0", /*need a default so this var works in required_if*/                     "INTEGER,MIN=0", "SIMULATION_PARAMETER"},
@@ -1653,7 +1645,7 @@ public:
             double disp_rsu_cost_calc = as_double("disp_rsu_cost_rel")*q_dot_rec_des;   //[$/start]
             dispatch.params.set_user_params(as_boolean("can_cycle_use_standby"), as_double("disp_time_weighting"),
                 disp_rsu_cost_calc, heater_startup_cost, disp_csu_cost_calc, as_double("disp_pen_ramping"),
-                as_double("disp_inventory_incentive"), as_double("q_rec_standby"), as_double("q_rec_heattrace"));
+                as_double("disp_inventory_incentive"), 0.0, 0.0);
         }
         else {
             dispatch.solver_params.dispatch_optimize = false;
@@ -1799,7 +1791,6 @@ public:
             p_A_sf[i] = (ssc_number_t)A_sf[i];
         }
 
-        // TODO: Do we need rec assignment?
         size_t n_helio_pos_rows = helio_pos.nrows();
         ssc_number_t* p_helio_positions_calc = allocate("helio_positions_calc", n_helio_pos_rows, 2);
         for (size_t i = 0; i < n_helio_pos_rows; i++) {
