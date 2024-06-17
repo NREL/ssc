@@ -774,12 +774,11 @@ void C_falling_particle_receiver::set_fixed_mflow(double mflow)  // kg/s
 
 void C_falling_particle_receiver::design_point_steady_state(double v_wind_10, double wind_direc, double& eta_thermal, double& W_lift, double &Q_transport_loss, double& q_dot_loss_per_m2_ap, double& tauc_avg)
 {
-    // TODO: discuss with Janna
-    eta_thermal = 0.0;// std::numeric_limits<double>::quiet_NaN();
-    W_lift = 0.0;// std::numeric_limits<double>::quiet_NaN();
-    Q_transport_loss = 0.0;// std::numeric_limits<double>::quiet_NaN();
-    q_dot_loss_per_m2_ap = 0.0;// std::numeric_limits<double>::quiet_NaN();
-    tauc_avg = 0.0;// std::numeric_limits<double>::quiet_NaN();
+    eta_thermal = std::numeric_limits<double>::quiet_NaN();
+    W_lift = std::numeric_limits<double>::quiet_NaN();
+    Q_transport_loss = std::numeric_limits<double>::quiet_NaN();
+    q_dot_loss_per_m2_ap = std::numeric_limits<double>::quiet_NaN();
+    tauc_avg = std::numeric_limits<double>::quiet_NaN();
 
     s_steady_state_soln soln_des;
     soln_des.T_amb = m_T_amb_des;

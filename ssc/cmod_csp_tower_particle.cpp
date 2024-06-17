@@ -847,11 +847,20 @@ public:
 
             receivers.at(i)->init();
             design_heat_loss.at(i) = receivers.at(i)->getHeatLossPerApertureArea() / 1000.0;    // [W/m^2] -> [kW/m^2]
-            if (design_heat_loss.at(i) == 0.0) {// Receiver model failed to solve
-                std::string msg;
-                msg = util::format("Receiver (%d) failed to converge initially. Setting receiver heat loss to zero for SolarPILOT. \n"
-                    "Resulting heliostat field could be undersized.", i);
-                log(msg, SSC_WARNING);
+            if (design_heat_loss.at(i) != design_heat_loss.at(i)) {// Receiver model failed to solve -> NAN result
+                if (as_integer("field_model_type") == 0) { // Heliostat field optimization to follow
+                    design_heat_loss.at(i) = 0.0;
+                    std::string msg;
+                    msg = util::format("Receiver (%d) failed to converge at design condition. Setting receiver heat loss to 0.0 for SolarPILOT. \n"
+                        "Resulting heliostat field could be undersized.", i);
+                    log(msg, SSC_WARNING);
+                }
+                else { // Throw error if not running optimization
+                    std::string msg;
+                    msg = util::format("Receiver (%d) failed to converge at design condition. "
+                        "Aperture size is too large.", i);
+                    throw exec_error("csp_tower_particle", msg);
+                }
             }
         }
 
