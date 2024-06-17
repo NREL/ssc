@@ -93,12 +93,12 @@ private:
     // Receiver and field results from the most recent estimates call
     bool m_fix_mode_from_estimates;     // Require receiver state to match that from estimates call, even if receiver can't achieve target exit temperature?
     bool m_fixed_mode_mflow_method;     // Method for setting mass flow when m_is_mode_fixed_to_input_mode = True.   0 = fix mass flow rate, 1 = solve for mass flow rate at maximum exit temperature
-    std::vector<double> m_sf_qinc_from_estimates;       // Incident solar power from estimates call (MWt)
-    std::vector<double> m_rec_qthermal_from_estimates;  // Receiver Qthermal from estimates call (MWt)
-    std::vector<double> m_eta_rec_from_estimates;       // Receiver efficiency from estimates call
-    std::vector<double> m_mdot_from_estimates;          // REceiver mass flow from estimates call (kg/s)
-    
+    std::vector<double> m_qthermal_from_estimates;   // Receiver Qthermal from estimates call (MWt)
+    std::vector<double> m_mdot_from_estimates;       // Receiver mass flow from estimates call (kg/s)
+    std::vector<bool> m_is_on_from_estimates;        // Is receiver on after estimates call?
+    int m_n_on_from_estimates;                      // Number of receiver on after estimates call
 
+    std::vector<double> split_defocus(double avg_defocus, std::vector<bool>& is_rec_on);
     void combine_results();
     void set_outputs(C_csp_collector_receiver::S_csp_cr_out_solver& cr_out_solver);
 

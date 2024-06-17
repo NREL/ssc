@@ -149,7 +149,7 @@ C_falling_particle_receiver::C_falling_particle_receiver(double h_tower /*m*/,
 
     // Control variables
     m_is_mode_fixed_to_input_mode = false;
-    m_fixed_mode_mflow_method = 0;  // Hard-coded for now, maybe try adding this option through collector-receiver class later
+    m_fixed_mode_mflow_method = 0;  // Hard-coded for now, needs to match value in collector-receiver class
     m_m_dot_htf_fixed = std::numeric_limits<double>::quiet_NaN();
 
 
@@ -1697,7 +1697,7 @@ void C_falling_particle_receiver::solve_for_mass_flow(s_steady_state_soln &soln)
     }
 
     // Require final solution to have positive energy to particles, regardless of operating state requirements
-    if (soln.Q_thermal_without_transport < 0.0)
+    if (soln.Q_thermal < 0.0)
         soln.rec_is_off = true; 
 
 	return;
