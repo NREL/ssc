@@ -955,7 +955,7 @@ bool SolarField::FieldLayout(){
 
 		//For the map-to-annual case, run a simulation here
 		if(_var_map->sf.des_sim_detail.mapval() == var_solarfield::DES_SIM_DETAIL::EFFICIENCY_MAP__ANNUAL)
-			SolarField::AnnualEfficiencySimulation( _var_map->amb.weather_file.val, this, results); //, (double*)NULL, (double*)NULL, (double*)NULL);
+			SolarField::AnnualEfficiencySimulation( _var_map->amb.weather_file.val, this, results);
 
 
 		ProcessLayoutResults(&results, sim_last - sim_first);

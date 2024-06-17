@@ -584,7 +584,34 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
 		}
 
 		m_sapi->Setup(*this);
-        m_sapi->PostProcessLayout(layout);
+        if (recs.size() > 1) {
+            // Multi-receiver systems have to assign heliostats to receivers
+            // This results in better agreement when assigning a heliostat field 
+            // TODO: This approach is clunky and doesn't quite get the same result (generating vs. importing a field)
+            weather_record wf;
+
+            vector<string> wfdata;
+            wfdata.reserve(8760);
+            char buf[1024];
+            for (int i = 0; i < 8760; i++) {
+                if (!wdata->read(&wf))
+                    throw exec_error("SolarPILOT", "could not read data line " + util::to_string(i + 1) + " of 8760 in weather data");
+
+                mysnprintf(buf, 1023, "%d,%d,%d,%.2lf,%.1lf,%.1lf,%.1lf", wf.day, wf.hour, wf.month, wf.dn, wf.tdry, wf.pres / 1000., wf.wspd);
+                wfdata.push_back(std::string(buf));
+            }
+
+            m_sapi->SetDetailCallback(ssc_cmod_solarpilot_callback, m_cmod);
+            m_sapi->SetSummaryCallbackStatus(false);
+            m_sapi->GenerateDesignPointSimulations(*this, wfdata);
+
+            sf.layout_method.combo_select_by_mapval(var_solarfield::LAYOUT_METHOD::USERDEFINED);
+            if (!m_sapi->CreateLayout(layout))
+                throw exec_error("SolarPILOT", "Failed to generate a heliostat field.");
+        }   
+        else {
+            m_sapi->PostProcessLayout(layout);
+        }
     }
     
     //check if flux map calculations are desired
@@ -600,7 +627,7 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
 		
         string aim_method_save = flux.aim_method.val;
         flux.aim_method.combo_select("Simple aim points");
-        if (rec_type == 3)  // Falling particle
+        if (rec_type == var_receiver::REC_TYPE::FALLING_PARTICLE)  // Falling particle
             m_sapi->SimulateAimPointsAtDesign();                // Required to set the aimpoints at design conditions
             flux.aim_method.combo_select( "Keep existing" );    // Fix aimpoints for simulation points
 
