@@ -961,7 +961,7 @@ public:
                     A_rec_aperture.at(i) = ap_height * ap_width;           // The aperture area should be used in cost calculations
                     A_rec_aperture_total += A_rec_aperture.at(i);
                     A_rec_curtain_total += A_rec_curtain.at(i);
-                    receivers.at(i)->update_sizing(rec_height[input_idx], rec_width[input_idx], THT, rec_azimuth[i]);
+                    receivers.at(i)->update_sizing(rec_height[input_idx], rec_width[input_idx], rec_azimuth[i], THT);
 
                     /*
                     ap_curtain_depth_ratio = max_curtain_depth[input_idx] / ap_height;
