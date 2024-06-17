@@ -269,3 +269,10 @@ void C_pt_receiver::get_design_performance(double& eta_thermal /*-*/,
     q_dot_piping_loss_des = m_Q_dot_piping_loss*1.E-6;  //[MWt]
     m_dot_htf_max = m_m_dot_htf_max;            //[kg/s]
 }
+
+
+void C_pt_receiver::update_sizing(double val1, double val2, double val3, double val4)
+{
+    throw std::runtime_error((std::string)__func__ + " is not implemented.");
+};
+

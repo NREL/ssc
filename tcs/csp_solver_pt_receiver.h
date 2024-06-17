@@ -179,7 +179,8 @@ public:
         double& q_dot_piping_loss_des /*MWt*/);
 
     virtual void set_state_requirement(bool) {};       // Only implemented in falling particle receiver class
-    virtual void set_fixed_mflow(double) {};     // Only implemented in falling particle receiver class
+    virtual void set_fixed_mflow(double) {};            // Only implemented in falling particle receiver class
+    virtual void update_sizing(double, double, double, double);  // Only implemented in falling particle receiver class
 
 protected:
 
