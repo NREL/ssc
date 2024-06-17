@@ -352,6 +352,8 @@ public:
 
 	virtual void init() override;
 
+    virtual void update_sizing(double ap_height, double ap_width, double rec_orientation, double h_tower);
+
 	virtual void call(const C_csp_weatherreader::S_outputs &weather, 
 		const C_csp_solver_htf_1state &htf_state_in, 
 		const C_pt_receiver::S_inputs &inputs,

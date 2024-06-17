@@ -81,6 +81,8 @@ C_falling_particle_receiver::C_falling_particle_receiver(double h_tower /*m*/,
     m_ap_width_ratio = ap_width_ratio;
     m_ap_curtain_depth_ratio = ap_curtain_depth_ratio;
     m_rec_orientation = rec_orientation;
+    if (m_rec_orientation < 0)
+        m_rec_orientation += 360;  // Relative wind directions require receiver orientation within [0,360]
 
     m_is_ap_at_bot = true;          // Hard-coded to true to match SolarPILOT
     m_is_curtain_flat = true;       // Curved curtain is not implemented yet
@@ -259,6 +261,17 @@ void C_falling_particle_receiver::init()
 }
 
 
+void C_falling_particle_receiver::update_sizing(double ap_height, double ap_width, double rec_orientation, double h_tower)
+{
+    m_ap_height = ap_height;
+    m_ap_width = ap_width;
+    m_h_tower = h_tower;
+    m_rec_orientation = rec_orientation;
+    if (m_rec_orientation < 0)
+        m_rec_orientation += 360;  // Relative wind directions require receiver orientation within [0,360]
+    init();  // Re-initialize receiver with new sizing
+    return;
+}
 
 
 void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& weather,

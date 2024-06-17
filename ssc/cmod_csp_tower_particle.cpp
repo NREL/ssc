@@ -827,8 +827,6 @@ public:
             ap_curtain_depth_ratio = max_curtain_depth[input_idx] / ap_height;
             q_dot_des_per_rec = q_dot_rec_des * (power_fraction[input_idx] / power_fraction_sum);  // Receiver design point power
             rec_orientation = rec_azimuth[i];
-            if (rec_orientation < 0)
-                rec_orientation += 360;  // Relative wind directions in receiver code require receiver orientation within [0,360]
 
             receivers.at(i) = std::shared_ptr<C_falling_particle_receiver>(new C_falling_particle_receiver(
                 THT, as_double("T_htf_hot_des"), as_double("T_htf_cold_des"),
@@ -963,6 +961,9 @@ public:
                     A_rec_aperture.at(i) = ap_height * ap_width;           // The aperture area should be used in cost calculations
                     A_rec_aperture_total += A_rec_aperture.at(i);
                     A_rec_curtain_total += A_rec_curtain.at(i);
+                    receivers.at(i)->update_sizing(rec_height[input_idx], rec_width[input_idx], THT, rec_azimuth[i]);
+
+                    /*
                     ap_curtain_depth_ratio = max_curtain_depth[input_idx] / ap_height;
                     q_dot_des_per_rec = q_dot_rec_des * (power_fraction[input_idx] / power_fraction_sum);  // Receiver design point power
                     rec_orientation = rec_azimuth[i];
@@ -985,6 +986,8 @@ public:
                         as_double("T_htf_hot_des"), as_double("rec_clearsky_fraction")));
 
                     receivers.at(i)->init();
+                    */
+
                     design_heat_loss.at(i) = receivers.at(i)->getHeatLossPerApertureArea() / 1000.0;    // [W/m^2] -> [kW/m^2]
                 }
 
@@ -1818,9 +1821,10 @@ public:
         ssc_number_t* rec_aspect = allocate("rec_aspect", num_recs);
         ssc_number_t* rec_azimuth_calc = allocate("rec_azimuth_calc", num_recs);
         for (size_t i = 0; i < num_recs; i++) {
-            rec_height_calc[i] = rec_height[i];                 //[m]
-            rec_width_calc[i] = rec_width[i];                   //[m]
-            rec_aspect[i] = rec_height[i] / rec_width[i];       //[-]
+            input_idx = duplicate_recs ? 0 : i;
+            rec_height_calc[i] = rec_height[input_idx];                 //[m]
+            rec_width_calc[i] = rec_width[input_idx];                   //[m]
+            rec_aspect[i] = rec_height[input_idx] / rec_width[input_idx];       //[-]
             rec_azimuth_calc[i] = rec_azimuth[i];               //[deg]
         }
 
