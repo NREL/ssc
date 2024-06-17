@@ -477,6 +477,9 @@ int multi_rec_opt_helper::run(SolarField *SF)
     case INFEASIBLE:
         result_status = RESULT_STATUS::RS_INFEASIBLE;
         break;
+    case TIMEOUT:
+        result_status = RESULT_STATUS::RS_TIMED_OUT;
+        break;
     }
     double objective = get_objective(lp);
     int ncols = get_Ncolumns(lp);

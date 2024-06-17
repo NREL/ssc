@@ -1866,8 +1866,11 @@ void SolarField::ProcessLayoutResults( sim_results *results, int nsim_total){
         mroh.sim_info = &_sim_info;
         mroh.problem_name = " heliostat assignments for multiple receivers ";
         mroh.run(this);         //run the optimization
-        
-        if (mroh.result_status == multi_rec_opt_helper::RS_INFEASIBLE) {
+
+        // Recover by assigning heliostats
+        if (mroh.result_status == multi_rec_opt_helper::RS_INFEASIBLE
+            || mroh.result_status == multi_rec_opt_helper::RS_TIMED_OUT
+            || mroh.result_status == multi_rec_opt_helper::RS_UNKNOWN_ERROR) {
             _sim_error.addSimulationError("The field can't provide enough power to meet receiver input power requirements.", false, false);
             // Re-run optimization with field "assigned"
             mroh.is_performance = true;
