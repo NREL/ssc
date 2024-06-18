@@ -107,8 +107,6 @@ extern module_entry_info
 	cm_entry_tcstrough_physical,
 	cm_entry_trough_physical,
     cm_entry_trough_physical_iph,
-	cm_entry_trough_physical_csp_solver,
-	cm_entry_trough_physical_process_heat,
 	cm_entry_iph_to_lcoefcr,
 	cm_entry_tcsgeneric_solar,
 	cm_entry_tcsmolten_salt,
@@ -209,8 +207,6 @@ static module_entry_info *module_table[] = {
 	&cm_entry_tcstrough_physical,
     &cm_entry_trough_physical,
     &cm_entry_trough_physical_iph,
-	&cm_entry_trough_physical_csp_solver,
-	&cm_entry_trough_physical_process_heat,
 	&cm_entry_iph_to_lcoefcr,
 	&cm_entry_tcsgeneric_solar,
 	&cm_entry_tcsmolten_salt,
@@ -712,6 +708,16 @@ SSCEXPORT ssc_var_t ssc_data_get_data_matrix(ssc_data_t p_data, const char *name
     }
     return dat;
 }
+
+SSCEXPORT ssc_bool_t ssc_data_deep_copy(ssc_data_t source, ssc_data_t dest) {
+    auto source_vt = static_cast<var_table*>(source);
+    if (!source_vt) return 0;
+    auto dest_vt = static_cast<var_table*>(dest);
+    if (!dest_vt) return 0;
+	*dest_vt = *source_vt;  // invokes operator= for deep copy
+    return 1;
+}
+
 /*
 void json_to_ssc_var(const Json::Value& json_val, ssc_var_t ssc_val){
     if (!ssc_val)

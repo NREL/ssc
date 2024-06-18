@@ -43,7 +43,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_trough_collector_receiver.h"
 #include "csp_solver_pc_heat_sink.h"
 #include "csp_solver_two_tank_tes.h"
-#include "csp_solver_tou_block_schedules.h"
 #include "csp_dispatch.h"
 #include "csp_system_costs.h"
 //#include "cmod_csp_common_eqns.h"
@@ -56,9 +55,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma warning (disable : 4388)
 
 static var_info _cm_vtab_trough_physical_iph[] = {
-
-
-
 
     /* VARTYPE          DATATYPE         NAME                         LABEL                                                                               UNITS           META              GROUP             REQUIRED_IF                CONSTRAINTS         UI_HINTS*/
 
@@ -89,8 +85,15 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_INPUT,        SSC_NUMBER,      "T_loop_in_des",             "Design loop inlet temperature",                                                    "C",            "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_loop_out",                "Target loop outlet temperature",                                                   "C",            "",               "solar_field",    "*",                       "",                      "" },
     //{ SSC_INPUT,        SSC_NUMBER,      "T_startup",                 "Required temperature of the system before the power block can be switched on",     "C",            "",               "solar_field",     "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "m_dot_htfmin",              "Minimum loop HTF flow rate",                                                       "kg/s",         "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "m_dot_htfmax",              "Maximum loop HTF flow rate",                                                       "kg/s",         "",               "solar_field",    "*",                       "",                      "" },
+
+
+    { SSC_INPUT,        SSC_NUMBER,      "use_abs_or_rel_mdot_limit", "Use mass flow abs (0) or relative (1) limits",                                     "",             "",               "solar_field",    "?=0",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "m_dot_htfmin",              "Minimum loop HTF flow rate",                                                       "kg/s",         "",               "solar_field",    "use_abs_or_rel_mdot_limit=0",  "",                 "" },
+    { SSC_INPUT,        SSC_NUMBER,      "m_dot_htfmax",              "Maximum loop HTF flow rate",                                                       "kg/s",         "",               "solar_field",    "use_abs_or_rel_mdot_limit=0",  "",                 "" },
+    { SSC_INPUT,        SSC_NUMBER,      "f_htfmin",                  "Minimum loop mass flow rate fraction of design",                                   "",             "",               "solar_field",    "use_abs_or_rel_mdot_limit=1",  "",                 "" },
+    { SSC_INPUT,        SSC_NUMBER,      "f_htfmax",                  "Maximum loop mass flow rate fraction of design",                                   "",             "",               "solar_field",    "use_abs_or_rel_mdot_limit=1",  "",                 "" },
+
+
     { SSC_INPUT,        SSC_MATRIX,      "field_fl_props",            "User defined field fluid property data",                                           "-",            "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_fp",                      "Freeze protection temperature (heat trace activation temperature)",                "none",         "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "I_bn_des",                  "Solar irradiation at design",                                                      "C",            "",               "solar_field",    "*",                       "",                      "" },
@@ -208,8 +211,6 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_INPUT,        SSC_ARRAY,       "dispatch_tod_factors",      "TOD factors for periods 1 through 9",                                              "",
         "We added this array input after SAM 2022.12.21 to replace the functionality of former single value inputs dispatch_factor1 through dispatch_factor9",                              "Time of Delivery Factors","ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1","",  "SIMULATION_PARAMETER" },
 
-    { SSC_INPUT,        SSC_NUMBER,      "is_dispatch_series",        "Use time-series dispatch factors",                                                 "",             "",               "tou",                     "?=1",                                                       "",             "" },
-    { SSC_INPUT,        SSC_ARRAY,       "dispatch_series",           "Time series dispatch factors",                                                     "",             "",               "tou",                     "",                                                          "",             "" },
     { SSC_INPUT,        SSC_NUMBER,      "is_timestep_load_fractions","Use turbine load fraction for each timestep instead of block dispatch?",           "",             "",               "tou",                     "?=0",                                                       "",             "SIMULATION_PARAMETER" },
     { SSC_INPUT,        SSC_ARRAY,       "timestep_load_fractions",   "Turbine load fraction for each timestep, alternative to block dispatch",           "",             "",               "tou",                     "?",                                                         "",             "SIMULATION_PARAMETER" },
     { SSC_INPUT,        SSC_ARRAY,       "ppa_price_input",			  "PPA prices - yearly",			                                                  "$/kWh",	      "",	            "Revenue",			       "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1","",      	    "SIMULATION_PARAMETER" },
@@ -278,10 +279,6 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_INPUT,        SSC_NUMBER,      "disp_rsu_cost",                       "Receiver startup cost",                                                  "$",            "",               "System Control",     "",           "",              "SIMULATION_PARAMETER" },
     { SSC_INPUT,        SSC_NUMBER,      "disp_pen_delta_w",                    "Dispatch cycle production change penalty",                               "$/kWe-change", "",               "tou",                "",           "",              "SIMULATION_PARAMETER" },
     { SSC_INPUT,        SSC_NUMBER,      "P_boil",                              "Boiler operating pressure",                                              "bar",          "",               "powerblock",         "",           "",              "SIMULATION_PARAMETER" },
-
-
-    // ADDED For Design Point
-    { SSC_INPUT,        SSC_NUMBER,      "lat",                                 "Latitude",                                                               "degree",       "",               "",                   "*",          "",              "" },
 
 
     // Direct Capital Costs
@@ -359,6 +356,13 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "SCADefocusArray",                  "Order in which the SCA's should be defocused",                             "",              "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "max_field_flow_velocity",          "Maximum field flow velocity",                                              "m/s",           "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "min_field_flow_velocity",          "Minimum field flow velocity",                                              "m/s",           "",               "Solar Field",    "*",                                "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "m_dot_htfmin_actual",              "Actual minimum loop HTF flow rate",                                         "kg/s",         "",                "solar_field",    "*",                                "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "m_dot_htfmax_actual",              "Actual maximum loop HTF flow rate",                                         "kg/s",         "",                "solar_field",    "*",                                "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "f_htfmin_actual",                  "Actual minimum loop mass flow rate fraction of design",                     "",             "",                "solar_field",    "*",                                "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "f_htfmax_actual",                  "Actual maximum loop mass flow rate fraction of design",                     "",             "",                "solar_field",    "*",                                "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "max_loop_flow_vel_des",            "Maximum loop flow velocity at design",                                     "m/s",           "",               "Solar Field",    "*",                                "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "min_loop_flow_vel_des",            "Minimum loop flow velocity at design",                                     "m/s",           "",               "Solar Field",    "*",                                "",                      "" },
+
 
     { SSC_OUTPUT,       SSC_NUMBER,      "total_loop_conversion_efficiency", "Total Loop Conversion Efficiency at Design",                               "",              "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "total_required_aperture_for_SM1",  "Aperture required for solar mult = 1",                                     "m2",            "",               "Solar Field",    "*",                                "",                      "" },
@@ -373,8 +377,12 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_OUTPUT,       SSC_MATRIX,      "L_cpnt",                           "Lengths of the components in each loop interconnect",                      "m",             "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_MATRIX,      "Type_cpnt",                        "Type of component in each loop interconnect [0=fitting | 1=pipe | 2=flex_hose]",  "Wm",     "",               "Solar Field",    "*",                                "",                      "" },
 
-    { SSC_OUTPUT,       SSC_NUMBER,      "field_thermal_output_actual",      "Design-point thermal power from the solar field limited by mass flow", "MW",           "",         "Receiver",                       "*",                                                                "",              "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "field_thermal_output_ideal",       "Design-point thermal power from the solar field with no limit",        "MW",           "",         "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "field_thermal_output_actual",      "Design-point thermal power from the solar field limited by mass flow",     "MW",            "",               "Solar Field",    "*",                                "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "field_thermal_output_ideal",       "Design-point thermal power from the solar field with no limit",            "MW",            "",               "Solar Field",    "*",                                "",                      "" },
+
+        // Solar Field STEADY STATE
+    { SSC_OUTPUT,       SSC_NUMBER,      "dP_sf_SS",                         "Steady State field pressure drop",                                         "bar",           "",               "Solar Field",    "*",                                "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "W_dot_pump_SS",                    "Steady State pumping power",                                               "MWe",           "",               "Solar Field",    "*",                                "",                      "" },
 
 
     // Thermal Storage
@@ -500,7 +508,10 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "T_rec_hot_out",             "Loop timestep-averaged outlet temperature",                                        "C",            "",               "solar_field",    "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "T_field_hot_out",           "Field timestep-averaged outlet temperature",                                       "C",            "",               "solar_field",    "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "deltaP_field",              "Field pressure drop",                                                              "bar",          "",               "solar_field",    "sim_type=1",                       "",                      "" },
-                                                                                                                                                                                                                                                               
+    { SSC_OUTPUT,       SSC_ARRAY,       "vel_loop_min",              "Receiver min HTF velocity in loop",                                                "m/s",          "",               "solar_field",    "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "vel_loop_max",              "Receiver max HTF velocity in loop",                                                "m/s",          "",               "solar_field",    "sim_type=1",                       "",                      "" },
+
+
     { SSC_OUTPUT,       SSC_ARRAY,       "W_dot_sca_track",           "Field collector tracking power",                                                   "MWe",          "",               "solar_field",    "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "W_dot_field_pump",          "Field htf pumping power",                                                          "MWe",          "",               "solar_field",    "sim_type=1",                       "",                      "" },
 
@@ -695,6 +706,7 @@ public:
         C_csp_weatherreader weather_reader;
         C_csp_solver::S_sim_setup sim_setup;
         int n_steps_fixed;
+        double lat = std::numeric_limits<double>::quiet_NaN();
         int steps_per_hour;
         {
             if (is_assigned("file_name")) {
@@ -726,6 +738,8 @@ public:
             int n_wf_records = (int)weather_reader.m_weather_data_provider->nrecords();
             steps_per_hour = n_wf_records / 8760;                       //[-]
 
+            lat = weather_reader.ms_solved_params.m_lat;     //[deg]
+
             n_steps_fixed = steps_per_hour * 8760;                    //[-]
             sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;  //[s]
         }
@@ -741,15 +755,15 @@ public:
             // Collect Inputs
             {
                 // ADDED Trough Inputs (TMB 10/06/2023) for design point calculations
-                std::vector<double> trough_loop_vec = as_vector_double("trough_loop_control");
-                c_trough.m_trough_loop_control.assign(&trough_loop_vec[0], trough_loop_vec.size());
+                //std::vector<double> trough_loop_vec = as_vector_double("trough_loop_control");
+                //c_trough.m_trough_loop_control.assign(&trough_loop_vec[0], trough_loop_vec.size());
 
-                int actual_nSCA = trough_loop_vec[0];
+                //int actual_nSCA = trough_loop_vec[0];
 
                 c_trough.m_use_solar_mult_or_aperture_area = as_number("use_solar_mult_or_aperture_area"); // Use specified solar mult (0) or total aperture (1)
                 c_trough.m_specified_solar_mult = as_number("specified_solar_multiple");            // User specified solar mult
                 c_trough.m_specified_total_aperture = as_number("specified_total_aperture");    //[m2] User specified total aperture
-                c_trough.m_nSCA = actual_nSCA;                              //[-] Number of SCA's in a loop
+                //c_trough.m_nSCA = actual_nSCA;   CALCULATED INTERNAL                           //[-] Number of SCA's in a loop
                 c_trough.m_nHCEt = as_integer("nHCEt");                     //[-] Number of HCE types
                 c_trough.m_nColt = as_integer("nColt");                     //[-] Number of collector types
                 c_trough.m_nHCEVar = as_integer("nHCEVar");                 //[-] Number of HCE variants per t
@@ -779,8 +793,13 @@ public:
                 double T_startup = max(T_startup_min, 0.67 * T_loop_in_des + 0.33 * T_loop_out_des); //[C]
                 c_trough.m_T_startup = T_startup;                           //[C] The required temperature (converted to K in init) of the system before the power block can be switched on
 
-                c_trough.m_m_dot_htfmin = as_double("m_dot_htfmin");        //[kg/s] Minimum loop HTF flow rate
-                c_trough.m_m_dot_htfmax = as_double("m_dot_htfmax");        //[kg/s] Maximum loop HTF flow rate
+                c_trough.m_use_abs_or_rel_mdot_limit = as_integer("use_abs_or_rel_mdot_limit"); // Use mass flow abs (0) or relative (1) limits
+                c_trough.m_m_dot_htfmin_in = as_double("m_dot_htfmin");        //[kg/s] Minimum loop HTF flow rate
+                c_trough.m_m_dot_htfmax_in = as_double("m_dot_htfmax");        //[kg/s] Maximum loop HTF flow rate
+                c_trough.m_f_htfmin_in = as_double("f_htfmin");                //[] Minimum loop htf flow rate fraction
+                c_trough.m_f_htfmax_in = as_double("f_htfmax");                //[] Maximum loop htf flow rate fraction
+
+
                 c_trough.m_field_fl_props = as_matrix("field_fl_props");    //[-] User-defined field HTF properties
                 c_trough.m_T_fp = as_double("T_fp");                        //[C] Freeze protection temperature (heat trace activation temperature), convert to K in init
                 c_trough.m_I_bn_des = as_double("I_bn_des");                //[W/m^2] Solar irradiation at design
@@ -971,7 +990,7 @@ public:
             }
 
             // Calculate solar multiple (needed for other component constructors)
-            bool success = c_trough.design_solar_mult();
+            bool success = c_trough.design_solar_mult(as_vector_double("trough_loop_control"));
             if (success == false)
                 throw exec_error("trough_physical_iph", "Negative solar mult or total aperture.");
 
@@ -1010,6 +1029,10 @@ public:
 
                 c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_W_DOT_SCA_TRACK, allocate("W_dot_sca_track", n_steps_fixed), n_steps_fixed);     //[MWe]
                 c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_W_DOT_PUMP, allocate("W_dot_field_pump", n_steps_fixed), n_steps_fixed);         //[MWe]
+
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_VEL_LOOP_MIN, allocate("vel_loop_min", n_steps_fixed), n_steps_fixed);               //[C]
+                c_trough.mc_reported_outputs.assign(C_csp_trough_collector_receiver::E_VEL_LOOP_MAX, allocate("vel_loop_max", n_steps_fixed), n_steps_fixed);               //[C]
+
             }
             
         }
@@ -1132,159 +1155,118 @@ public:
 
         // ********************************
         // ********************************
-        // TOU
+        // Schedules
         // ********************************
         // ********************************
-        C_csp_tou_block_schedules tou;
-        C_csp_tou_block_schedules::S_params *tou_params = &tou.ms_params;
-        double ppa_price_year1 = std::numeric_limits<double>::quiet_NaN();
+
+        // Off-taker schedule
+        C_timeseries_schedule_inputs offtaker_schedule;
+        bool is_timestep_load_fractions = as_boolean("is_timestep_load_fractions");
+        if (is_timestep_load_fractions) {
+            auto vec = as_vector_double("timestep_load_fractions");
+            C_timeseries_schedule_inputs offtaker_series = C_timeseries_schedule_inputs(vec, std::numeric_limits<double>::quiet_NaN());
+            offtaker_schedule = offtaker_series;
+        }
+        else {      // Block schedules
+            C_timeseries_schedule_inputs offtaker_block = C_timeseries_schedule_inputs(as_matrix("weekday_schedule"),
+                as_matrix("weekend_schedule"), as_vector_double("f_turb_tou_periods"), std::numeric_limits<double>::quiet_NaN());
+            offtaker_schedule = offtaker_block;
+        }
+
+        // Electricity pricing schedule
+        C_timeseries_schedule_inputs elec_pricing_schedule;
+
+        if (sim_type == 1)
         {
-            tou_params->mc_csp_ops.mc_weekdays = as_matrix("weekday_schedule");
-            tou_params->mc_csp_ops.mc_weekends = as_matrix("weekend_schedule");
-            if (tou_params->mc_pricing.mc_weekdays.ncells() == 1) {
-                // Resize default value from var table to proper dimensions
-                tou_params->mc_pricing.mc_weekdays = util::matrix_t<double>(12, 24, 1.0);
-            }
-            if (tou_params->mc_pricing.mc_weekends.ncells() == 1) {
-                // Resize default value from var table to proper dimensions
-                tou_params->mc_pricing.mc_weekends = util::matrix_t<double>(12, 24, 1.0);
-            }
-
-            tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = as_boolean("is_tod_pc_target_also_pc_max");
-            tou.mc_dispatch_params.m_is_block_dispatch = !is_dispatch;      //mw
-            tou.mc_dispatch_params.m_use_rule_1 = true;
-            tou.mc_dispatch_params.m_standby_off_buffer = 2.0;
-            tou.mc_dispatch_params.m_use_rule_2 = false;
-            tou.mc_dispatch_params.m_q_dot_rec_des_mult = -1.23;
-            tou.mc_dispatch_params.m_f_q_dot_pc_overwrite = -1.23;
-
-            size_t n_f_turbine = 0;
-            ssc_number_t* p_f_turbine = as_array("f_turb_tou_periods", &n_f_turbine);
-            tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(n_f_turbine, 0.0);
-            //tou_params->mv_t_frac.resize(n_f_turbine, 0.0);
-            for (size_t i = 0; i < n_f_turbine; i++)
-                tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC][i] = (double)p_f_turbine[i];
-
-            // Load fraction by time step:
-            //bool is_load_fraction_by_timestep = is_assigned("timestep_load_fractions");
-            bool is_is_timestep_load_fractions_assigned = is_assigned("is_timestep_load_fractions");
-            bool is_timestep_load_fractions = false;
-            if (is_is_timestep_load_fractions_assigned) {
-                is_timestep_load_fractions = as_boolean("is_timestep_load_fractions");
-            }
-            tou_params->mc_csp_ops.mv_is_diurnal = !(is_timestep_load_fractions);
-            if (is_timestep_load_fractions) {
-                size_t N_load_fractions;
-                ssc_number_t* load_fractions = as_array("timestep_load_fractions", &N_load_fractions);
-                std::copy(load_fractions, load_fractions + N_load_fractions, std::back_inserter(tou_params->mc_csp_ops.timestep_load_fractions));
-            }
-
-            
-
-            if (sim_type == 1)
-            {
-                if (csp_financial_model == 8 || csp_financial_model == 7) {        // No Financial Model or LCOH; Single Owner in progress 9/2023
-                    if (is_dispatch) {
-                        throw exec_error("trough_physical_iph", "Can't select dispatch optimization if No Financial model");
-                    }
-                    else { // if no dispatch optimization, don't need an input pricing schedule
-                        // If electricity pricing data is not available, then dispatch to a uniform schedule
-                        tou_params->mc_pricing.mc_weekdays.resize_fill(12, 24, 1.);
-                        tou_params->mc_pricing.mc_weekends.resize_fill(12, 24, 1.);
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, -1.0);
-
-                        if (csp_financial_model == 1) {
-                            log("The MSLF IPH model does not control dispatch with respect to input pricing signals");
-                        }
-                    }
+            if (csp_financial_model == 8 || csp_financial_model == 7) {        // No Financial Model or LCOH; Single Owner in progress 9/2023
+                if (is_dispatch) {
+                    throw exec_error("trough_physical_iph", "Can't select dispatch optimization if No Financial model");
                 }
-                else if (csp_financial_model == 1) {    // Single Owner
+                else { // if no dispatch optimization, don't need an input pricing schedule
+                    // If electricity pricing data is not available, then dispatch to a uniform schedule
+                    elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0, std::numeric_limits<double>::quiet_NaN());
+                }
+            }
+            else if (csp_financial_model == 1) {    // Single Owner
 
-                    // Get first year base ppa price
-                    bool is_ppa_price_input_assigned = is_assigned("ppa_price_input");
-                    if (is_dispatch && !is_ppa_price_input_assigned) {
-                        throw exec_error("trough_physical_iph", "\n\nYou selected dispatch optimization which requires that the array input ppa_price_input is defined\n");
-                    }
+                double ppa_price_year1 = std::numeric_limits<double>::quiet_NaN();
 
-                    if (is_ppa_price_input_assigned) {
-                        size_t count_ppa_price_input;
-                        ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
-                        ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
-                    }
-                    else {
-                        ppa_price_year1 = 1.0;      //[-] don't need ppa multiplier if not optimizing
-                    }
+                // Get first year base ppa price
+                bool is_ppa_price_input_assigned = is_assigned("ppa_price_input");
+                if (is_dispatch && !is_ppa_price_input_assigned) {
+                    throw exec_error("trough_physical_iph", "\n\nYou selected dispatch optimization which requires that the array input ppa_price_input is defined\n");
+                }
 
-                    int ppa_soln_mode = as_integer("ppa_soln_mode");    // PPA solution mode (0=Specify IRR target, 1=Specify PPA price)
-                    if (ppa_soln_mode == 0 && is_dispatch) {
-                        throw exec_error("trough_physical_iph", "\n\nYou selected dispatch optimization and the Specify IRR Target financial solution mode, "
-                            "but dispatch optimization requires known absolute electricity prices. Dispatch optimization requires "
-                            "the Specify PPA Price financial solution mode. You can continue using dispatch optimization and iteratively "
-                            "solve for the PPA that results in a target IRR by running a SAM Parametric analysis or script.\n");
-                    }
-
-                    // Time-of-Delivery factors by time step:
-                    int ppa_mult_model = as_integer("ppa_multiplier_model");
-                    if (ppa_mult_model == 1)    // use dispatch_ts input
-                    {
-                        tou_params->mc_pricing.mv_is_diurnal = false;
-
-                        if (is_assigned("dispatch_factors_ts")) {
-                            size_t nmultipliers;
-                            ssc_number_t* multipliers = as_array("dispatch_factors_ts", &nmultipliers);
-                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(nmultipliers, 0.0);
-                            for (size_t ii = 0; ii < nmultipliers; ii++)
-                                tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][ii] = multipliers[ii];
-                        }
-                        else {
-                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
-                        }
-                    }
-                    else if (ppa_mult_model == 0) // standard diuranal input
-                    {
-                        tou_params->mc_pricing.mv_is_diurnal = true;
-
-                        // Most likely use case is to use schedules and TOD. So assume if at least one is provided, then user intended to use this approach
-                        // the 'else' option applies non-feasible electricity prices, so we want to guard against selecting that it appears users
-                        // are trying to use the schedules. 
-                        bool is_one_assigned = is_assigned("dispatch_sched_weekday") || is_assigned("dispatch_sched_weekend") || is_assigned("dispatch_tod_factors");
-
-                        if (is_one_assigned || is_dispatch) {
-
-                            tou_params->mc_pricing.mc_weekdays = as_matrix("dispatch_sched_weekday");
-                            tou_params->mc_pricing.mc_weekends = as_matrix("dispatch_sched_weekend");
-
-                            auto dispatch_tod_factors = as_vector_double("dispatch_tod_factors");
-                            if (dispatch_tod_factors.size() != 9)
-                                throw exec_error("trough_physical_iph", util::format("\n\nDispatch TOD factors has %d periods instead of the expected 9.\n", (int)dispatch_tod_factors.size()));
-
-                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, 0.0);
-                            for (size_t i = 0; i < 9; i++)
-                                tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][i] = dispatch_tod_factors[i];
-
-                        }
-                        else {
-                            tou_params->mc_pricing.mc_weekdays.resize_fill(12, 24, 1.);
-                            tou_params->mc_pricing.mc_weekends.resize_fill(12, 24, 1.);
-                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, -1.0);
-                        }
-                    }
-
+                if (is_ppa_price_input_assigned) {
+                    size_t count_ppa_price_input;
+                    ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
+                    ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
                 }
                 else {
-                    throw exec_error("trough_physical_iph", "csp_financial_model must be 1, 7, or 8");
+                    ppa_price_year1 = 1.0;      //[-] don't need ppa multiplier if not optimizing
                 }
 
-
+                int ppa_soln_mode = as_integer("ppa_soln_mode");    // PPA solution mode (0=Specify IRR target, 1=Specify PPA price)
+                if (ppa_soln_mode == 0 && is_dispatch) {
+                    throw exec_error("trough_physical_iph", "\n\nYou selected dispatch optimization and the Specify IRR Target financial solution mode, "
+                        "but dispatch optimization requires known absolute electricity prices. Dispatch optimization requires "
+                        "the Specify PPA Price financial solution mode. You can continue using dispatch optimization and iteratively "
+                        "solve for the PPA that results in a target IRR by running a SAM Parametric analysis or script.\n");
                 }
-            else if (sim_type == 2)
-            {
-                tou_params->mc_pricing.mv_is_diurnal = false;
-                tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
+
+                // Time-of-Delivery factors by time step:
+                int ppa_mult_model = as_integer("ppa_multiplier_model");
+                if (ppa_mult_model == 1)    // use dispatch_ts input
+                {
+                    if (is_assigned("dispatch_factors_ts") || is_dispatch) {
+                        auto vec = as_vector_double("dispatch_factors_ts");
+                        elec_pricing_schedule = C_timeseries_schedule_inputs(vec, ppa_price_year1);
+                    }
+                    else { // if no dispatch optimization, don't need an input pricing schedule
+                        elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0, numeric_limits<double>::quiet_NaN());
+                    }
+                }
+                else if (ppa_mult_model == 0) // standard diuranal input
+                {
+                    // Most likely use case is to use schedules and TOD. So assume if at least one is provided, then user intended to use this approach
+                    // the 'else' option applies non-feasible electricity prices, so we want to guard against selecting that it appears users
+                    // are trying to use the schedules. 
+                    bool is_one_assigned = is_assigned("dispatch_sched_weekday") || is_assigned("dispatch_sched_weekend") || is_assigned("dispatch_tod_factors");
+
+                    if (is_one_assigned || is_dispatch) {
+
+                        elec_pricing_schedule = C_timeseries_schedule_inputs(as_matrix("dispatch_sched_weekday"),
+                            as_matrix("dispatch_sched_weekend"), as_vector_double("dispatch_tod_factors"), ppa_price_year1);
+                    }
+                    else {
+                        // If electricity pricing data is not available, then dispatch to a uniform schedule
+                        elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0, std::numeric_limits<double>::quiet_NaN());
+                    }
+                }
+
+            }
+            else {
+                throw exec_error("trough_physical_iph", "csp_financial_model must be 1, 7, or 8");
             }
         }
-        
-        
+        else if (sim_type == 2)
+        {
+            elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0, std::numeric_limits<double>::quiet_NaN());
+        }
+
+        // Set dispatch model type
+        C_csp_tou::C_dispatch_model_type::E_dispatch_model_type dispatch_model_type = C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::UNDEFINED;
+        if (is_dispatch) {
+            dispatch_model_type = C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::DISPATCH_OPTIMIZATION;
+        }
+        else {
+            dispatch_model_type = C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::HEURISTIC;
+        }
+
+        bool is_offtaker_frac_also_max = as_boolean("is_tod_pc_target_also_pc_max");
+
+        C_csp_tou tou(offtaker_schedule, elec_pricing_schedule, dispatch_model_type, is_offtaker_frac_also_max);
+            
         // System parameters
         C_csp_solver::S_csp_system_params system;
         {
@@ -1322,7 +1304,7 @@ public:
             double disp_rsu_cost_calc = as_double("disp_rsu_cost_rel") * q_dot_rec_des;   //[$/start]
             dispatch.params.set_user_params(can_cycle_use_standby, as_double("disp_time_weighting"),
                 disp_rsu_cost_calc, heater_startup_cost, disp_csu_cost_calc, disp_pen_ramping,
-                as_double("disp_inventory_incentive"), as_double("q_rec_standby"), as_double("q_rec_heattrace"), ppa_price_year1);
+                as_double("disp_inventory_incentive"), as_double("q_rec_standby"), as_double("q_rec_heattrace")); // , ppa_price_year1);
         }
         else {
             dispatch.solver_params.dispatch_optimize = false;
@@ -1488,6 +1470,8 @@ public:
                 set_vector("SCADefocusArray", c_trough.m_SCADefocusArray);
                 assign("max_field_flow_velocity", c_trough.m_max_field_flow_velocity);  //[m/s]
                 assign("min_field_flow_velocity", c_trough.m_min_field_flow_velocity);  //[m/s]
+                assign("max_loop_flow_vel_des", c_trough.m_max_loop_flow_vel_des);      //[m/s]
+                assign("min_loop_flow_vel_des", c_trough.m_min_loop_flow_vel_des);      //[m/s]
                 assign("total_loop_conversion_efficiency", c_trough.m_total_loop_conversion_efficiency_des);
                 assign("total_required_aperture_for_SM1", c_trough.m_total_required_aperture_for_SM1);
                 assign("required_number_of_loops_for_SM1", c_trough.m_required_number_of_loops_for_SM1);
@@ -1504,7 +1488,14 @@ public:
                 assign("D_cpnt", c_trough.m_D_cpnt);    //[m]
                 assign("L_cpnt", c_trough.m_L_cpnt);    //[m]
                 assign("Type_cpnt", c_trough.m_Type_cpnt);   //[]
-                
+
+                assign("m_dot_htfmin_actual", c_trough.m_m_dot_htfmin); //[kg/s]
+                assign("m_dot_htfmax_actual", c_trough.m_m_dot_htfmax); //[kg/s]
+                assign("f_htfmin_actual", c_trough.m_f_htfmin);         //[]
+                assign("f_htfmax_actual", c_trough.m_f_htfmax);         //[]
+
+                assign("dP_sf_SS", c_trough.m_dP_sf_SS);                //[bar]
+                assign("W_dot_pump_SS", c_trough.m_W_dot_pump_SS);      //[MWe]
             }
 
             // Thermal Storage
@@ -1545,8 +1536,7 @@ public:
                 vector<double> L_SCA = as_vector_double("L_SCA");
                 vector<double> ColperSCA = as_vector_double("ColperSCA");
                 vector<double> Ave_Focal_Length = as_vector_double("Ave_Focal_Length");
-                double lat = as_double("lat");
-
+                
                 util::matrix_t<ssc_number_t> csp_dtr_sca_ap_lengths;
                 {
                     size_t n = L_SCA.size();
