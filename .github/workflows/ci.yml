@@ -8,6 +8,7 @@ env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
   GTEST_REF: b85864c64758dec007208e56af933fc3f52044ee
+  ORTOOLS_VER: "9.8"
 
 jobs:
   build-on-ubuntu:
@@ -43,8 +44,8 @@ jobs:
           sudo apt update
           sudo apt install -y build-essential cmake lsb-release
           cd $GITHUB_WORKSPACE
-          wget -q https://github.com/google/or-tools/releases/download/v9.9/or-tools_amd64_ubuntu-23.04_cpp_v9.9.3963.tar.gz
-          tar -xvf or-tools_amd64_ubuntu-23.04_cpp_v9.9.3963.tar.gz
+          wget -q https://github.com/google/or-tools/releases/download/v${ORTOOLS_VER}/or-tools_amd64_ubuntu-22.04_cpp_v${ORTOOLS_VER}.3296.tar.gz
+          tar -xvf or-tools_amd64_ubuntu-*
           mkdir or-tools
           mv or-tools*/* or-tools
 
@@ -139,7 +140,7 @@ jobs:
       if: ${{ matrix.os == 'macos-latest' && steps.cachedortools.outputs.cache-hit != 'true'}}
       run: |
           cd $GITHUB_WORKSPACE
-          curl -LJO https://github.com/google/or-tools/releases/download/v9.9/or-tools_arm64_macOS-14.3.1_cpp_v9.9.3963.tar.gz
+          curl -LJO https://github.com/google/or-tools/releases/download/v${ORTOOLS_VER}/or-tools_arm64_macOS-14.1_cpp_v${ORTOOLS_VER}.3296.tar.gz
           tar -xvf or-tools_arm64*.tar.gz
           mkdir or-tools
           mv or-tools*/* or-tools
@@ -147,7 +148,7 @@ jobs:
       if: ${{ matrix.os == 'macos-14-large' && steps.cachedortools.outputs.cache-hit != 'true'}}
       run: |
           cd $GITHUB_WORKSPACE
-          curl -LJO https://github.com/google/or-tools/releases/download/v9.9/or-tools_x86_64_macOS-14.3.1_cpp_v9.9.3963.tar.gz
+          curl -LJO https://github.com/google/or-tools/releases/download/v${ORTOOLS_VER}/or-tools_x86_64_macOS-14.1_cpp_v${ORTOOLS_VER}.3296.tar.gz
           tar -xvf or-tools_x86_64*tar.gz
           mkdir or-tools
           mv or-tools*/* or-tools
@@ -251,8 +252,8 @@ jobs:
       shell: bash
       run: |
         cd $GITHUB_WORKSPACE
-        curl -LJO https://github.com/google/or-tools/releases/download/v9.8/or-tools_x64_VisualStudio2022_cpp_v9.8.3296.zip
-        unzip or-tools_x64_VisualStudio2022_cpp_v9.8.3296.zip -d or-tools
+        curl -LJO https://github.com/google/or-tools/releases/download/v${ORTOOLS_VER}/or-tools_x64_VisualStudio2022_cpp_v${ORTOOLS_VER}.3296.zip
+        unzip or-tools_x64_VisualStudio2022_cpp_* -d or-tools
         mv or-tools/or-tools_* $ORTOOLSDIR
 
     - name: Get cached GTest
