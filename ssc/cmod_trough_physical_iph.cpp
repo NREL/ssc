@@ -1992,17 +1992,18 @@ public:
         assign("kwh_per_kw", (ssc_number_t)kWh_per_kW);
 
         // Calculate percentage of heat load met
-        std::vector<double> gen = as_vector_double("gen");
+        //std::vector<double> gen = as_vector_double("gen");
+        std::vector<double> heat_sink_q = as_vector_double("q_dot_to_heat_sink");
         double tot_heat_load = 0.0, heat_load = 0.0, load_met = 0.0;
         double step_s, hl_nondim_val, temp;
         int temp_int;
         double sec_per_ts = 3600. / steps_per_hour;
-        for (int i = 0; i < gen.size(); i++) {
+        for (int i = 0; i < heat_sink_q.size(); i++) {
             step_s = (i+1) * sec_per_ts;
             offtaker_schedule.get_timestep_data(step_s, hl_nondim_val, temp, temp_int);
-            heat_load = hl_nondim_val * nameplate * 1.e3;
+            heat_load = hl_nondim_val * nameplate;
             tot_heat_load += heat_load;
-            load_met += gen[i] > heat_load ? heat_load : gen[i];    // Only get credit for the load itself
+            load_met += heat_sink_q[i] > heat_load ? heat_load : heat_sink_q[i];    // Only get credit for the load itself
         }
         assign("heat_load_capacity_factor", (ssc_number_t)load_met * 100. / tot_heat_load);        
     }
