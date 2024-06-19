@@ -44,7 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_pc_Rankine_indirect_224.h"
 #include "csp_solver_two_tank_tes.h"
 #include "csp_solver_NTHeatTrap_tes.h"
-#include "csp_solver_tou_block_schedules.h"
+//#include "csp_solver_tou_block_schedules.h"
 #include "csp_dispatch.h"
 #include "csp_system_costs.h"
 //#include "cmod_csp_common_eqns.h"
@@ -1614,6 +1614,8 @@ public:
                 }
                 else {
                     elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0, std::numeric_limits<double>::quiet_NaN());
+                    // TMB 2024.01.31 Set en_electricity_rates to 'on'
+                    assign("en_electricity_rates", 1);
                 }
             }
             else if (csp_financial_model == 6) {     // use 'mp_energy_market_revenue' -> from Merchant Plant model
@@ -1981,23 +1983,32 @@ public:
                     h_tank_calc /*m*/, d_tank_calc /*m*/, q_dot_loss_tes_des_calc /*MWt*/, dens_store_htf_at_T_ave_calc /*kg/m3*/,
                     Q_tes_des_calc /*MWt-hr*/;
 
+                double tes_htf_min_temp = 0;
+                double tes_htf_max_temp = 0;
+                double vol_min = 0;
+
                 if (tes_type == 0)
                 {
                     storage_two_tank.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
                         h_tank_calc, d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
+
+                    tes_htf_min_temp = storage_two_tank.get_min_storage_htf_temp() - 273.15;
+                    tes_htf_max_temp = storage_two_tank.get_max_storage_htf_temp() - 273.15;
+                    vol_min = V_tes_htf_total_calc * (storage_two_tank.m_h_tank_min / h_tank_calc);
                 }
                 else if (tes_type == 1)
                 {
                     storage_NT.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
                         h_tank_calc, d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
-                }
-                
 
-                double vol_min = V_tes_htf_total_calc * (storage_NT.m_h_tank_min / h_tank_calc);
+                    tes_htf_min_temp = storage_NT.get_min_storage_htf_temp() - 273.15;
+                    tes_htf_max_temp = storage_NT.get_max_storage_htf_temp() - 273.15;
+                    vol_min = V_tes_htf_total_calc * (storage_NT.m_h_tank_min / h_tank_calc);
+                }
+
                 double V_tank_hot_ini = (as_double("h_tank_min") / h_tank_calc) * V_tes_htf_total_calc; // m3
                 double T_avg = (as_double("T_loop_in_des") + as_double("T_loop_out")) / 2.0;    // C
-                //double tes_htf_min_temp = storage_NT.get_min_storage_htf_temp() - 273.15;
-                //double tes_htf_max_temp = storage_NT.get_max_storage_htf_temp() - 273.15;
+                
 
                 assign("q_tes", Q_tes_des_calc); // MWt-hr
                 assign("tes_avail_vol", V_tes_htf_avail_calc); // m3
@@ -2010,8 +2021,8 @@ public:
                 assign("vol_min", vol_min); // m3
                 assign("V_tank_hot_ini", V_tank_hot_ini);   // m3
                 assign("tes_htf_avg_temp", T_avg);  // C
-                assign("tes_htf_min_temp", 0);
-                assign("tes_htf_max_temp", 0);
+                assign("tes_htf_min_temp", tes_htf_min_temp);
+                assign("tes_htf_max_temp", tes_htf_max_temp);
             }
 
             // Collector
