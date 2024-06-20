@@ -311,7 +311,8 @@ bool compute_module::verify(const std::string &phase, int check_var_type) {
                     ret =  false;
                 }
             }
-            else { // SAM issue 1184 - if variable present check constraints even if not required - can check type. too.
+            else if (vi->ui_hint != "SKIP_CONSTRAINT_CHECK") // SAM issue 1733 added for depr_fed_sl_years and depr_sta_sl_years
+            { // SAM issue 1184 - if variable present check constraints even if not required - can check type. too.
                 if (var_data* dat = lookup(vi->name)) {
                     std::string fail_text;
                     if (!check_constraints(vi->name, fail_text)) {
