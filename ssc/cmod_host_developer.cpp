@@ -1586,6 +1586,8 @@ public:
 
 		double cost_installed;
 
+        double pre_depr_alloc_basis; // Total costs that could qualify for depreciation before allocations
+
 		double depr_alloc_macrs_5_frac = as_double("depr_alloc_macrs_5_percent") * 0.01;
 		double depr_alloc_macrs_15_frac = as_double("depr_alloc_macrs_15_percent") * 0.01;
 		double depr_alloc_sl_5_frac = as_double("depr_alloc_sl_5_percent") * 0.01;
@@ -1679,6 +1681,8 @@ public:
 		double depr_alloc_custom;
 		double depr_alloc_none;
 		double depr_alloc_total;
+
+        double pre_itc_qual_basis; // Total costs that could qualify for ITC before allocations
 
 		double itc_sta_qual_macrs_5_frac = ( as_boolean("depr_itc_sta_macrs_5")  ? 1: 0 ) ;
 		double itc_sta_qual_macrs_15_frac = ( as_boolean("depr_itc_sta_macrs_15")  ? 1: 0 ) ;
@@ -2267,6 +2271,7 @@ public:
 
 			cost_debt_upfront = cost_debt_fee_frac * size_of_debt; // cpg added this to make cash flow consistent with single_owner.xlsx
 
+            // Total costs that require equity or debt
 			cost_installed = cost_prefinancing + cost_financing
 				- ibi_fed_amount
 				- ibi_sta_amount
@@ -2281,8 +2286,19 @@ public:
 				- cbi_uti_amount
 				- cbi_oth_amount;
 
+            // Installed costs, financing costs, and construction costs can be claimed in the basis, but reserves are not
+            pre_depr_alloc_basis = cost_prefinancing +
+                cost_debt_closing +
+                cost_debt_fee_frac * size_of_debt +
+                cost_other_financing +
+                constr_total_financing;
+            // Basis reductions are handled in depr_fed_reduction and depr_sta_reduction
+
+            // Under 2024 law these are understood to be the same, keep seperate variables for reporting out
+            pre_itc_qual_basis = pre_depr_alloc_basis;
+
 //		}
-		depr_alloc_total = depr_alloc_total_frac * cost_installed;
+		depr_alloc_total = depr_alloc_total_frac * pre_depr_alloc_basis;
 		depr_alloc_macrs_5 = depr_alloc_macrs_5_frac * depr_alloc_total;
 		depr_alloc_macrs_15 = depr_alloc_macrs_15_frac * depr_alloc_total;
 		depr_alloc_sl_5 = depr_alloc_sl_5_frac * depr_alloc_total;
