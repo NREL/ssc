@@ -1567,6 +1567,7 @@ double CGeothermalAnalyzer::GetNumberOfWells(void)
         }
 
         if (mp_geo_out->md_NumberOfWellsInj < 0) mp_geo_out->md_NumberOfWellsInj = 0;
+        if (mp_geo_out->md_NumberOfWells < 0) mp_geo_out->md_NumberOfWells = 0;
 	}
 
 	return mp_geo_out->md_NumberOfWells;
