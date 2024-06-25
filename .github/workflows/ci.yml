@@ -15,7 +15,7 @@ jobs:
 
     steps:
     - name: Setup cmake
-      uses: jwlawson/actions-setup-cmake@v1.12
+      uses: jwlawson/actions-setup-cmake@v2
       with:
         cmake-version: '3.24.x'
     - name: Test cmake version
@@ -80,7 +80,7 @@ jobs:
         ${SSCDIR}/build/test/Test
     
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
           name: SSC Linux Shared Libraries
           path: |
@@ -95,7 +95,7 @@ jobs:
 
     steps:
     - name: Setup cmake
-      uses: jwlawson/actions-setup-cmake@v1.12
+      uses: jwlawson/actions-setup-cmake@v2
       with:
         cmake-version: '3.24.x'
     - name: Test cmake version
@@ -160,7 +160,7 @@ jobs:
     
     - name: Upload Artifacts
       if: ${{ matrix.os == 'macos-latest' }}
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
           name: SSC Mac Arm Shared Libraries
           path: |
@@ -169,7 +169,7 @@ jobs:
 
     - name: Upload Artifacts
       if: ${{ matrix.os != 'macos-latest' }}
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
           name: SSC Mac Intel Shared Libraries
           path: |
