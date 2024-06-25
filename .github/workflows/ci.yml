@@ -27,8 +27,6 @@ jobs:
         echo "GTEST=$GTEST" >> $GITHUB_ENV
         SSCDIR=$GITHUB_WORKSPACE/ssc
         echo "SSCDIR=$SSCDIR" >> $GITHUB_ENV
-        ORTOOLSDIR=$GITHUB_WORKSPACE/or-tools
-        echo "ORTOOLSDIR=$ORTOOLSDIR" >> $GITHUB_ENV
     
     - name: Get cached GTest
       uses: actions/cache@v4
@@ -107,15 +105,13 @@ jobs:
         echo "GTEST=$GTEST" >> $GITHUB_ENV
         SSCDIR=$GITHUB_WORKSPACE/ssc
         echo "SSCDIR=$SSCDIR" >> $GITHUB_ENV
-        ORTOOLSDIR=$GITHUB_WORKSPACE/or-tools
-        echo "ORTOOLSDIR=$ORTOOLSDIR" >> $GITHUB_ENV
     
     - name: Get cached GTest
       uses: actions/cache@v4
       id: cachedgtest
       with:
         path: ${{env.GTEST}}/
-        key: ortools-${{ matrix.os }}
+        key: gtest-${{ matrix.os }}
     - name: Clone Gtest
       if: steps.cachedgtest.outputs.cache-hit != 'true'
       uses: actions/checkout@v4
@@ -200,7 +196,7 @@ jobs:
       id: cachedgtest
       with:
         path: ${{env.GTEST}}/
-        key: ortools-windows
+        key: gtest-windows
 
     - name: Clone Gtest
       if: steps.cachedgtest.outputs.cache-hit != 'true'
