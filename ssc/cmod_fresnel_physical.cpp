@@ -205,7 +205,10 @@ static var_info _cm_vtab_fresnel_physical[] = {
 
 
     // System Control
-              
+
+    { SSC_INPUT,    SSC_NUMBER,         "is_timestep_load_fractions",  "Use turbine load fraction for each timestep instead of block dispatch?",                "",                    "",                             "tou",                  "?=0",              "",                 "SIMULATION_PARAMETER" },
+    { SSC_INPUT,    SSC_ARRAY,          "timestep_load_fractions",     "Turbine load fraction for each timestep, alternative to block dispatch",                "",                    "",                             "tou",                  "?",                "",                 "SIMULATION_PARAMETER" },
+
     { SSC_INPUT,    SSC_NUMBER,         "pb_fixed_par",                "Fixed parasitic load - runs at all times",                                              "",                    "",                             "Sys_Control",          "*",                "",                 "" },
     { SSC_INPUT,    SSC_ARRAY,          "bop_array",                   "Balance of plant parasitic power fraction",                                             "",                    "",                             "Sys_Control",          "*",                "",                 "" },
     { SSC_INPUT,    SSC_ARRAY,          "aux_array",                   "Aux heater, boiler parasitic",                                                          "",                    "",                             "Sys_Control",          "*",                "",                 "" },
@@ -1038,11 +1041,7 @@ public:
 
         // Off-taker schedule
         C_timeseries_schedule_inputs offtaker_schedule;
-        bool assigned_is_timestep_fractions = is_assigned("is_timestep_load_fractions");
-        bool is_timestep_load_fractions = false;
-        if (assigned_is_timestep_fractions) {
-            is_timestep_load_fractions = as_boolean("is_timestep_load_fractions");
-        }
+        bool is_timestep_load_fractions = as_boolean("is_timestep_load_fractions");
         if (is_timestep_load_fractions) {
             auto vec = as_vector_double("timestep_load_fractions");
             C_timeseries_schedule_inputs offtaker_series = C_timeseries_schedule_inputs(vec, std::numeric_limits<double>::quiet_NaN());

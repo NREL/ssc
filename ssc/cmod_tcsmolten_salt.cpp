@@ -326,6 +326,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_NUMBER, "bop_par_2",                          "Balance of plant parasitic power fraction - quadratic coeff",                                                                             "",             "",                                  "System Control",                           "*",                                                                "",              "" },
 
     // System Control
+    { SSC_INPUT,     SSC_NUMBER, "is_timestep_load_fractions",         "Use turbine load fraction for each timestep instead of block dispatch?",                                                                  "",             "",                                  "System Control",                           "?=0",                                                              "",              "SIMULATION_PARAMETER" },
     { SSC_INPUT,     SSC_ARRAY,  "timestep_load_fractions",            "Turbine load fraction for each timestep, alternative to block dispatch",                                                                  "",             "",                                  "System Control",                           "?",                                                                "",              "SIMULATION_PARAMETER" },
     { SSC_INPUT,     SSC_ARRAY,  "f_turb_tou_periods",                 "Dispatch logic for turbine load fraction",                                                                                                "",             "",                                  "System Control",                           "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_MATRIX, "weekday_schedule",                   "12x24 CSP operation Time-of-Use Weekday schedule",                                                                                        "",             "",                                  "System Control",                           "*",                                                                "",              ""},
@@ -2047,11 +2048,7 @@ public:
 
         // Off-taker schedule
         C_timeseries_schedule_inputs offtaker_schedule;
-        bool assigned_is_timestep_fractions = is_assigned("is_timestep_load_fractions");
-        bool is_timestep_load_fractions = false;
-        if (assigned_is_timestep_fractions) {
-            is_timestep_load_fractions = as_boolean("is_timestep_load_fractions");
-        }
+        bool is_timestep_load_fractions = as_boolean("is_timestep_load_fractions");
         if (is_timestep_load_fractions) {
             auto vec = as_vector_double("timestep_load_fractions");
             C_timeseries_schedule_inputs offtaker_series = C_timeseries_schedule_inputs(vec, std::numeric_limits<double>::quiet_NaN());
