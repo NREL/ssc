@@ -589,9 +589,10 @@ double C_csp_falling_particle_collector_receiver::calculate_optical_efficiency( 
     {
         mc_pt_heliostatfields.at(i)->call(weather, 1., sim);
         q_dot_field_inc += mc_pt_heliostatfields.at(i)->ms_outputs.m_q_dot_field_inc;
-        eta_field += mc_pt_heliostatfields.at(i)->ms_outputs.m_eta_field* mc_pt_heliostatfields.at(i)->ms_outputs.m_q_dot_field_inc;
+        eta_field += mc_pt_heliostatfields.at(i)->ms_outputs.m_eta_field * mc_pt_heliostatfields.at(i)->ms_outputs.m_q_dot_field_inc;
     }
-    eta_field /= q_dot_field_inc;
+    if (q_dot_field_inc != 0.0)
+        eta_field /= q_dot_field_inc;
     return eta_field;
 }
 
@@ -621,7 +622,8 @@ double C_csp_falling_particle_collector_receiver::calculate_thermal_efficiency_a
         q_inc_rec = q_inc * mc_pt_heliostatfields.at(i)->ms_params.m_A_sf / A_sf_tot;
         eta_therm += mc_pt_receivers.at(i)->estimate_thermal_efficiency(weather, q_inc_rec) * q_inc_rec;
     }
-    eta_therm /= q_inc;  // Weighted-average of reciever efficiencies based on incident power
+    if (q_inc != 0.0)
+        eta_therm /= q_inc;  // Weighted-average of receiver efficiencies based on incident power
     return eta_therm;
 }
 
