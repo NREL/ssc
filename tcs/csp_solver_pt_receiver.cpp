@@ -242,6 +242,11 @@ double C_pt_receiver::get_T_htf_cold_des()    //[K]
     return m_T_htf_cold_des;    //[K]
 }
 
+double C_pt_receiver::get_T_htf_hot_des()    //[K]
+{
+    return m_T_htf_hot_des;    //[K]
+}
+
 double C_pt_receiver::get_q_dot_rec_des()     //[MWt]
 {
     return m_q_rec_des * 1.E-6;     //[MWt]

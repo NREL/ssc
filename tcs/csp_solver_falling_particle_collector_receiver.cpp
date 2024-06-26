@@ -111,6 +111,11 @@ void C_csp_falling_particle_collector_receiver::init(const C_csp_collector_recei
     m_mdot_from_estimates.resize(nrec);
     m_is_on_from_estimates.resize(nrec);
     m_n_on_from_estimates = 0;
+    m_approx_min_focus.resize(nrec);
+    m_approx_min_focus_at_T.resize(nrec);
+    std::fill(m_approx_min_focus.begin(), m_approx_min_focus.end(), 0.0);
+    std::fill(m_approx_min_focus_at_T.begin(), m_approx_min_focus_at_T.end(), 0.0);
+
 	return;
 }
 
@@ -308,56 +313,436 @@ void C_csp_falling_particle_collector_receiver::set_outputs(C_csp_collector_rece
     return;
 }
 
-std::vector<double> C_csp_falling_particle_collector_receiver::split_defocus(double avg_defocus, std::vector<bool>& is_rec_on)
+std::vector<double> C_csp_falling_particle_collector_receiver::split_focus(double avg_focus, std::vector<bool>& is_rec_on)
 {
     // 'avg_defocus' = average focus fraction for receivers that are on (defined by is_rec_on).
-    
+
     size_t nrec = mc_pt_receivers.size();
     std::vector<double> heliostat_field_control_per_rec(nrec, 0.0);
+
+
     int n_rec_on = 0;
+    double mtot_estimates = 0.0;  // Total mass flow for subset of operating receivers from estimates (no defocus)
     for (size_t i = 0; i < nrec; i++)
     {
         if (is_rec_on.at(i))
+        {
             n_rec_on += 1;
+            mtot_estimates += m_mdot_from_estimates.at(i);
+        }
     }
 
     bool is_uniform_split = false;
-    if (avg_defocus > 0.99)
-        is_uniform_split = true;
-
-    if (!is_uniform_split && nrec > 1)  // Try to split the defocus signal unevenly between operating receivers
+    if (is_uniform_split || n_rec_on == 1 || avg_focus > 0.95) // Split defocus signal uniformly between operating receivers, without accounting for potential known operational minima
     {
-        double dfmin = 0.4;  // Min allowable initial focus fraction to be applied to any receiver
-        double mtot = 0.0;  // Total mass flow from estimates (no defocus), counting only those receivers that are still operating
         for (size_t i = 0; i < nrec; i++)
+            heliostat_field_control_per_rec.at(i) = is_rec_on.at(i) ? avg_focus : 0.0;
+    }
+
+    else  // Split defocus signal between operating receiver, accounting for known operational minima
+    {
+        bool is_uniform_split = (avg_focus < 0.5);  // Uniform initial split it likely better if we're just trying to keep receivers on, non-uniform split likely better if we're trying to keep all receivers at temperature
+        double focus_min = 0.4;
+
+        std::vector<int> low_to_high_order = order_receivers(is_rec_on);
+        std::vector<bool>is_at_limit(nrec, false);
+        double mtot_estimates_new = mtot_estimates;
+        int n_at_low_limit = 0;
+        int n_at_high_limit = 0;
+        double focus_sum = 0.0;
+        for (size_t j = 0; j < n_rec_on; j++)
         {
-            if (is_rec_on.at(i))
-                mtot += m_mdot_from_estimates.at(i);   
+            int n_remain = n_rec_on - j;
+            double avg_focus_new = (avg_focus * n_rec_on - focus_sum) / n_remain;
+            int i;
+            double focus;
+            if (is_uniform_split)
+            {
+                i = low_to_high_order.at(j);  // Worst to best order (e.g. lowest to highest minimum focus)
+                focus = avg_focus_new;
+            }
+            else
+            {
+                i = low_to_high_order.at(n_rec_on - 1 - j);  // Best to worst order (i.e. lowest to highest focus fraction if split based on relative mass flows)
+                focus = 1.0 - (m_mdot_from_estimates.at(i) / mtot_estimates_new) * n_remain * (1.0 - avg_focus_new);
+            }
+
+            if (focus < m_approx_min_focus.at(i))   // Enforce known minimum values per receiver 
+            {
+                heliostat_field_control_per_rec.at(i) = m_approx_min_focus.at(i);
+                is_at_limit.at(i) = true;
+                n_at_low_limit += 1;
+            }
+            else
+                heliostat_field_control_per_rec.at(i) = fmax(focus_min, fmin(focus, 1.0));
+            focus_sum += heliostat_field_control_per_rec.at(i);
+            mtot_estimates_new -= m_mdot_from_estimates.at(i);
         }
 
-        for (size_t i = 0; i < nrec; i++)
+
+        // Check if applied focus fraction is equal to the target focus fraction
+        double df = focus_sum - avg_focus * n_rec_on;  // Difference between applied focus fraction and target focus fraction
+        double dftol = 1e-4;
+        if (df > dftol && n_at_low_limit < n_rec_on)   // Need to reduce focus fraction and there are receivers not already at their lower limits
         {
-            if (is_rec_on.at(i))
+            for (size_t j = 0; j < n_rec_on; j++)
             {
-                heliostat_field_control_per_rec.at(i) = 1.0 - (m_mdot_from_estimates.at(i) / mtot) * n_rec_on * (1.0 - avg_defocus);
-                if (heliostat_field_control_per_rec.at(i) < dfmin || heliostat_field_control_per_rec.at(i) > 1.0)
+                int i = low_to_high_order.at(n_rec_on-1-j);
+                if (!is_at_limit.at(i))
                 {
-                    is_uniform_split = true;
-                    break;
+                    double dfi = fmin(df, heliostat_field_control_per_rec.at(i) - m_approx_min_focus.at(i));
+                    heliostat_field_control_per_rec.at(i) -= dfi;
+                    df -= dfi;
+                    if (df <= dftol)
+                        break;
                 }
             }
         }
-    }
+        else if (df < -dftol)   // Need to increase focus fractions
+        {
+            for (size_t j = 0; j < n_rec_on; j++)
+            {
+                int i = low_to_high_order.at(n_rec_on - 1 - j);
+                if (heliostat_field_control_per_rec.at(i)<1.0)
+                {
+                    double dfi = fmin(df, 1.0 - heliostat_field_control_per_rec.at(i));
+                    heliostat_field_control_per_rec.at(i) += dfi;
+                    df += dfi;
+                    if (df >= -dftol)
+                        break;
+                }
+            }
+        }
 
-    if (is_uniform_split)
-    {
-        for (size_t i = 0; i < nrec; i++)
-            heliostat_field_control_per_rec.at(i) = is_rec_on.at(i) ? avg_defocus : 0.0;
+        // If defocus split above was unsuccessful, revert back to a uniform split, even though this might violate minimum values
+        if (fabs(df) >= dftol)
+        {
+            for (size_t i = 0; i < nrec; i++)
+                heliostat_field_control_per_rec.at(i) = is_rec_on.at(i) ? avg_focus : 0.0;
+        }
     }
 
     return heliostat_field_control_per_rec;
 }
 
+
+void C_csp_falling_particle_collector_receiver::update_limits(std::vector<double>& focus_fractions, std::vector<bool>& is_on, std::vector<bool>& is_at_T, double bound_tol,
+    std::vector<double>& focus_min_sim_on, std::vector<double>& focus_max_sim_off,
+    std::vector<double>& focus_min_sim_at_T, std::vector<double>& focus_max_sim_under_T)
+{
+    // Update min/max focus fractions where receiver can/can't operate and can/can't achieve exit T
+
+    size_t nrec = mc_pt_receivers.size();
+    for (size_t i = 0; i < nrec; i++)
+    {
+        if (is_on.at(i))
+            focus_min_sim_on.at(i) = fmin(focus_min_sim_on.at(i), focus_fractions.at(i));
+        else
+            focus_max_sim_off.at(i) = fmax(focus_max_sim_off.at(i), focus_fractions.at(i));
+
+        if (focus_min_sim_on.at(i) - focus_max_sim_off.at(i) < bound_tol)
+        {
+            // Update approximate min focus for this time step if we don't have one already, or if we know that the receiver will be off at the current value
+            if (m_approx_min_focus.at(i) == 0.0 || (m_approx_min_focus.at(i) > 0.0 && m_approx_min_focus.at(i) <= focus_max_sim_off.at(i)))
+                m_approx_min_focus.at(i) = focus_min_sim_on.at(i);
+        }
+
+        if (is_at_T.at(i))
+            focus_min_sim_at_T.at(i) = fmin(focus_min_sim_at_T.at(i), focus_fractions.at(i));
+        else
+            focus_max_sim_under_T.at(i) = fmax(focus_max_sim_under_T.at(i), focus_fractions.at(i));
+
+        if (focus_min_sim_at_T.at(i) - focus_max_sim_under_T.at(i) < bound_tol)
+        {
+            if (m_approx_min_focus_at_T.at(i) == 0.0 || (m_approx_min_focus_at_T.at(i) > 0.0 && m_approx_min_focus_at_T.at(i) <= focus_max_sim_under_T.at(i)))
+                m_approx_min_focus_at_T.at(i) = focus_min_sim_at_T.at(i);
+        }
+    }
+    return;
+}
+
+std::vector<int> C_csp_falling_particle_collector_receiver::order_receivers(std::vector<bool>& is_rec_on)
+{
+    std::vector<int> low_to_high_order(0);
+    for (size_t i = 0; i < mc_pt_receivers.size(); i++)
+    {
+        if (is_rec_on.at(i))
+        {
+            size_t n = low_to_high_order.size();
+            for (size_t j = 0; j < n; j++)
+            {
+                int k = low_to_high_order.at(j);
+                if (m_mdot_from_estimates.at(i) < m_mdot_from_estimates.at(k))
+                {
+                    low_to_high_order.insert(low_to_high_order.begin() + j, i);
+                    break;
+                }
+            }
+            if (low_to_high_order.size() == n)
+                low_to_high_order.push_back(i);
+        }
+    }
+    return low_to_high_order;
+}
+
+
+
+bool C_csp_falling_particle_collector_receiver::update_focus_split(std::vector<double>& focus_fractions, double focus_step, std::vector<int>& low_to_high_order,
+    std::vector<bool>& is_expect_on, std::vector<bool>& is_on, std::vector<bool>& is_at_T,
+    std::vector<double>& focus_min_sim_on, std::vector<double>& focus_max_sim_off,
+    std::vector<double>& focus_min_sim_at_T, std::vector<double>& focus_max_sim_under_T)
+{
+    bool skip_to_next_iter = false;
+
+    //--- Count number of receivers in each state
+    size_t nrec = mc_pt_receivers.size();
+    int n_should_operate = 0;
+    int n_on = 0;
+    int n_at_target_T = 0;
+    for (size_t i = 0; i < nrec; i++)
+    {
+        if (is_expect_on.at(i))
+            n_should_operate += 1;
+        if (is_on.at(i))
+            n_on += 1;
+        if (is_at_T.at(i))
+            n_at_target_T += 1;
+    }
+    int n_turned_off = n_should_operate - n_on;         // Number of receivers that were intended to be "on", but that turned off under current defocus conditions
+    int n_under_T = n_should_operate - n_at_target_T;  // Number of receivers that were intended to be "on", but that are operating under the target temperature at the current defocus conditions
+
+
+    //--- Update next defocus split
+
+     // All receivers are off, or more are off than on -> unlikely to find a good solution without shutting one receiver off
+    if (n_turned_off == n_should_operate || n_turned_off > n_on) 
+        skip_to_next_iter = true;
+
+    // At least one receiver turned off.  Turn up receivers that were off (targeting their minimum operation level) and turn down receivers that were on
+    else if (n_turned_off > 0)
+    {
+        // Turn up receivers that were off to minimum operational level (if known), or step up focus fraction if min operational level is unkonwn
+        int n_increase = n_turned_off;
+        double df = 0.0;
+        double focus_new;
+        for (size_t i = 0; i < nrec; i++)
+        {
+            if (is_expect_on.at(i) && !is_on.at(i))
+            {
+                if (m_approx_min_focus.at(i) > 0.0 && m_approx_min_focus.at(i) > focus_max_sim_off.at(i))  // Known minimum operational level
+                    focus_new = m_approx_min_focus.at(i);
+                else  // No known minimum operational level, step up focus fraction limited by the current minimum focus fraction at which the receiver was on
+                {
+                    focus_new = fmin(focus_fractions.at(i) + focus_step, 1.0);
+                    if (focus_new >= focus_min_sim_on.at(i))
+                        focus_new = 0.5 * (focus_min_sim_on.at(i) + focus_max_sim_off.at(i));
+                }
+                df += focus_new - focus_fractions.at(i);
+                focus_fractions.at(i) = focus_new;
+            }
+        }
+
+        // Turn down receivers that were on to compensate. 
+        int n_decrease = n_should_operate - n_turned_off;
+        int n_turned_down = 0;
+        int n = 0;
+        for (size_t i = 0; i < nrec; i++)
+        {
+            if (is_expect_on.at(i) && is_on.at(i))
+            {
+                focus_new = 0.0;
+                if (is_at_T.at(i) && n_at_target_T < n_decrease)  // This receiver is at T but there is at least one more receiver operating that is not. Only turn down this receiver to the point where it can maintain the target exit T
+                {
+                    if (m_approx_min_focus_at_T.at(i) > 0.0 && focus_fractions.at(i) > m_approx_min_focus_at_T.at(i)) 
+                        focus_new = focus_fractions.at(i) - fmin(df, focus_fractions.at(i) - m_approx_min_focus_at_T.at(i));
+                    else if (m_approx_min_focus_at_T.at(i) == 0.0) 
+                    {
+                        focus_new = focus_fractions.at(i) - df / (n_on - n);
+                        if (focus_new <= focus_max_sim_under_T.at(i))
+                            focus_new = 0.5 * (focus_min_sim_at_T.at(i) + focus_max_sim_under_T.at(i));
+                    }
+                }
+                else  // This receiver is not at T, or it's the only receiver that can be turned down
+                {
+                    focus_new = focus_fractions.at(i) - df / (n_on - n);
+                    if (focus_new <= m_approx_min_focus.at(i))
+                        focus_new = m_approx_min_focus.at(i);
+                    else if (focus_new <= focus_max_sim_off.at(i))
+                        focus_new = 0.5 * (focus_min_sim_on.at(i) + focus_max_sim_off.at(i));
+                }
+
+                if (focus_new > 0.0) // Receiver i turned down
+                {
+                    df -= (focus_fractions.at(i) - focus_new);
+                    focus_fractions.at(i) = focus_new;
+                    n_turned_down += 1;
+                }
+                n += 1;
+            }
+        }
+
+        if (n_turned_down == 0)
+            skip_to_next_iter = true;
+        else if (df > 0.001) 
+        {
+            int j = low_to_high_order.at(n_should_operate - 1);
+            focus_fractions.at(j) -= df;
+        }
+    }
+
+    // All receivers that should be operating are on, but all are below the target temperature.
+    // Typically can find a better exit temperature by minimizing focus of the lowest-performing receivers (targeting limits at which they can remain on)
+    else if (n_under_T == n_should_operate)
+    {
+        int n_decrease = floor(n_should_operate / 2);
+        double df = 0.0;
+        int n = 0;
+        int k = 0;
+        double focus_new;
+        while (k < n_should_operate - 1 && n < n_decrease)
+        {
+            int j = low_to_high_order.at(k);
+            focus_new = 0.0;
+            if (m_approx_min_focus.at(j) > 0.0 && focus_fractions.at(j) > m_approx_min_focus.at(j))
+                focus_new = m_approx_min_focus.at(j);
+            else if (m_approx_min_focus.at(j) == 0.0)
+            {
+                focus_new = focus_fractions.at(j) - focus_step;
+                if (focus_new <= focus_max_sim_off.at(j))
+                    focus_new = 0.5 * (focus_min_sim_on.at(j) + focus_max_sim_off.at(j));
+            }
+            if (focus_new > 0.0)
+            {
+                df += focus_fractions.at(j) - focus_new;
+                focus_fractions.at(j) = focus_new;
+                n += 1;
+            }
+            k += 1;
+        }
+
+        if (n == 0)  // No receivers turned down, stop here
+            skip_to_next_iter = true;
+        else
+        {
+            int n_increase = n_should_operate - k;
+            for (size_t i = 0; i < n_increase; i++)
+            {
+                int j = low_to_high_order.at(n_should_operate - 1 - i);
+                double dfi = fmin(df / (n_increase - i), 1.0 - focus_fractions.at(j));
+                if (focus_min_sim_at_T.at(j) < 1.0)  // Only turn up receiver j to min value where it can achieve target outlet T (if known)
+                    dfi = fmin(dfi, focus_min_sim_at_T.at(j) - focus_fractions.at(j));
+                focus_fractions.at(j) += dfi;
+                df -= dfi;
+            }
+            if (df > 0.001)  // Need to turn back up some of the receivers that turned down
+            {
+                for (size_t i = 0; i < k; i++)
+                {
+                    int j = low_to_high_order.at(k - 1 - i);
+                    double dfi = fmin(df, focus_min_sim_at_T.at(j) - focus_fractions.at(j));
+                    focus_fractions.at(j) += dfi;
+                    df -= dfi;
+                }
+            }
+        }
+    }
+
+    // All receivers are operating and at least one receiver is operating at the target exit temperature.
+    // Try increasing the focus fraction of receivers operating below the target exit temperature
+    else
+    {
+        double df = 0.0;
+        double focus_new;
+
+        // Turn up recievers that are under temperature, targeting the minimum focus fraction at which the receiver achieves the target
+        for (size_t i = 0; i < nrec; i++)
+        {
+            if (is_expect_on.at(i) && !is_at_T.at(i))
+            {
+                focus_new = fmin(1.0, focus_fractions.at(i) + focus_step);
+                if (focus_new >= focus_min_sim_at_T.at(i))
+                    focus_new = 0.5 * (focus_min_sim_at_T.at(i) + focus_max_sim_under_T.at(i));
+                df += focus_new - focus_fractions.at(i);
+                focus_fractions.at(i) = focus_new;
+            }
+        }
+
+        // Turn down recievers that are at temperature, targeting the minimum focus fraction at which the receiver achieves the target
+        int n = 0;
+        int n_turned_down = 0;
+        for (size_t i = 0; i < nrec; i++)
+        {
+            if (is_expect_on.at(i) && is_at_T.at(i))
+            {
+                focus_new = 0.0;
+                if (m_approx_min_focus_at_T.at(i) > 0.0 && focus_fractions.at(i) > m_approx_min_focus_at_T.at(i))
+                    focus_new = focus_fractions.at(i) - fmin(df, focus_fractions.at(i) - m_approx_min_focus_at_T.at(i));
+                else if (m_approx_min_focus_at_T.at(i) == 0.0)
+                {
+                    focus_new = focus_fractions.at(i) - df / (n_at_target_T - n);
+                    if (focus_new <= focus_max_sim_under_T.at(i))
+                        focus_new = 0.5 * (focus_min_sim_at_T.at(i) + focus_max_sim_under_T.at(i));
+                }
+
+                if (focus_new > 0.0) // True unless receiver i is already at min focus for target T
+                {
+                    df -= (focus_fractions.at(i) - focus_new);
+                    focus_fractions.at(i) = focus_new;
+                    n_turned_down += 1;
+                }
+                n += 1;
+            }
+        }
+
+        if (n_turned_down == 0)  // No receivers were able to turn down without going under known minimum focus
+            skip_to_next_iter = true;
+        else if (df > 0.001)
+        {
+            for (size_t i = 0; i < nrec; i++)
+            {
+                if (is_expect_on.at(i) && !is_at_T.at(i))
+                    focus_fractions.at(i) -= df / n_under_T;
+            }
+        }
+
+    }
+    return skip_to_next_iter;
+}
+
+
+void C_csp_falling_particle_collector_receiver::run_component_models(const C_csp_weatherreader::S_outputs& weather,
+    const C_csp_solver_htf_1state& htf_state_in,
+    const C_csp_collector_receiver::S_csp_cr_inputs& inputs,
+    const C_csp_solver_sim_info& sim_info,
+    bool is_fixed_states,
+    std::vector<double>& heliostat_field_control_per_rec)
+{
+    for (size_t i = 0; i < mc_pt_receivers.size(); i++)
+    {
+        if (heliostat_field_control_per_rec.at(i) < 0.01) // Receiver i is not able to operate
+        {
+            mc_pt_heliostatfields.at(i)->off(weather, sim_info);
+            mc_pt_receivers.at(i)->off(weather, htf_state_in, sim_info);
+        }
+        else
+        {
+            // First call heliostat field class, then use its outputs as inputs to receiver class
+            mc_pt_heliostatfields.at(i)->call(weather, heliostat_field_control_per_rec.at(i), sim_info);
+
+            // Get heliostat field outputs and set corresponding receiver inputs
+            C_pt_receiver::S_inputs receiver_inputs;
+            receiver_inputs.m_plant_defocus = mc_pt_heliostatfields.at(i)->ms_outputs.m_plant_defocus_out;  //[-]
+            receiver_inputs.m_input_operation_mode = inputs.m_input_operation_mode;                         // TODO: This uses the reported state of the aggregated receiver for each individual receiver.  Should be fine when startup requirements are zero?
+            receiver_inputs.m_flux_map_input = &mc_pt_heliostatfields.at(i)->ms_outputs.m_flux_map_out;
+            receiver_inputs.m_clearsky_dni = mc_pt_heliostatfields.at(i)->ms_outputs.m_clearsky_dni;        //[W/m2]
+            if (is_fixed_states && m_fixed_mode_mflow_method == 0)  // Set receiver fixed mass flow (this mass flow will be used ONLY if the receiver mass flow iterations can't achieve the target temperature).
+                mc_pt_receivers.at(i)->set_fixed_mflow(heliostat_field_control_per_rec.at(i) * m_mdot_from_estimates.at(i));
+            mc_pt_receivers.at(i)->call(weather, htf_state_in, receiver_inputs, sim_info);
+        }
+    }
+    combine_results();
+    return;
+}
 
 
 
@@ -371,77 +756,145 @@ void C_csp_falling_particle_collector_receiver::call(const C_csp_weatherreader::
 {
     size_t nrec = mc_pt_receivers.size();
     double heliostat_field_control = inputs.m_field_control;
-
+    
+    //-- Set allowable number of iterations to split defocus between fields
     int n_split_iter = 1;
+    bool allow_outer_iter = false;
     if (nrec > 1 && heliostat_field_control < 0.99 && is_fixed_states)
-        n_split_iter = 2;
-
+    {
+        n_split_iter = 10;
+        allow_outer_iter = true;
+    }
 
     //--- Set initial defocus for each field
     //    The focus fraction provided by the controller is defined relative to the initial solution with focus fraction = 1, which may have some receivers already off.
-    //    Assume receivers that were off in estimates are also off in the intial solution with focus fraction 1, and apply the controll defocus to the remaining receivers
-    std::vector<double> heliostat_field_control_per_rec = split_defocus(heliostat_field_control, m_is_on_from_estimates);
+    //    Assume receivers that were off in estimates are also off in the intial solution with focus fraction 1, and apply the controller defocus to the remaining receivers
+    std::vector<double> heliostat_field_control_per_rec = split_focus(heliostat_field_control, m_is_on_from_estimates);
 
-    //--- Iterate over defocus for each field
-    for (int q = 0; q < n_split_iter; q++)
+    //--- Cases without iteration for defocus split between receivers
+    if (n_split_iter == 1 && !allow_outer_iter)
     {
-        // Run models for each heliostat field and receiver
-        for (size_t i = 0; i < nrec; i++)
-        {
-            if (heliostat_field_control_per_rec.at(i) < 0.001 || (is_fixed_states && !m_is_on_from_estimates.at(i))) // Receiver i is not able to operate
-            {
-                mc_pt_heliostatfields.at(i)->off(weather, sim_info);
-                mc_pt_receivers.at(i)->off(weather, htf_state_in, sim_info);
-            }
-            else
-            {
-                // First call heliostat field class, then use its outputs as inputs to receiver class
-                mc_pt_heliostatfields.at(i)->call(weather, heliostat_field_control_per_rec.at(i), sim_info);
+        run_component_models(weather, htf_state_in, inputs, sim_info, is_fixed_states, heliostat_field_control_per_rec);
+    }
 
-                // Get heliostat field outputs and set corresponding receiver inputs
-                C_pt_receiver::S_inputs receiver_inputs;
-                receiver_inputs.m_plant_defocus = mc_pt_heliostatfields.at(i)->ms_outputs.m_plant_defocus_out;  //[-]
-                receiver_inputs.m_input_operation_mode = inputs.m_input_operation_mode;                         // TODO: This uses the reported state of the aggregated receiver for each individual receiver.  Should be fine when startup requirements are zero?
-                receiver_inputs.m_flux_map_input = &mc_pt_heliostatfields.at(i)->ms_outputs.m_flux_map_out;
-                receiver_inputs.m_clearsky_dni = mc_pt_heliostatfields.at(i)->ms_outputs.m_clearsky_dni;        //[W/m2]
-                if (is_fixed_states && m_fixed_mode_mflow_method == 0)  // Set receiver fixed mass flow (this mass flow will be used ONLY if the receiver mass flow iterations can't achieve the target temperature).
-                    mc_pt_receivers.at(i)->set_fixed_mflow(heliostat_field_control_per_rec.at(i) * m_mdot_from_estimates.at(i));
-                mc_pt_receivers.at(i)->call(weather, htf_state_in, receiver_inputs, sim_info);
+    //--- Cases including iteration for defocus split
+    else
+    {
+        double focus_step = fmin(0.1 * heliostat_field_control, 0.05);
+        double T_hot_des = mc_pt_receivers.at(0)->get_T_htf_hot_des() - 273.15;
+        double bound_tol = 0.025;
+
+        std::vector<double>focus_min_sim_at_T(nrec, 1.0);       // Minimum simulated focus fraction at which receiver achieved exit T
+        std::vector<double>focus_max_sim_under_T(nrec, 0.0);    // Maximum simulated focus fraction at which receiver didn't achieve exit T
+        std::vector<double>focus_min_sim_on(nrec, 1.0);         // Minimum simulated focus fraction at which receiver was on
+        std::vector<double>focus_max_sim_off(nrec, 0.0);        // Maximum simulated focus fraction at which receiver was off
+
+        bool is_current_soln_best = false;  // Is the current solution also the best solution?
+        int n_on_best = -1;                 // Number of receivers "on" in current best solution
+        double T_hot_best = 0.0;            // Combined mass-weighted average particle exit temperature in the current best solution
+        std::vector<double>heliostat_field_control_per_rec_best(nrec, 0.0); // Focus fraction for each receiver in the current best solution
+
+        std::vector<bool>is_expect_on = m_is_on_from_estimates;  // Expected state of each receiver prior to solution
+        int n_should_operate = m_n_on_from_estimates;            // Number of receivers that we expect to be "on"
+        bool stop_outer = false;
+
+        while (n_should_operate >= 0 && !stop_outer)            // Iterations over number of receivers that we're trying to keep "on"
+        {
+            bool is_any_above_T = false;                                         // Has a solution been found with at least one receiver at the target T
+            n_split_iter = n_should_operate > 1 ? n_split_iter : 1;              // Only need one iteration if only one receiver is operating
+            std::vector<int> low_to_high_order = order_receivers(is_expect_on);  // Low-to-high performance order of receivers that are expected to be on 
+
+            int q = 0;
+            while (q < n_split_iter)  // Iterations over defocus split between receivers we're trying to keep "on"
+            {
+
+                //--- Run models for each heliostat field and receiver, collect states, and update limits
+                run_component_models(weather, htf_state_in, inputs, sim_info, is_fixed_states, heliostat_field_control_per_rec);
+                int n_on = 0;                           // Number of receivers on after solution
+                int n_at_target_T = 0;                  // Number of receivers at target temperature
+                std::vector<bool> is_on(nrec, false);   // Is receiver on after solution?
+                std::vector<bool> is_at_T(nrec, false); // Is receiver at target temperature?
+                for (size_t i = 0; i < nrec; i++)
+                {
+                    is_on.at(i) = mc_pt_receivers.at(i)->ms_outputs.m_Q_thermal > 0.001;                // Receiver i is operating
+                    if (is_on.at(i))
+                        n_on += 1;
+
+                    is_at_T.at(i) = (T_hot_des - mc_pt_receivers.at(i)->outputs.m_T_salt_hot) < 1.0;    // Receiver i is at target temperature
+                    if (is_at_T.at(i))
+                        n_at_target_T += 1;
+                }
+
+                //--- Update known operational limits
+                update_limits(heliostat_field_control_per_rec, is_on, is_at_T, bound_tol, focus_min_sim_on, focus_max_sim_off, focus_min_sim_at_T, focus_max_sim_under_T);
+
+                //--- Stop all iterations here if the current solution is sufficient (all receivers are operating at the target outlet temperature), or if iteration isn't allowed
+                if (n_at_target_T == n_should_operate || (!allow_outer_iter && n_split_iter == 1))
+                {
+                    is_current_soln_best = true;
+                    stop_outer = true;
+                    break;
+                }
+
+                //--- Check if this solution is better than any prior solutions
+                is_current_soln_best = false;
+                if (n_on > n_on_best)  // This solution has more receivers "on" than any previous solution
+                    is_current_soln_best = true;
+                else if (n_on == n_on_best && m_combined_outputs.T_salt_hot >= T_hot_best) // This solution has the same number of receivers "on", but a higher combined particle exit temperature
+                    is_current_soln_best = true;
+                if (is_current_soln_best)
+                {
+                    n_on_best = n_on;
+                    T_hot_best = m_combined_outputs.T_salt_hot;
+                    heliostat_field_control_per_rec_best = heliostat_field_control_per_rec;
+                }
+
+
+                //--- Create next split of focus fractions 
+                if (q < n_split_iter - 1)
+                {
+                    bool is_skip_to_next = false;
+                    int n_turned_off = n_should_operate - n_on;         // Number of receivers that were intended to be "on", but that turned off under current defocus conditions
+                    int n_under_T = n_should_operate - n_at_target_T;   // Number of receivers that were intended to be "on", but that are operating under the target temperature at the current defocus conditions
+
+                    if (is_any_above_T && n_turned_off == 0 && n_under_T == n_should_operate)   // We've previously found a solution with at least one receiver at the target temperature, unlikely to do any better with more iteration
+                        is_skip_to_next = true;
+
+                    if (n_turned_off > 0 && n_under_T < n_should_operate) // All receivers are on and at least one is at the target particle exit temperature
+                        is_any_above_T = true;
+
+                    if (!is_skip_to_next)
+                        is_skip_to_next = update_focus_split(heliostat_field_control_per_rec, focus_step, low_to_high_order, is_expect_on, is_on, is_at_T, focus_min_sim_on, focus_max_sim_off, focus_min_sim_at_T, focus_max_sim_under_T);
+
+                    if (is_skip_to_next)
+                        q = n_split_iter - 1;
+                }
+
+                //--- If this is the last iteration, check to see if the best solution has at least one receiver off (that was expected to be on).  If so, shut down worst receiver and re-split the controller defocus signal among the remaining receivers
+                stop_outer = true;
+                if (q == n_split_iter - 1 && allow_outer_iter && n_on_best < n_should_operate)
+                {
+                    stop_outer = false;
+                    int iworst = low_to_high_order.at(0);
+                    is_expect_on.at(iworst) = false;
+                    n_should_operate -= 1;
+                    double avg_defocus = std::min(1.0, heliostat_field_control * m_n_on_from_estimates / n_should_operate);
+                    heliostat_field_control_per_rec = split_focus(avg_defocus, is_expect_on);
+                }
+                q += 1;
             }
         }
 
-        // Check if any receivers turned off (even if the state is "fixed" to on, this can happen if the thermal output is negative).
-        //  If so, keep that subset of receivers off and re-split the defocus signal between the remaining receivers
-        //  TODO: If the receivers that are on are at temperature, add iterations to try to reduce the focus fraction of those receivers and increase the focus fraction of the receivers that shut off
-        if (q < n_split_iter - 1)
+        // Re-run receiver models if the best solution is not the current solution
+        heliostat_field_control_per_rec = heliostat_field_control_per_rec_best;  // Heliostat field fractions might have been changed from best solution when we tried to update the defocus split, even if last call to receiver models was best solution
+        if (!is_current_soln_best)
         {
-            std:vector<bool> is_rec_on_after_soln(nrec, false);
-            int n_on_after_soln = 0;
-            for (size_t i = 0; i < nrec; i++)
-            {
-                if (mc_pt_receivers.at(i)->ms_outputs.m_Q_thermal > 0)
-                {
-                    is_rec_on_after_soln.at(i) = true;
-                    n_on_after_soln += 1;
-                }
-            }
-
-            if (n_on_after_soln < m_n_on_from_estimates)
-            {
-                double avg_defocus = std::min(1.0, heliostat_field_control * m_n_on_from_estimates / n_on_after_soln); // Average focus fraction only for those receivers that are operating
-                heliostat_field_control_per_rec = split_defocus(avg_defocus, is_rec_on_after_soln);
-            }
+            run_component_models(weather, htf_state_in, inputs, sim_info, is_fixed_states, heliostat_field_control_per_rec);
         }
     }
 
-    // Aggregate results and set outputs
-    combine_results();
     set_outputs(cr_out_solver);
-	
     return;
-
-    
- 
 }
 
 void C_csp_falling_particle_collector_receiver::off(const C_csp_weatherreader::S_outputs &weather,
@@ -572,6 +1025,8 @@ void C_csp_falling_particle_collector_receiver::estimates(const C_csp_weatherrea
             m_n_on_from_estimates += 1;
         if (m_fix_mode_from_estimates)
             mc_pt_receivers.at(i)->set_state_requirement(true); // Require receiver state to be fixed to that in inputs.m_input_operation_mode in subsequent calls
+        m_approx_min_focus.at(i) = 0.0;
+        m_approx_min_focus_at_T.at(i) = 0.0;
     }
     return;
 }
@@ -634,6 +1089,9 @@ void C_csp_falling_particle_collector_receiver::converged()
 
     startup_time_remain_final_per_rec = startup_energy_remain_final_per_rec = std::numeric_limits<double>::quiet_NaN();
     startup_time_remain_final = startup_energy_remain_final = 1e10;
+
+    std::fill(m_approx_min_focus.begin(), m_approx_min_focus.end(), 0.0);
+    std::fill(m_approx_min_focus_at_T.begin(), m_approx_min_focus_at_T.end(), 0.0);
 
     size_t nrec = mc_pt_receivers.size();
     is_field_tracking_final = false;

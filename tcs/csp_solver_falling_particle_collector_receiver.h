@@ -97,8 +97,29 @@ private:
     std::vector<double> m_mdot_from_estimates;       // Receiver mass flow from estimates call (kg/s)
     std::vector<bool> m_is_on_from_estimates;        // Is receiver on after estimates call?
     int m_n_on_from_estimates;                      // Number of receiver on after estimates call
+    std::vector<double> m_approx_min_focus;         
+    std::vector<double> m_approx_min_focus_at_T;    
 
-    std::vector<double> split_defocus(double avg_defocus, std::vector<bool>& is_rec_on);
+    std::vector<double> split_focus(double avg_focus, std::vector<bool>& is_rec_on);
+
+    void update_limits(std::vector<double>& focus_fractions, std::vector<bool>& is_on, std::vector<bool>& is_at_T, double bound_tol,
+        std::vector<double>& focus_min_sim_on, std::vector<double>& focus_max_sim_off,
+        std::vector<double>& focus_min_sim_at_T, std::vector<double>& focus_max_sim_under_T);
+
+    std::vector<int> order_receivers(std::vector<bool>& is_rec_on);
+
+    bool update_focus_split(std::vector<double>& focus_fractions, double focus_step, std::vector<int>& low_to_high_order,
+        std::vector<bool>& is_expect_on, std::vector<bool>& is_on, std::vector<bool>& is_at_T,
+        std::vector<double>& focus_min_sim_on, std::vector<double>& focus_max_sim_off,
+        std::vector<double>& focus_min_sim_at_T, std::vector<double>& focus_max_sim_under_T);
+
+    void run_component_models(const C_csp_weatherreader::S_outputs& weather,
+        const C_csp_solver_htf_1state& htf_state_in,
+        const C_csp_collector_receiver::S_csp_cr_inputs& inputs,
+        const C_csp_solver_sim_info& sim_info,
+        bool is_fixed_states,
+        std::vector<double>& heliostat_field_control_per_rec);
+
     void combine_results();
     void set_outputs(C_csp_collector_receiver::S_csp_cr_out_solver& cr_out_solver);
 
