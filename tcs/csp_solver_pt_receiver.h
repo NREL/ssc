@@ -168,6 +168,8 @@ public:
 
     double get_T_htf_cold_des();    //[K]
 
+    double get_T_htf_hot_des();    //[K]
+
     double get_q_dot_rec_des();     //[MWt]
 
     void get_design_geometry(double& L_tower_piping /*m*/, double& od_tube_calc /*m*/);
