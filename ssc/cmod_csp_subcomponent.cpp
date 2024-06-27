@@ -111,6 +111,7 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "T_tank_hot",                "Temperature of hot tank (average)",                                                "C",            "",               "TES",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "tes_diameter",              "TES Diameter",                                                                     "m",            "",               "TES",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "tes_radius",                "TES Radius",                                                                       "m",            "",               "TES",            "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "tes_height",                "TES Height",                                                                       "m",            "",               "TES",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "hot_tank_vol_frac",         "Hot tank volume fraction of total",                                                "",             "",               "TES",            "*",                       "",                      "" },
 
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_error",                 "TES energy balance error",                                                         "MW",           "",               "TES",            "tes_type=1",              "",                      "" },
@@ -128,9 +129,9 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_exp_length",            "TES expansion tank effective length",                                              "m",            "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_mass_cold",             "TES cold fluid mass",                                                              "kg",           "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_mass_hot",              "TES hot fluid mass",                                                               "kg",           "",               "TES",            "tes_type=1",              "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "tes_V_cold",                "TES cold fluid volume",                                                              "kg",           "",               "TES",            "tes_type=1",              "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "tes_V_hot",                 "TES hot fluid volume",                                                               "kg",           "",               "TES",            "tes_type=1",              "",                      "" },
-
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_V_cold",                "TES cold fluid volume",                                                            "kg",           "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "tes_V_hot",                 "TES hot fluid volume",                                                             "kg",           "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "hot_tank_mass_perc",        "TES hot tank mass percent of total (end)",                                         "kg",           "",               "TES",            "*",                       "",                      "" },
 
     var_info_invalid };
 
@@ -399,11 +400,11 @@ public:
             T_tank_hot[i] = K_to_C(storage_pointer->get_hot_temp());
             assign("tes_diameter", d_tank_calc);
             assign("tes_radius", d_tank_calc / 2.0);
+            assign("tes_height", h_tank_calc);
             
 
             hot_tank_vol_frac[i] = storage_pointer->get_hot_tank_vol_frac();
-
-
+            
 
             // Add NT specific outputs
             if (tes_type == 1)
