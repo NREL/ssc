@@ -415,7 +415,10 @@ public:
 
     battery_params get_params();
 
-    void set_state(const battery_state& state);
+    // The simulation time tracked by last_idx is dependent on the timestep. 
+    // If the previous state was using a different timestep, such as via ChangeTimestep, set the dt_hr (which is in battery_params)
+    // to that during the previous state to ensure last_idx is tracking the time correctly.
+    void set_state(const battery_state& state, double dt_hr=0.0);
 
 private:
     std::unique_ptr<capacity_t> capacity;
