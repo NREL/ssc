@@ -482,6 +482,9 @@ static var_info _cm_vtab_saleleaseback[] = {
 /*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_total",		"Total federal first year bonus depreciation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_total",		"Total federal depreciation basis",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 
+    { SSC_OUTPUT,       SSC_NUMBER,     "pre_depr_alloc_basis",		          "Total depreciation basis prior to allocation",	"$", "",	  "Depreciation",             "*",					  "",     			        "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "pre_itc_qual_basis",		              "Total ITC basis prior to qualification",	"$", "",	  "Tax Credits",             "*",					  "",     			        "" },
+
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_percent_total",		"federal ITC percent total",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_fixed_total",		"federal ITC fixed total",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
@@ -1675,6 +1678,9 @@ public:
 
 		double cost_installed;
 
+        double pre_depr_alloc_basis; // Total costs that could qualify for depreciation before allocations
+        double pre_itc_qual_basis; // Total costs that could qualify for ITC before allocations
+
 		double depr_alloc_macrs_5_frac = as_double("depr_alloc_macrs_5_percent") * 0.01;
 		double depr_alloc_macrs_15_frac = as_double("depr_alloc_macrs_15_percent") * 0.01;
 		double depr_alloc_sl_5_frac = as_double("depr_alloc_sl_5_percent") * 0.01;
@@ -2065,9 +2071,15 @@ public:
 			cf.at(CF_reserve_receivables, 0);
 
 		cost_installed = cost_prefinancing + cost_financing;
-		sale_of_property = cost_prefinancing + sponsor_pretax_development_fee + cost_other_financing + cost_equity_closing + constr_total_financing;
-		// depreciable bases different from other models
-		depr_alloc_total = depr_alloc_total_frac * sale_of_property;
+
+        // Installed costs and construction costs can be claimed in the basis, but reserves are not
+        // TODO checkbox for financing costs: https://github.com/NREL/SAM/issues/1803
+        sale_of_property = cost_prefinancing + sponsor_pretax_development_fee + cost_other_financing + cost_equity_closing + constr_total_financing;
+        pre_depr_alloc_basis = sale_of_property;
+        pre_itc_qual_basis = pre_depr_alloc_basis;
+
+        // depreciable bases different from other models
+		depr_alloc_total = depr_alloc_total_frac * pre_depr_alloc_basis;
 		depr_alloc_macrs_5 = depr_alloc_macrs_5_frac * depr_alloc_total;
 		depr_alloc_macrs_15 = depr_alloc_macrs_15_frac * depr_alloc_total;
 		depr_alloc_sl_5 = depr_alloc_sl_5_frac * depr_alloc_total;
@@ -3241,7 +3253,9 @@ public:
 	m_disp_calcs.compute_outputs(ppa_cf);
 
 
-
+    // Intermediate tax credit/depreciation variables 
+    assign("pre_depr_alloc_basis", var_data((ssc_number_t)pre_depr_alloc_basis));
+    assign("pre_itc_qual_basis", var_data((ssc_number_t)pre_itc_qual_basis));
 
 		// State ITC/depreciation table
 		assign("depr_stabas_percent_macrs_5", var_data((ssc_number_t)  (depr_stabas_macrs_5_frac*100.0)));
