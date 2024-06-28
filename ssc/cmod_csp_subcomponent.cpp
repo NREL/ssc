@@ -107,12 +107,18 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     // Outputs
     { SSC_OUTPUT,       SSC_ARRAY,       "T_src_in",                  "Temperature to heat source",                                                       "C",            "",               "TES",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "T_sink_in",                 "Temperature to heat sink or power block",                                          "C",            "",               "TES",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "T_tank_cold",               "Temperature of cold tank (average)",                                               "C",            "",               "TES",            "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "T_tank_hot",                "Temperature of hot tank (average)",                                                "C",            "",               "TES",            "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "T_tank_cold",               "Temperature of cold tank (end of timestep)",                                       "C",            "",               "TES",            "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "T_tank_hot",                "Temperature of hot tank (end of timestep)",                                        "C",            "",               "TES",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "tes_diameter",              "TES Diameter",                                                                     "m",            "",               "TES",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "tes_radius",                "TES Radius",                                                                       "m",            "",               "TES",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "tes_height",                "TES Height",                                                                       "m",            "",               "TES",            "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "hot_tank_vol_frac",         "Hot tank volume fraction of total",                                                "",             "",               "TES",            "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_dc_to_htf",           "Thermal power to HTF from storage",                                                "MWt",          "",               "TES",            "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_ch_from_htf",         "Thermal power from the HTF to storage",                                            "MWt",          "",               "TES",            "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dc_to_htf",               "Thermal energy to HTF from storage",                                               "MJt",          "",               "TES",            "*",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_ch_from_htf",             "Thermal energy from the HTF to storage",                                           "MJt",          "",               "TES",            "*",                       "",                      "" },
+
+
 
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_error",                 "TES energy balance error",                                                         "MW",           "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_error_percent",         "TES energy balance error percent",                                                 "%",            "",               "TES",            "tes_type=1",              "",                      "" },
@@ -132,6 +138,8 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_V_cold",                "TES cold fluid volume",                                                            "kg",           "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_V_hot",                 "TES hot fluid volume",                                                             "kg",           "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "hot_tank_mass_perc",        "TES hot tank mass percent of total (end)",                                         "kg",           "",               "TES",            "*",                       "",                      "" },
+
+
 
     var_info_invalid };
 
@@ -358,6 +366,10 @@ public:
         double* mass_cold = allocate("tes_mass_cold", n_steps);
         double* V_hot = allocate("tes_V_hot", n_steps);
         double* V_cold = allocate("tes_V_cold", n_steps);
+        double* q_dot_dc_to_htf = allocate("q_dot_dc_to_htf", n_steps);
+        double* q_dot_ch_from_htf = allocate("q_dot_ch_from_htf", n_steps);
+        double* q_dc_to_htf = allocate("q_dc_to_htf", n_steps);
+        double* q_ch_from_htf = allocate("q_ch_from_htf", n_steps);
 
         vector<double> piston_loc_vec;
         vector<double> piston_frac_vec;
@@ -401,7 +413,11 @@ public:
             assign("tes_diameter", d_tank_calc);
             assign("tes_radius", d_tank_calc / 2.0);
             assign("tes_height", h_tank_calc);
-            
+            q_dot_dc_to_htf[i] = tes_outputs.m_q_dot_dc_to_htf; //[MWt]
+            q_dot_ch_from_htf[i] = tes_outputs.m_q_dot_ch_from_htf; //[MWt]
+            q_dc_to_htf[i] = tes_outputs.m_q_dot_dc_to_htf * t_step; //[MJt]
+            q_ch_from_htf[i] = tes_outputs.m_q_dot_ch_from_htf * t_step; //[MJt]
+
 
             hot_tank_vol_frac[i] = storage_pointer->get_hot_tank_vol_frac();
             
