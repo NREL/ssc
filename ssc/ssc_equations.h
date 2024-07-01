@@ -44,6 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cmod_financial_eqns.h"
 #include "cmod_utilityrate5_eqns.h"
 #include "cmod_analysisperiodchange_eqns.h"
+#include "cmod_geothermal_eqns.h"
 
 /**
  *  Returns true if completed successfully. For failures, query the "error" string that has been assigned to the `data`.

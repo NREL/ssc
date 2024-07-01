@@ -47,6 +47,8 @@ set(SSC_SRC
 		cmod_generic_system.cpp
 		cmod_geothermal.cpp
 		cmod_geothermal_costs.cpp
+        cmod_geothermal_eqns.cpp
+        cmod_geothermal_eqns.h
 		cmod_grid.cpp
 		cmod_grid.h
 		cmod_hcpv.cpp

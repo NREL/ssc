@@ -75,7 +75,9 @@ static var_info _cm_vtab_geothermal_costs[] = {
 		{ SSC_INPUT,		SSC_NUMBER,		"hp_flash_pressure",				"HP Flash Pressure",										"psia",		"",						"GeoHourly",				 "conversion_type=1",		"",								"" },
 		{ SSC_INPUT,		SSC_NUMBER,		"lp_flash_pressure",				"LP Flash Pressure",										"psia",		"",						"GeoHourly",				 "conversion_type=1",		"",								"" },
 		{ SSC_INPUT,		SSC_NUMBER,		"flash_count",						"Flash Count",												"(1 -2)",	"",						"GeoHourly",				 "conversion_type=1",		"",								"" },
-		// Outputs	
+        { SSC_INPUT,		SSC_NUMBER,		"cwflow",								"Cooling Water Flow",								"lb/h",		"",				"GeoHourly",				 "conversion_type=1",				 "",				"" },
+
+        // Outputs	
 
 		{ SSC_OUTPUT,       SSC_NUMBER,     "baseline_cost",					"Baseline Cost",											"$/kW",		"",                     "GeoHourly",				"?",                         "",                            "" },
         var_info_invalid };
@@ -570,12 +572,13 @@ public:
 		}
 
         //OM Cost calculations
-        /*
+        
         double unit_plant = as_double("gross_output");
-        double cooling_water_flow_rate = as_double("cooling_water_flow_rate"); //todo provide input
-        double cooling_water_cost = as_double("cooling_water_cost"); //todo provide input
+        double cooling_water_flow_rate = as_double("cwflow"); //todo provide input
+        double cooling_water_cost = 300; //$/acre-ft //todo provide input
         double water_treatment_cost = (conversion_type == 0) ? 0 : cooling_water_flow_rate * cooling_water_cost;
         double non_labor_om_cost = 0.018 * baseline_cost * unit_plant + water_treatment_cost;
+
         //Plant OM
         double total_operator_cost = 0.25 * pow(unit_plant, 0.525) * 8760 * 20 * labor_ppi[ppi_base_year] * 1.8;
         double total_mechanic_cost = (conversion_type == 0) ? 0.15 : 0.13 * pow(unit_plant, 0.65) * 2000 * 24 * labor_ppi[ppi_base_year] * 1.8;
@@ -590,7 +593,7 @@ public:
         double plant_om = non_labor_om_cost + labor_om_cost;
 
         //Field OM
-        double percent_drilling_cost_om = as_double("percent_drilling_cost_om");
+        double percent_drilling_cost_om = 1.5 / 100.0; //% always
         double well_om = percent_drilling_cost_om * as_double("geotherm.cost.prod_inj_total");
         double surface_equip_om = 0.015 * as_double("field_gathering_system_cost"); //todo provide input
         double GF_flowrate = as_double("GF_flowrate");
@@ -607,7 +610,7 @@ public:
         double total_capital_cost = as_double("total_installed_cost"); //todo move OM to separate cmod, pass in total installed cost
         double tax_insurance_rate = 0.0075;
         double annual_tax_insurance_cost = total_capital_cost * tax_insurance_rate;
-        */
+        
 
 	};
 
