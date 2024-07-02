@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "vartab.h"
 
-#include "cmod_mhk_eqns.h"
+#include "cmod_geothermal_eqns.h"
 #pragma warning(disable: 4297)  // ignore warning: 'function assumed not to throw an exception but does'
 
 bool getem_om_cost_calc(ssc_data_t data)
@@ -68,7 +68,7 @@ bool getem_om_cost_calc(ssc_data_t data)
     vt_get_number(vt, "baseline_cost", &baseline_cost);
     vt_get_number(vt, "ppi_base_year", &ppi_base_year);
     vt_get_number(vt, "cwflow", &cooling_water_flow_rate);
-    vt_get_number(vt, "geotherm.cost.prod_inj_total", &drilling_cost);
+    vt_get_number(vt, "drilling_cost", &drilling_cost);
     vt_get_number(vt, "field_gathering_system_cost", &field_cost);
     vt_get_number(vt, "GF_flowrate", &flow_rate);
     vt_get_number(vt, "num_wells", &num_wells);

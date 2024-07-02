@@ -129,6 +129,11 @@ static ssc_equation_entry ssc_equation_table [] = {
             "Windpower", Turbine_calculate_powercurve_doc,
             false, true},
 
+        // Geothermal
+        {"getem_om_cost_calc", getem_om_cost_calc,
+            "geothermal", getem_om_cost_calc_doc,
+            false, true},
+
         // CSP
 
         // Do not add SSC equations for MSPT, ETES, Trough, or PTES

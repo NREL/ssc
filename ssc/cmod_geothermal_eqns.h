@@ -30,7 +30,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
+#ifndef _CMOD_GETEM_BUILDER_H_
+#define _CMOD_GETEM_BUILDER_H_
 
 
 #include "sscapi.h"
@@ -56,6 +57,7 @@ SSCEXPORT bool getem_om_cost_calc(ssc_data_t data);
 
 #ifdef __cplusplus
 }
+#endif
 #endif
 
 
