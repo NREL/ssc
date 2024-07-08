@@ -163,7 +163,7 @@ TEST(save_as_JSON_test_run, pvwatts_mechant_plant_rapidjson) {
     EXPECT_TRUE(success);
     ssc_number_t npv;
     ssc_data_get_number(data, "project_return_aftertax_npv", &npv);
-    EXPECT_NEAR(npv, -59413095.4, std::abs(-59413095.4) / 1e6); // latest version changes - run ssc/test/input_json.sam and Generate code->JSON for Inputs for each case
+    EXPECT_NEAR(npv, -59258741.2, std::abs(-59258741.2) / 1e6); // latest version changes - run ssc/test/input_json.sam and Generate code->JSON for Inputs for each case
     
     ssc_module_free(mod_pv);
     ssc_module_free(mod_mp);
@@ -191,7 +191,7 @@ TEST(save_as_JSON_test_run, pv_batt_mechant_plant_rapidjson) {
     EXPECT_TRUE(success);
     ssc_number_t npv;
     ssc_data_get_number(data, "project_return_aftertax_npv", &npv);
-    EXPECT_NEAR(npv, -60474915.2, std::abs(-60474915.2) / 1e6); // latest version changes - run ssc/test/input_json.sam and Generate code->JSON for Inputs for each case
+    EXPECT_NEAR(npv, -60320902.2, std::abs(-60320902.2) / 1e6); // latest version changes - run ssc/test/input_json.sam and Generate code->JSON for Inputs for each case
 
     ssc_module_free(mod_pv);
     ssc_module_free(mod_grid);
@@ -219,7 +219,7 @@ TEST(save_as_JSON_test_run, pt_mechant_plant_rapidjson) {
     EXPECT_TRUE(success);
     ssc_number_t npv;
     ssc_data_get_number(data, "project_return_aftertax_npv", &npv);
-    EXPECT_NEAR(npv, -570636240.1, std::abs(-570636240.1) / 1e7); // latest version changes - run ssc/test/input_json.sam and Generate code->JSON for Inputs for each case
+    EXPECT_NEAR(npv, -571181145.3, std::abs(-571181145.3) / 1e7); // latest version changes - run ssc/test/input_json.sam and Generate code->JSON for Inputs for each case
     
     ssc_module_free(mod_pv);
     ssc_module_free(mod_grid);
