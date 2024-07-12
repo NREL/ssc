@@ -42,7 +42,7 @@ TEST_F(CMSingleOwner, ResidentialDefault_cmod_swh) {
 
     ssc_number_t npv;
     ssc_data_get_number(data, "project_return_aftertax_npv", &npv);
-    EXPECT_NEAR(npv, -647812341.0, 0.1);
+    EXPECT_NEAR(npv, -647727845.8, 0.1);
 
 }
 

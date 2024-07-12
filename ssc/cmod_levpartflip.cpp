@@ -2363,14 +2363,8 @@ public:
 			- cbi_oth_amount;
 
         // Installed costs and construction costs can be claimed in the basis, but reserves are not
-        // TODO checkbox for financing costs: https://github.com/NREL/SAM/issues/1803
-        pre_depr_alloc_basis = cost_prefinancing +
-            cost_dev_fee_percent * cost_prefinancing +
-            cost_debt_closing +
-            cost_debt_fee_frac * size_of_debt +
-            cost_equity_closing +
-            cost_other_financing +
-            constr_total_financing;
+        // TODO: Realign with new understanding of allowable costs: https://github.com/NREL/SAM/issues/1803
+        pre_depr_alloc_basis = cost_prefinancing + cost_financing;
 
         // Basis reductions are handled in depr_fed_reduction and depr_sta_reduction
 

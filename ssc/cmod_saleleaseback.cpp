@@ -2073,7 +2073,7 @@ public:
 		cost_installed = cost_prefinancing + cost_financing;
 
         // Installed costs and construction costs can be claimed in the basis, but reserves are not
-        // TODO checkbox for financing costs: https://github.com/NREL/SAM/issues/1803
+        // TODO: Realign with new understanding of allowable costs: https://github.com/NREL/SAM/issues/1803
         sale_of_property = cost_prefinancing + sponsor_pretax_development_fee + cost_other_financing + cost_equity_closing + constr_total_financing;
         pre_depr_alloc_basis = sale_of_property;
         pre_itc_qual_basis = pre_depr_alloc_basis;

@@ -2869,13 +2869,11 @@ public:
 			- cbi_oth_amount;
 
         // Installed costs and construction costs can be claimed in the basis, but reserves are not
-        // TODO checkbox for financing costs: https://github.com/NREL/SAM/issues/1803
-        pre_depr_alloc_basis = cost_prefinancing +
-            cost_debt_closing +
-            cost_debt_fee_frac * size_of_debt +
-            cost_other_financing +
-            cs_upfront_cost + // Leaving this in to make a smaller change for the patch. Probably should be removed as a part of 1803
-            constr_total_financing;
+        // TODO: Realign with new understanding of allowable costs: https://github.com/NREL/SAM/issues/1803
+        pre_depr_alloc_basis = cost_prefinancing
+            + cost_financing
+            + cs_upfront_cost
+            - cs_upfront_revenue;
         // Basis reductions are handled in depr_fed_reduction and depr_sta_reduction
 
         // Under 2024 law these are understood to be the same, keep seperate variables for reporting out
