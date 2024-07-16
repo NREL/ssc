@@ -98,12 +98,9 @@ C_mspt_receiver_222::C_mspt_receiver_222(double h_tower /*m*/, double epsilon /*
 	m_RelRough = std::numeric_limits<double>::quiet_NaN();
 
     // State variables
-    m_mode_initial = C_csp_collector_receiver::E_csp_cr_modes::OFF;
-    m_E_su_init = std::numeric_limits<double>::quiet_NaN();
-    m_t_su_init = std::numeric_limits<double>::quiet_NaN();
-
     m_E_su_prev = std::numeric_limits<double>::quiet_NaN();
     m_t_su_prev = std::numeric_limits<double>::quiet_NaN();
+
 
     // Private
     m_E_su = std::numeric_limits<double>::quiet_NaN();
@@ -146,30 +143,16 @@ void C_mspt_receiver_222::init_mspt_common()
         m_m_dot_htf_des,
         m_L_piping, d_inner_piping, m_Q_dot_piping_loss);
 
-    m_mode = m_mode_initial;					//[-] 0 = requires startup, 1 = starting up, 2 = running
-    m_mode_prev = m_mode;
-
     m_E_su_prev = m_q_rec_des * m_rec_qf_delay;	//[W-hr] Startup energy
     m_t_su_prev = m_rec_su_delay;				//[hr] Startup time requirement
 
-    if (m_mode_initial == C_csp_collector_receiver::STARTUP) {
-        if (std::isfinite(m_E_su_init)) {
-            m_E_su_prev = std::fmin(m_q_rec_des * m_rec_qf_delay, std::fmax(0.0, m_E_su_init));
-        }
-        if (std::isfinite(m_t_su_init)) {
-            m_t_su_prev = std::fmin(m_rec_su_delay, std::fmax(0.0, m_t_su_init));
-        }
-    }
-    else if (m_mode_initial != C_csp_collector_receiver::OFF) {
-        m_E_su_prev = 0.0;
-        m_t_su_prev = 0.0;
-    }
-
     // If no startup requirements, then receiver is always ON
-    // ... in the sense that the controller doesn't need to worry about startup
-    if (m_E_su_prev == 0.0 && m_t_su_prev == 0.0 && m_mode_initial == C_csp_collector_receiver::OFF) {
-        m_mode = C_csp_collector_receiver::OFF_NO_SU_REQ;
-        m_mode_prev = C_csp_collector_receiver::OFF_NO_SU_REQ;
+        // ... in the sense that the controller doesn't need to worry about startup
+    if (m_E_su_prev == 0.0 && m_t_su_prev == 0.0) {
+        m_mode_prev = C_csp_collector_receiver::OFF_NO_SU_REQ;					//[-] 0 = requires startup, 1 = starting up, 2 = running
+    }
+    else {
+        m_mode_prev = C_csp_collector_receiver::OFF;					//[-] 0 = requires startup, 1 = starting up, 2 = running
     }
 
     std::string flow_msg;
@@ -251,14 +234,6 @@ void C_mspt_receiver_222::init()
 	m_ncall = -1;
 
 	return;
-}
-
-void C_mspt_receiver_222::set_inital_state(C_csp_collector_receiver::E_csp_cr_modes mode_initial,
-    double E_su_init /*W-hr*/, double t_su_init /*hr*/)
-{
-    m_mode_initial = mode_initial;
-    m_E_su_init = E_su_init;
-    m_t_su_init = t_su_init;
 }
 
 void C_mspt_receiver_222::call_common(double P_amb /*Pa*/, double T_amb /*K*/,

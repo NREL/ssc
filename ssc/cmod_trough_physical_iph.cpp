@@ -278,6 +278,10 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_INPUT,        SSC_NUMBER,      "P_boil",                              "Boiler operating pressure",                                              "bar",          "",               "powerblock",         "",           "",              "SIMULATION_PARAMETER" },
 
 
+    // ADDED For Design Point
+    { SSC_INPUT,        SSC_NUMBER,      "lat",                                 "Latitude",                                                               "degree",       "",               "",                   "*",          "",              "" },
+
+
     // Direct Capital Costs
     { SSC_INPUT,    SSC_NUMBER,         "csp.dtr.cost.site_improvements.cost_per_m2", "Site Improvement Cost per m2",                                     "$/m2",         "",               "Capital_Costs",      "?=0",        "",              "" },
     { SSC_INPUT,    SSC_NUMBER,         "csp.dtr.cost.solar_field.cost_per_m2",       "Solar Field Cost per m2",                                          "$/m2",         "",               "Capital_Costs",      "?=0",        "",              "" },
@@ -688,7 +692,6 @@ public:
         C_csp_weatherreader weather_reader;
         C_csp_solver::S_sim_setup sim_setup;
         int n_steps_fixed;
-        double lat = std::numeric_limits<double>::quiet_NaN();
         int steps_per_hour;
         {
             if (is_assigned("file_name")) {
@@ -719,8 +722,6 @@ public:
 
             int n_wf_records = (int)weather_reader.m_weather_data_provider->nrecords();
             steps_per_hour = n_wf_records / 8760;                       //[-]
-
-            lat = weather_reader.ms_solved_params.m_lat;     //[deg]
 
             n_steps_fixed = steps_per_hour * 8760;                    //[-]
             sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;  //[s]
@@ -1535,7 +1536,8 @@ public:
                 vector<double> L_SCA = as_vector_double("L_SCA");
                 vector<double> ColperSCA = as_vector_double("ColperSCA");
                 vector<double> Ave_Focal_Length = as_vector_double("Ave_Focal_Length");
-                
+                double lat = as_double("lat");
+
                 util::matrix_t<ssc_number_t> csp_dtr_sca_ap_lengths;
                 {
                     size_t n = L_SCA.size();

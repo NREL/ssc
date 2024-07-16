@@ -39,7 +39,6 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_mspt_collector_receiver::E_FIELD_Q_DOT_INC, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_mspt_collector_receiver::E_FIELD_ETA_OPT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_mspt_collector_receiver::E_FIELD_ADJUST, C_csp_reported_outputs::TS_WEIGHTED_AVE},
-    {C_csp_mspt_collector_receiver::E_IS_FIELD_TRACKING_FINAL, C_csp_reported_outputs::TS_LAST},
 
     {C_csp_mspt_collector_receiver::E_REC_DEFOCUS, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_mspt_collector_receiver::E_Q_DOT_INC, C_csp_reported_outputs::TS_WEIGHTED_AVE},
@@ -68,9 +67,6 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{ C_csp_mspt_collector_receiver::E_CLEARSKY, C_csp_reported_outputs::TS_WEIGHTED_AVE },
 	{ C_csp_mspt_collector_receiver::E_Q_DOT_THERMAL_CSKY_SS, C_csp_reported_outputs::TS_WEIGHTED_AVE },
 	{ C_csp_mspt_collector_receiver::E_Q_DOT_THERMAL_SS, C_csp_reported_outputs::TS_WEIGHTED_AVE },
-    { C_csp_mspt_collector_receiver::E_REC_OP_MODE_FINAL, C_csp_reported_outputs::TS_LAST},
-    { C_csp_mspt_collector_receiver::E_REC_STARTUP_TIME_REMAIN_FINAL, C_csp_reported_outputs::TS_LAST },
-    { C_csp_mspt_collector_receiver::E_REC_STARTUP_ENERGY_REMAIN_FINAL, C_csp_reported_outputs::TS_LAST },
 	csp_info_invalid	
 };
 
@@ -393,21 +389,6 @@ void C_csp_mspt_collector_receiver::converged()
 {
 	mc_pt_heliostatfield.converged();
 	mc_pt_receiver.converged();
-
-    // Set reported heliostat converged value  // TODO: This could be refactored...
-    bool is_field_tracking_final;
-    mc_pt_heliostatfield.get_converged(is_field_tracking_final);
-    mc_reported_outputs.value(E_IS_FIELD_TRACKING_FINAL, (int)is_field_tracking_final);			//[-]
-
-    // Set reported receiver converged value
-    C_csp_collector_receiver::E_csp_cr_modes rec_op_mode_final;
-    double rec_startup_time_remain_final, rec_startup_energy_remain_final;
-    rec_startup_time_remain_final = rec_startup_energy_remain_final = std::numeric_limits<double>::quiet_NaN();
-    mc_pt_receiver.get_converged_values(rec_op_mode_final,
-        rec_startup_energy_remain_final, rec_startup_time_remain_final);
-    mc_reported_outputs.value(E_REC_OP_MODE_FINAL, (int)rec_op_mode_final);
-    mc_reported_outputs.value(E_REC_STARTUP_TIME_REMAIN_FINAL, rec_startup_time_remain_final);
-    mc_reported_outputs.value(E_REC_STARTUP_ENERGY_REMAIN_FINAL, rec_startup_energy_remain_final);
 
 	// Hardcode to test...
 	//mc_reported_outputs.set_timestep_output(E_Q_DOT_THERMAL, mc_pt_receiver.ms_outputs.m_Q_thermal);	//[MWt]

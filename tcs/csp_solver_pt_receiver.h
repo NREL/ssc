@@ -145,9 +145,6 @@ public:
 
     virtual void converged() = 0;
 
-    void get_converged_values(C_csp_collector_receiver::E_csp_cr_modes& m_mode_final,
-        double& E_su_final, double& t_su_final);
-
     virtual double get_pumping_parasitic_coef() = 0;
 
     HTFProperties *get_htf_property_object();
@@ -246,13 +243,6 @@ protected:
 
     C_csp_collector_receiver::E_csp_cr_modes m_mode;                         //[-] current operating mode of receiver
     C_csp_collector_receiver::E_csp_cr_modes m_mode_prev;                    //[-] operating mode of receiver at end of last converged timestep
-
-    // ************************************
-    // State variables
-    double m_E_su_prev;         //[W-hr] Startup energy required at end of previous timestep
-    double m_E_su;              //[W-hr] Startup energy required calculated at end of current timestep
-    double m_t_su;              //[hr] Startup time requirement at end of previous timestep
-    double m_t_su_prev;         //[hr] Startup time requirement calculated at end of current timestep
 
     std::string error_msg;              // member string for exception messages
 
