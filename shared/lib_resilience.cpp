@@ -79,7 +79,7 @@ bool dispatch_resilience::run_outage_step_ac(double crit_load_kwac, double pv_kw
     double met_load = m_batteryPower->powerBatteryToLoad + m_batteryPower->powerSystemToLoad + m_batteryPower->powerFuelCellToLoad;
     double unmet_load = m_batteryPower->powerCritLoadUnmet;
     met_loads_kw += met_load;
-    bool survived = unmet_load < tolerance;
+    bool survived = unmet_load < powerflow_tolerance;
     if (survived)
         current_outage_index += 1;
     return survived;
@@ -101,7 +101,7 @@ bool dispatch_resilience::run_outage_step_dc(double crit_load_kwac, double pv_kw
     double met_load = m_batteryPower->powerBatteryToLoad + m_batteryPower->powerSystemToLoad + m_batteryPower->powerFuelCellToLoad;
     double unmet_load = m_batteryPower->powerCritLoadUnmet;
     met_loads_kw += met_load;
-    bool survived = unmet_load < tolerance;
+    bool survived = unmet_load < powerflow_tolerance;
     if (survived)
         current_outage_index += 1;
     return survived;

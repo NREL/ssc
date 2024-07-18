@@ -173,7 +173,7 @@ bool dispatch_manual_t::check_constraints(double &I, size_t count)
 			I <= 0)											// and battery was not discharging
 		{
 			double dI = 0;
-			if (std::abs(m_batteryPower->powerBatteryDC) < tolerance)
+			if (std::abs(m_batteryPower->powerBatteryDC) < powerflow_tolerance)
 				dI = (m_batteryPower->powerSystemToGrid  * util::kilowatt_to_watt / _Battery->V());
 			else
 				dI = (m_batteryPower->powerSystemToGrid  / std::abs(m_batteryPower->powerBatteryAC)) * std::abs(I);
@@ -194,7 +194,7 @@ bool dispatch_manual_t::check_constraints(double &I, size_t count)
 			}
 
 			double dI = 0;
-			if (dP < tolerance)
+			if (dP < powerflow_tolerance)
 				dI = dP / _Battery->V();
 			else
 				dI = (dP / std::abs(m_batteryPower->powerBatteryAC)) * std::abs(I);
@@ -204,7 +204,7 @@ bool dispatch_manual_t::check_constraints(double &I, size_t count)
 		// Don't let battery export to the grid if behind the meter
 		else if (m_batteryPower->meterPosition == dispatch_t::BEHIND && !m_batteryPower->canDischargeToGrid && I > 0 && m_batteryPower->powerBatteryToGrid > tolerance)
 		{
-			if (std::abs(m_batteryPower->powerBatteryAC) < tolerance)
+			if (std::abs(m_batteryPower->powerBatteryAC) < powerflow_tolerance)
 				I -= (m_batteryPower->powerBatteryToGrid * util::kilowatt_to_watt / _Battery->V());
 			else
 				I -= (m_batteryPower->powerBatteryToGrid / std::abs(m_batteryPower->powerBatteryAC)) * std::abs(I);
