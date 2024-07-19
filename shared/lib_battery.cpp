@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <functional>
 
 #include "lib_battery.h"
+#include "lib_battery_powerflow.h"
 
 /*
 Define Thermal Model
@@ -522,7 +523,7 @@ double battery_t::calculate_max_charge_kw(double *max_current_A) {
     double power_W = 0;
     double current = 0;
     size_t its = 0;
-    while (std::abs(power_W - voltage->calculate_max_charge_w(q, qmax, thermal->T_battery(), &current)) > tolerance
+    while (std::abs(power_W - voltage->calculate_max_charge_w(q, qmax, thermal->T_battery(), &current)) > powerflow_tolerance
            && its++ < 10) {
         power_W = voltage->calculate_max_charge_w(q, qmax, thermal->T_battery(), &current);
         thermal->updateTemperature(current, state->last_idx + 1);
@@ -541,7 +542,7 @@ double battery_t::calculate_max_discharge_kw(double *max_current_A) {
     double power_W = 0;
     double current = 0;
     size_t its = 0;
-    while (std::abs(power_W - voltage->calculate_max_discharge_w(q, qmax, thermal->T_battery(), &current)) > tolerance
+    while (std::abs(power_W - voltage->calculate_max_discharge_w(q, qmax, thermal->T_battery(), &current)) > powerflow_tolerance
            && its++ < 5) {
         power_W = voltage->calculate_max_discharge_w(q, qmax, thermal->T_battery(), &current);
         thermal->updateTemperature(current, state->last_idx + 1);
@@ -779,8 +780,10 @@ battery_state battery_t::get_state() { return *state; }
 
 battery_params battery_t::get_params() { return *params; }
 
-void battery_t::set_state(const battery_state& tmp_state) {
+void battery_t::set_state(const battery_state& tmp_state, double dt_hr) {
     *state = tmp_state;
+    if (dt_hr > 0 && dt_hr <= 1)
+        params->dt_hr = dt_hr;
 }
 
 void battery_t::update_state(double I) {

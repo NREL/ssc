@@ -220,6 +220,9 @@ static var_info _cm_vtab_equpartflip[] = {
 	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_none_percent",		"Non-depreciable federal and state allocation",	"%", "",	  "Intermediate Costs",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_none",		"Non-depreciable federal and state allocation",	"$", "",	  "Intermediate Costs",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_alloc_total",		"Total depreciation federal and state allocation",	"$", "",	  "Intermediate Costs",             "*",					  "",     			        "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "pre_depr_alloc_basis",		          "Total depreciation basis prior to allocation",	"$", "",	  "Depreciation",             "*",					  "",     			        "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "pre_itc_qual_basis",		              "Total ITC basis prior to qualification",	"$", "",	  "Tax Credits",             "*",					  "",     			        "" },
+
 
 // state itc table
 /*1*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_stabas_percent_macrs_5",		"5-yr MACRS state percent of total depreciable basis",	"%", "",	  "Depreciation",             "*",					  "",     			        "" },
@@ -1642,6 +1645,9 @@ public:
 
 		double cost_installed;
 
+        double pre_depr_alloc_basis; // Total costs that could qualify for depreciation before allocations
+        double pre_itc_qual_basis; // Total costs that could qualify for ITC before allocations
+
 		double depr_alloc_macrs_5_frac = as_double("depr_alloc_macrs_5_percent") * 0.01;
 		double depr_alloc_macrs_15_frac = as_double("depr_alloc_macrs_15_percent") * 0.01;
 		double depr_alloc_sl_5_frac = as_double("depr_alloc_sl_5_percent") * 0.01;
@@ -2043,7 +2049,15 @@ public:
 			- cbi_uti_amount
 			- cbi_oth_amount;
 
-		depr_alloc_total = depr_alloc_total_frac * cost_installed;
+        // Installed costs and construction costs can be claimed in the basis, but reserves are not
+        // TODO: Realign with new understanding of allowable costs: https://github.com/NREL/SAM/issues/1803
+        pre_depr_alloc_basis = cost_prefinancing + cost_financing;
+        // Basis reductions are handled in depr_fed_reduction and depr_sta_reduction
+
+        // Under 2024 law these are understood to be the same, keep seperate variables for reporting out
+        pre_itc_qual_basis = pre_depr_alloc_basis;
+
+		depr_alloc_total = depr_alloc_total_frac * pre_depr_alloc_basis;
 		depr_alloc_macrs_5 = depr_alloc_macrs_5_frac * depr_alloc_total;
 		depr_alloc_macrs_15 = depr_alloc_macrs_15_frac * depr_alloc_total;
 		depr_alloc_sl_5 = depr_alloc_sl_5_frac * depr_alloc_total;
@@ -3092,8 +3106,9 @@ public:
 		}
 		m_disp_calcs.compute_outputs(ppa_cf);
 
-
-
+        // Intermediate tax credit/depreciation variables 
+        assign("pre_depr_alloc_basis", var_data((ssc_number_t)pre_depr_alloc_basis));
+        assign("pre_itc_qual_basis", var_data((ssc_number_t)pre_itc_qual_basis));
 
 		// State ITC/depreciation table
 		assign("depr_stabas_percent_macrs_5", var_data((ssc_number_t)  (depr_stabas_macrs_5_frac*100.0)));

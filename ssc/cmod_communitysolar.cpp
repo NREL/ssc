@@ -285,7 +285,9 @@ static var_info _cm_vtab_communitysolar[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,     "depr_alloc_none_percent",		          "Non-depreciable federal and state allocation",	"%", "",	  "Depreciation",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "depr_alloc_none",		                  "Non-depreciable federal and state allocation",	"$", "",	  "Depreciation",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "depr_alloc_total",		                  "Total depreciation federal and state allocation",	"$", "",	  "Depreciation",             "*",					  "",     			        "" },
-                                                                                  
+    { SSC_OUTPUT,       SSC_NUMBER,     "pre_depr_alloc_basis",		          "Total depreciation basis prior to allocation",	"$", "",	  "Depreciation",             "*",					  "",     			        "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "pre_itc_qual_basis",		              "Total ITC basis prior to qualification",	"$", "",	  "Tax Credits",             "*",					  "",     			        "" },
+
 // state itc table                                                                
 /*1*/ { SSC_OUTPUT,     SSC_NUMBER,     "depr_stabas_percent_macrs_5",		      "5-yr MACRS state percent of total depreciable basis",	"%", "",	  "Depreciation",             "*",					  "",     			        "" },
 	  { SSC_OUTPUT,     SSC_NUMBER,     "depr_alloc_macrs_5",		              "5-yr MACRS depreciation federal and state allocation",	"$", "",	  "Depreciation",             "*",					  "",     			        "" },
@@ -2205,6 +2207,9 @@ public:
 
 		double cost_installed;
 
+        double pre_depr_alloc_basis; // Total costs that could qualify for depreciation before allocations
+        double pre_itc_qual_basis; // Total costs that could qualify for ITC before allocations
+
 		double depr_alloc_macrs_5_frac = as_double("depr_alloc_macrs_5_percent") * 0.01;
 		double depr_alloc_macrs_15_frac = as_double("depr_alloc_macrs_15_percent") * 0.01;
 		double depr_alloc_sl_5_frac = as_double("depr_alloc_sl_5_percent") * 0.01;
@@ -2755,11 +2760,11 @@ public:
         // restore cf_thermal_value if Community Storage for fuel cell implemented, and capacity/curtailment payments if additional revenue implemented
 		if (nyears>0)
 		{
-			cf.at(CF_reserve_receivables, 0) = months_receivables_reserve_frac * (cf.at(CF_community_solar_subscriber1_revenue) + cf.at(CF_community_solar_subscriber2_revenue) + cf.at(CF_community_solar_subscriber3_revenue) + cf.at(CF_community_solar_subscriber4_revenue) /*+ cf.at(CF_thermal_value, 1) + cf.at(CF_curtailment_value, 1) + cf.at(CF_capacity_payment, 1)*/);
+			cf.at(CF_reserve_receivables, 0) = months_receivables_reserve_frac * (cf.at(CF_community_solar_subscriber1_revenue, 1) + cf.at(CF_community_solar_subscriber2_revenue, 1) + cf.at(CF_community_solar_subscriber3_revenue, 1) + cf.at(CF_community_solar_subscriber4_revenue, 1) /*+ cf.at(CF_thermal_value, 1) + cf.at(CF_curtailment_value, 1) + cf.at(CF_capacity_payment, 1)*/);
 			cf.at(CF_funding_receivables, 0) = cf.at(CF_reserve_receivables, 0);
 			for (i = 1; i<nyears; i++)
 			{
-				cf.at(CF_reserve_receivables, i) = months_receivables_reserve_frac * (cf.at(CF_community_solar_subscriber1_revenue, i + 1) + cf.at(CF_community_solar_subscriber2_revenue, i + 1) + cf.at(CF_community_solar_subscriber3_revenue, i + 1) + cf.at(CF_community_solar_subscriber4_revenue, i + 1) + cf.at(CF_thermal_value, i+1) /* + cf.at(CF_curtailment_value, i + 1) + cf.at(CF_capacity_payment, i + 1)*/);
+				cf.at(CF_reserve_receivables, i) = months_receivables_reserve_frac * (cf.at(CF_community_solar_subscriber1_revenue, i + 1) + cf.at(CF_community_solar_subscriber2_revenue, i + 1) + cf.at(CF_community_solar_subscriber3_revenue, i + 1) + cf.at(CF_community_solar_subscriber4_revenue, i + 1) /* + cf.at(CF_thermal_value, i + 1) + cf.at(CF_curtailment_value, i + 1) + cf.at(CF_capacity_payment, i + 1)*/);
 				cf.at(CF_funding_receivables, i) = cf.at(CF_reserve_receivables, i) - cf.at(CF_reserve_receivables, i - 1);
 			}
 			cf.at(CF_disbursement_receivables, nyears) = -cf.at(CF_reserve_receivables, nyears - 1);
@@ -2833,40 +2838,48 @@ public:
 		for (i=1; i<=nyears; i++)
 			cf.at(CF_reserve_interest,i) = reserves_interest * cf.at(CF_reserve_total,i-1);
 
-//		if (constant_dscr_mode)
-//		{
-			cost_financing =
-				cost_debt_closing +
-				cost_debt_fee_frac * size_of_debt +
-				cost_other_financing +
-				cf.at(CF_reserve_debtservice, 0) +
-				constr_total_financing +
-				cf.at(CF_reserve_om, 0) +
-				cf.at(CF_reserve_receivables, 0);
+		cost_financing =
+			cost_debt_closing +
+			cost_debt_fee_frac * size_of_debt +
+			cost_other_financing +
+			cf.at(CF_reserve_debtservice, 0) +
+			constr_total_financing +
+			cf.at(CF_reserve_om, 0) +
+			cf.at(CF_reserve_receivables, 0);
 
-			cost_debt_upfront = cost_debt_fee_frac * size_of_debt; // cpg added this to make cash flow consistent with single_owner.xlsx
+		cost_debt_upfront = cost_debt_fee_frac * size_of_debt; // cpg added this to make cash flow consistent with single_owner.xlsx
 
-            // Community Solar adjustment for up-front revenue and costs
-			cost_installed =
-                cost_prefinancing
-                + cost_financing
-                + cs_upfront_cost
-                - cs_upfront_revenue
-				- ibi_fed_amount
-				- ibi_sta_amount
-				- ibi_uti_amount
-				- ibi_oth_amount
-				- ibi_fed_per
-				- ibi_sta_per
-				- ibi_uti_per
-				- ibi_oth_per
-				- cbi_fed_amount
-				- cbi_sta_amount
-				- cbi_uti_amount
-				- cbi_oth_amount;
+        // Community Solar adjustment for up-front revenue and costs
+		cost_installed =
+            cost_prefinancing
+            + cost_financing
+            + cs_upfront_cost
+            - cs_upfront_revenue
+			- ibi_fed_amount
+			- ibi_sta_amount
+			- ibi_uti_amount
+			- ibi_oth_amount
+			- ibi_fed_per
+			- ibi_sta_per
+			- ibi_uti_per
+			- ibi_oth_per
+			- cbi_fed_amount
+			- cbi_sta_amount
+			- cbi_uti_amount
+			- cbi_oth_amount;
+
+        // Installed costs and construction costs can be claimed in the basis, but reserves are not
+        // TODO: Realign with new understanding of allowable costs: https://github.com/NREL/SAM/issues/1803
+        pre_depr_alloc_basis = cost_prefinancing
+            + cost_financing
+            + cs_upfront_cost
+            - cs_upfront_revenue;
+        // Basis reductions are handled in depr_fed_reduction and depr_sta_reduction
+
+        // Under 2024 law these are understood to be the same, keep seperate variables for reporting out
+        pre_itc_qual_basis = pre_depr_alloc_basis;
 			
-//		}
-		depr_alloc_total = depr_alloc_total_frac * cost_installed;
+		depr_alloc_total = depr_alloc_total_frac * pre_depr_alloc_basis;
 		depr_alloc_macrs_5 = depr_alloc_macrs_5_frac * depr_alloc_total;
 		depr_alloc_macrs_15 = depr_alloc_macrs_15_frac * depr_alloc_total;
 		depr_alloc_sl_5 = depr_alloc_sl_5_frac * depr_alloc_total;
@@ -3953,6 +3966,10 @@ public:
 		}
 		//m_disp_calcs.compute_outputs(ppa_cf);
         */
+
+        // Intermediate tax credit/depreciation variables
+        assign("pre_depr_alloc_basis", var_data((ssc_number_t)pre_depr_alloc_basis));
+        assign("pre_itc_qual_basis", var_data((ssc_number_t)pre_itc_qual_basis));
 
 		// State ITC/depreciation table
 		assign("depr_stabas_percent_macrs_5", var_data((ssc_number_t)  (depr_stabas_macrs_5_frac*100.0)));
