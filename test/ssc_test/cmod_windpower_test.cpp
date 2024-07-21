@@ -621,6 +621,10 @@ TEST(Turbine_powercurve_cmod_windpower_eqns, Case4) {
 }
 
 bool setup_python() {
+    if (!std::getenv("SAMNTDIR")){
+        std::cerr << "Python not configured.";
+        return false;
+    }
 #ifdef __WINDOWS__
     auto python_dir = std::string(std::getenv("SAMNTDIR")) + "\\deploy\\runtime\\python\\";
 #else

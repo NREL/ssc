@@ -163,8 +163,8 @@ std::unique_ptr<Trough> TroughFactory::MakeTrough(TroughSpecifications* trough_s
     trough->m_T_loop_in_des = trough_specifications->T_loop_in_des;
     trough->m_T_loop_out_des = trough_specifications->T_loop_out_des;
     trough->m_T_startup = trough_specifications->T_startup;
-    trough->m_m_dot_htfmin = trough_specifications->m_dot_htfmin;
-    trough->m_m_dot_htfmax = trough_specifications->m_dot_htfmax;
+    trough->m_m_dot_htfmin_in = trough_specifications->m_dot_htfmin_in;
+    trough->m_m_dot_htfmax_in = trough_specifications->m_dot_htfmax_in;
     trough->m_field_fl_props = trough_specifications->field_fl_props;
     trough->m_T_fp = trough_specifications->T_fp;
     trough->m_I_bn_des = trough_specifications->I_bn_des;
@@ -262,13 +262,14 @@ std::unique_ptr<Trough> TroughFactory::MakeTrough(TroughSpecifications* trough_s
     trough->m_sf_hdr_lengths = trough_specifications->sf_hdr_lengths;
 
     // TMB 11-28-2023 Added parameters for updated Trough
-    trough->m_trough_loop_control = trough_specifications->trough_loop_control;
+    //trough->m_trough_loop_control = trough_specifications->trough_loop_control;
     trough->m_use_solar_mult_or_aperture_area = trough_specifications->use_solar_mult_or_aperture_area;
     trough->m_specified_solar_mult = trough_specifications->specified_solar_mult;
     trough->m_P_ref = trough_specifications->P_ref;
     trough->m_eta_ref = trough_specifications->eta_ref;
     trough->m_non_solar_field_land_area_multiplier = trough_specifications->non_solar_field_land_area_multiplier;
 
+    trough->design_solar_mult(trough_specifications->trough_loop_control);
     TroughSolvedParams trough_solved_params;
     trough->init(location, trough_solved_params);
 
@@ -326,8 +327,9 @@ std::unique_ptr<TroughSpecifications> DefaultTroughFactory::MakeSpecifications()
     trough_specifications->T_loop_in_des = 293.;
     trough_specifications->T_loop_out_des = 391.;
     trough_specifications->T_startup = 0.67 * trough_specifications->T_loop_in_des + 0.33 * trough_specifications->T_loop_out_des; //[C]
-    trough_specifications->m_dot_htfmin = 1.;
-    trough_specifications->m_dot_htfmax = 12.;
+
+    trough_specifications->m_dot_htfmin_in = 1.;
+    trough_specifications->m_dot_htfmax_in = 12.;
     double vals[] = { 0 };
     trough_specifications->field_fl_props.assign(vals, 1, 1);
     trough_specifications->T_fp = 150.;
@@ -675,7 +677,7 @@ std::unique_ptr<TroughSpecifications> DefaultTroughFactory::MakeSpecifications()
 
     // TMB 11-28-2023 Added parameters for updated Trough
     std::vector<double> trough_loop_vals = { 8, 1, 1, 8, 1, 1, 7, 1, 1, 6, 1, 1, 5, 1, 1, 4, 1, 1, 3, 1, 1, 2, 1, 1, 1 };
-    trough_specifications->trough_loop_control.assign(trough_loop_vals.data(), trough_loop_vals.size(), 1);
+    trough_specifications->trough_loop_control = trough_loop_vals;
 
     trough_specifications->use_solar_mult_or_aperture_area = 0;
     trough_specifications->specified_solar_mult = 2;
