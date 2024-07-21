@@ -71,6 +71,7 @@ static var_info _cm_vtab_windpower[] = {
 	{ SSC_INPUT  , SSC_NUMBER , "en_icing_cutoff"                    , "Enable Icing Cutoff"                      , "0/1"     ,""                                    , "Losses"                               , "?=0"                                             , "INTEGER"                                         , "" } ,
 	{ SSC_INPUT  , SSC_NUMBER , "icing_cutoff_temp"                  , "Icing Cutoff Temperature"                 , "C"       ,""                                    , "Losses"                               , "en_icing_cutoff=1"                               , ""                                                , "" } ,
 	{ SSC_INPUT  , SSC_NUMBER , "icing_cutoff_rh"                    , "Icing Cutoff Relative Humidity"           , "%"       ,"'rh' required in wind_resource_data" , "Losses"                               , "en_icing_cutoff=1"                               , "MIN=0"                                           , "" } ,
+    { SSC_INPUT  , SSC_NUMBER , "icing_persistence_timesteps"        , "Num timesteps icing lasts if conditions are met",""   ,"includes initial timestep"           , "Losses"                               , "?=1"                                             , "MIN=1,INTEGER"                                           , "" } ,
 
     // optional SDK only wake loss inputs
     { SSC_INPUT  , SSC_NUMBER , "wake_loss_multiplier"               , "Multiplier for the calculated wake loss"  , ""        ,">1 increases loss, <1 decreases loss", "Farm"                                 , ""                                                , "MIN=0"                                           , "" } ,
@@ -358,6 +359,7 @@ void cm_windpower::exec()
 	bool icingCutoff = as_boolean("en_icing_cutoff");
     double icingTempCutoffValue = icingCutoff ? as_double("icing_cutoff_temp") : -1;
     double icingRHCutoffValue = icingCutoff ? as_double("icing_cutoff_rh") : -1;
+    int icingPersistenceTimesteps = as_integer("icing_persistence_timesteps");
 
 	// Run Weibull Statistical model (single outputs) if selected
 	if (as_integer("wind_resource_model_choice") == 1 ){
@@ -576,6 +578,7 @@ void cm_windpower::exec()
 	double annual_gross = 0.0; //annual energy before any losses in kWh
 	double withoutCutOffLosses = 0.0; //annual energy without low temperature/icing cutoff losses applied in kWh
 	double annual_after_wake_loss = 0.0; //annual energy after wake losses but before other losses in kWh
+    int icingPersistenceTSRemaining = 0; //a counter for icing to persist x number of timesteps based on user input
 
 	// compute power output at i-th timestep
 	int i = 0;
@@ -675,8 +678,16 @@ void cm_windpower::exec()
 				if (temp < lowTempCutoffValue) farmp = 0.0;
 			}
 			if (icingCutoff){
-				if (temp < icingTempCutoffValue && wdprov->relativeHumidity()[i] > icingRHCutoffValue)
-					farmp = 0.0;
+                if (temp < icingTempCutoffValue && wdprov->relativeHumidity()[i] > icingRHCutoffValue)
+                {
+                    farmp = 0.0;
+                    icingPersistenceTSRemaining = icingPersistenceTimesteps;
+                }
+                if (icingPersistenceTSRemaining > 0)
+                {
+                    farmp = 0.0;
+                    icingPersistenceTSRemaining--;
+                }
 			}
 
 			farmpwr[i] = (ssc_number_t)farmp*haf(hr); //adjustment factors are constrained to be hourly, not sub-hourly, so it's correct for this to be indexed on the hour
