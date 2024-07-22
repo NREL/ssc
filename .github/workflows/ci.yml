@@ -7,6 +7,7 @@ on:
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
+  GTEST_REF: b85864c64758dec007208e56af933fc3f52044ee
 
 jobs:
   build-on-ubuntu:
@@ -27,14 +28,23 @@ jobs:
         SSCDIR=$GITHUB_WORKSPACE/ssc
         echo "SSCDIR=$SSCDIR" >> $GITHUB_ENV
     
+    - name: Get cached GTest
+      uses: actions/cache@v4
+      id: cachedgtest
+      with:
+        path: ${{env.GTEST}}/
+        key: gtest-ubuntu
+
     - name: Clone Gtest
-      uses: actions/checkout@v2
+      if: steps.cachedgtest.outputs.cache-hit != 'true'
+      uses: actions/checkout@v4
       with:
         repository: google/googletest
         path: googletest
-        ref: b85864c64758dec007208e56af933fc3f52044ee
+        ref: ${{env.GTEST_REF}}
     
     - name: build Gtest
+      if: steps.cachedgtest.outputs.cache-hit != 'true'
       run: | 
           export 
           mkdir ${GTEST}/build
@@ -43,7 +53,7 @@ jobs:
           make          
     
     - name: Checkout SSC
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
          path: ssc
 
@@ -96,14 +106,22 @@ jobs:
         SSCDIR=$GITHUB_WORKSPACE/ssc
         echo "SSCDIR=$SSCDIR" >> $GITHUB_ENV
     
+    - name: Get cached GTest
+      uses: actions/cache@v4
+      id: cachedgtest
+      with:
+        path: ${{env.GTEST}}/
+        key: gtest-${{ matrix.os }}
     - name: Clone Gtest
-      uses: actions/checkout@v2
+      if: steps.cachedgtest.outputs.cache-hit != 'true'
+      uses: actions/checkout@v4
       with:
         repository: google/googletest
         path: googletest
-        ref: b85864c64758dec007208e56af933fc3f52044ee
+        ref: ${{env.GTEST_REF}}
     
     - name: build Gtest
+      if: steps.cachedgtest.outputs.cache-hit != 'true'
       run: | 
           export 
           mkdir ${GTEST}/build
@@ -112,7 +130,7 @@ jobs:
           make          
     
     - name: Checkout SSC
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
          path: ssc
 
@@ -159,7 +177,7 @@ jobs:
 
     steps:
     - name: Setup cmake
-      uses: jwlawson/actions-setup-cmake@v1.12
+      uses: jwlawson/actions-setup-cmake@v2
       with:
         cmake-version: '3.24.x'
     - name: Test cmake version
@@ -173,26 +191,33 @@ jobs:
         SSCDIR=$GITHUB_WORKSPACE/ssc
         echo "SSCDIR=$SSCDIR" >> $GITHUB_ENV
     
+    - name: Get cached GTest
+      uses: actions/cache@v4
+      id: cachedgtest
+      with:
+        path: ${{env.GTEST}}/
+        key: gtest-windows
+
     - name: Clone Gtest
-      uses: actions/checkout@v2
+      if: steps.cachedgtest.outputs.cache-hit != 'true'
+      uses: actions/checkout@v4
       with:
         repository: google/googletest
         path: googletest
-        ref: b85864c64758dec007208e56af933fc3f52044ee
+        ref: ${{env.GTEST_REF}}
     
     - name: build Gtest
+      if: steps.cachedgtest.outputs.cache-hit != 'true'
       shell: bash
-      # Need to build both Release and Debug for the SSC CMake below
       run: | 
           export 
           mkdir ${GTEST}/build
           cd ${GTEST}/build
           cmake -Dgtest_force_shared_crt=ON ..
           cmake --build . --config Release -j4
-          cmake --build . --config Debug -j4
     
     - name: Checkout SSC
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
           path: ssc
 
@@ -202,7 +227,7 @@ jobs:
       run: |
         mkdir ${SSCDIR}/build
         cd ${SSCDIR}/build
-        cmake .. -DSAM_SKIP_TOOLS=1
+        cmake .. -DSAM_SKIP_TOOLS=1 -DCMAKE_CONFIGURATION_TYPES="Release"
         cmake --build . --config Release -j4
         cp ssc/Release/* test/Release
 
@@ -214,7 +239,7 @@ jobs:
         ./Test.exe
   
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
           name: SSC Windows Shared Libraries
           path: |
