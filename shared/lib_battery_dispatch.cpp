@@ -183,7 +183,7 @@ bool dispatch_t::check_constraints(double& I, size_t count)
         m_batteryPower->powerBatteryTarget = _Battery_initial->calculate_max_charge_kw(&I);
     }
     // Don't allow grid charging unless explicitly allowed (reduce charging)
-    if (!m_batteryPower->canGridCharge && I < 0 && m_batteryPower->powerGridToBattery > tolerance)
+    if (!m_batteryPower->canGridCharge && I < 0 && m_batteryPower->powerGridToBattery > powerflow_tolerance)
     {
         m_batteryPower->powerBatteryTarget += m_batteryPower->powerGridToBattery * m_batteryPower->singlePointEfficiencyACToDC;
         I = _Battery->calculate_current_for_power_kw(m_batteryPower->powerBatteryTarget);
@@ -498,7 +498,7 @@ void dispatch_t::dispatch_dc_outage_step(size_t lifetimeIndex) {
         runDispatch(lifetimeIndex);
         double dc_input = pv_kwdc + remaining_kwdc;
         double est_crit_load_unmet = m_batteryPower->powerCritLoadUnmet;
-        while (m_batteryPower->powerCritLoadUnmet > tolerance) {
+        while (m_batteryPower->powerCritLoadUnmet > powerflow_tolerance) {
             _Battery->set_state(Battery_initial);
             dc_input = pv_kwdc + remaining_kwdc + (m_batteryPower->powerCritLoadUnmet) / dc_ac_eff;
             // remaining_kw_dc is a negative number, so add it to pv_kwdc to reduce inverter dc power
@@ -517,7 +517,7 @@ void dispatch_t::dispatch_dc_outage_step(size_t lifetimeIndex) {
     else {
         // find dc power required from pv + battery discharge to meet load, then get just the power required from battery
         double required_kwdc = (m_batteryPower->sharedInverter->calculateRequiredDCPower(crit_load_kwac * (1 + ac_loss_percent), V_pv, m_batteryPower->sharedInverter->Tdry_C) - pv_kwdc) / dc_dc_eff;
-        required_kwdc = required_kwdc < tolerance ? tolerance : required_kwdc; // Cover for the fact that the loss percent can occasionally drive the above number negative
+        required_kwdc = required_kwdc < powerflow_tolerance ? powerflow_tolerance : required_kwdc; // Cover for the fact that the loss percent can occasionally drive the above number negative
 
         if (required_kwdc < max_discharge_kwdc) {
             batt_losses = _Battery->calculate_loss(required_kwdc, lifetimeIndex);
@@ -527,9 +527,9 @@ void dispatch_t::dispatch_dc_outage_step(size_t lifetimeIndex) {
             m_batteryPower->powerBatteryTarget = discharge_kwdc;
             m_batteryPower->powerBatteryDC = discharge_kwdc;
             runDispatch(lifetimeIndex);
-            if (m_batteryPower->powerCritLoadUnmet > tolerance) {
+            if (m_batteryPower->powerCritLoadUnmet > powerflow_tolerance) {
                 while (discharge_kwdc < max_discharge_kwdc) {
-                    if (m_batteryPower->powerCritLoadUnmet < tolerance)
+                    if (m_batteryPower->powerCritLoadUnmet < powerflow_tolerance)
                         break;
                     discharge_kwdc *= 1.01;
                     _Battery->set_state(Battery_initial);
@@ -580,9 +580,9 @@ void dispatch_t::dispatch_ac_outage_step(size_t lifetimeIndex) {
             m_batteryPower->powerBatteryTarget = discharge_kwdc;
             m_batteryPower->powerBatteryDC = discharge_kwdc;
             runDispatch(lifetimeIndex);
-            if (m_batteryPower->powerCritLoadUnmet > tolerance) {
+            if (m_batteryPower->powerCritLoadUnmet > powerflow_tolerance) {
                 while (discharge_kwdc < max_discharge_kwdc) {
-                    if (m_batteryPower->powerCritLoadUnmet < tolerance)
+                    if (m_batteryPower->powerCritLoadUnmet < powerflow_tolerance)
                         break;
                     discharge_kwdc *= 1.01;
                     _Battery->set_state(Battery_initial);
@@ -781,7 +781,7 @@ bool dispatch_automatic_t::check_constraints(double& I, size_t count)
 		}
 
         // Try and force controller to meet target or custom dispatch
-        else if (P_battery > P_target + tolerance || P_battery < P_target - tolerance)
+        else if (P_battery > P_target + powerflow_tolerance || P_battery < P_target - powerflow_tolerance)
         {
             // Difference between the dispatch and the desired dispatch
             double dP = P_battery - m_batteryPower->powerBatteryTarget;
@@ -799,8 +799,8 @@ bool dispatch_automatic_t::check_constraints(double& I, size_t count)
                 }
                 // Don't charge more if would violate current or power charge limits
                 if (I > m_batteryPower->currentChargeMax - tolerance ||
-                    std::abs(P_battery) > m_batteryPower->powerBatteryChargeMaxDC - tolerance ||
-                    std::abs(m_batteryPower->powerBatteryAC) > m_batteryPower->powerBatteryChargeMaxAC - tolerance) {
+                    std::abs(P_battery) > m_batteryPower->powerBatteryChargeMaxDC - powerflow_tolerance ||
+                    std::abs(m_batteryPower->powerBatteryAC) > m_batteryPower->powerBatteryChargeMaxAC - powerflow_tolerance) {
                     iterate = false;
                 }
                 // restrict based on power limits
@@ -818,8 +818,8 @@ bool dispatch_automatic_t::check_constraints(double& I, size_t count)
                 }
                 // Don't discharge more if would violate current or power discharge limits
                 if (I > m_batteryPower->currentDischargeMax - tolerance ||
-                    P_battery > m_batteryPower->powerBatteryDischargeMaxDC - tolerance ||
-                    m_batteryPower->powerBatteryAC > m_batteryPower->powerBatteryDischargeMaxAC - tolerance) {
+                    P_battery > m_batteryPower->powerBatteryDischargeMaxDC - powerflow_tolerance ||
+                    m_batteryPower->powerBatteryAC > m_batteryPower->powerBatteryDischargeMaxAC - powerflow_tolerance) {
                     iterate = false;
                 }
                 // restrict based on power limits
@@ -854,18 +854,18 @@ bool dispatch_automatic_t::check_constraints(double& I, size_t count)
 		if (m_batteryPower->meterPosition == dispatch_t::BEHIND)
 		{
 			// Don't let PV export to grid if can still charge battery (increase charging) (unless following custom dispatch)
-			if (_mode != dispatch_t::CUSTOM_DISPATCH && m_batteryPower->powerSystemToGrid  > tolerance && m_batteryPower->canSystemCharge &&
+			if (_mode != dispatch_t::CUSTOM_DISPATCH && m_batteryPower->powerSystemToGrid  > powerflow_tolerance && m_batteryPower->canSystemCharge &&
                     _Battery->SOC() < m_batteryPower->stateOfChargeMax - tolerance && std::abs(I) < std::abs(m_batteryPower->currentChargeMax))
 			{
-				if (std::abs(m_batteryPower->powerBatteryAC) < tolerance)
+				if (std::abs(m_batteryPower->powerBatteryAC) < powerflow_tolerance)
 					I -= (m_batteryPower->powerSystemToGrid / m_batteryPower->singlePointEfficiencyDCToAC * util::kilowatt_to_watt / _Battery->V());
 				else
 					I -= (m_batteryPower->powerSystemToGrid  / std::abs(m_batteryPower->powerBatteryAC)) * std::abs(I);
 			}
 			// Don't let battery export to the grid if behind the meter
-			else if (m_batteryPower->powerBatteryToGrid > tolerance && !m_batteryPower->canDischargeToGrid)
+			else if (m_batteryPower->powerBatteryToGrid > powerflow_tolerance && !m_batteryPower->canDischargeToGrid)
 			{
-                if (std::abs(m_batteryPower->powerBatteryAC) < tolerance) {
+                if (std::abs(m_batteryPower->powerBatteryAC) < powerflow_tolerance) {
                     I -= (m_batteryPower->powerBatteryToGrid / m_batteryPower->singlePointEfficiencyDCToAC * util::kilowatt_to_watt / _Battery->V());
                 }
                 else {
