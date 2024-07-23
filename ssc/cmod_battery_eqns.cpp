@@ -262,7 +262,7 @@ bool Reopt_size_standalone_battery_params(ssc_data_t data) {
     }
 
     reopt_settings.assign_match_case("time_steps_per_hour", var_data((int)(sim_len / 8760)));
-    reopt_settings.assign("solver_name", var_data("SCIP"));
+    reopt_settings.assign("solver_name", var_data("SCIP")); // "HiGHS" option does not work with large numbers like 1e38 for tier max values per https://github.com/NREL/SAM/issues/1742
 
     // assign the reopt parameter table and log messages
     reopt_electric.assign_match_case("urdb_response", reopt_utility);

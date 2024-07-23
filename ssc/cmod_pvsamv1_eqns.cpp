@@ -234,6 +234,11 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
         reopt_utility.assign("outage_durations", outage_durations);
     }
 
+    // set net metering limit to system capacity per https://github.com/NREL/SAM/issues/1742
+    vd = vt->lookup("ur_metering_option");
+    if ((int)vd->num[0] == 0) // net metering
+        reopt_utility.assign("net_metering_limit_kw", system_cap);
+
     // assign the reopt parameter table and log messages
     reopt_table->assign_match_case("PV", reopt_pv);
     reopt_table->assign_match_case("Site", reopt_site);
