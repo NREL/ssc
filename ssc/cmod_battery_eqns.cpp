@@ -262,6 +262,7 @@ bool Reopt_size_standalone_battery_params(ssc_data_t data) {
     }
 
     reopt_settings.assign_match_case("time_steps_per_hour", var_data((int)(sim_len / 8760)));
+    reopt_settings.assign("solver_name", var_data("SCIP"));
 
     // assign the reopt parameter table and log messages
     reopt_electric.assign_match_case("urdb_response", reopt_utility);
