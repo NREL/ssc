@@ -231,6 +231,14 @@ ssc_data_t ssc_data_get_table( ssc_data_t p_data, const char *name )
 	return (*f)( p_data, name );
 }
 
+ssc_data_t json_to_ssc_data(const char* name)
+{
+    static ssc_data_t(*f)(const char*) = NULL;
+    CHECK_DLL_LOADED();
+    if (!f && 0 == (f = (ssc_data_t(*)(const char*))PROCADDR())) FAIL_ON_LOCATE();
+    return (*f)(name);
+}
+
 #define DYNAMICCALL_CONSTCHARSTAR__SSCDATAT() \
 	static const char *(*f)(ssc_data_t) = NULL; \
 	CHECK_DLL_LOADED(); \
