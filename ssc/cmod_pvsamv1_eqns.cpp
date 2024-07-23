@@ -70,7 +70,8 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
     // Use existing PV size for economic runs, allow REopt to return PV size for grid outage runs
     if (!size_for_grid_outage) {
         // use existing pv system from SAM, not allowing additional PV
-        map_input(vt, "system_capacity", &reopt_pv, "existing_kw");
+        // do not specify both 'existing_kw' and 'max_kw' per https://github.com/NREL/SAM/issues/1742#issuecomment-2125878338
+        //map_input(vt, "system_capacity", &reopt_pv, "existing_kw");
         map_input(vt, "system_capacity", &reopt_pv, "max_kw");
     }
     map_optional_input(vt, "degradation", &reopt_pv, "degradation_pct", 0.5, true);
