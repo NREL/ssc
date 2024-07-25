@@ -12,7 +12,7 @@
 #include "../tcs/csp_solver_mspt_collector_receiver.h"
 #include "../tcs/csp_solver_pc_Rankine_indirect_224.h"
 #include "../tcs/csp_solver_two_tank_tes.h"
-#include "../tcs/csp_solver_tou_block_schedules.h"
+//#include "../tcs/csp_solver_tou_block_schedules.h"
 #include "../tcs/csp_dispatch.h"
 
 /**
@@ -236,7 +236,7 @@ protected:
     C_csp_power_cycle* pc;
     C_pc_Rankine_indirect_224 rankine;
     C_csp_two_tank_tes tes;
-    C_csp_tou_block_schedules tou;
+    C_csp_tou tou;
     C_csp_solver::S_sim_setup sim_setup;
     C_csp_solver::S_csp_system_params system;
     csp_dispatch_opt dispatch;
