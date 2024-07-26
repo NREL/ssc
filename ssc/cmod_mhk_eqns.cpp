@@ -162,7 +162,7 @@ bool tidal_turbine_calculate_powercurve(ssc_data_t data)
         if (tidal_vel > cut_out) eff = 0;
         p_electric = eff * p_rotor;
         powercurve_powerout[i] = p_electric;
-        generator_rated_capacity += p_electric * tidal_freq / 100.0;
+        generator_rated_capacity += p_electric * tidal_freq;
         powercurve_tidespeeds[i] = tidal_vel;
 
     }
