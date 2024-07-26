@@ -1,5 +1,6 @@
 
 #include <string.h>
+#include <cmath>
 #include "commonlib.h"
 #include "lp_lib.h"
 #include "lp_report.h"
@@ -64,7 +65,7 @@ STATIC int append_SOSgroup(SOSgroup *group, SOSrec *SOS)
   /* First append to the end of the list */
   group->sos_list[group->sos_count] = SOS;
   group->sos_count++;
-  i = abs(SOS->type);
+    i = std::abs(SOS->type);
   SETMAX(group->maxorder, i);
   if(i == 1)
     group->sos1_count++;
@@ -104,12 +105,12 @@ STATIC int clean_SOSgroup(SOSgroup *group, MYBOOL forceupdatemap)
       SOS = group->sos_list[i-1];
       k = SOS->members[0];
       if((k == 0) ||                              /* Empty */
-         ((k == abs(SOS->type)) && (k <= 2))) {   /* Trivial */
+         ((k == std::abs(SOS->type)) && (k <= 2))) {   /* Trivial */
         delete_SOSrec(group, i);
         n++;
       }
       else {
-        SETMAX(group->maxorder, abs(SOS->type));
+          SETMAX(group->maxorder, std::abs(SOS->type));
       }
     }
     if((n > 0) || forceupdatemap)
@@ -151,7 +152,7 @@ STATIC SOSrec *create_SOSrec(SOSgroup *group, char *name, int type, int priority
     strcpy(SOS->name, name);
   }
   if(type < 0)
-    type = abs(type);
+      type = std::abs(type);
   SOS->tagorder = 0;
   SOS->size = 0;
   SOS->priority = priority;
@@ -174,7 +175,7 @@ STATIC int append_SOSrec(SOSrec *SOS, int size, int *variables, REAL *weights)
 
   oldsize = SOS->size;
   newsize = oldsize + size;
-  nn = abs(SOS->type);
+    nn = std::abs(SOS->type);
 
  /* Shift existing active data right (normally zero) */
   if(SOS->members == NULL)
@@ -313,7 +314,7 @@ STATIC MYBOOL delete_SOSrec(SOSgroup *group, int sosindex)
   /* Update maxorder */
   group->maxorder = 0;
   for(sosindex = 0; sosindex < group->sos_count; sosindex++) {
-    SETMAX(group->maxorder, abs(group->sos_list[sosindex]->type));
+      SETMAX(group->maxorder, std::abs(group->sos_list[sosindex]->type));
   }
 
   return(TRUE);
@@ -665,7 +666,7 @@ int SOS_infeasible(SOSgroup *group, int sosindex)
     nn = list[n+1];
    /* Find index of next lower-bounded variable */
     for(i = 1; i <= n; i++) {
-      varnr = abs(list[i]);
+        varnr = std::abs(list[i]);
       if((lp->orig_lowbo[lp->rows + varnr] > 0) &&
          !((lp->sc_vars > 0) && is_semicont(lp, varnr)))
         break;
@@ -674,14 +675,14 @@ int SOS_infeasible(SOSgroup *group, int sosindex)
    /* Find if there is another lower-bounded variable beyond the type window */
     i = i+nn;
     while(i <= n) {
-      varnr = abs(list[i]);
+        varnr = std::abs(list[i]);
       if((lp->orig_lowbo[lp->rows + varnr] > 0) &&
          !((lp->sc_vars > 0) && is_semicont(lp, varnr)))
         break;
       i++;
     }
     if(i <= n)
-      failindex = abs(list[i]);
+        failindex = std::abs(list[i]);
   }
   return(failindex);
 }
@@ -1468,7 +1469,7 @@ int SOS_is_satisfied(SOSgroup *group, int sosindex, REAL *solution)
     if(count > 0) {
       nn = list[n+1];
       for(i = 1; i < n; i++) {
-        if((abs(list[i]) == nn) || (solution[lp->rows + abs(list[i])] != 0))
+          if((abs(list[i]) == nn) || (solution[lp->rows + std::abs(list[i])] != 0))
           break;
       }
       if(abs(list[i]) != nn)
@@ -1476,14 +1477,14 @@ int SOS_is_satisfied(SOSgroup *group, int sosindex, REAL *solution)
       else {
        /* Scan active SOS variables until we find a non-zero value */
         while(count > 0) {
-          if(solution[lp->rows + abs(list[i])] != 0)
+            if(solution[lp->rows + std::abs(list[i])] != 0)
             break;
           i++;
           count--;
         }
        /* Scan active non-zero SOS variables; break at first non-zero (rest required to be zero) */
         while(count > 0) {
-          if(solution[lp->rows + abs(list[i])] == 0)
+            if(solution[lp->rows + std::abs(list[i])] == 0)
             break;
           i++;
           count--;
@@ -1495,10 +1496,10 @@ int SOS_is_satisfied(SOSgroup *group, int sosindex, REAL *solution)
     else {
       i = 1;
       /* There are no active variables; see if we have happened to find a valid header */
-      while((i < n) && (solution[lp->rows + abs(list[i])] == 0))
+        while((i < n) && (solution[lp->rows + std::abs(list[i])] == 0))
         i++;
       count = 0;
-      while((i < n) && (count <= nn) && (solution[lp->rows + abs(list[i])] != 0)) {
+        while((i < n) && (count <= nn) && (solution[lp->rows + std::abs(list[i])] != 0)) {
         count++;
         i++;
       }
@@ -1510,7 +1511,7 @@ int SOS_is_satisfied(SOSgroup *group, int sosindex, REAL *solution)
     if(status <= 0) {
       n--;
       while(i <= n) {
-        if(solution[lp->rows + abs(list[i])] != 0)
+          if(solution[lp->rows + std::abs(list[i])] != 0)
           break;
         i++;
       }
