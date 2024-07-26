@@ -75,13 +75,13 @@ endif()
 #
 #####################################################################################################################
 
-if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR MSVC)
+if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR "Debug" IN_LIST CMAKE_CONFIGURATION_TYPES)
     find_library( GTESTD_LIB
             NAMES libgtest.a gtest.lib libgtest.so
             PATHS $ENV{GTEST_DIR} ${GTDIR}/build/lib ${GTDIR}/build/lib/Debug)
     target_link_libraries(Test debug ${GTESTD_LIB})
 endif()
-if (CMAKE_BUILD_TYPE STREQUAL "Release" OR MSVC)
+if(CMAKE_BUILD_TYPE STREQUAL "Release" OR "Release" IN_LIST CMAKE_CONFIGURATION_TYPES)
     find_library( GTEST_LIB
             NAMES libgtest.a gtest.lib libgtest.so
             PATHS $ENV{GTEST_DIR} ${GTDIR}/build/lib ${GTDIR}/build/lib/Release)

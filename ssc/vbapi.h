@@ -76,8 +76,10 @@ SSCEXPORT long VBCALL_CONVENTION sscvb_data_get_string(void *p_data, const char 
 SSCEXPORT long VBCALL_CONVENTION sscvb_data_get_number(void *p_data, const char *name, double *value);
 SSCEXPORT long VBCALL_CONVENTION sscvb_data_get_array(void *p_data, const char *name, double *pvalue, long length);
 SSCEXPORT long VBCALL_CONVENTION sscvb_data_get_matrix(void *p_data, const char *name, double *pvalue, long nrows, long ncols);
-// TODO test this
-SSCEXPORT long VBCALL_CONVENTION sscvb_data_get_table(void *p_data, const char *name, void *table);
+
+SSCEXPORT void* VBCALL_CONVENTION sscvb_data_get_table(void *p_data, const char *name);
+SSCEXPORT void* VBCALL_CONVENTION sscvb_json_file_to_ssc_data(const char* name);
+SSCEXPORT long VBCALL_CONVENTION sscvb_data_lookup(void* p_data, const char* name);
 
 SSCEXPORT void *VBCALL_CONVENTION sscvb_module_entry( long index);
 SSCEXPORT long VBCALL_CONVENTION sscvb_entry_name(void *p_entry, const char *name);
