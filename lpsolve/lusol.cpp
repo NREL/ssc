@@ -741,11 +741,11 @@ char relationChar(REAL left, REAL right)
 
 /* Retrieve the core modules ordered by order of dependency */
 
-#include "lusol2.c"      /* Heap management */
-#include "lusol6a.c"     /* Singularity checking and equation solving */
-#include "lusol1.c"      /* Factorization and core components */
-#include "lusol7a.c"     /* Utility routines for updates */
-#include "lusol8a.c"     /* Column update */
+#include "lusol2.cpp"      /* Heap management */
+#include "lusol6a.cpp"     /* Singularity checking and equation solving */
+#include "lusol1.cpp"      /* Factorization and core components */
+#include "lusol7a.cpp"     /* Utility routines for updates */
+#include "lusol8a.cpp"     /* Column update */
 
 
 void LUSOL_dump(FILE *output, LUSOLrec *LUSOL)

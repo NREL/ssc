@@ -343,7 +343,7 @@ void LU6CHK(LUSOLrec *LUSOL, int MODE, int LENA2, int *INFORM)
    Include routines for row-based L0.
    20 Apr 2005 Current version - KE.
    ------------------------------------------------------------------ */
-#include "lusol6l0.c"
+#include "lusol6l0.cpp"
 
 
 /* ------------------------------------------------------------------
@@ -630,7 +630,7 @@ void print_L0(LUSOLrec *LUSOL)
    Include routines for column-based U.
    5 Feb 2006 Current version - KE.
    ------------------------------------------------------------------ */
-#include "lusol6u.c"
+#include "lusol6u.cpp"
 
 
 /* ==================================================================
