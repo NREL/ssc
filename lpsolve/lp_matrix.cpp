@@ -1,4 +1,4 @@
-
+#include <cmath>
 #include <string.h>
 #include "commonlib.h"
 #include "lp_lib.h"
@@ -2545,7 +2545,7 @@ STATIC MYBOOL mat_computemax(MATrec *mat)
   mat->dynrange = mat->lp->infinite;
   for(; i < ie;
       i++, rownr += matRowColStep, colnr += matRowColStep, value += matValueStep) {
-    absvalue = fabs(*value);
+    absvalue = std::fabs(*value);
     SETMAX(mat->colmax[*colnr], absvalue);
     SETMAX(mat->rowmax[*rownr], absvalue);
     SETMIN(mat->dynrange, absvalue);
@@ -2754,7 +2754,7 @@ STATIC MYBOOL appendUndoPresolve(lprec *lp, MYBOOL isprimal, REAL beta, int coln
     int ix = mat->col_tag[0];
 #if 0
     report(lp, NORMAL, "appendUndoPresolve: %s %g * x%d\n",
-                       ( beta < 0 ? "-" : "+"), fabs(beta), colnrDep);
+                       ( beta < 0 ? "-" : "+"), std::fabs(beta), colnrDep);
 #endif
 
     /* Do normal user variable case */
@@ -2804,7 +2804,7 @@ STATIC MYBOOL addUndoPresolve(lprec *lp, MYBOOL isprimal, int colnrElim, REAL al
   mat = (*DV)->tracker;
 #if 0
   report(lp, NORMAL, "addUndoPresolve: x%d = %g %s %g * x%d\n",
-                     colnrElim, alpha, ( beta < 0 ? "-" : "+"), fabs(beta), colnrDep);
+                     colnrElim, alpha, ( beta < 0 ? "-" : "+"), std::fabs(beta), colnrDep);
 #endif
   /* Add the data */
   ix = mat->col_tag[0] = incrementUndoLadder(*DV);
@@ -3068,8 +3068,8 @@ STATIC MYBOOL fimprove(lprec *lp, REAL *pcol, int *nzidx, REAL roundzero)
 
   sdp = 0;
   for(j = 1; j <= lp->rows; j++)
-    if(fabs(errors[j])>sdp)
-      sdp = fabs(errors[j]);
+    if(std::fabs(errors[j])>sdp)
+      sdp = std::fabs(errors[j]);
   if(sdp > lp->epsmachine) {
     report(lp, DETAILED, "Iterative FTRAN correction metric %g", sdp);
     for(j = 1; j <= lp->rows; j++) {
@@ -3115,8 +3115,8 @@ STATIC MYBOOL bimprove(lprec *lp, REAL *rhsvector, int *nzidx, REAL roundzero)
   for(j = 1; j <= lp->rows; j++) {
     if(lp->var_basic[j]<=lp->rows) continue;
     err = errors[lp->rows+lp->var_basic[j]];
-    if(fabs(err)>maxerr)
-      maxerr = fabs(err);
+    if(std::fabs(err)>maxerr)
+      maxerr = std::fabs(err);
   }
   if(maxerr > lp->epsmachine) {
     report(lp, DETAILED, "Iterative BTRAN correction metric %g", maxerr);
@@ -3294,7 +3294,7 @@ STATIC MYBOOL get_colIndexA(lprec *lp, int varset, int *colindex, MYBOOL append)
 #endif
     }
 
-    /* Find if the variable is in the scope - default is {Ø} */
+    /* Find if the variable is in the scope - default is {Ã˜} */
     i = lp->is_basic[varnr];
     if((varset & USE_BASICVARS) > 0 && (i))
       ;
@@ -3552,7 +3552,7 @@ STATIC int prod_xA(lprec *lp, int *coltarget,
 
     /* Special handling of small reduced cost values */
     if(!isRC || (my_chsign(lp->is_lower[varnr], v) < 0)) {
-      SETMAX(vmax, fabs((REAL) v));
+      SETMAX(vmax, std::fabs((REAL) v));
     }
     if(v != 0) {
       countNZ++;
@@ -3709,7 +3709,7 @@ STATIC MYBOOL prod_xA2(lprec *lp, int *coltarget,
       }
     }
 
-    SETMAX(pmax, fabs((REAL) p));
+    SETMAX(pmax, std::fabs((REAL) p));
     prow[varnr] = (REAL) p;
     if((nzprow != NULL) && (p != 0)) {
       (*nzprow)++;
@@ -3718,7 +3718,7 @@ STATIC MYBOOL prod_xA2(lprec *lp, int *coltarget,
 
     /* Special handling of reduced cost rounding */
     if(!isRC || (my_chsign(lp->is_lower[varnr], d) < 0)) {
-      SETMAX(dmax, fabs((REAL) d));
+      SETMAX(dmax, std::fabs((REAL) d));
     }
     drow[varnr] = (REAL) d;
     if((nzdrow != NULL) && (d != 0)) {

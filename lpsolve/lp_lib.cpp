@@ -21,6 +21,7 @@
 /* ---------------------------------------------------------------------------------- */
 /* Main library of routines for lp_solve                                              */
 /*----------------------------------------------------------------------------------- */
+#include <cmath>
 #include <signal.h>
 #include <string.h>
 #include <float.h>
@@ -712,7 +713,7 @@ static void set_infiniteex(lprec *lp, REAL infinite, MYBOOL init)
 {
   int i;
 
-  infinite = fabs(infinite);
+  infinite = std::fabs(infinite);
   if((init) || is_infinite(lp, lp->bb_heuristicOF))
     lp->bb_heuristicOF = my_chsign(is_maxim(lp), infinite);
   if((init) || is_infinite(lp, lp->bb_breakOF))
@@ -867,7 +868,7 @@ void __WINAPI set_scalelimit(lprec *lp, REAL scalelimit)
 /* Set the relative scaling convergence criterion for the active scaling mode;
    the integer part specifies the maximum number of iterations (default = 5). */
 {
-  lp->scalelimit = fabs(scalelimit);
+  lp->scalelimit = std::fabs(scalelimit);
 }
 
 REAL __WINAPI get_scalelimit(lprec *lp)
@@ -4178,11 +4179,11 @@ MYBOOL __WINAPI set_rh_range(lprec *lp, int rownr, REAL deltavalue)
       set_constr_type(lp, rownr, GE);
     else
       set_constr_type(lp, rownr, LE);
-    lp->orig_upbo[rownr] = fabs(deltavalue);
+    lp->orig_upbo[rownr] = std::fabs(deltavalue);
   }
   else {
     /* Modify GE/LE ranges */
-    lp->orig_upbo[rownr] = fabs(deltavalue);
+    lp->orig_upbo[rownr] = std::fabs(deltavalue);
   }
 
   return(TRUE);
@@ -4870,8 +4871,8 @@ STATIC int expand_column(lprec *lp, int col_nr, REAL *column, int *nzlist, REAL 
       value = *matValue;
       if(j > 0) {
         value *= mult;
-        if(fabs(value) > maxval) {
-          maxval = fabs(value);
+        if(std::fabs(value) > maxval) {
+          maxval = std::fabs(value);
           maxidx = j;
         }
       }
@@ -4911,8 +4912,8 @@ STATIC int expand_column(lprec *lp, int col_nr, REAL *column, int *nzlist, REAL 
       nzcount++;
       nzlist[nzcount] = j;
       column[nzcount] = value;
-      if(fabs(value) > maxval) {
-        maxval = fabs(value);
+      if(std::fabs(value) > maxval) {
+        maxval = std::fabs(value);
         maxidx = nzcount;
       }
     }
@@ -5938,11 +5939,11 @@ int __WINAPI column_in_lp(lprec *lp, REAL *testcolumn)
   REAL   value, *matValue;
 
   for(nz = 0, i = 1; i <= lp->rows; i++)
-    if(fabs(testcolumn[i]) > lp->epsvalue) nz++;
+    if(std::fabs(testcolumn[i]) > lp->epsvalue) nz++;
 
   for(i = 1; (i <= lp->columns) && (ident); i++) {
     ident = nz;
-    value = fabs(get_mat(lp, 0, i)-testcolumn[0]);
+    value = std::fabs(get_mat(lp, 0, i)-testcolumn[0]);
     if(value > lp->epsvalue)
       continue;
     j = mat->col_end[i - 1];
@@ -6398,7 +6399,7 @@ STATIC int row_decimals(lprec *lp, int rownr, MYBOOL intsonly, REAL *intscalar)
       else
         continue;
     }
-    f = fabs(get_mat(lp, rownr, j));
+    f = std::fabs(get_mat(lp, rownr, j));
     /* f = fmod(f, 1); */
     f -= floor (f + epsvalue);
 /*
@@ -6486,7 +6487,7 @@ STATIC int row_intstats(lprec *lp, int rownr, int pivcolnr, int *maxndec,
         (*plucount)++;
 
       /* Check if the parameter value is integer and update the row's GCD */
-      rowval = fabs(rowval) * intfrac;
+      rowval = std::fabs(rowval) * intfrac;
       rowval += rowval*lp->epsmachine;
       rowval = modf(rowval, &inthold);
       if(rowval < lp->epsprimal) {
@@ -6565,7 +6566,7 @@ REAL MIP_stepOF(lprec *lp)
 
             /* We can update */
             valOF = unscaled_mat(lp, lp->orig_obj[colnr], 0, colnr);
-            valOF = fabs( valOF * (valGCD / divOF) );
+            valOF = std::fabs( valOF * (valGCD / divOF) );
             if(OFgcd) {
               SETMIN(value, valOF);
             }
@@ -6653,7 +6654,7 @@ REAL MIP_stepOF(lprec *lp)
 
             /* We can update */
             valOF = unscaled_mat(lp, lp->orig_obj[colnr], 0, colnr);
-            valOF = fabs( valOF * (valGCD / divOF) );
+            valOF = std::fabs( valOF * (valGCD / divOF) );
             if(OFgcd) {
               SETMIN(value, valOF);
             }
@@ -6703,7 +6704,7 @@ STATIC MYBOOL feasiblePhase1(lprec *lp, REAL epsvalue)
   REAL   gap;
   MYBOOL test;
 
-  gap = fabs(lp->rhs[0] - lp->orig_rhs[0]);
+  gap = std::fabs(lp->rhs[0] - lp->orig_rhs[0]);
   test = (MYBOOL) (gap < epsvalue);
   return( test) ;
 }
@@ -6713,8 +6714,8 @@ STATIC MYBOOL isDegenerateBasis(lprec *lp, int basisvar)
   int varindex;
 
   varindex = lp->var_basic[basisvar];
-  if((fabs(lp->rhs[basisvar]) < lp->epsprimal) ||
-     (fabs(lp->upbo[varindex]-lp->rhs[basisvar]) < lp->epsprimal))
+  if((std::fabs(lp->rhs[basisvar]) < lp->epsprimal) ||
+     (std::fabs(lp->upbo[varindex]-lp->rhs[basisvar]) < lp->epsprimal))
     return( TRUE );
   else
     return( FALSE );
@@ -6756,8 +6757,8 @@ STATIC MYBOOL isBasisVarFeasible(lprec *lp, REAL tol, int basis_row)
   x = lp->rhs[basis_row];         /* The current solution of basic variables stored here! */
   if((x < -tol) || (x > lp->upbo[col]+tol))
     Ok = FALSE;
-  else if(doSC && (col > lp->rows) && (fabs(lp->sc_lobound[col - lp->rows]) > 0)) {
-    if((x > tol) && (x < fabs(lp->sc_lobound[col - lp->rows])-tol))
+  else if(doSC && (col > lp->rows) && (std::fabs(lp->sc_lobound[col - lp->rows]) > 0)) {
+    if((x > tol) && (x < std::fabs(lp->sc_lobound[col - lp->rows])-tol))
       Ok = FALSE;
   }
   return( Ok );
@@ -6841,7 +6842,7 @@ STATIC MYBOOL isDualFeasible(lprec *lp, REAL tol, int *boundflipcount, int infea
       /* Check if we have non-flippable bounds, i.e. an unbounded variable
          (types 2+4), or bounded variables (type 3), and if the counter is NULL. */
       if( (boundflipcount == NULL) ||
-          ((lp->bb_level <= 1) && (my_rangebo(lp, varnr) > fabs(lp->negrange))) ||
+          ((lp->bb_level <= 1) && (my_rangebo(lp, varnr) > std::fabs(lp->negrange))) ||
           (islower && my_infinite(lp, lp->upbo[varnr])) ||
           (!islower && my_infinite(lp, my_lowbo(lp, varnr))) ) {
         m++;
@@ -7496,8 +7497,8 @@ STATIC int find_sc_bbvar(lprec *lp, int *count)
       if(hold > bestval) {
         if( (bestvar == 0) ||
             (hold > bestval+lp->epsprimal) ||
-            (fabs(modf(lp->solution[i]/scval, &holdINT) - 0.5) <
-             fabs(modf(lp->solution[bestvar]/
+            (std::fabs(modf(lp->solution[i]/scval, &holdINT) - 0.5) <
+                std::fabs(modf(lp->solution[bestvar]/
                        get_pseudorange(lp->bb_PseudoCost, bestvar-lp->rows, BB_SC), &holdINT) - 0.5)) ) {
           bestval = hold;
           bestvar = i;
@@ -7773,8 +7774,8 @@ STATIC int find_int_bbvar(lprec *lp, int *count, BBrec *BB, MYBOOL *isfeasible)
     /* Select better, check for ties, and split by proximity to 0.5 */
     if(hold > bestval) {
       if( (hold > bestval+lp->epsprimal) ||
-          (fabs(modf(lp->solution[i], &holdINT) - 0.5) <
-           fabs(modf(lp->solution[bestvar], &holdINT) - 0.5)) ) {
+          (std::fabs(modf(lp->solution[i], &holdINT) - 0.5) <
+              std::fabs(modf(lp->solution[bestvar], &holdINT) - 0.5)) ) {
         bestval = hold;
         bestvar = i;
       }
@@ -8252,7 +8253,7 @@ STATIC MYBOOL performiteration(lprec *lp, int rownr, int varin, LREAL theta, MYB
 #endif
 #if 0
   if((lp->longsteps != NULL) && (boundswaps[0] > 0) && lp->longsteps->objcheck &&
-    ((pivot = fabs(my_reldiff(lp->rhs[0], lp->longsteps->obj_last))) > lp->epssolution)) {
+    ((pivot = std::fabs(my_reldiff(lp->rhs[0], lp->longsteps->obj_last))) > lp->epssolution)) {
     report(lp, IMPORTANT, "performiteration: Objective value gap %8.6f found at iter %6.0f (%d bound flips, %d)\n",
                           pivot, (double) get_total_iter(lp), boundswaps[0], enteringFromUB);
   }
@@ -8610,9 +8611,9 @@ STATIC void construct_solution(lprec *lp, REAL *target)
     f = lp->orig_rhs[i];
     if((i > 0) && !lp->is_basic[i] && !lp->is_lower[i])
 #ifdef SlackInitMinusInf
-      f -= my_chsign(is_chsign(lp, i), fabs(lp->upbo[i]));
+      f -= my_chsign(is_chsign(lp, i), std::fabs(lp->upbo[i]));
 #else
-      f -= my_chsign(is_chsign(lp, i), fabs(lp->lowbo[i] + lp->upbo[i]));
+      f -= my_chsign(is_chsign(lp, i), std::fabs(lp->lowbo[i] + lp->upbo[i]));
 #endif
     f = unscaled_value(lp, -f, i);
 #endif
@@ -8693,7 +8694,7 @@ STATIC void construct_solution(lprec *lp, REAL *target)
         /* Check if we have an all-integer OF */
         basi = lp->columns;
         for(j = 1; j <= basi; j++) {
-          f = fabs(get_mat(lp, 0, j)) + lp->epsint / 2;
+          f = std::fabs(get_mat(lp, 0, j)) + lp->epsint / 2;
           if(f > lp->epsint) { /* If coefficient is 0 then it doesn't influence OF, even it variable is not integer */
             if(!is_int(lp, j) || (fmod(f, 1) > lp->epsint))
               break;
@@ -8755,7 +8756,7 @@ STATIC int check_solution(lprec *lp, int  lastcolumn, REAL *solution,
 #ifdef UseMaxValueInCheck
   allocREAL(lp, &maxvalue, lp->rows + 1, FALSE);
   for(i = 0; i <= lp->rows; i++)
-    maxvalue[i] = fabs(get_rh(lp, i));
+    maxvalue[i] = std::fabs(get_rh(lp, i));
 #else
   allocREAL(lp, &plusum, lp->rows + 1, TRUE);
   allocREAL(lp, &negsum, lp->rows + 1, TRUE);
@@ -8770,7 +8771,7 @@ STATIC int check_solution(lprec *lp, int  lastcolumn, REAL *solution,
     test = unscaled_mat(lp, *matValue, *matRownr, *matColnr);
     test *= solution[lp->rows + (*matColnr)];
 #ifdef UseMaxValueInCheck
-    test = fabs(test);
+    test = std::fabs(test);
     if(test > maxvalue[*matRownr])
       maxvalue[*matRownr] = test;
 #else
@@ -8800,8 +8801,8 @@ STATIC int check_solution(lprec *lp, int  lastcolumn, REAL *solution,
     if(diff < 0) {
       if(isSC && (value < test/2))
         test = 0;
-      SETMAX(maxerr, fabs(value-test));
-      SETMAX(maxdiff, fabs(diff));
+      SETMAX(maxerr, std::fabs(value-test));
+      SETMAX(maxdiff, std::fabs(diff));
     }
     if((diff < -tolerance) && !isSC)  {
       if(n < errlimit)
@@ -8814,8 +8815,8 @@ STATIC int check_solution(lprec *lp, int  lastcolumn, REAL *solution,
     test = unscaled_value(lp, upbo[i], i);
     diff = my_reldiff(value, test);
     if(diff > 0) {
-      SETMAX(maxerr, fabs(value-test));
-      SETMAX(maxdiff, fabs(diff));
+      SETMAX(maxerr, std::fabs(value-test));
+      SETMAX(maxdiff, std::fabs(diff));
     }
     if(diff > tolerance) {
       if(n < errlimit)
@@ -8844,7 +8845,7 @@ STATIC int check_solution(lprec *lp, int  lastcolumn, REAL *solution,
 
     if(is_chsign(lp, i)) {
       test = my_flipsign(test);
-      test += fabs(upbo[i]);
+      test += std::fabs(upbo[i]);
     }
     value = solution[i];
     test = unscaled_value(lp, test, i);
@@ -8861,8 +8862,8 @@ STATIC int check_solution(lprec *lp, int  lastcolumn, REAL *solution,
       hold = 1;
     diff = my_reldiff((value+1)/hold, (test+1)/hold);
     if(diff > 0) {
-      SETMAX(maxerr, fabs(value-test));
-      SETMAX(maxdiff, fabs(diff));
+      SETMAX(maxerr, std::fabs(value-test));
+      SETMAX(maxdiff, std::fabs(diff));
     }
     if(diff > tolerance) {
       if(n < errlimit)
@@ -8889,9 +8890,9 @@ STATIC int check_solution(lprec *lp, int  lastcolumn, REAL *solution,
     else {
       if(is_infinite(lp, upbo[i]))
         continue;
-      test -= fabs(upbo[i]);
+      test -= std::fabs(upbo[i]);
 #ifndef LegacySlackDefinition
-      value = fabs(upbo[i]) - value;
+      value = std::fabs(upbo[i]) - value;
 #endif
     }
     test = unscaled_value(lp, test, i);
@@ -8908,8 +8909,8 @@ STATIC int check_solution(lprec *lp, int  lastcolumn, REAL *solution,
       hold = 1;
     diff = my_reldiff((value+1)/hold, (test+1)/hold);
     if(diff < 0) {
-      SETMAX(maxerr, fabs(value-test));
-      SETMAX(maxdiff, fabs(diff));
+      SETMAX(maxerr, std::fabs(value-test));
+      SETMAX(maxdiff, std::fabs(diff));
     }
     if(diff < -tolerance) {
       if(n < errlimit)
@@ -9263,8 +9264,8 @@ Abandon:
           min2=infinite;
           for(l=1; l<=lp->sum; l++)   /* search for the column(s) which first results in further iterations */
             if ((!lp->is_basic[l]) && (lp->upbo[l]>0.0) &&
-                (fabs(prow[l])>epsvalue) && (drow[l]*(lp->is_lower[l] ? -1 : 1)<epsvalue)) {
-              a = unscaled_mat(lp, fabs(drow[l] / prow[l]), 0, i);
+                (std::fabs(prow[l])>epsvalue) && (drow[l]*(lp->is_lower[l] ? -1 : 1)<epsvalue)) {
+              a = unscaled_mat(lp, std::fabs(drow[l] / prow[l]), 0, i);
               if(prow[l]*sign*(lp->is_lower[l] ? 1 : -1) < 0.0) {
                 if(a < min1)
                   min1 = a;
@@ -9497,7 +9498,7 @@ STATIC void initialize_solution(lprec *lp, MYBOOL shiftbounds)
 
   /* Do final pass to get the maximum value */
   i = idamax(lp->rows /* +1 */, lp->rhs, 1);
-  lp->rhsmax = fabs(lp->rhs[i]);
+  lp->rhsmax = std::fabs(lp->rhs[i]);
 
   if(shiftbounds == INITSOL_SHIFTZERO)
     clear_action(&lp->spx_action, ACTION_REBASE);
@@ -9568,7 +9569,7 @@ STATIC int verify_solution(lprec *lp, MYBOOL reinvert, char *info)
   ii = -1;
   n = 0;
   for(i = lp->rows; i > 0; i--) {
-    err = fabs(my_reldiff(oldrhs[oldmap[i]], lp->rhs[newmap[i]]));
+    err = std::fabs(my_reldiff(oldrhs[oldmap[i]], lp->rhs[newmap[i]]));
     if(err > lp->epsprimal) {
       n++;
       if(err > errmax) {
@@ -9577,7 +9578,7 @@ STATIC int verify_solution(lprec *lp, MYBOOL reinvert, char *info)
       }
     }
   }
-  err = fabs(my_reldiff(oldrhs[i], lp->rhs[i]));
+  err = std::fabs(my_reldiff(oldrhs[i], lp->rhs[i]));
   if(err < lp->epspivot) {
     i--;
     err = 0;

@@ -4,7 +4,7 @@
    C translation via f2c + hand-cleanup and incorporation into NLopt by S. G. Johnson (2009). */
 
 /* Table of constant values */
-
+#include <cmath>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -89,7 +89,7 @@ static double dnrm2___(int *n_, double *dx, int incx)
      double xmax = 0, scale;
      long double sum = 0;
      for (i = 0; i < n; ++i) {
-          double xabs = fabs(dx[incx*i]);
+          double xabs = std::fabs(dx[incx*i]);
           if (xmax < xabs) xmax = xabs;
      }
      if (xmax == 0) return 0;
@@ -120,7 +120,7 @@ static void dsrotg_(double *da, double *db, double *c, double *s)
 {
      double absa, absb, roe, scale;
 
-     absa = fabs(*da); absb = fabs(*db);
+     absa = std::fabs(*da); absb = std::fabs(*db);
      if (absa > absb) {
 	  roe = *da;
 	  scale = absa;
@@ -133,10 +133,10 @@ static void dsrotg_(double *da, double *db, double *c, double *s)
      if (scale != 0) {
 	  double r, iscale = 1 / scale;
 	  double tmpa = (*da) * iscale, tmpb = (*db) * iscale;
-	  r = (roe < 0 ? -scale : scale) * sqrt((tmpa * tmpa) + (tmpb * tmpb)); 
+	  r = (roe < 0 ? -scale : scale) * std::sqrt((tmpa * tmpa) + (tmpb * tmpb));
 	  *c = *da / r; *s = *db / r; 
 	  *da = r;
-	  if (*c != 0 && fabs(*c) <= *s) *db = 1 / *c;
+	  if (*c != 0 && std::fabs(*c) <= *s) *db = 1 / *c;
 	  else *db = *s;
      }
      else { 
@@ -216,14 +216,14 @@ static void h12_(const int *mode, int *lpivot, int *l1,
     if (0 >= *lpivot || *lpivot >= *l1 || *l1 > *m) {
 	goto L80;
     }
-    cl = (d__1 = u[*lpivot * u_dim1 + 1], fabs(d__1));
+    cl = (d__1 = u[*lpivot * u_dim1 + 1], std::fabs(d__1));
     if (*mode == 2) {
 	goto L30;
     }
 /*     ****** CONSTRUCT THE TRANSFORMATION ****** */
     i__1 = *m;
     for (j = *l1; j <= i__1; ++j) {
-	sm = (d__1 = u[j * u_dim1 + 1], fabs(d__1));
+	sm = (d__1 = u[j * u_dim1 + 1], std::fabs(d__1));
 /* L10: */
 	cl = MAX2(sm,cl);
     }
@@ -425,7 +425,7 @@ L140:
     h12_(&c__1, &npp1, &i__2, m, &a[j * a_dim1 + 1], &c__1, &up, &z__[1], &
 	    c__1, &c__1, &c__0);
     unorm = dnrm2___(&nsetp, &a[j * a_dim1 + 1], 1);
-    t = factor * (d__1 = a[npp1 + j * a_dim1], fabs(d__1));
+    t = factor * (d__1 = a[npp1 + j * a_dim1], std::fabs(d__1));
     d__1 = unorm + t;
     if (d__1 - unorm <= 0.0) {
 	goto L150;
@@ -767,7 +767,7 @@ static void lsi_(double *e, double *f, double *g,
     for (i__ = 1; i__ <= i__2; ++i__) {
 	i__1 = *n;
 	for (j = 1; j <= i__1; ++j) {
-	    if ((d__1 = e[j + j * e_dim1], fabs(d__1)) < epmach) {
+	    if ((d__1 = e[j + j * e_dim1], std::fabs(d__1)) < epmach) {
 		goto L50;
 	    }
 /* L20: */
@@ -941,7 +941,7 @@ L70:
     i__2 = ldiag;
     for (j = 1; j <= i__2; ++j) {
 /* L90: */
-	if ((d__1 = a[j + j * a_dim1], fabs(d__1)) <= *tau) {
+	if ((d__1 = a[j + j * a_dim1], std::fabs(d__1)) <= *tau) {
 	    goto L100;
 	}
     }
@@ -1135,7 +1135,7 @@ static void lsei_(double *c__, double *d__, double *e,
     *mode = 6;
     i__2 = *mc;
     for (i__ = 1; i__ <= i__2; ++i__) {
-	if ((d__1 = c__[i__ + i__ * c_dim1], fabs(d__1)) < epmach) {
+	if ((d__1 = c__[i__ + i__ * c_dim1], std::fabs(d__1)) < epmach) {
 	    goto L75;
 	}
 	i__1 = i__ - 1;
@@ -1650,10 +1650,10 @@ L10:
     fw = fv;
 L20:
     m = (a + b) * .5;
-    tol1 = eps * fabs(x) + *tol;
+    tol1 = eps * std::fabs(x) + *tol;
     tol2 = tol1 + tol1;
 /*  TEST CONVERGENCE */
-    if ((d__1 = x - m, fabs(d__1)) <= tol2 - (b - a) * .5) {
+    if ((d__1 = x - m, std::fabs(d__1)) <= tol2 - (b - a) * .5) {
 	goto L90;
     }
     r__ = 0.0;
@@ -1678,7 +1678,7 @@ L20:
     e = d__;
 /*  IS PARABOLA ACCEPTABLE */
 L30:
-    if (fabs(p) >= (d__1 = q * r__, fabs(d__1)) * .5 || p <= q * (a - x) || p >=
+    if (fabs(p) >= (d__1 = q * r__, std::fabs(d__1)) * .5 || p <= q * (a - x) || p >=
 	     q * (b - x)) {
 	goto L40;
     }
@@ -1876,7 +1876,7 @@ L100:
     } else {
 	iexact = 1;
     }
-    *acc = fabs(*acc);
+    *acc = std::fabs(*acc);
     tol = ten * *acc;
     *iter = 0;
     ireset = 0;
@@ -1973,7 +1973,7 @@ L150:
     f0 = *f;
     dcopy___(n, &x[1], 1, &x0[1], 1);
     gs = ddot_sl__(n, &g[1], 1, &s[1], 1);
-    h1 = fabs(gs);
+    h1 = std::fabs(gs);
     h2 = 0.0;
     i__1 = *m;
     for (j = 1; j <= i__1; ++j) {
@@ -1985,11 +1985,11 @@ L150:
 /* Computing MAX */
 	d__1 = -c__[j];
 	h2 += MAX2(d__1,h3);
-	h3 = (d__1 = r__[j], fabs(d__1));
+	h3 = (d__1 = r__[j], std::fabs(d__1));
 /* Computing MAX */
 	d__1 = h3, d__2 = (mu[j] + h3) / two;
 	mu[j] = MAX2(d__1,d__2);
-	h1 += h3 * (d__1 = c__[j], fabs(d__1));
+	h1 += h3 * (d__1 = c__[j], std::fabs(d__1));
 /* L170: */
     }
 /*   CHECK CONVERGENCE */
@@ -2103,7 +2103,7 @@ L240:
 	h3 += MAX2(d__1,h1);
 /* L250: */
     }
-    if (((d__1 = *f - f0, fabs(d__1)) < *acc || dnrm2___(n, &s[1], 1) < *
+    if (((d__1 = *f - f0, std::fabs(d__1)) < *acc || dnrm2___(n, &s[1], 1) < *
 	    acc) && h3 < *acc) {
 	*mode = 0;
     } else {
@@ -2112,7 +2112,7 @@ L240:
     goto L330;
 /*   CHECK relaxed CONVERGENCE in case of positive directional derivative */
 L255:
-    if (((d__1 = *f - f0, fabs(d__1)) < tol || dnrm2___(n, &s[1], 1) < tol)
+    if (((d__1 = *f - f0, std::fabs(d__1)) < tol || dnrm2___(n, &s[1], 1) < tol)
 	     && h3 < tol) {
 	*mode = 0;
     } else {
@@ -2507,9 +2507,9 @@ nlopt_result nlopt_slsqp(unsigned n, nlopt_func f, void *f_data,
 			     ret = NLOPT_FORCED_STOP; goto done; }
 			for (k = 0; k < h[i].m; ++k, ++ii) {
 			     infeasibility_cur = 
-				  MAX2(infeasibility_cur, fabs(c[ii]));
+				  MAX2(infeasibility_cur, std::fabs(c[ii]));
 			     feasible_cur = 
-				  feasible_cur && fabs(c[ii]) <= h[i].tol[k];
+				  feasible_cur && std::fabs(c[ii]) <= h[i].tol[k];
 			     for (j = 0; j < n; ++ j)
 				  cgrad[j*U(mpi1) + ii] = cgradtmp[k*n + j];
 			}
@@ -2546,9 +2546,9 @@ nlopt_result nlopt_slsqp(unsigned n, nlopt_func f, void *f_data,
 			     ret = NLOPT_FORCED_STOP; goto done; }
 			for (k = 0; k < h[i].m; ++k, ++ii) {
 			     infeasibility_cur = 
-				  MAX2(infeasibility_cur, fabs(c[ii]));
+				  MAX2(infeasibility_cur, std::fabs(c[ii]));
 			     feasible_cur = 
-				  feasible_cur && fabs(c[ii]) <= h[i].tol[k];
+				  feasible_cur && std::fabs(c[ii]) <= h[i].tol[k];
 			}
 		   }
 		   for (i = 0; i < m; ++i) {

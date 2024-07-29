@@ -2,7 +2,7 @@
 
    f2c output hand-cleaned by SGJ (August 2007).
 */
-
+#include <cmath>
 #include <math.h>
 #include "direct-internal.h"
 
@@ -233,7 +233,7 @@ L12:
 		helplower = *kmax;
 	    }
 	    if (f[(j___ << 1) + 1] - helplower * thirds[s[j + (s_dim1 << 1)]] >
-		     MIN(*minf - epsrel * fabs(*minf), 
+		     MIN(*minf - epsrel * std::fabs(*minf),
 			 *minf - epsabs)) {
 		if (logfile)
 		     fprintf(logfile, "> minf - epslminfl\n");
@@ -606,7 +606,7 @@ L40:
 /* L30: */
 	    }
 	    if (f[(i__ << 1) + 2] == 1.) {
-		f[(i__ << 1) + 1] += (d__1 = f[(i__ << 1) + 1], fabs(d__1)) *
+		f[(i__ << 1) + 1] += (d__1 = f[(i__ << 1) + 1], std::fabs(d__1)) *
 			1e-6f;
 		i__2 = *n;
 		for (l = 1; l <= i__2; ++l) {
@@ -1571,7 +1571,7 @@ L50:
 		 "Final function value: %g\n"
 		 "Number of function evaluations: %d\n", *minf, *numfunc);
 	 if (*fglobal > -1e99)
-	      fprintf(logfile, "Final function value is within %g%% of global optimum\n", 100*(*minf - *fglobal) / MAX(1.0, fabs(*fglobal)));
+	      fprintf(logfile, "Final function value is within %g%% of global optimum\n", 100*(*minf - *fglobal) / MAX(1.0, std::fabs(*fglobal)));
 	 fprintf(logfile, "Index, final solution, x(i)-l(i), u(i)-x(i)\n");
 	 for (i__ = 1; i__ <= *n; ++i__)
 	      fprintf(logfile, "%d, %g, %g, %g\n", i__, x[i__], 

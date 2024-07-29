@@ -1,3 +1,4 @@
+#include <cmath>
 #include <math.h>
 #include "luksan.h"
 
@@ -33,7 +34,7 @@ double luksan_mxvmax__(int *n, double *x)
     i__1 = *n;
     for (i__ = 1; i__ <= i__1; ++i__) {
 /* Computing MAX */
-	d__2 = mxvmax, d__3 = (d__1 = x[i__], fabs(d__1));
+	d__2 = mxvmax, d__3 = (d__1 = x[i__], std::fabs(d__1));
 	mxvmax = MAX2(d__2,d__3);
 /* L1: */
     }

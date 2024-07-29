@@ -19,7 +19,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. 
  */
-
+#include <cmath>
 #include <math.h>
 #include "nlopt-util.h"
 
@@ -28,8 +28,8 @@
 static int relstop(double vold, double vnew, double reltol, double abstol)
 {
      if (nlopt_isinf(vold)) return 0;
-     return(fabs(vnew - vold) < abstol 
-	    || fabs(vnew - vold) < reltol * (fabs(vnew) + fabs(vold)) * 0.5
+     return(std::fabs(vnew - vold) < abstol
+	    || std::fabs(vnew - vold) < reltol * (std::fabs(vnew) + std::fabs(vold)) * 0.5
 	    || (reltol > 0 && vnew == vold)); /* catch vnew == vold == 0 */
 }
 

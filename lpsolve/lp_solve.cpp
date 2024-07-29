@@ -1,3 +1,4 @@
+#include <cmath>
 #include <string.h>
 #include <time.h>
 #include <signal.h>
@@ -335,9 +336,9 @@ static void minmax1(REAL value0, REAL factor, REAL *minmax, int *nminmax, int ro
 
   if (value0 == 0)
     return;
-  value = fabs(value0) * factor;
-  for (i = 0; (i < *nminmax) && (value <= fabs(minmax[i]) * factor); i++)
-    if (value == fabs(minmax[i]) * factor)
+  value = std::fabs(value0) * factor;
+  for (i = 0; (i < *nminmax) && (value <= std::fabs(minmax[i]) * factor); i++)
+    if (value == std::fabs(minmax[i]) * factor)
       return;
   if (i >= nstats)
     return;

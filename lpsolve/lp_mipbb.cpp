@@ -24,7 +24,7 @@
                                 and converted to delta-model of B&B bound storage.
    ----------------------------------------------------------------------------------
 */
-
+#include <cmath>
 #include <string.h>
 #include <float.h>
 #include "commonlib.h"
@@ -406,7 +406,7 @@ STATIC MYBOOL initbranches_BB(BBrec *BB)
       LO: Fix the variable by setting upper/lower bound to zero
 
       ... indicate that the variable is B&B-active by reversing sign of sc_lobound[]. */
-    new_bound = fabs(lp->sc_lobound[k]);
+    new_bound = std::fabs(lp->sc_lobound[k]);
     BB->sc_bound = new_bound;
     BB->sc_canset = (MYBOOL) (new_bound != 0);
 
@@ -460,10 +460,10 @@ STATIC MYBOOL fillbranches_BB(BBrec *BB)
 #if 1
       if(((ult_lowbo >= 0) &&
           ((floor(BB->lastsolution) < /* Skip cases where the lower bound becomes violated */
-            unscaled_value(lp, MAX(ult_lowbo, fabs(lp->sc_lobound[k])), K)-intmargin))) ||
+            unscaled_value(lp, MAX(ult_lowbo, std::fabs(lp->sc_lobound[k])), K)-intmargin))) ||
          ((ult_upbo <= 0) &&   /*  Was  ((ult_lowbo < 0) && */
           ((floor(BB->lastsolution) > /* Skip cases where the upper bound becomes violated */
-            unscaled_value(lp, MIN(ult_upbo, -fabs(lp->sc_lobound[k])), K)-intmargin)))) {
+            unscaled_value(lp, MIN(ult_upbo, -std::fabs(lp->sc_lobound[k])), K)-intmargin)))) {
 #else
       if((floor(BB->lastsolution) <  /* Skip cases where the lower bound becomes violated */
           unscaled_value(lp, MAX(ult_lowbo, fabs(lp->sc_lobound[k])), K)-intmargin)) {

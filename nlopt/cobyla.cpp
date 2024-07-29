@@ -35,6 +35,7 @@
 static char const rcsid[] =
   "@(#) $Jeannot: cobyla.c,v 1.11 2004/04/18 09:51:36 js Exp $";
 
+#include <cmath>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -209,11 +210,11 @@ nlopt_result cobyla_minimize(unsigned n, nlopt_func f, void *f_data,
      if (!s.xtmp) { ret = NLOPT_OUT_OF_MEMORY; goto done; }
 
      /* SGJ, 2008: compute rhoend from NLopt stop info */
-     rhobeg = fabs(dx[0] / s.scale[0]);
+     rhobeg = std::fabs(dx[0] / s.scale[0]);
      rhoend = stop->xtol_rel * (rhobeg);
      for (j = 0; j < n; ++j)
-	  if (rhoend < stop->xtol_abs[j] / fabs(s.scale[j]))
-	       rhoend = stop->xtol_abs[j] / fabs(s.scale[j]);
+	  if (rhoend < stop->xtol_abs[j] / std::fabs(s.scale[j]))
+	       rhoend = stop->xtol_abs[j] / std::fabs(s.scale[j]);
 
      /* each equality constraint gives two inequality constraints */
      m = nlopt_count_constraints(m, fc) + 2 * nlopt_count_constraints(p, h);
@@ -739,7 +740,7 @@ L140:
       for (k = 1; k <= i__3; ++k) if (sim[k + j * sim_dim1] != 0) {
         temp += simi[i__ + k * simi_dim1] * sim[k + j * sim_dim1];
       }
-      d__1 = error, d__2 = fabs(temp);
+      d__1 = error, d__2 = std::fabs(temp);
       error = MAX2(d__1,d__2);
     }
   }
@@ -1027,7 +1028,7 @@ L440:
     for (i__ = 1; i__ <= i__2; ++i__) {
       temp += simi[j + i__ * simi_dim1] * dx[i__];
     }
-    temp = fabs(temp);
+    temp = std::fabs(temp);
     if (temp > ratio) {
       jdrop = j;
       ratio = temp;
@@ -1408,10 +1409,10 @@ L100:
     for (i__ = 1; i__ <= i__1; ++i__) {
       temp = z__[i__ + k * z_dim1] * dxnew[i__];
       sp += temp;
-      spabs += fabs(temp);
+      spabs += std::fabs(temp);
     }
-    acca = spabs + fabs(sp) * .1;
-    accb = spabs + fabs(sp) * .2;
+    acca = spabs + std::fabs(sp) * .1;
+    accb = spabs + std::fabs(sp) * .2;
     if (spabs >= acca || acca >= accb) {
       sp = 0.;
     }
@@ -1463,10 +1464,10 @@ L130:
   for (i__ = 1; i__ <= i__1; ++i__) {
     temp = z__[i__ + k * z_dim1] * dxnew[i__];
     zdotv += temp;
-    zdvabs += fabs(temp);
+    zdvabs += std::fabs(temp);
   }
-  acca = zdvabs + fabs(zdotv) * .1;
-  accb = zdvabs + fabs(zdotv) * .2;
+  acca = zdvabs + std::fabs(zdotv) * .1;
+  accb = zdvabs + std::fabs(zdotv) * .2;
   if (zdvabs < acca && acca < accb) {
     temp = zdotv / zdota[k];
     if (temp > 0. && iact[k] <= *m) {
@@ -1689,7 +1690,7 @@ L340:
   ss = 0.;
   i__1 = *n;
   for (i__ = 1; i__ <= i__1; ++i__) {
-    if ((d__1 = dx[i__], fabs(d__1)) >= *rho * 1e-6f) {
+    if ((d__1 = dx[i__], std::fabs(d__1)) >= *rho * 1e-6f) {
       d__2 = dx[i__];
       dd -= d__2 * d__2;
     }
@@ -1700,9 +1701,9 @@ L340:
   if (dd <= 0.) {
     goto L490;
   }
-  temp = sqrt(ss * dd);
-  if (fabs(sd) >= temp * 1e-6f) {
-    temp = sqrt(ss * dd + sd * sd);
+  temp = std::sqrt(ss * dd);
+  if (std::fabs(sd) >= temp * 1e-6f) {
+    temp = std::sqrt(ss * dd + sd * sd);
   }
   stpful = dd / (temp + sd);
   step = stpful;
@@ -1755,10 +1756,10 @@ L390:
   for (i__ = 1; i__ <= i__1; ++i__) {
     temp = z__[i__ + k * z_dim1] * dxnew[i__];
     zdotw += temp;
-    zdwabs += fabs(temp);
+    zdwabs += std::fabs(temp);
   }
-  acca = zdwabs + fabs(zdotw) * .1;
-  accb = zdwabs + fabs(zdotw) * .2;
+  acca = zdwabs + std::fabs(zdotw) * .1;
+  accb = zdwabs + std::fabs(zdotw) * .2;
   if (zdwabs >= acca || acca >= accb) {
     zdotw = 0.;
   }
@@ -1789,15 +1790,15 @@ L390:
     for (k = kl; k <= i__1; ++k) {
       kk = iact[k];
       sum = resmax - b[kk];
-      sumabs = resmax + (d__1 = b[kk], fabs(d__1));
+      sumabs = resmax + (d__1 = b[kk], std::fabs(d__1));
       i__2 = *n;
       for (i__ = 1; i__ <= i__2; ++i__) {
         temp = a[i__ + kk * a_dim1] * dxnew[i__];
         sum += temp;
-        sumabs += fabs(temp);
+        sumabs += std::fabs(temp);
       }
-      acca = sumabs + fabs(sum) * .1f;
-      accb = sumabs + fabs(sum) * .2f;
+      acca = sumabs + std::fabs(sum) * .1f;
+      accb = sumabs + std::fabs(sum) * .2f;
       if (sumabs >= acca || acca >= accb) {
         sum = 0.f;
       }

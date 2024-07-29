@@ -1,4 +1,4 @@
-
+#include <cmath>
 #include <stdlib.h>
 #include <stdio.h>
 /*#include <memory.h>*/
@@ -657,9 +657,9 @@ int BLAS_CALLMODEL my_idamax( int *_n, REAL *x, int *_is )
     return(imax);
 
 #if defined DOFASTMATH
-  xmax = fabs(*x);
+  xmax = std::fabs(*x);
   for (i = 2, x += is; i <= n; i++, x += is) {
-    xtest = fabs(*x);
+    xtest = std::fabs(*x);
     if(xtest > xmax) {
       xmax = xtest;
       imax = i;
@@ -668,9 +668,9 @@ int BLAS_CALLMODEL my_idamax( int *_n, REAL *x, int *_is )
 #else
   x--;
   ii = 1;
-  xmax = fabs(x[ii]);
+  xmax = std::fabs(x[ii]);
   for(i = 2, ii+ = is; i <= n; i++, ii+ = is) {
-    xtest = fabs(x[ii]);
+    xtest = std::fabs(x[ii]);
     if(xtest > xmax) {
       xmax = xtest;
       imax = i;
@@ -696,9 +696,9 @@ int BLAS_CALLMODEL my_idamin( int *_n, REAL *x, int *_is )
     return(imin);
 
 #if defined DOFASTMATH
-  xmin = fabs(*x);
+  xmin = std::fabs(*x);
   for (i = 2, x += is; i <= n; i++, x += is) {
-    xtest = fabs(*x);
+    xtest = std::fabs(*x);
     if(xtest < xmin) {
       xmin = xtest;
       imin = i;
@@ -707,9 +707,9 @@ int BLAS_CALLMODEL my_idamin( int *_n, REAL *x, int *_is )
 #else
   x--;
   ii = 1;
-  xmin = fabs(x[ii]);
+  xmin = std::fabs(x[ii]);
   for(i = 2, ii+ = is; i <= n; i++, ii+ = is) {
-    xtest = fabs(x[ii]);
+    xtest = std::fabs(x[ii]);
     if(xtest < xmin) {
       xmin = xtest;
       imin = i;
@@ -739,7 +739,7 @@ REAL BLAS_CALLMODEL my_dnormi( int *_n, REAL *x )
    hold = 0.0;
 /*   for(j = 1; j <= n; j++) */
    for(j = n; j > 0; j--) {
-     absval = fabs(x[j]);
+     absval = std::fabs(x[j]);
      hold = MAX( hold, absval );
    }
 
@@ -842,7 +842,7 @@ void ddrand( int n, REAL *x, int incx, int *seeds )
               ((REAL) seeds[2])/30307.0 +
               ((REAL) seeds[3])/30323.0;
      xix    = (int) x[ix];
-	 x[ix]  = fabs(x[ix] - xix);
+	 x[ix]  = std::fabs(x[ix] - xix);
    }
 
 }

@@ -1,4 +1,4 @@
-
+#include <cmath>
 #include <string.h>
 #include <stdarg.h>
 #include <ctype.h>
@@ -991,7 +991,7 @@ MYBOOL __WINAPI MPS_readex(lprec **newlp, void *userhandle, read_modeldata_func 
             }
             else if(is_chsign(lp, row)) {
               /* GE */
-              lp->orig_upbo[row] = fabs(field4);
+              lp->orig_upbo[row] = std::fabs(field4);
             }
             else if((lp->orig_upbo[row] == 0) && (field4 >= 0)) {
               /*  EQ with positive sign of r value */
@@ -1000,7 +1000,7 @@ MYBOOL __WINAPI MPS_readex(lprec **newlp, void *userhandle, read_modeldata_func 
             }
             else if(lp->orig_upbo[row] == lp->infinite) {
               /* LE */
-              lp->orig_upbo[row] = fabs(field4);
+              lp->orig_upbo[row] = std::fabs(field4);
             }
             else if((lp->orig_upbo[row] == 0) && (field4 < 0)) {
               /* EQ with negative sign of r value */
@@ -1018,7 +1018,7 @@ MYBOOL __WINAPI MPS_readex(lprec **newlp, void *userhandle, read_modeldata_func 
             if((row = find_row(lp, field5, Unconstrained_rows_found)) >= 0) {
               /* Determine constraint type */
 
-              if(fabs(field6) >= lp->infinite) {
+              if(std::fabs(field6) >= lp->infinite) {
                 report(lp, IMPORTANT,
                             "Warning, Range for row %s >= infinity (value %g) on line %d, ignored",
                             field5, field6, Lineno);
@@ -1030,7 +1030,7 @@ MYBOOL __WINAPI MPS_readex(lprec **newlp, void *userhandle, read_modeldata_func 
               }
               else if(is_chsign(lp, row)) {
                 /* GE */
-                lp->orig_upbo[row] = fabs(field6);
+                lp->orig_upbo[row] = std::fabs(field6);
               }
               else if(lp->orig_upbo[row] == 0 && field6 >= 0) {
                 /*  EQ with positive sign of r value */
@@ -1039,7 +1039,7 @@ MYBOOL __WINAPI MPS_readex(lprec **newlp, void *userhandle, read_modeldata_func 
               }
               else if(lp->orig_upbo[row] == lp->infinite) {
                 /* LE */
-                lp->orig_upbo[row] = fabs(field6);
+                lp->orig_upbo[row] = std::fabs(field6);
               }
               else if((lp->orig_upbo[row] == 0) && (field6 < 0)) {
                 /* EQ with negative sign of r value */

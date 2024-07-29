@@ -19,6 +19,7 @@
    ---------------------------------------------------------------------------------- */
 
 /* Generic include libraries */
+#include <cmath>
 #include <stdlib.h>
 #include <string.h>
 #include "lp_lib.h"
@@ -704,7 +705,7 @@ int BFP_CALLMODEL bfp_findredundant(lprec *lp, int items, getcolumnex_func cb, i
   /* Scale rows to prevent numerical problems */
   if((lp->scalemode != SCALE_NONE) && allocREAL(lp, &arraymax, items+1, TRUE)) {
     for(i = 1; i <= nz; i++) {
-      SETMAX(arraymax[LUSOL->indc[i]], fabs(LUSOL->a[i]));
+      SETMAX(arraymax[LUSOL->indc[i]], std::fabs(LUSOL->a[i]));
     }
     for(i = 1; i <= nz; i++)
       LUSOL->a[i] /= arraymax[LUSOL->indc[i]];

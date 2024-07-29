@@ -19,7 +19,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. 
  */
-
+#include <cmath>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -417,7 +417,7 @@ static nlopt_result divide_good_rects(params *p)
 	       K2 = (hull[i][1] - hull[ip][1]) / (hull[i][0] - hull[ip][0]);
 	  K = MAX(K1, K2);
 	  if (hull[i][1] - K * hull[i][0]
-	      <= p->minf - magic_eps * fabs(p->minf) || ip == nhull) {
+	      <= p->minf - magic_eps * std::fabs(p->minf) || ip == nhull) {
 	       /* "potentially optimal" rectangle, so subdivide */
 	       nlopt_result ret = divide_rect(hull[i], p);
 	       divided_some = 1;

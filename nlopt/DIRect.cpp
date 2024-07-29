@@ -2,7 +2,7 @@
    
    f2c output hand-cleaned by SGJ (August 2007). 
 */
-
+#include <cmath>
 #include <math.h>
 #include "direct-internal.h"
 
@@ -369,7 +369,7 @@
     if (*fglobal == 0.) {
 	divfactor = 1.;
     } else {
-	divfactor = fabs(*fglobal);
+	divfactor = std::fabs(*fglobal);
     }
 /* +-----------------------------------------------------------------------+ */
 /* | Save the budget given by the user. The variable maxf will be changed  | */
@@ -672,7 +672,7 @@
 /* +-----------------------------------------------------------------------+ */
 	if (iepschange == 1) {
 /* Computing MAX */
-	    d__1 = fabs(*minf) * 1e-4;
+	    d__1 = std::fabs(*minf) * 1e-4;
 	    *eps = MAX(d__1,epsfix);
 	}
 /* +-----------------------------------------------------------------------+ */

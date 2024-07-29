@@ -1,4 +1,4 @@
-
+#include <cmath>
 #include <string.h>
 #include "commonlib.h"
 #include "lp_lib.h"
@@ -169,12 +169,12 @@ int CMP_CALLMODEL compareSubstitutionVar(const pricerec *current, const pricerec
 
   /* Compute the ranking test metric. */
   if(isdual) {
-    testvalue = fabs(testvalue);
-    margin    = fabs(margin);
+    testvalue = std::fabs(testvalue);
+    margin    = std::fabs(margin);
   }
 
   /* Use absolute test for "small numbers", relative otherwise */
-  if(fabs(testvalue) < LIMIT_ABS_REL)
+  if(std::fabs(testvalue) < LIMIT_ABS_REL)
     testvalue -= margin;
   else
     testvalue = my_reldiff(testvalue, margin);
@@ -196,8 +196,8 @@ int CMP_CALLMODEL compareSubstitutionVar(const pricerec *current, const pricerec
 
   /* Resolve a tie */
   if(result == COMP_PREFERNONE) {
-    REAL currentpivot = fabs(current->pivot),
-         candidatepivot = fabs(candidate->pivot);
+    REAL currentpivot = std::fabs(current->pivot),
+         candidatepivot = std::fabs(candidate->pivot);
 
     /* Handle first index / Bland's rule specially */
     if(lp->_piv_rule_ == PRICER_FIRSTINDEX) {
@@ -308,10 +308,10 @@ int CMP_CALLMODEL compareBoundFlipVar(const pricerec *current, const pricerec *c
   testvalue = candidate->theta;
   margin    = current->theta;
   if(candidate->isdual) {
-    testvalue = fabs(testvalue);
-    margin    = fabs(margin);
+    testvalue = std::fabs(testvalue);
+    margin    = std::fabs(margin);
   }
-  if(fabs(margin) < LIMIT_ABS_REL)
+  if(std::fabs(margin) < LIMIT_ABS_REL)
     testvalue -= margin;
   else
     testvalue = my_reldiff(testvalue, margin);
@@ -332,8 +332,8 @@ int CMP_CALLMODEL compareBoundFlipVar(const pricerec *current, const pricerec *c
 
     /* Tertiary selection based on priority for large pivot sizes */
     if(result == COMP_PREFERNONE) {
-      REAL currentpivot   = fabs(current->pivot),
-           candidatepivot = fabs(candidate->pivot);
+      REAL currentpivot   = std::fabs(current->pivot),
+           candidatepivot = std::fabs(candidate->pivot);
       if(candidatepivot > currentpivot+margin)
         result = COMP_PREFERCANDIDATE;
       else if(candidatepivot < currentpivot-margin)
@@ -372,7 +372,7 @@ Finish:
    a subject for the comparison functions/operators. */
 STATIC MYBOOL validImprovementVar(pricerec *candidate)
 {
-  register REAL candidatepivot = fabs(candidate->pivot);
+  register REAL candidatepivot = std::fabs(candidate->pivot);
 
 #ifdef Paranoia
   return( (MYBOOL) ((candidate->varno > 0) && (candidatepivot > candidate->lp->epsvalue)) );
@@ -384,18 +384,18 @@ STATIC MYBOOL validImprovementVar(pricerec *candidate)
 STATIC MYBOOL validSubstitutionVar(pricerec *candidate)
 {
   register lprec *lp   = candidate->lp;
-  register REAL  theta = (candidate->isdual ? fabs(candidate->theta) : candidate->theta);
+  register REAL  theta = (candidate->isdual ? std::fabs(candidate->theta) : candidate->theta);
 
 #ifdef Paranoia
   if(candidate->varno <= 0)
     return( FALSE );
   else
 #endif
-  if(fabs(candidate->pivot) >= lp->infinite)
+  if(std::fabs(candidate->pivot) >= lp->infinite)
     return( (MYBOOL) (theta < lp->infinite) );
   else
     return( (MYBOOL) ((theta < lp->infinite) &&
-                      (fabs(candidate->pivot) >= candidate->epspivot)) );
+                      (std::fabs(candidate->pivot) >= candidate->epspivot)) );
 }
 
 int CMP_CALLMODEL compareImprovementQS(const UNIONTYPE QSORTrec *current, const UNIONTYPE QSORTrec *candidate)
@@ -687,7 +687,7 @@ STATIC MYBOOL serious_facterror(lprec *lp, REAL *bvector, int maxcols, REAL tole
 
     /* Catch high precision early, so we don't to uneccessary work */
     tsum += sum;
-    SETMAX(err, fabs(sum));
+    SETMAX(err, std::fabs(sum));
     if((tsum / nc > tolerance / 100) && (err < tolerance / 100))
       break;
   }
@@ -777,11 +777,11 @@ STATIC MYBOOL verify_stability(lprec *lp, MYBOOL isprimal, REAL xfeas, REAL sfea
     sfeas /= (1+lp->rhsmax);
   }
 #endif
-  xfeas = fabs(xfeas);             /* Maximum (positive) infeasibility */
+  xfeas = std::fabs(xfeas);             /* Maximum (positive) infeasibility */
 /*  if(xfeas < lp->epspivot) { */
   if(xfeas < lp->epssolution) {
     REAL f;
-    sfeas = fabs(sfeas);           /* Make sum of infeasibilities positive */
+    sfeas = std::fabs(sfeas);           /* Make sum of infeasibilities positive */
     xfeas = (sfeas-xfeas)/nfeas;   /* Average "residual" feasibility */
     f = 1 + log10((REAL) nfeas);   /* Some numerical complexity scalar */
     /* Numerical errors can interact to cause non-convergence, and the
@@ -814,9 +814,9 @@ STATIC int find_rowReplacement(lprec *lp, int rownr, REAL *prow, int *nzprow)
   bestvalue = 0;
   for(i = 1; i <= lp->sum-abs(lp->P1extraDim); i++) {
     if(!lp->is_basic[i] && !is_fixedvar(lp, i) &&
-      (fabs(prow[i]) > bestvalue)) {
+      (std::fabs(prow[i]) > bestvalue)) {
       bestindex = i;
-      bestvalue = fabs(prow[i]);
+      bestvalue = std::fabs(prow[i]);
     }
   }
 
@@ -939,7 +939,7 @@ doLoop:
   if(xviol != NULL)
     *xviol = xinfeas;
   if(updateinfeas)
-    lp->suminfeas = fabs(sinfeas);
+    lp->suminfeas = std::fabs(sinfeas);
   if((lp->multivars == NULL) && (current.varno > 0) &&
      !verify_stability(lp, TRUE, xinfeas, sinfeas, ninfeas))
     current.varno = 0;
@@ -979,7 +979,7 @@ STATIC int rowprim(lprec *lp, int colnr, LREAL *theta, REAL *pcol, int *nzpcol, 
   Htheta = 0;
   k = 0;
   for(i = 1; i <= lp->rows; i++) {
-    p = fabs(pcol[i]);
+    p = std::fabs(pcol[i]);
     if(p > Hlimit)
       Hlimit = p;
     if(p > epsvalue) {
@@ -1008,7 +1008,7 @@ STATIC int rowprim(lprec *lp, int colnr, LREAL *theta, REAL *pcol, int *nzpcol, 
   p = 0;
   for(ii = 1; ii <= iy; ii++) {
     i = nzlist[ii];
-    p = fabs(pcol[i]);
+    p = std::fabs(pcol[i]);
 
     /* Compress the list of valid alternatives, if appropriate */
     if(p > epspivot) {
@@ -1158,7 +1158,7 @@ Retry:
                          current.varno, current.pivot);
 
 /*  *theta = current.theta; */
-  *theta = fabs(current.theta);
+  *theta = std::fabs(current.theta);
 
   return(current.varno);
 } /* rowprim */
@@ -1260,7 +1260,7 @@ STATIC int rowdual(lprec *lp, REAL *rhvec, MYBOOL forceoutEQ, MYBOOL updateinfea
 
   /* Verify infeasibility */
   if(updateinfeas)
-    lp->suminfeas = fabs(sinfeas);
+    lp->suminfeas = std::fabs(sinfeas);
   if((ninfeas > 1) &&
      !verify_stability(lp, FALSE, xinfeas, sinfeas, ninfeas)) {
     report(lp, IMPORTANT, "rowdual: Check for reduced accuracy and tolerance settings.\n");
@@ -1279,7 +1279,7 @@ STATIC int rowdual(lprec *lp, REAL *rhvec, MYBOOL forceoutEQ, MYBOOL updateinfea
       report(lp, FULL, "rowdual: Optimality - No primal infeasibilities found\n");
   }
   if(xviol != NULL)
-    *xviol = fabs(xinfeas);
+    *xviol = std::fabs(xinfeas);
 
   return(current.varno);
 } /* rowdual */
@@ -1906,7 +1906,7 @@ STATIC MYBOOL multi_recompute(multirec *multi, int index, MYBOOL isphase2, MYBOO
     prev_theta = this_theta;
     thisprice  = (pricerec *) (multi->sortedList[index].pvoidreal.ptr);
     this_theta = thisprice->theta;
-    Alpha = fabs(thisprice->pivot);
+    Alpha = std::fabs(thisprice->pivot);
     uB = lp->upbo[thisprice->varno];
     lB = 0;
     SETMAX(multi->maxpivot, Alpha);
@@ -2025,7 +2025,7 @@ Redo:
     candidate = (pricerec *) (multi->sortedList[i].pvoidreal.ptr);
     colnr = candidate->varno;
     bound = lp->upbo[colnr];
-    score = fabs(candidate->pivot) / multi->maxpivot;
+    score = std::fabs(candidate->pivot) / multi->maxpivot;
     score = pow(1.0 + score                           , b1) *
             pow(1.0 + log(bound / multi->maxbound + 1), b2) *
             pow(1.0 + (REAL) i / multi->used          , b3);
@@ -2037,7 +2037,7 @@ Redo:
   }
 
   /* Do pivot protection */
-  if((priority < 4) && (fabs(bestcand->pivot) < lp->epssolution)) {
+  if((priority < 4) && (std::fabs(bestcand->pivot) < lp->epssolution)) {
     bestindex = 0;
     priority++;
     goto Redo;

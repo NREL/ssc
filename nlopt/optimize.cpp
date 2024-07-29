@@ -19,7 +19,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. 
  */
-
+#include <cmath>
 #include <stdlib.h>
 #include <math.h>
 #include <float.h>
@@ -117,8 +117,8 @@ static nlopt_result initial_step(nlopt_opt opt, const double *x, double *step)
 
      *step = HUGE_VAL;
      for (i = 0; i < opt->n; ++i)
-	  if (*step > fabs(opt->dx[i]))
-	       *step = fabs(opt->dx[i]);
+	  if (*step > std::fabs(opt->dx[i]))
+	       *step = std::fabs(opt->dx[i]);
 
      if (freedx) { free(opt->dx); opt->dx = NULL; }
      return NLOPT_SUCCESS;

@@ -1,5 +1,5 @@
 #define CODE_lp_utils
-
+#include <cmath>
 #include <string.h>
 #include "commonlib.h"
 #include "lp_lib.h"
@@ -428,7 +428,7 @@ STATIC REAL restoreINT(REAL valREAL, REAL epsilon)
   REAL valINT, fracREAL, fracABS;
 
   fracREAL = modf(valREAL, &valINT);
-  fracABS = fabs(fracREAL);
+  fracABS = std::fabs(fracREAL);
   if(fracABS < epsilon)
     return(valINT);
   else if(fracABS > 1-epsilon) {
@@ -451,7 +451,7 @@ STATIC REAL roundToPrecision(REAL value, REAL precision)
     return(value);
 
   sign  = my_sign(value);
-  value = fabs(value);
+  value = std::fabs(value);
 
   /* Round to integer if possible */
   if(value < precision)
@@ -559,11 +559,11 @@ STATIC MYBOOL isINT(lprec *lp, REAL value)
 #if 0
   return( (MYBOOL) (modf(fabs(value)+lp->epsint, &value) < 2*lp->epsint) );
 #elif 1
-  value = fabs(value)+lp->epsint;
+  value = std::fabs(value)+lp->epsint;
   return( (MYBOOL) (my_reldiff(value, floor(value)) < 2*lp->epsint) );
 #elif 0
   REAL hold;
-  value = fabs(value);
+  value = std::fabs(value);
   hold = pow(10, MIN(-2, log10(value+1)+log10(lp->epsint)));
   return( (MYBOOL) (modf(value+lp->epsint, &value) < 2*hold) );
 #elif 0

@@ -24,7 +24,7 @@
 /* NEWUOA derivative-free optimization algorithm by M. J. D. Powell.
    Original Fortran code by Powell (2004).  Converted via f2c, cleaned up,
    and incorporated into NLopt by S. G. Johnson (2008).  See README. */
-
+#include <cmath>
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -872,7 +872,7 @@ L70:
 /* L240: */
 	    sum += denex[j - 1] * par[j - 1];
 	}
-	if (fabs(sum) > fabs(denmax)) {
+	if (fabs(sum) > std::fabs(denmax)) {
 	    denmax = sum;
 	    isave = i__;
 	    tempa = sumold;
@@ -941,7 +941,7 @@ L70:
     if (iterc > 1) {
 	densav = MAX2(densav,denold);
     }
-    if (fabs(denmax) <= fabs(densav) * 1.1) {
+    if (std::fabs(denmax) <= std::fabs(densav) * 1.1) {
 	goto L340;
     }
     densav = denmax;
@@ -1191,7 +1191,7 @@ static nlopt_result biglag_(int *n, int *npt, double *xopt,
 /* L60: */
 	dhd += d__[i__] * gd[i__];
     }
-    scale = *delta / sqrt(dd);
+    scale = *delta / std::sqrt(dd);
     if (sp * dhd < zero) {
 	scale = -scale;
     }
@@ -1199,7 +1199,7 @@ static nlopt_result biglag_(int *n, int *npt, double *xopt,
     if (sp * sp > dd * .99 * gg) {
 	temp = one;
     }
-    tau = scale * (fabs(sp) + half * scale * fabs(dhd));
+    tau = scale * (std::fabs(sp) + half * scale * std::fabs(dhd));
     if (gg * delsq < tau * .01 * tau) {
 	temp = one;
     }
@@ -1325,7 +1325,7 @@ L80:
 	cth = cos(angle);
 	sth = sin(angle);
 	tau = cf1 + (cf2 + cf4 * cth) * cth + (cf3 + cf5 * cth) * sth;
-	if (fabs(tau) > fabs(taumax)) {
+	if (std::fabs(tau) > std::fabs(taumax)) {
 	    taumax = tau;
 	    isave = i__;
 	    tempa = tauold;
@@ -1361,7 +1361,7 @@ L80:
 /* L150: */
 	s[i__] = gc[i__] + gd[i__];
     }
-    if (fabs(tau) <= fabs(taubeg) * 1.1) {
+    if (std::fabs(tau) <= std::fabs(taubeg) * 1.1) {
 	goto L160;
     }
     if (iterc < *n) {
@@ -2147,7 +2147,7 @@ L310:
     diff = f - fopt - vquad;
     diffc = diffb;
     diffb = diffa;
-    diffa = fabs(diff);
+    diffa = std::fabs(diff);
     if (dnorm > rho) {
 	nfsav = nf;
     }
@@ -2229,7 +2229,7 @@ L310:
 	}
 /* Computing 2nd power */
 	d__2 = vlag[k];
-	temp = (d__1 = beta * hdiag + d__2 * d__2, fabs(d__1));
+	temp = (d__1 = beta * hdiag + d__2 * d__2, std::fabs(d__1));
 	distsq = zero;
 	i__2 = *n;
 	for (j = 1; j <= i__2; ++j) {

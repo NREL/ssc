@@ -1,3 +1,4 @@
+#include <cmath>
 #include <math.h>
 #include "luksan.h"
 
@@ -46,13 +47,13 @@ void luksan_pcbs04__(int *nf, double *x, int *ix,
 	    temp = 1.;
 	    ixi = (i__2 = ix[i__], iabs(i__2));
 /* Computing MAX */
-	    d__2 = (d__1 = xl[i__], fabs(d__1));
+	    d__2 = (d__1 = xl[i__], std::fabs(d__1));
 	    if ((ixi == 1 || ixi == 3 || ixi == 4) && x[i__] <= xl[i__] + *
 		    eps9 * MAX2(d__2,temp)) {
 		x[i__] = xl[i__];
 	    }
 /* Computing MAX */
-	    d__2 = (d__1 = xu[i__], fabs(d__1));
+	    d__2 = (d__1 = xu[i__], std::fabs(d__1));
 	    if ((ixi == 2 || ixi == 3 || ixi == 4) && x[i__] >= xu[i__] - *
 		    eps9 * MAX2(d__2,temp)) {
 		x[i__] = xu[i__];
@@ -398,13 +399,13 @@ L3:
 	m2 = FALSE_;
 	m3 = l3;
 	if (mes3 >= 1) {
-	    m1 = fabs(*p) <= fabs(*po) * .01 && *fo - *f >= fabs(*fo) * 
+	    m1 = std::fabs(*p) <= std::fabs(*po) * .01 && *fo - *f >= std::fabs(*fo) *
 		    9.9999999999999994e-12;
 	    l3 = l3 || m1;
 	}
 	if (mes3 >= 2) {
-	    m2 = fabs(*p) <= fabs(*po) * .5 && (d__1 = *fo - *f, fabs(d__1)) <= 
-		    fabs(*fo) * 2.0000000000000001e-13;
+	    m2 = std::fabs(*p) <= std::fabs(*po) * .5 && (d__1 = *fo - *f, std::fabs(d__1)) <=
+            std::fabs(*fo) * 2.0000000000000001e-13;
 	    l3 = l3 || m2;
 	}
 	*maxst = 0;
@@ -905,7 +906,7 @@ void luksan_pyfut1__(int *n, double *f, double *fo, double *umax,
     }
     if (*nit <= 0) {
 /* Computing MIN */
-	d__1 = sqrt((fabs(*f))), d__2 = fabs(*f) / 10.;
+	d__1 = std::sqrt((std::fabs(*f))), d__2 = std::fabs(*f) / 10.;
 	*fo = *f + MIN2(d__1,d__2);
     }
     if (nlopt_stop_forced(stop)) {
@@ -1104,8 +1105,8 @@ void luksan_pytrcd__(int *nf, double *x, int *ix,
 	}
 /* Computing MAX */
 /* Computing MAX */
-	d__5 = (d__2 = x[i__], fabs(d__2));
-	d__3 = *dmax__, d__4 = (d__1 = xo[i__], fabs(d__1)) / MAX2(d__5,1.);
+	d__5 = (d__2 = x[i__], std::fabs(d__2));
+	d__3 = *dmax__, d__4 = (d__1 = xo[i__], std::fabs(d__1)) / MAX2(d__5,1.);
 	*dmax__ = MAX2(d__3,d__4);
 L1:
 	;
@@ -1159,7 +1160,7 @@ void luksan_pytrcg__(int *nf, int *n, int *ix,
 	    temp = g[i__];
 	    if (ix[i__] >= 0) {
 /* Computing MAX */
-		d__1 = *gmax, d__2 = fabs(temp);
+		d__1 = *gmax, d__2 = std::fabs(temp);
 		*gmax = MAX2(d__1,d__2);
 	    } else if (ix[i__] <= -5) {
 	    } else if ((ix[i__] == -1 || ix[i__] == -3) && *umax + temp >= 0.)
@@ -1168,7 +1169,7 @@ void luksan_pytrcg__(int *nf, int *n, int *ix,
 		     {
 	    } else {
 		*iold = i__;
-		*umax = fabs(temp);
+		*umax = std::fabs(temp);
 	    }
 /* L1: */
 	}

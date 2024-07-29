@@ -1,3 +1,4 @@
+#include <cmath>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -155,8 +156,8 @@ nlopt_result auglag_minimize(int n, nlopt_func f, void *f_data,
 		    ret = NLOPT_FORCED_STOP; goto done; }
 	       for (k = 0; k < d.h[i].m; ++k) {
 		    double hi = d.restmp[k];
-		    penalty += fabs(hi);
-		    feasible = feasible && fabs(hi) <= h[i].tol[k];
+		    penalty += std::fabs(hi);
+		    feasible = feasible && std::fabs(hi) <= h[i].tol[k];
 		    con2 += hi * hi;
 	       }
 	  }
@@ -174,7 +175,7 @@ nlopt_result auglag_minimize(int n, nlopt_func f, void *f_data,
 	  *minf = fcur;
 	  minf_penalty = penalty;
 	  minf_feasible = feasible;
-	  d.rho = MAX(1e-6, MIN(10, 2 * fabs(*minf) / con2));
+	  d.rho = MAX(1e-6, MIN(10, 2 * std::fabs(*minf) / con2));
      }
      else
 	  d.rho = 1; /* whatever, doesn't matter */
@@ -215,9 +216,9 @@ nlopt_result auglag_minimize(int n, nlopt_func f, void *f_data,
 	       for (k = 0; k < d.h[i].m; ++k) {
 		    double hi = d.restmp[k];
 		    double newlam = d.lambda[ii] + d.rho * hi;
-		    penalty += fabs(hi);
-		    feasible = feasible && fabs(hi) <= h[i].tol[k];
-		    ICM = MAX(ICM, fabs(hi));
+		    penalty += std::fabs(hi);
+		    feasible = feasible && std::fabs(hi) <= h[i].tol[k];
+		    ICM = MAX(ICM, std::fabs(hi));
 		    d.lambda[ii++] = MIN(MAX(lam_min, newlam), lam_max);
 	       }
 	  }
@@ -230,7 +231,7 @@ nlopt_result auglag_minimize(int n, nlopt_func f, void *f_data,
 		    double newmu = d.mu[ii] + d.rho * fci;
 		    penalty += fci > 0 ? fci : 0;
 		    feasible = feasible && fci <= fc[i].tol[k];
-		    ICM = MAX(ICM, fabs(MAX(fci, -d.mu[ii] / d.rho)));
+		    ICM = MAX(ICM, std::fabs(MAX(fci, -d.mu[ii] / d.rho)));
 		    d.mu[ii++] = MIN(MAX(0.0, newmu), mu_max);
 	       }
 	  }

@@ -19,7 +19,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. 
  */
-
+#include <cmath>
 #include <math.h>
 #include <float.h>
 
@@ -28,7 +28,7 @@
 /*************************************************************************/
 
 int nlopt_isinf(double x) {
-     return fabs(x) >= HUGE_VAL * 0.99
+     return std::fabs(x) >= HUGE_VAL * 0.99
 #ifdef HAVE_ISINF
 	  || isinf(x)
 #endif

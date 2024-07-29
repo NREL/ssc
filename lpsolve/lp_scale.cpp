@@ -1,4 +1,4 @@
-
+#include <cmath>
 #include <string.h>
 #include "commonlib.h"
 #include "lp_lib.h"
@@ -90,7 +90,7 @@ REAL CurtisReidMeasure(lprec *lp, MYBOOL _Advanced, REAL *FRowScale, REAL *FColS
   /* Do OF part */
   result = 0;
   for(i = 1; i <= lp->columns; i++) {
-    absvalue = fabs(lp->orig_obj[i]);
+    absvalue = std::fabs(lp->orig_obj[i]);
     if(absvalue > 0) {
       logvalue = log(absvalue);
       if(_Advanced)
@@ -107,7 +107,7 @@ REAL CurtisReidMeasure(lprec *lp, MYBOOL _Advanced, REAL *FRowScale, REAL *FColS
   nz = get_nonzeros(lp);
   for(i = 0; i < nz;
       i++, value += matValueStep, rownr += matRowColStep, colnr += matRowColStep) {
-    absvalue = fabs(*value);
+    absvalue = std::fabs(*value);
     if(absvalue > 0) {
       logvalue = log(absvalue);
       if(_Advanced)
@@ -476,7 +476,7 @@ STATIC MYBOOL scaleCR(lprec *lp, REAL *scaledelta)
 STATIC MYBOOL transform_for_scale(lprec *lp, REAL *value)
 {
   MYBOOL Accept = TRUE;
-  *value = fabs(*value);
+  *value = std::fabs(*value);
 #ifdef Paranoia
   if(*value < lp->epsmachine) {
     Accept = FALSE;

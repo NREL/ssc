@@ -19,7 +19,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. 
  */
-
+#include <cmath>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -104,13 +104,13 @@ static double dual_func(unsigned m, const double *y, double *grad, void *d_)
 	  }
 
 	  u = dfdx[j];
-	  v = fabs(dfdx[j]) * sigma[j] + 0.5 * rho;
-	  for (i = 0; i < m; ++i) if (!isnan(fcval[i])) {
+	  v = std::fabs(dfdx[j]) * sigma[j] + 0.5 * rho;
+	  for (i = 0; i < m; ++i) if (!std::isnan(fcval[i])) {
 	       u += dfcdx[i*n + j] * y[i];
-	       v += (fabs(dfcdx[i*n + j]) * sigma[j] + 0.5 * rhoc[i]) * y[i];
+	       v += (std::fabs(dfcdx[i*n + j]) * sigma[j] + 0.5 * rhoc[i]) * y[i];
 	  }
 	  u *= (sigma2 = sqr(sigma[j]));
-	  dx = (u/v) / (-1 - sqrt(fabs(1 - sqr(u/(v*sigma[j])))));
+	  dx = (u/v) / (-1 - std::sqrt(std::fabs(1 - sqr(u/(v*sigma[j])))));
 	  xcur[j] = x[j] + dx;
 	  if (xcur[j] > ub[j]) xcur[j] = ub[j];
 	  else if (xcur[j] < lb[j]) xcur[j] = lb[j];

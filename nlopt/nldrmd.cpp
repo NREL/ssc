@@ -19,7 +19,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. 
  */
-
+#include <cmath>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -46,7 +46,7 @@ static int simplex_compare(double *k1, double *k2)
    precision, 0 otherwise */
 static int close(double a, double b)
 {
-     return (fabs(a - b) <= 1e-13 * (fabs(a) + fabs(b)));
+     return (std::fabs(a - b) <= 1e-13 * (std::fabs(a) + std::fabs(b)));
 }
 
 /* Perform the reflection xnew = c + scale * (c - xold),
@@ -138,16 +138,16 @@ nlopt_result nldrmd_minimize_(int n, nlopt_func f, void *f_data,
 	  memcpy(pt+1, x, sizeof(double)*n);
 	  pt[1+i] += xstep[i];
 	  if (pt[1+i] > ub[i]) {
-	       if (ub[i] - x[i] > fabs(xstep[i]) * 0.1)
+	       if (ub[i] - x[i] > std::fabs(xstep[i]) * 0.1)
 		    pt[1+i] = ub[i];
 	       else /* ub is too close to pt, go in other direction */
-		    pt[1+i] = x[i] - fabs(xstep[i]);
+		    pt[1+i] = x[i] - std::fabs(xstep[i]);
 	  }
 	  if (pt[1+i] < lb[i]) {
-	       if (x[i] - lb[i] > fabs(xstep[i]) * 0.1)
+	       if (x[i] - lb[i] > std::fabs(xstep[i]) * 0.1)
 		    pt[1+i] = lb[i];
 	       else {/* lb is too close to pt, go in other direction */
-		    pt[1+i] = x[i] + fabs(xstep[i]);
+		    pt[1+i] = x[i] + std::fabs(xstep[i]);
 		    if (pt[1+i] > ub[i]) /* go towards further of lb, ub */
 			 pt[1+i] = 0.5 * ((ub[i] - x[i] > x[i] - lb[i] ?
 					   ub[i] : lb[i]) + x[i]);
@@ -175,7 +175,7 @@ nlopt_result nldrmd_minimize_(int n, nlopt_func f, void *f_data,
 	  *fdiff = fh - fl;
 
 	  if (init_diam == 0) /* initialize diam. for psi convergence test */
-	       for (i = 0; i < n; ++i) init_diam += fabs(xl[i] - xh[i]);
+	       for (i = 0; i < n; ++i) init_diam += std::fabs(xl[i] - xh[i]);
 
 	  if (psi <= 0 && nlopt_stop_ftol(stop, fl, fh)) {
 	       ret = NLOPT_FTOL_REACHED;
@@ -201,14 +201,14 @@ nlopt_result nldrmd_minimize_(int n, nlopt_func f, void *f_data,
 	  for (i = 0; i < n + 1; ++i) {
                double *xi = pts + i*(n+1) + 1;
 	       for (j = 0; j < n; ++j) {
-		    double dx = fabs(xi[j] - c[j]);
+		    double dx = std::fabs(xi[j] - c[j]);
 		    if (dx > xcur[j]) xcur[j] = dx;
 	       }
 	  }
 	  for (i = 0; i < n; ++i) xcur[i] += c[i];
 	  if (psi > 0) {
 	       double diam = 0;
-	       for (i = 0; i < n; ++i) diam += fabs(xl[i] - xh[i]);
+	       for (i = 0; i < n; ++i) diam += std::fabs(xl[i] - xh[i]);
 	       if (diam < psi * init_diam) {
 		    ret = NLOPT_XTOL_REACHED;
 		    goto done;

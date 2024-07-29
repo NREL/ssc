@@ -31,7 +31,7 @@
     v5.5.1  18 June 2005        Finished sparsity-enhancing logic and added
                                 initial version of column aggregation code.
    ------------------------------------------------------------------------- */
-
+#include <cmath>
 #include <string.h>
 #include "commonlib.h"
 #include "lp_lib.h"
@@ -1935,7 +1935,7 @@ Restart:
 #if 1
         Value = 0;
 #else
-        Value = MAX(fabs(upvalue), fabs(lovalue));
+        Value = MAX(fabs(upvalue), std::fabs(lovalue));
         Value = psdata->epsvalue * MAX(1, Value);
 #endif
         if((upvalue < get_rh_lower(lp, i)-Value) ||
@@ -2105,7 +2105,7 @@ STATIC MYBOOL presolve_probefix01(presolverec *psdata, int colnr, REAL *fixvalue
     /* First check the lower bound of the normalized constraint */
     loLim = presolve_sumplumin(lp, i, psdata->rows, chsign);
     loLim = my_chsign(chsign, loLim);
-    absvalue = fabs(*fixvalue);
+    absvalue = std::fabs(*fixvalue);
     canfix = (MYBOOL) ((loLim + absvalue > lp->orig_rhs[i]+epsvalue*MAX(1, absvalue)));
 
     /* If we were unsuccessful in fixing above, try the upper bound
@@ -2147,7 +2147,7 @@ STATIC MYBOOL presolve_probefix01(presolverec *psdata, int colnr, REAL *fixvalue
   for(ix = presolve_nextrow(psdata, colnr, &item); (ix >= 0); ix = presolve_nextrow(psdata, colnr, &item)) {
     i = COL_MAT_ROWNR(ix);
     *fixvalue = COL_MAT_VALUE(ix);
-    absvalue = fabs(*fixvalue);
+    absvalue = std::fabs(*fixvalue);
     SETMIN(absvalue, 100);
     tolgap = epsvalue*MAX(1, absvalue);
     chsign = is_chsign(lp, i);
@@ -2219,7 +2219,7 @@ STATIC int presolve_probetighten01(presolverec *psdata, int colnr)
     upLim = my_chsign(chsign, upLim);
 
     /* Does this constraint qualify for coefficient tightening? */
-    absvalue = fabs(value);
+    absvalue = std::fabs(value);
     if(upLim - absvalue < lp->orig_rhs[i]-epsvalue*MAX(1, absvalue)) {
       REAL delta = lp->orig_rhs[i] - upLim;
       lp->orig_rhs[i] = upLim;
@@ -2413,7 +2413,7 @@ STATIC MYBOOL presolve_reduceGCD(presolverec *psdata, int *nn, int *nb, int *nsu
     jx++;
     if(jx < je)
     for(; (jx < je) && (GCDvalue > 1); jx++) {
-      Rvalue = fabs(ROW_MAT_VALUE(jx));
+      Rvalue = std::fabs(ROW_MAT_VALUE(jx));
       GCDvalue = gcd((LLONG) Rvalue, GCDvalue, NULL, NULL);
     }
 
@@ -2428,7 +2428,7 @@ STATIC MYBOOL presolve_reduceGCD(presolverec *psdata, int *nn, int *nb, int *nsu
       }
       Rvalue = (lp->orig_rhs[i] / GCDvalue) + epsvalue;
       lp->orig_rhs[i] = floor(Rvalue);
-      Rvalue = fabs(lp->orig_rhs[i]-Rvalue);
+      Rvalue = std::fabs(lp->orig_rhs[i]-Rvalue);
       if(is_constr_type(lp, i, EQ) && (Rvalue > epsvalue)) {
         report(lp, NORMAL, "presolve_reduceGCD: Infeasible equality constraint %d\n", i);
         status = FALSE;
@@ -3057,25 +3057,25 @@ STATIC MYBOOL presolve_impliedcolfix(presolverec *psdata, int rownr, int colnr, 
     pivot = 0;
     for(ib = presolve_nextcol(psdata, rownr, &i); i != 0; ib = presolve_nextcol(psdata, rownr, &i)) {
       jx = ROW_MAT_COLNR(ib);
-      dual = fabs(ROW_MAT_VALUE(ib));
+      dual = std::fabs(ROW_MAT_VALUE(ib));
       /* Check if we have the target column and save the pivot value */
       if(jx == colnr) {
         /* Always accept unit coefficient */
-        if(fabs(dual - 1) < psdata->epsvalue)
+        if(std::fabs(dual - 1) < psdata->epsvalue)
           break;
         pivot = dual;
         /* Otherwise continue scan */
       }
       /* Cannot accept case where result can be fractional */
       else if((pivot > dual + psdata->epsvalue) ||
-               ((pivot > 0) && (fabs(fmod(dual, pivot)) > psdata->epsvalue)))
+               ((pivot > 0) && (std::fabs(fmod(dual, pivot)) > psdata->epsvalue)))
         return( FALSE );
     }
   }
 
   /* Ascertain that the pivot value is large enough to preserve stability */
   pivot = matAij;
-  if(fabs(pivot) < psdata->epspivot*mat->colmax[colnr])
+  if(std::fabs(pivot) < psdata->epspivot*mat->colmax[colnr])
     return( FALSE );
 
   /* Must ascertain that the row variables are not SOS'es; this is because
@@ -3377,7 +3377,7 @@ STATIC presolverec *presolve_init(lprec *lp)
         removeLink(psdata->INTmap, i);
         break;
       }
-      hold = fabs(ROW_MAT_VALUE(ix));
+      hold = std::fabs(ROW_MAT_VALUE(ix));
       hold = fmod(hold, 1);
       /* Adjust colnr to be a decimal scalar */
       for(k = 0; (k <= MAX_FRACSCALE) && (hold+psdata->epsvalue < 1); k++)
@@ -3392,7 +3392,7 @@ STATIC presolverec *presolve_init(lprec *lp)
       continue;
     hold = pow(10.0, colnr);
     /* Also disqualify if the RHS is fractional after scaling */
-    if(fabs(fmod(lp->orig_rhs[i] * hold, 1)) > psdata->epsvalue) {
+    if(std::fabs(fmod(lp->orig_rhs[i] * hold, 1)) > psdata->epsvalue) {
       removeLink(psdata->INTmap, i);
       continue;
     }
@@ -5468,11 +5468,11 @@ write_lp(lp, "test_in.lp");    /* Write to lp-formatted file for debugging */
   /* Update inf norms and check for potential factorization trouble */
   mat_computemax(mat /*, FALSE */);
 #if 0
-  Value1 = fabs(lp->negrange);
+  Value1 = std::fabs(lp->negrange);
   if(is_obj_in_basis(lp) && (mat->dynrange < Value1) && vec_computeext(lp->orig_obj, 1, lp->columns, TRUE, &i, &j)) {
 
     /* Compute relative scale metric */
-    Value2 = fabs(lp->orig_obj[j]/lp->orig_obj[i]) / mat->dynrange;
+    Value2 = std::fabs(lp->orig_obj[j]/lp->orig_obj[i]) / mat->dynrange;
     if(Value2 < 1.0)
       Value2 = 1.0 / Value2;
 

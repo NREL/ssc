@@ -17,6 +17,7 @@
 */
 
 #include <string.h>
+#include <cmath>
 
 #include "commonlib.h"
 #include "lp_lib.h"
@@ -77,7 +78,7 @@ MYBOOL crash_basis(lprec *lp)
         i++, rownr += matRowColStep, colnr += matRowColStep, value += matValueStep) {
       rx = *rownr;
       cx = *colnr;
-      wx = fabs(*value);
+      wx = std::fabs(*value);
       rowNZ[rx]++;
       colNZ[cx]++;
       if(i == 0) {
@@ -99,7 +100,7 @@ MYBOOL crash_basis(lprec *lp)
         i++, rownr += matRowColStep, colnr += matRowColStep, value += matValueStep) {
       rx = *rownr;
       cx = *colnr;
-      wx = fabs(*value);
+      wx = std::fabs(*value);
 #ifdef CRASH_SIMPLESCALE
       if(wx < CRASH_THRESHOLD * colMAX[0]) {
         rowNZ[rx]--;
@@ -175,7 +176,7 @@ MYBOOL crash_basis(lprec *lp)
       for(ii = mat->row_end[rx-1]; ii < mat->row_end[rx]; ii++) {
 
         /* Update NZ column counts for row selected above */
-        tx = fabs(ROW_MAT_VALUE(ii));
+        tx = std::fabs(ROW_MAT_VALUE(ii));
         ix = ROW_MAT_COLNR(ii);
 #ifdef CRASH_SIMPLESCALE
         if(tx >= CRASH_THRESHOLD * colMAX[0])
@@ -204,7 +205,7 @@ MYBOOL crash_basis(lprec *lp)
       value = &COL_MAT_VALUE(ii);
       for(; ii < mat->col_end[cx];
           ii++, rownr += matRowColStep, value += matValueStep) {
-        wx = fabs(*value);
+        wx = std::fabs(*value);
         ix = *rownr;
 #ifdef CRASH_SIMPLESCALE
         if(wx >= CRASH_THRESHOLD * colMAX[0])
@@ -299,7 +300,7 @@ Finish:
         ix = *rownr;
         hold = *value;
         eta[ix] = rhs[ix] / hold;
-        hold = fabs(hold);
+        hold = std::fabs(hold);
         if(isActiveLink(rowLL, ix) && (hold > wx)) {
           wx = hold;
           rx = ix;

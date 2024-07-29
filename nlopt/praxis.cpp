@@ -1,5 +1,5 @@
 /* See README */
-
+#include <cmath>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -320,7 +320,7 @@ L99:
 L105:
 	    ;
 	}
-	if (illc || df >= (d__1 = machep * 100 * global_1.fx, fabs(d__1))) {
+	if (illc || df >= (d__1 = machep * 100 * global_1.fx, std::fabs(d__1))) {
 	    goto L110;
 	}
 
@@ -740,7 +740,7 @@ L16:
 	    }
 	}
 L10:
-	y = (d__1 = q[i__], fabs(d__1)) + (d__2 = e[i__ - 1], fabs(d__2));
+	y = (d__1 = q[i__], std::fabs(d__1)) + (d__2 = e[i__ - 1], std::fabs(d__2));
 /* L11: */
 	if (y > x) {
 	    x = y;
@@ -807,13 +807,13 @@ L102:
 	for (ll2 = 1; ll2 <= i__3; ++ll2) {
 	    l2 = k - ll2 + 1;
 	    l = l2;
-	    if ((d__1 = e[l - 1], fabs(d__1)) <= eps) {
+	    if ((d__1 = e[l - 1], std::fabs(d__1)) <= eps) {
 		goto L120;
 	    }
 	    if (l == 1) {
 		goto L103;
 	    }
-	    if ((d__1 = q[l - 1], fabs(d__1)) <= eps) {
+	    if ((d__1 = q[l - 1], std::fabs(d__1)) <= eps) {
 		goto L110;
 	    }
 L103:
@@ -827,12 +827,12 @@ L110:
 	for (i__ = l; i__ <= i__3; ++i__) {
 	    f = s * e[i__ - 1];
 	    e[i__ - 1] = c__ * e[i__ - 1];
-	    if (fabs(f) <= eps) {
+	    if (std::fabs(f) <= eps) {
 		goto L120;
 	    }
 	    g = q[i__];
 /* ...Q(I) = H = DSQRT(G*G + F*F)... */
-	    if (fabs(f) < fabs(g)) {
+	    if (std::fabs(f) < std::fabs(g)) {
 		goto L113;
 	    }
 	    if (f != 0.) {
@@ -846,12 +846,12 @@ L111:
 L112:
 /* Computing 2nd power */
 	    d__1 = g / f;
-	    h__ = fabs(f) * sqrt(d__1 * d__1 + 1);
+	    h__ = std::fabs(f) * std::sqrt(d__1 * d__1 + 1);
 	    goto L114;
 L113:
 /* Computing 2nd power */
 	    d__1 = f / g;
-	    h__ = fabs(g) * sqrt(d__1 * d__1 + 1);
+	    h__ = std::fabs(g) * std::sqrt(d__1 * d__1 + 1);
 L114:
 	    q[i__] = h__;
 	    if (h__ != 0.) {
@@ -895,7 +895,7 @@ L120:
 	    y = q[i__];
 	    h__ = s * g;
 	    g *= c__;
-	    if (fabs(f) < fabs(h__)) {
+	    if (std::fabs(f) < std::fabs(h__)) {
 		goto L123;
 	    }
 	    if (f != 0.) {
@@ -909,12 +909,12 @@ L121:
 L122:
 /* Computing 2nd power */
 	    d__1 = h__ / f;
-	    z__ = fabs(f) * sqrt(d__1 * d__1 + 1);
+	    z__ = std::fabs(f) * std::sqrt(d__1 * d__1 + 1);
 	    goto L124;
 L123:
 /* Computing 2nd power */
 	    d__1 = f / h__;
-	    z__ = fabs(h__) * sqrt(d__1 * d__1 + 1);
+	    z__ = std::fabs(h__) * std::sqrt(d__1 * d__1 + 1);
 L124:
 	    e[i__ - 2] = z__;
 	    if (z__ != 0.) {
@@ -937,7 +937,7 @@ L125:
 /* L126: */
 		ab[j + i__ * ab_dim1] = -x * s + z__ * c__;
 	    }
-	    if (fabs(f) < fabs(h__)) {
+	    if (std::fabs(f) < std::fabs(h__)) {
 		goto L129;
 	    }
 	    if (f != 0.) {
@@ -951,12 +951,12 @@ L127:
 L128:
 /* Computing 2nd power */
 	    d__1 = h__ / f;
-	    z__ = fabs(f) * sqrt(d__1 * d__1 + 1);
+	    z__ = std::fabs(f) * std::sqrt(d__1 * d__1 + 1);
 	    goto L130;
 L129:
 /* Computing 2nd power */
 	    d__1 = f / h__;
-	    z__ = fabs(h__) * sqrt(d__1 * d__1 + 1);
+	    z__ = std::fabs(h__) * std::sqrt(d__1 * d__1 + 1);
 L130:
 	    q[i__ - 1] = z__;
 	    if (z__ != 0.) {
@@ -1069,7 +1069,7 @@ static nlopt_result min_(int n, int j, int nits, double *
     xm = *x1;
     fm = *f1;
 L2:
-    if (fk && fabs(*x1) >= t2) {
+    if (fk && std::fabs(*x1) >= t2) {
 	goto L3;
     }
     temp = 1.;
@@ -1158,7 +1158,7 @@ L13:
     fm = f2;
 /* ...GET A NEW ESTIMATE OF THE SECOND DERIVATIVE... */
 L14:
-    if ((d__1 = x2 * (x2 - *x1), fabs(d__1)) <= small) {
+    if ((d__1 = x2 * (x2 - *x1), std::fabs(d__1)) <= small) {
 	goto L15;
     }
     *d2 = (x2 * (*f1 - f0) - *x1 * (fm - f0)) / (*x1 * x2 * (*x1 - x2));

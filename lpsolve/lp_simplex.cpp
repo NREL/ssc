@@ -22,7 +22,7 @@
 
    ----------------------------------------------------------------------------------
 */
-
+#include <cmath>
 #include <string.h>
 #include "commonlib.h"
 #include "lp_lib.h"
@@ -176,7 +176,7 @@ STATIC MYBOOL stallMonitor_check(lprec *lp, int rownr, int colnr, int lastnr,
   /* Check if we have a stationary solution at selected tolerance level;
      allow some difference in case we just refactorized the basis. */
   deltaobj = my_reldiff(monitor->thisobj, monitor->prevobj);
-  deltaobj = fabs(deltaobj); /* Pre v5.2 version */
+  deltaobj = std::fabs(deltaobj); /* Pre v5.2 version */
   isStalled = (MYBOOL) (deltaobj < monitor->epsvalue);
 
   /* Also require that we have a measure of infeasibility-stalling */
@@ -1215,7 +1215,7 @@ RetryRow:
          /* Verify numeric accuracy of the basis factorization and change to
             the "theoretically" correct version of the theta */
           if((lp->improve & IMPROVE_THETAGAP) && !refactRecent(lp) &&
-             (my_reldiff(fabs(theta), fabs(prow[colnr])) >
+             (my_reldiff(std::fabs(theta), std::fabs(prow[colnr])) >
               lp->epspivot*10.0*log(2.0+50.0*lp->rows))) {  /* This is my kludge - KE */
             set_action(&lp->spx_action, ACTION_REINVERT);
             bfpfinal = TRUE;

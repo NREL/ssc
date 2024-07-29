@@ -2,7 +2,7 @@
    Original Fortran code by Powell (2009).  Converted via v2c,
    cleaned up, and incorporated into NLopt by S. G. Johnson (2009).
    See README. */
-
+#include <cmath>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -62,7 +62,7 @@ static void update_(int *n, int *npt, double *bmat,
 	for (j = 1; j <= i__2; ++j) {
 /* L10: */
 /* Computing MAX */
-	    d__2 = ztest, d__3 = (d__1 = zmat[k + j * zmat_dim1], fabs(d__1));
+	    d__2 = ztest, d__3 = (d__1 = zmat[k + j * zmat_dim1], std::fabs(d__1));
 	    ztest = MAX2(d__2,d__3);
 	}
     }
@@ -73,7 +73,7 @@ static void update_(int *n, int *npt, double *bmat,
     jl = 1;
     i__2 = nptm;
     for (j = 2; j <= i__2; ++j) {
-	if ((d__1 = zmat[*knew + j * zmat_dim1], fabs(d__1)) > ztest) {
+	if ((d__1 = zmat[*knew + j * zmat_dim1], std::fabs(d__1)) > ztest) {
 /* Computing 2nd power */
 	    d__1 = zmat[*knew + zmat_dim1];
 /* Computing 2nd power */
@@ -312,8 +312,8 @@ static nlopt_result rescue_(int *n, int *npt, const double *xl, const double *xu
 	    ptsaux[(j << 1) + 1] = ptsaux[(j << 1) + 2];
 	    ptsaux[(j << 1) + 2] = temp;
 	}
-	if ((d__2 = ptsaux[(j << 1) + 2], fabs(d__2)) < half * (d__1 = ptsaux[(
-		j << 1) + 1], fabs(d__1))) {
+	if ((d__2 = ptsaux[(j << 1) + 2], std::fabs(d__2)) < half * (d__1 = ptsaux[(
+		j << 1) + 1], std::fabs(d__1))) {
 	    ptsaux[(j << 1) + 2] = half * ptsaux[(j << 1) + 1];
 	}
 	i__2 = *ndim;
@@ -341,8 +341,8 @@ static nlopt_result rescue_(int *n, int *npt, const double *xl, const double *xu
 	    bmat[jpn + j * bmat_dim1] = temp + one / ptsaux[(j << 1) + 2];
 	    bmat[j * bmat_dim1 + 1] = -bmat[jp + j * bmat_dim1] - bmat[jpn + 
 		    j * bmat_dim1];
-	    zmat[j * zmat_dim1 + 1] = sqrt(2.) / (d__1 = ptsaux[(j << 1) + 1] 
-		    * ptsaux[(j << 1) + 2], fabs(d__1));
+	    zmat[j * zmat_dim1 + 1] = std::sqrt(2.) / (d__1 = ptsaux[(j << 1) + 1]
+		    * ptsaux[(j << 1) + 2], std::fabs(d__1));
 	    zmat[jp + j * zmat_dim1] = zmat[j * zmat_dim1 + 1] * ptsaux[(j << 
 		    1) + 2] * temp;
 	    zmat[jpn + j * zmat_dim1] = -zmat[j * zmat_dim1 + 1] * ptsaux[(j 
@@ -423,7 +423,7 @@ L80:
 	i__2 = *npt;
 	for (k = 1; k <= i__2; ++k) {
 /* L110: */
-	    w[*ndim + k] = (d__1 = w[*ndim + k], fabs(d__1));
+	    w[*ndim + k] = (d__1 = w[*ndim + k], std::fabs(d__1));
 	}
     }
 
@@ -929,7 +929,7 @@ static void altmov_(int *n, int *npt, double *xpt,
 	    vlag = slbd * (dderiv - slbd * diff);
 	    isbd = ilbd;
 	    temp = subd * (dderiv - subd * diff);
-	    if (fabs(temp) > fabs(vlag)) {
+	    if (std::fabs(temp) > std::fabs(vlag)) {
 		step = subd;
 		vlag = temp;
 		isbd = iubd;
@@ -939,7 +939,7 @@ static void altmov_(int *n, int *npt, double *xpt,
 	    tempb = tempd - diff * subd;
 	    if (tempa * tempb < zero) {
 		temp = tempd * tempd / diff;
-		if (fabs(temp) > fabs(vlag)) {
+		if (std::fabs(temp) > std::fabs(vlag)) {
 		    step = tempd / diff;
 		    vlag = temp;
 		    isbd = 0;
@@ -953,13 +953,13 @@ static void altmov_(int *n, int *npt, double *xpt,
 	    vlag = slbd * (one - slbd);
 	    isbd = ilbd;
 	    temp = subd * (one - subd);
-	    if (fabs(temp) > fabs(vlag)) {
+	    if (std::fabs(temp) > std::fabs(vlag)) {
 		step = subd;
 		vlag = temp;
 		isbd = iubd;
 	    }
 	    if (subd > half) {
-		if (fabs(vlag) < .25) {
+		if (std::fabs(vlag) < .25) {
 		    step = half;
 		    vlag = .25;
 		    isbd = 0;
@@ -2623,7 +2623,7 @@ L360:
     diff = f - fopt - vquad;
     diffc = diffb;
     diffb = diffa;
-    diffa = fabs(diff);
+    diffa = std::fabs(diff);
     if (dnorm > rho) {
 	nfsav = stop->nevals;
     }
@@ -3110,7 +3110,7 @@ nlopt_result bobyqa(int n, int npt, double *x,
     xu = sxu;
     nlopt_reorder_bounds(n, sxl, sxu);
 
-    rhobeg = fabs(dx[0] / s[0]); /* equals all other dx[i] after rescaling */
+    rhobeg = std::fabs(dx[0] / s[0]); /* equals all other dx[i] after rescaling */
 
     calfun_data.s = s;
     calfun_data.xs = xs;
@@ -3120,8 +3120,8 @@ nlopt_result bobyqa(int n, int npt, double *x,
     /* SGJ, 2009: compute rhoend from NLopt stop info */
     rhoend = stop->xtol_rel * (rhobeg);
     for (j = 0; j < n; ++j)
-	 if (rhoend < stop->xtol_abs[j] / fabs(s[j]))
-	      rhoend = stop->xtol_abs[j] / fabs(s[j]);
+	 if (rhoend < stop->xtol_abs[j] / std::fabs(s[j]))
+	      rhoend = stop->xtol_abs[j] / std::fabs(s[j]);
 
 
 /*     This subroutine seeks the least value of a function of many variables, */

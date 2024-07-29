@@ -19,7 +19,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. 
  */
-
+#include <cmath>
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -38,7 +38,7 @@ static int p_compare(void *dx_, const void *i_, const void *j_)
 {
      const double *dx = (const double *) dx_;
      int i = *((const int *) i_), j = *((const int *) j_);
-     double dxi = fabs(dx[i]), dxj = fabs(dx[j]);
+     double dxi = std::fabs(dx[i]), dxj = std::fabs(dx[j]);
      return (dxi > dxj ? -1 : (dxi < dxj ? +1 : 0));
 }
 
@@ -119,17 +119,17 @@ nlopt_result sbplx_minimize(int n, nlopt_func f, void *f_data,
 	  nlopt_qsort_r(p, (size_t) n, sizeof(int), dx, p_compare);
 
 	  /* find the subspaces, and perform nelder-mead on each one */
-	  for (i = 0; i < n; ++i) normdx += fabs(dx[i]); /* L1 norm */
+	  for (i = 0; i < n; ++i) normdx += std::fabs(dx[i]); /* L1 norm */
 	  for (i = 0; i + nsmin < n; i += ns) {
 	       /* find subspace starting at index i */
 	       int k, nk;
 	       double ns_goodness = -HUGE_VAL, norm = normi;
 	       nk = i+nsmax > n ? n : i+nsmax; /* max k for this subspace */
-	       for (k = i; k < i+nsmin-1; ++k) norm += fabs(dx[p[k]]);
+	       for (k = i; k < i+nsmin-1; ++k) norm += std::fabs(dx[p[k]]);
 	       ns = nsmin;
 	       for (k = i+nsmin-1; k < nk; ++k) {
 		    double goodness;
-		    norm += fabs(dx[p[k]]);
+		    norm += std::fabs(dx[p[k]]);
 		    /* remaining subspaces must be big enough to partition */
 		    if (n-(k+1) < nsmin) continue;
 		    /* maximize figure of merit defined by Rowan thesis:
@@ -143,7 +143,7 @@ nlopt_result sbplx_minimize(int n, nlopt_func f, void *f_data,
 			 ns = (k+1)-i;
 		    }
 	       }
-	       for (k = i; k < i+ns; ++k) normi += fabs(dx[p[k]]);
+	       for (k = i; k < i+ns; ++k) normi += std::fabs(dx[p[k]]);
 	       /* do nelder-mead on subspace of dimension ns starting w/i */
 	       sd.is = i;
 	       for (k = i; k < i+ns; ++k) {
@@ -197,8 +197,8 @@ nlopt_result sbplx_minimize(int n, nlopt_func f, void *f_data,
 		  the step size is too large (in early iterations),
 		  the inner Nelder-Mead may not make much progress */
 	       for (j = 0; j < n; ++j)
-		    if (fabs(xstep[j]) * psi > stop->xtol_abs[j]
-			&& fabs(xstep[j]) * psi > stop->xtol_rel * fabs(x[j]))
+		    if (std::fabs(xstep[j]) * psi > stop->xtol_abs[j]
+			&& std::fabs(xstep[j]) * psi > stop->xtol_rel * std::fabs(x[j]))
 			 break;
 	       if (j == n) {
 		    ret = NLOPT_XTOL_REACHED;
@@ -217,8 +217,8 @@ nlopt_result sbplx_minimize(int n, nlopt_func f, void *f_data,
 	       else {
 		    double stepnorm = 0, dxnorm = 0;
 		    for (i = 0; i < n; ++i) {
-			 stepnorm += fabs(xstep[i]);
-			 dxnorm += fabs(dx[i]);
+			 stepnorm += std::fabs(xstep[i]);
+			 dxnorm += std::fabs(dx[i]);
 		    }
 		    scale = dxnorm / stepnorm;
 		    if (scale < omega) scale = omega;
