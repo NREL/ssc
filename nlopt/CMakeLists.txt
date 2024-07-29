@@ -51,9 +51,9 @@ set(NLOPT_SRC
 )
 
 if(MSVC)
-	list( APPEND NLOPT_SRC sys/time.cpp timer.cpp)
+	list( APPEND NLOPT_SRC sys/time.cpp timer.c)
 else()
-	list( APPEND NLOPT_SRC timer.cpp)
+	list( APPEND NLOPT_SRC timer.c)
 endif()
 
 
