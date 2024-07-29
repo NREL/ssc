@@ -2285,9 +2285,9 @@ public:
 			- cbi_uti_amount
 			- cbi_oth_amount;
 
-        // Installed costs and construction costs can be claimed in the basis, but reserves are not
-        // TODO: Realign with new understanding of allowable costs: https://github.com/NREL/SAM/issues/1803
-        pre_depr_alloc_basis = cost_prefinancing + cost_financing;
+        // Installed costs and construction costs, developer fees, and legal fees can be claimed in the basis, but reserves and financing fees cannot
+        // See https://github.com/NREL/SAM/issues/1803 and linked issues for more details
+        pre_depr_alloc_basis = cost_prefinancing + constr_total_financing + cost_other_financing;
 
         // Basis reductions are handled in depr_fed_reduction and depr_sta_reduction
 
