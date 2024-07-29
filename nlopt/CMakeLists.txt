@@ -12,48 +12,48 @@ endif()
 include_directories(.)
 
 set(NLOPT_SRC
-	auglag.c
-	bobyqa.c
-	ccsa_quadratic.c
-	cdirect.c
-	cobyla.c
-	crs.c
-	deprecated.c
-	DIRect.c
-	direct_wrap.c
-	DIRserial.c
-	DIRsubrout.c
-	esch.c
-	general.c
-	hybrid.c
-	isres.c
-	mlsl.c
-	mma.c
-	mssubs.c
-	mt19937ar.c
-	newuoa.c
-	nldrmd.c
-	optimize.c
-	options.c
-	plip.c
-	plis.c
-	pnet.c
-	praxis.c
-	pssubs.c
-	qsort_r.c
-	redblack.c
-	rescale.c
-	sbplx.c
-	slsqp.c
-	sobolseq.c
-	stop.c
+	auglag.cpp
+	bobyqa.cpp
+	ccsa_quadratic.cpp
+	cdirect.cpp
+	cobyla.cpp
+	crs.cpp
+	deprecated.cpp
+	DIRect.cpp
+	direct_wrap.cpp
+	DIRserial.cpp
+	DIRsubrout.cpp
+	esch.cpp
+	general.cpp
+	hybrid.cpp
+	isres.cpp
+	mlsl.cpp
+	mma.cpp
+	mssubs.cpp
+	mt19937ar.cpp
+	newuoa.cpp
+	nldrmd.cpp
+	optimize.cpp
+	options.cpp
+	plip.cpp
+	plis.cpp
+	pnet.cpp
+	praxis.cpp
+	pssubs.cpp
+	qsort_r.cpp
+	redblack.cpp
+	rescale.cpp
+	sbplx.cpp
+	slsqp.cpp
+	sobolseq.cpp
+	stop.cpp
 
 )
 
 if(MSVC)
-	list( APPEND NLOPT_SRC sys/time.cpp timer.c)
+	list( APPEND NLOPT_SRC sys/time.cpp timer.cpp)
 else()
-	list( APPEND NLOPT_SRC timer.c)
+	list( APPEND NLOPT_SRC timer.cpp)
 endif()
 
 
