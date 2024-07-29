@@ -451,7 +451,7 @@ STATIC int get_artificialRow(lprec *lp, int colnr)
   MATrec *mat = lp->matA;
 
 #ifdef Paranoia
-  if((colnr <= lp->columns-abs(lp->P1extraDim)) || (colnr > lp->columns))
+  if((colnr <= lp->columns- std::abs(lp->P1extraDim)) || (colnr > lp->columns))
     report(lp, SEVERE, "get_artificialRow: Invalid column index %d\n", colnr);
   if(mat->col_end[colnr] - mat->col_end[colnr-1] != 1)
     report(lp, SEVERE, "get_artificialRow: Invalid column non-zero count\n");
@@ -467,7 +467,7 @@ STATIC int findAnti_artificial(lprec *lp, int colnr)
 /* Primal simplex: Find a basic artificial variable to swap
    against the non-basic slack variable, if possible */
 {
-  int    i, k, rownr = 0, P1extraDim = abs(lp->P1extraDim);
+  int    i, k, rownr = 0, P1extraDim = std::abs(lp->P1extraDim);
 
   if((P1extraDim == 0) || (colnr > lp->rows) || !lp->is_basic[colnr])
     return( rownr );
@@ -488,7 +488,7 @@ STATIC int findAnti_artificial(lprec *lp, int colnr)
 
 STATIC int findBasicArtificial(lprec *lp, int before)
 {
-  int i = 0, P1extraDim = abs(lp->P1extraDim);
+  int i = 0, P1extraDim = std::abs(lp->P1extraDim);
 
   if(P1extraDim > 0) {
     if(before > lp->rows || before <= 1)
@@ -505,7 +505,7 @@ STATIC int findBasicArtificial(lprec *lp, int before)
 
 STATIC void eliminate_artificials(lprec *lp, REAL *prow)
 {
-  int   i, j, colnr, rownr, P1extraDim = abs(lp->P1extraDim);
+  int   i, j, colnr, rownr, P1extraDim = std::abs(lp->P1extraDim);
 
   for(i = 1; (i <= lp->rows) && (P1extraDim > 0); i++) {
     j = lp->var_basic[i];
@@ -532,7 +532,7 @@ STATIC void clear_artificials(lprec *lp)
 
   /* Substitute any basic artificial variable for its slack counterpart */
   n = 0;
-  P1extraDim = abs(lp->P1extraDim);
+  P1extraDim = std::abs(lp->P1extraDim);
   for(i = 1; (i <= lp->rows) && (n < P1extraDim); i++) {
     j = lp->var_basic[i];
     if(j <= lp->sum-P1extraDim)
@@ -916,7 +916,7 @@ Optimality:
       /* Detect if an auxiliary variable has left the basis and delete it; if
          the non-basic variable only changed bound (a "minor iteration"), the
          basic artificial variable did not leave and there is nothing to do */
-      if((minit == ITERATE_MAJORMAJOR) && (lastnr > lp->sum - abs(lp->P1extraDim))) {
+      if((minit == ITERATE_MAJORMAJOR) && (lastnr > lp->sum - std::abs(lp->P1extraDim))) {
 #ifdef Paranoia
         if(lp->is_basic[lastnr] || !lp->is_basic[colnr])
           report(lp, SEVERE, "primloop: Invalid basis indicator for variable %d at iter %10.0f.\n",
@@ -948,7 +948,7 @@ Optimality:
   }
 
   /* Remove any remaining artificial variables (feasible or infeasible model) */
-  lp->P1extraDim = abs(lp->P1extraDim);
+  lp->P1extraDim = std::abs(lp->P1extraDim);
 /*  if((lp->P1extraDim > 0) && (lp->spx_status != DEGENERATE)) { */
   if(lp->P1extraDim > 0) {
     clear_artificials(lp);

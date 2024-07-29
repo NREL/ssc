@@ -1540,7 +1540,7 @@ STATIC int presolve_rowtighten(presolverec *psdata, int rownr, int *tally, MYBOO
   ix = 0;
   while(ix < idxn) {
     jjx = idxbound[ix];
-    jx = abs(jjx);
+    jx = std::abs(jjx);
 
     /* Skip free variables and non-ints, if specified */
     if(is_unbounded(lp, jx) ||
@@ -1549,8 +1549,8 @@ STATIC int presolve_rowtighten(presolverec *psdata, int rownr, int *tally, MYBOO
 
     VARlo = get_lowbo(lp, jx);
     VARup = get_upbo(lp, jx);
-    /* while((ix < idxn) && (jx == abs(jjx))) { */
-    while((ix < idxn) && (jx == abs((jjx = idxbound[ix])))) {
+    /* while((ix < idxn) && (jx == std::abs(jjx))) { */
+    while((ix < idxn) && (jx == std::abs((jjx = idxbound[ix])))) {
       if(jjx < 0)
         VARlo = newbound[ix];
       else
@@ -2409,7 +2409,7 @@ STATIC MYBOOL presolve_reduceGCD(presolverec *psdata, int *nn, int *nb, int *nsu
     jx = mat->row_end[i - 1];
     je = mat->row_end[i];
     Rvalue = ROW_MAT_VALUE(jx);
-    GCDvalue = abs((int) Rvalue);
+    GCDvalue = std::abs((int) Rvalue);
     jx++;
     if(jx < je)
     for(; (jx < je) && (GCDvalue > 1); jx++) {
@@ -4536,7 +4536,7 @@ STATIC int presolve_makesparser(presolverec *psdata, int *nCoeffChanged, int *nC
   for(ix = firstActiveLink(EQlist); ix != 0; ) {
 
     /* Get row starting and ending positions of the mask */
-    ii = abs(QS[ix-1].int4.intval);
+    ii = std::abs(QS[ix-1].int4.intval);
     jjb = QS[ix-1].int4.intpar1;
     jje = presolve_lastcol(psdata, ii);
     jje = ROW_MAT_COLNR(jje);
@@ -4594,7 +4594,7 @@ STATIC int presolve_makesparser(presolverec *psdata, int *nCoeffChanged, int *nC
     for(ib = 1; ib < ix; ib++) {
 
       /* Get row starting and ending positions of the target constraint */
-      i  = abs(QS[ib-1].int4.intval);
+      i  = std::abs(QS[ib-1].int4.intval);
       jb = QS[ib-1].int4.intpar1;
       je = presolve_lastcol(psdata, i);
       je = ROW_MAT_COLNR(je);

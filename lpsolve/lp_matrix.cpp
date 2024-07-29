@@ -293,7 +293,7 @@ STATIC int mat_shiftrows(MATrec *mat, int *bbase, int delta, LLrec *varmap)
 
   if(delta == 0)
     return( 0 );
-  base = abs(*bbase);
+  base = std::abs(*bbase);
 
   if(delta > 0) {
 
@@ -673,7 +673,7 @@ STATIC int mat_shiftcols(MATrec *mat, int *bbase, int delta, LLrec *varmap)
   k = 0;
   if(delta == 0)
     return( k );
-  base = abs(*bbase);
+  base = std::abs(*bbase);
 
   if(delta > 0) {
     /* Shift pointers right */
@@ -3245,7 +3245,7 @@ STATIC MYBOOL get_colIndexA(lprec *lp, int varset, int *colindex, MYBOOL append)
 
   /* Find what variable range to scan - default is {SCAN_USERVARS} */
   /* First determine the starting position; add from the top, going down */
-  P1extraDim = abs(lp->P1extraDim);
+  P1extraDim = std::abs(lp->P1extraDim);
   vb = nrows + 1;
   if(varset & SCAN_ARTIFICIALVARS)
     vb = nsum - P1extraDim + 1;

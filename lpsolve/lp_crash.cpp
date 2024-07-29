@@ -538,7 +538,7 @@ MYBOOL __WINAPI guess_basis(lprec *lp, REAL *guessvector, int *basisvector)
   slkpos = (int *) violation;
   MEMCLEAR(slkpos, nrows+1);
   for(i = 1; i <= nrows; i++) {
-    j = abs(basisvector[i]);
+    j = std::abs(basisvector[i]);
     if(j <= nrows) {
       isnz[j] = TRUE;
       slkpos[j] = i;
@@ -551,7 +551,7 @@ MYBOOL __WINAPI guess_basis(lprec *lp, REAL *guessvector, int *basisvector)
     }
   }
   for(; i <= lp->sum; i++) {
-    j = abs(basisvector[i]);
+    j = std::abs(basisvector[i]);
     if(j <= nrows)
       slkpos[j] = i;
   }
@@ -566,7 +566,7 @@ MYBOOL __WINAPI guess_basis(lprec *lp, REAL *guessvector, int *basisvector)
       isnz[j] = TRUE;
       i = slkpos[j];
       swapINT(&basisvector[i], &basisvector[j]);
-      basisvector[j] = abs(basisvector[j]);
+      basisvector[j] = std::abs(basisvector[j]);
     }
   }
 #endif
@@ -682,7 +682,7 @@ MYBOOL __WINAPI guess_basis(lprec *lp, REAL *guessvector, int *basisvector)
   slkpos = (int *) violation;
   MEMCLEAR(slkpos, nrows+1);
   for(i = 1; i <= nrows; i++) {
-    j = abs(basisvector[i]);
+    j = std::abs(basisvector[i]);
     if(j <= nrows) {
       isnz[j] = TRUE;
       slkpos[j] = i;
@@ -696,7 +696,7 @@ MYBOOL __WINAPI guess_basis(lprec *lp, REAL *guessvector, int *basisvector)
     }
   }
   for(; i <= lp->sum; i++) {
-    j = abs(basisvector[i]);
+    j = std::abs(basisvector[i]);
     if(j <= nrows)
       slkpos[j] = i;
   }
@@ -711,7 +711,7 @@ MYBOOL __WINAPI guess_basis(lprec *lp, REAL *guessvector, int *basisvector)
       isnz[j] = TRUE;
       i = slkpos[j];
       swapINT(&basisvector[i], &basisvector[j]);
-      basisvector[j] = abs(basisvector[j]);
+      basisvector[j] = std::abs(basisvector[j]);
     }
   }
 
@@ -806,7 +806,7 @@ MYBOOL __WINAPI guess_basis(lprec *lp, REAL *guessvector, int *basisvector)
   isnz = (MYBOOL *) (slkpos+n+1);
   MEMCLEAR(isnz, n);
   for(i = 1; i <= nrows; i++) {
-    j = abs(basisvector[i]);
+    j = std::abs(basisvector[i]);
     if(j <= nrows) {
       isnz[j] = TRUE;
       slkpos[j] = i;
@@ -819,7 +819,7 @@ MYBOOL __WINAPI guess_basis(lprec *lp, REAL *guessvector, int *basisvector)
     }
   }
   for(; i <= nsum; i++) {
-    j = abs(basisvector[i]);
+    j = std::abs(basisvector[i]);
     if(j <= nrows)
       slkpos[j] = i;
   }
@@ -832,7 +832,7 @@ MYBOOL __WINAPI guess_basis(lprec *lp, REAL *guessvector, int *basisvector)
       isnz[j] = TRUE;
       i = slkpos[j];
       swapINT(&basisvector[i], &basisvector[j]);
-      basisvector[j] = abs(basisvector[j]);
+      basisvector[j] = std::abs(basisvector[j]);
     }
   }
 

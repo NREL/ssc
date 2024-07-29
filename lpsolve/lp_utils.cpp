@@ -504,21 +504,21 @@ STATIC int searchFor(int target, int *attributes, int size, int offset, MYBOOL a
   newPos = (beginPos + endPos) / 2;
   match = attributes[newPos];
   if(absolute)
-    match = abs(match);
+    match = std::abs(match);
   while(endPos - beginPos > LINEARSEARCH) {
     if(match < target) {
       beginPos = newPos + 1;
       newPos = (beginPos + endPos) / 2;
       match = attributes[newPos];
       if(absolute)
-        match = abs(match);
+        match = std::abs(match);
     }
     else if(match > target) {
       endPos = newPos - 1;
       newPos = (beginPos + endPos) / 2;
       match = attributes[newPos];
       if(absolute)
-        match = abs(match);
+        match = std::abs(match);
     }
     else {
       beginPos = newPos;
@@ -530,12 +530,12 @@ STATIC int searchFor(int target, int *attributes, int size, int offset, MYBOOL a
   if(endPos - beginPos <= LINEARSEARCH) {
     match = attributes[beginPos];
     if(absolute)
-      match = abs(match);
+      match = std::abs(match);
       while((beginPos < endPos) && (match != target)) {
         beginPos++;
         match = attributes[beginPos];
         if(absolute)
-          match = abs(match);
+          match = std::abs(match);
       }
       if(match == target)
         endPos = beginPos;
@@ -1026,7 +1026,7 @@ STATIC MYBOOL unpackPackedVector(PVrec *PV, REAL **target)
 STATIC REAL getvaluePackedVector(PVrec *PV, int index)
 {
   index = searchFor(index, PV->startpos, PV->count, 0, FALSE);
-  index = abs(index)-1;
+  index = std::abs(index)-1;
   if(index >= 0)
     return( PV->value[index] );
   else

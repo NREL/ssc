@@ -1136,7 +1136,7 @@ STATIC MYBOOL findnode_BB(BBrec *BB, int *varno, int *vartype, int *varcus)
     /* Check if we have reached the depth limit for any individual variable
       (protects against infinite recursions of mainly integer variables) */
     k = *varno-lp->rows;
-    if((*varno > 0) && (lp->bb_limitlevel != 0) && (lp->bb_varactive[k] >= abs(lp->bb_limitlevel) /* abs(DEF_BB_LIMITLEVEL) */)) {
+    if((*varno > 0) && (lp->bb_limitlevel != 0) && (lp->bb_varactive[k] >= std::abs(lp->bb_limitlevel) /* abs(DEF_BB_LIMITLEVEL) */)) {
       /* if(!is_action(lp->nomessage, NOMSG_BBLIMIT)) {*/
 /*
         report(lp, IMPORTANT, "findnode_BB: Reached B&B depth limit %d for variable %d; will not dive further.\n\n",

@@ -6084,7 +6084,7 @@ char * __WINAPI get_origrow_name(lprec *lp, int rownr)
   char   *ptr;
 
   newrow = (MYBOOL) (rownr < 0);
-  rownr = abs(rownr);
+  rownr = std::abs(rownr);
 #ifdef Paranoia
   if(((lp->presolve_undo->var_to_orig == NULL) && newrow) ||
      (rownr > MAX(lp->rows, lp->presolve_undo->orig_rows))) {
@@ -6153,7 +6153,7 @@ char * __WINAPI get_origcol_name(lprec *lp, int colnr)
   char   *ptr;
 
   newcol = (MYBOOL) (colnr < 0);
-  colnr = abs(colnr);
+  colnr = std::abs(colnr);
 #ifdef Paranoia
   if(((lp->presolve_undo->var_to_orig == NULL) && newcol) ||
      (colnr > MAX(lp->columns, lp->presolve_undo->orig_columns))) {
@@ -6966,7 +6966,7 @@ MYBOOL __WINAPI set_basis(lprec *lp, int *bascolumn, MYBOOL nonbasic)   /* Added
     n = lp->rows;
   for(i = 1; i <= n; i++) {
     s = bascolumn[i];
-    k = abs(s);
+    k = std::abs(s);
     if(k <= 0 || k > lp->sum)
       return( FALSE );
     if(i <= lp->rows) {
