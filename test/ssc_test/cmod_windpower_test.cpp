@@ -456,6 +456,12 @@ TEST_F(CMWindPowerIntegration, IcingAndLowTempCutoff_cmod_windpower) {
     ssc_data_get_number(data, "cutoff_losses", &losses_percent);
     EXPECT_NEAR(losses_percent, 0.5, 0.01);
 
+    //now test the persistence feature
+    vt->assign("icing_persistence_timesteps", 100);
+    compute();
+    ssc_data_get_number(data, "cutoff_losses", &losses_percent);
+    EXPECT_NEAR(losses_percent, 1, 0.01);
+
     free_winddata_array(windresourcedata);
 }
 
