@@ -1354,6 +1354,8 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
         referenceArea = elevenParamSingleDiodeModel.Area;
         selfShadingFillFactor = elevenParamSingleDiodeModel.Vmp0 * elevenParamSingleDiodeModel.Imp0 / elevenParamSingleDiodeModel.Voc0 / elevenParamSingleDiodeModel.Isc0;
         voltageMaxPower = elevenParamSingleDiodeModel.Vmp0;
+
+        groundClearanceHeight = 1.0; //No input as there is no bifacial option for IEC 61853 model
     }
     else if (modulePowerModel == MODULE_PVYIELD)
     {
