@@ -1,3 +1,14 @@
+/********************************************************************************************************************************************
+
+Note
+-------------
+The version of nlopt included in this repository has been modified as follows:
+1. The original .c files have been modified to .cpp files to facilitate the use of c++ std library functions for abs, fabs, sqrt, etc.
+2. The nlopt specific file modifications can be found at https://github.com/NREL/ssc/commits/patch/nlopt
+
+The original version of nlopt can be found at https://github.com/stevengj/nlopt
+
+********************************************************************************************************************************************/
 /* Copyright (c) 2004 M. J. D. Powell (mjdp@cam.ac.uk)
  * Copyright (c) 2007-2012 Massachusetts Institute of Technology
  *

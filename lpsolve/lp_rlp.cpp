@@ -1,3 +1,14 @@
+/********************************************************************************************************************************************
+
+Note
+-------------
+The version of lp_solve included in this repository has been modified as follows:
+1. The original .c files have been modified to .cpp files to facilitate the use of c++ std library functions for abs, fabs, sqrt, etc.
+2. The lp_solve specific file modifications can be found at https://github.com/NREL/ssc/commits/patch/lpsolve
+
+The original version of lp_solve can be found at https://sourceforge.net/projects/lpsolve/
+
+********************************************************************************************************************************************/
 /* A Bison parser, made by GNU Bison 2.3.  */
 
 /* Skeleton implementation for Bison's Yacc-like parsers in C
