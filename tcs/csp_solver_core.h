@@ -1864,6 +1864,8 @@ public:
         C_CR_DF__PC_MAX__TES_OFF__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
             C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__TO_PC__PC_MAX, C_MEQ__timestep::E_STEP_FIXED,
             true, "CR_DF__PC_MAX__TES_OFF__AUX_OFF", QUIETNAN, false) {}
+
+        void handle_solve_error(double time /*hr*/, bool& is_rec_su_unchanged);
     };
 
     class C_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF : public C_operating_mode_core

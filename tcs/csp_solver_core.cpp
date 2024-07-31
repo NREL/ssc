@@ -2387,6 +2387,12 @@ void C_csp_solver::C_CR_DF__PC_MAX__TES_FULL__AUX_OFF::handle_solve_error(double
     is_turn_off_rec_su = true;
 }
 
+void C_csp_solver::C_CR_DF__PC_MAX__TES_OFF__AUX_OFF::handle_solve_error(double time /*hr*/, bool& is_turn_off_rec_su)
+{
+    m_is_mode_available = false;
+    is_turn_off_rec_su = true;
+}
+
 void C_csp_solver::C_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF::handle_solve_error(double time /*hr*/, bool& is_turn_off_rec_su)
 {
     m_is_HI_SIDE_mode_available = false;
