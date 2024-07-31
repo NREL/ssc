@@ -34,7 +34,7 @@ CMAKE_DEPENDENT_OPTION(USE_XPRESS "Adds support for the XPRESS Solver" OFF "NOT 
 #
 
 if(APPLE)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum OS X deployment version")
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "12" CACHE STRING "Minimum OS X deployment version")
 endif()
 
 if (UNIX AND NOT CMAKE_C_COMPILER)
@@ -114,7 +114,7 @@ function(set_default_compile_options target)
         endif()
     endif()
     if (SAMAPI_EXPORT AND APPLE)
-        SET(MAIN_CFLAGS "${MAIN_CFLAGS} -mmacosx-version-min=10.15" )
+        SET(MAIN_CFLAGS "${MAIN_CFLAGS} -mmacosx-version-min=12" )
     endif()
     set_target_properties(${target} PROPERTIES COMPILE_FLAGS ${MAIN_CFLAGS})
 endfunction()

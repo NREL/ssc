@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_battery_capacity.h"
 
 double low_tolerance = 0.01;
-double tolerance = 0.002;
+double tolerance = 0.002; // Used for capacity calcs. Please use powerflow_tolerance for units of kW
 
 /*
 Define Capacity Model

@@ -70,7 +70,8 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
     // Use existing PV size for economic runs, allow REopt to return PV size for grid outage runs
     if (!size_for_grid_outage) {
         // use existing pv system from SAM, not allowing additional PV
-        map_input(vt, "system_capacity", &reopt_pv, "existing_kw");
+        // do not specify both 'existing_kw' and 'max_kw' per https://github.com/NREL/SAM/issues/1742#issuecomment-2125878338
+        //map_input(vt, "system_capacity", &reopt_pv, "existing_kw");
         map_input(vt, "system_capacity", &reopt_pv, "max_kw");
     }
     map_optional_input(vt, "degradation", &reopt_pv, "degradation_pct", 0.5, true);
@@ -232,6 +233,11 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
         reopt_utility.assign("outage_start_time_steps", outage_start_times);
         reopt_utility.assign("outage_durations", outage_durations);
     }
+
+    // set net metering limit to system capacity per https://github.com/NREL/SAM/issues/1742
+    vd = vt->lookup("ur_metering_option");
+    if ((int)vd->num[0] == 0) // net metering
+        reopt_utility.assign("net_metering_limit_kw", system_cap);
 
     // assign the reopt parameter table and log messages
     reopt_table->assign_match_case("PV", reopt_pv);

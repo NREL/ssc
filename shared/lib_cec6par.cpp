@@ -44,7 +44,7 @@ static const double KB = 8.618e-5; // Boltzmann constant [eV/K] note units
 static const double k_air=0.02676, mu_air=1.927E-5, Pr_air=0.724;  // !Viscosity in units of N-s/m^2
 static const double EmisC = 0.84, EmisB = 0.7;  // Emissivities of glass cover, backside material
 static const double sigma = 5.66961E-8, cp_air = 1005.5;
-static double amavec[5] = { 0.918093, 0.086257, -0.024459, 0.002816, -0.000126 };	// !Air mass modifier coefficients as indicated in DeSoto paper
+static double amavec[5] = { 0.918093, 0.086257, -0.024459, 0.002816, -0.000126 };	// !Air mass modifier coefficients as indicated for polycrystalline modules in Table A1 of DeSoto paper published in Solar Energy  Vol 80 Issue 1 January 2006
 
 static const double Tc_ref = (25+273.15); // 25 'C
 static const double I_ref = 1000; // 1000 W/m2
