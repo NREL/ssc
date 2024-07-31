@@ -1434,7 +1434,7 @@ public:
 						year1_hourly_e_togrid[ii] = 0.0;
 						year1_hourly_e_fromgrid[ii] = -e_tofromgrid[ii];
 					}
-					p_tofromgrid[ii] = fabs(p_grid_cy[ii]) > powerflow_tolerance ? p_grid_cy[ii] : 0.0;
+					p_tofromgrid[ii] = std::fabs(p_grid_cy[ii]) > powerflow_tolerance ? p_grid_cy[ii] : 0.0;
 					salespurchases[ii] = revenue_w_sys[ii];
 				}
 				assign("year1_hourly_ec_tou_schedule", var_data(&ec_tou_sched[0], (int)m_num_rec_yearly));

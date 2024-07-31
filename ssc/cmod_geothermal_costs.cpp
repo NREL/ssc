@@ -232,6 +232,7 @@ private:
 	double current_cost_ref_tg;
 
 	double plant_equip_cost, baseline_cost;
+    double indirect_plant_cost;
 
 
 
@@ -605,6 +606,11 @@ public:
 			plant_equip_cost = hx_cost + condenser_cost + wf_pump_cost + turbine_cost;
 			corrected_equip_cost = dc_cost_multiplier * plant_equip_cost;
 
+            //Indirect Plant Costs
+            indirect_plant_cost = corrected_equip_cost * 0.12;
+
+            corrected_equip_cost += indirect_plant_cost;
+
 
 			// for outputs, to assign, use:
 			//assign("dc_cost_multiplier", var_data(static_cast<ssc_number_t>(dc_cost_multiplier)));
@@ -753,6 +759,11 @@ public:
 			//Direct Plant Construction Cost: 
 			direct_plant_cost = current_cost_flash * dc_cost_multiplier;
 			baseline_cost = direct_plant_cost / unit_plant;		// ($/kW)
+
+            //Indirect Plant Costs
+            indirect_plant_cost = baseline_cost * 0.12;
+
+            baseline_cost += indirect_plant_cost;
 
 			assign("baseline_cost", var_data(static_cast<ssc_number_t>(baseline_cost)));
 
