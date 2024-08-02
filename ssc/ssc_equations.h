@@ -82,20 +82,21 @@ struct ssc_equation_entry{
 
 static ssc_equation_entry ssc_equation_table [] = {
         // Marine energy
+        
 		{"me_array_cable_length", me_array_cable_length,
-            "MhkWave", me_array_cable_length_doc,
+            "Marine Energy", me_array_cable_length_doc,
             false, true},
         {"me_array_cable_length", me_array_cable_length,
-            "MhkTidal", me_array_cable_length_doc,
+            "Marine Energy", me_array_cable_length_doc,
             false, true},
         {"tidal_turbine_calculate_powercurve", tidal_turbine_calculate_powercurve,
-            "MhkTidal", tidal_turbine_calculate_powercurve_doc,
+            "Marine Energy", tidal_turbine_calculate_powercurve_doc,
             false, true},
         {"me_array_cable_voltage", me_array_cable_voltage,
-            "MhkWave", me_array_cable_voltage_doc,
+            "Marine Energy", me_array_cable_voltage_doc,
             false, true},
         {"me_array_cable_voltage", me_array_cable_voltage,
-            "MhkTidal", me_array_cable_voltage_doc,
+            "Marine Energy", me_array_cable_voltage_doc,
             false, true},
 		{"mp_ancillary_services", mp_ancillary_services,
             "Merchant plant", mp_ancillary_services_doc,
