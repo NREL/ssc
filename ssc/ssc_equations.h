@@ -98,6 +98,7 @@ static ssc_equation_entry ssc_equation_table [] = {
         {"me_array_cable_voltage", me_array_cable_voltage,
             "Marine Energy", me_array_cable_voltage_doc,
             false, true},
+            //"Marine Energy" is wrong module name, replace for next FY25 release
 		{"mp_ancillary_services", mp_ancillary_services,
             "Merchant plant", mp_ancillary_services_doc,
             false, true},
