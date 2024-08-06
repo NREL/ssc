@@ -30,15 +30,15 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef __csp_solver_particlecline_tes_
-#define __csp_solver_particlecline_tes_
+#ifndef __csp_solver_packedbed_tes_
+#define __csp_solver_packedbed_tes_
 
 #include "csp_solver_core.h"
 #include "csp_solver_util.h"
 #include "sam_csp_util.h"
 #include "csp_solver_tes_core.h"
 
-class C_csp_particlecline_tes : public C_csp_tes
+class C_csp_packedbed_tes : public C_csp_tes
 {
 private:
 
@@ -61,6 +61,8 @@ private:
     double m_dens_solid;        // [kg/m3] density of particles
     double m_cp_solid;          // [J/kg K] specific heat of particles
     double m_tes_pump_coef;		// [kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
+    double m_T_hot_delta;       // [C] Max allowable decrease in hot discharge temp
+    double m_T_cold_delta;      // [C] Max allowable increase in cold discharge temp
 
     // Time step carryover
     std::vector<double> m_T_prev_vec;   // [K] Temperatures in space, starting at CHARGE inlet (hot)
@@ -93,7 +95,7 @@ public:
     C_csp_reported_outputs mc_reported_outputs;
 
 
-    C_csp_particlecline_tes(
+    C_csp_packedbed_tes(
         int external_fl,                            // [-] external fluid identifier
         util::matrix_t<double> external_fl_props,   // [-] external fluid properties
         double h_tank_in,			                // [m] tank height input
@@ -109,12 +111,14 @@ public:
         double void_frac,                           // [] Packed bed void fraction
         double dens_solid,                          // [kg/m3] solid specific heat 
         double cp_solid,                            // [J/kg K] solid specific heat
-        double d_tank
+        double d_tank,                              // [m] Tank diameter
+        double T_hot_delta,                         // [C] Max allowable decrease in hot discharge temp
+        double T_cold_delta                         // [C] Max allowable increase in cold discharge temp
             );
 
-    C_csp_particlecline_tes();
+    C_csp_packedbed_tes();
 
-    ~C_csp_particlecline_tes() {};
+    ~C_csp_packedbed_tes() {};
 
     void set_T_grad_init(std::vector<double> T_grad_init_C);
 

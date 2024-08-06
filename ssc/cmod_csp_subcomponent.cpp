@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "core.h"
 #include "csp_solver_two_tank_tes.h"
 #include "csp_solver_NTHeatTrap_tes.h"
-#include "csp_solver_particlecline_tes.h"
+#include "csp_solver_packedbed_tes.h"
 
 // Forward declarations
 double C_to_K(double T);
@@ -170,7 +170,7 @@ public:
         C_csp_tes* storage_pointer;
         C_csp_two_tank_tes storage_two_tank;
         C_csp_NTHeatTrap_tes storage_NT;
-        C_csp_particlecline_tes storage_particle;
+        C_csp_packedbed_tes storage_packedbed;
 
         double P_ref = as_double("P_ref");
         double eta_ref = as_double("eta_ref");
@@ -300,7 +300,7 @@ public:
         // Particle Thermocline
         else if (tes_type == 2)
         {
-            storage_particle = C_csp_particlecline_tes(
+            storage_packedbed = C_csp_packedbed_tes(
                 as_integer("Fluid"),                                                // [-] field fluid identifier
                 as_matrix("field_fl_props"),                                        // [-] field fluid properties
                 as_double("h_tank"),                                                // [m] Tank height
@@ -329,11 +329,11 @@ public:
                 }
                 else
                 {
-                    storage_particle.set_T_grad_init(T_grad_ini);
+                    storage_packedbed.set_T_grad_init(T_grad_ini);
                 }
             }
 
-            storage_pointer = &storage_particle;
+            storage_pointer = &storage_packedbed;
 
         }
         else
@@ -476,7 +476,7 @@ public:
 
             // Add Particle specific outputs
             {
-                std::vector<double> T_prev_vec = storage_particle.get_T_prev_vec();
+                std::vector<double> T_prev_vec = storage_packedbed.get_T_prev_vec();
                 for (int j = 0; j < T_prev_vec.size(); j++)
                 {
                     tes_T_grad_mat.at(i, j) = T_prev_vec[j] - 273.15;   // [C] Convert from K

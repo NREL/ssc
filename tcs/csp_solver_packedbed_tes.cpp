@@ -31,24 +31,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#include "csp_solver_particlecline_tes.h"
+#include "csp_solver_packedbed_tes.h"
 
 static C_csp_reported_outputs::S_output_info S_output_info[] =
 {
-    {C_csp_particlecline_tes::E_Q_DOT_LOSS, C_csp_reported_outputs::TS_WEIGHTED_AVE},		//[MWt] TES thermal losses
-    {C_csp_particlecline_tes::E_W_DOT_HEATER, C_csp_reported_outputs::TS_WEIGHTED_AVE},		//[MWe] TES freeze protection power
-    {C_csp_particlecline_tes::E_TES_T_HOT, C_csp_reported_outputs::TS_LAST},					//[C] TES final hot tank temperature
-    {C_csp_particlecline_tes::E_TES_T_COLD, C_csp_reported_outputs::TS_LAST},				//[C] TES cold temperature at end of timestep      
-    {C_csp_particlecline_tes::E_M_DOT_TANK_TO_TANK, C_csp_reported_outputs::TS_WEIGHTED_AVE},		//[MWt] TES thermal losses
-    {C_csp_particlecline_tes::E_MASS_COLD_TANK, C_csp_reported_outputs::TS_LAST},			//[kg] Mass in cold tank at end of timestep		
-    {C_csp_particlecline_tes::E_MASS_HOT_TANK, C_csp_reported_outputs::TS_LAST},				//[kg] Mass in hot tank at end of timestep
-    {C_csp_particlecline_tes::E_HOT_TANK_HTF_PERC_FINAL, C_csp_reported_outputs::TS_LAST},	//[%] Final percent fill of available hot tank mass
-    {C_csp_particlecline_tes::E_W_DOT_HTF_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[MWe]
+    {C_csp_packedbed_tes::E_Q_DOT_LOSS, C_csp_reported_outputs::TS_WEIGHTED_AVE},		//[MWt] TES thermal losses
+    {C_csp_packedbed_tes::E_W_DOT_HEATER, C_csp_reported_outputs::TS_WEIGHTED_AVE},		//[MWe] TES freeze protection power
+    {C_csp_packedbed_tes::E_TES_T_HOT, C_csp_reported_outputs::TS_LAST},					//[C] TES final hot tank temperature
+    {C_csp_packedbed_tes::E_TES_T_COLD, C_csp_reported_outputs::TS_LAST},				//[C] TES cold temperature at end of timestep      
+    {C_csp_packedbed_tes::E_M_DOT_TANK_TO_TANK, C_csp_reported_outputs::TS_WEIGHTED_AVE},		//[MWt] TES thermal losses
+    {C_csp_packedbed_tes::E_MASS_COLD_TANK, C_csp_reported_outputs::TS_LAST},			//[kg] Mass in cold tank at end of timestep		
+    {C_csp_packedbed_tes::E_MASS_HOT_TANK, C_csp_reported_outputs::TS_LAST},				//[kg] Mass in hot tank at end of timestep
+    {C_csp_packedbed_tes::E_HOT_TANK_HTF_PERC_FINAL, C_csp_reported_outputs::TS_LAST},	//[%] Final percent fill of available hot tank mass
+    {C_csp_packedbed_tes::E_W_DOT_HTF_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[MWe]
 
     csp_info_invalid
 };
 
-C_csp_particlecline_tes::C_csp_particlecline_tes(
+C_csp_packedbed_tes::C_csp_packedbed_tes(
     int external_fl,                                // [-] external fluid identifier
     util::matrix_t<double> external_fl_props,       // [-] external fluid properties
     double h_tank,			                        // [m] tank height input
@@ -64,7 +64,9 @@ C_csp_particlecline_tes::C_csp_particlecline_tes(
     double void_frac,                               // [] Packed bed void fraction
     double dens_solid,                              // [kg/m3] solid specific heat 
     double cp_solid,                                // [J/kg K] solid specific heat
-    double d_tank
+    double d_tank,                                  // [m] Tank diameter
+    double T_hot_delta,                             // [C] Max allowable decrease in hot discharge temp
+    double T_cold_delta                             // [C] Max allowable increase in cold discharge temp
     )
     :
     m_external_fl(external_fl), m_external_fl_props(external_fl_props),
@@ -72,23 +74,21 @@ C_csp_particlecline_tes::C_csp_particlecline_tes(
     m_f_V_hot_ini(f_V_hot_ini),
     m_n_xstep(n_xstep), m_n_subtimestep(n_subtimestep), m_tes_pump_coef(tes_pump_coef),
     m_k_eff(k_eff), m_void_frac(void_frac), m_dens_solid(dens_solid), m_cp_solid(cp_solid),
-    m_d_tank(d_tank)
+    m_d_tank(d_tank), m_T_hot_delta(T_hot_delta), m_T_cold_delta(T_cold_delta)
 {
     // Convert Temperature Units
     m_T_cold_des = T_cold_des_C + 273.15;
     m_T_hot_des = T_hot_des_C + 273.15;
-    m_T_tank_hot_ini = T_tank_hot_ini_C + 273.15;
-    m_T_tank_cold_ini = T_tank_cold_ini_C + 273.15;
 
     mc_reported_outputs.construct(S_output_info);
 }
 
-C_csp_particlecline_tes::C_csp_particlecline_tes()
+C_csp_packedbed_tes::C_csp_packedbed_tes()
 {
     mc_reported_outputs.construct(S_output_info);
 }
 
-void C_csp_particlecline_tes::set_T_grad_init(std::vector<double> T_grad_init_C)
+void C_csp_packedbed_tes::set_T_grad_init(std::vector<double> T_grad_init_C)
 {
     for (double T_C : T_grad_init_C)
         m_T_prev_vec.push_back(T_C + 273.15);
@@ -96,7 +96,7 @@ void C_csp_particlecline_tes::set_T_grad_init(std::vector<double> T_grad_init_C)
     m_use_T_grad_init = true;
 }
 
-void C_csp_particlecline_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs)
+void C_csp_packedbed_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs)
 {
     // Declare instance of fluid class for EXTERNAL fluid
     // Set fluid number and copy over fluid matrix if it makes sense
@@ -156,71 +156,71 @@ void C_csp_particlecline_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_i
     
 }
 
-bool C_csp_particlecline_tes::does_tes_exist()
+bool C_csp_packedbed_tes::does_tes_exist()
 {
 	return false;
 }
 
-bool C_csp_particlecline_tes::is_cr_to_cold_allowed()
+bool C_csp_packedbed_tes::is_cr_to_cold_allowed()
 {
 	return false;
 }
 
-double C_csp_particlecline_tes::get_hot_temp()
+double C_csp_packedbed_tes::get_hot_temp()
 {
     // Return temperature closest to charge inlet (hot)
     return m_T_prev_vec[0];
 }
 
-double C_csp_particlecline_tes::get_cold_temp()
+double C_csp_packedbed_tes::get_cold_temp()
 {
     // Return temperature furthest from charge inlet (cold)
     return m_T_prev_vec[m_T_prev_vec.size() - 1];
 }
 
-double C_csp_particlecline_tes::get_hot_tank_vol_frac()
+double C_csp_packedbed_tes::get_hot_tank_vol_frac()
 {
 	return std::numeric_limits<double>::quiet_NaN();
 }
 
-double C_csp_particlecline_tes::get_initial_charge_energy()
+double C_csp_packedbed_tes::get_initial_charge_energy()
 {
     return std::numeric_limits<double>::quiet_NaN();
 }
 
-double C_csp_particlecline_tes::get_min_charge_energy()
+double C_csp_packedbed_tes::get_min_charge_energy()
 {
     return std::numeric_limits<double>::quiet_NaN();
 }
 
-double C_csp_particlecline_tes::get_max_charge_energy()
+double C_csp_packedbed_tes::get_max_charge_energy()
 {
     return std::numeric_limits<double>::quiet_NaN();
 }
 
-double C_csp_particlecline_tes::get_degradation_rate()
+double C_csp_packedbed_tes::get_degradation_rate()
 {
     return std::numeric_limits<double>::quiet_NaN();
 }
 
-void C_csp_particlecline_tes::reset_storage_to_initial_state()
+void C_csp_packedbed_tes::reset_storage_to_initial_state()
 {
     return;
 }
 
-void C_csp_particlecline_tes::discharge_avail_est(double T_cold_K, double step_s,
+void C_csp_packedbed_tes::discharge_avail_est(double T_cold_K, double step_s,
     double& q_dot_dc_est /*MWt*/, double& m_dot_external_est /*kg/s*/, double& T_hot_external_est /*K*/)
 {
     return;
 }
 
-void C_csp_particlecline_tes::charge_avail_est(double T_hot_K, double step_s,
+void C_csp_packedbed_tes::charge_avail_est(double T_hot_K, double step_s,
     double& q_dot_ch_est /*MWt*/, double& m_dot_external_est /*kg/s*/, double& T_cold_external_est /*K*/)
 {
     return;
 }
 
-int C_csp_particlecline_tes::solve_tes_off_design(double timestep /*s*/, double  T_amb /*K*/,
+int C_csp_packedbed_tes::solve_tes_off_design(double timestep /*s*/, double  T_amb /*K*/,
     double m_dot_cr_to_cv_hot /*kg/s*/, double m_dot_cv_hot_to_sink /*kg/s*/, double m_dot_cr_to_cv_cold /*kg/s*/,
     double T_cr_out_hot /*K*/, double T_sink_out_cold /*K*/,
     double& T_sink_htf_in_hot /*K*/, double& T_cr_in_cold /*K*/,
@@ -368,39 +368,39 @@ int C_csp_particlecline_tes::solve_tes_off_design(double timestep /*s*/, double 
     return 0;
 }
 
-void C_csp_particlecline_tes::converged()
+void C_csp_packedbed_tes::converged()
 {
     m_T_prev_vec = m_T_calc_vec;
     return;
 }
 
-void C_csp_particlecline_tes::write_output_intervals(double report_time_start,
+void C_csp_packedbed_tes::write_output_intervals(double report_time_start,
     const std::vector<double>& v_temp_ts_time_end, double report_time_end)
 {
     mc_reported_outputs.send_to_reporting_ts_array(report_time_start,
         v_temp_ts_time_end, report_time_end);
 }
 
-void C_csp_particlecline_tes::assign(int index, double* p_reporting_ts_array, size_t n_reporting_ts_array)
+void C_csp_packedbed_tes::assign(int index, double* p_reporting_ts_array, size_t n_reporting_ts_array)
 {
     mc_reported_outputs.assign(index, p_reporting_ts_array, n_reporting_ts_array);
 }
 
-double /*MWe*/ C_csp_particlecline_tes::pumping_power(double m_dot_sf /*kg/s*/, double m_dot_pb /*kg/s*/, double m_dot_tank /*kg/s*/,
+double /*MWe*/ C_csp_packedbed_tes::pumping_power(double m_dot_sf /*kg/s*/, double m_dot_pb /*kg/s*/, double m_dot_tank /*kg/s*/,
     double T_sf_in /*K*/, double T_sf_out /*K*/, double T_pb_in /*K*/, double T_pb_out /*K*/, bool recirculating)
 {
     return std::numeric_limits<double>::quiet_NaN();
 }
 
 
-void C_csp_particlecline_tes::get_design_parameters(double& vol_one_temp_avail /*m3*/, double& vol_one_temp_total /*m3*/,
+void C_csp_packedbed_tes::get_design_parameters(double& vol_one_temp_avail /*m3*/, double& vol_one_temp_total /*m3*/,
     double& h_tank_calc /*m*/, double& d_tank_calc /*m*/,
     double& q_dot_loss_des /*MWt*/, double& dens_store_htf_at_T_ave /*kg/m3*/, double& Q_tes /*MWt-hr*/)
 {
     return;
 }
 
-bool C_csp_particlecline_tes::charge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/,
+bool C_csp_packedbed_tes::charge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/,
     double T_htf_hot_in /*K*/, double& T_htf_cold_out /*K*/,
     double& q_dot_heater /*MWe*/, double& m_dot_tank_to_tank /*kg/s*/, double& W_dot_rhtf_pump /*MWe*/,
     double& q_dot_loss /*MWt*/, double& q_dot_dc_to_htf /*MWt*/, double& q_dot_ch_from_htf /*MWt*/,
@@ -518,7 +518,7 @@ bool C_csp_particlecline_tes::charge(double timestep /*s*/, double T_amb /*K*/, 
     return true;
 }
 
-bool C_csp_particlecline_tes::discharge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/,
+bool C_csp_packedbed_tes::discharge(double timestep /*s*/, double T_amb /*K*/, double m_dot_htf_in /*kg/s*/,
     double T_htf_cold_in /*K*/, double& T_htf_hot_out /*K*/,
     double& q_dot_heater /*MWe*/, double& m_dot_tank_to_tank /*kg/s*/, double& W_dot_rhtf_pump /*MWe*/,
     double& q_dot_loss /*MWt*/, double& q_dot_dc_to_htf /*MWt*/, double& q_dot_ch_from_htf /*MWt*/,
@@ -636,29 +636,29 @@ bool C_csp_particlecline_tes::discharge(double timestep /*s*/, double T_amb /*K*
     return true;
 }
 
-int C_csp_particlecline_tes::pressure_drops(double m_dot_sf, double m_dot_pb,
+int C_csp_packedbed_tes::pressure_drops(double m_dot_sf, double m_dot_pb,
     double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating,
     double& P_drop_col, double& P_drop_gen)
 {
     return std::numeric_limits<bool>::quiet_NaN();
 }
 
-double C_csp_particlecline_tes::get_min_storage_htf_temp()
+double C_csp_packedbed_tes::get_min_storage_htf_temp()
 {
     return std::numeric_limits<bool>::quiet_NaN();
 }
 
-double C_csp_particlecline_tes::get_max_storage_htf_temp()
+double C_csp_packedbed_tes::get_max_storage_htf_temp()
 {
     return std::numeric_limits<bool>::quiet_NaN();
 }
 
-double C_csp_particlecline_tes::get_storage_htf_density()
+double C_csp_packedbed_tes::get_storage_htf_density()
 {
     return std::numeric_limits<bool>::quiet_NaN();
 }
 
-double C_csp_particlecline_tes::get_storage_htf_cp()
+double C_csp_packedbed_tes::get_storage_htf_cp()
 {
     return std::numeric_limits<bool>::quiet_NaN();
 }
