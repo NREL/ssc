@@ -67,7 +67,7 @@ C_csp_packedbed_tes::C_csp_packedbed_tes(
     double d_tank,                                  // [m] Tank diameter
     double T_hot_delta,                             // [C] Max allowable decrease in hot discharge temp
     double T_cold_delta                             // [C] Max allowable increase in cold discharge temp
-    )
+)
     :
     m_external_fl(external_fl), m_external_fl_props(external_fl_props),
     m_h_tank(h_tank),
@@ -153,17 +153,17 @@ void C_csp_packedbed_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_input
         }
     }
 
-    
+
 }
 
 bool C_csp_packedbed_tes::does_tes_exist()
 {
-	return false;
+    return false;
 }
 
 bool C_csp_packedbed_tes::is_cr_to_cold_allowed()
 {
-	return false;
+    return false;
 }
 
 double C_csp_packedbed_tes::get_hot_temp()
@@ -180,7 +180,7 @@ double C_csp_packedbed_tes::get_cold_temp()
 
 double C_csp_packedbed_tes::get_hot_tank_vol_frac()
 {
-	return std::numeric_limits<double>::quiet_NaN();
+    return std::numeric_limits<double>::quiet_NaN();
 }
 
 double C_csp_packedbed_tes::get_initial_charge_energy()
@@ -211,12 +211,67 @@ void C_csp_packedbed_tes::reset_storage_to_initial_state()
 void C_csp_packedbed_tes::discharge_avail_est(double T_cold_K, double step_s,
     double& q_dot_dc_est /*MWt*/, double& m_dot_external_est /*kg/s*/, double& T_hot_external_est /*K*/)
 {
+    // Calculate Available Discharge Energy
+    double dx = m_h_tank / m_n_xstep;               // [m]
+    double mass_packed_subsection = dx * m_Ac * (1.0 - m_void_frac) * m_dens_solid;   // [kg] Packed bed mass in subsection
+
+    // Loop through temperatures, starting at hot end, to check temperature threshold
+    double Q_dc_avail = 0;  // [MWt]
+    for (double T_prev_node : m_T_prev_vec)
+    {
+        if (T_prev_node >= (m_T_hot_des - m_T_hot_delta))
+        {
+            Q_dc_avail += mass_packed_subsection * m_cp_solid * (T_prev_node - T_cold_K) * 1e-6;    // [MWt]
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    // Calculate Max Mass Flow Rate
+    double cp_fluid_avg = mc_external_htfProps.Cp_ave(m_T_cold_des, m_T_hot_des) * 1.E3; //[J/kg-K]
+    double mdot_max = (Q_dc_avail * 1e6) / (step_s * cp_fluid_avg * (m_T_hot_des - T_cold_K));  //[kg/s]
+
+    // Set Outputs
+    q_dot_dc_est = Q_dc_avail;  //[MWt]
+    m_dot_external_est = mdot_max;  //[kg/s]
+    T_hot_external_est = m_T_prev_vec[0];   // [K] Temperature near charge inlet (hottest)
+
     return;
 }
 
 void C_csp_packedbed_tes::charge_avail_est(double T_hot_K, double step_s,
     double& q_dot_ch_est /*MWt*/, double& m_dot_external_est /*kg/s*/, double& T_cold_external_est /*K*/)
 {
+    // Calculate Available Charge Energy
+    double dx = m_h_tank / m_n_xstep;   // [m]
+    double mass_packed_subsection = dx * m_Ac * (1.0 - m_void_frac) * m_dens_solid;   // [kg] Packed bed mass in subsection 
+
+    // Loop through temperatures, starting at cold end, to check temperature threshold
+    double Q_ch_avail = 0;  //[MWt]
+    for (int i = m_T_prev_vec.size() - 1; i >= 0; i--)
+    {
+        double T_prev_node = m_T_prev_vec[i];   //[K]
+        if (T_prev_node <= (m_T_cold_des + m_T_cold_delta))
+        {
+            Q_ch_avail += mass_packed_subsection * m_cp_solid * (T_hot_K - m_T_cold_des) * 1e-6;    //[MWt]
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    // Calculate Max Mass Flow Rate
+    double cp_fluid_avg = mc_external_htfProps.Cp_ave(m_T_cold_des, m_T_hot_des) * 1.E3; //[J/kg-K]
+    double mdot_max = (Q_ch_avail * 1e6) / (step_s * cp_fluid_avg * (T_hot_K - m_T_cold_des));  //[kg/s]
+
+    // Set Outputs
+    q_dot_ch_est = Q_ch_avail;  //[MWt]
+    m_dot_external_est = mdot_max;  //[kg/s]
+    T_cold_external_est = m_T_prev_vec[m_T_prev_vec.size() - 1];    // [K] Temperature near charge outlet (coldest)
+
     return;
 }
 
@@ -405,7 +460,7 @@ bool C_csp_packedbed_tes::charge(double timestep /*s*/, double T_amb /*K*/, doub
     double& q_dot_heater /*MWe*/, double& m_dot_tank_to_tank /*kg/s*/, double& W_dot_rhtf_pump /*MWe*/,
     double& q_dot_loss /*MWt*/, double& q_dot_dc_to_htf /*MWt*/, double& q_dot_ch_from_htf /*MWt*/,
     double& T_hot_ave /*K*/, double& T_cold_ave /*K*/, double& T_hot_final /*K*/, double& T_cold_final /*K*/
-    )
+)
 {
     // Inputs
     //double dens_fluid = 1.204;  // [kg/m3] density of air at room temp
@@ -523,7 +578,7 @@ bool C_csp_packedbed_tes::discharge(double timestep /*s*/, double T_amb /*K*/, d
     double& q_dot_heater /*MWe*/, double& m_dot_tank_to_tank /*kg/s*/, double& W_dot_rhtf_pump /*MWe*/,
     double& q_dot_loss /*MWt*/, double& q_dot_dc_to_htf /*MWt*/, double& q_dot_ch_from_htf /*MWt*/,
     double& T_hot_ave /*K*/, double& T_cold_ave /*K*/, double& T_hot_final /*K*/, double& T_cold_final /*K*/
-    )
+)
 {
     // Inputs
     //double dens_fluid = 1.204;  // [kg/m3] density of air at room temp

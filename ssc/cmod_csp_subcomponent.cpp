@@ -110,6 +110,8 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_INPUT,        SSC_NUMBER,      "packed_dens_solid",         "TES particle density",                                                             "kg/m3",        "",               "TES",            "tes_type=2",              "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "packed_cp_solid",           "TES particle specific heat",                                                       "J/kg K",       "",               "TES",            "tes_type=2",              "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "d_tank",                    "TEMPORARY tank diameter",                                                          "m",            "",               "TES",            "?=0",                     "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "packed_T_hot_delta",        "Max allowable decrease in hot discharge temp",                                     "m",            "",               "TES",            "tes_type=2",                     "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "packed_T_cold_delta",       "Max allowable increase in cold discharge temp",                                    "m",            "",               "TES",            "tes_type=2",                     "",                      "" },
 
 
     // Outputs
@@ -316,7 +318,9 @@ public:
                 as_double("packed_void_frac"),                                      // [] Packed bed void fraction
                 as_double("packed_dens_solid"),                                     // [kg/m3] solid specific heat 
                 as_double("packed_cp_solid"),                                       // [J/kg K] solid specific heat
-                as_double("d_tank")
+                as_double("d_tank"),
+                as_double("packed_T_hot_delta"),                                    // [C] Max allowable decrease in hot discharge temp
+                as_double("packed_T_cold_delta")                                    // [C] Max allowable increase in cold discharge temp
             );
 
 
