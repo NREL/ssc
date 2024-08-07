@@ -63,7 +63,8 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_INPUT,        SSC_NUMBER,      "eta_ref",                   "Power cycle efficiency at design",                                                 "none",         "",               "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "solar_mult",                "Actual solar multiple of system",                                                  "-",            "",               "system",         "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tshours",                   "Equivalent full-load thermal storage hours",                                       "hr",           "",               "TES",            "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "h_tank",                    "Total height of tank (height of HTF when tank is full",                            "m",            "",               "TES",            "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "h_tank_in",                 "Total height of tank (height of HTF when tank is full",                            "m",            "",               "TES",            "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "d_tank_in",                 "Total height of tank (height of HTF when tank is full",                            "m",            "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "u_tank",                    "Loss coefficient from the tank",                                                   "W/m2-K",       "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tank_pairs",                "Number of equivalent tank pairs",                                                  "-",            "",               "TES",            "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "hot_tank_Thtr",             "Minimum allowable hot tank HTF temp",                                              "C",            "",               "TES",            "*",                       "",                      "" },
@@ -93,7 +94,7 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_INPUT,        SSC_NUMBER,      "DP_SGS",                    "Pressure drop within the steam generator",                                         "bar",          "",               "controller",     "*",                       "",                      "" },
 
     // Added Inputs for NT System
-    { SSC_INPUT,        SSC_NUMBER,      "tes_type",                  "Standard two tank (0), HeatTrap Single Tank (1)",                                  "-",            "",               "TES",            "?=0",                     "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_type",                  "Standard two tank (0), HeatTrap Single Tank (1), Packed Bed (2)",                  "-",            "",               "TES",            "?=0",                     "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tes_tank_thick",            "Tank wall thickness (used for Norwich HeatTrap)",                                  "m",            "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tes_tank_cp",               "Tank wall cp (used for Norwich HeatTrap)",                                         "kJ/kg-K",      "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tes_tank_dens",             "Tank wall thickness (used for Norwich HeatTrap)",                                  "kg/m3",        "",               "TES",            "tes_type=1",              "",                      "" },
@@ -109,9 +110,10 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_INPUT,        SSC_NUMBER,      "packed_void_frac",          "TES particle packed bed void fraction",                                            "",             "",               "TES",            "tes_type=2",              "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "packed_dens_solid",         "TES particle density",                                                             "kg/m3",        "",               "TES",            "tes_type=2",              "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "packed_cp_solid",           "TES particle specific heat",                                                       "J/kg K",       "",               "TES",            "tes_type=2",              "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "d_tank",                    "TEMPORARY tank diameter",                                                          "m",            "",               "TES",            "?=0",                     "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "packed_T_hot_delta",        "Max allowable decrease in hot discharge temp",                                     "m",            "",               "TES",            "tes_type=2",                     "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "packed_T_cold_delta",       "Max allowable increase in cold discharge temp",                                    "m",            "",               "TES",            "tes_type=2",                     "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "packed_T_hot_delta",        "Max allowable decrease in hot discharge temp",                                     "m",            "",               "TES",            "tes_type=2",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "packed_T_cold_delta",       "Max allowable increase in cold discharge temp",                                    "m",            "",               "TES",            "tes_type=2",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "packed_size_type",          "(0) use fixed diameter, (1) use fixed height, (2) use preset inputs",              "",             "",               "TES",            "tes_type=2",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "packed_f_oversize",         "Packed bed oversize factor",                                                       "",             "",               "TES",            "tes_type=2",              "",                      "" },
 
 
     // Outputs
@@ -297,13 +299,17 @@ public:
 
             storage_pointer = &storage_NT;
         }
-        // Particle Thermocline
+        // Packed Bed
         else if (tes_type == 2)
         {
             storage_packedbed = C_csp_packedbed_tes(
                 as_integer("Fluid"),                                                // [-] field fluid identifier
                 as_matrix("field_fl_props"),                                        // [-] field fluid properties
-                as_double("h_tank"),                                                // [m] Tank height
+                as_double("P_ref") / as_double("eta_ref") * as_double("tshours"),   // [MWt-hr] design storage capacity
+                as_integer("packed_size_type"),                                     // [] Sizing Method (0) use fixed diameter, (1) use fixed height, (2) use preset inputs
+                as_double("h_tank_in"),                                             // [m] Tank height
+                as_double("d_tank_in"),                                             // [m] Tank diameter
+                as_double("packed_f_oversize"),                                     // [] Oversize factor
                 as_double("T_loop_in_des"),                                         // [C] Cold design temperature
                 as_double("T_loop_out"),                                            // [C] hot design temperature
                 as_double("T_tank_hot_ini"),                                        // [C] Initial temperature in hot storage tank
@@ -316,7 +322,6 @@ public:
                 as_double("packed_void_frac"),                                      // [] Packed bed void fraction
                 as_double("packed_dens_solid"),                                     // [kg/m3] solid specific heat 
                 as_double("packed_cp_solid"),                                       // [J/kg K] solid specific heat
-                as_double("d_tank"),
                 as_double("packed_T_hot_delta"),                                    // [C] Max allowable decrease in hot discharge temp
                 as_double("packed_T_cold_delta")                                    // [C] Max allowable increase in cold discharge temp
             );
@@ -476,7 +481,7 @@ public:
                 tes_error_corrected_vec.push_back(tes_error_corrected);
             }
 
-            // Add Particle specific outputs
+            // Add packed bed specific outputs
             {
                 std::vector<double> T_prev_vec = storage_packedbed.get_T_prev_vec();
                 for (int j = 0; j < T_prev_vec.size(); j++)

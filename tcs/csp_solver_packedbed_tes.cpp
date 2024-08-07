@@ -48,10 +48,42 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
     csp_info_invalid
 };
 
+// Private Methods
+
+void C_csp_packedbed_tes::size_pb_fixed_height(double Q_tes_des /*MWt-hr*/, double f_oversize,
+    double void_frac, double dens_solid /*kg/m3*/, double cp_solid /*J/kg K*/,
+    double T_tes_hot /*K*/, double T_tes_cold /*K*/, double h_tank /*m*/,
+    double& vol_total /*m3*/, double& d_tank_out /*m*/)
+{
+    // Calculate Total Volume
+    vol_total = (Q_tes_des * 1e6 * 3600.0) / ((1.0 - void_frac) * dens_solid * cp_solid * (T_tes_hot - T_tes_cold)); // [m3]
+
+    // Calculate Diameter
+    d_tank_out = 2.0 * std::sqrt(vol_total / (h_tank * CSP::pi));   // [m]
+}
+
+void C_csp_packedbed_tes::size_pb_fixed_diameter(double Q_tes_des /*MWt-hr*/, double f_oversize,
+    double void_frac, double dens_solid /*kg/m3*/, double cp_solid /*J/kg K*/,
+    double T_tes_hot /*K*/, double T_tes_cold /*K*/, double d_tank /*m*/,
+    double& vol_total /*m3*/, double& h_tank_out /*m*/)
+{
+    // Calculate Total Volume
+    vol_total = (Q_tes_des * 1e6 * 3600.0) / ((1.0 - void_frac) * dens_solid * cp_solid * (T_tes_hot - T_tes_cold)); // [m3]
+
+    // Calculate Height
+    h_tank_out = vol_total / (CSP::pi * std::pow(d_tank / 2.0, 2.0));   // m
+}
+
+// Public Methods
+
 C_csp_packedbed_tes::C_csp_packedbed_tes(
     int external_fl,                                // [-] external fluid identifier
     util::matrix_t<double> external_fl_props,       // [-] external fluid properties
-    double h_tank,			                        // [m] tank height input
+    double Q_tes_des,                               // [MWt-hr] design storage capacity
+    int size_type,                                  // [] Sizing Method (0) use fixed diameter, (1) use fixed height, (2) use preset inputs
+    double h_tank_in,			                    // [m] tank height input
+    double d_tank_in,                               // [m] tank diameter input
+    double f_oversize,                              // [] Oversize factor
     double T_cold_des_C,	                        // [C] convert to K in constructor()
     double T_hot_des_C,	                            // [C] convert to K in constructor()
     double T_tank_hot_ini_C,	                    // [C] Initial temperature in hot storage tank
@@ -64,17 +96,16 @@ C_csp_packedbed_tes::C_csp_packedbed_tes(
     double void_frac,                               // [] Packed bed void fraction
     double dens_solid,                              // [kg/m3] solid specific heat 
     double cp_solid,                                // [J/kg K] solid specific heat
-    double d_tank,                                  // [m] Tank diameter
     double T_hot_delta,                             // [C] Max allowable decrease in hot discharge temp
     double T_cold_delta                             // [C] Max allowable increase in cold discharge temp
 )
     :
-    m_external_fl(external_fl), m_external_fl_props(external_fl_props),
-    m_h_tank(h_tank),
+    m_external_fl(external_fl), m_external_fl_props(external_fl_props), m_Q_tes_des(Q_tes_des),
+    m_size_type(size_type), m_h_tank_in(h_tank_in), m_d_tank_in(d_tank_in), m_f_oversize(f_oversize),
     m_f_V_hot_ini(f_V_hot_ini),
     m_n_xstep(n_xstep), m_n_subtimestep(n_subtimestep), m_tes_pump_coef(tes_pump_coef),
     m_k_eff(k_eff), m_void_frac(void_frac), m_dens_solid(dens_solid), m_cp_solid(cp_solid),
-    m_d_tank(d_tank), m_T_hot_delta(T_hot_delta), m_T_cold_delta(T_cold_delta)
+    m_T_hot_delta(T_hot_delta), m_T_cold_delta(T_cold_delta)
 {
     // Convert Temperature Units
     m_T_cold_des = T_cold_des_C + 273.15;
@@ -130,9 +161,40 @@ void C_csp_packedbed_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_input
         throw(C_csp_exception("External HTF code is not recognized", "Two Tank TES Initialization"));
     }
 
-    // Temporary Sizing Info
-    if (m_d_tank == 0)
-        m_d_tank = m_h_tank;   // [m]
+    // Size Tank
+
+    // Fixed Diameter
+    if (m_size_type == 0)
+    {
+        double h_tank_out;
+        size_pb_fixed_diameter(m_Q_tes_des /*MWt-hr*/, m_f_oversize,
+            m_void_frac, m_dens_solid /*kg/m3*/, m_cp_solid /*J/kg K*/,
+            m_T_hot_des /*K*/, m_T_cold_des /*K*/, m_d_tank_in /*m*/,
+            m_V_total /*m3*/, h_tank_out /*m*/);
+        m_h_tank = h_tank_out;
+        m_d_tank = m_d_tank_in;
+    }
+    // Fixed Height
+    else if (m_size_type == 1)
+    {
+        double d_tank_out;
+        size_pb_fixed_height(m_Q_tes_des /*MWt-hr*/, m_f_oversize,
+            m_void_frac, m_dens_solid /*kg/m3*/, m_cp_solid /*J/kg K*/,
+            m_T_hot_des /*K*/, m_T_cold_des /*K*/, m_h_tank_in /*m*/,
+            m_V_total /*m3*/, d_tank_out /*m*/);
+        m_d_tank = d_tank_out;
+        m_h_tank = m_h_tank_in;
+    }
+    // Diameter and height are defined by user
+    else if (m_size_type == 2)
+    {
+        m_h_tank = m_h_tank_in; //[m]
+        m_d_tank = m_d_tank_in; //[m]
+    }
+    else
+    {
+        throw(C_csp_exception("Invalid TES sizing type"));
+    }
 
     // Define Cross Sectional Area
     m_Ac = M_PI * std::pow(0.5 * m_d_tank, 2.0);

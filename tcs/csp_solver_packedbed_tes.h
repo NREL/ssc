@@ -48,7 +48,11 @@ private:
     // Constructor Inputs
     int m_external_fl;
     util::matrix_t<double> m_external_fl_props;
-    double m_h_tank;            // [m] Tank height
+    int m_size_type;            // [] Sizing Method (0) use fixed diameter, (1) use fixed height, (2) use preset inputs
+    double m_Q_tes_des;         // [MWt-hr] design storage capacity
+    double m_h_tank_in;         // [m] Tank height
+    double m_d_tank_in;         // [m] tank diameter input
+    double m_f_oversize;        // [] Oversize factor
     double m_T_cold_des;	    // [K] Design cold temperature
     double m_T_hot_des;	        // [K] Design hot temperature
     double m_T_tank_hot_ini;    // [K] Initial hot temperature
@@ -63,18 +67,35 @@ private:
     double m_tes_pump_coef;		// [kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
     double m_T_hot_delta;       // [C] Max allowable decrease in hot discharge temp
     double m_T_cold_delta;      // [C] Max allowable increase in cold discharge temp
+    
 
     // Time step carryover
     std::vector<double> m_T_prev_vec;   // [K] Temperatures in space, starting at CHARGE inlet (hot)
     std::vector<double> m_T_calc_vec;   // [K] Temperatures in space, starting at CHARGE inlet (hot)
 
     // Calculated in init()
+    double m_h_tank;    // [m] Tank height
     double m_d_tank;    // [m] Tank diameter
     double m_Ac;        // [m2] Tank cross sectional area
+    double m_V_total;   // [m3] Tank volume
 
     // Private members
     bool m_use_T_grad_init = false;
     HTFProperties mc_external_htfProps;		// Instance of HTFProperties class for external HTF
+
+
+    // Private Methods
+    void size_pb_fixed_height(double Q_tes_des /*MWt-hr*/, double f_oversize,
+        double void_frac, double dens_solid /*kg/m3*/, double cp_solid /*J/kg K*/,
+        double T_tes_hot /*K*/, double T_tes_cold /*K*/, double h_tank /*m*/,
+        double& vol_total /*m3*/, double& d_tank_out /*m*/);
+
+    void size_pb_fixed_diameter(double Q_tes_des /*MWt-hr*/, double f_oversize,
+        double void_frac, double dens_solid /*kg/m3*/, double cp_solid /*J/kg K*/,
+        double T_tes_hot /*K*/, double T_tes_cold /*K*/, double d_tank /*m*/,
+        double& vol_total /*m3*/, double& h_tank_out /*m*/);
+
+    void size_pb_fixed_diameter();
 
 public:
 
@@ -98,7 +119,11 @@ public:
     C_csp_packedbed_tes(
         int external_fl,                            // [-] external fluid identifier
         util::matrix_t<double> external_fl_props,   // [-] external fluid properties
+        double Q_tes_des,                           // [MWt-hr] design storage capacity
+        int size_type,                              // [] Sizing Method (0) use fixed diameter, (1) use fixed height, (2) use preset inputs
         double h_tank_in,			                // [m] tank height input
+        double d_tank_in,                           // [m] tank diameter input
+        double f_oversize,                          // [] Oversize factor
         double T_cold_des_C,	                    // [C] convert to K in constructor()
         double T_hot_des_C,	                        // [C] convert to K in constructor()
         double T_tank_hot_ini_C,	                // [C] Initial temperature in hot storage tank
@@ -111,7 +136,6 @@ public:
         double void_frac,                           // [] Packed bed void fraction
         double dens_solid,                          // [kg/m3] solid specific heat 
         double cp_solid,                            // [J/kg K] solid specific heat
-        double d_tank,                              // [m] Tank diameter
         double T_hot_delta,                         // [C] Max allowable decrease in hot discharge temp
         double T_cold_delta                         // [C] Max allowable increase in cold discharge temp
             );
