@@ -373,7 +373,7 @@ bool dispatch_t::restrict_power(double& I)
                 iterate = true;
             }
             else if (m_batteryPower->connectionMode == m_batteryPower->AC_CONNECTED &&
-                fabs(powerBatteryAC) > m_batteryPower->powerBatteryChargeMaxAC * (1 + low_tolerance))
+                std::fabs(powerBatteryAC) > m_batteryPower->powerBatteryChargeMaxAC * (1 + low_tolerance))
             {
                 dP = std::abs(m_batteryPower->powerBatteryChargeMaxAC - std::abs(powerBatteryAC));
 
