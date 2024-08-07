@@ -56,7 +56,7 @@ void C_csp_packedbed_tes::size_pb_fixed_height(double Q_tes_des /*MWt-hr*/, doub
     double& vol_total /*m3*/, double& d_tank_out /*m*/)
 {
     // Calculate Total Volume
-    vol_total = (Q_tes_des * 1e6 * 3600.0) / ((1.0 - void_frac) * dens_solid * cp_solid * (T_tes_hot - T_tes_cold)); // [m3]
+    vol_total = f_oversize * (Q_tes_des * 1e6 * 3600.0) / ((1.0 - void_frac) * dens_solid * cp_solid * (T_tes_hot - T_tes_cold)); // [m3]
 
     // Calculate Diameter
     d_tank_out = 2.0 * std::sqrt(vol_total / (h_tank * CSP::pi));   // [m]
@@ -68,7 +68,7 @@ void C_csp_packedbed_tes::size_pb_fixed_diameter(double Q_tes_des /*MWt-hr*/, do
     double& vol_total /*m3*/, double& h_tank_out /*m*/)
 {
     // Calculate Total Volume
-    vol_total = (Q_tes_des * 1e6 * 3600.0) / ((1.0 - void_frac) * dens_solid * cp_solid * (T_tes_hot - T_tes_cold)); // [m3]
+    vol_total = f_oversize * (Q_tes_des * 1e6 * 3600.0) / ((1.0 - void_frac) * dens_solid * cp_solid * (T_tes_hot - T_tes_cold)); // [m3]
 
     // Calculate Height
     h_tank_out = vol_total / (CSP::pi * std::pow(d_tank / 2.0, 2.0));   // m
