@@ -65,6 +65,20 @@ SSCEXPORT void* VBCALL_CONVENTION sscvb_data_create()
 	return ssc_data_create();
 }
 
+SSCEXPORT void* VBCALL_CONVENTION sscvb_json_file_to_ssc_data(const char* name)
+{
+    return json_file_to_ssc_data(name);
+}
+
+SSCEXPORT long VBCALL_CONVENTION sscvb_data_lookup(void* p_data, const char* name)
+{
+    if (p_data && ssc_data_lookup(p_data, name))
+        return 1;
+    else
+        return 0;
+}
+
+
 SSCEXPORT long VBCALL_CONVENTION sscvb_data_free(void *p_data)
 {
 	if (p_data)
@@ -279,14 +293,10 @@ SSCEXPORT long VBCALL_CONVENTION sscvb_data_get_matrix(void *p_data, const char 
 		return 0;
 	}
 
-// TODO test this
-SSCEXPORT long VBCALL_CONVENTION sscvb_data_get_table(void *p_data, const char *name, void *table)
+SSCEXPORT void* VBCALL_CONVENTION sscvb_data_get_table(void *p_data, const char *name)
 {
-	if (p_data && table)
-	{
-		ssc_data_t tmp = ssc_data_get_table(p_data, name); 
-		return (long)tmp;
-	}
+	if (p_data)
+		return ssc_data_get_table(p_data, name); 
 	else
 		return 0;
 }

@@ -118,7 +118,7 @@ TEST_F(LiIon_lib_battery_capacity_test, updateCapacityLifetimeTest){
 
     percent = 110;
     old_cap->updateCapacityForLifetime(percent);
-    s1 = {100, 100, 1000, 0, 400, 100, 50, 2};
+    s1 = {100, 1100, 1000, 0, 400, 10, 50, 2};
     compareState(old_cap->get_state(), s1, "updateCapacityLifetimeTest: 4");
 
     percent = -110;
