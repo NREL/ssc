@@ -2587,7 +2587,6 @@ public:
                     monthly_ec_charges[m] -= monthly_cumulative_excess_dollars[m];
                     payment[c - 1] -= monthly_cumulative_excess_dollars[m];
                     dollars_applied += monthly_cumulative_excess_dollars[m];
-                    monthly_cumulative_excess_dollars[m] = 0;
                 }
                 // Rollover credits at end of true-up period are applied after annual minimums below this section
 
