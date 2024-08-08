@@ -147,10 +147,11 @@ protected:
     double m_LoverD;        //[-]
     double m_RelRough;      //[-]
 
-    // Initial State variables
-    C_csp_collector_receiver::E_csp_cr_modes m_mode_initial;
-    double m_E_su_init;         //[W-hr] Initial startup energy
-    double m_t_su_init;         //[hr] Startup time requirement
+    // State variables
+    double m_E_su;              //[W-hr] startup energy
+    double m_E_su_prev;         //[W-hr] startup energy
+    double m_t_su;              //[hr] startup time
+    double m_t_su_prev;         //[hr] startup time requirement
 
     // Stored solutions
     s_steady_state_soln m_mflow_soln_prev;  // Steady state solution using actual DNI from the last call to the model
@@ -269,9 +270,6 @@ public:
 	~C_mspt_receiver_222(){};
 
 	virtual void init() override;
-
-    void set_inital_state(C_csp_collector_receiver::E_csp_cr_modes mode_initial,
-        double E_su_init /*W-hr*/, double t_su_init /*hr*/);
 
 	virtual void call(const C_csp_weatherreader::S_outputs &weather, 
 		const C_csp_solver_htf_1state &htf_state_in, 

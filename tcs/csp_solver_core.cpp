@@ -464,8 +464,8 @@ void C_csp_solver::init()
 
     m_is_cr_config_recirc = true;
 
-    if (mc_tou.m_dispatch_model_type == C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::UNDEFINED) {
-        throw(C_csp_exception("Either heuristic, imported dispatch targets, or dispatch optimization must be specified", "CSP Solver"));
+    if (!mc_tou.mc_dispatch_params.m_is_block_dispatch && !mc_dispatch.solver_params.dispatch_optimize && !mc_tou.mc_dispatch_params.m_is_arbitrage_policy) {
+        throw(C_csp_exception("Either block dispatch or dispatch optimization must be specified", "CSP Solver"));
     }
 
     if (mc_dispatch.solver_params.dispatch_optimize)
@@ -1390,8 +1390,8 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
             q_dot_elec_to_PAR_HTR = m_PAR_HTR_q_dot_rec_des;    //[MWt]
         }
     }
-    // Use simply policy to govern arbitrage operation
-    else if (mc_tou.m_dispatch_model_type == C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::ARBITRAGE_CUTOFF) {
+    // use simply policy to govern arbitrage operation
+    else if (mc_tou.mc_dispatch_params.m_is_arbitrage_policy) {
 
         // Check purchase multiplier
         // If less than 1, then allow charging
@@ -1432,29 +1432,9 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
             q_dot_pc_max = 0.0;
         }
     }
-    // Use external dispatch targets
-    else if (mc_tou.m_dispatch_model_type == C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::IMPORT_DISPATCH_TARGETS) {
-        int p = (int)ceil((mc_kernel.mc_sim_info.ms_ts.m_time - mc_kernel.get_sim_setup()->m_sim_time_start) / baseline_step) - 1;
-
-        if (pc_operating_state == C_csp_power_cycle::OFF || pc_operating_state == C_csp_power_cycle::STARTUP) {
-            q_dot_pc_target = mc_tou.mc_dispatch_params.m_q_pc_target_su_in.at(p);
-        }
-        else {
-            q_dot_pc_target = mc_tou.mc_dispatch_params.m_q_pc_target_on_in.at(p) + mc_tou.mc_dispatch_params.m_q_pc_target_su_in.at(p);  // Dispatch can miss startup timing -> Use total target to avoid attempted solutions with q_pc_target = 0
-        }
-
-        q_dot_pc_max = mc_tou.mc_dispatch_params.m_q_pc_max_in.at(p);
-        is_rec_su_allowed = mc_tou.mc_dispatch_params.m_is_rec_su_allowed_in.at(p);
-        is_pc_su_allowed = mc_tou.mc_dispatch_params.m_is_pc_su_allowed_in.at(p);
-        is_pc_sb_allowed = mc_tou.mc_dispatch_params.m_is_pc_sb_allowed_in.at(p);
-
-        is_PAR_HTR_allowed = mc_tou.mc_dispatch_params.m_is_PAR_HTR_allowed_in.at(p);
-        q_dot_elec_to_PAR_HTR = mc_tou.mc_dispatch_params.m_q_dot_elec_to_PAR_HTR_in.at(p);
-        q_dot_elec_to_CR_heat = 0.0;
-
-    }
     // Run dispatch optimization?
-    else if (mc_tou.m_dispatch_model_type == C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::DISPATCH_OPTIMIZATION) {
+    else if (mc_dispatch.solver_params.dispatch_optimize)
+    {
         q_dot_elec_to_PAR_HTR = 0.0;
         is_PAR_HTR_allowed = false;
 
@@ -1529,6 +1509,44 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
         is_PAR_HTR_allowed = mc_dispatch.disp_outputs.is_eh_su_allowed;
         q_dot_elec_to_PAR_HTR = mc_dispatch.disp_outputs.q_eh_target;
     }
+}
+
+void C_csp_tou::init_parent(bool dispatch_optimize)
+{
+	// Check that dispatch logic is reasonable
+	if( !(dispatch_optimize || mc_dispatch_params.m_is_block_dispatch || mc_dispatch_params.m_is_arbitrage_policy) )
+	{
+		throw(C_csp_exception("Must select a plant control strategy", "TOU initialization"));
+	}
+
+	if( (dispatch_optimize && mc_dispatch_params.m_is_block_dispatch) ||
+        (dispatch_optimize && mc_dispatch_params.m_is_arbitrage_policy) ||
+        (mc_dispatch_params.m_is_block_dispatch && mc_dispatch_params.m_is_arbitrage_policy) )
+	{
+		throw(C_csp_exception("Multiple plant control strategies were selected. Please select one.", "TOU initialization"));
+	}
+
+	if( mc_dispatch_params.m_is_block_dispatch )
+	{
+		if( mc_dispatch_params.m_use_rule_1 )
+		{
+			if( mc_dispatch_params.m_standby_off_buffer < 0.0 )
+			{
+				throw(C_csp_exception("Block Dispatch Rule 1 was selected, but the time entered was invalid."
+					" Please select a time >= 0", "TOU initialization"));
+			}
+		}
+
+		if( mc_dispatch_params.m_use_rule_2 )
+		{
+			if( mc_dispatch_params.m_f_q_dot_pc_overwrite <= 0.0 || 
+				mc_dispatch_params.m_q_dot_rec_des_mult <= 0.0 )
+			{
+				throw(C_csp_exception("Block Dispatch Rule 2 was selected, but the parameters entered were invalid."
+					" Both values must be greater than 0", "TOU initialization"));
+			}
+		}
+	}
 }
 
 void C_csp_solver::C_operating_mode_core::turn_off_mode_availability()
