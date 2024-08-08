@@ -44,6 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_pc_Rankine_indirect_224.h"
 #include "csp_solver_two_tank_tes.h"
 #include "csp_solver_NTHeatTrap_tes.h"
+#include "csp_solver_packedbed_tes.h"
 #include "csp_solver_tou_block_schedules.h"
 #include "csp_dispatch.h"
 #include "csp_system_costs.h"
@@ -219,6 +220,17 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "tes_tank_dens",             "Tank wall thickness (used for Norwich HeatTrap)",                                  "kg/m3",        "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tes_NT_nstep",              "Number of time steps for energy balance (used for Norwich HeatTrap)",              "",             "",               "TES",            "?=1",                     "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "tes_NT_piston_loss_poly",   "Polynomial coefficients describing piston heat loss function (f(kg/s)=%)",         "",             "",               "TES",            "tes_type=1",              "",                      "" },
+
+    // TES Packed Bed
+    { SSC_INPUT,        SSC_NUMBER,      "tes_pb_n_xsteps",           "Number of spatial segments",                                                       "",             "",               "TES",            "tes_type=2",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_pb_n_tsteps",           "Number of subtimesteps",                                                           "",             "",               "TES",            "tes_type=2",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_pb_k_eff",              "TES packed bed effective conductivity",                                            "W/m K",        "",               "TES",            "tes_type=2",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_pb_void_frac",          "TES particle packed bed void fraction",                                            "",             "",               "TES",            "tes_type=2",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_pb_dens_solid",         "TES particle density",                                                             "kg/m3",        "",               "TES",            "tes_type=2",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_pb_cp_solid",           "TES particle specific heat",                                                       "J/kg K",       "",               "TES",            "tes_type=2",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_pb_T_hot_delta",        "Max allowable decrease in hot discharge temp",                                     "m",            "",               "TES",            "tes_type=2",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_pb_T_cold_delta",       "Max allowable increase in cold discharge temp",                                    "m",            "",               "TES",            "tes_type=2",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_pb_f_oversize",         "Packed bed oversize factor",                                                       "",             "",               "TES",            "tes_type=2",              "",                      "" },
 
 
     // TOU
@@ -1205,6 +1217,7 @@ public:
         C_csp_tes* storage_pointer;
         C_csp_two_tank_tes storage_two_tank;
         C_csp_NTHeatTrap_tes storage_NT;
+        C_csp_packedbed_tes storage_packedbed;
         if (tes_type == 0)
         {
 
@@ -1399,6 +1412,34 @@ public:
             storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_LEAK_ERROR, allocate("tes_leak_error", n_steps_fixed), n_steps_fixed);
             storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_WALL_ERROR, allocate("tes_wall_error", n_steps_fixed), n_steps_fixed);
             storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_ERROR_CORRECTED, allocate("tes_error_corrected", n_steps_fixed), n_steps_fixed);
+        }
+        else if (tes_type == 2)
+        {
+            storage_packedbed = C_csp_packedbed_tes(
+                as_integer("Fluid"),                                                // [-] field fluid identifier
+                as_matrix("field_fl_props"),                                        // [-] field fluid properties
+                as_double("P_ref") / as_double("eta_ref") * as_double("tshours"),   // [MWt-hr] design storage capacity
+                as_integer("is_h_tank_fixed"),                                      // [] Sizing Method (0) use fixed diameter, (1) use fixed height, (2) use preset inputs
+                as_double("h_tank_in"),                                             // [m] Tank height
+                as_double("d_tank_in"),                                             // [m] Tank diameter
+                as_double("tes_pb_f_oversize"),                                     // [] Oversize factor
+                as_double("T_loop_in_des"),                                         // [C] Cold design temperature
+                as_double("T_loop_out"),                                            // [C] hot design temperature
+                as_double("T_loop_out"),                                            // [C] Initial temperature in hot storage tank
+                as_double("T_loop_in_des"),                                         // [C] Initial temperature in cold storage cold
+                as_double("init_hot_htf_percent"),                                  // [%] Initial fraction of available volume that is hot
+                as_integer("tes_pb_n_xsteps"),                                      // number spatial sub steps
+                as_integer("tes_pb_n_tsteps"),                                      // number subtimesteps
+                as_double("tes_pump_coef"),                                         // [kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop 
+                as_double("tes_pb_k_eff"),                                          // [W/m K] Effective thermal conductivity
+                as_double("tes_pb_void_frac"),                                      // [] Packed bed void fraction
+                as_double("tes_pb_dens_solid"),                                     // [kg/m3] solid specific heat 
+                as_double("tes_pb_cp_solid"),                                       // [J/kg K] solid specific heat
+                as_double("tes_pb_T_hot_delta"),                                    // [C] Max allowable decrease in hot discharge temp
+                as_double("tes_pb_T_cold_delta")                                    // [C] Max allowable increase in cold discharge temp
+                );
+
+            storage_pointer = &storage_packedbed;
         }
         else
         {
@@ -1845,6 +1886,11 @@ public:
                 else if (tes_type == 1)
                 {
                     storage_NT.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
+                        h_tank_calc, d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
+                }
+                else if (tes_type == 2)
+                {
+                    storage_packedbed.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
                         h_tank_calc, d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
                 }
                 

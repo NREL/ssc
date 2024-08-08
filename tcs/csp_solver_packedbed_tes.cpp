@@ -108,8 +108,10 @@ C_csp_packedbed_tes::C_csp_packedbed_tes(
     m_T_hot_delta(T_hot_delta), m_T_cold_delta(T_cold_delta)
 {
     // Convert Temperature Units
-    m_T_cold_des = T_cold_des_C + 273.15;
-    m_T_hot_des = T_hot_des_C + 273.15;
+    m_T_cold_des = T_cold_des_C + 273.15;           //[K]
+    m_T_hot_des = T_hot_des_C + 273.15;             //[K]
+    m_T_tank_hot_ini = T_tank_hot_ini_C + 273.15;   //[K]
+    m_T_tank_cold_ini = T_tank_cold_ini_C + 273.15; //[K]
 
     mc_reported_outputs.construct(S_output_info);
 }
@@ -129,6 +131,14 @@ void C_csp_packedbed_tes::set_T_grad_init(std::vector<double> T_grad_init_C)
 
 void C_csp_packedbed_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs)
 {
+    if (!(m_Q_tes_des > 0.0))
+    {
+        m_is_tes = false;
+        return;		// No storage!
+    }
+
+    m_is_tes = true;
+
     // Declare instance of fluid class for EXTERNAL fluid
     // Set fluid number and copy over fluid matrix if it makes sense
     if (m_external_fl != HTFProperties::User_defined && m_external_fl < HTFProperties::End_Library_Fluids)
@@ -170,9 +180,9 @@ void C_csp_packedbed_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_input
         size_pb_fixed_diameter(m_Q_tes_des /*MWt-hr*/, m_f_oversize,
             m_void_frac, m_dens_solid /*kg/m3*/, m_cp_solid /*J/kg K*/,
             m_T_hot_des /*K*/, m_T_cold_des /*K*/, m_d_tank_in /*m*/,
-            m_V_total /*m3*/, h_tank_out /*m*/);
-        m_h_tank = h_tank_out;
-        m_d_tank = m_d_tank_in;
+            m_V_tank /*m3*/, h_tank_out /*m*/);
+        m_h_tank_calc = h_tank_out;
+        m_d_tank_calc = m_d_tank_in;
     }
     // Fixed Height
     else if (m_size_type == 1)
@@ -181,15 +191,15 @@ void C_csp_packedbed_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_input
         size_pb_fixed_height(m_Q_tes_des /*MWt-hr*/, m_f_oversize,
             m_void_frac, m_dens_solid /*kg/m3*/, m_cp_solid /*J/kg K*/,
             m_T_hot_des /*K*/, m_T_cold_des /*K*/, m_h_tank_in /*m*/,
-            m_V_total /*m3*/, d_tank_out /*m*/);
-        m_d_tank = d_tank_out;
-        m_h_tank = m_h_tank_in;
+            m_V_tank /*m3*/, d_tank_out /*m*/);
+        m_d_tank_calc = d_tank_out;
+        m_h_tank_calc = m_h_tank_in;
     }
     // Diameter and height are defined by user
     else if (m_size_type == 2)
     {
-        m_h_tank = m_h_tank_in; //[m]
-        m_d_tank = m_d_tank_in; //[m]
+        m_h_tank_calc = m_h_tank_in; //[m]
+        m_d_tank_calc = m_d_tank_in; //[m]
     }
     else
     {
@@ -197,18 +207,32 @@ void C_csp_packedbed_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_input
     }
 
     // Define Cross Sectional Area
-    m_Ac = M_PI * std::pow(0.5 * m_d_tank, 2.0);
+    m_Ac = M_PI * std::pow(0.5 * m_d_tank_calc, 2.0);
 
     // Define initial temperatures
     if (m_use_T_grad_init == false)
     {
-        double dx = m_h_tank / m_n_xstep;               // [m]
+        double dx = m_h_tank_calc / m_n_xstep;               // [m]
+        double x_end = 0;   //[m]
+        double x_mid = 0;   //[m]
         m_T_prev_vec = std::vector<double>(m_n_xstep + 1);
         // Loop through space
         for (int i = 0; i <= m_n_xstep; i++)
         {
-            double frac = (i * dx) / m_h_tank;
-            if (frac < m_f_V_hot_ini * 0.01)
+            // Update position of center of section
+            if (i == 0 || i == m_n_xstep)
+            {
+                x_end += dx * 0.5;
+                x_mid = x_end - (dx * 0.5 * 0.5);
+            }
+            else
+            {
+                x_end += dx;
+                x_mid = x_end - (dx * 0.5);
+            }
+
+            double frac_mid = x_mid / m_h_tank_calc;
+            if(frac_mid < m_f_V_hot_ini * 0.01)
                 m_T_prev_vec[i] = m_T_tank_hot_ini;
             else
                 m_T_prev_vec[i] = m_T_tank_cold_ini;
@@ -220,7 +244,7 @@ void C_csp_packedbed_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_input
 
 bool C_csp_packedbed_tes::does_tes_exist()
 {
-    return false;
+    return m_is_tes;
 }
 
 bool C_csp_packedbed_tes::is_cr_to_cold_allowed()
@@ -242,7 +266,28 @@ double C_csp_packedbed_tes::get_cold_temp()
 
 double C_csp_packedbed_tes::get_hot_tank_vol_frac()
 {
-    return std::numeric_limits<double>::quiet_NaN();
+    // Loop through temperatures, starting at hot end, to check temperature threshold
+    double n_hot_sections = 0;
+    for (int i = 0; i < m_T_prev_vec.size(); i++)
+    {
+        double T_prev_node = m_T_prev_vec[i];
+        double weight = 1;
+
+        // First and last node count for half
+        if (i == 0 || i == m_T_prev_vec.size() - 1)
+            weight = 0.5;
+
+        if (T_prev_node >= (m_T_hot_des - m_T_hot_delta))
+        {
+            n_hot_sections += weight;
+        }
+    }
+
+    // Calculate hot fraction
+    // Divide by number of "sections" which is one less than number of nodes
+    double hot_vol_frac = n_hot_sections / m_n_xstep;
+
+    return hot_vol_frac;
 }
 
 double C_csp_packedbed_tes::get_initial_charge_energy()
@@ -273,17 +318,29 @@ void C_csp_packedbed_tes::reset_storage_to_initial_state()
 void C_csp_packedbed_tes::discharge_avail_est(double T_cold_K, double step_s,
     double& q_dot_dc_est /*MWt*/, double& m_dot_external_est /*kg/s*/, double& T_hot_external_est /*K*/)
 {
+    // Temperatures are at the node between segments
+    // if m_n_xstep == 9, there are 10 reported temperatures
+    // The first and last node represent HALF volume each
+
     // Calculate Available Discharge Energy
-    double dx = m_h_tank / m_n_xstep;               // [m]
+    double dx = m_h_tank_calc / m_n_xstep;               // [m]
     double mass_packed_subsection = dx * m_Ac * (1.0 - m_void_frac) * m_dens_solid;   // [kg] Packed bed mass in subsection
 
     // Loop through temperatures, starting at hot end, to check temperature threshold
-    double Q_dc_avail = 0;  // [MWt]
-    for (double T_prev_node : m_T_prev_vec)
+    double Q_dc_avail = 0;  // [MJt]
+    for(int i = 0; i < m_T_prev_vec.size(); i++)
     {
+        double T_prev_node = m_T_prev_vec[i];
+        double local_mass = mass_packed_subsection;
+
+        // Mass is half if first or last node
+        if (i == 0 || i == m_T_prev_vec.size() - 1)
+            local_mass = local_mass / 2.0;
+
+        // Check if node is above threshold
         if (T_prev_node >= (m_T_hot_des - m_T_hot_delta))
         {
-            Q_dc_avail += mass_packed_subsection * m_cp_solid * (T_prev_node - T_cold_K) * 1e-6;    // [MWt]
+            Q_dc_avail += local_mass * m_cp_solid * (T_prev_node - T_cold_K) * 1e-6;    // [MJt]
         }
         else
         {
@@ -291,12 +348,15 @@ void C_csp_packedbed_tes::discharge_avail_est(double T_cold_K, double step_s,
         }
     }
 
+    // Calculate Q dot avail
+    double Q_dot_dc_avail = Q_dc_avail / step_s;    // [MWt]
+
     // Calculate Max Mass Flow Rate
     double cp_fluid_avg = mc_external_htfProps.Cp_ave(m_T_cold_des, m_T_hot_des) * 1.E3; //[J/kg-K]
     double mdot_max = (Q_dc_avail * 1e6) / (step_s * cp_fluid_avg * (m_T_hot_des - T_cold_K));  //[kg/s]
 
     // Set Outputs
-    q_dot_dc_est = Q_dc_avail;  //[MWt]
+    q_dot_dc_est = Q_dot_dc_avail;  //[MWt]
     m_dot_external_est = mdot_max;  //[kg/s]
     T_hot_external_est = m_T_prev_vec[0];   // [K] Temperature near charge inlet (hottest)
 
@@ -306,18 +366,30 @@ void C_csp_packedbed_tes::discharge_avail_est(double T_cold_K, double step_s,
 void C_csp_packedbed_tes::charge_avail_est(double T_hot_K, double step_s,
     double& q_dot_ch_est /*MWt*/, double& m_dot_external_est /*kg/s*/, double& T_cold_external_est /*K*/)
 {
+    // Temperatures are at the node between segments
+    // if m_n_xstep == 9, there are 10 reported temperatures
+    // The first and last node represent HALF volume each
+
     // Calculate Available Charge Energy
-    double dx = m_h_tank / m_n_xstep;   // [m]
+    double dx = m_h_tank_calc / m_n_xstep;   // [m]
     double mass_packed_subsection = dx * m_Ac * (1.0 - m_void_frac) * m_dens_solid;   // [kg] Packed bed mass in subsection 
 
     // Loop through temperatures, starting at cold end, to check temperature threshold
-    double Q_ch_avail = 0;  //[MWt]
+    double Q_ch_avail = 0;  //[MJt]
+    double count = 0;
     for (int i = m_T_prev_vec.size() - 1; i >= 0; i--)
     {
         double T_prev_node = m_T_prev_vec[i];   //[K]
+        double local_mass = mass_packed_subsection;
+
+        // Mass is half if first or last node
+        if (i == 0 || i == m_T_prev_vec.size() - 1)
+            local_mass = local_mass / 2.0;
+
         if (T_prev_node <= (m_T_cold_des + m_T_cold_delta))
         {
-            Q_ch_avail += mass_packed_subsection * m_cp_solid * (T_hot_K - m_T_cold_des) * 1e-6;    //[MWt]
+            Q_ch_avail += local_mass * m_cp_solid * (T_hot_K - m_T_cold_des) * 1e-6;    //[MJt]
+            count++;
         }
         else
         {
@@ -325,12 +397,15 @@ void C_csp_packedbed_tes::charge_avail_est(double T_hot_K, double step_s,
         }
     }
 
+    // Calculate Q dot avail
+    double Q_dot_ch_avail = Q_ch_avail / step_s;    // [MWt]
+
     // Calculate Max Mass Flow Rate
     double cp_fluid_avg = mc_external_htfProps.Cp_ave(m_T_cold_des, m_T_hot_des) * 1.E3; //[J/kg-K]
     double mdot_max = (Q_ch_avail * 1e6) / (step_s * cp_fluid_avg * (T_hot_K - m_T_cold_des));  //[kg/s]
 
     // Set Outputs
-    q_dot_ch_est = Q_ch_avail;  //[MWt]
+    q_dot_ch_est = Q_dot_ch_avail;  //[MWt]
     m_dot_external_est = mdot_max;  //[kg/s]
     T_cold_external_est = m_T_prev_vec[m_T_prev_vec.size() - 1];    // [K] Temperature near charge outlet (coldest)
 
@@ -514,6 +589,14 @@ void C_csp_packedbed_tes::get_design_parameters(double& vol_one_temp_avail /*m3*
     double& h_tank_calc /*m*/, double& d_tank_calc /*m*/,
     double& q_dot_loss_des /*MWt*/, double& dens_store_htf_at_T_ave /*kg/m3*/, double& Q_tes /*MWt-hr*/)
 {
+    vol_one_temp_avail = m_V_tank;  //[m3]
+    vol_one_temp_total = m_V_tank;  //[m3]
+    h_tank_calc = m_h_tank_calc;    //[m]
+    d_tank_calc = m_d_tank_calc;    //[m]
+    q_dot_loss_des = 0.0;           //[MWt]
+    dens_store_htf_at_T_ave = m_dens_solid; //[kg/m3] This is just the density of the solid media (?)
+    Q_tes = m_Q_tes_des;            //[MWt-hr]
+
     return;
 }
 
@@ -533,7 +616,7 @@ bool C_csp_packedbed_tes::charge(double timestep /*s*/, double T_amb /*K*/, doub
 
     // Define timestep and spatial step
     double dt = timestep / m_n_subtimestep;     // [s] subtimestep
-    double dx = m_h_tank / m_n_xstep;           // [m]
+    double dx = m_h_tank_calc / m_n_xstep;           // [m]
 
     // Calculate Coefficients (assume constant for now)
     double cp_eff = m_void_frac * dens_fluid_avg * cp_fluid_avg
@@ -651,7 +734,7 @@ bool C_csp_packedbed_tes::discharge(double timestep /*s*/, double T_amb /*K*/, d
 
     // Define timestep and spatial step
     double dt = timestep / m_n_subtimestep;         // [s] subtimestep
-    double dx = m_h_tank / m_n_xstep;               // [m]
+    double dx = m_h_tank_calc / m_n_xstep;               // [m]
 
     // Calculate Coefficients (assume constant for now)
     double cp_eff = m_void_frac * dens_fluid_avg * cp_fluid_avg

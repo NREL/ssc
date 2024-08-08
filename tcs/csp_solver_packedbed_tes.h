@@ -74,12 +74,13 @@ private:
     std::vector<double> m_T_calc_vec;   // [K] Temperatures in space, starting at CHARGE inlet (hot)
 
     // Calculated in init()
-    double m_h_tank;    // [m] Tank height
-    double m_d_tank;    // [m] Tank diameter
-    double m_Ac;        // [m2] Tank cross sectional area
-    double m_V_total;   // [m3] Tank volume
+    double m_h_tank_calc;       // [m] Tank height
+    double m_d_tank_calc;       // [m] Tank diameter
+    double m_Ac;                // [m2] Tank cross sectional area
+    double m_V_tank;            // [m3] Tank volume
 
     // Private members
+    bool m_is_tes;
     bool m_use_T_grad_init = false;
     HTFProperties mc_external_htfProps;		// Instance of HTFProperties class for external HTF
 
