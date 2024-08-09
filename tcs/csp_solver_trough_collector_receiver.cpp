@@ -77,6 +77,8 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
     {C_csp_trough_collector_receiver::E_DEFOCUS_FINAL, C_csp_reported_outputs::TS_LAST},
     {C_csp_trough_collector_receiver::E_T_IN_LOOP_FINAL, C_csp_reported_outputs::TS_LAST},
     {C_csp_trough_collector_receiver::E_T_OUT_LOOP_FINAL, C_csp_reported_outputs::TS_LAST},
+    {C_csp_trough_collector_receiver::E_VEL_LOOP_MIN, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_csp_trough_collector_receiver::E_VEL_LOOP_MAX, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
 	csp_info_invalid
 };
