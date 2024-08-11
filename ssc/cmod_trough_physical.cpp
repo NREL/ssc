@@ -1440,7 +1440,20 @@ public:
                 );
 
             storage_pointer = &storage_packedbed;
+
+            // Set storage outputs
+            storage_two_tank.mc_reported_outputs.assign(C_csp_packedbed_tes::E_Q_DOT_LOSS, allocate("tank_losses", n_steps_fixed), n_steps_fixed);
+            storage_two_tank.mc_reported_outputs.assign(C_csp_packedbed_tes::E_W_DOT_HEATER, allocate("q_tes_heater", n_steps_fixed), n_steps_fixed);
+            storage_two_tank.mc_reported_outputs.assign(C_csp_packedbed_tes::E_TES_T_HOT, allocate("T_tes_hot", n_steps_fixed), n_steps_fixed);
+            storage_two_tank.mc_reported_outputs.assign(C_csp_packedbed_tes::E_TES_T_COLD, allocate("T_tes_cold", n_steps_fixed), n_steps_fixed);
+            storage_two_tank.mc_reported_outputs.assign(C_csp_packedbed_tes::E_M_DOT_TANK_TO_TANK, allocate("m_dot_cold_tank_to_hot_tank", n_steps_fixed), n_steps_fixed);
+            storage_two_tank.mc_reported_outputs.assign(C_csp_packedbed_tes::E_MASS_COLD_TANK, allocate("mass_tes_cold", n_steps_fixed), n_steps_fixed);
+            storage_two_tank.mc_reported_outputs.assign(C_csp_packedbed_tes::E_MASS_HOT_TANK, allocate("mass_tes_hot", n_steps_fixed), n_steps_fixed);
+            storage_two_tank.mc_reported_outputs.assign(C_csp_packedbed_tes::E_W_DOT_HTF_PUMP, allocate("tes_htf_pump_power", n_steps_fixed), n_steps_fixed);
+            storage_two_tank.mc_reported_outputs.assign(C_csp_packedbed_tes::E_VOL_TOT, allocate("vol_tes_tot", n_steps_fixed), n_steps_fixed);
+            storage_two_tank.mc_reported_outputs.assign(C_csp_packedbed_tes::E_MASS_TOT, allocate("tes_mass_tot", n_steps_fixed), n_steps_fixed);
         }
+
         else
         {
 

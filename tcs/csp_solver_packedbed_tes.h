@@ -78,6 +78,7 @@ private:
     double m_d_tank_calc;       // [m] Tank diameter
     double m_Ac;                // [m2] Tank cross sectional area
     double m_V_tank;            // [m3] Tank volume
+    double m_mass_solid;        // [kg] Mass of packed bed media
 
     // Private members
     bool m_is_tes;
@@ -111,6 +112,8 @@ public:
 		E_MASS_HOT_TANK,		//[kg] Mass in hot tank at end of timestep
 		E_HOT_TANK_HTF_PERC_FINAL,   //[%] Final percent fill of available hot tank mass
 		E_W_DOT_HTF_PUMP,    //[MWe]
+        E_VOL_TOT,           //[m3] Total volume of hot and cold fluid in storage
+        E_MASS_TOT           //[kg] Total mass of hot and cold fluid in storage
 	};
 
 

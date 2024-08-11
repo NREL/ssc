@@ -44,7 +44,8 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
     {C_csp_packedbed_tes::E_MASS_HOT_TANK, C_csp_reported_outputs::TS_LAST},				//[kg] Mass in hot tank at end of timestep
     {C_csp_packedbed_tes::E_HOT_TANK_HTF_PERC_FINAL, C_csp_reported_outputs::TS_LAST},	//[%] Final percent fill of available hot tank mass
     {C_csp_packedbed_tes::E_W_DOT_HTF_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[MWe]
-
+    {C_csp_packedbed_tes::E_VOL_TOT, C_csp_reported_outputs::TS_LAST},	//[m3]
+    {C_csp_packedbed_tes::E_MASS_TOT, C_csp_reported_outputs::TS_LAST},	//[kg] 
     csp_info_invalid
 };
 
@@ -208,6 +209,9 @@ void C_csp_packedbed_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_input
 
     // Define Cross Sectional Area
     m_Ac = M_PI * std::pow(0.5 * m_d_tank_calc, 2.0);
+
+    // Back calculate packed bed mass
+    m_mass_solid = m_V_tank * (1.0 - m_void_frac) * m_dens_solid;   // [kg]
 
     // Define initial temperatures
     if (m_use_T_grad_init == false)
@@ -528,6 +532,7 @@ int C_csp_packedbed_tes::solve_tes_off_design(double timestep /*s*/, double  T_a
     // Solve pumping power here
     double W_dot_htf_pump = std::numeric_limits<double>::quiet_NaN();
 
+    // Set values not part of packed bed model
     s_outputs.m_q_heater = q_dot_heater;                        //[MWe] Heater
     s_outputs.m_W_dot_elec_in_tot = W_dot_rhtf_pump;            //[MWe] Use this pumping power?
 
@@ -556,6 +561,8 @@ int C_csp_packedbed_tes::solve_tes_off_design(double timestep /*s*/, double  T_a
     mc_reported_outputs.value(E_W_DOT_HTF_PUMP, W_dot_htf_pump);    //[MWe]
     //mc_reported_outputs.value(E_VOL_TOT, vol_total);    //[m3]
     //mc_reported_outputs.value(E_MASS_TOT, mc_cold_tank.get_m_m_calc() + mc_hot_tank.get_m_m_calc());    //[m3]
+    mc_reported_outputs.value(E_VOL_TOT, m_V_tank);    //[m3]
+    mc_reported_outputs.value(E_MASS_TOT, m_mass_solid);    //[m3]
 
     return 0;
 }
