@@ -607,6 +607,9 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_wall_error",            "TES energy balance error due to wall temperature assumption",                      "MWt",           "",               "TES",           "sim_type=1&tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_error_corrected",       "TES energy balance error, accounting for wall and temperature assumption error",   "MWt",           "",              "TES",            "sim_type=1&tes_type=1",              "",                      "" },
 
+    // Packed Bed TES
+    { SSC_OUTPUT,       SSC_MATRIX,      "T_grad_final",              "TES Temperature gradient at end of timestep",                                      "C",            "",               "TES",            "",              "",                      "" },
+
 
     //{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_tes_dc",              "TES discharge mass flow rate",                                                     "kg/s",         "",               "TES",            "*",                       "",                      "" },
     //{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_tes_ch",              "TES charge mass flow rate",                                                        "kg/s",         "",               "TES",            "*",                       "",                      "" },
@@ -2199,6 +2202,22 @@ public:
         {
             log(out_msg, out_type);
         }
+
+        // Temporary
+        std::vector<std::vector<double>> T_grad_vec_vec = storage_packedbed.m_T_grad_mat;
+        util::matrix_t<ssc_number_t> T_grad_mat;
+        {
+            int nrow = T_grad_vec_vec.size();
+            int ncol = T_grad_vec_vec[0].size();
+
+            T_grad_mat.resize(nrow, ncol);           // NOTE!: You must do a separate 'fill', probably with how this is eventually set to an array instead of a matrix. This fails:  result(n, 1, std::numeric_limits<double>::quiet_NaN())
+            T_grad_mat.fill(std::numeric_limits<double>::quiet_NaN());
+            for (size_t i = 0; i < nrow; i++) {
+                for (size_t j = 0; j < ncol; j++)
+                    T_grad_mat.at(i, j) = T_grad_vec_vec[i][j];
+            }
+        }
+        assign("T_grad_final", T_grad_mat);
 
         std::clock_t clock_end = std::clock();
         double sim_duration = (clock_end - clock_start) / (double)CLOCKS_PER_SEC;		//[s]

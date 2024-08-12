@@ -575,6 +575,9 @@ void C_csp_packedbed_tes::converged()
 
     mc_reported_outputs.set_timestep_outputs();
 
+    // Try store temperature gradient
+    m_T_grad_mat.push_back(m_T_prev_vec);
+
     return;
 }
 

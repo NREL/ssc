@@ -85,6 +85,7 @@ private:
     bool m_use_T_grad_init = false;
     HTFProperties mc_external_htfProps;		// Instance of HTFProperties class for external HTF
 
+    
 
     // Private Methods
     void size_pb_fixed_height(double Q_tes_des /*MWt-hr*/, double f_oversize,
@@ -100,6 +101,9 @@ private:
     void size_pb_fixed_diameter();
 
 public:
+
+    //Temporary
+    std::vector<std::vector<double>> m_T_grad_mat;
 
 	enum
 	{
