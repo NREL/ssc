@@ -570,6 +570,11 @@ int C_csp_packedbed_tes::solve_tes_off_design(double timestep /*s*/, double  T_a
 void C_csp_packedbed_tes::converged()
 {
     m_T_prev_vec = m_T_calc_vec;
+
+    mc_reported_outputs.value(E_HOT_TANK_HTF_PERC_FINAL, get_hot_tank_vol_frac() * 100.0);
+
+    mc_reported_outputs.set_timestep_outputs();
+
     return;
 }
 
