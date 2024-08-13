@@ -348,7 +348,7 @@ void C_csp_packedbed_tes::discharge_avail_est(double T_cold_K, double step_s,
         }
         else
         {
-            break;
+            //break;
         }
     }
 
@@ -374,6 +374,15 @@ void C_csp_packedbed_tes::charge_avail_est(double T_hot_K, double step_s,
     // if m_n_xstep == 9, there are 10 reported temperatures
     // The first and last node represent HALF volume each
 
+    // First check if charge temp is hot enough
+    if (T_hot_K < (m_T_hot_des - m_T_hot_delta))
+    {
+        q_dot_ch_est = 0;
+        m_dot_external_est = 0;
+        T_cold_external_est = 0;
+        return;
+    }
+
     // Calculate Available Charge Energy
     double dx = m_h_tank_calc / m_n_xstep;   // [m]
     double mass_packed_subsection = dx * m_Ac * (1.0 - m_void_frac) * m_dens_solid;   // [kg] Packed bed mass in subsection 
@@ -397,7 +406,7 @@ void C_csp_packedbed_tes::charge_avail_est(double T_hot_K, double step_s,
         }
         else
         {
-            break;
+            //break;
         }
     }
 

@@ -103,7 +103,7 @@ private:
 public:
 
     //Temporary
-    std::vector<std::vector<double>> m_T_grad_mat;
+    std::vector<std::vector<double>> m_T_grad_mat;  // [K]
 
 	enum
 	{

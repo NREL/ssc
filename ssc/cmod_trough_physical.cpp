@@ -2214,7 +2214,7 @@ public:
             T_grad_mat.fill(std::numeric_limits<double>::quiet_NaN());
             for (size_t i = 0; i < nrow; i++) {
                 for (size_t j = 0; j < ncol; j++)
-                    T_grad_mat.at(i, j) = T_grad_vec_vec[i][j];
+                    T_grad_mat.at(i, j) = T_grad_vec_vec[i][j] - 273.15; //[C] Convert from K
             }
         }
         assign("T_grad_final", T_grad_mat);
