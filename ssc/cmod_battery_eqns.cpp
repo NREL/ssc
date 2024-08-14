@@ -265,12 +265,17 @@ bool Reopt_size_standalone_battery_params(ssc_data_t data) {
     reopt_settings.assign("solver_name", var_data("SCIP")); // "HiGHS" option does not work with large numbers like 1e38 for tier max values per https://github.com/NREL/SAM/issues/1742
 
     // assign the reopt parameter table and log messages
+#if defined(__MACOSX__) || defined(__WINDOWS__)
     reopt_table->assign_match_case("Settings", reopt_settings);
+#endif
     reopt_electric.assign_match_case("urdb_response", reopt_utility);
     reopt_table->assign_match_case("ElectricTariff", reopt_electric);
     reopt_table->assign_match_case("ElectricLoad", reopt_load);
     reopt_table->assign_match_case("Financial", reopt_fin);
     reopt_table->assign_match_case("ElectricStorage", reopt_batt);
+#ifdef __UNIX__
+    reopt_table->assign_match_case("Settings", reopt_settings);
+#endif
     vt->assign_match_case("reopt_scenario", reopt_params);
     vt->assign_match_case("log", log);
     return true;
