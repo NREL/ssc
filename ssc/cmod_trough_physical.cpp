@@ -1836,6 +1836,7 @@ public:
         // ********************************
         // ********************************
         double nameplate_des;
+        double Q_tes = std::numeric_limits<double>::quiet_NaN();
         {
             // System Design
             {
@@ -1909,7 +1910,7 @@ public:
                     storage_packedbed.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
                         h_tank_calc, d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
                 }
-                
+                Q_tes = Q_tes_des_calc;
 
                 double vol_min = V_tes_htf_total_calc * (storage_NT.m_h_tank_min / h_tank_calc);
                 double V_tank_hot_ini = (as_double("h_tank_min") / h_tank_calc) * V_tes_htf_total_calc; // m3
@@ -2127,7 +2128,6 @@ public:
             double site_improvements_area = c_trough.m_Ap_tot;
             double solar_field_area = c_trough.m_Ap_tot;
             double htf_system_area = c_trough.m_Ap_tot;
-            double Q_tes = q_dot_cycle_des * as_double("tshours");
             double P_ref = as_double("P_ref");      // MWe
             double fossil_backup_mwe = P_ref;       // MWe
             double power_plant_mwe = P_ref;         // MWe

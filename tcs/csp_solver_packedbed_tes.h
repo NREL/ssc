@@ -79,6 +79,7 @@ private:
     double m_Ac;                // [m2] Tank cross sectional area
     double m_V_tank;            // [m3] Tank volume
     double m_mass_solid;        // [kg] Mass of packed bed media
+    double m_Q_tes_actual;      // [MWt-hr] Storage capacity (including volume oversize factor)
 
     // Private members
     bool m_is_tes;

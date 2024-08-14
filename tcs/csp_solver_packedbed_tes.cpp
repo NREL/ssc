@@ -227,6 +227,9 @@ void C_csp_packedbed_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_input
     // Back calculate packed bed mass
     m_mass_solid = m_V_tank * (1.0 - m_void_frac) * m_dens_solid;   // [kg]
 
+    // Calculate actual storage capacity
+    m_Q_tes_actual = m_Q_tes_des * m_f_oversize;    //[MWt-hr]
+
     // Define initial temperatures
     if (m_use_T_grad_init == false)
     {
@@ -656,7 +659,7 @@ void C_csp_packedbed_tes::get_design_parameters(double& vol_one_temp_avail /*m3*
     d_tank_calc = m_d_tank_calc;    //[m]
     q_dot_loss_des = 0.0;           //[MWt]
     dens_store_htf_at_T_ave = m_dens_solid; //[kg/m3] This is just the density of the solid media (?)
-    Q_tes = m_Q_tes_des;            //[MWt-hr]
+    Q_tes = m_Q_tes_actual;         //[MWt-hr]
 
     return;
 }
