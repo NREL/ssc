@@ -51,25 +51,39 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 
 // Private Methods
 
-void C_csp_packedbed_tes::size_pb_fixed_height(double Q_tes_des /*MWt-hr*/, double f_oversize,
+void C_csp_packedbed_tes::size_pb_fixed_height(HTFProperties& tes_htf_props, double Q_tes_des /*MWt-hr*/, double f_oversize,
     double void_frac, double dens_solid /*kg/m3*/, double cp_solid /*J/kg K*/,
     double T_tes_hot /*K*/, double T_tes_cold /*K*/, double h_tank /*m*/,
     double& vol_total /*m3*/, double& d_tank_out /*m*/)
 {
-    // Calculate Total Volume
-    vol_total = f_oversize * (Q_tes_des * 1e6 * 3600.0) / ((1.0 - void_frac) * dens_solid * cp_solid * (T_tes_hot - T_tes_cold)); // [m3]
+    double T_tes_ave = 0.5 * (T_tes_hot + T_tes_cold);		//[K]
+
+    double dens_htf_ave = tes_htf_props.dens(T_tes_ave, 1.0);		//[kg/m^3] Density at average temperature
+    double cp_htf_ave = tes_htf_props.Cp_ave(T_tes_cold, T_tes_hot) * 1000.0;//[J/kg-K] Specific heat at average temperature
+
+    // Calculate Total Volume (include void space for HTF)
+    double dT = (T_tes_hot - T_tes_cold);   //[dK]
+    vol_total = f_oversize * (Q_tes_des * 1e6 * 3600.0) /
+        ((((1.0 - void_frac) * dens_solid * cp_solid) + (void_frac * dens_htf_ave * cp_htf_ave)) * dT); // [m3]
 
     // Calculate Diameter
     d_tank_out = 2.0 * std::sqrt(vol_total / (h_tank * CSP::pi));   // [m]
 }
 
-void C_csp_packedbed_tes::size_pb_fixed_diameter(double Q_tes_des /*MWt-hr*/, double f_oversize,
+void C_csp_packedbed_tes::size_pb_fixed_diameter(HTFProperties& tes_htf_props, double Q_tes_des /*MWt-hr*/, double f_oversize,
     double void_frac, double dens_solid /*kg/m3*/, double cp_solid /*J/kg K*/,
     double T_tes_hot /*K*/, double T_tes_cold /*K*/, double d_tank /*m*/,
     double& vol_total /*m3*/, double& h_tank_out /*m*/)
 {
+    double T_tes_ave = 0.5 * (T_tes_hot + T_tes_cold);		//[K]
+
+    double dens_htf_ave = tes_htf_props.dens(T_tes_ave, 1.0);		//[kg/m^3] Density at average temperature
+    double cp_htf_ave = tes_htf_props.Cp_ave(T_tes_cold, T_tes_hot) * 1000.0;//[J/kg-K] Specific heat at average temperature
+
     // Calculate Total Volume
-    vol_total = f_oversize * (Q_tes_des * 1e6 * 3600.0) / ((1.0 - void_frac) * dens_solid * cp_solid * (T_tes_hot - T_tes_cold)); // [m3]
+    double dT = (T_tes_hot - T_tes_cold);   //[dK]
+    vol_total = f_oversize * (Q_tes_des * 1e6 * 3600.0) /
+        ((((1.0 - void_frac) * dens_solid * cp_solid) + (void_frac * dens_htf_ave * cp_htf_ave)) * dT); // [m3]
 
     // Calculate Height
     h_tank_out = vol_total / (CSP::pi * std::pow(d_tank / 2.0, 2.0));   // m
@@ -178,7 +192,7 @@ void C_csp_packedbed_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_input
     if (m_size_type == 0)
     {
         double h_tank_out;
-        size_pb_fixed_diameter(m_Q_tes_des /*MWt-hr*/, m_f_oversize,
+        size_pb_fixed_diameter(mc_external_htfProps, m_Q_tes_des /*MWt-hr*/, m_f_oversize,
             m_void_frac, m_dens_solid /*kg/m3*/, m_cp_solid /*J/kg K*/,
             m_T_hot_des /*K*/, m_T_cold_des /*K*/, m_d_tank_in /*m*/,
             m_V_tank /*m3*/, h_tank_out /*m*/);
@@ -189,7 +203,7 @@ void C_csp_packedbed_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_input
     else if (m_size_type == 1)
     {
         double d_tank_out;
-        size_pb_fixed_height(m_Q_tes_des /*MWt-hr*/, m_f_oversize,
+        size_pb_fixed_height(mc_external_htfProps, m_Q_tes_des /*MWt-hr*/, m_f_oversize,
             m_void_frac, m_dens_solid /*kg/m3*/, m_cp_solid /*J/kg K*/,
             m_T_hot_des /*K*/, m_T_cold_des /*K*/, m_h_tank_in /*m*/,
             m_V_tank /*m3*/, d_tank_out /*m*/);
@@ -242,7 +256,6 @@ void C_csp_packedbed_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_input
                 m_T_prev_vec[i] = m_T_tank_cold_ini;
         }
     }
-
 
 }
 
@@ -326,25 +339,38 @@ void C_csp_packedbed_tes::discharge_avail_est(double T_cold_K, double step_s,
     // if m_n_xstep == 9, there are 10 reported temperatures
     // The first and last node represent HALF volume each
 
+    // Calculate HTF properties
+    double T_tes_ave = 0.5 * (m_T_hot_des + m_T_cold_des);		//[K]
+    double dens_htf_ave = mc_external_htfProps.dens(T_tes_ave, 1.0);		//[kg/m^3] Density at average temperature
+    double cp_htf_ave = mc_external_htfProps.Cp_ave(m_T_cold_des, m_T_hot_des) * 1000.0;//[J/kg-K] Specific heat at average temperature
+
     // Calculate Available Discharge Energy
     double dx = m_h_tank_calc / m_n_xstep;               // [m]
     double mass_packed_subsection = dx * m_Ac * (1.0 - m_void_frac) * m_dens_solid;   // [kg] Packed bed mass in subsection
+    double mass_htf_subsection = dx * m_Ac * m_void_frac * dens_htf_ave;    //[kg] HTF mass in subsection
 
     // Loop through temperatures, starting at hot end, to check temperature threshold
     double Q_dc_avail = 0;  // [MJt]
     for(int i = 0; i < m_T_prev_vec.size(); i++)
     {
         double T_prev_node = m_T_prev_vec[i];
-        double local_mass = mass_packed_subsection;
+        double local_packed_mass = mass_packed_subsection;
+        double local_htf_mass = mass_htf_subsection;
 
         // Mass is half if first or last node
         if (i == 0 || i == m_T_prev_vec.size() - 1)
-            local_mass = local_mass / 2.0;
+        {
+            local_packed_mass = local_packed_mass / 2.0;
+            local_htf_mass = local_htf_mass / 2.0;
+        }
 
         // Check if node is above threshold
         if (T_prev_node >= (m_T_hot_des - m_T_hot_delta))
         {
-            Q_dc_avail += local_mass * m_cp_solid * (T_prev_node - T_cold_K) * 1e-6;    // [MJt]
+            double Q_avail_packed = local_packed_mass * m_cp_solid * (T_prev_node - T_cold_K) * 1e-6;    // [MJt]
+            double Q_avail_htf = local_htf_mass * cp_htf_ave * (T_prev_node - T_cold_K) * 1e-6; // [MJt]
+            Q_dc_avail += Q_avail_packed;
+            Q_dc_avail += Q_avail_htf;
         }
         else
         {
@@ -356,8 +382,7 @@ void C_csp_packedbed_tes::discharge_avail_est(double T_cold_K, double step_s,
     double Q_dot_dc_avail = Q_dc_avail / step_s;    // [MWt]
 
     // Calculate Max Mass Flow Rate
-    double cp_fluid_avg = mc_external_htfProps.Cp_ave(m_T_cold_des, m_T_hot_des) * 1.E3; //[J/kg-K]
-    double mdot_max = (Q_dc_avail * 1e6) / (step_s * cp_fluid_avg * (m_T_hot_des - T_cold_K));  //[kg/s]
+    double mdot_max = (Q_dc_avail * 1e6) / (step_s * cp_htf_ave * (m_T_hot_des - T_cold_K));  //[kg/s]
 
     // Set Outputs
     q_dot_dc_est = Q_dot_dc_avail;  //[MWt]
@@ -383,9 +408,15 @@ void C_csp_packedbed_tes::charge_avail_est(double T_hot_K, double step_s,
         return;
     }
 
+    // Calculate HTF properties
+    double T_tes_ave = 0.5 * (m_T_hot_des + m_T_cold_des);		//[K]
+    double dens_htf_ave = mc_external_htfProps.dens(T_tes_ave, 1.0);		//[kg/m^3] Density at average temperature
+    double cp_htf_ave = mc_external_htfProps.Cp_ave(m_T_cold_des, m_T_hot_des) * 1000.0;//[J/kg-K] Specific heat at average temperature
+
     // Calculate Available Charge Energy
     double dx = m_h_tank_calc / m_n_xstep;   // [m]
     double mass_packed_subsection = dx * m_Ac * (1.0 - m_void_frac) * m_dens_solid;   // [kg] Packed bed mass in subsection 
+    double mass_htf_subsection = dx * m_Ac * m_void_frac * dens_htf_ave;    //[kg] HTF mass in subsection
 
     // Loop through temperatures, starting at cold end, to check temperature threshold
     double Q_ch_avail = 0;  //[MJt]
@@ -393,15 +424,22 @@ void C_csp_packedbed_tes::charge_avail_est(double T_hot_K, double step_s,
     for (int i = m_T_prev_vec.size() - 1; i >= 0; i--)
     {
         double T_prev_node = m_T_prev_vec[i];   //[K]
-        double local_mass = mass_packed_subsection;
+        double local_packed_mass = mass_packed_subsection;
+        double local_htf_mass = mass_htf_subsection;
 
         // Mass is half if first or last node
         if (i == 0 || i == m_T_prev_vec.size() - 1)
-            local_mass = local_mass / 2.0;
+        {
+            local_packed_mass = local_packed_mass / 2.0;
+            local_htf_mass = local_htf_mass / 2.0;
+        }
 
         if (T_prev_node <= (m_T_cold_des + m_T_cold_delta))
         {
-            Q_ch_avail += local_mass * m_cp_solid * (T_hot_K - m_T_cold_des) * 1e-6;    //[MJt]
+            double Q_avail_packed = local_packed_mass * m_cp_solid * (T_hot_K - m_T_cold_des) * 1e-6;   //[MJt]
+            double Q_avail_htf = local_htf_mass * cp_htf_ave * (T_hot_K - m_T_cold_des) * 1e-6;         //[MJt]
+            Q_ch_avail += Q_avail_packed;
+            Q_ch_avail += Q_avail_htf;
             count++;
         }
         else
@@ -414,8 +452,7 @@ void C_csp_packedbed_tes::charge_avail_est(double T_hot_K, double step_s,
     double Q_dot_ch_avail = Q_ch_avail / step_s;    // [MWt]
 
     // Calculate Max Mass Flow Rate
-    double cp_fluid_avg = mc_external_htfProps.Cp_ave(m_T_cold_des, m_T_hot_des) * 1.E3; //[J/kg-K]
-    double mdot_max = (Q_ch_avail * 1e6) / (step_s * cp_fluid_avg * (T_hot_K - m_T_cold_des));  //[kg/s]
+    double mdot_max = (Q_ch_avail * 1e6) / (step_s * cp_htf_ave * (T_hot_K - m_T_cold_des));  //[kg/s]
 
     // Set Outputs
     q_dot_ch_est = Q_dot_ch_avail;  //[MWt]

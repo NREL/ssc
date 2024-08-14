@@ -88,17 +88,15 @@ private:
     
 
     // Private Methods
-    void size_pb_fixed_height(double Q_tes_des /*MWt-hr*/, double f_oversize,
+    void size_pb_fixed_height(HTFProperties& tes_htf_props, double Q_tes_des /*MWt-hr*/, double f_oversize,
         double void_frac, double dens_solid /*kg/m3*/, double cp_solid /*J/kg K*/,
         double T_tes_hot /*K*/, double T_tes_cold /*K*/, double h_tank /*m*/,
         double& vol_total /*m3*/, double& d_tank_out /*m*/);
 
-    void size_pb_fixed_diameter(double Q_tes_des /*MWt-hr*/, double f_oversize,
+    void size_pb_fixed_diameter(HTFProperties& tes_htf_props, double Q_tes_des /*MWt-hr*/, double f_oversize,
         double void_frac, double dens_solid /*kg/m3*/, double cp_solid /*J/kg K*/,
         double T_tes_hot /*K*/, double T_tes_cold /*K*/, double d_tank /*m*/,
         double& vol_total /*m3*/, double& h_tank_out /*m*/);
-
-    void size_pb_fixed_diameter();
 
 public:
 
