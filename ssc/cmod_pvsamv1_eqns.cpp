@@ -38,16 +38,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vartab.h"
 
 SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
-    auto vt = static_cast<var_table*>(data);
-    if (!vt) {
-        return false;
-    }
+//    auto vt = static_cast<var_table*>(data);
+//    if (!vt) {
+//        return false;
+//    }
     var_table reopt_site, reopt_pv, reopt_utility;
 
     bool result = Reopt_size_standalone_battery_params(data);
     // Continue error handling for the prior function
     if (!result) {
         return result;
+    }
+
+    auto vt = static_cast<var_table*>(data);
+    if (!vt) {
+        return false;
     }
 
     bool size_for_grid_outage = false;
