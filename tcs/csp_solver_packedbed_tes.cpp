@@ -45,7 +45,17 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
     {C_csp_packedbed_tes::E_HOT_TANK_HTF_PERC_FINAL, C_csp_reported_outputs::TS_LAST},	//[%] Final percent fill of available hot tank mass
     {C_csp_packedbed_tes::E_W_DOT_HTF_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[MWe]
     {C_csp_packedbed_tes::E_VOL_TOT, C_csp_reported_outputs::TS_LAST},	//[m3]
-    {C_csp_packedbed_tes::E_MASS_TOT, C_csp_reported_outputs::TS_LAST},	//[kg] 
+    {C_csp_packedbed_tes::E_MASS_TOT, C_csp_reported_outputs::TS_LAST},	//[kg]
+    {C_csp_packedbed_tes::E_T_GRAD_0, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[C]
+    {C_csp_packedbed_tes::E_T_GRAD_1, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[C]
+    {C_csp_packedbed_tes::E_T_GRAD_2, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[C]
+    {C_csp_packedbed_tes::E_T_GRAD_3, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[C]
+    {C_csp_packedbed_tes::E_T_GRAD_4, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[C]
+    {C_csp_packedbed_tes::E_T_GRAD_5, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[C]
+    {C_csp_packedbed_tes::E_T_GRAD_6, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[C]
+    {C_csp_packedbed_tes::E_T_GRAD_7, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[C]
+    {C_csp_packedbed_tes::E_T_GRAD_8, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[C]
+    {C_csp_packedbed_tes::E_T_GRAD_9, C_csp_reported_outputs::TS_WEIGHTED_AVE},	//[C]
     csp_info_invalid
 };
 
@@ -89,6 +99,51 @@ void C_csp_packedbed_tes::size_pb_fixed_diameter(HTFProperties& tes_htf_props, d
     h_tank_out = vol_total / (CSP::pi * std::pow(d_tank / 2.0, 2.0));   // m
 }
 
+std::vector<double> C_csp_packedbed_tes::reduce_vector_avg(std::vector<double> vec, int out_vec_size)
+{
+    // Produce new vector of different size, using averages from 'vec'
+    std::vector<double> out_vec(out_vec_size, 0);
+
+    for (int i = 0; i < out_vec_size; i++)
+    {
+        // Calculate average at this location
+        double frac = (double)i / (out_vec_size - 1);
+        double val_avg = this->get_avg_from_vec(vec, frac);
+
+        // Save value
+        out_vec[i] = val_avg;
+    }
+
+    return out_vec;
+}
+
+double C_csp_packedbed_tes::get_avg_from_vec(std::vector<double> vec, double frac)
+{
+    double frac_prev = 0.0;
+    double frac_next = 0.0;
+    double val_prev = vec[0];
+    double val_next = std::numeric_limits<double>::quiet_NaN();
+    double vec_size = vec.size();
+    for (int i = 1; i < vec.size(); i++)
+    {
+        frac_next = (double)i / (vec_size - 1);
+        val_next = vec[i];
+        if (frac >= frac_prev && frac <= frac_next)
+        {
+            break;
+        }
+        else
+        {
+            frac_prev = frac_next;
+            val_prev = val_next;
+        }
+    }
+
+    double val_avg = val_next + (frac - frac_next) * ((val_prev - val_next) / (frac_prev - frac_next));
+
+    return val_avg;
+}
+
 // Public Methods
 
 C_csp_packedbed_tes::C_csp_packedbed_tes(
@@ -115,12 +170,12 @@ C_csp_packedbed_tes::C_csp_packedbed_tes(
     double T_cold_delta                             // [C] Max allowable increase in cold discharge temp
 )
     :
-    m_external_fl(external_fl), m_external_fl_props(external_fl_props), m_Q_tes_des(Q_tes_des),
-    m_size_type(size_type), m_h_tank_in(h_tank_in), m_d_tank_in(d_tank_in), m_f_oversize(f_oversize),
-    m_f_V_hot_ini(f_V_hot_ini),
-    m_n_xstep(n_xstep), m_n_subtimestep(n_subtimestep), m_tes_pump_coef(tes_pump_coef),
-    m_k_eff(k_eff), m_void_frac(void_frac), m_dens_solid(dens_solid), m_cp_solid(cp_solid),
-    m_T_hot_delta(T_hot_delta), m_T_cold_delta(T_cold_delta)
+m_external_fl(external_fl), m_external_fl_props(external_fl_props), m_Q_tes_des(Q_tes_des),
+m_size_type(size_type), m_h_tank_in(h_tank_in), m_d_tank_in(d_tank_in), m_f_oversize(f_oversize),
+m_f_V_hot_ini(f_V_hot_ini),
+m_n_xstep(n_xstep), m_n_subtimestep(n_subtimestep), m_tes_pump_coef(tes_pump_coef),
+m_k_eff(k_eff), m_void_frac(void_frac), m_dens_solid(dens_solid), m_cp_solid(cp_solid),
+m_T_hot_delta(T_hot_delta), m_T_cold_delta(T_cold_delta)
 {
     // Convert Temperature Units
     m_T_cold_des = T_cold_des_C + 273.15;           //[K]
@@ -613,6 +668,19 @@ int C_csp_packedbed_tes::solve_tes_off_design(double timestep /*s*/, double  T_a
     mc_reported_outputs.value(E_VOL_TOT, m_V_tank);    //[m3]
     mc_reported_outputs.value(E_MASS_TOT, m_mass_solid);    //[m3]
 
+    // Report average thermocline temperatures
+    std::vector<double> reduced_T_vec = reduce_vector_avg(m_T_calc_vec, 10);    //[K]
+    mc_reported_outputs.value(E_T_GRAD_0, reduced_T_vec[0] - 273.15);		    //[C]
+    mc_reported_outputs.value(E_T_GRAD_1, reduced_T_vec[1] - 273.15);		    //[C]
+    mc_reported_outputs.value(E_T_GRAD_2, reduced_T_vec[2] - 273.15);		    //[C]
+    mc_reported_outputs.value(E_T_GRAD_3, reduced_T_vec[3] - 273.15);		    //[C]
+    mc_reported_outputs.value(E_T_GRAD_4, reduced_T_vec[4] - 273.15);		    //[C]
+    mc_reported_outputs.value(E_T_GRAD_5, reduced_T_vec[5] - 273.15);		    //[C]
+    mc_reported_outputs.value(E_T_GRAD_6, reduced_T_vec[6] - 273.15);		    //[C]
+    mc_reported_outputs.value(E_T_GRAD_7, reduced_T_vec[7] - 273.15);		    //[C]
+    mc_reported_outputs.value(E_T_GRAD_8, reduced_T_vec[8] - 273.15);		    //[C]
+    mc_reported_outputs.value(E_T_GRAD_9, reduced_T_vec[9] - 273.15);		    //[C]
+
     return 0;
 }
 
@@ -623,9 +691,6 @@ void C_csp_packedbed_tes::converged()
     mc_reported_outputs.value(E_HOT_TANK_HTF_PERC_FINAL, get_hot_tank_vol_frac() * 100.0);
 
     mc_reported_outputs.set_timestep_outputs();
-
-    // Try store temperature gradient
-    m_T_grad_mat.push_back(m_T_prev_vec);
 
     return;
 }

@@ -67,7 +67,6 @@ private:
     double m_tes_pump_coef;		// [kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
     double m_T_hot_delta;       // [C] Max allowable decrease in hot discharge temp
     double m_T_cold_delta;      // [C] Max allowable increase in cold discharge temp
-    
 
     // Time step carryover
     std::vector<double> m_T_prev_vec;   // [K] Temperatures in space, starting at CHARGE inlet (hot)
@@ -86,8 +85,6 @@ private:
     bool m_use_T_grad_init = false;
     HTFProperties mc_external_htfProps;		// Instance of HTFProperties class for external HTF
 
-    
-
     // Private Methods
     void size_pb_fixed_height(HTFProperties& tes_htf_props, double Q_tes_des /*MWt-hr*/, double f_oversize,
         double void_frac, double dens_solid /*kg/m3*/, double cp_solid /*J/kg K*/,
@@ -99,10 +96,11 @@ private:
         double T_tes_hot /*K*/, double T_tes_cold /*K*/, double d_tank /*m*/,
         double& vol_total /*m3*/, double& h_tank_out /*m*/);
 
-public:
+    std::vector<double> reduce_vector_avg(std::vector<double> vec, int out_vec_size);
 
-    //Temporary
-    std::vector<std::vector<double>> m_T_grad_mat;  // [K]
+    double get_avg_from_vec(std::vector<double> vec, double frac);
+
+public:
 
 	enum
 	{
@@ -116,7 +114,17 @@ public:
 		E_HOT_TANK_HTF_PERC_FINAL,   //[%] Final percent fill of available hot tank mass
 		E_W_DOT_HTF_PUMP,    //[MWe]
         E_VOL_TOT,           //[m3] Total volume of hot and cold fluid in storage
-        E_MASS_TOT           //[kg] Total mass of hot and cold fluid in storage
+        E_MASS_TOT,          //[kg] Total mass of hot and cold fluid in storage
+        E_T_GRAD_0,
+        E_T_GRAD_1,
+        E_T_GRAD_2,
+        E_T_GRAD_3,
+        E_T_GRAD_4,
+        E_T_GRAD_5,
+        E_T_GRAD_6,
+        E_T_GRAD_7,
+        E_T_GRAD_8,
+        E_T_GRAD_9
 	};
 
 

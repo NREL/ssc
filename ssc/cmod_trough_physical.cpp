@@ -608,7 +608,16 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_error_corrected",       "TES energy balance error, accounting for wall and temperature assumption error",   "MWt",           "",              "TES",            "sim_type=1&tes_type=1",              "",                      "" },
 
     // Packed Bed TES
-    { SSC_OUTPUT,       SSC_MATRIX,      "T_grad_final",              "TES Temperature gradient at end of timestep",                                      "C",            "",               "TES",            "",              "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "T_grad_0",                  "TES Temperature gradient 0 indice",                                                "C",            "",               "TES",            "",                                 "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "T_grad_1",                  "TES Temperature gradient 1 indice",                                                "C",            "",               "TES",            "",                                 "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "T_grad_2",                  "TES Temperature gradient 2 indice",                                                "C",            "",               "TES",            "",                                 "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "T_grad_3",                  "TES Temperature gradient 3 indice",                                                "C",            "",               "TES",            "",                                 "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "T_grad_4",                  "TES Temperature gradient 4 indice",                                                "C",            "",               "TES",            "",                                 "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "T_grad_5",                  "TES Temperature gradient 5 indice",                                                "C",            "",               "TES",            "",                                 "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "T_grad_6",                  "TES Temperature gradient 6 indice",                                                "C",            "",               "TES",            "",                                 "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "T_grad_7",                  "TES Temperature gradient 7 indice",                                                "C",            "",               "TES",            "",                                 "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "T_grad_8",                  "TES Temperature gradient 8 indice",                                                "C",            "",               "TES",            "",                                 "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "T_grad_9",                  "TES Temperature gradient 9 indice",                                                "C",            "",               "TES",            "",                                 "",                      "" },
 
 
     //{ SSC_OUTPUT,       SSC_ARRAY,       "m_dot_tes_dc",              "TES discharge mass flow rate",                                                     "kg/s",         "",               "TES",            "*",                       "",                      "" },
@@ -1455,6 +1464,16 @@ public:
             storage_packedbed.mc_reported_outputs.assign(C_csp_packedbed_tes::E_W_DOT_HTF_PUMP, allocate("tes_htf_pump_power", n_steps_fixed), n_steps_fixed);
             storage_packedbed.mc_reported_outputs.assign(C_csp_packedbed_tes::E_VOL_TOT, allocate("vol_tes_tot", n_steps_fixed), n_steps_fixed);
             storage_packedbed.mc_reported_outputs.assign(C_csp_packedbed_tes::E_MASS_TOT, allocate("tes_mass_tot", n_steps_fixed), n_steps_fixed);
+            storage_packedbed.mc_reported_outputs.assign(C_csp_packedbed_tes::E_T_GRAD_0, allocate("T_grad_0", n_steps_fixed), n_steps_fixed);
+            storage_packedbed.mc_reported_outputs.assign(C_csp_packedbed_tes::E_T_GRAD_1, allocate("T_grad_1", n_steps_fixed), n_steps_fixed);
+            storage_packedbed.mc_reported_outputs.assign(C_csp_packedbed_tes::E_T_GRAD_2, allocate("T_grad_2", n_steps_fixed), n_steps_fixed);
+            storage_packedbed.mc_reported_outputs.assign(C_csp_packedbed_tes::E_T_GRAD_3, allocate("T_grad_3", n_steps_fixed), n_steps_fixed);
+            storage_packedbed.mc_reported_outputs.assign(C_csp_packedbed_tes::E_T_GRAD_4, allocate("T_grad_4", n_steps_fixed), n_steps_fixed);
+            storage_packedbed.mc_reported_outputs.assign(C_csp_packedbed_tes::E_T_GRAD_5, allocate("T_grad_5", n_steps_fixed), n_steps_fixed);
+            storage_packedbed.mc_reported_outputs.assign(C_csp_packedbed_tes::E_T_GRAD_6, allocate("T_grad_6", n_steps_fixed), n_steps_fixed);
+            storage_packedbed.mc_reported_outputs.assign(C_csp_packedbed_tes::E_T_GRAD_7, allocate("T_grad_7", n_steps_fixed), n_steps_fixed);
+            storage_packedbed.mc_reported_outputs.assign(C_csp_packedbed_tes::E_T_GRAD_8, allocate("T_grad_8", n_steps_fixed), n_steps_fixed);
+            storage_packedbed.mc_reported_outputs.assign(C_csp_packedbed_tes::E_T_GRAD_9, allocate("T_grad_9", n_steps_fixed), n_steps_fixed);
         }
 
         else
@@ -2202,22 +2221,6 @@ public:
         {
             log(out_msg, out_type);
         }
-
-        // Temporary
-        std::vector<std::vector<double>> T_grad_vec_vec = storage_packedbed.m_T_grad_mat;
-        util::matrix_t<ssc_number_t> T_grad_mat;
-        {
-            int nrow = T_grad_vec_vec.size();
-            int ncol = T_grad_vec_vec[0].size();
-
-            T_grad_mat.resize(nrow, ncol);           // NOTE!: You must do a separate 'fill', probably with how this is eventually set to an array instead of a matrix. This fails:  result(n, 1, std::numeric_limits<double>::quiet_NaN())
-            T_grad_mat.fill(std::numeric_limits<double>::quiet_NaN());
-            for (size_t i = 0; i < nrow; i++) {
-                for (size_t j = 0; j < ncol; j++)
-                    T_grad_mat.at(i, j) = T_grad_vec_vec[i][j] - 273.15; //[C] Convert from K
-            }
-        }
-        assign("T_grad_final", T_grad_mat);
 
         std::clock_t clock_end = std::clock();
         double sim_duration = (clock_end - clock_start) / (double)CLOCKS_PER_SEC;		//[s]
