@@ -2425,13 +2425,20 @@ void cm_pvsamv1::exec()
                 {
                     float smLoss = 0.0f;
 
-                    if (!Subarrays[nn]->snowModel.getLoss((float)(Subarrays[nn]->poa.poaBeamFront + Subarrays[nn]->poa.poaDiffuseFront + Subarrays[nn]->poa.poaGroundFront),
+                    if (!Subarrays[nn]->snowModel.getLoss((float)(Subarrays[nn]->poa.poaBeamFront + Subarrays[nn]->poa.poaDiffuseFront + Subarrays[nn]->poa.poaGroundFront + Subarrays[nn]->poa.poaRear),
                         (float)Subarrays[nn]->poa.surfaceTiltDegrees, (float)wf.wspd, (float)wf.tdry, (float)wf.snow, sunup, 1.0f / step_per_hour, smLoss))
                     {
                         if (!Subarrays[nn]->snowModel.good)
                             throw exec_error("pvsamv1", Subarrays[nn]->snowModel.msg);
                     }
-
+                    float poa_front = Subarrays[nn]->poa.poaBeamFront + Subarrays[nn]->poa.poaDiffuseFront + Subarrays[nn]->poa.poaGroundFront;
+                    float poa_rear = Subarrays[nn]->poa.poaBeamFront + Subarrays[nn]->poa.poaDiffuseFront + Subarrays[nn]->poa.poaGroundFront + Subarrays[nn]->poa.poaRear;
+                    float poa_front_cs = Subarrays[nn]->poa.poaBeamFrontCS + Subarrays[nn]->poa.poaDiffuseFrontCS + Subarrays[nn]->poa.poaGroundFrontCS;
+                    float poa_rear_cs = Subarrays[nn]->poa.poaBeamFrontCS + Subarrays[nn]->poa.poaDiffuseFrontCS + Subarrays[nn]->poa.poaGroundFrontCS + Subarrays[nn]->poa.poaRearCS;
+                    if (poa_rear != 0) {
+                        smLoss *= poa_front / poa_rear;
+                    }
+                 
                     if (iyear == 0 || save_full_lifetime_variables == 1)
                     {
                         PVSystem->p_snowLoss[nn][idx] = (ssc_number_t)(util::watt_to_kilowatt * Subarrays[nn]->dcPowerSubarray * smLoss);
@@ -2440,9 +2447,11 @@ void cm_pvsamv1::exec()
                         if (iyear == 0) annual_snow_loss += (ssc_number_t)(util::watt_to_kilowatt * Subarrays[nn]->dcPowerSubarray * smLoss);
                         Subarrays[nn]->dcPowerSubarray *= (1 - smLoss);
                         Subarrays[nn]->dcPowerSubarrayCS *= (1 - smLoss);
+                        
                     }
-
+                    
                     Subarrays[nn]->Module->dcPowerW *= (1 - smLoss);
+
                     Subarrays[nn]->Module->dcPowerWCS *= (1 - smLoss);
                     if (iyear == 0 || save_full_lifetime_variables == 1) mpptVoltageClipping[nn] *= (1 - smLoss);
                 }
