@@ -2425,18 +2425,18 @@ void cm_pvsamv1::exec()
                 {
                     float smLoss = 0.0f;
 
-                    if (!Subarrays[nn]->snowModel.getLoss((float)(Subarrays[nn]->poa.poaBeamFront + Subarrays[nn]->poa.poaDiffuseFront + Subarrays[nn]->poa.poaGroundFront + Subarrays[nn]->poa.poaRear),
+                    if (!Subarrays[nn]->snowModel.getLoss((float)(Subarrays[nn]->poa.poaBeamFront + Subarrays[nn]->poa.poaDiffuseFront + Subarrays[nn]->poa.poaGroundFront + ipoa_rear_after_losses[nn]),
                         (float)Subarrays[nn]->poa.surfaceTiltDegrees, (float)wf.wspd, (float)wf.tdry, (float)wf.snow, sunup, 1.0f / step_per_hour, smLoss))
                     {
                         if (!Subarrays[nn]->snowModel.good)
                             throw exec_error("pvsamv1", Subarrays[nn]->snowModel.msg);
                     }
                     float poa_front = Subarrays[nn]->poa.poaBeamFront + Subarrays[nn]->poa.poaDiffuseFront + Subarrays[nn]->poa.poaGroundFront;
-                    float poa_rear = Subarrays[nn]->poa.poaBeamFront + Subarrays[nn]->poa.poaDiffuseFront + Subarrays[nn]->poa.poaGroundFront + Subarrays[nn]->poa.poaRear;
+                    float poa = poa_front + Subarrays[nn]->poa.poaRear * bifaciality;
                     float poa_front_cs = Subarrays[nn]->poa.poaBeamFrontCS + Subarrays[nn]->poa.poaDiffuseFrontCS + Subarrays[nn]->poa.poaGroundFrontCS;
                     float poa_rear_cs = Subarrays[nn]->poa.poaBeamFrontCS + Subarrays[nn]->poa.poaDiffuseFrontCS + Subarrays[nn]->poa.poaGroundFrontCS + Subarrays[nn]->poa.poaRearCS;
-                    if (poa_rear != 0) {
-                        smLoss *= poa_front / poa_rear;
+                    if (poa != 0) {
+                        smLoss *= poa_front / poa;
                     }
                  
                     if (iyear == 0 || save_full_lifetime_variables == 1)

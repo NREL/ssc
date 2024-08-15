@@ -1201,7 +1201,7 @@ public:
                     {
                         float smLoss = 0.0f;
                         if (!snowmodel.getLoss(
-                            (float)poa, (float)stilt,
+                            (float)(poa_front + irr.get_poa_rear()), (float)stilt,
                             (float)wf.wspd, (float)wf.tdry, (float)wf.snow,
                             sunup, (float)ts_hour,
                             smLoss))
@@ -1209,6 +1209,7 @@ public:
                             if (!snowmodel.good)
                                 throw exec_error("pvwattsv8", snowmodel.msg);
                         }
+                        if (poa != 0) smLoss *= poa_front / poa;
                         f_snow = (1.0 - smLoss);
                     }
 
