@@ -63,6 +63,8 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
     map_input(vt, "lat", &reopt_site, "latitude");
     map_input(vt, "lon", &reopt_site, "longitude");
 
+    reopt_table->assign_match_case("Site", reopt_site);
+
     //
     // convert required pvsamv1 or pvwatts inputs
     //
@@ -241,7 +243,7 @@ SSCEXPORT bool Reopt_size_battery_params(ssc_data_t data) {
 
     // assign the reopt parameter table and log messages
     reopt_table->assign_match_case("PV", reopt_pv);
-    reopt_table->assign_match_case("Site", reopt_site);
+//    reopt_table->assign_match_case("Site", reopt_site);
     reopt_table->assign_match_case("ElectricUtility", reopt_utility);
     vt->assign_match_case("reopt_scenario", reopt_params);
     vt->assign_match_case("log", log);
