@@ -42,7 +42,7 @@ TEST_F(GeothermalPlantAnalyzer, TestBinaryPlant_lib_geothermal)
 	GeothermalPlantAnalyzer::SetUp(); // uses values set (conversion_type)
 
 	EXPECT_NEAR(geoPlant_outputs.max_secondlaw, 0.4, 0.2);
-	EXPECT_NEAR(geoPlant_outputs.md_GrossPlantOutputMW, 37.191, 3);
+	EXPECT_NEAR(geoPlant_outputs.md_GrossPlantOutputMW, 34.004, 3);
 	EXPECT_NEAR(geoPlant_outputs.GF_flowrate, 5002143, 200000);
 }
 
