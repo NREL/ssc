@@ -65,8 +65,9 @@ private:
     double m_dens_solid;        // [kg/m3] density of particles
     double m_cp_solid;          // [J/kg K] specific heat of particles
     double m_tes_pump_coef;		// [kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
-    double m_T_hot_delta;       // [C] Max allowable decrease in hot discharge temp
-    double m_T_cold_delta;      // [C] Max allowable increase in cold discharge temp
+    double m_T_hot_delta;       // [dC] Max allowable decrease in hot discharge temp
+    double m_T_cold_delta;      // [dC] Max allowable increase in cold discharge temp
+    double m_T_charge_min;      // [K] Min allowable charge temperature
 
     // Time step carryover
     std::vector<double> m_T_prev_vec;   // [K] Temperatures in space, starting at CHARGE inlet (hot)
@@ -152,7 +153,8 @@ public:
         double dens_solid,                          // [kg/m3] solid specific heat 
         double cp_solid,                            // [J/kg K] solid specific heat
         double T_hot_delta,                         // [C] Max allowable decrease in hot discharge temp
-        double T_cold_delta                         // [C] Max allowable increase in cold discharge temp
+        double T_cold_delta,                        // [C] Max allowable increase in cold discharge temp
+        double T_charge_min                         // [C] Min allowable charge temperature
             );
 
     C_csp_packedbed_tes();

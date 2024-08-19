@@ -167,7 +167,8 @@ C_csp_packedbed_tes::C_csp_packedbed_tes(
     double dens_solid,                              // [kg/m3] solid specific heat 
     double cp_solid,                                // [J/kg K] solid specific heat
     double T_hot_delta,                             // [C] Max allowable decrease in hot discharge temp
-    double T_cold_delta                             // [C] Max allowable increase in cold discharge temp
+    double T_cold_delta,                            // [C] Max allowable increase in cold discharge temp
+    double T_charge_min_C                           // [C] Min allowable charge temperature
 )
     :
 m_external_fl(external_fl), m_external_fl_props(external_fl_props), m_Q_tes_des(Q_tes_des),
@@ -182,6 +183,7 @@ m_T_hot_delta(T_hot_delta), m_T_cold_delta(T_cold_delta)
     m_T_hot_des = T_hot_des_C + 273.15;             //[K]
     m_T_tank_hot_ini = T_tank_hot_ini_C + 273.15;   //[K]
     m_T_tank_cold_ini = T_tank_cold_ini_C + 273.15; //[K]
+    m_T_charge_min = T_charge_min_C + 273.15;       //[K]
 
     mc_reported_outputs.construct(S_output_info);
 }
@@ -458,7 +460,7 @@ void C_csp_packedbed_tes::charge_avail_est(double T_hot_K, double step_s,
     // The first and last node represent HALF volume each
 
     // First check if charge temp is hot enough
-    if (T_hot_K < (m_T_hot_des - m_T_hot_delta))
+    if (T_hot_K < m_T_charge_min)
     {
         q_dot_ch_est = 0;
         m_dot_external_est = 0;

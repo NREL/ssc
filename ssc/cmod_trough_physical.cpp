@@ -228,8 +228,9 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "tes_pb_void_frac",          "TES particle packed bed void fraction",                                            "",             "",               "TES",            "tes_type=2",              "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tes_pb_dens_solid",         "TES particle density",                                                             "kg/m3",        "",               "TES",            "tes_type=2",              "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tes_pb_cp_solid",           "TES particle specific heat",                                                       "J/kg K",       "",               "TES",            "tes_type=2",              "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "tes_pb_T_hot_delta",        "Max allowable decrease in hot discharge temp",                                     "m",            "",               "TES",            "tes_type=2",              "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "tes_pb_T_cold_delta",       "Max allowable increase in cold discharge temp",                                    "m",            "",               "TES",            "tes_type=2",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_pb_T_hot_delta",        "Max allowable decrease in hot discharge temp",                                     "C",            "",               "TES",            "tes_type=2",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_pb_T_cold_delta",       "Max allowable increase in cold discharge temp",                                    "C",            "",               "TES",            "tes_type=2",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_pb_T_charge_min",       "Min charge temp",                                                                  "C",            "",               "TES",            "tes_type=2",              "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tes_pb_f_oversize",         "Packed bed oversize factor",                                                       "",             "",               "TES",            "tes_type=2",              "",                      "" },
 
 
@@ -1448,7 +1449,8 @@ public:
                 as_double("tes_pb_dens_solid"),                                     // [kg/m3] solid specific heat 
                 as_double("tes_pb_cp_solid"),                                       // [J/kg K] solid specific heat
                 as_double("tes_pb_T_hot_delta"),                                    // [C] Max allowable decrease in hot discharge temp
-                as_double("tes_pb_T_cold_delta")                                    // [C] Max allowable increase in cold discharge temp
+                as_double("tes_pb_T_cold_delta"),                                   // [C] Max allowable increase in cold discharge temp
+                as_double("tes_pb_T_charge_min")                                    // [C] Min allowable charge temperature
                 );
 
             storage_pointer = &storage_packedbed;
