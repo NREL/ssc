@@ -171,12 +171,12 @@ C_csp_packedbed_tes::C_csp_packedbed_tes(
     double T_charge_min_C                           // [C] Min allowable charge temperature
 )
     :
-m_external_fl(external_fl), m_external_fl_props(external_fl_props), m_Q_tes_des(Q_tes_des),
-m_size_type(size_type), m_h_tank_in(h_tank_in), m_d_tank_in(d_tank_in), m_f_oversize(f_oversize),
-m_f_V_hot_ini(f_V_hot_ini),
-m_n_xstep(n_xstep), m_n_subtimestep(n_subtimestep), m_tes_pump_coef(tes_pump_coef),
-m_k_eff(k_eff), m_void_frac(void_frac), m_dens_solid(dens_solid), m_cp_solid(cp_solid),
-m_T_hot_delta(T_hot_delta), m_T_cold_delta(T_cold_delta)
+        m_external_fl(external_fl), m_external_fl_props(external_fl_props), m_Q_tes_des(Q_tes_des),
+        m_size_type(size_type), m_h_tank_in(h_tank_in), m_d_tank_in(d_tank_in), m_f_oversize(f_oversize),
+        m_f_V_hot_ini(f_V_hot_ini),
+        m_n_xstep(n_xstep), m_n_subtimestep(n_subtimestep), m_tes_pump_coef(tes_pump_coef),
+        m_k_eff(k_eff), m_void_frac(void_frac), m_dens_solid(dens_solid), m_cp_solid(cp_solid),
+        m_T_hot_delta(T_hot_delta), m_T_cold_delta(T_cold_delta)
 {
     // Convert Temperature Units
     m_T_cold_des = T_cold_des_C + 273.15;           //[K]
@@ -184,6 +184,9 @@ m_T_hot_delta(T_hot_delta), m_T_cold_delta(T_cold_delta)
     m_T_tank_hot_ini = T_tank_hot_ini_C + 273.15;   //[K]
     m_T_tank_cold_ini = T_tank_cold_ini_C + 273.15; //[K]
     m_T_charge_min = T_charge_min_C + 273.15;       //[K]
+
+    // Set Subtimestep
+    m_subtimestep_nominal = 3600.0 / m_n_subtimestep;   //[s]
 
     mc_reported_outputs.construct(S_output_info);
 }
@@ -738,15 +741,15 @@ bool C_csp_packedbed_tes::charge(double timestep /*s*/, double T_amb /*K*/, doub
     double& T_hot_ave /*K*/, double& T_cold_ave /*K*/, double& T_hot_final /*K*/, double& T_cold_final /*K*/
 )
 {
-    // Inputs
-    //double dens_fluid = 1.204;  // [kg/m3] density of air at room temp
-    //double cp_fluid = 1005;     // [J/kg K] specific heat of air at room temp
-
+    // HTF Properties
     double dens_fluid_avg = mc_external_htfProps.dens((m_T_cold_des + m_T_hot_des) * 0.5, 1);   //[kg/m3]
     double cp_fluid_avg = mc_external_htfProps.Cp_ave(m_T_cold_des, m_T_hot_des) * 1.E3;        //[J/kg-K]
 
+    // Calculate subtimestep
+    int N_subtimesteps_local = (int)std::ceil(timestep / m_subtimestep_nominal);
+    double dt = timestep / (double)N_subtimesteps_local;    //[s]
+
     // Define timestep and spatial step
-    double dt = timestep / m_n_subtimestep;     // [s] subtimestep
     double dx = m_h_tank_calc / m_n_xstep;           // [m]
 
     // Calculate Coefficients (assume constant for now)
@@ -759,11 +762,11 @@ bool C_csp_packedbed_tes::charge(double timestep /*s*/, double T_amb /*K*/, doub
     // Initialize Temperature Vectors
     std::vector<double> T_calc_vec(m_n_xstep + 1);          // [K] Temperature gradient at end of subtimestep
     std::vector<double> T_prev_vec_subtime = m_T_prev_vec;  // [K] Temperature gradient at beginning of subtimestep
-    std::vector<double> T_out_vec(m_n_subtimestep, 0.0);    // [K] Temperature at Outlet
-    std::vector<double> T_hot_vec(m_n_subtimestep, 0.0);    // [K] Temperature closest to inlet
+    std::vector<double> T_out_vec(N_subtimesteps_local, 0.0);    // [K] Temperature at Outlet
+    std::vector<double> T_hot_vec(N_subtimesteps_local, 0.0);    // [K] Temperature closest to inlet
 
     // Loop through subtimesteps
-    for (int n = 0; n < m_n_subtimestep; n++)
+    for (int n = 0; n < N_subtimesteps_local; n++)
     {
         // Loop through space
         for (int i = 0; i <= m_n_xstep; i++)
@@ -856,15 +859,15 @@ bool C_csp_packedbed_tes::discharge(double timestep /*s*/, double T_amb /*K*/, d
     double& T_hot_ave /*K*/, double& T_cold_ave /*K*/, double& T_hot_final /*K*/, double& T_cold_final /*K*/
 )
 {
-    // Inputs
-    //double dens_fluid = 1.204;  // [kg/m3] density of air at room temp
-    //double cp_fluid = 1005;     // [J/kg K] specific heat of air at room temp
-
+    // HTF Properties
     double dens_fluid_avg = mc_external_htfProps.dens((m_T_cold_des + m_T_hot_des) * 0.5, 1); //[kg/m3]
     double cp_fluid_avg = mc_external_htfProps.Cp_ave(m_T_cold_des, m_T_hot_des) * 1.E3; //[J/kg-K]
 
+    // Calculate subtimestep
+    int N_subtimesteps_local = (int)std::ceil(timestep / m_subtimestep_nominal);
+    double dt = timestep / (double)N_subtimesteps_local;    //[s]
+
     // Define timestep and spatial step
-    double dt = timestep / m_n_subtimestep;         // [s] subtimestep
     double dx = m_h_tank_calc / m_n_xstep;               // [m]
 
     // Calculate Coefficients (assume constant for now)
@@ -877,11 +880,11 @@ bool C_csp_packedbed_tes::discharge(double timestep /*s*/, double T_amb /*K*/, d
     // Initialize Temperature Vectors
     std::vector<double> T_calc_vec(m_n_xstep + 1);              // [K] Temperature gradient at end of subtimestep
     std::vector<double> T_prev_vec_subtime = m_T_prev_vec;      // [K] Temperature gradient at beginning of subtimestep
-    std::vector<double> T_out_vec(m_n_subtimestep, 0.0);        // [K] Temperature at Outlet
-    std::vector<double> T_cold_vec(m_n_subtimestep, 0.0);       // [K] Temperature closest to inlet (cold)
+    std::vector<double> T_out_vec(N_subtimesteps_local, 0.0);        // [K] Temperature at Outlet
+    std::vector<double> T_cold_vec(N_subtimesteps_local, 0.0);       // [K] Temperature closest to inlet (cold)
 
     // Loop through subtimesteps
-    for (int n = 0; n < m_n_subtimestep; n++)
+    for (int n = 0; n < N_subtimesteps_local; n++)
     {
         // Loop through space
         for (int i = m_n_xstep; i >= 0; i--)
