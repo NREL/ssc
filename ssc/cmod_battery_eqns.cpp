@@ -267,11 +267,11 @@ bool Reopt_size_standalone_battery_params(ssc_data_t data) {
     // assign the reopt parameter table and log messages
 //#if defined(__MACOSX__) || defined(__WINDOWS__)
     reopt_table->assign_match_case("Settings", reopt_settings);
+    reopt_table->assign_match_case("Financial", reopt_fin);
 //#endif
     reopt_electric.assign_match_case("urdb_response", reopt_utility);
     reopt_table->assign_match_case("ElectricTariff", reopt_electric);
     reopt_table->assign_match_case("ElectricLoad", reopt_load);
-    reopt_table->assign_match_case("Financial", reopt_fin);
     reopt_table->assign_match_case("ElectricStorage", reopt_batt);
 //#ifdef __UNIX__
 //    reopt_table->assign_match_case("Settings", reopt_settings);
