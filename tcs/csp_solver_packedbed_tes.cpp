@@ -638,8 +638,10 @@ int C_csp_packedbed_tes::solve_tes_off_design(double timestep /*s*/, double  T_a
         T_sink_htf_in_hot = (m_dot_tes_dc * T_htf_tes_hot + m_dot_cr_to_cv_hot * T_cr_out_hot) / m_dot_cv_hot_to_sink;   //[K]
     }
 
-    // Solve pumping power here
-    double W_dot_htf_pump = std::numeric_limits<double>::quiet_NaN();
+    // No need to call pumping_power because pumping power is same as solved in charge/discharge
+    /*double W_dot_htf_pump = pumping_power(m_dot_cr_to_cv_hot, m_dot_cv_hot_to_sink, std::abs(m_dot_cold_tank_to_hot_tank),
+        T_cr_in_cold, T_cr_out_hot, T_sink_htf_in_hot, T_sink_out_cold,
+        false);*/
 
     // Set values not part of packed bed model
     s_outputs.m_q_heater = q_dot_heater;                        //[MWe] Heater
@@ -667,7 +669,7 @@ int C_csp_packedbed_tes::solve_tes_off_design(double timestep /*s*/, double  T_a
     mc_reported_outputs.value(E_M_DOT_TANK_TO_TANK, m_dot_cold_tank_to_hot_tank);	//[kg/s]
     //mc_reported_outputs.value(E_MASS_COLD_TANK, mc_cold_tank.get_m_m_calc());		//[kg]
     //mc_reported_outputs.value(E_MASS_HOT_TANK, mc_hot_tank.get_m_m_calc());			//[kg]
-    mc_reported_outputs.value(E_W_DOT_HTF_PUMP, W_dot_htf_pump);    //[MWe]
+    mc_reported_outputs.value(E_W_DOT_HTF_PUMP, W_dot_rhtf_pump);    //[MWe]
     //mc_reported_outputs.value(E_VOL_TOT, vol_total);    //[m3]
     //mc_reported_outputs.value(E_MASS_TOT, mc_cold_tank.get_m_m_calc() + mc_hot_tank.get_m_m_calc());    //[m3]
     mc_reported_outputs.value(E_VOL_TOT, m_V_tank);    //[m3]
@@ -715,7 +717,10 @@ void C_csp_packedbed_tes::assign(int index, double* p_reporting_ts_array, size_t
 double /*MWe*/ C_csp_packedbed_tes::pumping_power(double m_dot_sf /*kg/s*/, double m_dot_pb /*kg/s*/, double m_dot_tank /*kg/s*/,
     double T_sf_in /*K*/, double T_sf_out /*K*/, double T_pb_in /*K*/, double T_pb_out /*K*/, bool recirculating)
 {
-    return std::numeric_limits<double>::quiet_NaN();
+    double mdot_net = std::abs(m_dot_sf - m_dot_pb);    //[kg/s] m_dot_tank is always NaN for packed bed TES
+    double htf_pump_power = (m_tes_pump_coef * mdot_net) / 1000.0;		//[MWe]
+
+    return htf_pump_power;
 }
 
 
@@ -968,13 +973,6 @@ bool C_csp_packedbed_tes::discharge(double timestep /*s*/, double T_amb /*K*/, d
     q_dot_ch_from_htf = 0.0;    // [MWt]
 
     return true;
-}
-
-int C_csp_packedbed_tes::pressure_drops(double m_dot_sf, double m_dot_pb,
-    double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating,
-    double& P_drop_col, double& P_drop_gen)
-{
-    return std::numeric_limits<bool>::quiet_NaN();
 }
 
 double C_csp_packedbed_tes::get_min_storage_htf_temp()

@@ -224,10 +224,6 @@ public:
         double& q_dot_loss /*MWt*/, double& q_dot_dc_to_htf /*MWt*/, double& q_dot_ch_from_htf /*MWt*/,
         double& T_hot_ave /*K*/, double& T_cold_ave /*K*/, double& T_hot_final /*K*/, double& T_cold_final /*K*/);
 
-    int pressure_drops(double m_dot_sf, double m_dot_pb,
-        double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating,
-        double& P_drop_col, double& P_drop_gen);
-
     double get_max_storage_htf_temp();
 
     double get_min_storage_htf_temp();
