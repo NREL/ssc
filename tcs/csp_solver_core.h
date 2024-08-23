@@ -227,85 +227,139 @@ public:
 	std::string get_error(){ return m_error_msg; }
 };
 
+struct S_timeseries_schedule_data
+{
+    double nondim_value;        //[-]
+    double dimensional_value;   //[dimensional]
+    int tou_period;             //[-]
+
+    S_timeseries_schedule_data()
+    {
+        nondim_value = std::numeric_limits<double>::quiet_NaN();
+        dimensional_value = std::numeric_limits<double>::quiet_NaN();
+        tou_period = -1;
+    }
+};
+
+class C_timeseries_schedule_inputs
+{
+public:
+    enum E_timeseries_input_type
+    {
+        UNDEFINED,
+        BLOCK,
+        TIMESERIES,
+        CONSTANT
+    };
+
+    E_timeseries_input_type input_type;
+
+    std::vector<S_timeseries_schedule_data> mv_timeseries_schedule_data;
+
+    C_timeseries_schedule_inputs(const util::matrix_t<double>& weekdays, const util::matrix_t<double>& weekends,
+        std::vector<double> tod_factors, double base_value /*dimensional*/);
+
+    C_timeseries_schedule_inputs(std::vector<double>& timeseries_values_in, double base_value /*dimensional*/);
+
+    C_timeseries_schedule_inputs(double const_val, double base_value /*dimensional*/);
+
+    C_timeseries_schedule_inputs() { input_type = UNDEFINED; };
+
+    void get_timestep_data(double time_s, double& nondim_val, double& dim_value, int& tou);
+};
+
 class C_csp_tou
 {
 
 public:
+
+    class C_dispatch_model_type
+    {
+    public:
+        enum E_dispatch_model_type
+        {
+            UNDEFINED,
+            HEURISTIC,
+            ARBITRAGE_CUTOFF,
+            IMPORT_DISPATCH_TARGETS,
+            DISPATCH_OPTIMIZATION
+        };
+    };
+
     struct S_csp_tou_params
     {
-        bool m_is_block_dispatch;
-        bool m_is_arbitrage_policy;
-        bool m_isleapyear;
-		std::vector<double> m_w_lim_full;
-
-        bool m_is_tod_pc_target_also_pc_max;
-        bool m_is_purchase_mult_same_as_price;
-
-		bool m_use_rule_1;
-		double m_standby_off_buffer;
-
-		bool m_use_rule_2;
-		double m_q_dot_rec_des_mult;
-		double m_f_q_dot_pc_overwrite;
-
-
-        S_csp_tou_params()
-        {
-            m_is_block_dispatch = true;			// Either this or m_dispatch_optimize must be true
-            m_is_arbitrage_policy = false;
-
-            m_isleapyear = false;
-			m_w_lim_full.resize(8760);
-			m_w_lim_full.assign(8760, 9.e99);
-
-            m_is_tod_pc_target_also_pc_max = false;
-            m_is_purchase_mult_same_as_price = true;
-
-			// Rule 1: if the sun sets (or does not rise) in m_standby_off_buffer [hours], then do not allow power cycle standby
-			m_use_rule_1 = false;				
-			m_standby_off_buffer = -1.23;		//[hr]
-
-
-			// Rule 2: If both:
-			//   1) Block Dispatch calls for PC OFF
-			//   2) Thermal storage charge capacity is less than the product of 'm_q_dot_rec_des_mult' and the receiver design output
-			//
-			//   THEN: Run power cycle at 'm_f_q_dot_pc_overwrite' until either:
-			//   1) the Block Dispatch target fraction calls for PC ON
-			//   2) the PC shuts off due to lack of thermal resource
-			//   
-			m_use_rule_2 = false;
-			m_q_dot_rec_des_mult = -1.23;
-			m_f_q_dot_pc_overwrite = 1.23;
-
-        };
+        std::vector<double> m_q_pc_target_su_in;
+        std::vector<double> m_q_pc_target_on_in;
+        std::vector<double> m_q_pc_max_in;
+        std::vector<bool> m_is_rec_su_allowed_in;
+        std::vector<bool> m_is_pc_su_allowed_in;
+        std::vector<bool> m_is_pc_sb_allowed_in;
+        // electric heater control
+        std::vector<double> m_q_dot_elec_to_PAR_HTR_in;
+        std::vector<bool> m_is_PAR_HTR_allowed_in;
 
     } mc_dispatch_params;   // TODO: Remove this 
 
 	struct S_csp_tou_outputs
 	{
         int m_csp_op_tou;
-		int m_pricing_tou;
 		double m_f_turbine;
-		double m_price_mult;
+
+        int m_pricing_tou;
+        double m_price_mult;    //[-]
+        double m_elec_price;    //[$/kWhe]
+
+        double m_wlim_dispatch; //[-]
 
 		S_csp_tou_outputs()
 		{
             m_csp_op_tou = m_pricing_tou = -1;
 
-			m_f_turbine = m_price_mult = std::numeric_limits<double>::quiet_NaN();
+			m_f_turbine = m_price_mult = m_elec_price = m_wlim_dispatch = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
-	C_csp_tou(){};
+    // Rules for heuristic control
+    bool m_use_rule_1;
+    double m_standby_off_buffer;
+
+    bool m_use_rule_2;
+    double m_q_dot_rec_des_mult;
+    double m_f_q_dot_pc_overwrite;
+    // ****************************
+
+    bool m_isleapyear;
+
+    bool m_is_tod_pc_target_also_pc_max;
+
+    C_dispatch_model_type::E_dispatch_model_type m_dispatch_model_type;
+
+    C_timeseries_schedule_inputs mc_offtaker_schedule;
+    C_timeseries_schedule_inputs mc_elec_pricing_schedule;
+
+    C_csp_tou(C_timeseries_schedule_inputs c_offtaker_schedule,
+        C_timeseries_schedule_inputs c_elec_pricing_schedule,
+        C_csp_tou::C_dispatch_model_type::E_dispatch_model_type dispatch_model_type,
+        bool is_offtaker_frac_also_max)
+    {
+        mc_offtaker_schedule = c_offtaker_schedule;
+        mc_elec_pricing_schedule = c_elec_pricing_schedule;
+        m_dispatch_model_type = dispatch_model_type;
+        m_is_tod_pc_target_also_pc_max = is_offtaker_frac_also_max;
+
+        // Set defaults on heuristic rule values. No one at the cmod level knows what to do with these
+        m_use_rule_1 = true;
+        m_standby_off_buffer = 2.0;
+        m_use_rule_2 = false;
+        m_q_dot_rec_des_mult = -1.23;
+        m_f_q_dot_pc_overwrite = -1.23;
+    }
 
 	~C_csp_tou(){};
 
-	void init_parent(bool dispatch_optimize);
+	void init(bool is_leapyear);
 
-	virtual void init() = 0;
-
-	virtual void call(double time_s, C_csp_tou::S_csp_tou_outputs & tou_outputs) = 0;
+	void call(double time_s, C_csp_tou::S_csp_tou_outputs & tou_outputs);
 };
 
 class C_csp_collector_receiver
