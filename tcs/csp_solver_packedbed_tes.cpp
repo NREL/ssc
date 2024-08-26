@@ -746,9 +746,7 @@ bool C_csp_packedbed_tes::charge(double timestep /*s*/, double T_amb /*K*/, doub
     double& T_hot_ave /*K*/, double& T_cold_ave /*K*/, double& T_hot_final /*K*/, double& T_cold_final /*K*/
 )
 {
-    // HTF Properties
-    double dens_fluid_avg = mc_external_htfProps.dens((m_T_cold_des + m_T_hot_des) * 0.5, 1);   //[kg/m3]
-    double cp_fluid_avg = mc_external_htfProps.Cp_ave(m_T_cold_des, m_T_hot_des) * 1.E3;        //[J/kg-K]
+    
 
     // Calculate subtimestep
     int N_subtimesteps_local = (int)std::ceil(timestep / m_subtimestep_nominal);
@@ -757,12 +755,7 @@ bool C_csp_packedbed_tes::charge(double timestep /*s*/, double T_amb /*K*/, doub
     // Define timestep and spatial step
     double dx = m_h_tank_calc / m_n_xstep;           // [m]
 
-    // Calculate Coefficients (assume constant for now)
-    double cp_eff = m_void_frac * dens_fluid_avg * cp_fluid_avg
-        + (1.0 - m_void_frac) * m_dens_solid * m_cp_solid;  // [J/m3 K]
-    double u0 = (m_dot_htf_in / m_Ac) / dens_fluid_avg;          // [kg/s m3] --> [m/s]
-    double alpha = (dens_fluid_avg * u0 * cp_fluid_avg * dt) / (cp_eff * dx);
-    double beta = (m_k_eff * dt) / (cp_eff * std::pow(dx, 2.0));
+    
 
     // Initialize Temperature Vectors
     std::vector<double> T_calc_vec(m_n_xstep + 1);          // [K] Temperature gradient at end of subtimestep
@@ -776,6 +769,17 @@ bool C_csp_packedbed_tes::charge(double timestep /*s*/, double T_amb /*K*/, doub
         // Loop through space
         for (int i = 0; i <= m_n_xstep; i++)
         {
+            // HTF Properties
+            double dens_fluid = mc_external_htfProps.dens(T_prev_vec_subtime[i], 1);   //[kg/m3]
+            double cp_fluid = mc_external_htfProps.Cp(T_prev_vec_subtime[i]) * 1.E3;        //[J/kg-K]
+
+            // Calculate Coefficients (assume constant for now)
+            double cp_eff = m_void_frac * dens_fluid * cp_fluid
+                + (1.0 - m_void_frac) * m_dens_solid * m_cp_solid;  // [J/m3 K]
+            double u0 = (m_dot_htf_in / m_Ac) / dens_fluid;          // [kg/s m3] --> [m/s]
+            double alpha = (dens_fluid * u0 * cp_fluid * dt) / (cp_eff * dx);
+            double beta = (m_k_eff * dt) / (cp_eff * std::pow(dx, 2.0));
+
             // Charge INLET
             if (i == 0)
             {
@@ -849,6 +853,7 @@ bool C_csp_packedbed_tes::charge(double timestep /*s*/, double T_amb /*K*/, doub
 
     // Charge power from htf to storage
     q_dot_ch_from_htf = 0.0;    // [MWt]
+    double cp_fluid_avg = mc_external_htfProps.Cp_ave(m_T_cold_des, m_T_hot_des) * 1.E3; //[J/kg-K]
     for (double T_out : T_out_vec)
     {
         q_dot_ch_from_htf += m_dot_htf_in * cp_fluid_avg * (T_htf_hot_in - T_out) * 1.E-3 * (dt / timestep);  // [MWt]
@@ -864,23 +869,12 @@ bool C_csp_packedbed_tes::discharge(double timestep /*s*/, double T_amb /*K*/, d
     double& T_hot_ave /*K*/, double& T_cold_ave /*K*/, double& T_hot_final /*K*/, double& T_cold_final /*K*/
 )
 {
-    // HTF Properties
-    double dens_fluid_avg = mc_external_htfProps.dens((m_T_cold_des + m_T_hot_des) * 0.5, 1); //[kg/m3]
-    double cp_fluid_avg = mc_external_htfProps.Cp_ave(m_T_cold_des, m_T_hot_des) * 1.E3; //[J/kg-K]
-
     // Calculate subtimestep
     int N_subtimesteps_local = (int)std::ceil(timestep / m_subtimestep_nominal);
     double dt = timestep / (double)N_subtimesteps_local;    //[s]
 
     // Define timestep and spatial step
     double dx = m_h_tank_calc / m_n_xstep;               // [m]
-
-    // Calculate Coefficients (assume constant for now)
-    double cp_eff = m_void_frac * dens_fluid_avg * cp_fluid_avg
-        + (1.0 - m_void_frac) * m_dens_solid * m_cp_solid;  // [J/m3 K]
-    double u0 = (m_dot_htf_in / m_Ac) / dens_fluid_avg;          // [kg/s m3] --> [m/s]
-    double alpha = (dens_fluid_avg * u0 * cp_fluid_avg * dt) / (cp_eff * dx);
-    double beta = (m_k_eff * dt) / (cp_eff * std::pow(dx, 2.0));
 
     // Initialize Temperature Vectors
     std::vector<double> T_calc_vec(m_n_xstep + 1);              // [K] Temperature gradient at end of subtimestep
@@ -894,6 +888,17 @@ bool C_csp_packedbed_tes::discharge(double timestep /*s*/, double T_amb /*K*/, d
         // Loop through space
         for (int i = m_n_xstep; i >= 0; i--)
         {
+            // HTF Properties
+            double dens_fluid = mc_external_htfProps.dens(T_prev_vec_subtime[i], 1);   //[kg/m3]
+            double cp_fluid = mc_external_htfProps.Cp(T_prev_vec_subtime[i]) * 1.E3;        //[J/kg-K]
+
+            // Calculate Coefficients (assume constant for now)
+            double cp_eff = m_void_frac * dens_fluid * cp_fluid
+                + (1.0 - m_void_frac) * m_dens_solid * m_cp_solid;  // [J/m3 K]
+            double u0 = (m_dot_htf_in / m_Ac) / dens_fluid;          // [kg/s m3] --> [m/s]
+            double alpha = (dens_fluid * u0 * cp_fluid * dt) / (cp_eff * dx);
+            double beta = (m_k_eff * dt) / (cp_eff * std::pow(dx, 2.0));
+
             // Discharge OUTLET
             if (i == 0)
             {
@@ -901,6 +906,7 @@ bool C_csp_packedbed_tes::discharge(double timestep /*s*/, double T_amb /*K*/, d
                     + (beta * (T_prev_vec_subtime[i] - 2.0 * T_prev_vec_subtime[i + 1] + T_prev_vec_subtime[i + 2])))
                     / (1.0 + alpha);
             }
+
             // Discharge INLET
             else if (i == m_n_xstep)
             {
@@ -908,6 +914,7 @@ bool C_csp_packedbed_tes::discharge(double timestep /*s*/, double T_amb /*K*/, d
                     + (beta * (T_prev_vec_subtime[i - 1] - (2.0 * T_prev_vec_subtime[i]) + T_htf_cold_in)))
                     / (1.0 + alpha);
             }
+
             // Middle space
             else
             {
@@ -952,6 +959,7 @@ bool C_csp_packedbed_tes::discharge(double timestep /*s*/, double T_amb /*K*/, d
 
     // Heat transferred from storage to htf
     q_dot_dc_to_htf = 0.0;  //[MWt]
+    double cp_fluid_avg = mc_external_htfProps.Cp_ave(m_T_cold_des, m_T_hot_des) * 1.E3; //[J/kg-K]
     for (double T_out : T_out_vec)
     {
         q_dot_dc_to_htf += m_dot_htf_in * cp_fluid_avg * (T_out - T_htf_cold_in) * 1.E-3 * (dt / timestep);  // [MWt]
