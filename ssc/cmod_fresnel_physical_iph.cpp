@@ -36,7 +36,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "csp_solver_fresnel_collector_receiver.h"
 #include "csp_solver_pc_heat_sink.h"
-#include "csp_solver_tou_block_schedules.h"
 #include "csp_dispatch.h"
 #include "csp_system_costs.h"
 #include "csp_solver_two_tank_tes.h"
@@ -57,138 +56,143 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
 
     // System Design
 
-    /*System Design*/{ SSC_INPUT,    SSC_NUMBER,         "solar_mult_in",               "Solar multiple Input",                                                                  "",                    "",                             "System_Design",        "",                 "",                 "" },
-    /*System Design*/{ SSC_INPUT,    SSC_NUMBER,         "total_Ap_in",                 "Field aperture Input",                                                                  "m3",                  "",                             "System_Design",        "",                 "",                 "" },
-    /*System Design*/{ SSC_INPUT,    SSC_NUMBER,         "solar_mult_or_Ap",            "Design using specified solar mult or field aperture",                                   "m3",                  "",                             "System_Design",        "",                 "",                 "" },
-    /*System Design*/{ SSC_INPUT,    SSC_NUMBER,         "T_loop_in_des",               "Design loop inlet temperature",                                                         "C",                   "",                             "System_Design",        "*",                "",                 "" },
-    /*System Design*/{ SSC_INPUT,    SSC_NUMBER,         "T_loop_out",                  "Target loop outlet temperature",                                                        "C",                   "",                             "System_Design",        "*",                "",                 "" },
-    /*System Design*/{ SSC_INPUT,    SSC_NUMBER,         "I_bn_des",                    "Solar irradiation at design",                                                           "W/m2",                "",                             "System_Design",        "*",                "",                 "" },
-    /*System Design*/{ SSC_INPUT,    SSC_NUMBER,         "tshours",                     "Equivalent full-load thermal storage hours",                                            "hr",                  "",                             "System_Design",        "*",                "",                 "" },
-    /*System Design*/{ SSC_INPUT,    SSC_NUMBER,         "q_pb_design",                 "Design heat input to power block",                                                      "MWt",                 "",                             "System_Design",        "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "solar_mult_in",               "Solar multiple Input",                                                                  "",                    "",                             "System_Design",        "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "total_Ap_in",                 "Field aperture Input",                                                                  "m3",                  "",                             "System_Design",        "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "solar_mult_or_Ap",            "Design using specified solar mult or field aperture",                                   "m3",                  "",                             "System_Design",        "?=0",              "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "T_loop_in_des",               "Design loop inlet temperature",                                                         "C",                   "",                             "System_Design",        "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "T_loop_out",                  "Target loop outlet temperature",                                                        "C",                   "",                             "System_Design",        "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "I_bn_des",                    "Solar irradiation at design",                                                           "W/m2",                "",                             "System_Design",        "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "tshours",                     "Equivalent full-load thermal storage hours",                                            "hr",                  "",                             "System_Design",        "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "q_pb_design",                 "Design heat input to power block",                                                      "MWt",                 "",                             "System_Design",        "*",                "",                 "" },
 
 
     // Solar Field
 
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "nMod",                        "Number of collector modules in a loop",                                                 "",                    "",                             "Solar_Field",          "*",                "INTEGER",          "" },
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "eta_pump",                    "HTF pump efficiency",                                                                   "",                    "",                             "Solar_Field",          "*",                "",                 "" },
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "HDR_rough",                   "Header pipe roughness",                                                                 "m",                   "",                             "Solar_Field",          "*",                "",                 "" },
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "theta_stow",                  "stow angle",                                                                            "deg",                 "",                             "Solar_Field",          "*",                "",                 "" },
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "theta_dep",                   "deploy angle",                                                                          "deg",                 "",                             "Solar_Field",          "*",                "",                 "" },
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "FieldConfig",                 "Number of subfield headers",                                                            "",                    "",                             "Solar_Field",          "*",                "",                 "" },
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "m_dot_htfmin",                "Minimum loop HTF flow rate",                                                            "kg/s",                "",                             "Solar_Field",          "*",                "",                 "" },
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "m_dot_htfmax",                "Maximum loop HTF flow rate",                                                            "kg/s",                "",                             "Solar_Field",          "*",                "",                 "" },
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "Fluid",                       "Field HTF fluid number",                                                                "",                    "",                             "Solar_Field",          "*",                "INTEGER",          "" },
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "T_fp",                        "Freeze protection temperature (heat trace activation temperature)",                     "C",                   "",                             "Solar_Field",          "*",                "",                 "" },
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "V_hdr_max",                   "Maximum HTF velocity in the header at design",                                          "m/s",                 "",                             "Solar_Field",          "*",                "",                 "" },
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "V_hdr_min",                   "Minimum HTF velocity in the header at design",                                          "m/s",                 "",                             "Solar_Field",          "*",                "",                 "" },
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "Pipe_hl_coef",                "Loss coefficient from the header - runner pipe - and non-HCE piping",                   "W/m2-K",              "",                             "Solar_Field",          "*",                "",                 "" },
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "mc_bal_hot",                  "The heat capacity of the balance of plant on the hot side",                             "kWht/K-MWt",          "",                             "Solar_Field",          "*",                "",                 "" },
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "mc_bal_cold",                 "The heat capacity of the balance of plant on the cold side",                            "kWht/K-MWt",          "",                             "Solar_Field",          "*",                "",                 "" },
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "mc_bal_sca",                  "Non-HTF heat capacity associated with each SCA - per meter basis",                      "Wht/K-m",             "",                             "Solar_Field",          "*",                "",                 "" },
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "water_per_wash",              "Water usage per wash",                                                                  "L/m2_aper",           "",                             "Solar_Field",          "*",                "",                 "" },
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "washes_per_year",             "Mirror washing frequency",                                                              "none",                "",                             "Solar_Field",          "*",                "",                 "" },
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "rec_htf_vol",                 "Volume of HTF in a single collector unit per unit aperture area",                       "L/m2-ap",             "",                             "Solar_Field",          "*",                "",                 "" },
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "T_amb_sf_des",                "Ambient design-point temperature for the solar field",                                  "C",                   "",                             "Solar_Field",          "*",                "",                 "" },
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "V_wind_des",                  "Design-point wind velocity",                                                            "m/s",                 "",                             "Solar_Field",          "*",                "",                 "" },
-    /*Solar Field*/{ SSC_INPUT,    SSC_MATRIX,         "field_fl_props",              "Fluid property data",                                                                   "",                    "",                             "Solar_Field",          "*",                "",                 "" },
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "SCA_drives_elec",             "Tracking power in Watts per SCA drive",                                                 "W/module",            "",                             "Solar_Field",          "*",                "",                 "" },
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "land_mult",                   "Non-solar field land area multiplier",                                                  "-",                   "",                             "Solar_Field",          "*",                "",                 "" },
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "T_startup",                   "Power block startup temperature",                                                       "C",                   "",                             "Solar_Field",          "*",                "",                 "" },
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "rec_su_delay",                "Fixed startup delay time for the receiver",                                             "hr",                  "",                             "Solar_Field",          "*",                "",                 "" },
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "rec_qf_delay",                "Energy-based receiver startup delay (fraction of rated thermal power)",                 "-",                   "",                             "Solar_Field",          "*",                "",                 "" },
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "p_start",                     "Collector startup energy, per SCA",                                                     "kWe-hr",              "",                             "Solar_Field",          "*",                "",                 "" },
-    /*Solar Field*/{ SSC_INPUT,    SSC_NUMBER,         "L_rnr_pb",                    "Length of runner pipe in power block",                                                  "m",                   "",                             "Solar_Field",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "nMod",                        "Number of collector modules in a loop",                                                 "",                    "",                             "Solar_Field",          "*",                "INTEGER",          "" },
+    { SSC_INPUT,    SSC_NUMBER,         "eta_pump",                    "HTF pump efficiency",                                                                   "",                    "",                             "Solar_Field",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "HDR_rough",                   "Header pipe roughness",                                                                 "m",                   "",                             "Solar_Field",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "theta_stow",                  "stow angle",                                                                            "deg",                 "",                             "Solar_Field",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "theta_dep",                   "deploy angle",                                                                          "deg",                 "",                             "Solar_Field",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "FieldConfig",                 "Number of subfield headers",                                                            "",                    "",                             "Solar_Field",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "Fluid",                       "Field HTF fluid number",                                                                "",                    "",                             "Solar_Field",          "*",                "INTEGER",          "" },
+    { SSC_INPUT,    SSC_NUMBER,         "T_fp",                        "Freeze protection temperature (heat trace activation temperature)",                     "C",                   "",                             "Solar_Field",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "V_hdr_max",                   "Maximum HTF velocity in the header at design",                                          "m/s",                 "",                             "Solar_Field",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "V_hdr_min",                   "Minimum HTF velocity in the header at design",                                          "m/s",                 "",                             "Solar_Field",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "Pipe_hl_coef",                "Loss coefficient from the header - runner pipe - and non-HCE piping",                   "W/m2-K",              "",                             "Solar_Field",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "mc_bal_hot",                  "The heat capacity of the balance of plant on the hot side",                             "kWht/K-MWt",          "",                             "Solar_Field",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "mc_bal_cold",                 "The heat capacity of the balance of plant on the cold side",                            "kWht/K-MWt",          "",                             "Solar_Field",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "mc_bal_sca",                  "Non-HTF heat capacity associated with each SCA - per meter basis",                      "Wht/K-m",             "",                             "Solar_Field",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "water_per_wash",              "Water usage per wash",                                                                  "L/m2_aper",           "",                             "Solar_Field",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "washes_per_year",             "Mirror washing frequency",                                                              "none",                "",                             "Solar_Field",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "rec_htf_vol",                 "Volume of HTF in a single collector unit per unit aperture area",                       "L/m2-ap",             "",                             "Solar_Field",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "T_amb_sf_des",                "Ambient design-point temperature for the solar field",                                  "C",                   "",                             "Solar_Field",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "V_wind_des",                  "Design-point wind velocity",                                                            "m/s",                 "",                             "Solar_Field",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_MATRIX,         "field_fl_props",              "Fluid property data",                                                                   "",                    "",                             "Solar_Field",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "SCA_drives_elec",             "Tracking power in Watts per SCA drive",                                                 "W/module",            "",                             "Solar_Field",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "land_mult",                   "Non-solar field land area multiplier",                                                  "-",                   "",                             "Solar_Field",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "T_startup",                   "Power block startup temperature",                                                       "C",                   "",                             "Solar_Field",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "rec_su_delay",                "Fixed startup delay time for the receiver",                                             "hr",                  "",                             "Solar_Field",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "rec_qf_delay",                "Energy-based receiver startup delay (fraction of rated thermal power)",                 "-",                   "",                             "Solar_Field",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "p_start",                     "Collector startup energy, per SCA",                                                     "kWe-hr",              "",                             "Solar_Field",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "L_rnr_pb",                    "Length of runner pipe in power block",                                                  "m",                   "",                             "Solar_Field",          "*",                "",                 "" },
+
+    { SSC_INPUT,    SSC_NUMBER,         "use_abs_or_rel_mdot_limit",   "Use mass flow abs (0) or relative (1) limits",                                          "",                    "",                             "solar_field",          "?=0",                          "",     "" },
+    { SSC_INPUT,    SSC_NUMBER,         "m_dot_htfmin",                "Minimum loop HTF flow rate",                                                            "kg/s",                "",                             "solar_field",          "use_abs_or_rel_mdot_limit=0",  "",     "" },
+    { SSC_INPUT,    SSC_NUMBER,         "m_dot_htfmax",                "Maximum loop HTF flow rate",                                                            "kg/s",                "",                             "solar_field",          "use_abs_or_rel_mdot_limit=0",  "",     "" },
+    { SSC_INPUT,    SSC_NUMBER,         "f_htfmin",                    "Minimum loop mass flow rate fraction of design",                                        "",                    "",                             "solar_field",          "use_abs_or_rel_mdot_limit=1",  "",     "" },
+    { SSC_INPUT,    SSC_NUMBER,         "f_htfmax",                    "Maximum loop mass flow rate fraction of design",                                        "",                    "",                             "solar_field",          "use_abs_or_rel_mdot_limit=1",  "",     "" },
+
 
     // Collector and Receiver
 
-    /*Col & Rec*/{ SSC_INPUT,    SSC_NUMBER,         "ColAz",                       "Collector azimuth angle",                                                               "deg",                 "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_NUMBER,         "opt_model",                   "The optical model",                                                                     "",                    "",                             "Col_Rec",              "*",                "INTEGER",          "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_NUMBER,         "A_aperture",                  "Reflective aperture area of the collector",                                             "m2",                  "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_NUMBER,         "reflectivity",                "Solar-weighted mirror reflectivity value",                                              "",                    "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_NUMBER,         "TrackingError",               "Tracking error derate",                                                                 "",                    "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_NUMBER,         "GeomEffects",                 "Geometry effects derate",                                                               "",                    "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_NUMBER,         "Dirt_mirror",                 "User-defined dirt on mirror derate",                                                    "",                    "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_NUMBER,         "Error",                       "User-defined general optical error derate",                                             "",                    "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_NUMBER,         "L_mod",                       "The length of the collector module",                                                    "m",                   "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "IAM_T_coefs",                 "Incidence angle modifier coefficients - transversal plane",                             "",                    "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "IAM_L_coefs",                 "Incidence angle modifier coefficients - longitudinal plane",                            "",                    "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_MATRIX,         "OpticalTable",                "Values of the optical efficiency table",                                                "",                    "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "ColAz",                       "Collector azimuth angle",                                                               "deg",                 "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "opt_model",                   "The optical model",                                                                     "",                    "",                             "Col_Rec",              "*",                "INTEGER",          "" },
+    { SSC_INPUT,    SSC_NUMBER,         "A_aperture",                  "Reflective aperture area of the collector",                                             "m2",                  "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "reflectivity",                "Solar-weighted mirror reflectivity value",                                              "",                    "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "TrackingError",               "Tracking error derate",                                                                 "",                    "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "GeomEffects",                 "Geometry effects derate",                                                               "",                    "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "Dirt_mirror",                 "User-defined dirt on mirror derate",                                                    "",                    "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "Error",                       "User-defined general optical error derate",                                             "",                    "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "L_mod",                       "The length of the collector module",                                                    "m",                   "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "IAM_T_coefs",                 "Incidence angle modifier coefficients - transversal plane",                             "",                    "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "IAM_L_coefs",                 "Incidence angle modifier coefficients - longitudinal plane",                            "",                    "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_MATRIX,         "OpticalTable",                "Values of the optical efficiency table",                                                "",                    "",                             "Col_Rec",              "*",                "",                 "" },
 
-    /*Col & Rec*/{ SSC_INPUT,    SSC_NUMBER,         "rec_model",                   "Receiver model type (1=Polynomial ; 2=Evac tube)",                                      "",                    "",                             "Col_Rec",              "*",                "INTEGER",          "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "HCE_FieldFrac",               "The fraction of the field occupied by this HCE type",                                   "",                    "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "D_abs_in",                    "The inner absorber tube diameter",                                                      "m",                   "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "D_abs_out",                   "The outer absorber tube diameter",                                                      "m",                   "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "D_glass_in",                  "The inner glass envelope diameter",                                                     "m",                   "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "D_glass_out",                 "The outer glass envelope diameter",                                                     "m",                   "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "D_plug",                      "The diameter of the absorber flow plug (optional)",                                     "m",                   "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "Flow_type",                   "The flow type through the absorber",                                                    "",                    "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "Rough",                       "Roughness of the internal surface",                                                     "m",                   "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "alpha_env",                   "Envelope absorptance",                                                                  "",                    "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_MATRIX,         "epsilon_abs_1",               "Absorber emittance - HCE variation 1",                                                  "",                    "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_MATRIX,         "epsilon_abs_2",               "Absorber emittance - HCE variation 2",                                                  "",                    "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_MATRIX,         "epsilon_abs_3",               "Absorber emittance - HCE variation 3",                                                  "",                    "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_MATRIX,         "epsilon_abs_4",               "Absorber emittance - HCE variation 4",                                                  "",                    "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "alpha_abs",                   "Absorber absorptance",                                                                  "",                    "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "Tau_envelope",                "Envelope transmittance",                                                                "",                    "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "epsilon_glass",               "Glass envelope emissivity",                                                             "",                    "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "GlazingIntactIn",             "The glazing intact flag",                                                               "",                    "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "P_a",                         "Annulus gas pressure",                                                                  "torr",                "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "AnnulusGas",                  "Annulus gas type (1=air; 26=Ar; 27=H2)",                                                "",                    "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "AbsorberMaterial",            "Absorber material type",                                                                "",                    "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "Shadowing",                   "Receiver bellows shadowing loss factor",                                                "",                    "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "dirt_env",                    "Loss due to dirt on the receiver envelope",                                             "",                    "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "Design_loss",                 "Receiver heat loss at design",                                                          "W/m",                 "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_NUMBER,         "L_mod_spacing",               "Piping distance between sequential modules in a loop",                                  "m",                   "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_NUMBER,         "L_crossover",                 "Length of crossover piping in a loop",                                                  "m",                   "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "HL_T_coefs",                  "HTF temperature-dependent heat loss coefficients",                                      "W/m-K",               "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "HL_w_coefs",                  "Wind-speed-dependent heat loss coefficients",                                           "W/m-(m/s)",           "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_NUMBER,         "DP_nominal",                  "Pressure drop across a single collector assembly at design",                            "bar",                 "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_ARRAY,          "DP_coefs",                    "Pressure drop mass flow based part-load curve",                                         "",                    "",                             "Col_Rec",              "*",                "",                 "" },
-    /*Col & Rec*/{ SSC_INPUT,    SSC_NUMBER,         "nRecVar",                     "Number of receiver variations",                                                         "",                    "",                             "Col_Rec",              "?=4",              "INTEGER",          "" },
+    { SSC_INPUT,    SSC_NUMBER,         "rec_model",                   "Receiver model type (1=Polynomial ; 2=Evac tube)",                                      "",                    "",                             "Col_Rec",              "*",                "INTEGER",          "" },
+    { SSC_INPUT,    SSC_ARRAY,          "HCE_FieldFrac",               "The fraction of the field occupied by this HCE type",                                   "",                    "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "D_abs_in",                    "The inner absorber tube diameter",                                                      "m",                   "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "D_abs_out",                   "The outer absorber tube diameter",                                                      "m",                   "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "D_glass_in",                  "The inner glass envelope diameter",                                                     "m",                   "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "D_glass_out",                 "The outer glass envelope diameter",                                                     "m",                   "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "D_plug",                      "The diameter of the absorber flow plug (optional)",                                     "m",                   "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "Flow_type",                   "The flow type through the absorber",                                                    "",                    "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "Rough",                       "Roughness of the internal surface",                                                     "m",                   "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "alpha_env",                   "Envelope absorptance",                                                                  "",                    "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_MATRIX,         "epsilon_abs_1",               "Absorber emittance - HCE variation 1",                                                  "",                    "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_MATRIX,         "epsilon_abs_2",               "Absorber emittance - HCE variation 2",                                                  "",                    "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_MATRIX,         "epsilon_abs_3",               "Absorber emittance - HCE variation 3",                                                  "",                    "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_MATRIX,         "epsilon_abs_4",               "Absorber emittance - HCE variation 4",                                                  "",                    "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "alpha_abs",                   "Absorber absorptance",                                                                  "",                    "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "Tau_envelope",                "Envelope transmittance",                                                                "",                    "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "epsilon_glass",               "Glass envelope emissivity",                                                             "",                    "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "GlazingIntactIn",             "The glazing intact flag",                                                               "",                    "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "P_a",                         "Annulus gas pressure",                                                                  "torr",                "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "AnnulusGas",                  "Annulus gas type (1=air; 26=Ar; 27=H2)",                                                "",                    "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "AbsorberMaterial",            "Absorber material type",                                                                "",                    "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "Shadowing",                   "Receiver bellows shadowing loss factor",                                                "",                    "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "dirt_env",                    "Loss due to dirt on the receiver envelope",                                             "",                    "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "Design_loss",                 "Receiver heat loss at design",                                                          "W/m",                 "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "L_mod_spacing",               "Piping distance between sequential modules in a loop",                                  "m",                   "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "L_crossover",                 "Length of crossover piping in a loop",                                                  "m",                   "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "HL_T_coefs",                  "HTF temperature-dependent heat loss coefficients",                                      "W/m-K",               "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "HL_w_coefs",                  "Wind-speed-dependent heat loss coefficients",                                           "W/m-(m/s)",           "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "DP_nominal",                  "Pressure drop across a single collector assembly at design",                            "bar",                 "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "DP_coefs",                    "Pressure drop mass flow based part-load curve",                                         "",                    "",                             "Col_Rec",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "nRecVar",                     "Number of receiver variations",                                                         "",                    "",                             "Col_Rec",              "?=4",              "INTEGER",          "" },
 
 
     // Heat Sink
 
-    /*Heat Sink*/{SSC_INPUT,     SSC_NUMBER,         "pb_pump_coef",                "Pumping power to move 1kg of HTF through PB loop",                                      "kW/kg",               "",                              "Heat Sink",           "*",                "",                 ""},
+    {SSC_INPUT,     SSC_NUMBER,         "pb_pump_coef",                "Pumping power to move 1kg of HTF through PB loop",                                      "kW/kg",               "",                              "Heat Sink",           "*",                "",                 ""},
 
     // TES   
 
-    /*Storage*/{ SSC_INPUT,    SSC_NUMBER,         "store_fluid",                 "Storage HTF ID",                                                                        "",                    "",                             "Storage",              "*",                "",                 "" },
-    /*Storage*/{ SSC_INPUT,    SSC_MATRIX,         "store_fl_props",              "Storage user-defined HTF Properties",                                                   "",                    "",                             "Storage",              "*",                "",                 "" },
-    /*Storage*/{ SSC_INPUT,    SSC_NUMBER,         "h_tank",                      "Height of HTF when tank is full",                                                       "",                    "",                             "Storage",              "*",                "",                 "" },
-    /*Storage*/{ SSC_INPUT,    SSC_NUMBER,         "u_tank",                      "Loss coefficient from tank",                                                            "",                    "",                             "Storage",              "*",                "",                 "" },
-    /*Storage*/{ SSC_INPUT,    SSC_NUMBER,         "tank_pairs",                  "Number of equivalent tank pairs",                                                       "",                    "",                             "Storage",              "*",                "INTEGER",          "" },
-    /*Storage*/{ SSC_INPUT,    SSC_NUMBER,         "hot_tank_Thtr",               "Hot tank heater set point",                                                             "",                    "",                             "Storage",              "*",                "",                 "" },
-    /*Storage*/{ SSC_INPUT,    SSC_NUMBER,         "hot_tank_max_heat",           "Rated heater capacity for hot tank heating",                                            "MWe",                 "",                             "Storage",              "*",                "",                 "" },
-    /*Storage*/{ SSC_INPUT,    SSC_NUMBER,         "cold_tank_Thtr",              "Cold tank heater set point",                                                            "",                    "",                             "Storage",              "*",                "",                 "" },
-    /*Storage*/{ SSC_INPUT,    SSC_NUMBER,         "cold_tank_max_heat",          "Rated heater capacity for cold tank heating",                                           "MWe",                 "",                             "Storage",              "*",                "",                 "" },
-    /*Storage*/{ SSC_INPUT,    SSC_NUMBER,         "dt_hot",                      "Hot side HX approach temp",                                                             "",                    "",                             "Storage",              "*",                "",                 "" },
-    /*Storage*/{ SSC_INPUT,    SSC_NUMBER,         "h_tank_min",                  "Minimum tank fluid height",                                                             "",                    "",                             "Storage",              "*",                "",                 "" },
-    /*Storage*/{ SSC_INPUT,    SSC_NUMBER,         "dt_cold",                     "Cold side HX approach temp",                                                            "",                    "",                             "Storage",              "*",                "",                 "" },
-    /*Storage*/{ SSC_INPUT,    SSC_NUMBER,         "init_hot_htf_percent",        "Initial fraction of avail. vol that is hot",                                            "%",                   "",                             "Storage",              "*",                "",                 "" },
-    /*Storage*/{ SSC_INPUT,    SSC_NUMBER,         "tes_pump_coef",               "Pumping power to move 1kg of HTF through tes loop",                                     "kW/(kg/s)",           "",                             "Storage",              "*",                "",                 "" },
-    /*Storage*/{ SSC_INPUT,    SSC_NUMBER,         "tanks_in_parallel",           "Tanks are in parallel, not in series, with solar field",                                "-",                   "",                             "Storage",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "store_fluid",                 "Storage HTF ID",                                                                        "",                    "",                             "Storage",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_MATRIX,         "store_fl_props",              "Storage user-defined HTF Properties",                                                   "",                    "",                             "Storage",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "h_tank",                      "Height of HTF when tank is full",                                                       "",                    "",                             "Storage",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "u_tank",                      "Loss coefficient from tank",                                                            "",                    "",                             "Storage",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "tank_pairs",                  "Number of equivalent tank pairs",                                                       "",                    "",                             "Storage",              "*",                "INTEGER",          "" },
+    { SSC_INPUT,    SSC_NUMBER,         "hot_tank_Thtr",               "Hot tank heater set point",                                                             "",                    "",                             "Storage",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "hot_tank_max_heat",           "Rated heater capacity for hot tank heating",                                            "MWe",                 "",                             "Storage",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "cold_tank_Thtr",              "Cold tank heater set point",                                                            "",                    "",                             "Storage",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "cold_tank_max_heat",          "Rated heater capacity for cold tank heating",                                           "MWe",                 "",                             "Storage",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "dt_hot",                      "Hot side HX approach temp",                                                             "",                    "",                             "Storage",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "h_tank_min",                  "Minimum tank fluid height",                                                             "",                    "",                             "Storage",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "dt_cold",                     "Cold side HX approach temp",                                                            "",                    "",                             "Storage",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "init_hot_htf_percent",        "Initial fraction of avail. vol that is hot",                                            "%",                   "",                             "Storage",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "tes_pump_coef",               "Pumping power to move 1kg of HTF through tes loop",                                     "kW/(kg/s)",           "",                             "Storage",              "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "tanks_in_parallel",           "Tanks are in parallel, not in series, with solar field",                                "-",                   "",                             "Storage",              "*",                "",                 "" },
 
     /*Storage NOT in UI*/{ SSC_INPUT,    SSC_NUMBER,         "V_tes_des",                   "Design-point velocity to size the TES pipe diameters",                                  "m/s",                 "",                             "Storage",              "?=1.85",           "",                 "SIMULATION_PARAMETER" },
 
 
     // System Control
-    /*Sys Control*/{ SSC_INPUT,    SSC_NUMBER,         "is_timestep_load_fractions",  "Use turbine load fraction for each timestep instead of block dispatch?",                "",                    "",                             "tou",                  "?=0",              "",             "SIMULATION_PARAMETER" },
-    /*Sys Control*/{ SSC_INPUT,    SSC_ARRAY,          "timestep_load_fractions",     "Turbine load fraction for each timestep, alternative to block dispatch",                "",                    "",                             "tou",                  "?",                "",             "SIMULATION_PARAMETER" },
+    { SSC_INPUT,    SSC_NUMBER,         "is_timestep_load_fractions",  "Use turbine load fraction for each timestep instead of block dispatch?",                "",                    "",                             "tou",                  "?=0",              "",             "SIMULATION_PARAMETER" },
+    { SSC_INPUT,    SSC_ARRAY,          "timestep_load_fractions",     "Turbine load fraction for each timestep, alternative to block dispatch",                "",                    "",                             "tou",                  "?",                "",             "SIMULATION_PARAMETER" },
 
-    /*Sys Control*/{ SSC_INPUT,    SSC_NUMBER,         "pb_fixed_par",                "Fixed parasitic load - runs at all times",                                              "",                    "",                             "Sys_Control",          "*",                "",                 "" },
-    /*Sys Control*/{ SSC_INPUT,    SSC_ARRAY,          "bop_array",                   "Balance of plant parasitic power fraction",                                             "",                    "",                             "Sys_Control",          "*",                "",                 "" },
-    /*Sys Control*/{ SSC_INPUT,    SSC_ARRAY,          "aux_array",                   "Aux heater, boiler parasitic",                                                          "",                    "",                             "Sys_Control",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "pb_fixed_par",                "Fixed parasitic load - runs at all times",                                              "",                    "",                             "Sys_Control",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "bop_array",                   "Balance of plant parasitic power fraction",                                             "",                    "",                             "Sys_Control",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "aux_array",                   "Aux heater, boiler parasitic",                                                          "",                    "",                             "Sys_Control",          "*",                "",                 "" },
 
-    /*Sys Control*/{ SSC_INPUT,    SSC_NUMBER,         "is_dispatch",                 "Allow dispatch optimization?",  /*TRUE=1*/                                              "-",                   "",                             "Sys_Control",          "?=0",              "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "is_dispatch",                 "Allow dispatch optimization?",  /*TRUE=1*/                                              "-",                   "",                             "Sys_Control",          "?=0",              "",                 "" },
 
-    /*Sys Control*/{ SSC_INPUT,    SSC_NUMBER,         "disp_rsu_cost_rel",           "Receiver startup cost",                                                                 "$/MWt/start",         "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
-    /*Sys Control*/{ SSC_INPUT,    SSC_NUMBER,         "disp_horizon",                "Time horizon for dispatch optimization",                                                "hour",                "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
-    /*Sys Control*/{ SSC_INPUT,    SSC_NUMBER,         "disp_frequency",              "Frequency for dispatch optimization calculations",                                      "hour",                "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
-    /*Sys Control*/{ SSC_INPUT,    SSC_NUMBER,         "disp_max_iter",               "Max. no. dispatch optimization iterations",                                             "-",                   "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
-    /*Sys Control*/{ SSC_INPUT,    SSC_NUMBER,         "disp_timeout",                "Max. dispatch optimization solve duration",                                             "s",                   "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
-    /*Sys Control*/{ SSC_INPUT,    SSC_NUMBER,         "disp_mip_gap",                "Dispatch optimization solution tolerance",                                              "-",                   "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
-    /*Sys Control*/{ SSC_INPUT,    SSC_NUMBER,         "disp_time_weighting",         "Dispatch optimization future time discounting factor",                                  "-",                   "",                             "Sys_Control",          "?=0.99",           "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "disp_rsu_cost_rel",           "Receiver startup cost",                                                                 "$/MWt/start",         "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "disp_horizon",                "Time horizon for dispatch optimization",                                                "hour",                "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "disp_frequency",              "Frequency for dispatch optimization calculations",                                      "hour",                "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "disp_max_iter",               "Max. no. dispatch optimization iterations",                                             "-",                   "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "disp_timeout",                "Max. dispatch optimization solve duration",                                             "s",                   "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "disp_mip_gap",                "Dispatch optimization solution tolerance",                                              "-",                   "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "disp_time_weighting",         "Dispatch optimization future time discounting factor",                                  "-",                   "",                             "Sys_Control",          "?=0.99",           "",                 "" },
 
     /*LK Only*/{ SSC_INPUT,    SSC_NUMBER,         "is_write_ampl_dat",           "Write AMPL data files for dispatch run",                                                "-",                   "",                             "tou",                                      "?=0",                     "",                      "SIMULATION_PARAMETER" },
     /*LK Only*/{ SSC_INPUT,    SSC_NUMBER,         "is_ampl_engine",              "Run dispatch optimization with external AMPL engine",                                   "-",                   "",                             "tou",                                      "?=0",                     "",                      "SIMULATION_PARAMETER" },
@@ -208,70 +212,70 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
 
 
     // Financials  and Pricing schedules (copied from electricity - eventually need to resolve electricity vs. heat)
-    /*Sys Design*/{SSC_INPUT,    SSC_NUMBER,          "csp_financial_model",         "",                                                                                      "1-8",                 "",                             "Financial Model",      "*",              "INTEGER,MIN=0",    ""},
+    {SSC_INPUT,    SSC_NUMBER,          "csp_financial_model",         "",                                                                                      "1-8",                 "",                             "Financial Model",      "*",              "INTEGER,MIN=0",    ""},
 
-    /*Financial TOD Factors*/{ SSC_INPUT,    SSC_NUMBER,         "ppa_multiplier_model",        "PPA multiplier model 0: dispatch factors dispatch_factorX, 1: hourly multipliers dispatch_factors_ts", "0/1",  "",                             "tou",                  "?=0",  /*need a default so this var works in required_if*/ "INTEGER,MIN=0",  "SIMULATION_PARAMETER" },
-    /*Fin Sol Mode Sing Own*/{ SSC_INPUT,    SSC_NUMBER,         "ppa_soln_mode",               "PPA solution mode (0=Specify IRR target, 1=Specify PPA price)",                         "",                    "",                             "Financial Solution Mode",                  "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
-    /*Financial TOD Factors*/{ SSC_INPUT,    SSC_ARRAY,          "dispatch_factors_ts",         "Dispatch payment factor array",                                                         "",                    "",                             "tou",                                      "ppa_multiplier_model=1&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
-    /*Financial TOD Factors*/{ SSC_INPUT,    SSC_MATRIX,         "dispatch_sched_weekday",      "PPA pricing weekday schedule, 12x24",                                                   "",                    "",                             "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
-    /*Financial TOD Factors*/{ SSC_INPUT,    SSC_MATRIX,         "dispatch_sched_weekend",      "PPA pricing weekend schedule, 12x24",                                                   "",                    "",                             "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
-                             { SSC_INPUT,    SSC_ARRAY,          "dispatch_tod_factors",        "TOD factors for periods 1 through 9",                                                   "",                    "",                             "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",  "SIMULATION_PARAMETER" },
-    /*Fin Sol Mode Sing Own*/{ SSC_INPUT,    SSC_ARRAY,          "ppa_price_input",             "PPA solution mode (0=Specify IRR target, 1=Specify PPA price)",                         "",                    "",                             "Financial Solution Mode",                  "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,    SSC_NUMBER,         "ppa_multiplier_model",        "PPA multiplier model 0: dispatch factors dispatch_factorX, 1: hourly multipliers dispatch_factors_ts", "0/1",  "",                             "tou",                  "?=0",  /*need a default so this var works in required_if*/ "INTEGER,MIN=0",  "SIMULATION_PARAMETER" },
+    { SSC_INPUT,    SSC_NUMBER,         "ppa_soln_mode",               "PPA solution mode (0=Specify IRR target, 1=Specify PPA price)",                         "",                    "",                             "Financial Solution Mode",                  "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,    SSC_ARRAY,          "dispatch_factors_ts",         "Dispatch payment factor array",                                                         "",                    "",                             "tou",                                      "ppa_multiplier_model=1&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,    SSC_MATRIX,         "dispatch_sched_weekday",      "PPA pricing weekday schedule, 12x24",                                                   "",                    "",                             "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,    SSC_MATRIX,         "dispatch_sched_weekend",      "PPA pricing weekend schedule, 12x24",                                                   "",                    "",                             "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,    SSC_ARRAY,          "dispatch_tod_factors",        "TOD factors for periods 1 through 9",                                                   "",                    "",                             "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",  "SIMULATION_PARAMETER" },
+    { SSC_INPUT,    SSC_ARRAY,          "ppa_price_input",             "PPA solution mode (0=Specify IRR target, 1=Specify PPA price)",                         "",                    "",                             "Financial Solution Mode",                  "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
 
 
     // System Control
-    /*Dipatch*/{ SSC_INPUT,    SSC_MATRIX,         "weekday_schedule",            "12x24 Time of Use Values for week days",                                                "",                    "",                             "Sys_Control",          "*",                "",                 "" },
-    /*Dipatch*/{ SSC_INPUT,    SSC_MATRIX,         "weekend_schedule",            "12x24 Time of Use Values for week end days",                                            "",                    "",                             "Sys_Control",          "*",                "",                 "" },
-    /*Dipatch*/{ SSC_INPUT,    SSC_NUMBER,         "is_tod_pc_target_also_pc_max","Is the TOD target cycle heat input also the max cycle heat input?",                     "",                    "",                             "tou",                  "?=0",              "",                 "" },
-    /*Dipatch*/{ SSC_INPUT,    SSC_ARRAY,          "f_turb_tou_periods",          "Dispatch logic for turbine load fraction",                                              "-",                   "",                             "tou",                  "*",                "",                 "" },
+    { SSC_INPUT,    SSC_MATRIX,         "weekday_schedule",            "12x24 Time of Use Values for week days",                                                "",                    "",                             "Sys_Control",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_MATRIX,         "weekend_schedule",            "12x24 Time of Use Values for week end days",                                            "",                    "",                             "Sys_Control",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "is_tod_pc_target_also_pc_max","Is the TOD target cycle heat input also the max cycle heat input?",                     "",                    "",                             "tou",                  "?=0",              "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "f_turb_tou_periods",          "Dispatch logic for turbine load fraction",                                              "-",                   "",                             "tou",                  "*",                "",                 "" },
 
 
     // Capital Costs
                 // Direct Capital Costs
-    /*Capital Costs*/{ SSC_INPUT,    SSC_NUMBER,         "site_improvements_spec_cost", "Site Improvement Cost per m2",                                                          "$/m2",                "",                             "Capital_Costs",                 "?=0",       "",              "" },
-    /*Capital Costs*/{ SSC_INPUT,    SSC_NUMBER,         "solar_field_spec_cost",       "Solar Field Cost per m2",                                                               "$/m2",                "",                             "Capital_Costs",                 "?=0",       "",              "" },
-    /*Capital Costs*/{ SSC_INPUT,    SSC_NUMBER,         "htf_system_spec_cost",        "HTF System Cost Per m2",                                                                "$/m2",                "",                             "Capital_Costs",                 "?=0",       "",              "" },
-    /*Capital Costs*/{ SSC_INPUT,    SSC_NUMBER,         "storage_spec_cost",           "Storage cost per kWht",                                                                 "$/kWht",              "",                             "Capital_Costs",                 "?=0",       "",              "" },
-    /*Capital Costs*/{ SSC_INPUT,    SSC_NUMBER,         "heat_sink_spec_cost",         "Heat Sink Cost per kWt",                                                                "$/kWt",               "",                             "Capital_Costs",                 "?=0",       "",              "" },
-    /*Capital Costs*/{ SSC_INPUT,    SSC_NUMBER,         "bop_spec_cost",               "Balance of Plant Cost per kWe",                                                         "$/kWe",               "",                             "Capital_Costs",                 "?=0",       "",              "" },
-    /*Capital Costs*/{ SSC_INPUT,    SSC_NUMBER,         "contingency_percent",         "Contingency Percent",                                                                   "%",                   "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "site_improvements_spec_cost", "Site Improvement Cost per m2",                                                          "$/m2",                "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "solar_field_spec_cost",       "Solar Field Cost per m2",                                                               "$/m2",                "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "htf_system_spec_cost",        "HTF System Cost Per m2",                                                                "$/m2",                "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "storage_spec_cost",           "Storage cost per kWht",                                                                 "$/kWht",              "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "heat_sink_spec_cost",         "Heat Sink Cost per kWt",                                                                "$/kWt",               "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "bop_spec_cost",               "Balance of Plant Cost per kWe",                                                         "$/kWe",               "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "contingency_percent",         "Contingency Percent",                                                                   "%",                   "",                             "Capital_Costs",                 "?=0",       "",              "" },
 
     // Indirect Capital Costs
-    /*Capital Costs*/{ SSC_INPUT,    SSC_NUMBER,         "epc_cost_per_acre",           "EPC Costs per acre",                                                                    "$/acre",              "",                             "Capital_Costs",                 "?=0",       "",              "" },
-    /*Capital Costs*/{ SSC_INPUT,    SSC_NUMBER,         "epc_cost_percent_direct",     "EPC Costs % direct",                                                                    "%",                   "",                             "Capital_Costs",                 "?=0",       "",              "" },
-    /*Capital Costs*/{ SSC_INPUT,    SSC_NUMBER,         "epc_cost_per_watt",           "EPC Cost Wac",                                                                          "$/Wac",               "",                             "Capital_Costs",                 "?=0",       "",              "" },
-    /*Capital Costs*/{ SSC_INPUT,    SSC_NUMBER,         "epc_cost_fixed",              "Fixed EPC Cost",                                                                        "$",                   "",                             "Capital_Costs",                 "?=0",       "",              "" },
-    /*Capital Costs*/{ SSC_INPUT,    SSC_NUMBER,         "plm_cost_per_acre",           "Land Cost per acre",                                                                    "$/acre",              "",                             "Capital_Costs",                 "?=0",       "",              "" },
-    /*Capital Costs*/{ SSC_INPUT,    SSC_NUMBER,         "plm_cost_percent_direct",     "Land Cost % direct",                                                                    "%",                   "",                             "Capital_Costs",                 "?=0",       "",              "" },
-    /*Capital Costs*/{ SSC_INPUT,    SSC_NUMBER,         "plm_cost_per_watt",           "Land Cost Wac",                                                                         "$/Wac",               "",                             "Capital_Costs",                 "?=0",       "",              "" },
-    /*Capital Costs*/{ SSC_INPUT,    SSC_NUMBER,         "plm_cost_fixed",              "Fixed Land Cost",                                                                       "$",                   "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "epc_cost_per_acre",           "EPC Costs per acre",                                                                    "$/acre",              "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "epc_cost_percent_direct",     "EPC Costs % direct",                                                                    "%",                   "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "epc_cost_per_watt",           "EPC Cost Wac",                                                                          "$/Wac",               "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "epc_cost_fixed",              "Fixed EPC Cost",                                                                        "$",                   "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "plm_cost_per_acre",           "Land Cost per acre",                                                                    "$/acre",              "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "plm_cost_percent_direct",     "Land Cost % direct",                                                                    "%",                   "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "plm_cost_per_watt",           "Land Cost Wac",                                                                         "$/Wac",               "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "plm_cost_fixed",              "Fixed Land Cost",                                                                       "$",                   "",                             "Capital_Costs",                 "?=0",       "",              "" },
 
 
     // Sales Tax
-    /*Capital Costs*/{ SSC_INPUT,    SSC_NUMBER,         "sales_tax_percent",           "Sales Tax Percentage of Direct Cost",                                                   "%",                   "",                             "Capital_Costs",                 "?=0",       "",              "" },
-    /*Fin Tax and Insurace*/{ SSC_INPUT,    SSC_NUMBER,         "sales_tax_rate",              "Sales Tax Rate",                                                                        "%",                   "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "sales_tax_percent",           "Sales Tax Percentage of Direct Cost",                                                   "%",                   "",                             "Capital_Costs",                 "?=0",       "",              "" },
+    { SSC_INPUT,    SSC_NUMBER,         "sales_tax_rate",              "Sales Tax Rate",                                                                        "%",                   "",                             "Capital_Costs",                 "?=0",       "",              "" },
 
         // Construction financing inputs/outputs (SSC variable table from cmod_cb_construction_financing)
-    { SSC_INPUT,     SSC_NUMBER, "const_per_interest_rate1",           "Interest rate, loan 1",                                                                                                                   "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "const_per_interest_rate2",           "Interest rate, loan 2",                                                                                                                   "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "const_per_interest_rate3",           "Interest rate, loan 3",                                                                                                                   "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "const_per_interest_rate4",           "Interest rate, loan 4",                                                                                                                   "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "const_per_interest_rate5",           "Interest rate, loan 5",                                                                                                                   "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "const_per_months1",                  "Months prior to operation, loan 1",                                                                                                       "",             "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "const_per_months2",                  "Months prior to operation, loan 2",                                                                                                       "",             "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "const_per_months3",                  "Months prior to operation, loan 3",                                                                                                       "",             "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "const_per_months4",                  "Months prior to operation, loan 4",                                                                                                       "",             "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "const_per_months5",                  "Months prior to operation, loan 5",                                                                                                       "",             "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "const_per_percent1",                 "Percent of total installed cost, loan 1",                                                                                                 "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "const_per_percent2",                 "Percent of total installed cost, loan 2",                                                                                                 "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "const_per_percent3",                 "Percent of total installed cost, loan 3",                                                                                                 "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "const_per_percent4",                 "Percent of total installed cost, loan 4",                                                                                                 "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "const_per_percent5",                 "Percent of total installed cost, loan 5",                                                                                                 "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "const_per_upfront_rate1",            "Upfront fee on principal, loan 1",                                                                                                        "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "const_per_upfront_rate2",            "Upfront fee on principal, loan 2",                                                                                                        "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "const_per_upfront_rate3",            "Upfront fee on principal, loan 3",                                                                                                        "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "const_per_upfront_rate4",            "Upfront fee on principal, loan 4",                                                                                                        "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
-    { SSC_INPUT,     SSC_NUMBER, "const_per_upfront_rate5",            "Upfront fee on principal, loan 5",                                                                                                        "%",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_INPUT,     SSC_NUMBER,        "const_per_interest_rate1",    "Interest rate, loan 1",                                                                 "%",                   "",                             "Financial Parameters",          "*",         "",              "" },
+    { SSC_INPUT,     SSC_NUMBER,        "const_per_interest_rate2",    "Interest rate, loan 2",                                                                 "%",                   "",                             "Financial Parameters",          "*",         "",              "" },
+    { SSC_INPUT,     SSC_NUMBER,        "const_per_interest_rate3",    "Interest rate, loan 3",                                                                 "%",                   "",                             "Financial Parameters",          "*",         "",              "" },
+    { SSC_INPUT,     SSC_NUMBER,        "const_per_interest_rate4",    "Interest rate, loan 4",                                                                 "%",                   "",                             "Financial Parameters",          "*",         "",              "" },
+    { SSC_INPUT,     SSC_NUMBER,        "const_per_interest_rate5",    "Interest rate, loan 5",                                                                 "%",                   "",                             "Financial Parameters",          "*",         "",              "" },
+    { SSC_INPUT,     SSC_NUMBER,        "const_per_months1",           "Months prior to operation, loan 1",                                                     "",                    "",                             "Financial Parameters",          "*",         "",              "" },
+    { SSC_INPUT,     SSC_NUMBER,        "const_per_months2",           "Months prior to operation, loan 2",                                                     "",                    "",                             "Financial Parameters",          "*",         "",              "" },
+    { SSC_INPUT,     SSC_NUMBER,        "const_per_months3",           "Months prior to operation, loan 3",                                                     "",                    "",                             "Financial Parameters",          "*",         "",              "" },
+    { SSC_INPUT,     SSC_NUMBER,        "const_per_months4",           "Months prior to operation, loan 4",                                                     "",                    "",                             "Financial Parameters",          "*",         "",              "" },
+    { SSC_INPUT,     SSC_NUMBER,        "const_per_months5",           "Months prior to operation, loan 5",                                                     "",                    "",                             "Financial Parameters",          "*",         "",              "" },
+    { SSC_INPUT,     SSC_NUMBER,        "const_per_percent1",          "Percent of total installed cost, loan 1",                                               "%",                   "",                             "Financial Parameters",          "*",         "",              "" },
+    { SSC_INPUT,     SSC_NUMBER,        "const_per_percent2",          "Percent of total installed cost, loan 2",                                               "%",                   "",                             "Financial Parameters",          "*",         "",              "" },
+    { SSC_INPUT,     SSC_NUMBER,        "const_per_percent3",          "Percent of total installed cost, loan 3",                                               "%",                   "",                             "Financial Parameters",          "*",         "",              "" },
+    { SSC_INPUT,     SSC_NUMBER,        "const_per_percent4",          "Percent of total installed cost, loan 4",                                               "%",                   "",                             "Financial Parameters",          "*",         "",              "" },
+    { SSC_INPUT,     SSC_NUMBER,        "const_per_percent5",          "Percent of total installed cost, loan 5",                                               "%",                   "",                             "Financial Parameters",          "*",         "",              "" },
+    { SSC_INPUT,     SSC_NUMBER,        "const_per_upfront_rate1",     "Upfront fee on principal, loan 1",                                                      "%",                   "",                             "Financial Parameters",          "*",         "",              "" },
+    { SSC_INPUT,     SSC_NUMBER,        "const_per_upfront_rate2",     "Upfront fee on principal, loan 2",                                                      "%",                   "",                             "Financial Parameters",          "*",         "",              "" },
+    { SSC_INPUT,     SSC_NUMBER,        "const_per_upfront_rate3",     "Upfront fee on principal, loan 3",                                                      "%",                   "",                             "Financial Parameters",          "*",         "",              "" },
+    { SSC_INPUT,     SSC_NUMBER,        "const_per_upfront_rate4",     "Upfront fee on principal, loan 4",                                                      "%",                   "",                             "Financial Parameters",          "*",         "",              "" },
+    { SSC_INPUT,     SSC_NUMBER,        "const_per_upfront_rate5",     "Upfront fee on principal, loan 5",                                                      "%",                   "",                             "Financial Parameters",          "*",         "",              "" },
 
 
     // OUTPUTS
@@ -306,7 +310,7 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
     { SSC_OUTPUT,       SSC_NUMBER,     "mdot_field_des",                   "Field design HTF mass flow rate",                                      "kg/s",         "",         "Receiver",                       "*",                                                                "",              "" },
     
     { SSC_OUTPUT,       SSC_NUMBER,     "dP_field_des_SS",                  "Steady State Field design total pressure drop",                        "bar",          "",          "Receiver",                       "*",                                                                "",              "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "Q_field_des_SS",                   "Steady State Field design thermal power",                              "MWt",           "",          "Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "Q_field_des_SS",                   "Steady State Field design thermal power",                              "MWt",          "",          "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "T_field_out_des_SS",               "Steady State Field design outlet temperature",                         "C",            "",          "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "m_dot_des_SS",                     "Steady State Field mass flow rate",                                    "kg/s",         "",          "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "m_dot_loop_des_SS",                "Steady State Loop mass flow rate",                                     "kg/s",         "",          "Receiver",                       "*",                                                                "",              "" },
@@ -315,8 +319,13 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
     { SSC_OUTPUT,       SSC_NUMBER,     "eta_optical_des_SS",               "Steady State optical efficiency",                                      "",             "",          "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "therm_eff_des_SS",                 "Steady State field optical efficiency",                                "",             "",          "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "eff_des_SS",                       "Steady State field total efficiency",                                  "",             "",          "Receiver",                       "*",                                                                "",              "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "W_dot_pump_des_SS",                "Steady State field pumping power",                                           "MWe",             "",          "Receiver",                       "*",                                                                "",              "" },
-    
+    { SSC_OUTPUT,       SSC_NUMBER,     "W_dot_pump_des_SS",                "Steady State field pumping power",                                     "MWe",          "",          "Receiver",                       "*",                                                                "",              "" },
+
+    { SSC_OUTPUT,       SSC_NUMBER,     "m_dot_htfmin_actual",              "Actual minimum loop HTF flow rate",                                    "kg/s",         "",          "solar_field",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "m_dot_htfmax_actual",              "Actual maximum loop HTF flow rate",                                    "kg/s",         "",          "solar_field",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "f_htfmin_actual",                  "Actual minimum loop mass flow rate fraction of design",                "",             "",          "solar_field",                    "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "f_htfmax_actual",                  "Actual maximum loop mass flow rate fraction of design",                "",             "",          "solar_field",                    "*",                                                                "",              "" },
+
     
     { SSC_OUTPUT,       SSC_NUMBER,     "T_loop_out_des_SS",                "Steady State loop design outlet temperature",                          "C",            "",          "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "Q_loop_des_SS",                    "Steady State loop design thermal power",                               "MWt",          "",          "Receiver",                       "*",                                                                "",              "" },
@@ -657,10 +666,14 @@ public:
                 c_fresnel.m_P_ref = as_double("q_pb_design") * 1e6;
                 c_fresnel.m_eta_ref = 1;
 
-                c_fresnel.m_m_dot_htfmin = as_number("m_dot_htfmin");
-                c_fresnel.m_m_dot_htfmax = as_number("m_dot_htfmax");
-                c_fresnel.m_T_loop_in_des = as_number("T_loop_in_des");
+                c_fresnel.m_use_abs_or_rel_mdot_limit = as_integer("use_abs_or_rel_mdot_limit"); // Use mass flow abs (0) or relative (1) limits
+                c_fresnel.m_m_dot_htfmin_in = as_double("m_dot_htfmin");        //[kg/s] Minimum loop HTF flow rate
+                c_fresnel.m_m_dot_htfmax_in = as_double("m_dot_htfmax");        //[kg/s] Maximum loop HTF flow rate
+                c_fresnel.m_f_htfmin_in = as_double("f_htfmin");                //[] Minimum loop htf flow rate fraction
+                c_fresnel.m_f_htfmax_in = as_double("f_htfmax");                //[] Maximum loop htf flow rate fraction
 
+
+                c_fresnel.m_T_loop_in_des = as_number("T_loop_in_des");
                 c_fresnel.m_T_loop_out_des = as_number("T_loop_out");
                 c_fresnel.m_Fluid = as_integer("Fluid");
 
@@ -854,43 +867,26 @@ public:
 
         }
 
-        // TOU
-        C_csp_tou_block_schedules tou;
-        C_csp_tou_block_schedules::S_params* tou_params = &tou.ms_params;
-        tou_params->mc_csp_ops.mc_weekdays = as_matrix("weekday_schedule");
-        tou_params->mc_csp_ops.mc_weekends = as_matrix("weekend_schedule");
+        // *******************************************
+        // Schedules
 
-        tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = as_boolean("is_tod_pc_target_also_pc_max");
-        tou.mc_dispatch_params.m_is_block_dispatch = !is_dispatch;      //mw
-        tou.mc_dispatch_params.m_use_rule_1 = true;
-        tou.mc_dispatch_params.m_standby_off_buffer = 2.0;
-        tou.mc_dispatch_params.m_use_rule_2 = false;
-        tou.mc_dispatch_params.m_q_dot_rec_des_mult = -1.23;
-        tou.mc_dispatch_params.m_f_q_dot_pc_overwrite = -1.23;
-
-        size_t n_f_turbine = 0;
-        ssc_number_t* p_f_turbine = as_array("f_turb_tou_periods", &n_f_turbine);
-        tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(n_f_turbine, 0.0);
-        //tou_params->mv_t_frac.resize(n_f_turbine, 0.0);
-        for (size_t i = 0; i < n_f_turbine; i++)
-            tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC][i] = (double)p_f_turbine[i];
-
-        // Load fraction by time step:
-            //bool is_load_fraction_by_timestep = is_assigned("timestep_load_fractions");
-        bool is_is_timestep_load_fractions_assigned = is_assigned("is_timestep_load_fractions");
-        bool is_timestep_load_fractions = false;
-        if (is_is_timestep_load_fractions_assigned) {
-            is_timestep_load_fractions = as_boolean("is_timestep_load_fractions");
-        }
-        tou_params->mc_csp_ops.mv_is_diurnal = !(is_timestep_load_fractions);
+        // Off-taker schedule
+        C_timeseries_schedule_inputs offtaker_schedule;
+        bool is_timestep_load_fractions = as_boolean("is_timestep_load_fractions");
         if (is_timestep_load_fractions) {
-            size_t N_load_fractions;
-            ssc_number_t* load_fractions = as_array("timestep_load_fractions", &N_load_fractions);
-            std::copy(load_fractions, load_fractions + N_load_fractions, std::back_inserter(tou_params->mc_csp_ops.timestep_load_fractions));
+            auto vec = as_vector_double("timestep_load_fractions");
+            C_timeseries_schedule_inputs offtaker_series = C_timeseries_schedule_inputs(vec, std::numeric_limits<double>::quiet_NaN());
+            offtaker_schedule = offtaker_series;
+        }
+        else {      // Block schedules
+            C_timeseries_schedule_inputs offtaker_block = C_timeseries_schedule_inputs(as_matrix("weekday_schedule"),
+                as_matrix("weekend_schedule"), as_vector_double("f_turb_tou_periods"), std::numeric_limits<double>::quiet_NaN());
+            offtaker_schedule = offtaker_block;
         }
 
-        double ppa_price_year1 = std::numeric_limits<double>::quiet_NaN();
+        // Electricity pricing schedule
         int csp_financial_model = as_integer("csp_financial_model");
+        C_timeseries_schedule_inputs elec_pricing_schedule;
 
         if (sim_type == 1) {
             if (csp_financial_model == 8 || csp_financial_model == 7) {        // No Financial Model or LCOH; Single Owner in progress 9/2023
@@ -899,16 +895,12 @@ public:
                 }
                 else { // if no dispatch optimization, don't need an input pricing schedule
                     // If electricity pricing data is not available, then dispatch to a uniform schedule
-                    tou_params->mc_pricing.mc_weekdays.resize_fill(12, 24, 1.);
-                    tou_params->mc_pricing.mc_weekends.resize_fill(12, 24, 1.);
-                    tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, -1.0);
-
-                    if (csp_financial_model == 1) {
-                        log("The MSLF IPH model does not control dispatch with respect to input pricing signals");
-                    }
+                    elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0, std::numeric_limits<double>::quiet_NaN());
                 }
             }
             else if (csp_financial_model == 1) {    // Single Owner
+
+                double ppa_price_year1 = std::numeric_limits<double>::quiet_NaN();
 
                 // Get first year base ppa price
                 bool is_ppa_price_input_assigned = is_assigned("ppa_price_input");
@@ -937,23 +929,16 @@ public:
                 int ppa_mult_model = as_integer("ppa_multiplier_model");
                 if (ppa_mult_model == 1)    // use dispatch_ts input
                 {
-                    tou_params->mc_pricing.mv_is_diurnal = false;
-
-                    if (is_assigned("dispatch_factors_ts")) {
-                        size_t nmultipliers;
-                        ssc_number_t* multipliers = as_array("dispatch_factors_ts", &nmultipliers);
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(nmultipliers, 0.0);
-                        for (size_t ii = 0; ii < nmultipliers; ii++)
-                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][ii] = multipliers[ii];
+                    if (is_assigned("dispatch_factors_ts") || is_dispatch) {
+                        auto vec = as_vector_double("dispatch_factors_ts");
+                        elec_pricing_schedule = C_timeseries_schedule_inputs(vec, ppa_price_year1);
                     }
-                    else {
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
+                    else { // if no dispatch optimization, don't need an input pricing schedule
+                        elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0, std::numeric_limits<double>::quiet_NaN());
                     }
                 }
                 else if (ppa_mult_model == 0) // standard diuranal input
                 {
-                    tou_params->mc_pricing.mv_is_diurnal = true;
-
                     // Most likely use case is to use schedules and TOD. So assume if at least one is provided, then user intended to use this approach
                     // the 'else' option applies non-feasible electricity prices, so we want to guard against selecting that it appears users
                     // are trying to use the schedules. 
@@ -961,22 +946,12 @@ public:
 
                     if (is_one_assigned || is_dispatch) {
 
-                        tou_params->mc_pricing.mc_weekdays = as_matrix("dispatch_sched_weekday");
-                        tou_params->mc_pricing.mc_weekends = as_matrix("dispatch_sched_weekend");
-
-                        auto dispatch_tod_factors = as_vector_double("dispatch_tod_factors");
-                        if (dispatch_tod_factors.size() != 9)
-                            throw exec_error("fresnel_physical_iph", util::format("\n\nDispatch TOD factors has %d periods instead of the expected 9.\n", (int)dispatch_tod_factors.size()));
-
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, 0.0);
-                        for (size_t i = 0; i < 9; i++)
-                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][i] = dispatch_tod_factors[i];
-
+                        elec_pricing_schedule = C_timeseries_schedule_inputs(as_matrix("dispatch_sched_weekday"),
+                            as_matrix("dispatch_sched_weekend"), as_vector_double("dispatch_tod_factors"), std::numeric_limits<double>::quiet_NaN());
                     }
                     else {
-                        tou_params->mc_pricing.mc_weekdays.resize_fill(12, 24, 1.);
-                        tou_params->mc_pricing.mc_weekends.resize_fill(12, 24, 1.);
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, -1.0);
+                        // If electricity pricing data is not available, then dispatch to a uniform schedule
+                        elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0, std::numeric_limits<double>::quiet_NaN());
                     }
                 }
 
@@ -984,16 +959,28 @@ public:
             else {
                 throw exec_error("fresnel_physical_iph", "csp_financial_model must be 1, 7, or 8");
             }
-
-            
         }
         else if (sim_type == 2) {
-            tou_params->mc_pricing.mv_is_diurnal = false;
+            elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0, std::numeric_limits<double>::quiet_NaN());
 
-            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
         }
 
+        // Set dispatch model type
+        C_csp_tou::C_dispatch_model_type::E_dispatch_model_type dispatch_model_type = C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::UNDEFINED;
+        if (is_dispatch) {
+            dispatch_model_type = C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::DISPATCH_OPTIMIZATION;
+        }
+        else {
+            dispatch_model_type = C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::HEURISTIC;
+        }
 
+        bool is_offtaker_frac_also_max = as_boolean("is_tod_pc_target_also_pc_max");
+
+        // TOU
+        C_csp_tou tou(offtaker_schedule, elec_pricing_schedule, dispatch_model_type, is_offtaker_frac_also_max);
+
+        //tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = as_boolean("is_tod_pc_target_also_pc_max");
+        //tou.mc_dispatch_params.m_is_block_dispatch = !is_dispatch;      //mw
 
         // System Parameters
         C_csp_solver::S_csp_system_params system;
@@ -1030,7 +1017,7 @@ public:
             double disp_rsu_cost_calc = as_double("disp_rsu_cost_rel") * q_dot_rec_des;   //[$/start]
             dispatch.params.set_user_params(can_cycle_use_standby, as_double("disp_time_weighting"),
                 disp_rsu_cost_calc, heater_startup_cost, disp_csu_cost_calc, disp_pen_ramping,
-                as_double("disp_inventory_incentive"), as_double("q_rec_standby"), as_double("q_rec_heattrace"), ppa_price_year1);
+                as_double("disp_inventory_incentive"), as_double("q_rec_standby"), as_double("q_rec_heattrace")); // , ppa_price_year1);
         }
         else {
             dispatch.solver_params.dispatch_optimize = false;
@@ -1230,6 +1217,11 @@ public:
                 assign("field_htf_min_temp", field_htf_min_temp);
                 assign("field_htf_max_temp", field_htf_max_temp);
                 assign("mdot_field_des", mdot_field_des);
+
+                assign("m_dot_htfmin_actual", c_fresnel.m_m_dot_htfmin);    //[kg/s]
+                assign("m_dot_htfmax_actual", c_fresnel.m_m_dot_htfmax);    //[kg/s]
+                assign("f_htfmin_actual", c_fresnel.m_f_htfmin);
+                assign("f_htfmax_actual", c_fresnel.m_f_htfmax);
 
                 assign("dP_field_des_SS", dP_field_des_SS);
                 assign("Q_field_des_SS", Q_field_des_SS);

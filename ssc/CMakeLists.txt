@@ -102,14 +102,12 @@ set(SSC_SRC
 		cmod_tcsmslf.cpp
 		cmod_tcstrough_empirical.cpp
 		cmod_tcstrough_physical.cpp
-		cmod_tcstrough_physical_csp_solver.cpp
 		cmod_test_ud_power_cycle.cpp
 		cmod_thermalrate.cpp
 		cmod_thirdpartyownership.cpp
 		cmod_timeseq.cpp
 		cmod_trough_physical.cpp
 		cmod_trough_physical_iph.cpp
-        	cmod_trough_physical_iph_old.cpp
 		cmod_ui_tes_calcs.cpp
 		cmod_ui_udpc_checks.cpp
 		cmod_user_htf_comparison.cpp
@@ -223,7 +221,7 @@ if(UNIX)
 		set_property(TARGET ssc PROPERTY PREFIX "lib")
 		set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
 		if (APPLE)
-            SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.15")
+            SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=12")
             add_custom_command(
 				TARGET ssc
 				POST_BUILD

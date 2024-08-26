@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include <cstring>
 #include <iostream>
+#include <fstream>
 #include <vector>
 
 #include "lib_util.h"
@@ -44,12 +45,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../rapidjson/error/en.h" // parser errors returned as char strings
 #include "../rapidjson/stringbuffer.h"
 #include "../rapidjson/writer.h"
+#include "../rapidjson/istreamwrapper.h"
 
 #pragma warning (disable : 4706 )
 
 SSCEXPORT int ssc_version()
 {
-	return 290;
+	return 292;
 }
 
 SSCEXPORT const char *ssc_build_info()
@@ -107,8 +109,6 @@ extern module_entry_info
 	cm_entry_tcstrough_physical,
 	cm_entry_trough_physical,
     cm_entry_trough_physical_iph,
-	cm_entry_trough_physical_csp_solver,
-	cm_entry_trough_physical_process_heat,
 	cm_entry_iph_to_lcoefcr,
 	cm_entry_tcsgeneric_solar,
 	cm_entry_tcsmolten_salt,
@@ -209,8 +209,6 @@ static module_entry_info *module_table[] = {
 	&cm_entry_tcstrough_physical,
     &cm_entry_trough_physical,
     &cm_entry_trough_physical_iph,
-	&cm_entry_trough_physical_csp_solver,
-	&cm_entry_trough_physical_process_heat,
 	&cm_entry_iph_to_lcoefcr,
 	&cm_entry_tcsgeneric_solar,
 	&cm_entry_tcsmolten_salt,
@@ -935,6 +933,37 @@ void json_to_ssc_var(const rapidjson::Value& json_val, ssc_var_t ssc_val) {
         }
         vd->type = SSC_TABLE;
     }
+}
+
+SSCEXPORT ssc_data_t json_file_to_ssc_data(const char* json_fn) {
+    // memory leak if calling program does not do garbage collection
+    auto vt = new var_table;
+    //    std::unique_ptr<var_table> vt = std::unique_ptr<var_table>(new var_table);
+
+    std::ifstream ifs{ json_fn };
+    if (!ifs.is_open())
+    {
+        std::string s = "Could not open file for reading!\n";
+        vt->assign("error", s);
+        return vt;
+    }
+    rapidjson::IStreamWrapper isw{ ifs };
+
+    rapidjson::Document document;
+    document.ParseStream<rapidjson::kParseNanAndInfFlag>(isw); // Allow parsing NaN, Inf, Infinity, -Inf and -Infinity as double values (relaxed JSON syntax).
+    if (document.HasParseError()) {
+        std::string s = rapidjson::GetParseError_En(document.GetParseError());
+        vt->assign("error", s);
+        return vt;
+    }
+    //    static const char* kTypeNames[] = { "Null", "False", "True", "Object", "Array", "String", "Number" };
+    for (rapidjson::Value::ConstMemberIterator itr = document.MemberBegin(); itr != document.MemberEnd(); ++itr) {
+        //printf("Type of member %s is %s\n", itr->name.GetString(), kTypeNames[itr->value.GetType()]);
+        var_data ssc_val;
+        json_to_ssc_var(itr->value, &ssc_val);
+        vt->assign(itr->name.GetString(), ssc_val);
+    }
+    return vt;
 }
 
 SSCEXPORT ssc_data_t json_to_ssc_data(const char* json_str) {
