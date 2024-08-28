@@ -272,7 +272,6 @@ public:
                 as_double("hot_tank_max_heat"),                                     // [MW]
                 as_double("cold_tank_Thtr"),                                        // [C] convert to K in init()
                 as_double("cold_tank_max_heat"),                                    // [MW]
-                as_double("dt_hot"),                                                // [C] Temperature difference across heat exchanger - assume hot and cold deltaTs are equal
                 as_double("T_loop_in_des"),                                         // [C] convert to K in init()
                 as_double("T_loop_out"),                                            // [C] convert to K in init()
                 as_double("T_tank_hot_ini"),                                        // [C] Initial temperature in hot storage tank

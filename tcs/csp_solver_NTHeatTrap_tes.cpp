@@ -865,7 +865,6 @@ C_csp_NTHeatTrap_tes::C_csp_NTHeatTrap_tes(
     double hot_tank_max_heat,	                 // [MW]
     double cold_tank_Thtr,	                     // [C] convert to K in init()
     double cold_tank_max_heat,                   // [MW]
-    double dt_hot,			                     // [C] Temperature difference across heat exchanger - assume hot and cold deltaTs are equal
     double T_cold_des,	                         // [C] convert to K in init()
     double T_hot_des,	                         // [C] convert to K in init()
     double T_tank_hot_ini,	                     // [C] Initial temperature in hot storage tank
@@ -898,7 +897,7 @@ C_csp_NTHeatTrap_tes::C_csp_NTHeatTrap_tes(
         m_q_dot_design(q_dot_design), m_frac_max_q_dot(frac_max_q_dot), m_Q_tes_des(Q_tes_des),
         m_is_h_fixed(is_h_fixed), m_h_tank_in(h_tank_in), m_d_tank_in(d_tank_in),
         m_u_tank(u_tank), m_tank_pairs(tank_pairs), m_hot_tank_Thtr(hot_tank_Thtr), m_hot_tank_max_heat(hot_tank_max_heat),
-        m_cold_tank_Thtr(cold_tank_Thtr), m_cold_tank_max_heat(cold_tank_max_heat), m_dt_hot(dt_hot), m_T_cold_des(T_cold_des),
+        m_cold_tank_Thtr(cold_tank_Thtr), m_cold_tank_max_heat(cold_tank_max_heat), m_T_cold_des(T_cold_des),
         m_T_hot_des(T_hot_des), m_T_tank_hot_ini(T_tank_hot_ini), m_T_tank_cold_ini(T_tank_cold_ini),
         m_h_tank_min(h_tank_min), m_f_V_hot_ini(f_V_hot_ini), m_htf_pump_coef(htf_pump_coef),
         m_tank_wall_cp(tank_wall_cp), m_tank_wall_dens(tank_wall_dens), m_tank_wall_thick(tank_wall_thick), m_nstep(nstep),
@@ -1629,29 +1628,6 @@ bool C_csp_NTHeatTrap_tes::charge(double timestep /*s*/, double T_amb /*K*/, dou
     double T_hot_prev = mc_hot_tank_NT.get_m_T_prev();
     double T_cold_prev = mc_cold_tank_NT.get_m_T_prev();
 
-    //// Call energy balance on cold tank discharge to get average outlet temperature over timestep
-    //mc_cold_tank_NT.energy_balance_iterated(timestep, 0.0, m_dot_tank, 0.0, T_amb, T_hot_prev, T_hot_prev, T_cold_ave, q_heater_cold, q_dot_loss_cold, q_dot_out_cold, q_dot_error_cold);
-
-    //// Call energy balance on hot tank charge to track tank mass and temperature
-    //mc_hot_tank_NT.energy_balance_iterated(timestep, m_dot_tank, 0.0, T_hot_tank_in, T_amb, T_cold_prev, T_cold_prev, T_hot_ave, q_heater_hot, q_dot_loss_hot, q_dot_out_hot, q_dot_error_hot);
-
-    //if (true)
-    //{
-    //    double T_cold_ave_test, q_heater_cold_test, q_dot_loss_cold_test, q_dot_out_cold_test, q_dot_error_cold_test,
-    //        T_hot_ave_test, q_heater_hot_test, q_dot_loss_hot_test, q_dot_out_hot_test, q_dot_error_hot_test;
-
-    //    solve_tanks_iterative(timestep, 1, m_dot_tank, 0, T_hot_tank_in, 0, T_amb,
-    //        T_cold_ave_test, q_heater_cold_test, q_dot_loss_cold_test, q_dot_out_cold_test, q_dot_error_cold_test,
-    //        T_hot_ave_test, q_heater_hot_test, q_dot_loss_hot_test, q_dot_out_hot_test, q_dot_error_hot_test);
-
-    //    if ((T_cold_ave != T_cold_ave_test || T_hot_ave != T_hot_ave_test)
-    //        || (q_dot_loss_cold != q_dot_loss_cold_test || q_dot_loss_hot != q_dot_loss_hot_test)
-    //        || (q_dot_out_cold != q_dot_out_cold_test || q_dot_out_hot != q_dot_out_hot_test)
-    //        || (q_dot_error_cold != q_dot_error_cold_test || q_dot_error_hot != q_dot_error_hot_test))
-    //    {
-    //        double x = 0;
-    //    }
-    //}
     solve_tanks_iterative(timestep, m_nstep, m_dot_tank, 0, T_hot_tank_in, 0, T_amb,
         T_cold_ave, q_heater_cold, q_dot_loss_cold, q_dot_out_cold, q_dot_error_cold,
         T_hot_ave, q_heater_hot, q_dot_loss_hot, q_dot_out_hot, q_dot_error_hot,
@@ -1731,12 +1707,6 @@ bool C_csp_NTHeatTrap_tes::discharge(double timestep /*s*/, double T_amb /*K*/, 
 
     double T_hot_prev = mc_hot_tank_NT.get_m_T_prev();
     double T_cold_prev = mc_cold_tank_NT.get_m_T_prev();
-
-    //// Call energy balance on hot tank discharge to get average outlet temperature over timestep
-    //mc_hot_tank_NT.energy_balance_iterated(timestep, 0.0, m_dot_tank, 0.0, T_amb, T_cold_prev, T_cold_prev, T_hot_ave, q_heater_hot, q_dot_loss_hot, q_dot_out_hot, q_dot_error_hot);
-
-    //// Call energy balance on cold tank charge to track tank mass and temperature
-    //mc_cold_tank_NT.energy_balance_iterated(timestep, m_dot_tank, 0.0, T_cold_tank_in, T_amb, T_hot_prev, T_hot_prev, T_cold_ave, q_heater_cold, q_dot_loss_cold, q_dot_out_cold, q_dot_error_cold);
 
     solve_tanks_iterative(timestep, m_nstep, 0, m_dot_tank, 0, T_cold_tank_in, T_amb,
         T_cold_ave, q_heater_cold, q_dot_loss_cold, q_dot_out_cold, q_dot_error_cold,

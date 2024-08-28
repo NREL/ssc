@@ -1456,7 +1456,6 @@ public:
                 as_double("hot_tank_max_heat"),
                 as_double("cold_tank_Thtr"),
                 as_double("cold_tank_max_heat"),
-                as_double("dt_hot"),
                 as_double("T_loop_in_des"),
                 as_double("T_loop_out"),
                 as_double("T_loop_out"),
