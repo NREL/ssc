@@ -124,8 +124,6 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_error_percent",         "TES energy balance error percent",                                                 "%",            "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "piston_loc",                "Piston Location (distance from left cold side)",                                   "m",            "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "piston_frac",               "Piston Fraction (distance from left cold side)",                                   "",             "",               "TES",            "tes_type=1",              "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "tes_hot_error",             "TES hot energy balance error",                                                     "MWt",          "",               "TES",            "tes_type=1",              "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "tes_cold_error",            "TES cold energy balance error",                                                    "MWt",          "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_leak_error",            "TES energy balance error due to leakage assumption",                               "MWt",          "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_E_hot",                 "TES hot side internal energy",                                                     "MJ",           "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_E_cold",                "TES cold side internal energy",                                                    "MJ",           "",               "TES",            "tes_type=1",              "",                      "" },
@@ -433,8 +431,6 @@ public:
 
                 double tes_error = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_ERROR);
                 double tes_error_percent = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_ERROR_PERCENT);
-                double tes_error_hot = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_HOT_ERROR);
-                double tes_error_cold = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_COLD_ERROR);
                 double tes_error_leak = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_LEAK_ERROR);
                 double tes_E_hot = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_E_HOT);
                 double tes_E_cold = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_E_COLD);
@@ -443,8 +439,6 @@ public:
 
                 tes_error_vec.push_back(tes_error);
                 tes_error_percent_vec.push_back(tes_error_percent);
-                tes_error_hot_vec.push_back(tes_error_hot);
-                tes_error_cold_vec.push_back(tes_error_cold);
                 tes_error_leakage_vec.push_back(tes_error_leak);
                 tes_E_hot_vec.push_back(tes_E_hot);
                 tes_E_cold_vec.push_back(tes_E_cold);
@@ -469,8 +463,6 @@ public:
             set_vector("T_cold_calc", T_cold_calc_vec);
             set_vector("tes_error", tes_error_vec);
             set_vector("tes_error_percent", tes_error_percent_vec);
-            set_vector("tes_hot_error", tes_error_hot_vec);
-            set_vector("tes_cold_error", tes_error_cold_vec);
             set_vector("tes_leak_error", tes_error_leakage_vec);
             set_vector("tes_E_hot", tes_E_hot_vec);
             set_vector("tes_E_cold", tes_E_cold_vec);

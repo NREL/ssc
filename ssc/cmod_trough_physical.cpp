@@ -627,8 +627,6 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_SA_tot",                "TES total surface area",                                                           "m2",           "",               "TES",            "sim_type=1&tes_type=1",            "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_error",                 "TES energy balance error",                                                         "MWt",          "",               "TES",            "sim_type=1&tes_type=1",            "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_error_percent",         "TES energy balance error percent",                                                 "%",            "",               "TES",            "sim_type=1&tes_type=1",            "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "tes_hot_error",             "TES hot energy balance error",                                                     "MWt",          "",               "TES",            "sim_type=1&tes_type=1",            "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "tes_cold_error",            "TES cold energy balance error",                                                    "MWt",          "",               "TES",            "sim_type=1&tes_type=1",            "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_leak_error",            "TES energy balance error due to leakage assumption",                               "MWt",          "",               "TES",            "sim_type=1&tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_wall_error",            "TES energy balance error due to wall temperature assumption",                      "MWt",           "",               "TES",           "sim_type=1&tes_type=1",              "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "tes_error_corrected",       "TES energy balance error, accounting for wall and temperature assumption error",   "MWt",           "",              "TES",            "sim_type=1&tes_type=1",              "",                      "" },
@@ -1511,8 +1509,6 @@ public:
             storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_SA_TOT, allocate("tes_SA_tot", n_steps_fixed), n_steps_fixed);
             storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_ERROR, allocate("tes_error", n_steps_fixed), n_steps_fixed);
             storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_ERROR_PERCENT, allocate("tes_error_percent", n_steps_fixed), n_steps_fixed);
-            storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_HOT_ERROR, allocate("tes_hot_error", n_steps_fixed), n_steps_fixed);
-            storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_COLD_ERROR, allocate("tes_cold_error", n_steps_fixed), n_steps_fixed);
             storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_LEAK_ERROR, allocate("tes_leak_error", n_steps_fixed), n_steps_fixed);
             storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_WALL_ERROR, allocate("tes_wall_error", n_steps_fixed), n_steps_fixed);
             storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_ERROR_CORRECTED, allocate("tes_error_corrected", n_steps_fixed), n_steps_fixed);

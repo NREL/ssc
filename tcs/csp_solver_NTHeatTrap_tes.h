@@ -261,8 +261,6 @@ public:
         E_SA_TOT,
         E_ERROR,
         E_ERROR_PERCENT,
-        E_HOT_ERROR,
-        E_COLD_ERROR,
         E_LEAK_ERROR,
         E_E_HOT,
         E_E_COLD,
