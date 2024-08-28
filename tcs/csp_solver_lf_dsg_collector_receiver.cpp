@@ -2572,7 +2572,7 @@ int C_csp_lf_dsg_collector_receiver::once_thru_loop_energy_balance_T_t_int(const
 		//double q_bal_htf = m_m_dot_loop*(mc_sca_out_t_int[i].m_enth - mc_sca_in_t_int[i].m_enth);	//[kW]
 		//double q_bal_int_energy = E_sca[i] / sim_info.ms_ts.m_step;		//[kW]
 		//
-		//double q_max_abs = max( abs(q_bal_int_energy), max( abs(q_bal_abs), abs(q_bal_htf) ) );
+		//double q_max_abs = max( std::abs(q_bal_int_energy), max( std::abs(q_bal_abs), std::abs(q_bal_htf) ) );
 		//
 		//double E_bal_sca = q_bal_abs - q_bal_htf - q_bal_int_energy;
 		//

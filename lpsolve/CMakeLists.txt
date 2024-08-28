@@ -7,34 +7,34 @@
 include_directories(.)
 
 set(LPSOLVE_SRC
-	colamd.c
-	commonlib.c
-	fortify.c
-	ini.c
-	lp_crash.c
-	lp_Hash.c
-	lp_lib.c
-	lp_LUSOL.c
-	lp_matrix.c
-	lp_MDO.c
-	lp_mipbb.c
-	lp_MPS.c
-	lp_params.c
-	lp_presolve.c
-	lp_price.c
-	lp_pricePSE.c
-	lp_report.c
-	lp_rlp.c
-	lp_scale.c
-	lp_simplex.c
-	lp_solve.c
-	lp_SOS.c
-	lp_utils.c
-	lp_wlp.c
-	lusol.c
-	mmio.c
-	myblas.c
-	yacc_read.c)
+	colamd.cpp
+	commonlib.cpp
+	fortify.cpp
+	ini.cpp
+	lp_crash.cpp
+	lp_Hash.cpp
+	lp_lib.cpp
+	lp_LUSOL.cpp
+	lp_matrix.cpp
+	lp_MDO.cpp
+	lp_mipbb.cpp
+	lp_MPS.cpp
+	lp_params.cpp
+	lp_presolve.cpp
+	lp_price.cpp
+	lp_pricePSE.cpp
+	lp_report.cpp
+	lp_rlp.cpp
+	lp_scale.cpp
+	lp_simplex.cpp
+	lp_solve.cpp
+	lp_SOS.cpp
+	lp_utils.cpp
+	lp_wlp.cpp
+	lusol.cpp
+	mmio.cpp
+	myblas.cpp
+	yacc_read.cpp)
 
 
 ####################################################################################################################
