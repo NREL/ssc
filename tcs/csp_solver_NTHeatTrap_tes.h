@@ -72,7 +72,6 @@ private:
 
     // Added TMB 12.15.2023
     double m_radius;   //[m]
-    double m_length_total;  //[m]
 
     double m_tank_wall_cp;           //[J/kgK]
     double m_tank_wall_dens;         //[kg/m3]
@@ -83,9 +82,6 @@ private:
 
     double m_SA_prev;           //[m2] Surface area previous timestep
     double m_SA_calc;           //[m2] Surface area current timestep
-
-    double m_volume_combined; //[m3]
-
 
     // Added surface area of tank wall as piston moves
     double calc_SA_rate(double mdot_htf /*kg/s*/, double T_htf /*K*/);
@@ -144,7 +140,6 @@ public:
         double tank_pairs /*-*/, double T_htr /*K*/, double max_q_htr /*MWt*/,
         double V_ini /*m3*/, double T_ini /*K*/,
         double T_design /*K*/,
-        double V_combined_tanks /*m3*/,
         double tank_wall_cp,            // [J/kg-K] Tank wall specific heat
         double tank_wall_dens,          // [kg/m3] Tank wall density
         double tank_wall_thick,         // [m] Tank wall thickness)

@@ -74,7 +74,7 @@ C_storage_tank_dynamic_NT::C_storage_tank_dynamic_NT()
 
         m_V_total = m_V_active = m_V_inactive = 
 
-        m_T_htr = m_max_q_htr = m_radius = m_length_total =
+        m_T_htr = m_max_q_htr = m_radius =
         m_T_design = m_mass_total = m_mass_inactive = m_mass_active = std::numeric_limits<double>::quiet_NaN();
 }
 
@@ -83,7 +83,6 @@ void C_storage_tank_dynamic_NT::init(HTFProperties htf_class_in, double V_tank /
     double tank_pairs /*-*/, double T_htr /*K*/, double max_q_htr /*MWt*/,
     double V_ini /*m3*/, double T_ini /*K*/,
     double T_design /*K*/,
-    double V_combined_tanks /*m3*/,
     double tank_wall_cp,            // [J/kg-K] Tank wall specific heat
     double tank_wall_dens,          // [kg/m3] Tank wall density
     double tank_wall_thick,         // [m] Tank wall thickness)
@@ -112,8 +111,6 @@ void C_storage_tank_dynamic_NT::init(HTFProperties htf_class_in, double V_tank /
     double diameter = pow(A_cs / CSP::pi, 0.5) * 2.0;		//[m] Diameter of a single tank
 
     m_radius = diameter / 2.0;  // [m] radius
-    m_volume_combined = V_combined_tanks;    // [m3] Volume of total tank
-    m_length_total = V_combined_tanks / (CSP::pi * std::pow(m_radius, 2.0));  // [m] length of total tank (contains both hot and cold 'tanks')
     m_tank_wall_thick = tank_wall_thick; // [m] tank wall thickness
     m_tank_wall_dens = tank_wall_dens;  //[kg/m3]
     m_tank_wall_cp = tank_wall_cp;      //[J/kgK]
@@ -121,7 +118,6 @@ void C_storage_tank_dynamic_NT::init(HTFProperties htf_class_in, double V_tank /
     m_piston_loss_poly = piston_loss_poly;  //[]
 
     // Calculate tank conductance
-    //m_UA = u_tank * (A_cs + CSP::pi * diameter * h_tank) * tank_pairs;	//[W/K]
     m_u_tank = u_tank;
 
     m_T_htr = T_htr;
@@ -1102,11 +1098,11 @@ void C_csp_NTHeatTrap_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inpu
             // Hot tank
     mc_hot_tank_NT.init(mc_store_htfProps, m_vol_tank, m_h_tank_calc, m_h_tank_min,
         m_u_tank, m_tank_pairs, m_hot_tank_Thtr, m_hot_tank_max_heat,
-        V_hot_ini, T_hot_ini, T_tes_hot_des, volume_combined, m_tank_wall_cp, m_tank_wall_dens, m_tank_wall_thick, m_nstep, m_piston_loss_poly);
+        V_hot_ini, T_hot_ini, T_tes_hot_des, m_tank_wall_cp, m_tank_wall_dens, m_tank_wall_thick, m_nstep, m_piston_loss_poly);
     // Cold tank
     mc_cold_tank_NT.init(mc_store_htfProps, m_vol_tank, m_h_tank_calc, m_h_tank_min,
         m_u_tank, m_tank_pairs, m_cold_tank_Thtr, m_cold_tank_max_heat,
-        V_cold_ini, T_cold_ini, T_tes_cold_des, volume_combined, m_tank_wall_cp, m_tank_wall_dens, m_tank_wall_thick, m_nstep, m_piston_loss_poly);
+        V_cold_ini, T_cold_ini, T_tes_cold_des, m_tank_wall_cp, m_tank_wall_dens, m_tank_wall_thick, m_nstep, m_piston_loss_poly);
 
     double hot_radius = mc_hot_tank_NT.get_radius();
     double cold_radius = mc_cold_tank_NT.get_radius();
@@ -1203,11 +1199,11 @@ void C_csp_NTHeatTrap_tes::reset_storage_to_initial_state()
     // Hot tank
     mc_hot_tank_NT.init(mc_store_htfProps, m_vol_tank, m_h_tank_calc, m_h_tank_min,
         m_u_tank, m_tank_pairs, m_hot_tank_Thtr, m_hot_tank_max_heat,
-        V_hot_ini, T_hot_ini, m_T_hot_des, m_vol_tank, m_tank_wall_cp, m_tank_wall_dens, m_tank_wall_thick, m_nstep, m_piston_loss_poly);
+        V_hot_ini, T_hot_ini, m_T_hot_des, m_tank_wall_cp, m_tank_wall_dens, m_tank_wall_thick, m_nstep, m_piston_loss_poly);
     // Cold tank
     mc_cold_tank_NT.init(mc_store_htfProps, m_vol_tank, m_h_tank_calc, m_h_tank_min,
         m_u_tank, m_tank_pairs, m_cold_tank_Thtr, m_cold_tank_max_heat,
-        V_cold_ini, T_cold_ini, m_T_cold_des, m_vol_tank, m_tank_wall_cp, m_tank_wall_dens, m_tank_wall_thick, m_nstep, m_piston_loss_poly);
+        V_cold_ini, T_cold_ini, m_T_cold_des, m_tank_wall_cp, m_tank_wall_dens, m_tank_wall_thick, m_nstep, m_piston_loss_poly);
 }
 
 void C_csp_NTHeatTrap_tes::discharge_avail_est(double T_cold_K, double step_s,
