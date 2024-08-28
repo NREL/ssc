@@ -68,10 +68,10 @@ private:
     double m_m_calc;		    //[kg] Mass of storage fluid in tank
     double m_E_calc;            //[MJ] Internal energy (including tank wall)
     double m_m_wall_calc;       //[kg] Mass of storage tank wall
+    double m_L_calc;            //[m] Length of tank at end of timestep
 
     // Added TMB 12.15.2023
     double m_radius;   //[m]
-    double m_length_total;  //[m]
 
     double m_tank_wall_cp;           //[J/kgK]
     double m_tank_wall_dens;         //[kg/m3]
@@ -82,9 +82,6 @@ private:
 
     double m_SA_prev;           //[m2] Surface area previous timestep
     double m_SA_calc;           //[m2] Surface area current timestep
-
-    double m_volume_combined; //[m3]
-
 
     // Added surface area of tank wall as piston moves
     double calc_SA_rate(double mdot_htf /*kg/s*/, double T_htf /*K*/);
@@ -136,12 +133,13 @@ public:
 
     double get_m_m_wall_calc();
 
+    double get_m_L_calc();  // m
+
     void init(HTFProperties htf_class_in, double V_tank /*m3*/,
         double h_tank /*m*/, double h_min /*m*/, double u_tank /*W/m2-K*/,
         double tank_pairs /*-*/, double T_htr /*K*/, double max_q_htr /*MWt*/,
         double V_ini /*m3*/, double T_ini /*K*/,
         double T_design /*K*/,
-        double V_combined_tanks /*m3*/,
         double tank_wall_cp,            // [J/kg-K] Tank wall specific heat
         double tank_wall_dens,          // [kg/m3] Tank wall density
         double tank_wall_thick,         // [m] Tank wall thickness)
@@ -217,8 +215,10 @@ private:
     std::vector<double> m_piston_loss_poly;  //[] Coefficients to piston loss polynomial (0*x^0 + 1*x^1 ....)    
 
     // Added for NT, calc in init
-    double m_radius;        //[m] radius of tank
-    double m_length_total;  //[m] Total length of tank (two tanks combined)
+    double m_radius;            //[m] radius of tank
+    double m_length_total;      //[m] Total length of tank (two tanks combined)
+    double m_V_wall_nominal;    //[m3] Total wall volume of tank
+    double m_mass_wall_nominal;//[kg] Total wall mass of tank (wall mass 'changes' as density of fluid changes)
 
     void solve_tanks_iterative(double timestep /*s*/, double n_substep /**/, double mdot_charge /*kg/s*/,
         double mdot_discharge /*kg/s*/, double T_charge /*K*/, double T_discharge /*K*/, double T_amb /*K*/,
@@ -256,13 +256,13 @@ public:
         E_SA_TOT,
         E_ERROR,
         E_ERROR_PERCENT,
-        E_HOT_ERROR,
-        E_COLD_ERROR,
         E_LEAK_ERROR,
         E_E_HOT,
         E_E_COLD,
         E_WALL_ERROR,
-        E_ERROR_CORRECTED
+        E_ERROR_CORRECTED,
+        E_EXP_WALL_MASS,
+        E_EXP_LENGTH
 	};
 
 
@@ -282,10 +282,8 @@ public:
     double m_hot_tank_max_heat;	              //[MW]
     double m_cold_tank_Thtr;	              //[C] convert to K in init()
     double m_cold_tank_max_heat;              //[MW]
-    double m_dt_hot;			              //[C] Temperature difference across heat exchanger - assume hot and cold deltaTs are equal
     double m_T_cold_des;	                  //[C] convert to K in init()
     double m_T_hot_des;	                      //[C] convert to K in init()
-    double m_dP_src_des;                      //[bar] Total source pressure drop at design
     double m_T_tank_hot_ini;	              //[C] Initial temperature in hot storage tank
     double m_T_tank_cold_ini;	              //[C] Initial temperature in cold storage cold
     double m_h_tank_min;		              //[m] Minimum allowable HTF height in storage tank
@@ -331,7 +329,6 @@ public:
         double hot_tank_max_heat,	                 // [MW]
         double cold_tank_Thtr,	                     // [C] convert to K in init()
         double cold_tank_max_heat,                   // [MW]
-        double dt_hot,			                     // [C] Temperature difference across heat exchanger - assume hot and cold deltaTs are equal
         double T_cold_des,	                         // [C] convert to K in init()
         double T_hot_des,	                         // [C] convert to K in init()
         double T_tank_hot_ini,	                     // [C] Initial temperature in hot storage tank

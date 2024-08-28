@@ -50,7 +50,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_mspt_collector_receiver.h"
 #include "csp_solver_pc_Rankine_indirect_224.h"
 #include "csp_solver_two_tank_tes.h"
-#include "csp_solver_tou_block_schedules.h"
 
 #include "csp_dispatch.h"
 
@@ -183,7 +182,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
 
     // New variables replacing deprecated variable "piping_loss". Variable currently not required so exec() can check if assigned and throw a more detailed error
-    { SSC_INPUT,     SSC_NUMBER, "piping_loss_coefficient",            "Thermal loss per meter of piping",                                                                                                        "Wt/m2-K",      "",                                  "Tower and Receiver",                       "",                                                                 "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "piping_loss_coefficient",            "Thermal loss per meter of piping",                                                                                                        "Wt/m2-K",      "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
 
 	{ SSC_INPUT,     SSC_NUMBER, "rec_clearsky_model",				   "Clearsky model: None = -1, User-defined data = 0, Meinel = 1; Hottel = 2; Allen = 3; Moon = 4",											  "",             "",                                  "Tower and Receiver",                       "?=-1",															   "",              "SIMULATION_PARAMETER"},
 	{ SSC_INPUT,     SSC_ARRAY,  "rec_clearsky_dni",					"User-defined clear-sky DNI",																											  "W/m2",         "",                                  "Tower and Receiver",                       "rec_clearsky_model=0",											   "",              "SIMULATION_PARAMETER"},
@@ -233,7 +232,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
 
 
     // TES parameters - general
-    { SSC_INPUT,     SSC_NUMBER, "tes_init_hot_htf_percent",           "Initial fraction of available volume that is hot",                                                                                        "%",            "",                                  "Thermal Storage",                          "", /*not required because replacing deprecated var and checked in cmod*/ "",        ""},
+    { SSC_INPUT,     SSC_NUMBER, "tes_init_hot_htf_percent",           "Initial fraction of available volume that is hot",                                                                                        "%",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "h_tank",                             "Total height of tank (height of HTF when tank is full)",                                                                                  "m",            "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "cold_tank_max_heat",                 "Rated heater capacity for cold tank heating",                                                                                             "MW",           "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "u_tank",                             "Loss coefficient from the tank",                                                                                                          "W/m2-K",       "",                                  "Thermal Storage",                          "*",                                                                "",              ""},
@@ -327,6 +326,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_NUMBER, "bop_par_2",                          "Balance of plant parasitic power fraction - quadratic coeff",                                                                             "",             "",                                  "System Control",                           "*",                                                                "",              "" },
 
     // System Control
+    { SSC_INPUT,     SSC_NUMBER, "is_timestep_load_fractions",         "Use turbine load fraction for each timestep instead of block dispatch?",                                                                  "",             "",                                  "System Control",                           "?=0",                                                              "",              "SIMULATION_PARAMETER" },
     { SSC_INPUT,     SSC_ARRAY,  "timestep_load_fractions",            "Turbine load fraction for each timestep, alternative to block dispatch",                                                                  "",             "",                                  "System Control",                           "?",                                                                "",              "SIMULATION_PARAMETER" },
     { SSC_INPUT,     SSC_ARRAY,  "f_turb_tou_periods",                 "Dispatch logic for turbine load fraction",                                                                                                "",             "",                                  "System Control",                           "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_MATRIX, "weekday_schedule",                   "12x24 CSP operation Time-of-Use Weekday schedule",                                                                                        "",             "",                                  "System Control",                           "*",                                                                "",              ""},
@@ -370,8 +370,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_ARRAY,  "dispatch_tod_factors",               "TOD factors for periods 1 through 9",                                                                                                     "",
         "We added this array input after SAM 2022.12.21 to replace the functionality of former single value inputs dispatch_factor1 through dispatch_factor9",                                                                                                         "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
 
-    { SSC_INPUT,     SSC_NUMBER, "is_dispatch_series",                 "Use time-series dispatch factors",                                                                                                        "",             "",                                  "System Control",                           "?=0",                                                                         "",              "SIMULATION_PARAMETER"},
-    { SSC_INPUT,     SSC_ARRAY,  "dispatch_series",                    "Time series dispatch factors",                                                                                                            "",             "",                                  "System Control",                           "",                                                                            "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_ARRAY,  "ppa_price_input",			           "PPA prices - yearly",			                                                                                                          "$/kWh",	      "",	                               "Revenue",			                       "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",      	       "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_MATRIX, "mp_energy_market_revenue",           "Energy market revenue input",                                                                                                             "",             "Lifetime x 2[Cleared Capacity(MW),Price($/MWh)]", "Revenue",                    "csp_financial_model=6&is_dispatch=1&sim_type=1",                              "",              "SIMULATION_PARAMETER"},
 
@@ -841,7 +839,7 @@ public:
                 " results in these minor non-intuitive ways, we decided to hardcode the valu to 100 bar.");
         }
 
-        if (is_dispatch) {
+        if (is_dispatch && sim_type == 1) {
             // Cycle startup cost disp_csu_cost
             bool is_disp_csu_cost_assigned = is_assigned("disp_csu_cost");
             bool is_disp_csu_cost_rel_assigned = is_assigned("disp_csu_cost_rel");
@@ -1961,62 +1959,31 @@ public:
         storage.mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HTF_PUMP, allocate("tes_htf_pump_power", n_steps_fixed), n_steps_fixed);
 
 
+        // *************************************************************************
+        // Schedules
 
-        // TOU parameters
-        C_csp_tou_block_schedules tou;
-        C_csp_tou_block_schedules::S_params *tou_params = &tou.ms_params;
-        tou_params->mc_csp_ops.mc_weekdays = as_matrix("weekday_schedule");
-        tou_params->mc_csp_ops.mc_weekends = as_matrix("weekend_schedule");
-
-        if (is_dispatch)
-        {
-            tou.mc_dispatch_params.m_w_lim_full.resize(n_steps_full);
-            std::fill(tou.mc_dispatch_params.m_w_lim_full.begin(), tou.mc_dispatch_params.m_w_lim_full.end(), 9.e99);
-            if (as_boolean("is_wlim_series"))
-            {
-                size_t n_wlim_series = 0;
-                ssc_number_t* wlim_series = as_array("wlim_series", &n_wlim_series);
-                if (n_wlim_series != n_steps_full)
-                    throw exec_error("tcsmolten_salt", "Invalid net electricity generation limit series dimension. Matrix must have " + util::to_string((int)n_steps_full) + " rows.");
-                for (size_t i = 0; i < n_steps_full; i++)
-                    tou.mc_dispatch_params.m_w_lim_full.at(i) = (double)wlim_series[i];
-            }
-            else if (as_boolean("is_wlim_design")) {
-                double wlim_design = as_double("disp_wlim_maxspec");
-                for (size_t i = 0; i < n_steps_full; i++)
-                    tou.mc_dispatch_params.m_w_lim_full.at(i) = wlim_design;
-            }
+        // Off-taker schedule
+        C_timeseries_schedule_inputs offtaker_schedule;
+        bool is_timestep_load_fractions = as_boolean("is_timestep_load_fractions");
+        if (is_timestep_load_fractions) {
+            auto vec = as_vector_double("timestep_load_fractions");
+            C_timeseries_schedule_inputs offtaker_series = C_timeseries_schedule_inputs(vec, std::numeric_limits<double>::quiet_NaN());
+            offtaker_schedule = offtaker_series;
+        }
+        else {      // Block schedules
+            C_timeseries_schedule_inputs offtaker_block = C_timeseries_schedule_inputs(as_matrix("weekday_schedule"), as_matrix("weekend_schedule"),
+                as_vector_double("f_turb_tou_periods"), std::numeric_limits<double>::quiet_NaN());
+            offtaker_schedule = offtaker_block;
         }
 
-        tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = as_boolean("is_tod_pc_target_also_pc_max");
-        tou.mc_dispatch_params.m_is_block_dispatch = ! as_boolean("is_dispatch");      //mw
-        tou.mc_dispatch_params.m_use_rule_1 = true;
-        tou.mc_dispatch_params.m_standby_off_buffer = 2.0;
-        tou.mc_dispatch_params.m_use_rule_2 = false;
-        tou.mc_dispatch_params.m_q_dot_rec_des_mult = -1.23;
-        tou.mc_dispatch_params.m_f_q_dot_pc_overwrite = -1.23;
+        // Electricity pricing schedule
+        C_timeseries_schedule_inputs elec_pricing_schedule;
 
-        size_t n_f_turbine = 0;
-        ssc_number_t *p_f_turbine = as_array("f_turb_tou_periods", &n_f_turbine);
-        tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(n_f_turbine,0.0);
-        //tou_params->mv_t_frac.resize(n_f_turbine, 0.0);
-        for( size_t i = 0; i < n_f_turbine; i++ )
-            tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC][i] = (double)p_f_turbine[i];
-
-        // Load fraction by time step:
-        bool is_load_fraction_by_timestep = is_assigned("timestep_load_fractions");
-        tou_params->mc_csp_ops.mv_is_diurnal = !(is_load_fraction_by_timestep);
-        if (is_load_fraction_by_timestep) {
-            size_t N_load_fractions;
-            ssc_number_t* load_fractions = as_array("timestep_load_fractions", &N_load_fractions);
-            std::copy(load_fractions, load_fractions + N_load_fractions, std::back_inserter(tou_params->mc_csp_ops.timestep_load_fractions));
-        }
-
-        int csp_financial_model = as_integer("csp_financial_model");        
-
-        double ppa_price_year1 = std::numeric_limits<double>::quiet_NaN();
+        int csp_financial_model = as_integer("csp_financial_model");
         if (sim_type == 1) {
             if (csp_financial_model > 0 && csp_financial_model < 5) {   // Single Owner financial models
+
+                double ppa_price_year1 = std::numeric_limits<double>::quiet_NaN();
 
                 // Get first year base ppa price
                 bool is_ppa_price_input_assigned = is_assigned("ppa_price_input");
@@ -2157,7 +2124,9 @@ public:
         // System dispatch
         csp_dispatch_opt dispatch;
 
-        if (as_boolean("is_dispatch")){
+        dispatch.solver_params.dispatch_optimize = is_dispatch;
+
+        if (is_dispatch && sim_type == 1){
 
 
             double heater_startup_cost = 0.0;
@@ -2167,7 +2136,7 @@ public:
                 heater_startup_cost = as_double("disp_hsu_cost_rel") * q_dot_heater_des;    //[$/start]
             }
 
-            dispatch.solver_params.set_user_inputs(as_boolean("is_dispatch"), as_integer("disp_steps_per_hour"), as_integer("disp_frequency"), as_integer("disp_horizon"),
+            dispatch.solver_params.set_user_inputs(is_dispatch, as_integer("disp_steps_per_hour"), as_integer("disp_frequency"), as_integer("disp_horizon"),
                 as_integer("disp_max_iter"), as_double("disp_mip_gap"), as_double("disp_timeout"),
                 as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_spec_scaling"), as_integer("disp_reporting"),
                 as_boolean("is_write_ampl_dat"), as_boolean("is_ampl_engine"), as_string("ampl_data_dir"), as_string("ampl_exec_call"));
@@ -2176,10 +2145,7 @@ public:
             double disp_rsu_cost_calc = as_double("disp_rsu_cost_rel")*q_dot_rec_des;   //[$/start]
             dispatch.params.set_user_params(as_boolean("can_cycle_use_standby"), as_double("disp_time_weighting"),
                 disp_rsu_cost_calc, heater_startup_cost, disp_csu_cost_calc, as_double("disp_pen_ramping"),
-                as_double("disp_inventory_incentive"), as_double("q_rec_standby"), as_double("q_rec_heattrace"), ppa_price_year1);
-        }
-        else {
-            dispatch.solver_params.dispatch_optimize = false;
+                as_double("disp_inventory_incentive"), as_double("q_rec_standby"), as_double("q_rec_heattrace")); // , ppa_price_year1);
         }
 
         // Instantiate Solver       
@@ -2299,30 +2265,6 @@ public:
         {
             log(out_msg, out_type);
         }
-
-
-        //if the pricing schedule is provided as hourly, overwrite the tou schedule
-        if( as_boolean("is_dispatch_series") )
-        {
-            size_t n_dispatch_series;
-            ssc_number_t *dispatch_series = as_array("dispatch_series", &n_dispatch_series);
-
-       //     if( n_dispatch_series != n_steps_fixed)
-                //throw exec_error("tcsmolten_salt", "Invalid dispatch pricing series dimension. Array length must match number of simulation time steps ("+my_to_string(n_steps_fixed)+").");
-                
-            //resize the m_hr_tou array
-            if( tou_params->mc_pricing.m_hr_tou != 0 )
-                delete [] tou_params->mc_pricing.m_hr_tou;
-            tou_params->mc_pricing.m_hr_tou = new double[n_steps_fixed];
-            //set the tou period as unique for each time step
-            for(size_t i=0; i<n_steps_fixed; i++)
-                tou_params->mc_pricing.m_hr_tou[i] = i+1;
-            //allocate reported arrays
-            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed);
-            for( size_t i=0; i<n_steps_fixed; i++)
-                tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][i] = dispatch_series[i];
-        }
-
 
         // *****************************************************
         // System design is complete, get design parameters from component models as necessary
@@ -3072,7 +3014,7 @@ public:
                 // Get first year base ppa price
                 size_t count_ppa_price_input;
                 ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
-                ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
+                double ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
 
                 double T_amb_hot = 30.0;    //[C]
                 double rev_full_cap_T_amb_hot = 0.0;    //[$]
