@@ -733,13 +733,13 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,       SSC_NUMBER,      "sim_duration",              "Computational time of timeseries simulation",                                      "s",            "",               "system",         "sim_type=1",                       "",                      "" },
 
     { SSC_OUTPUT,       SSC_ARRAY,       "recirculating",             "Field recirculating (bypass valve open)",                                          "-",            "",               "solar_field",    "sim_type=1",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_diams",            "Pipe diameters in TES",                                                            "m",            "",               "TES",            "sim_type=1",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_wallthk",          "Pipe wall thickness in TES",                                                       "m",            "",               "TES",            "sim_type=1",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_lengths",          "Pipe lengths in TES",                                                              "m",            "",               "TES",            "sim_type=1",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_mdot_dsn",         "Mass flow TES pipes at design conditions",                                         "kg/s",         "",               "TES",            "sim_type=1",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_vel_dsn",          "Velocity in TES pipes at design conditions",                                       "m/s",          "",               "TES",            "sim_type=1",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_T_dsn",            "Temperature in TES pipes at design conditions",                                    "C",            "",               "TES",            "sim_type=1",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_P_dsn",            "Pressure in TES pipes at design conditions",                                       "bar",          "",               "TES",            "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_diams",            "Pipe diameters in TES",                                                            "m",            "",               "TES",            "sim_type=1&tes_type=0",            "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_wallthk",          "Pipe wall thickness in TES",                                                       "m",            "",               "TES",            "sim_type=1&tes_type=0",            "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_lengths",          "Pipe lengths in TES",                                                              "m",            "",               "TES",            "sim_type=1&tes_type=0",            "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_mdot_dsn",         "Mass flow TES pipes at design conditions",                                         "kg/s",         "",               "TES",            "sim_type=1&tes_type=0",            "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_vel_dsn",          "Velocity in TES pipes at design conditions",                                       "m/s",          "",               "TES",            "sim_type=1&tes_type=0",            "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_T_dsn",            "Temperature in TES pipes at design conditions",                                    "C",            "",               "TES",            "sim_type=1&tes_type=0",            "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_P_dsn",            "Pressure in TES pipes at design conditions",                                       "bar",          "",               "TES",            "sim_type=1&tes_type=0",            "",                      "" },
 
     //{ SSC_OUTPUT,       SSC_ARRAY,       "defocus",                   "Field optical focus fraction",                                                     "",             "",               "solver",         "*",                       "",                      "" },
 
@@ -2497,20 +2497,25 @@ public:
         ssc_number_t *p_pipe_loop_P_dsn = allocate("pipe_loop_P_dsn", c_trough.m_P_loop_dsn.size());
         std::copy(c_trough.m_P_loop_dsn.begin(), c_trough.m_P_loop_dsn.end(), p_pipe_loop_P_dsn);
 
-        ssc_number_t *p_pipe_tes_diams = allocate("pipe_tes_diams", storage_pointer->pipe_diams.ncells());
-        std::copy(storage_pointer->pipe_diams.data(), storage_pointer->pipe_diams.data() + storage_pointer->pipe_diams.ncells(), p_pipe_tes_diams);
-        ssc_number_t *p_pipe_tes_wallthk = allocate("pipe_tes_wallthk", storage_pointer->pipe_wall_thk.ncells());
-        std::copy(storage_pointer->pipe_wall_thk.data(), storage_pointer->pipe_wall_thk.data() + storage_pointer->pipe_wall_thk.ncells(), p_pipe_tes_wallthk);
-        ssc_number_t* p_pipe_tes_lengths = allocate("pipe_tes_lengths", storage_pointer->pipe_lengths.ncells());
-        std::copy(storage_pointer->pipe_lengths.data(), storage_pointer->pipe_lengths.data() + storage_pointer->pipe_lengths.ncells(), p_pipe_tes_lengths);
-        ssc_number_t *p_pipe_tes_mdot_dsn = allocate("pipe_tes_mdot_dsn", storage_pointer->pipe_m_dot_des.ncells());
-        std::copy(storage_pointer->pipe_m_dot_des.data(), storage_pointer->pipe_m_dot_des.data() + storage_pointer->pipe_m_dot_des.ncells(), p_pipe_tes_mdot_dsn);
-        ssc_number_t *p_pipe_tes_vel_dsn = allocate("pipe_tes_vel_dsn", storage_pointer->pipe_vel_des.ncells());
-        std::copy(storage_pointer->pipe_vel_des.data(), storage_pointer->pipe_vel_des.data() + storage_pointer->pipe_vel_des.ncells(), p_pipe_tes_vel_dsn);
-        ssc_number_t *p_pipe_tes_T_dsn = allocate("pipe_tes_T_dsn", storage_pointer->pipe_T_des.ncells());
-        std::copy(storage_pointer->pipe_T_des.data(), storage_pointer->pipe_T_des.data() + storage_pointer->pipe_T_des.ncells(), p_pipe_tes_T_dsn);
-        ssc_number_t *p_pipe_tes_P_dsn = allocate("pipe_tes_P_dsn", storage_pointer->pipe_P_des.ncells());
-        std::copy(storage_pointer->pipe_P_des.data(), storage_pointer->pipe_P_des.data() + storage_pointer->pipe_P_des.ncells(), p_pipe_tes_P_dsn);
+        // Two Tank specific outputs
+        if (tes_type == 0)
+        {
+            ssc_number_t* p_pipe_tes_diams = allocate("pipe_tes_diams", storage_two_tank.pipe_diams.ncells());
+            std::copy(storage_two_tank.pipe_diams.data(), storage_two_tank.pipe_diams.data() + storage_two_tank.pipe_diams.ncells(), p_pipe_tes_diams);
+            ssc_number_t* p_pipe_tes_wallthk = allocate("pipe_tes_wallthk", storage_two_tank.pipe_wall_thk.ncells());
+            std::copy(storage_two_tank.pipe_wall_thk.data(), storage_two_tank.pipe_wall_thk.data() + storage_two_tank.pipe_wall_thk.ncells(), p_pipe_tes_wallthk);
+            ssc_number_t* p_pipe_tes_lengths = allocate("pipe_tes_lengths", storage_two_tank.pipe_lengths.ncells());
+            std::copy(storage_two_tank.pipe_lengths.data(), storage_two_tank.pipe_lengths.data() + storage_two_tank.pipe_lengths.ncells(), p_pipe_tes_lengths);
+            ssc_number_t* p_pipe_tes_mdot_dsn = allocate("pipe_tes_mdot_dsn", storage_two_tank.pipe_m_dot_des.ncells());
+            std::copy(storage_two_tank.pipe_m_dot_des.data(), storage_two_tank.pipe_m_dot_des.data() + storage_two_tank.pipe_m_dot_des.ncells(), p_pipe_tes_mdot_dsn);
+            ssc_number_t* p_pipe_tes_vel_dsn = allocate("pipe_tes_vel_dsn", storage_two_tank.pipe_vel_des.ncells());
+            std::copy(storage_two_tank.pipe_vel_des.data(), storage_two_tank.pipe_vel_des.data() + storage_two_tank.pipe_vel_des.ncells(), p_pipe_tes_vel_dsn);
+            ssc_number_t* p_pipe_tes_T_dsn = allocate("pipe_tes_T_dsn", storage_two_tank.pipe_T_des.ncells());
+            std::copy(storage_two_tank.pipe_T_des.data(), storage_two_tank.pipe_T_des.data() + storage_two_tank.pipe_T_des.ncells(), p_pipe_tes_T_dsn);
+            ssc_number_t* p_pipe_tes_P_dsn = allocate("pipe_tes_P_dsn", storage_two_tank.pipe_P_des.ncells());
+            std::copy(storage_two_tank.pipe_P_des.data(), storage_two_tank.pipe_P_des.data() + storage_two_tank.pipe_P_des.ncells(), p_pipe_tes_P_dsn);
+        }
+        
 
 
         // Monthly outputs

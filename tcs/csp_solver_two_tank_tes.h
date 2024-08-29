@@ -514,6 +514,14 @@ public:
     double pipe_rough;                        //[m] Pipe absolute roughness
     double dP_discharge;                      //[bar] Pressure drop on the TES discharge side (e.g., within the steam generator)
 
+    util::matrix_t<double> pipe_diams;           //[m^3]
+    util::matrix_t<double> pipe_wall_thk;        //[m]
+    util::matrix_t<double> pipe_lengths;         //[m]
+    util::matrix_t<double> pipe_m_dot_des;       //[kg/s]
+    util::matrix_t<double> pipe_vel_des;         //[m/s]
+    util::matrix_t<double> pipe_T_des;           //[C]
+    util::matrix_t<double> pipe_P_des;           //[bar]
+
     C_csp_reported_outputs mc_reported_outputs;
 
     C_csp_two_tank_tes();
