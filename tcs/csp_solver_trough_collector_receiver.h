@@ -54,34 +54,34 @@ public:
 
 	enum
 	{
-		E_THETA_AVE,			//[deg]
-		E_COSTH_AVE,			//[-]
-		E_IAM_AVE,				//[-]
-		E_ROWSHADOW_AVE,		//[-]
-		E_ENDLOSS_AVE,			//[-]
-		E_DNI_COSTH,			//[W/m2]
-		E_EQUIV_OPT_ETA_TOT,	//[-]
-		E_DEFOCUS,				//[-]
+		E_THETA_AVE,			    //[deg]
+		E_COSTH_AVE,			    //[-]
+		E_IAM_AVE,				    //[-]
+		E_ROWSHADOW_AVE,		    //[-]
+		E_ENDLOSS_AVE,			    //[-]
+		E_DNI_COSTH,			    //[W/m2]
+		E_EQUIV_OPT_ETA_TOT,	    //[-]
+		E_DEFOCUS,				    //[-]
 
-		E_Q_DOT_INC_SF_TOT,        //[MWt]
-		E_Q_DOT_INC_SF_COSTH,	   //[MWt]
-		E_Q_DOT_REC_INC,		   //[MWt]
-		E_Q_DOT_REC_THERMAL_LOSS,  //[MWt]
-		E_Q_DOT_REC_ABS,		   //[MWt]
-		E_Q_DOT_PIPING_LOSS,	   //[MWt]
-		E_E_DOT_INTERNAL_ENERGY,   //[MWt]
-		E_Q_DOT_HTF_OUT,		   //[MWt]
-		E_Q_DOT_FREEZE_PROT,       //[MWt]
+		E_Q_DOT_INC_SF_TOT,         //[MWt]
+		E_Q_DOT_INC_SF_COSTH,	    //[MWt]
+		E_Q_DOT_REC_INC,		    //[MWt]
+		E_Q_DOT_REC_THERMAL_LOSS,   //[MWt]
+		E_Q_DOT_REC_ABS,		    //[MWt]
+		E_Q_DOT_PIPING_LOSS,	    //[MWt]
+		E_E_DOT_INTERNAL_ENERGY,    //[MWt]
+		E_Q_DOT_HTF_OUT,		    //[MWt]
+		E_Q_DOT_FREEZE_PROT,        //[MWt]
 
 		E_M_DOT_LOOP,				//[kg/s]
         E_IS_RECIRCULATING,         //[-]
 		E_M_DOT_FIELD_RECIRC,		//[kg/s]
 		E_M_DOT_FIELD_DELIVERED,	//[kg/s]
-		E_T_FIELD_COLD_IN,	//[C]
-		E_T_REC_COLD_IN,	//[C]
-		E_T_REC_HOT_OUT,	//[C]
-		E_T_FIELD_HOT_OUT,	//[C]
-		E_PRESSURE_DROP,	//[bar]
+		E_T_FIELD_COLD_IN,	        //[C]
+		E_T_REC_COLD_IN,	        //[C]
+		E_T_REC_HOT_OUT,	        //[C]
+		E_T_FIELD_HOT_OUT,	        //[C]
+		E_PRESSURE_DROP,	        //[bar]
 
 		E_W_DOT_SCA_TRACK,	        //[MWe]
 		E_W_DOT_PUMP,		        //[MWe]
@@ -480,6 +480,13 @@ public:
 
     vector<interconnect> m_interconnects;
 
+    // Initial state
+    C_csp_collector_receiver::E_csp_cr_modes m_operating_mode_initial;
+    double m_defocus_initial;
+    double m_T_in_loop_initial;
+    double m_T_out_loop_initial;
+    std::vector<double> m_T_out_scas_last_initial;
+
     // Design Point Inputs
     int m_use_solar_mult_or_aperture_area = std::numeric_limits<double>::quiet_NaN();         // Use specified solar mult (0) or total aperture (1)
     double m_specified_solar_mult = std::numeric_limits<double>::quiet_NaN();                  // User specified solar mult
@@ -567,6 +574,7 @@ public:
     virtual double get_max_power_delivery(double T_htf_cold_in /*C*/);    //MWt
 	virtual double get_tracking_power();		//MWe
 	virtual double get_col_startup_power();		//MWe-hr
+    virtual std::vector<double> get_scas_outlet_temps(); //C
 
 	virtual C_csp_collector_receiver::E_csp_cr_modes get_operating_state();
 	
@@ -598,6 +606,8 @@ public:
 		const C_csp_solver_htf_1state &htf_state_in,
 		C_csp_collector_receiver::S_csp_cr_est_out &est_out,
 		const C_csp_solver_sim_info &sim_info);
+
+    void set_state(double T_in_loop, double T_out_loop, std::vector<double> T_out_scas);
 
 	virtual void converged();
 
