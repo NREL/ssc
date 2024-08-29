@@ -428,10 +428,6 @@ public:
         double& q_dot_error_total /*MW*/, double& q_dot_error_leak /*MW*/, double& q_dot_error_wall /*MW*/,
         double& q_dot_error_corrected /*MW*/);
 
-    int pressure_drops(double m_dot_sf, double m_dot_pb,
-        double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating,
-        double& P_drop_col, double& P_drop_gen);
-
     double get_max_storage_htf_temp();
 
     double get_min_storage_htf_temp();
