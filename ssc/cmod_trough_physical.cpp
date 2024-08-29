@@ -45,7 +45,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_two_tank_tes.h"
 #include "csp_solver_NTHeatTrap_tes.h"
 #include "csp_solver_packedbed_tes.h"
-#include "csp_solver_tou_block_schedules.h"
+//#include "csp_solver_tou_block_schedules.h"
 #include "csp_dispatch.h"
 #include "csp_system_costs.h"
 //#include "cmod_csp_common_eqns.h"
@@ -2083,11 +2083,6 @@ public:
                         h_tank_calc, d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
                 }
                 Q_tes = Q_tes_des_calc;
-
-                    tes_htf_min_temp = storage_NT.get_min_storage_htf_temp() - 273.15;
-                    tes_htf_max_temp = storage_NT.get_max_storage_htf_temp() - 273.15;
-                    vol_min = V_tes_htf_total_calc * (storage_NT.m_h_tank_min / h_tank_calc);
-                }
 
                 double V_tank_hot_ini = (as_double("h_tank_min") / h_tank_calc) * V_tes_htf_total_calc; // m3
                 double T_avg = (as_double("T_loop_in_des") + as_double("T_loop_out")) / 2.0;    // C
