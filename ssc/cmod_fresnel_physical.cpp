@@ -204,6 +204,14 @@ static var_info _cm_vtab_fresnel_physical[] = {
     { SSC_INPUT,    SSC_NUMBER,         "V_tes_des",                   "Design-point velocity to size the TES pipe diameters",                                  "m/s",                 "",                             "Storage",              "?=1.85",           "",                 "SIMULATION_PARAMETER" },
 
     // System Control
+
+    { SSC_INPUT,    SSC_NUMBER,         "is_timestep_load_fractions",  "Use turbine load fraction for each timestep instead of block dispatch?",                "",                    "",                             "tou",                  "?=0",              "",                 "SIMULATION_PARAMETER" },
+    { SSC_INPUT,    SSC_ARRAY,          "timestep_load_fractions",     "Turbine load fraction for each timestep, alternative to block dispatch",                "",                    "",                             "tou",                  "?",                "",                 "SIMULATION_PARAMETER" },
+
+    { SSC_INPUT,    SSC_NUMBER,         "pb_fixed_par",                "Fixed parasitic load - runs at all times",                                              "",                    "",                             "Sys_Control",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "bop_array",                   "Balance of plant parasitic power fraction",                                             "",                    "",                             "Sys_Control",          "*",                "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "aux_array",                   "Aux heater, boiler parasitic",                                                          "",                    "",                             "Sys_Control",          "*",                "",                 "" },
+    
     { SSC_INPUT,    SSC_NUMBER,         "is_dispatch",                 "Allow dispatch optimization?",  /*TRUE=1*/                                              "-",                   "",                             "Sys_Control",          "?=0",              "",                 "" },
     { SSC_INPUT,    SSC_NUMBER,         "disp_frequency",              "Frequency for dispatch optimization calculations",                                      "hour",                "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
     { SSC_INPUT,    SSC_NUMBER,         "disp_horizon",                "Time horizon for dispatch optimization",                                                "hour",                "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
@@ -961,7 +969,9 @@ public:
                 as_double("P_ref") / as_double("eta_ref"),
                 c_fresnel.m_solar_mult,
                 as_double("P_ref") / as_double("eta_ref") * as_double("tshours"),
+                true,
                 as_double("h_tank"),
+                0.0,
                 as_double("u_tank"),
                 as_integer("tank_pairs"),
                 as_double("hot_tank_Thtr"),
@@ -1028,11 +1038,7 @@ public:
 
         // Off-taker schedule
         C_timeseries_schedule_inputs offtaker_schedule;
-        bool assigned_is_timestep_fractions = is_assigned("is_timestep_load_fractions");
-        bool is_timestep_load_fractions = false;
-        if (assigned_is_timestep_fractions) {
-            is_timestep_load_fractions = as_boolean("is_timestep_load_fractions");
-        }
+        bool is_timestep_load_fractions = as_boolean("is_timestep_load_fractions");
         if (is_timestep_load_fractions) {
             auto vec = as_vector_double("timestep_load_fractions");
             C_timeseries_schedule_inputs offtaker_series = C_timeseries_schedule_inputs(vec, std::numeric_limits<double>::quiet_NaN());
@@ -1465,13 +1471,16 @@ public:
 
             // Storage
             double V_tes_htf_avail_calc /*m3*/, V_tes_htf_total_calc /*m3*/,
-                d_tank_calc /*m*/, q_dot_loss_tes_des_calc /*MWt*/, dens_store_htf_at_T_ave_calc /*kg/m3*/,
+                h_tank_calc /*m*/, d_tank_calc /*m*/,
+                q_dot_loss_tes_des_calc /*MWt*/, dens_store_htf_at_T_ave_calc /*kg/m3*/,
                 Q_tes_des_calc /*MWt-hr*/;
 
             storage.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
-                d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
+                h_tank_calc, d_tank_calc,
+                q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
 
-            double vol_min = V_tes_htf_total_calc * (storage.m_h_tank_min / storage.m_h_tank);
+
+            double vol_min = V_tes_htf_total_calc * (storage.m_h_tank_min / h_tank_calc);
             double tes_htf_min_temp = storage.get_min_storage_htf_temp() - 273.15;
             double tes_htf_max_temp = storage.get_max_storage_htf_temp() - 273.15;
             double tes_htf_dens = storage.get_storage_htf_density();

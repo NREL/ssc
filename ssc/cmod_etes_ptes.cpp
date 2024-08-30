@@ -650,7 +650,9 @@ public:
             q_dot_hot_in_gen,                   //[MWt]
             heater_mult,                        //[-]
             q_dot_hot_in_gen* tshours,          //[MWht]
+            true,
             as_double("h_tank"),
+            0.0,
             as_double("u_tank"),
             as_integer("tank_pairs"),
             as_double("hot_tank_Thtr"),
@@ -706,7 +708,9 @@ public:
             q_dot_CT_des__discharge_basis,                   //[MWt]
             heater_mult,                                     //[-]
             q_dot_CT_des__discharge_basis * tshours,         //[MWt-hr]
+            true,
             as_double("CT_h_tank"),
+            0.0,
             as_double("CT_u_tank"),
             as_integer("CT_tank_pairs"),
             hot_tank_Thtr,                                   //[C]
@@ -1002,19 +1006,19 @@ public:
 
             // HT TES
         double V_tes_htf_avail_calc /*m3*/, V_tes_htf_total_calc /*m3*/,
-            d_tank_calc /*m*/, q_dot_loss_tes_des_calc /*MWt*/, dens_store_htf_at_T_ave_calc /*kg/m3*/,
+            h_tank_calc /*m*/, d_tank_calc /*m*/, q_dot_loss_tes_des_calc /*MWt*/, dens_store_htf_at_T_ave_calc /*kg/m3*/,
             Q_tes_des_calc /*MWt-hr*/;
 
         c_HT_TES.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
-            d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
+            h_tank_calc, d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
 
             // CT TES
         double CT_V_tes_htf_avail_calc /*m3*/, CT_V_tes_htf_total_calc /*m3*/,
-            CT_d_tank_calc /*m*/, CT_q_dot_loss_tes_des_calc /*MWt*/, CT_dens_store_htf_at_T_ave_calc /*kg/m3*/,
+            CT_h_tank_calc /*m*/, CT_d_tank_calc /*m*/, CT_q_dot_loss_tes_des_calc /*MWt*/, CT_dens_store_htf_at_T_ave_calc /*kg/m3*/,
             CT_Q_tes_des_calc /*MWt-hr*/;
 
         c_CT_TES->get_design_parameters(CT_V_tes_htf_avail_calc, CT_V_tes_htf_total_calc,
-            CT_d_tank_calc, CT_q_dot_loss_tes_des_calc, CT_dens_store_htf_at_T_ave_calc,
+            CT_h_tank_calc, CT_d_tank_calc, CT_q_dot_loss_tes_des_calc, CT_dens_store_htf_at_T_ave_calc,
             CT_Q_tes_des_calc);
 
             // System

@@ -24,6 +24,8 @@ set(TCS_SRC
 		csp_solver_mspt_collector_receiver.cpp
 		csp_solver_mspt_receiver.cpp
 		csp_solver_mspt_receiver_222.cpp
+        csp_solver_NTHeatTrap_tes.cpp
+        csp_solver_packedbed_tes.cpp
 		csp_solver_pc_gen.cpp
 		csp_solver_pc_heat_sink.cpp
 		csp_solver_pc_ptes.cpp
@@ -32,6 +34,7 @@ set(TCS_SRC
 		csp_solver_pt_receiver.cpp
 		csp_solver_pt_sf_perf_interp.cpp
 		csp_solver_stratified_tes.cpp
+        csp_solver_tes_core.cpp
 		csp_solver_tou_block_schedules.cpp
 		csp_solver_trough_collector_receiver.cpp
 		csp_solver_two_tank_tes.cpp
@@ -117,6 +120,8 @@ set(TCS_SRC
 		csp_solver_mspt_collector_receiver.h
 		csp_solver_mspt_receiver.h
 		csp_solver_mspt_receiver_222.h
+        csp_solver_NTHeatTrap_tes.h
+        csp_solver_packedbed_tes.h
 		csp_solver_pc_gen.h
 		csp_solver_pc_heat_sink.h
 		csp_solver_pc_ptes.h
@@ -125,6 +130,7 @@ set(TCS_SRC
 		csp_solver_pt_receiver.h
 		csp_solver_pt_sf_perf_interp.h
 		csp_solver_stratified_tes.h
+        csp_solver_tes_core.h
 		csp_solver_trough_collector_receiver.h
 		csp_solver_two_tank_tes.h
 		csp_solver_util.h

@@ -827,7 +827,9 @@ public:
                 q_dot_pc_des,
                 c_fresnel.m_solar_mult,
                 Q_tes,
+                true,
                 as_double("h_tank"),
+                0.0,
                 as_double("u_tank"),
                 as_integer("tank_pairs"),
                 as_double("hot_tank_Thtr"),
@@ -1252,13 +1254,16 @@ public:
 
             // Storage
             double V_tes_htf_avail_calc /*m3*/, V_tes_htf_total_calc /*m3*/,
-                d_tank_calc /*m*/, q_dot_loss_tes_des_calc /*MWt*/, dens_store_htf_at_T_ave_calc /*kg/m3*/,
+                h_tank_calc /*m*/, d_tank_calc /*m*/,
+                q_dot_loss_tes_des_calc /*MWt*/, dens_store_htf_at_T_ave_calc /*kg/m3*/,
                 Q_tes_des_calc /*MWt-hr*/;
 
             storage.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
-                d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
+                h_tank_calc, d_tank_calc,
+                q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
 
-            double vol_min = V_tes_htf_total_calc * (storage.m_h_tank_min / storage.m_h_tank);
+
+            double vol_min = V_tes_htf_total_calc * (storage.m_h_tank_min / h_tank_calc);
             double tes_htf_min_temp = storage.get_min_storage_htf_temp() - 273.15;
             double tes_htf_max_temp = storage.get_max_storage_htf_temp() - 273.15;
             double tes_htf_dens = storage.get_storage_htf_density();
