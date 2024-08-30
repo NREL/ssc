@@ -222,18 +222,17 @@ static var_info _cm_vtab_trough_physical[] = {
     //{ SSC_INPUT,        SSC_NUMBER,      "T_tank_cold_ini",           "Initial cold tank fluid temperature",                                              "C",            "",               "TES",            "*",                      "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "h_tank_min",                "Minimum allowable HTF height in storage tank",                                     "m",            "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "init_hot_htf_percent",      "Initial fraction of avail. vol that is hot",                                       "%",            "",               "TES",            "*",                       "",                      "" },
-
+    { SSC_INPUT,        SSC_NUMBER,      "tes_n_tsteps",              "Number of subtimesteps (for NT and packed bed)",                                                           "",             "",               "TES",            "tes_type=2",              "",                      "" },
 
     // TES Norwich HeatTrap
     { SSC_INPUT,        SSC_NUMBER,      "tes_tank_thick",            "Tank wall thickness (used for Norwich HeatTrap)",                                  "m",            "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tes_tank_cp",               "Tank wall cp (used for Norwich HeatTrap)",                                         "kJ/kg-K",      "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tes_tank_dens",             "Tank wall thickness (used for Norwich HeatTrap)",                                  "kg/m3",        "",               "TES",            "tes_type=1",              "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "tes_NT_nstep",              "Number of time steps for energy balance (used for Norwich HeatTrap)",              "",             "",               "TES",            "?=1",                     "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "tes_NT_piston_loss_poly",   "Polynomial coefficients describing piston heat loss function (f(kg/s)=%)",         "",             "",               "TES",            "tes_type=1",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_tank_insul_percent",    "Percent additional wall mass due to insulation",                                   "%",            "",               "TES",            "?=0",                     "",                      "" },
 
     // TES Packed Bed
     { SSC_INPUT,        SSC_NUMBER,      "tes_pb_n_xsteps",           "Number of spatial segments",                                                       "",             "",               "TES",            "tes_type=2",              "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "tes_pb_n_tsteps",           "Number of subtimesteps",                                                           "",             "",               "TES",            "tes_type=2",              "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tes_pb_k_eff",              "TES packed bed effective conductivity",                                            "W/m K",        "",               "TES",            "tes_type=2",              "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tes_pb_void_frac",          "TES particle packed bed void fraction",                                            "",             "",               "TES",            "tes_type=2",              "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tes_pb_dens_solid",         "TES particle density",                                                             "kg/m3",        "",               "TES",            "tes_type=2",              "",                      "" },
@@ -243,7 +242,6 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "tes_pb_T_charge_min",       "Min charge temp",                                                                  "C",            "",               "TES",            "tes_type=2",              "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tes_pb_f_oversize",         "Packed bed oversize factor",                                                       "",             "",               "TES",            "tes_type=2",              "",                      "" },
 
-    { SSC_INPUT,        SSC_NUMBER,      "tes_tank_insul_percent",    "Percent additional wall mass due to insulation",                                   "%",            "",               "TES",            "?=0",                     "",                      "" },
 
     // Optional Component Initialization (state at start of first timestep)
         // Trough field
@@ -1425,8 +1423,8 @@ public:
         }
         else if (tes_type == 1)
         {
-
-            int nstep = as_integer("tes_NT_nstep");
+            // Get number of sub time steps
+            int nstep = as_integer("tes_n_tsteps");
 
             bool custom_tes_pipe_sizes = as_boolean("custom_tes_pipe_sizes");
             util::matrix_t<double> tes_lengths;
@@ -1555,7 +1553,7 @@ public:
                 as_double("T_loop_in_des"),                                         // [C] Initial temperature in cold storage cold
                 as_double("init_hot_htf_percent"),                                  // [%] Initial fraction of available volume that is hot
                 as_integer("tes_pb_n_xsteps"),                                      // number spatial sub steps
-                as_integer("tes_pb_n_tsteps"),                                      // number subtimesteps
+                as_integer("tes_n_tsteps"),                                      // number subtimesteps
                 as_double("tes_pump_coef"),                                         // [kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop 
                 as_double("tes_pb_k_eff"),                                          // [W/m K] Effective thermal conductivity
                 as_double("tes_pb_void_frac"),                                      // [] Packed bed void fraction
