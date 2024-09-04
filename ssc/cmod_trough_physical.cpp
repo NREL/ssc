@@ -92,8 +92,8 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "Row_Distance",              "Spacing between rows (centerline to centerline)",                                  "m",            "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_loop_in_des",             "Design loop inlet temperature",                                                    "C",            "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "T_loop_out",                "Target loop outlet temperature",                                                   "C",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_startup",                 "Required temperature of the system before the power block can be switched on",     "C",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_shutdown",                "Temperature when solar field begins recirculating",                                "C",            "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "T_startup",                 "Required temperature of the system before the power block can be switched on",     "C",            "",               "solar_field",    "?",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "T_shutdown",                "Temperature when solar field begins recirculating",                                "C",            "",               "solar_field",    "?",                       "",                      "" },
 
     { SSC_INPUT,        SSC_NUMBER,      "use_abs_or_rel_mdot_limit", "Use mass flow abs (0) or relative (1) limits",                                     "",             "",               "solar_field",    "?=0",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "m_dot_htfmin",              "Minimum loop HTF flow rate",                                                       "kg/s",         "",               "solar_field",    "use_abs_or_rel_mdot_limit=0",  "",                 "" },
@@ -206,9 +206,9 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_NUMBER,      "store_fluid",               "Material number for storage fluid",                                                "-",            "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "store_fl_props",            "User defined storage fluid property data",                                         "-",            "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tshours",                   "Equivalent full-load thermal storage hours",                                       "hr",           "",               "TES",            "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "is_h_tank_fixed",           "[1] Use fixed height (calculate diameter) [0] Use fixed diameter",                 "-",            "",               "TES",            "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "h_tank_in",                 "Total height of tank input (height of HTF when tank is full",                      "m",            "",               "TES",            "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "d_tank_in",                 "Tank diameter input",                                                              "m",            "",               "TES",            "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "is_h_tank_fixed",           "[1] Use fixed height (calculate diameter) [0] Use fixed diameter",                 "-",            "",               "TES",            "?=1",                     "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "h_tank_in",                 "Total height of tank input (height of HTF when tank is full",                      "m",            "",               "TES",            "is_h_tank_fixed=1",       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "d_tank_in",                 "Tank diameter input",                                                              "m",            "",               "TES",            "is_h_tank_fixed=0",       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "u_tank",                    "Loss coefficient from the tank",                                                   "W/m2-K",       "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tank_pairs",                "Number of equivalent tank pairs",                                                  "-",            "",               "TES",            "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "hot_tank_Thtr",             "Minimum allowable hot tank HTF temp",                                              "C",            "",               "TES",            "*",                       "",                      "" },
@@ -927,8 +927,21 @@ public:
                 double T_startup_old = max(T_startup_min, 0.67 * T_loop_in_des + 0.33 * T_loop_out_des); //[C]
                 //c_trough.m_T_startup = T_startup;                           //[C] The required temperature (converted to K in init) of the system before the power block can be switched on
 
-                c_trough.m_T_startup = as_double("T_startup");              //[C] The required temperature (converted to K in init) of the system before the power block can be switched on
-                c_trough.m_T_shutdown = as_double("T_shutdown");            //[C]
+                double T_startup = T_startup_old;
+                if (is_assigned("T_startup"))
+                {
+                    T_startup = as_double("T_startup");
+                }
+
+                double T_shutdown = T_startup;
+                if (is_assigned("T_shutdown"))
+                {
+                    T_shutdown = as_double("T_shutdown");
+                }
+
+
+                c_trough.m_T_startup = T_startup;            //[C] The required temperature (converted to K in init) of the system before the power block can be switched on
+                c_trough.m_T_shutdown = T_shutdown;            //[C]
 
                 c_trough.m_use_abs_or_rel_mdot_limit = as_integer("use_abs_or_rel_mdot_limit"); // Use mass flow abs (0) or relative (1) limits
                 c_trough.m_m_dot_htfmin_in = as_double("m_dot_htfmin");        //[kg/s] Minimum loop HTF flow rate
@@ -1338,6 +1351,9 @@ public:
                 tes_diams.assign(tes_diams_val, 1);
             }
 
+            double h_tank_in = is_assigned("h_tank_in") == true ? as_double("h_tank_in") : std::numeric_limits<double>::quiet_NaN();
+            double d_tank_in = is_assigned("d_tank_in") == true ? as_double("d_tank_in") : std::numeric_limits<double>::quiet_NaN();
+
             storage_two_tank = C_csp_two_tank_tes(
                 c_trough.m_Fluid,
                 c_trough.m_field_fl_props,
@@ -1347,8 +1363,8 @@ public:
                 c_trough.m_solar_mult,
                 as_double("P_ref") / as_double("eta_ref") * as_double("tshours"),
                 as_boolean("is_h_tank_fixed"),
-                as_double("h_tank_in"),
-                as_double("d_tank_in"),
+                h_tank_in,
+                d_tank_in,
                 as_double("u_tank"),
                 as_integer("tank_pairs"),
                 as_double("hot_tank_Thtr"),
@@ -1394,7 +1410,7 @@ public:
             storage_two_tank.mc_reported_outputs.assign(C_csp_two_tank_tes::E_W_DOT_HTF_PUMP, allocate("tes_htf_pump_power", n_steps_fixed), n_steps_fixed);
             storage_two_tank.mc_reported_outputs.assign(C_csp_two_tank_tes::E_VOL_TOT, allocate("vol_tes_tot", n_steps_fixed), n_steps_fixed);
             storage_two_tank.mc_reported_outputs.assign(C_csp_two_tank_tes::E_MASS_TOT, allocate("tes_mass_tot", n_steps_fixed), n_steps_fixed);
-            
+            storage_two_tank.mc_reported_outputs.assign(C_csp_two_tank_tes::E_HOT_TANK_HTF_PERC_FINAL, allocate("hot_tank_htf_percent_final", n_steps_fixed), n_steps_fixed);
         }
         else if (tes_type == 1)
         {
@@ -1437,7 +1453,9 @@ public:
             double mass_factor = 1.0 + (0.01 * as_double("tes_tank_insul_percent"));
             double dens_orig = as_double("tes_tank_dens");
             double dens_w_insulation = dens_orig * mass_factor;
-            
+
+            double h_tank_in = is_assigned("h_tank_in") == true ? as_double("h_tank_in") : std::numeric_limits<double>::quiet_NaN();
+            double d_tank_in = is_assigned("d_tank_in") == true ? as_double("d_tank_in") : std::numeric_limits<double>::quiet_NaN();
 
             storage_NT = C_csp_NTHeatTrap_tes(
                 c_trough.m_Fluid,
@@ -1448,8 +1466,8 @@ public:
                 c_trough.m_solar_mult,
                 as_double("P_ref") / as_double("eta_ref") * as_double("tshours"),
                 as_boolean("is_h_tank_fixed"),
-                as_double("h_tank_in"),
-                as_double("d_tank_in"),
+                h_tank_in,
+                d_tank_in,
                 as_double("u_tank"),
                 as_integer("tank_pairs"),
                 as_double("hot_tank_Thtr"),
@@ -1495,6 +1513,7 @@ public:
             storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_MASS_COLD_TANK, allocate("mass_tes_cold", n_steps_fixed), n_steps_fixed);
             storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_MASS_HOT_TANK, allocate("mass_tes_hot", n_steps_fixed), n_steps_fixed);
             storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_W_DOT_HTF_PUMP, allocate("tes_htf_pump_power", n_steps_fixed), n_steps_fixed);
+            storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_HOT_TANK_HTF_PERC_FINAL, allocate("hot_tank_htf_percent_final", n_steps_fixed), n_steps_fixed);
 
             storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_VOL_COLD, allocate("vol_tes_cold", n_steps_fixed), n_steps_fixed);
             storage_NT.mc_reported_outputs.assign(C_csp_NTHeatTrap_tes::E_VOL_HOT, allocate("vol_tes_hot", n_steps_fixed), n_steps_fixed);
