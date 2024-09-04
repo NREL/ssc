@@ -152,7 +152,7 @@ public:
         double k_eff_solid,                         // [W/m K] Solid effective thermal conductivity
         double void_frac,                           // [] Packed bed void fraction
         double dens_solid,                          // [kg/m3] solid specific heat 
-        double cp_solid,                            // [J/kg K] solid specific heat
+        double cp_solid,                            // [kJ/kg K] solid specific heat
         double T_hot_delta,                         // [C] Max allowable decrease in hot discharge temp
         double T_cold_delta,                        // [C] Max allowable increase in cold discharge temp
         double T_charge_min                         // [C] Min allowable charge temperature
