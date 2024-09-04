@@ -165,7 +165,7 @@ C_csp_packedbed_tes::C_csp_packedbed_tes(
     double k_eff,                                   // [W/m K] Effective thermal conductivity
     double void_frac,                               // [] Packed bed void fraction
     double dens_solid,                              // [kg/m3] solid specific heat 
-    double cp_solid,                                // [J/kg K] solid specific heat
+    double cp_solid,                                // [kJ/kg K] solid specific heat
     double T_hot_delta,                             // [C] Max allowable decrease in hot discharge temp
     double T_cold_delta,                            // [C] Max allowable increase in cold discharge temp
     double T_charge_min_C                           // [C] Min allowable charge temperature
@@ -175,7 +175,7 @@ C_csp_packedbed_tes::C_csp_packedbed_tes(
         m_size_type(size_type), m_h_tank_in(h_tank_in), m_d_tank_in(d_tank_in), m_f_oversize(f_oversize),
         m_f_V_hot_ini(f_V_hot_ini),
         m_n_xstep(n_xstep), m_n_subtimestep(n_subtimestep), m_tes_pump_coef(tes_pump_coef),
-        m_k_eff(k_eff), m_void_frac(void_frac), m_dens_solid(dens_solid), m_cp_solid(cp_solid),
+        m_k_eff(k_eff), m_void_frac(void_frac), m_dens_solid(dens_solid),
         m_T_hot_delta(T_hot_delta), m_T_cold_delta(T_cold_delta)
 {
     // Convert Temperature Units
@@ -184,6 +184,9 @@ C_csp_packedbed_tes::C_csp_packedbed_tes(
     m_T_tank_hot_ini = T_tank_hot_ini_C + 273.15;   //[K]
     m_T_tank_cold_ini = T_tank_cold_ini_C + 273.15; //[K]
     m_T_charge_min = T_charge_min_C + 273.15;       //[K]
+
+    // Convert Specific heat unit
+    m_cp_solid = cp_solid * 1e3;    //[J/kg K]
 
     // Set Subtimestep
     m_subtimestep_nominal = 3600.0 / m_n_subtimestep;   //[s]
