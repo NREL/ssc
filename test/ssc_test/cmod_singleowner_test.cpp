@@ -47,6 +47,72 @@ TEST_F(CMSingleOwner, ResidentialDefault_cmod_swh) {
 }
 
 
+TEST_F(CmodSingleOwnerTest, heat_electricity) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/FinancialModels/singleowner/Default_SO_10_IBI_PVWatts_Single_Owner_cmod_singleowner.json";
+    std::string file_outputs = SSCDIR;
+    file_outputs += "/test/input_json/FinancialModels/singleowner/Default_SO_10_IBI_PVWatts_Single_Owner_cmod_singleowner_outputs.json";
+    std::vector<std::string> compare_number_variables = { "ppa", "project_return_aftertax_npv", "lcoe_real", "lppa_nom" };
+    std::vector<std::string> compare_array_variables = { "cf_project_return_aftertax", "cf_annual_costs" };
+
+    //Test("singleowner", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+
+
+    std::string weather_file = "phoenix_az_33.450495_-111.983688_psmv3_60_tmy.csv";
+    char solar_resource_path[256];
+    std::string sWeatherFile = "%s/test/input_cases/general_data/" + weather_file;
+    int npvy1 = sprintf(solar_resource_path, sWeatherFile.c_str(), std::getenv("SSCDIR")); // TODO - update for robustness
+    std::ifstream file(file_inputs);
+    std::ostringstream tmp;
+    tmp << file.rdbuf();
+    file.close();
+    ssc_data_t dat_inputs = json_to_ssc_data(tmp.str().c_str());
+    ssc_data_set_string(dat_inputs, "solar_resource_file", solar_resource_path);
+
+    tmp.str("");
+    int errors = run_module(dat_inputs, "singleowner");
+
+    EXPECT_FALSE(errors);
+    if (!errors)
+    {
+        file.open(file_outputs);
+        tmp << file.rdbuf();
+        file.close();
+        ssc_data_t dat_outputs = json_to_ssc_data(tmp.str().c_str());
+        tmp.str("");
+
+        std::vector<ssc_number_t> values_to_compare(compare_number_variables.size());
+        std::vector<ssc_number_t> values_to_match(compare_number_variables.size());
+
+        std::vector< std::vector<ssc_number_t> > arrays_to_compare(compare_array_variables.size());
+        std::vector< std::vector<ssc_number_t> > arrays_to_match(compare_array_variables.size());
+
+        for (size_t i = 0; i < compare_number_variables.size(); i++) {
+            ssc_data_get_number(dat_inputs, compare_number_variables[i].c_str(), &values_to_compare[i]);
+            ssc_data_get_number(dat_outputs, compare_number_variables[i].c_str(), &values_to_match[i]);
+            if (!isnan(values_to_compare[i]) || !isnan(values_to_match[i]))
+                EXPECT_NEAR(values_to_compare[i], values_to_match[i], tolerance) << " number issue at index i=" << i << " for " << compare_number_variables[i];
+        }
+
+        int len_currentrun, len_comparerun;
+        for (size_t i = 0; i < compare_array_variables.size(); i++) {
+            auto pCurrentOutputs = ssc_data_get_array(dat_inputs, compare_array_variables[i].c_str(), &len_currentrun);
+            auto pCompareOutputs = ssc_data_get_array(dat_outputs, compare_array_variables[i].c_str(), &len_comparerun);
+            EXPECT_EQ(len_currentrun, len_comparerun) << " for " << compare_array_variables[i];
+            for (int j = 0; j < len_currentrun && j < len_comparerun; j++) {
+                EXPECT_NEAR(pCurrentOutputs[j], pCompareOutputs[j], tolerance) << " array issue at index i=" << i << " and array index j=" << j << " for " << compare_array_variables[i];
+            }
+        }
+
+        ssc_data_free(dat_outputs);
+        dat_outputs = nullptr;
+    }
+    ssc_data_free(dat_inputs);
+    dat_inputs = nullptr;
+}
+
+
+
 TEST_F(CmodSingleOwnerTest, ssc_1047) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/singleowner/Default_SO_10_IBI_PVWatts_Single_Owner_cmod_singleowner.json";
