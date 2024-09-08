@@ -282,7 +282,7 @@ public:
             for (int i = 0; i < num_cols; i++)
             {
                 const std::string col_name = trimboth(cols[i]);
-                if (name.length() > 0)
+                if (m_name.length() > 0)
                 {
                     std::string lowname = util::lower_case(col_name);
 

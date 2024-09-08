@@ -595,7 +595,7 @@ bool cm_battery_stateful::compute(handler_interface *handler, var_table *data) {
         log(e.err_text, SSC_ERROR, e.time);
         return false;
     } catch (std::exception &e) {
-        log("compute fail(" + name + "): " + e.what(), SSC_ERROR, -1);
+        log("compute fail(" + m_name + "): " + e.what(), SSC_ERROR, -1);
         return false;
     }
     return true;

@@ -85,7 +85,7 @@ bool compute_module::compute(handler_interface *handler, var_table *data) {
         log(e.err_text, SSC_ERROR, e.time);
         return false;
     } catch (std::exception &e) {
-        log("compute fail(" + name + "): " + e.what(), SSC_ERROR, -1);
+        log("compute fail(" + m_name + "): " + e.what(), SSC_ERROR, -1);
         return false;
     }
 
@@ -99,7 +99,7 @@ bool compute_module::evaluate() {
     for (std::size_t i = 0; i < table_length; i++) {
         if (ssc_equation_table[i].cmod == nullptr) continue;
         std::string row_compute_module_name = util::lower_case(ssc_equation_table[i].cmod);
-        std::size_t match = name.compare(row_compute_module_name);
+        std::size_t match = m_name.compare(row_compute_module_name);
 
         if (match == 0 && ssc_equation_table[i].auto_eval) {
             table_indices.push_back(i);
@@ -311,7 +311,8 @@ bool compute_module::verify(const std::string &phase, int check_var_type) {
                     ret =  false;
                 }
             }
-            else if (vi->ui_hint != "SKIP_CONSTRAINT_CHECK") // SAM issue 1733 added for depr_fed_sl_years and depr_sta_sl_years
+//            else if (vi->ui_hint != "SKIP_CONSTRAINT_CHECK") // SAM issue 1733 added for depr_fed_sl_years and depr_sta_sl_years
+            else if (vi->ui_hint && strcmp(vi->ui_hint, "SKIP_CONSTRAINT_CHECK") != 0) // SAM issue 1733 added for depr_fed_sl_years and depr_sta_sl_years
             { // SAM issue 1184 - if variable present check constraints even if not required - can check type. too.
                 if (var_data* dat = lookup(vi->name)) {
                     std::string fail_text;
@@ -408,7 +409,7 @@ bool compute_module::has_info(const std::string &name) {
     // otherwise search
     std::vector<var_info *>::iterator it;
     for (it = m_varlist.begin(); it != m_varlist.end(); ++it) {
-        if ((*it)->name == name)
+        if ((*it)->name == name.c_str())
             return true;
     }
     return false;
@@ -421,7 +422,34 @@ var_info *compute_module::info(int index) {
         return NULL;
 }
 
-const var_info &compute_module::info(const std::string &name) {
+/*
+const var_info& compute_module::info(const std::string& name) {
+    const char* cname = name.c_str();
+    return info(cname);
+}
+*/
+
+
+var_info *compute_module::info_editable(const char* name) {
+    // if there is an info lookup table, use it
+    if (m_infomap != NULL) {
+        unordered_map<std::string, var_info*>::iterator pos = m_infomap->find(name);
+        if (pos != m_infomap->end())
+            return (pos->second);
+    }
+
+    // otherwise search
+    std::vector<var_info*>::iterator it;
+    for (it = m_varlist.begin(); it != m_varlist.end(); ++it) {
+        if (strcmp((*it)->name, name) == 0)
+            return *it;
+    }
+
+    throw general_error("variable information lookup fail: '" + std::string(name) + "'");
+}
+
+
+const var_info &compute_module::info(const char *name) {
     // if there is an info lookup table, use it
     if (m_infomap != NULL) {
         unordered_map<std::string, var_info *>::iterator pos = m_infomap->find(name);
@@ -432,11 +460,11 @@ const var_info &compute_module::info(const std::string &name) {
     // otherwise search
     std::vector<var_info *>::iterator it;
     for (it = m_varlist.begin(); it != m_varlist.end(); ++it) {
-        if ((*it)->name == name)
+        if (strcmp((*it)->name,name) == 0)
             return *(*it);
     }
 
-    throw general_error("variable information lookup fail: '" + name + "'");
+    throw general_error("variable information lookup fail: '" + std::string(name) + "'");
 }
 
 bool compute_module::is_ssc_array_output(const std::string &name) {
@@ -497,12 +525,12 @@ util::matrix_t<ssc_number_t> &compute_module::allocate_matrix(const std::string 
     return v->num;
 }
 
-ssc_number_t* compute_module::resize_array(const std::string& name, size_t length) {
-    return m_vartab->resize_array(name, length);
+ssc_number_t* compute_module::resize_array(const std::string& _name, size_t length) {
+    return m_vartab->resize_array(_name, length);
 }
 
-ssc_number_t* compute_module::resize_matrix(const std::string& name, size_t n_rows, size_t n_cols) {
-    return m_vartab->resize_matrix(name, n_rows, n_cols);
+ssc_number_t* compute_module::resize_matrix(const std::string& _name, size_t n_rows, size_t n_cols) {
+    return m_vartab->resize_matrix(_name, n_rows, n_cols);
 }
 
 var_data &compute_module::value(const std::string &name) {
@@ -639,7 +667,7 @@ bool compute_module::check_required(const std::string &name) {
     // only check if the variable is required as input to the simulation context
     // if it is an input or an inout variable
 
-    const var_info &inf = info(name);
+    const var_info &inf = info(name.c_str());
     if (inf.required_if == NULL || strlen(inf.required_if) == 0)
         return false;
 
@@ -773,7 +801,7 @@ bool compute_module::check_required(const std::string &name) {
 bool compute_module::check_constraints(const std::string &name, std::string &fail_text) {
 #define fail_constraint(str) { fail_text = "fail("+name+", "+expr+"): "+std::string(str); return false; }
 
-    const var_info &inf = info(name);
+    const var_info &inf = info(name.c_str());
 
     if (inf.constraints == NULL) return true; // pass if no constraints defined
 

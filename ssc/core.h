@@ -181,8 +181,8 @@ public:
 	compute_module( ); // cannot be created directly - has a pure virtual function
 	virtual ~compute_module();
 
-	void set_name(const std::string &n) { name = n; }
-	std::string get_name() { return name; }
+	void set_name(const std::string &n) { m_name = n; }
+	std::string get_name() { return m_name; }
 	bool update( const std::string &current_action, float percent_done, float time=-1.0 );
 	void log( const std::string &msg, int type=SSC_NOTICE, float time=-1.0 );
 	bool extproc( const std::string &command, const std::string &workdir );
@@ -213,7 +213,7 @@ public:
 
 protected:
 
-    std::string name;
+    std::string m_name;
 
     /* these members are take values only during a call to 'compute(..)'
   and are NULL otherwise */
@@ -234,8 +234,10 @@ protected:
 
 public:
 	/* for working with input/output/inout variables during 'compute'*/
-	const var_info &info( const std::string &name );
-	bool is_ssc_array_output( const std::string &name );
+    //const var_info& info(const std::string& name);
+    var_info* info_editable(const char* name);
+    const var_info& info(const char* name);
+    bool is_ssc_array_output( const std::string &name );
 	var_data *lookup( const std::string &name );
     var_data *assign( const std::string &name, const var_data &value );
     void unassign( const std::string& name);

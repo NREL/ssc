@@ -1101,6 +1101,13 @@ SSCEXPORT const ssc_info_t ssc_module_var_info( ssc_module_t p_mod, int index )
 	return static_cast<ssc_info_t>( cm->info( index ) );
 }
 
+SSCEXPORT const ssc_info_t ssc_module_var_info_by_name(ssc_module_t p_mod, const char* name)
+{
+    compute_module* cm = static_cast<compute_module*>(p_mod);
+    if (!cm) return 0;
+    return static_cast<ssc_info_t>(cm->info_editable(name));
+}
+
 SSCEXPORT int ssc_info_var_type( ssc_info_t p_inf )
 {
 	var_info *vi = static_cast<var_info*>(p_inf);

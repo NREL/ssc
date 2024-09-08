@@ -103,7 +103,13 @@ TEST_F(CmodSingleOwnerTest, heat_electricity) {
                 EXPECT_NEAR(pCurrentOutputs[j], pCompareOutputs[j], tolerance) << " array issue at index i=" << i << " and array index j=" << j << " for " << compare_array_variables[i];
             }
         }
-
+        int agen_len;
+        auto agen = ssc_data_get_array(dat_outputs, "gen", &agen_len);
+        // test output
+        auto cm = ssc_module_create("singleowner");
+        auto agenlabel = ssc_module_var_info_by_name(cm, "gen"); // add for heat_in_financials
+        ssc_module_free(cm);
+ //       EXPECT_FALSE(1==1) << " 'gen' label is " << ssc_info_label( agenlabel);
         ssc_data_free(dat_outputs);
         dat_outputs = nullptr;
     }
