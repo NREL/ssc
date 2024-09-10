@@ -55,7 +55,7 @@ GTEST_API_ int main(int argc, char **argv) {
     //    filter to include
  //   ::testing::GTEST_FLAG(filter) = "CmodHybridTest.GenericPVWattsWindFuelCellBatteryHybrid_SingleOwner";
 //    ::testing::GTEST_FLAG(filter) = "CmodHybridTest.PVWattsv8Wind*";
-    //   ::testing::GTEST_FLAG(filter) = "CmodSingleOwnerTest.heat_electricity";
+ //      ::testing::GTEST_FLAG(filter) = "CmodSingleOwnerTest.heat_electricity";
 //    ::testing::GTEST_FLAG(filter) = "CmodSingleOwnerTest.ssc_1047";
     //::testing::GTEST_FLAG(filter) = "CmodHybridTest*";
 

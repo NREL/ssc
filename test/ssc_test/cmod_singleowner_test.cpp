@@ -70,7 +70,14 @@ TEST_F(CmodSingleOwnerTest, heat_electricity) {
     ssc_data_set_string(dat_inputs, "solar_resource_file", solar_resource_path);
 
     tmp.str("");
-    int errors = run_module(dat_inputs, "singleowner");
+
+    auto cm = ssc_module_create("singleowner");
+
+    ssc_data_set_number(dat_inputs, "financial_generation_type", 1); // change labels at runtime
+
+    int errors = (ssc_module_exec(cm, dat_inputs) == 0);
+
+//    int errors = run_module(dat_inputs, "singleowner");
 
     EXPECT_FALSE(errors);
     if (!errors)
@@ -106,10 +113,9 @@ TEST_F(CmodSingleOwnerTest, heat_electricity) {
         int agen_len;
         auto agen = ssc_data_get_array(dat_outputs, "gen", &agen_len);
         // test output
-        auto cm = ssc_module_create("singleowner");
         auto agenlabel = ssc_module_var_info_by_name(cm, "gen"); // add for heat_in_financials
         ssc_module_free(cm);
- //       EXPECT_FALSE(1==1) << " 'gen' label is " << ssc_info_label( agenlabel);
+        EXPECT_FALSE(1==1) << " 'gen' label is " << ssc_info_label( agenlabel) << ", units=" << ssc_info_units( agenlabel);
         ssc_data_free(dat_outputs);
         dat_outputs = nullptr;
     }

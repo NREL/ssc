@@ -940,14 +940,14 @@ public:
         if (is_assigned("en_electricity_rates") && as_number("en_electricity_rates") == 0 && as_number("ppa_soln_mode") == 0)
             throw exec_error("singleowner", "PPA price from which to calculate parasitic load costs is not specified. Check inputs for Revenue and Electricity Purchases.");
 
-        /*
-        // testing heat labeling
+        
+        // testing heat labeling at runtime with no constructor modifications
         if (as_integer("financial_generation_type") == 1) {
-            auto var_info_label = info_editable("financial_generation_type");
+            auto var_info_label = info_editable("gen");
             var_info_label->label = "heat to or from the grid";
             var_info_label->units = "kWt";
         }
-        */
+        
 		// cash flow initialization
 		int nyears = as_integer("analysis_period");
 		cf.resize_fill(CF_max, nyears + 1, 0.0);
