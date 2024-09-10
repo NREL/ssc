@@ -99,7 +99,7 @@ namespace geothermal
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// GETEM Physics and general equations
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	const bool IMITATE_GETEM = false; 
+	const bool IMITATE_GETEM = true;
 	const double GETEM_FT_IN_METER = (IMITATE_GETEM) ? 3.28083 : physics::FT_PER_METER; // feet per meter - largest source of discrepancy
 	//const double GETEM_PSI_PER_BAR = (IMITATE_GETEM) ? 14.50377 : physics::PSI_PER_BAR; // psi per bar
     const double GETEM_PSI_PER_BAR = 14.50377; // psi per bar
@@ -1567,6 +1567,7 @@ double CGeothermalAnalyzer::GetNumberOfWells(void)
         }
 
         if (mp_geo_out->md_NumberOfWellsInj < 0) mp_geo_out->md_NumberOfWellsInj = 0;
+        if (mp_geo_out->md_NumberOfWells < 0) mp_geo_out->md_NumberOfWells = 0;
 	}
 
 	return mp_geo_out->md_NumberOfWells;
