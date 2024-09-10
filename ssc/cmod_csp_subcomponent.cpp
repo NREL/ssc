@@ -50,8 +50,8 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_INPUT,        SSC_ARRAY,       "hot_tank_bypassed",         "Is mass flow from source going straight to cold tank?",                            "-",            "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "T_src_out",                 "Temperature from heat source",                                                     "C",            "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "T_sink_out",                "Temperature from heat sink or power block",                                        "C",            "",               "TES",            "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_tank_hot_ini",            "Temperature of fluid in hot tank at beginning of step",                            "C",            "",               "TES",            "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "T_tank_cold_ini",           "Temperature of fluid in cold tank at beginning of step",                           "C",            "",               "TES",            "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "T_tank_hot_ini",            "Temperature of fluid in hot tank at beginning of step",                            "C",            "",               "TES",            "",                        "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "T_tank_cold_ini",           "Temperature of fluid in cold tank at beginning of step",                           "C",            "",               "TES",            "",                        "",                      "" },
 
 
     // TES
@@ -63,9 +63,9 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_INPUT,        SSC_NUMBER,      "eta_ref",                   "Power cycle efficiency at design",                                                 "none",         "",               "powerblock",     "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "solar_mult",                "Actual solar multiple of system",                                                  "-",            "",               "system",         "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tshours",                   "Equivalent full-load thermal storage hours",                                       "hr",           "",               "TES",            "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "is_h_tank_fixed",           "[1] Use fixed height (calculate diameter) [0] Use fixed diameter",                 "-",            "",               "TES",            "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "h_tank_in",                    "Total height of tank (height of HTF when tank is full",                            "m",            "",               "TES",            "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "d_tank_in",                 "Tank diameter input",                                                              "m",            "",               "TES",            "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "is_h_tank_fixed",           "[1] Use fixed height (calculate diameter) [0] Use fixed diameter",                 "-",            "",               "TES",            "?=1",                     "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "h_tank_in",                    "Total height of tank (height of HTF when tank is full",                         "m",            "",               "TES",            "is_h_tank_fixed=1",       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "d_tank_in",                 "Tank diameter input",                                                              "m",            "",               "TES",            "is_h_tank_fixed=0",       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "u_tank",                    "Loss coefficient from the tank",                                                   "W/m2-K",       "",               "TES",            "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tank_pairs",                "Number of equivalent tank pairs",                                                  "-",            "",               "TES",            "*",                       "INTEGER",               "" },
     { SSC_INPUT,        SSC_NUMBER,      "hot_tank_Thtr",             "Minimum allowable hot tank HTF temp",                                              "C",            "",               "TES",            "*",                       "",                      "" },
@@ -170,12 +170,6 @@ public:
     {
         int tes_type = as_integer("tes_type");
 
-        double_vec hot = as_vector_double("T_src_out");
-        double_vec cold = as_vector_double("T_sink_out");
-        double hot_des = as_double("T_loop_out");
-        double cold_des = as_double("T_loop_in_des");
-        
-
         util::matrix_t<double> tes_lengths;
         if (is_assigned("tes_lengths")) {
             tes_lengths = as_matrix("tes_lengths");               //[m]
@@ -198,6 +192,12 @@ public:
         // Two Tank
         if (tes_type == 0)
         {
+            double T_tank_hot_ini = is_assigned("T_tank_hot_ini") == true ? as_double("T_tank_hot_ini") : as_double("T_loop_out");
+            double T_tank_cold_ini = is_assigned("T_tank_cold_ini") == true ? as_double("T_tank_cold_ini") : as_double("T_loop_in_des");
+
+            double h_tank_in = is_assigned("h_tank_in") == true ? as_double("h_tank_in") : std::numeric_limits<double>::quiet_NaN();
+            double d_tank_in = is_assigned("d_tank_in") == true ? as_double("d_tank_in") : std::numeric_limits<double>::quiet_NaN();
+
             storage_two_tank = C_csp_two_tank_tes(
                 as_integer("Fluid"),                                                // [-] field fluid identifier
                 as_matrix("field_fl_props"),                                        // [-] field fluid properties
@@ -207,8 +207,8 @@ public:
                 as_double("solar_mult"),                                            // [-] the max design heat rate as a fraction of the nominal
                 as_double("P_ref") / as_double("eta_ref") * as_double("tshours"),   // [MWt-hr] design storage capacity
                 as_boolean("is_h_tank_fixed"),                                      // Use input height
-                as_double("h_tank_in"),                                             // [m] tank height input
-                as_double("d_tank_in"),                                             // [m] tank diameter input
+                h_tank_in,                                                          // [m] tank height input
+                d_tank_in,                                                          // [m] tank diameter input
                 as_double("u_tank"),                                                // [W/m^2-K]
                 as_integer("tank_pairs"),                                           // [-]
                 as_double("hot_tank_Thtr"),                                         // [C] convert to K in init()
@@ -218,8 +218,8 @@ public:
                 as_double("dt_hot"),                                                // [C] Temperature difference across heat exchanger - assume hot and cold deltaTs are equal
                 as_double("T_loop_in_des"),                                         // [C] convert to K in init()
                 as_double("T_loop_out"),                                            // [C] convert to K in init()
-                as_double("T_tank_hot_ini"),                                        // [C] Initial temperature in hot storage tank
-                as_double("T_tank_cold_ini"),                                       // [C] Initial temperature in cold storage cold
+                T_tank_hot_ini,                                                     // [C] Initial temperature in hot storage tank
+                T_tank_cold_ini,                                                    // [C] Initial temperature in cold storage cold
                 as_double("h_tank_min"),                                            // [m] Minimum allowable HTF height in storage tank
                 as_double("init_hot_htf_percent"),                                  // [%] Initial fraction of available volume that is hot
                 as_double("pb_pump_coef"),                                          // [kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle
@@ -273,6 +273,12 @@ public:
             double dens_orig = as_double("tes_tank_dens");
             double dens_w_insulation = dens_orig * mass_factor;
 
+            double T_tank_hot_ini = is_assigned("T_tank_hot_ini") == true ? as_double("T_tank_hot_ini") : as_double("T_loop_out");
+            double T_tank_cold_ini = is_assigned("T_tank_cold_ini") == true ? as_double("T_tank_cold_ini") : as_double("T_loop_in_des");
+
+            double h_tank_in = is_assigned("h_tank_in") == true ? as_double("h_tank_in") : std::numeric_limits<double>::quiet_NaN();
+            double d_tank_in = is_assigned("d_tank_in") == true ? as_double("d_tank_in") : std::numeric_limits<double>::quiet_NaN();
+
             storage_NT = C_csp_NTHeatTrap_tes(
                 as_integer("Fluid"),                                                // [-] field fluid identifier
                 as_matrix("field_fl_props"),                                        // [-] field fluid properties
@@ -281,9 +287,9 @@ public:
                 as_double("P_ref") / as_double("eta_ref"),                          // [MWt] Design heat rate in and out of tes
                 as_double("solar_mult"),                                            // [-] the max design heat rate as a fraction of the nominal
                 as_double("P_ref") / as_double("eta_ref") * as_double("tshours"),   // [MWt-hr] design storage capacity
-                true,   // use input height                                         // Use input height
-                as_double("h_tank_in"),                                                // [m] tank height input
-                0.0,    // no input diameter                                        // [m] tank diameter input
+                as_boolean("is_h_tank_fixed"),                                      // Use input height
+                h_tank_in,                                                          // [m] tank height input
+                d_tank_in,                                                          // [m] tank diameter input
                 as_double("u_tank"),                                                // [W/m^2-K]
                 as_integer("tank_pairs"),                                           // [-]
                 as_double("hot_tank_Thtr"),                                         // [C] convert to K in init()
@@ -292,8 +298,8 @@ public:
                 as_double("cold_tank_max_heat"),                                    // [MW]
                 as_double("T_loop_in_des"),                                         // [C] convert to K in init()
                 as_double("T_loop_out"),                                            // [C] convert to K in init()
-                as_double("T_tank_hot_ini"),                                        // [C] Initial temperature in hot storage tank
-                as_double("T_tank_cold_ini"),                                       // [C] Initial temperature in cold storage cold
+                T_tank_hot_ini,                                                     // [C] Initial temperature in hot storage tank
+                T_tank_cold_ini,                                                    // [C] Initial temperature in cold storage cold
                 as_double("h_tank_min"),                                            // [m] Minimum allowable HTF height in storage tank
                 as_double("init_hot_htf_percent"),                                  // [%] Initial fraction of available volume that is hot
                 as_double("pb_pump_coef"),                                          // [kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle

@@ -236,7 +236,7 @@ ssc_data_t trough_physical_defaults()
     ssc_data_set_matrix(data, "store_fl_props", p_store_fl_props, 1, 1);
     ssc_data_set_number(data, "is_hx", 1);
     ssc_data_set_number(data, "tshours", 6);
-    ssc_data_set_number(data, "h_tank", 12);
+    ssc_data_set_number(data, "h_tank_in", 12);
     ssc_data_set_number(data, "u_tank", 0.40000000000000002);
     ssc_data_set_number(data, "tank_pairs", 1);
     ssc_data_set_number(data, "hot_tank_Thtr", 365);
