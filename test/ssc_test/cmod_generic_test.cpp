@@ -137,3 +137,27 @@ TEST_F(CMGeneric, CommericalWithBatteryWrongSizes)
 	EXPECT_TRUE(run_module(data, "battery"));
 }
 */
+
+
+TEST_F(CMGeneric, precheck_exception)
+{
+    generic_commerical_battery_60min(data);
+
+//    ssc_data_unassign(data, "conv_eff"); // succeeds because default value given - so why was hybrid test failing
+    auto cm = ssc_module_create("generic_system");
+//    ssc_data_set_number(data, "annual_fuel_usages", 10000);
+//    auto vi = (var_info*)ssc_module_var_info_by_name(cm, "annual_fuel_usage");
+//    vi->required_if = "*"; // const ref - can setup a ssc_var_info_set_required_if if we want this functionality
+
+    int errors = (ssc_module_exec(cm, data) == 0);
+    EXPECT_FALSE(errors);
+    ssc_module_free(cm);
+
+    EXPECT_TRUE(run_module(data, "generic_system")==0); // why is run_module setup to return false opposite of ssc_module_exec?
+    EXPECT_TRUE(run_module(data, "battery") == 0);
+//    EXPECT_TRUE(run_module(data, "cashloan") == 0); // inputs not setup
+    ssc_number_t fuel_usage;
+    ssc_data_get_number(data, "annual_fuel_usage", &fuel_usage);
+    EXPECT_FALSE(1 == 1) << "fuel usage = " << fuel_usage; //   1295317185.1899889, unassigned = same - why? 
+
+}
