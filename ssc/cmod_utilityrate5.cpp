@@ -415,6 +415,8 @@ void rate_setup::setup(var_table* vt, int num_recs_yearly, size_t nyears, rate_d
     rate.enable_nm = (metering_option == 0 || metering_option == 1);
     rate.nm_credits_w_rollover = (vt->as_integer("ur_metering_option") == 0);
     rate.net_metering_credit_month = (int)vt->as_number("ur_nm_credit_month");
+    rate.nb_credit_expire = vt->as_boolean("ur_nb_credit_expire");
+    rate.nb_apply_credit_current_month = vt->as_boolean("ur_nb_apply_credit_current_month");
     rate.nm_credit_sell_rate = vt->as_number("ur_nm_yearend_sell_rate");
 
     ssc_number_t* ratchet_matrix = NULL; ssc_number_t* bd_tou_matrix = NULL;
@@ -2235,6 +2237,10 @@ public:
 		//int metering_option = as_integer("ur_metering_option");
 		bool excess_monthly_dollars = (as_integer("ur_metering_option") == 3);
 		int excess_dollars_credit_month = (int)as_number("ur_nm_credit_month");
+        // Do our credits expire at the end of year
+        bool nb_credit_expire = as_boolean("ur_nb_credit_expire"); 
+        // Do we wish to apply our credits in the month they are earned
+        bool nb_apply_credit_current_month = as_boolean("ur_nb_apply_credit_current_month"); 
 
         rate.tou_demand_single_peak = (as_integer("TOU_demand_single_peak") == 1);
 
@@ -2321,48 +2327,48 @@ public:
 // main loop
 		c = 0; // hourly count
 		// process one timestep at a time
-		for (m = 0; m < 12; m++)
+		for (m = 0; m < 12; m++) // for each month
 		{
-			ur_month& curr_month = rate.m_month[m];
-			monthly_surplus_energy = 0;
+			ur_month& curr_month = rate.m_month[m]; 
+			monthly_surplus_energy = 0;                 
 			monthly_deficit_energy = 0;
             if (ur_ec_hourly_acc_period == 1) {
                 surplus_tier = 0;
                 deficit_tier = 0;
             }
 
-			for (d = 0; d<util::nday[m]; d++)
+			for (d = 0; d<util::nday[m]; d++) // for each day
 			{
 				daily_surplus_energy = 0;
 				daily_deficit_energy = 0;
-                if (ur_ec_hourly_acc_period == 2) {
+                if (ur_ec_hourly_acc_period == 2) { // This will never happen because we set it to 1 above
                     surplus_tier = 0;
                     deficit_tier = 0;
                 }
-				for (h = 0; h<24; h++)
+				for (h = 0; h<24; h++) // for each hour
 				{
-					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
+					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++) // as far as I can tell given an hour usage profile, etc, this should be a single iteration
 					{
 						// energy charge
-						if (ec_enabled)
+						if (ec_enabled)         // Also always true, "energy charge enabled", 
 						{
 							int row = rate.get_tou_row(c, m);
 
                             step_surplus_energy = 0.0;
                             step_deficit_energy = 0.0;
 
-							if (e_in[c] >= 0.0)
+							if (e_in[c] >= 0.0) // If we have money earned
 							{ // calculate income or credit
                                 e_upper = curr_month.ec_tou_ub.at(row, surplus_tier); // Have to check this each step to swap between surplus and deficit
 								monthly_surplus_energy += e_in[c];
 								daily_surplus_energy += e_in[c];
 
 								// base period charge on units specified
-								ssc_number_t energy_surplus = e_in[c];
+								ssc_number_t energy_surplus = e_in[c];              
 								ssc_number_t cumulative_energy = e_in[c];
-								if (ur_ec_hourly_acc_period == 1)
+								if (ur_ec_hourly_acc_period == 1)                   // Always 1
 									cumulative_energy = monthly_surplus_energy;
-								else if (ur_ec_hourly_acc_period == 2)
+								else if (ur_ec_hourly_acc_period == 2)              // Never taken
 									cumulative_energy = daily_surplus_energy;
 
 
@@ -2381,15 +2387,15 @@ public:
                                 }
 
                                 // Fall back to TOU rates if m_ec_ts_sell_rate.size() is too small
-                                if (tier_credit == 0) {
-                                    if (cumulative_energy <= e_upper) {
-                                        tier_energy = energy_surplus;
+                                if (tier_credit == 0) {         // So AFAICT this is to make sure we don't compute both time step and TOU. Maybe better as an else?
+                                    if (cumulative_energy <= e_upper) { // If we are within the max usage for the tier, then it's a simple multiply
+                                        tier_energy = energy_surplus;   // of our usage with that rate  and the escalator
                                         sr = curr_month.ec_tou_sr.at(row, surplus_tier);
 
                                         tier_credit = tier_energy * sr * rate_esc;
                                         curr_month.ec_energy_surplus.at(row, surplus_tier) += (ssc_number_t)tier_energy;
                                     }
-                                    else {
+                                    else {  // Otherwise, we need to handle that the electricity is being sold at different rates
                                         bool break_tier_loop = false;
                                         while (cumulative_energy > e_upper) {
                                             step_surplus_energy = energy_surplus - (cumulative_energy - e_upper); // Subtract amount above the tier to find amount in this tier
@@ -2428,7 +2434,7 @@ public:
 								credit_amt = tier_credit;
 
 
-								if (excess_monthly_dollars)
+								if (excess_monthly_dollars) // NB with carryover to next month
 								{
 									monthly_cumulative_excess_dollars[m] += credit_amt;
 								}
@@ -2447,10 +2453,10 @@ public:
                                     }
 								}
 							}
-							else
+							else // Same calc but with spending money
 							{ // calculate payment or charge
                                 e_upper = curr_month.ec_tou_ub.at(row, deficit_tier); // Have to check this each step to swap between surplus and deficit
-								monthly_deficit_energy -= e_in[c];
+								monthly_deficit_energy -= e_in[c];          
 								daily_deficit_energy -= e_in[c];
 								double charge_amt = 0;
 								double energy_deficit = -e_in[c];
@@ -2555,38 +2561,44 @@ public:
 
 			// Calculate monthly bill (before minimums and fixed charges) and excess kwhs and rollover
 
-			monthly_bill[m] = monthly_ec_charges[m] + rate.monthly_dc_fixed[m] + rate.monthly_dc_tou[m];
+			monthly_bill[m] = monthly_ec_charges[m] + rate.monthly_dc_fixed[m] + rate.monthly_dc_tou[m]; // This code seems unnecessary, it is repeated verbatim below
 
 			excess_dollars_earned[m] = monthly_cumulative_excess_dollars[m];
 
 
 			ssc_number_t dollars_applied = 0;
 			// apply previous month rollover kwhs
-			if (excess_monthly_dollars)
+			if (excess_monthly_dollars) // If in net billing with carrover to next month
 			{
                 // Overwrite this to include the current month's charges
                 monthly_ec_charges_gross[m] = monthly_ec_charges[m];
-				if (m == 0 && excess_dollars_credit_month != 11) {
-					monthly_ec_charges[m] -= prev_excess_dollars;
+				if (m == 0 && excess_dollars_credit_month != 11) { // If start of the year and the rollover month not december
+					monthly_ec_charges[m] -= prev_excess_dollars;   // prev_excess dollars is the value of the credit coming in from last year
 					payment[c - 1] -= prev_excess_dollars;
 					dollars_applied += prev_excess_dollars;
 				}
-				else if (m > 0 && m != excess_dollars_credit_month + 1)
+				else if (m > 0 && m != excess_dollars_credit_month + 1) // If during the middle of the year and the rollover month not the prior month
 				{
 					monthly_ec_charges[m] -= monthly_cumulative_excess_dollars[m - 1];
 					payment[c - 1] -= monthly_cumulative_excess_dollars[m - 1];
 					dollars_applied += monthly_cumulative_excess_dollars[m - 1];
 				}
+                if (nb_apply_credit_current_month) {
+                    monthly_ec_charges[m] -= monthly_cumulative_excess_dollars[m];
+                    payment[c - 1] -= monthly_cumulative_excess_dollars[m];
+                    dollars_applied += monthly_cumulative_excess_dollars[m];
+                    monthly_cumulative_excess_dollars[m] = 0;
+                }
                 // Rollover credits at end of true-up period are applied after annual minimums below this section
 
-                if (monthly_ec_charges[m] < 0)
+                if (monthly_ec_charges[m] < 0)  // If this brings the monthly energy charges negative, then
                 {
-                    payment[c - 1] -= monthly_ec_charges[m];
-                    dollars_applied += monthly_ec_charges[m];
-                    monthly_cumulative_excess_dollars[m] -= monthly_ec_charges[m];
+                    payment[c - 1] -= monthly_ec_charges[m]; // Add the magnitude of the negative amount to the last hour of the month
+                    dollars_applied += monthly_ec_charges[m];// Subtract the magnitude of the negative amount from the dollars applied
+                    monthly_cumulative_excess_dollars[m] -= monthly_ec_charges[m]; //add in the magnitude of the negative amount to the cumulative excess for this month
 					monthly_ec_charges[m] = 0;
 				}
-
+                // I'm pretty sure this branch can't be taken. 
                 if (monthly_ec_charges_gross[m] < dollars_applied) dollars_applied = monthly_ec_charges_gross[m];
                 net_billing_credits[m] = dollars_applied;
 			}
@@ -2645,17 +2657,19 @@ public:
 									}
 								}
 							}
-
-							if (m == excess_dollars_credit_month)
-							{
-								// apply annual rollovers AFTER minimum calculations
-								if (excess_monthly_dollars && (monthly_cumulative_excess_dollars[m] > 0))
-								{
-									income[c] += monthly_cumulative_excess_dollars[m];
-									monthly_bill[m] -= monthly_cumulative_excess_dollars[m];
-                                    monthly_true_up_credits[m] = monthly_cumulative_excess_dollars[m];
-								}
-							}
+                            if (!nb_credit_expire)
+                            {
+                                if (m == excess_dollars_credit_month)
+                                {
+                                    // apply annual rollovers AFTER minimum calculations
+                                    if (excess_monthly_dollars && (monthly_cumulative_excess_dollars[m] > 0))
+                                    {
+                                        income[c] += monthly_cumulative_excess_dollars[m];
+                                        monthly_bill[m] -= monthly_cumulative_excess_dollars[m];
+                                        monthly_true_up_credits[m] = monthly_cumulative_excess_dollars[m];
+                                    }
+                                }
+                            }
 							monthly_bill[m] += monthly_fixed_charges[m] + monthly_minimum_charges[m];
 						}
 						revenue[c] = income[c] - payment[c];

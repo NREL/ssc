@@ -1015,13 +1015,12 @@ var_info vtab_utility_rate_common[] = {
     { SSC_INPUT,        SSC_ARRAY,      "rate_escalation",          "Annual electricity rate escalation",          "%/year",   "",                     "Electricity Rates",        "?=0",              "",                             "SIMULATION_PARAMETER" },
                                                                                                                    
     { SSC_INPUT,        SSC_NUMBER,     "ur_metering_option",       "Metering options",                            "0=net energy metering,1=net energy metering with $ credits,2=net billing,3=net billing with carryover to next month,4=buy all - sell all", // continued on next row
-                                                                                                                               "Net metering monthly excess","Electricity Rates",  "?=0",              "INTEGER,MIN=0,MAX=4",          "SIMULATION_PARAMETER" },
-                                                                                                                    
-    { SSC_INPUT,        SSC_NUMBER,     "ur_nm_yearend_sell_rate",  "Net metering true-up credit sell rate",       "$/kWh",    "",                     "Electricity Rates",        "?=0.0",            "",                             "SIMULATION_PARAMETER" },
-    { SSC_INPUT,        SSC_NUMBER,     "ur_nm_credit_month",       "Month of year end payout (true-up)",          "mn",       "",                     "Electricity Rates",        "?=11",             "INTEGER,MIN=0,MAX=11",         "SIMULATION_PARAMETER" },
-    { SSC_INPUT,        SSC_NUMBER,     "ur_nm_credit_rollover",    "Apply net metering true-up credits to future bills", "0/1", "0=disable,1=enable", "Electricity Rates",        "?=0",              "INTEGER,MIN=0,MAX=1",          "SIMULATION_PARAMETER" },
-    { SSC_INPUT,        SSC_NUMBER,     "ur_monthly_fixed_charge",  "Monthly fixed charge",                        "$",        "",                     "Electricity Rates",        "?=0.0",            "",                             "SIMULATION_PARAMETER" },
-
+    { SSC_INPUT,        SSC_NUMBER,     "ur_nm_yearend_sell_rate",  "Net metering true-up credit sell rate", "$/kWh",    "",                     "Electricity Rates",        "?=0.0",            "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,     "ur_nm_credit_month",       "Month of year end payout (true-up)",    "mn",       "",                     "Electricity Rates",        "?=11",             "INTEGER,MIN=0,MAX=11",         "" },
+    { SSC_INPUT,        SSC_NUMBER,     "ur_nm_credit_rollover",    "Apply net metering true-up credits to future bills", "0/1", "0=disable,1=enable",           "Electricity Rates",        "?=0",              "INTEGER,MIN=0,MAX=1",          "" },
+    { SSC_INPUT,        SSC_NUMBER,     "ur_monthly_fixed_charge",  "Monthly fixed charge",                 "$",        "",                     "Electricity Rates",        "?=0.0",            "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,     "ur_nb_credit_expire",       "Credit is lost upon end of year        ", "0/1",  "0=disable,1=enable",     "Electricity Rates",        "?=0",              "INTEGER,MIN=0,MAX=1",          "" },
+    { SSC_INPUT,        SSC_NUMBER,     "ur_nb_apply_credit_current_month", "Apply earned credits to balance before rolling over excess        ", "0/1",  "0=disable,1=enable",     "Electricity Rates",        "?=0",              "INTEGER,MIN=0,MAX=1",          "" },
 
     // optional input that allows sell rates to be overridden with buy rates - defaults to not override
     { SSC_INPUT,        SSC_NUMBER,     "ur_sell_eq_buy",           "Set sell rate equal to buy rate",              "0/1",     "Optional override",    "Electricity Rates",        "?=0",              "BOOLEAN",                      "SIMULATION_PARAMETER" },
