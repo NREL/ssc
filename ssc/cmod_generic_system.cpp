@@ -59,7 +59,7 @@ static var_info _cm_vtab_generic_system[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",             "Monthly Energy Gross",                       "kWh",          "",      "Monthly",      "*",               "LENGTH=12",           "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",              "Annual Energy",                        "kWh",          "",      "Annual",      "*",               "",                    "" },
 
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_fuel_usage",           "Annual Fuel Usage",                    "kWht",         "",      "Annual",      "*",               "",                    "" },
+//	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_fuel_usage",           "Annual Fuel Usage",                    "kWht",         "",      "Annual",      "*",               "",                    "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "water_usage",                "Annual Water Usage",                   "",             "",      "Annual",      "*",               "",                    "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "system_heat_rate",           "Heat Rate Conversion Factor",          "MMBTUs/MWhe",  "",      "Annual",      "*",               "",                    "" },
 
