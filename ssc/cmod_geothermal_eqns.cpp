@@ -58,7 +58,7 @@ bool getem_om_cost_calc(ssc_data_t data)
     std::vector<double> og_support_ppi{ 0.62254627,0.6068424,0.632080763,0.637128435,0.633202468,0.691531127,0.798653954,0.770611329,0.760515984,0.795288839,0.904655076,1.052159282,1.089736399,1.104318564,1.01794728,1,1.067302299,1.102075154,1.117779024,1.117218172,1.103757712,1.081323612,1.088614694,1.103196859,1.108,1.041828294,1.050913679,1.157150869 }; //Process Equipment Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
     std::vector<double> labor_ppi{ 0.807138965,0.833514986,0.858855586,0.879455041,0.905667575,0.93640327,0.965395095,1,1.029373297,1.055640327,1.082561308,1.099237057,1.128828338,1.160817439,1.192752044,1.216730245,1.237765668,1.247629428,1.261743869,1.279291553,1.302158273,1.336821452,1.366252453,1.409,1.449,1.490190736,1.556294278,1.639633748 }; //Process Equipment Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
     std::vector<double> chemical_ppi{ 0.567132867,0.559624586,0.558446816,0.536290026,0.525174825,0.570040486,0.567316894,0.562237762,0.625947736,0.718917924,0.832719912,0.937909459,1,1.212661023,1.033860876,1.188847994,1.434155318,1.355612808,1.330364372,1.276223776,1.069787986,1.007508834,1.121908127,1.21024735,1.116,0.999484726,1.366118881,1.56194788 }; //Process Equipment Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
-    std::vector<double> petroleum_ppi{ 1.010,1.258,1.051,0.713,1.245,1.547,1.000,1.372,1.568,2.041,2.907,2.959,4.034,2.196,3.441,4.149,4.850,4.785,4.743,3.448,2.063,1.686,2.045,2.504,2.278,1.689,2.823,1.000 };
+    std::vector<double> petroleum_ppi{ 1.010,1.258,1.051,0.713,1.245,1.547,1.000,1.372,1.568,2.041,2.907,2.959,4.034,2.196,3.441,4.149,4.850,4.785,4.743,3.448,2.063,1.686,2.045,2.504,2.278,1.689,2.823,4.262 };
 
     double unit_plant, cooling_water_flow_rate, drilling_cost, field_cost, flow_rate, num_wells, water_loss, total_capital_cost = 0;
     double conversion_type, ppi_base_year, baseline_cost = 0;
@@ -86,13 +86,13 @@ bool getem_om_cost_calc(ssc_data_t data)
 
     double cooling_water_cost = 300; //$/acre-ft //todo provide input
     double water_treatment_cost = (conversion_type == 0) ? 0 : cooling_water_flow_rate * cooling_water_cost;
-    double non_labor_om_cost = 0.018 * baseline_cost * unit_plant + water_treatment_cost;
+    double non_labor_om_cost = 0.018 * baseline_cost * unit_plant * 1000.0 + water_treatment_cost;
 
     //Plant OM
     double total_operator_cost = 0.25 * pow(unit_plant, 0.525) * 8760 * 20 * labor_ppi[ppi_base_year] * 1.8;
-    double total_mechanic_cost = (conversion_type == 0) ? 0.15 : 0.13 * pow(unit_plant, 0.65) * 2000 * 24 * labor_ppi[ppi_base_year] * 1.8;
-    double total_electrician_cost = (conversion_type == 0) ? 0.15 : 0.13 * pow(unit_plant, 0.65) * 2000 * 24 * labor_ppi[ppi_base_year] * 1.8;
-    double total_general_maintenance_cost = (conversion_type == 0) ? 0.15 : 0.13 * pow(unit_plant, 0.65) * 2000 * 17.50 * labor_ppi[ppi_base_year] * 1.8;
+    double total_mechanic_cost = ((conversion_type == 0) ? 0.15 : 0.13) * pow(unit_plant, 0.65) * 2000 * 24 * labor_ppi[ppi_base_year] * 1.8;
+    double total_electrician_cost = ((conversion_type == 0) ? 0.15 : 0.13) * pow(unit_plant, 0.65) * 2000 * 24 * labor_ppi[ppi_base_year] * 1.8;
+    double total_general_maintenance_cost = ((conversion_type == 0) ? 0.15 : 0.13) * pow(unit_plant, 0.65) * 2000 * 17.50 * labor_ppi[ppi_base_year] * 1.8;
     double total_facility_manager_cost = 0.075 * pow(unit_plant, 0.65) * 2000 * 40 * labor_ppi[ppi_base_year] * 1.8;
     double total_operations_manager_cost = 0.075 * pow(unit_plant, 0.65) * 2000 * 30 * labor_ppi[ppi_base_year] * 1.8;
     double total_clerical_cost = 0.075 * pow(unit_plant, 0.65) * 2000 * 12 * labor_ppi[ppi_base_year] * 1.8;
@@ -114,8 +114,8 @@ bool getem_om_cost_calc(ssc_data_t data)
     double operating_life_pump = (pump_type == 0) ? 3 : 2;
     double pump_total_annual_rework_cost = rework_cost_per_pump * num_downhole_pumps / operating_life_pump;
     double cost_pump_per_year = 0;
-    double ref_depth = 152.4; //meters
-    double oil_cost = petroleum_ppi[ppi_base_year];
+    double ref_depth = 500; //feet
+    double oil_cost = 4300.0 * petroleum_ppi[ppi_base_year];
     if (conversion_type == 0) {
         if (pump_depth != 0) {
             if (pump_depth < 250.0) cost_pump_per_year = 0.5 * oil_cost;
