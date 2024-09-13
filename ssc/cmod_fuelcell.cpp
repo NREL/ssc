@@ -108,7 +108,7 @@ var_info vtab_fuelcell_output[] = {
 
 	{ SSC_OUTPUT,       SSC_ARRAY,       "fuelcell_replacement",                "Fuel cell replacements per year",      "number/year", "",              "Fuel Cell",           "",                           "",                              "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "system_heat_rate",                    "Heat rate conversion factor (MMBTUs/MWhe)",  "MMBTUs/MWhe",   "",      "Fuel Cell",           "*",               "",                    "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_fuel_usage",                   "Annual Fuel Usage",                          "kWht",          "",      "Fuel Cell",           "*",               "",                    "" },
+//	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_fuel_usage",                   "Annual Fuel Usage",                          "kWht",          "",      "Fuel Cell",           "*",               "",                    "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "annual_fuel_usage_lifetime",            "Annual Fuel Usage (lifetime)",               "kWht",          "",      "Fuel Cell",           "",               "",                    "" },
     { SSC_OUTPUT,	    SSC_MATRIX,			"annual_energy_distribution_time_fc",			"Annual energy production (PV + battery + fuel cell) as function of Time",				"",				"",				"Heatmaps",			"",						"",							"" },
 

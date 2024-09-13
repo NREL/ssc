@@ -207,7 +207,7 @@ static var_info _cm_vtab_biomass[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "system.annual.coal",                   "Annual coal usage",                          "dry tons/yr",   "",      "biomass",           "*",               "",                    "" },
 	//{ SSC_OUTPUT,       SSC_NUMBER,      "system.annual.biomass_output",         "Annual output from biomass (kWh)",           "kWh",           "",      "biomass",           "*",               "",                    "" },
 	//{ SSC_OUTPUT,       SSC_NUMBER,      "system.annual.coal_output",            "Annual output from coal (kWh)",              "kWh",           "",      "biomass",           "*",               "",                    "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_fuel_usage",             "Annual Fuel Usage",                          "kWht",          "",      "biomass",           "*",               "",                    "" },
+//	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_fuel_usage",             "Annual Fuel Usage",                          "kWht",          "",      "biomass",           "*",               "",                    "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_watter_usage",            "Annual Water Usage",                         "m3",            "",      "biomass",           "*",               "",                    "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "system.annual.ash",                    "Ash produced",                               "tons/yr",       "",      "biomass",           "*",               "",                    "" },
 

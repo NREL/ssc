@@ -288,7 +288,7 @@ static var_info _cm_vtab_tcslinear_fresnel[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_total_water_use",      "Total Annual Water Usage: cycle + mirror washing",     "m3",            "",            "PostProcess",    "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",                  "First year kWh/kW",                                    "kWh/kW", "", "", "*", "", "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "system_heat_rate",            "System heat rate",                                     "MMBtu/MWh", "", "", "*", "", "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_fuel_usage",           "Annual fuel usage",                                    "kWh", "", "", "*", "", "" },
+//	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_fuel_usage",           "Annual fuel usage",                                    "kWh", "", "", "*", "", "" },
 
 
 	var_info_invalid };
