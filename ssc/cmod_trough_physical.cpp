@@ -1444,6 +1444,7 @@ public:
             storage_packedbed = C_csp_packedbed_tes(
                 as_integer("Fluid"),                                                // [-] field fluid identifier
                 as_matrix("field_fl_props"),                                        // [-] field fluid properties
+                as_double("P_ref") / as_double("eta_ref"),                          // [MWt] Design heat rate in and out of tes
                 as_double("P_ref") / as_double("eta_ref") * as_double("tshours"),   // [MWt-hr] design storage capacity
                 as_integer("is_h_tank_fixed"),                                      // [] Sizing Method (0) use fixed diameter, (1) use fixed height, (2) use preset inputs
                 as_double("h_tank_in"),                                             // [m] Tank height
@@ -1455,7 +1456,7 @@ public:
                 as_double("T_loop_in_des"),                                         // [C] Initial temperature in cold storage cold
                 as_double("init_hot_htf_percent"),                                  // [%] Initial fraction of available volume that is hot
                 as_integer("tes_pb_n_xsteps"),                                      // number spatial sub steps
-                as_integer("tes_n_tsteps"),                                      // number subtimesteps
+                as_integer("tes_n_tsteps"),                                         // number subtimesteps
                 as_double("tes_pump_coef"),                                         // [kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop 
                 as_double("tes_pb_k_eff"),                                          // [W/m K] Effective thermal conductivity
                 as_double("tes_pb_void_frac"),                                      // [] Packed bed void fraction

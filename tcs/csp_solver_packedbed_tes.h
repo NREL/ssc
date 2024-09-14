@@ -49,6 +49,7 @@ private:
     int m_external_fl;
     util::matrix_t<double> m_external_fl_props;
     int m_size_type;            // [] Sizing Method (0) use fixed diameter, (1) use fixed height, (2) use preset inputs
+    double m_q_dot_design;      //[MWe] Design heat rate in and out of tes
     double m_Q_tes_des;         // [MWt-hr] design storage capacity
     double m_h_tank_in;         // [m] Tank height
     double m_d_tank_in;         // [m] tank diameter input
@@ -86,6 +87,9 @@ private:
     bool m_is_tes;
     bool m_use_T_grad_init = false;
     HTFProperties mc_external_htfProps;		// Instance of HTFProperties class for external HTF
+    double m_q_pb_design;		            //[Wt] thermal power to sink at design
+    double m_ts_hours;                      //[hr] hours of storage at design sink operation		
+    std::vector<double> m_T_grad_init;      //[K] (optional) initial temperature vector
 
     // Private Methods
     void size_pb_fixed_height(HTFProperties& tes_htf_props, double Q_tes_des /*MWt-hr*/, double f_oversize,
@@ -136,6 +140,7 @@ public:
     C_csp_packedbed_tes(
         int external_fl,                            // [-] external fluid identifier
         util::matrix_t<double> external_fl_props,   // [-] external fluid properties
+        double q_dot_design,                        // [MWt] Design heat rate in and out of tes
         double Q_tes_des,                           // [MWt-hr] design storage capacity
         int size_type,                              // [] Sizing Method (0) use fixed diameter, (1) use fixed height, (2) use preset inputs
         double h_tank_in,			                // [m] tank height input
@@ -223,14 +228,6 @@ public:
         double& q_dot_heater /*MWe*/, double& m_dot /*kg/s*/, double& W_dot_rhtf_pump /*MWe*/,
         double& q_dot_loss /*MWt*/, double& q_dot_dc_to_htf /*MWt*/, double& q_dot_ch_from_htf /*MWt*/,
         double& T_hot_ave /*K*/, double& T_cold_ave /*K*/, double& T_hot_final /*K*/, double& T_cold_final /*K*/);
-
-    double get_max_storage_htf_temp();
-
-    double get_min_storage_htf_temp();
-
-    double get_storage_htf_density();
-
-    double get_storage_htf_cp();
 
     std::vector<double> get_T_prev_vec() { return m_T_prev_vec; };
 };

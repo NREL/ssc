@@ -247,6 +247,7 @@ public:
             storage_packedbed = C_csp_packedbed_tes(
                 as_integer("Fluid"),                                                // [-] field fluid identifier
                 as_matrix("field_fl_props"),                                        // [-] field fluid properties
+                as_double("P_ref") / as_double("eta_ref"),                          // [MWt] Design heat rate in and out of tes
                 as_double("P_ref") / as_double("eta_ref") * as_double("tshours"),   // [MWt-hr] design storage capacity
                 as_integer("tes_pb_size_type"),                                     // [] Sizing Method (0) use fixed diameter, (1) use fixed height, (2) use preset inputs
                 as_double("h_tank_in"),                                             // [m] Tank height
