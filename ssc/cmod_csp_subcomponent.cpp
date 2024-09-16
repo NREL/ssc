@@ -111,11 +111,11 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_INPUT,        SSC_NUMBER,      "tes_pb_f_oversize",         "Packed bed oversize factor",                                                       "",             "",               "TES",            "tes_type=1",              "",                      "" },
 
     // Added Inputs for NT System
-    { SSC_INPUT,        SSC_NUMBER,      "tes_tank_thick",            "Tank wall thickness (used for Norwich HeatTrap)",                                  "m",            "",               "TES",            "tes_type=2",              "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "tes_tank_cp",               "Tank wall cp (used for Norwich HeatTrap)",                                         "kJ/kg-K",      "",               "TES",            "tes_type=2",              "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "tes_tank_dens",             "Tank wall thickness (used for Norwich HeatTrap)",                                  "kg/m3",        "",               "TES",            "tes_type=2",              "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "tes_NT_piston_loss_poly",   "Polynomial coefficients describing piston heat loss function (f(kg/s)=%)",         "",             "",               "TES",            "tes_type=2",              "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "tes_tank_insul_percent",    "Percent additional wall mass due to insulation",                                   "%",            "",               "TES",            "?=0",                     "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_nt_tank_thick",         "Tank wall thickness (used for Norwich HeatTrap)",                                  "m",            "",               "TES",            "tes_type=2",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_nt_tank_cp",            "Tank wall cp (used for Norwich HeatTrap)",                                         "kJ/kg-K",      "",               "TES",            "tes_type=2",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_nt_tank_dens",          "Tank wall thickness (used for Norwich HeatTrap)",                                  "kg/m3",        "",               "TES",            "tes_type=2",              "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "tes_nt_piston_loss_poly",   "Polynomial coefficients describing piston heat loss function (f(kg/s)=%)",         "",             "",               "TES",            "tes_type=2",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_nt_tank_insul_percent", "Percent additional wall mass due to insulation",                                   "%",            "",               "TES",            "?=0",                     "",                      "" },
 
     // Outputs
     { SSC_OUTPUT,       SSC_ARRAY,       "T_src_in",                  "Temperature to heat source",                                                       "C",            "",               "TES",            "*",                       "",                      "" },
@@ -314,8 +314,8 @@ public:
             }
 
             // Modify wall density to account for insulation mass
-            double mass_factor = 1.0 + (0.01 * as_double("tes_tank_insul_percent"));
-            double dens_orig = as_double("tes_tank_dens");
+            double mass_factor = 1.0 + (0.01 * as_double("tes_nt_tank_insul_percent"));
+            double dens_orig = as_double("tes_nt_tank_dens");
             double dens_w_insulation = dens_orig * mass_factor;
 
             double T_tank_hot_ini = is_assigned("T_tank_hot_ini") == true ? as_double("T_tank_hot_ini") : as_double("T_loop_out");
@@ -348,11 +348,11 @@ public:
                 as_double("h_tank_min"),                                            // [m] Minimum allowable HTF height in storage tank
                 as_double("init_hot_htf_percent"),                                  // [%] Initial fraction of available volume that is hot
                 as_double("pb_pump_coef"),                                          // [kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle
-                as_double("tes_tank_cp") * 1000,                                    // convert to J/kgK
+                as_double("tes_nt_tank_cp") * 1000,                                 // convert to J/kgK
                 dens_w_insulation,                                                  // Tank Wall density
-                as_double("tes_tank_thick"),                                        // Tank wall thickness
+                as_double("tes_nt_tank_thick"),                                     // Tank wall thickness
                 nstep,                                                              // Number subtimesteps
-                as_vector_double("tes_NT_piston_loss_poly"),                        // Leakage polynomial (%)
+                as_vector_double("tes_nt_piston_loss_poly"),                        // Leakage polynomial (%)
                 as_double("V_tes_des"),                                             // [m/s] Design-point velocity for sizing the diameters of the TES piping
                 as_boolean("calc_design_pipe_vals"),                                // [-] Should the HTF state be calculated at design conditions
                 as_double("tes_pump_coef"),                                         // [kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
