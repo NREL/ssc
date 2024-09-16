@@ -59,9 +59,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static var_info _cm_vtab_trough_physical[] = {
 
-
-
-
     /* VARTYPE          DATATYPE         NAME                         LABEL                                                                               UNITS           META              GROUP             REQUIRED_IF                CONSTRAINTS         UI_HINTS*/
 
     { SSC_INPUT,        SSC_NUMBER,      "sim_type",                  "1 (default): timeseries, 2: design only",                                          "",             "",               "System Control", "?=1",                    "",                      "SIMULATION_PARAMETER"},
@@ -225,7 +222,6 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_INPUT,        SSC_MATRIX,      "store_fl_props",            "User defined storage fluid property data",                                         "-",            "",               "TES",            "tes_type=0",              "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "dt_hot",                    "Hot side HX approach temp",                                                        "C",            "",               "TES",            "tes_type=0",              "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tanks_in_parallel",         "Tanks are in parallel, not in series, with solar field",                           "-",            "",               "controller",     "tes_type=0",              "",                      "" },
-
 
     // TES Norwich HeatTrap
     { SSC_INPUT,        SSC_NUMBER,      "tes_nt_tank_thick",         "Tank wall thickness (used for Norwich HeatTrap)",                                  "m",            "",               "TES",            "tes_type=2",              "",                      "" },
@@ -764,8 +760,6 @@ static var_info _cm_vtab_trough_physical[] = {
     { SSC_OUTPUT,      SSC_MATRIX,       "cycle_Tdb_table",                 "Normalized cycle efficiency and condenser power vs. ambient temperature",    "",             "",               "",               "sim_type=1",              "",                      "COL_LABEL=AMBTEMP_EFF_CONDPOW,ROW_LABEL=NO_ROW_LABEL" },
 
     var_info_invalid };
-    
-    
     
 class cm_trough_physical : public compute_module
 {
@@ -2077,6 +2071,7 @@ public:
                 double tes_htf_max_temp = 0;
                 double vol_min = 0;
                 int is_hx = 0;
+                double hot_vol_frac = 0;
 
                 if (tes_type == C_csp_tes::csp_tes_types::E_TES_TWO_TANK)
                 {
@@ -2086,25 +2081,26 @@ public:
                     tes_htf_min_temp = storage_two_tank.get_min_storage_htf_temp() - 273.15;
                     tes_htf_max_temp = storage_two_tank.get_max_storage_htf_temp() - 273.15;
                     vol_min = V_tes_htf_total_calc * (storage_two_tank.m_h_tank_min / h_tank_calc);
-
+                    hot_vol_frac = storage_two_tank.get_hot_tank_vol_frac();
                     is_hx = storage_two_tank.get_is_hx();
                 }
                 else if (tes_type == C_csp_tes::csp_tes_types::E_TES_PACKED_BED)
                 {
                     storage_packedbed.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
                         h_tank_calc, d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
+                    hot_vol_frac = storage_packedbed.get_hot_tank_vol_frac();
                 }
                 else if (tes_type == C_csp_tes::csp_tes_types::E_TES_NT)
                 {
                     storage_NT.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
                         h_tank_calc, d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
+                    hot_vol_frac = storage_NT.get_hot_tank_vol_frac();
                 }
                 
                 Q_tes = Q_tes_des_calc;
 
-                double V_tank_hot_ini = (as_double("h_tank_min") / h_tank_calc) * V_tes_htf_total_calc; // m3
+                double V_tank_hot_ini = hot_vol_frac * V_tes_htf_total_calc; // m3
                 double T_avg = (as_double("T_loop_in_des") + as_double("T_loop_out")) / 2.0;    // C
-                
 
                 assign("q_tes", Q_tes_des_calc); // MWt-hr
                 assign("tes_avail_vol", V_tes_htf_avail_calc); // m3
@@ -2466,10 +2462,17 @@ public:
         }
 
         // Non-timeseries array outputs
-        //double P_adj = storage.P_in_des; // slightly adjust all field design pressures to account for pressure drop in TES before hot tank
-        //transform(c_trough.m_P_rnr_dsn.begin(), c_trough.m_P_rnr_dsn.end(), c_trough.m_P_rnr_dsn.begin(), [P_adj](double x) {return x + P_adj; });
-        //transform(c_trough.m_P_hdr_dsn.begin(), c_trough.m_P_hdr_dsn.end(), c_trough.m_P_hdr_dsn.begin(), [P_adj](double x) {return x + P_adj; });
-        //transform(c_trough.m_P_loop_dsn.begin(), c_trough.m_P_loop_dsn.end(), c_trough.m_P_loop_dsn.begin(), [P_adj](double x) {return x + P_adj; });
+        double P_adj = 0; // slightly adjust all field design pressures to account for pressure drop in TES before hot tank
+        if (tes_type == C_csp_tes::csp_tes_types::E_TES_TWO_TANK)
+            P_adj = storage_two_tank.P_in_des;
+        else if (tes_type == C_csp_tes::csp_tes_types::E_TES_NT)
+            P_adj = storage_NT.P_in_des;
+
+        transform(c_trough.m_P_rnr_dsn.begin(), c_trough.m_P_rnr_dsn.end(), c_trough.m_P_rnr_dsn.begin(), [P_adj](double x) {return x + P_adj; });
+        transform(c_trough.m_P_hdr_dsn.begin(), c_trough.m_P_hdr_dsn.end(), c_trough.m_P_hdr_dsn.begin(), [P_adj](double x) {return x + P_adj; });
+        transform(c_trough.m_P_loop_dsn.begin(), c_trough.m_P_loop_dsn.end(), c_trough.m_P_loop_dsn.begin(), [P_adj](double x) {return x + P_adj; });
+
+        
 
         ssc_number_t *p_pipe_runner_diams = allocate("pipe_runner_diams", c_trough.m_D_runner.size());
         std::copy(c_trough.m_D_runner.begin(), c_trough.m_D_runner.end(), p_pipe_runner_diams);
@@ -2527,9 +2530,7 @@ public:
             std::copy(storage_two_tank.pipe_T_des.data(), storage_two_tank.pipe_T_des.data() + storage_two_tank.pipe_T_des.ncells(), p_pipe_tes_T_dsn);
             ssc_number_t* p_pipe_tes_P_dsn = allocate("pipe_tes_P_dsn", storage_two_tank.pipe_P_des.ncells());
             std::copy(storage_two_tank.pipe_P_des.data(), storage_two_tank.pipe_P_des.data() + storage_two_tank.pipe_P_des.ncells(), p_pipe_tes_P_dsn);
-        }
-        
-
+        }       
 
         // Monthly outputs
         if (!as_boolean("vacuum_arrays")) {
