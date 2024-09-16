@@ -847,8 +847,8 @@ double C_storage_tank_dynamic_NT::calc_leakage_fraction(double mdot)
 C_csp_NTHeatTrap_tes::C_csp_NTHeatTrap_tes(
     int external_fl,                             // [-] external fluid identifier
     util::matrix_t<double> external_fl_props,    // [-] external fluid properties
-    int tes_fl,                                  // [-] tes fluid identifier
-    util::matrix_t<double> tes_fl_props,         // [-] tes fluid properties
+    //int tes_fl,                                  // [-] tes fluid identifier
+    //util::matrix_t<double> tes_fl_props,         // [-] tes fluid properties
     double q_dot_design,                         // [MWt] Design heat rate in and out of tes
     double frac_max_q_dot,                       // [-] the max design heat rate as a fraction of the nominal
     double Q_tes_des,			                 // [MWt-hr] design storage capacity
@@ -889,7 +889,7 @@ C_csp_NTHeatTrap_tes::C_csp_NTHeatTrap_tes(
     double dP_discharge                          // [bar] Pressure drop on the TES discharge side (e.g., within the steam generator)
     )
     :
-        m_external_fl(external_fl), m_external_fl_props(external_fl_props), m_tes_fl(tes_fl), m_tes_fl_props(tes_fl_props),
+        m_external_fl(external_fl), m_external_fl_props(external_fl_props), //m_tes_fl(tes_fl), m_tes_fl_props(tes_fl_props),
         m_q_dot_design(q_dot_design), m_frac_max_q_dot(frac_max_q_dot), m_Q_tes_des(Q_tes_des),
         m_is_h_fixed(is_h_fixed), m_h_tank_in(h_tank_in), m_d_tank_in(d_tank_in),
         m_u_tank(u_tank), m_tank_pairs(tank_pairs), m_hot_tank_Thtr(hot_tank_Thtr), m_hot_tank_max_heat(hot_tank_max_heat),
@@ -969,40 +969,42 @@ void C_csp_NTHeatTrap_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inpu
         throw(C_csp_exception("External HTF code is not recognized", "Two Tank TES Initialization"));
     }
 
+    // For NT Heattrap, storage fluid IS external fluid
+    mc_store_htfProps = mc_external_htfProps;
 
-    // Declare instance of fluid class for STORAGE fluid.
-    // Set fluid number and copy over fluid matrix if it makes sense.
-    if (m_tes_fl != HTFProperties::User_defined && m_tes_fl < HTFProperties::End_Library_Fluids)
-    {
-        if (!mc_store_htfProps.SetFluid(m_tes_fl))
-        {
-            throw(C_csp_exception("Storage HTF code is not recognized", "Two Tank TES Initialization"));
-        }
-    }
-    else if (m_tes_fl == HTFProperties::User_defined)
-    {
-        int n_rows = (int)m_tes_fl_props.nrows();
-        int n_cols = (int)m_tes_fl_props.ncols();
-        if (n_rows > 2 && n_cols == 7)
-        {
-            if (!mc_store_htfProps.SetUserDefinedFluid(m_tes_fl_props))
-            {
-                error_msg = util::format(mc_store_htfProps.UserFluidErrMessage(), n_rows, n_cols);
-                throw(C_csp_exception(error_msg, "Two Tank TES Initialization"));
-            }
-        }
-        else
-        {
-            error_msg = util::format("The user defined storage HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", n_rows, n_cols);
-            throw(C_csp_exception(error_msg, "Two Tank TES Initialization"));
-        }
-    }
-    else
-    {
-        throw(C_csp_exception("Storage HTF code is not recognized", "Two Tank TES Initialization"));
-    }
+    //// Declare instance of fluid class for STORAGE fluid.
+    //// Set fluid number and copy over fluid matrix if it makes sense.
+    //if (m_tes_fl != HTFProperties::User_defined && m_tes_fl < HTFProperties::End_Library_Fluids)
+    //{
+    //    if (!mc_store_htfProps.SetFluid(m_tes_fl))
+    //    {
+    //        throw(C_csp_exception("Storage HTF code is not recognized", "Two Tank TES Initialization"));
+    //    }
+    //}
+    //else if (m_tes_fl == HTFProperties::User_defined)
+    //{
+    //    int n_rows = (int)m_tes_fl_props.nrows();
+    //    int n_cols = (int)m_tes_fl_props.ncols();
+    //    if (n_rows > 2 && n_cols == 7)
+    //    {
+    //        if (!mc_store_htfProps.SetUserDefinedFluid(m_tes_fl_props))
+    //        {
+    //            error_msg = util::format(mc_store_htfProps.UserFluidErrMessage(), n_rows, n_cols);
+    //            throw(C_csp_exception(error_msg, "Two Tank TES Initialization"));
+    //        }
+    //    }
+    //    else
+    //    {
+    //        error_msg = util::format("The user defined storage HTF table must contain at least 3 rows and exactly 7 columns. The current table contains %d row(s) and %d column(s)", n_rows, n_cols);
+    //        throw(C_csp_exception(error_msg, "Two Tank TES Initialization"));
+    //    }
+    //}
+    //else
+    //{
+    //    throw(C_csp_exception("Storage HTF code is not recognized", "Two Tank TES Initialization"));
+    //}
 
-    bool is_hx_calc = false;
+    /*bool is_hx_calc = false;
     if (m_tes_fl != m_external_fl)
         is_hx_calc = true;
     else if (m_external_fl != HTFProperties::User_defined)
@@ -1014,7 +1016,7 @@ void C_csp_NTHeatTrap_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inpu
     if (is_hx_calc == true)
     {
         throw(C_csp_exception("NT Tank must have the same external and internal fluid", "NT TES Initialization"));
-    }
+    }*/
 
     if (tanks_in_parallel) {
         m_is_cr_to_cold_tank_allowed = false;
