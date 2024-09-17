@@ -1220,7 +1220,7 @@ public:
             storage_packedbed = C_csp_packedbed_tes(
                 as_integer("Fluid"),                                                // [-] field fluid identifier
                 as_matrix("field_fl_props"),                                        // [-] field fluid properties
-                q_dot_pc_des,                                                       // [MWt] Design heat rate in and out of tes
+                q_dot_hs_des,                                                       // [MWt] Design heat rate in and out of tes
                 Q_tes,                                                              // [MWt-hr] design storage capacity
                 as_integer("is_h_tank_fixed"),                                      // [] Sizing Method (0) use fixed diameter, (1) use fixed height, (2) use preset inputs
                 as_double("h_tank_in"),                                             // [m] Tank height
@@ -1309,7 +1309,7 @@ public:
                 c_trough.m_field_fl_props,
                 //as_integer("store_fluid"),
                 //as_matrix("store_fl_props"),
-                q_dot_pc_des,
+                q_dot_hs_des,
                 c_trough.m_solar_mult,
                 Q_tes,
                 as_boolean("is_h_tank_fixed"),
