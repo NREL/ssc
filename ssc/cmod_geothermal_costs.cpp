@@ -75,9 +75,26 @@ static var_info _cm_vtab_geothermal_costs[] = {
 		{ SSC_INPUT,		SSC_NUMBER,		"hp_flash_pressure",				"HP Flash Pressure",										"psia",		"",						"GeoHourly",				 "conversion_type=1",		"",								"" },
 		{ SSC_INPUT,		SSC_NUMBER,		"lp_flash_pressure",				"LP Flash Pressure",										"psia",		"",						"GeoHourly",				 "conversion_type=1",		"",								"" },
 		{ SSC_INPUT,		SSC_NUMBER,		"flash_count",						"Flash Count",												"(1 -2)",	"",						"GeoHourly",				 "conversion_type=1",		"",								"" },
-		// Outputs	
+
+        { SSC_INPUT,        SSC_NUMBER,      "calc_drill_costs",                      "Calculate drill costs",                      "0/1",             "0=LargerDiameter,1=SmallerDiameter",             "GeoHourly",        "?=0",                        "",                "" },
+        { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.inj_cost_curve_welltype",                      "Injection well type",                      "0/1",             "",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
+        { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.prod_cost_curve_welltype",                      "Production well type",                      "0/1",             "",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
+        { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.inj_cost_curve_welldiam",                      "Injection well diameter type",                      "0/1",             "0=LargerDiameter,1=SmallerDiameter",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
+        { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.prod_cost_curve_welldiam",                      "Production well diameter type",                      "0/1",             "0=LargerDiameter,1=SmallerDiameter",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
+        { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.inj_cost_curve",                      "Injection well diameter type",                      "0/1",             "0=LargerDiameter,1=SmallerDiameter",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
+        { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.prod_cost_curve",                      "Production well diameter type",                      "0/1",             "0=LargerDiameter,1=SmallerDiameter",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
+        { SSC_INPUT,        SSC_NUMBER,      "resource_depth",                     "Resource Depth",                               "m",              "",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
+        { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.prod_wells_drilled",                      "Number of drilled production wells",                      "0/1",             "0=LargerDiameter,1=SmallerDiameter",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
+        { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.inj_wells_drilled",                      "Number of drilled injection wells",                      "0/1",             "0=LargerDiameter,1=SmallerDiameter",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
+
+
+        // Outputs	
 
 		{ SSC_OUTPUT,       SSC_NUMBER,     "baseline_cost",					"Baseline Cost",											"$/kW",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "inj_total_cost",					"Total Injection well cost",											"$/kW",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "prod_total_cost",					"Total Production well cost",											"$/kW",		"",                     "GeoHourly",				"?",                         "",                            "" },
+
+
         var_info_invalid };
 
 
@@ -215,6 +232,7 @@ private:
 	double current_cost_ref_tg;
 
 	double plant_equip_cost, baseline_cost;
+    double indirect_plant_cost;
 
 
 
@@ -295,6 +313,178 @@ public:
 	void exec() override
 	{
 		SGeothermal_Inputs geo_inputs;
+
+        int calc_drill_costs = as_integer("calc_drill_costs");
+        if (calc_drill_costs == 1) {
+            int inj_cost_curve_welldiam = as_integer("geotherm.cost.inj_cost_curve_welldiam");
+            int inj_cost_curve_welltype = as_integer("geotherm.cost.inj_cost_curve_welltype");
+            int inj_cost_curve = as_integer("geotherm.cost.inj_cost_curve");
+            int prod_cost_curve_welldiam = as_integer("geotherm.cost.prod_cost_curve_welldiam");
+            int prod_cost_curve_welltype = as_integer("geotherm.cost.prod_cost_curve_welltype");
+            int prod_cost_curve = as_integer("geotherm.cost.prod_cost_curve");
+
+            //Drilling cost calculations
+            double resource_depth = as_double("resource_depth");
+            double inj_well_cost = 0;
+            if (inj_cost_curve_welldiam == 0) {
+                if (inj_cost_curve_welltype == 0) {
+                    switch (inj_cost_curve) {
+                    case 0:
+                        inj_well_cost = 0.281801107 * pow(resource_depth, 2) + 1275.521301 * resource_depth + 632315.1264;
+                        break;
+                    case 1:
+                        inj_well_cost = 0.189267288 * pow(resource_depth, 2) + 293.4517365 * resource_depth + 1326526.313;
+                        break;
+                    case 2:
+                        inj_well_cost = 0.003145418 * pow(resource_depth, 2) + 782.70 * resource_depth + 983620.25;
+                        break;
+                    case 3:
+                        inj_well_cost = -0.002397497 * pow(resource_depth, 2) + 752.94 * resource_depth + 524337.65;
+                        break;
+                    }
+                }
+                else {
+                    switch (inj_cost_curve) {
+                    case 0:
+                        inj_well_cost = 0.2528 * pow(resource_depth, 2) + 1716.72 * resource_depth + 500866.89;
+                        break;
+                    case 1:
+                        inj_well_cost = 0.19950 * pow(resource_depth, 2) + 296.13 * resource_depth + 1697867.71;
+                        break;
+                    case 2:
+                        inj_well_cost = 0.0038019 * pow(resource_depth, 2) + 838.90 * resource_depth + 1181947.04;
+                        break;
+                    case 3:
+                        inj_well_cost = 0.0037570 * pow(resource_depth, 2) + 762.53 * resource_depth + 765103.08;
+                        break;
+                    }
+
+                }
+            }
+            else {
+                if (inj_cost_curve_welltype == 0) {
+                    switch (inj_cost_curve) {
+                    case 0:
+                        inj_well_cost = 0.30212 * pow(resource_depth, 2) + 584.91 * resource_depth + 751368.47;
+                        break;
+                    case 1:
+                        inj_well_cost = 0.13710 * pow(resource_depth, 2) + 129.61 * resource_depth + 1205587.57;
+                        break;
+                    case 2:
+                        inj_well_cost = 0.0080395 * pow(resource_depth, 2) + 455.61 * resource_depth + 921007.69;
+                        break;
+                    case 3:
+                        inj_well_cost = 0.0025212 * pow(resource_depth, 2) + 439.45 * resource_depth + 590611.90;
+                        break;
+                    }
+
+                }
+                else {
+                    switch (inj_cost_curve) {
+                    case 0:
+                        inj_well_cost = 0.28977 * pow(resource_depth, 2) + 882.15 * resource_depth + 680562.50;
+                        break;
+                    case 1:
+                        inj_well_cost = 0.15340 * pow(resource_depth, 2) + 120.32 * resource_depth + 1431801.54;
+                        break;
+                    case 2:
+                        inj_well_cost = 0.0085389 * pow(resource_depth, 2) + 506.08 * resource_depth + 1057330.39;
+                        break;
+                    case 3:
+                        inj_well_cost = 0.0071869 * pow(resource_depth, 2) + 455.85 * resource_depth + 753377.73;
+                        break;
+                    }
+
+                }
+            }
+            double inj_wells_drilled = as_double("geotherm.cost.inj_wells_drilled");
+            double inj_total_cost = inj_wells_drilled * inj_well_cost;
+            assign("inj_total_cost", inj_total_cost);
+
+            double prod_well_cost = 0;
+            if (prod_cost_curve_welldiam == 0) {
+                if (prod_cost_curve_welltype == 0) {
+                    switch (prod_cost_curve) {
+                    case 0:
+                        prod_well_cost = 0.281801107 * pow(resource_depth, 2) + 1275.521301 * resource_depth + 632315.1264;
+                        break;
+                    case 1:
+                        prod_well_cost = 0.189267288 * pow(resource_depth, 2) + 293.4517365 * resource_depth + 1326526.313;
+                        break;
+                    case 2:
+                        prod_well_cost = 0.003145418 * pow(resource_depth, 2) + 782.70 * resource_depth + 983620.25;
+                        break;
+                    case 3:
+                        prod_well_cost = -0.002397497 * pow(resource_depth, 2) + 752.94 * resource_depth + 524337.65;
+                        break;
+                    }
+                }
+                else {
+                    switch (prod_cost_curve) {
+                    case 0:
+                        prod_well_cost = 0.2528 * pow(resource_depth, 2) + 1716.72 * resource_depth + 500866.89;
+                        break;
+                    case 1:
+                        prod_well_cost = 0.19950 * pow(resource_depth, 2) + 296.13 * resource_depth + 1697867.71;
+                        break;
+                    case 2:
+                        prod_well_cost = 0.0038019 * pow(resource_depth, 2) + 838.90 * resource_depth + 1181947.04;
+                        break;
+                    case 3:
+                        prod_well_cost = 0.0037570 * pow(resource_depth, 2) + 762.53 * resource_depth + 765103.08;
+                        break;
+                    }
+
+                }
+            }
+            else {
+                if (prod_cost_curve_welltype == 0) {
+                    switch (prod_cost_curve) {
+                    case 0:
+                        prod_well_cost = 0.30212 * pow(resource_depth, 2) + 584.91 * resource_depth + 751368.47;
+                        break;
+                    case 1:
+                        prod_well_cost = 0.13710 * pow(resource_depth, 2) + 129.61 * resource_depth + 1205587.57;
+                        break;
+                    case 2:
+                        prod_well_cost = 0.0080395 * pow(resource_depth, 2) + 455.61 * resource_depth + 921007.69;
+                        break;
+                    case 3:
+                        prod_well_cost = 0.0025212 * pow(resource_depth, 2) + 439.45 * resource_depth + 590611.90;
+                        break;
+                    }
+
+                }
+                else {
+                    switch (prod_cost_curve) {
+                    case 0:
+                        prod_well_cost = 0.28977 * pow(resource_depth, 2) + 882.15 * resource_depth + 680562.50;
+                        break;
+                    case 1:
+                        prod_well_cost = 0.15340 * pow(resource_depth, 2) + 120.32 * resource_depth + 1431801.54;
+                        break;
+                    case 2:
+                        prod_well_cost = 0.0085389 * pow(resource_depth, 2) + 506.08 * resource_depth + 1057330.39;
+                        break;
+                    case 3:
+                        prod_well_cost = 0.0071869 * pow(resource_depth, 2) + 455.85 * resource_depth + 753377.73;
+                        break;
+                    }
+
+                }
+            }
+
+            double prod_wells_drilled = as_double("geotherm.cost.prod_wells_drilled");
+            double prod_total_cost = prod_wells_drilled * prod_well_cost;
+            assign("prod_total_cost", prod_total_cost);
+
+            if (!is_assigned("conversion_type")) {
+                return;
+            }
+            else {
+                //keep going
+            }
+        }
 		int conversion_type = as_integer("conversion_type");
 
         int ppi_base_year = as_integer("ppi_base_year");
@@ -415,6 +605,11 @@ public:
 			//Total Plant Cost: 
 			plant_equip_cost = hx_cost + condenser_cost + wf_pump_cost + turbine_cost;
 			corrected_equip_cost = dc_cost_multiplier * plant_equip_cost;
+
+            //Indirect Plant Costs
+            indirect_plant_cost = corrected_equip_cost * 0.12;
+
+            corrected_equip_cost += indirect_plant_cost;
 
 
 			// for outputs, to assign, use:
@@ -565,9 +760,20 @@ public:
 			direct_plant_cost = current_cost_flash * dc_cost_multiplier;
 			baseline_cost = direct_plant_cost / unit_plant;		// ($/kW)
 
+            //Indirect Plant Costs
+            indirect_plant_cost = baseline_cost * 0.12;
+
+            baseline_cost += indirect_plant_cost;
+
 			assign("baseline_cost", var_data(static_cast<ssc_number_t>(baseline_cost)));
 
 		}
+
+       
+
+
+
+
 
         //OM Cost calculations
         /*
@@ -603,12 +809,13 @@ public:
         double pump_om_cost = total_annual_pump_cost + oil_downhole_pump_cost;
         double field_om = well_om + surface_equip_om + chemical_cost + makeup_water_cost + pump_om_cost + field_labor_om;
 
+        
         //Annual Tax and Insurance
         double total_capital_cost = as_double("total_installed_cost"); //todo move OM to separate cmod, pass in total installed cost
         double tax_insurance_rate = 0.0075;
         double annual_tax_insurance_cost = total_capital_cost * tax_insurance_rate;
         */
-
+        
 	};
 
 };

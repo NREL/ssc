@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_battery_capacity.h"
 
 double low_tolerance = 0.01;
-double tolerance = 0.002;
+double tolerance = 0.002; // Used for capacity calcs. Please use powerflow_tolerance for units of kW
 
 /*
 Define Capacity Model
@@ -520,8 +520,10 @@ void capacity_lithium_ion_t::updateCapacityForThermal(double capacity_percent) {
 void capacity_lithium_ion_t::updateCapacityForLifetime(double capacity_percent) {
     if (capacity_percent < 0)
         capacity_percent = 0;
-    if (params->qmax_init * capacity_percent * 0.01 <= state->qmax_lifetime)
-        state->qmax_lifetime = params->qmax_init * capacity_percent * 0.01;
+
+    // lifetime_calendar_cycle_t capacity cannot increase (lib_battery_lifetime_calendar_cycle.cpp L699)
+    // lifetime_lmolto & lifetime_nmcgr capacities can increase due to reversal thermal degradation
+    state->qmax_lifetime = params->qmax_init * capacity_percent * 0.01;
 
     if (state->q0 > state->qmax_lifetime) {
         state->I_loss += (state->q0 - state->qmax_lifetime) / params->dt_hr;

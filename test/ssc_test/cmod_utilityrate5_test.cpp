@@ -1910,3 +1910,268 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_w_36_periods) {
     ssc_data_free(data);
 
 }
+
+TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_w_tiers) {
+    ssc_data_t data = new var_table;
+
+    setup_residential_rates(data);
+    ssc_data_set_number(data, "ur_metering_option", 2);
+    ssc_number_t p_ur_ec_tou_mat[24] = { 1, 1, 10, 0, 0.10000000000000001, 0.1,
+                             1, 2, 16, 0, 0.050000000000000003, 0.2,
+                             1, 3, 17, 0, 0.20000000000000001, 0.3,
+                             1, 4, 9.9999999999999998e+37, 0, 0.25, 0.4 };
+    ssc_data_set_matrix(data, "ur_ec_tou_mat", p_ur_ec_tou_mat, 4, 6);
+    ssc_number_t p_ur_ec_sched_weekday[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+    ssc_data_set_matrix(data, "ur_ec_sched_weekday", p_ur_ec_sched_weekday, 12, 24);
+    ssc_number_t p_ur_ec_sched_weekend[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+    ssc_data_set_matrix(data, "ur_ec_sched_weekend", p_ur_ec_sched_weekend, 12, 24);
+
+
+    int analysis_period = 25;
+    ssc_data_set_number(data, "system_use_lifetime_output", 1);
+    ssc_data_set_number(data, "analysis_period", analysis_period);
+    set_array(data, "load", load_profile_path, 8760);
+    set_array(data, "gen", gen_path, 8760 * analysis_period);
+
+    int status = run_module(data, "utilityrate5");
+    EXPECT_FALSE(status);
+
+    ensure_outputs_line_up(data);
+
+    int nrows;
+    ssc_number_t* hourly_sales_purchases = ssc_data_get_array(data, "year1_hourly_salespurchases_with_system", &nrows);
+    std::vector<double> hourly_sales(nrows);
+    hourly_sales = util::array_to_vector(hourly_sales_purchases, nrows);
+
+    //1.709 kWh net - tier 1
+    EXPECT_NEAR(hourly_sales[9], 0.1709, 0.0001);
+
+    // Cumulative tier change - 7.5 kWh to 10.46 kWh
+    EXPECT_NEAR(hourly_sales[12], 0.3415, 0.0001);
+
+    // Cumulative tier change - goes from 15.62 to 17.23, jumps two tiers
+    EXPECT_NEAR(hourly_sales[15], 0.4675, 0.0001);
+
+    ssc_data_free(data);
+
+}
+
+
+TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_w_tiers_buy_rates) {
+    ssc_data_t data = new var_table;
+
+    setup_residential_rates(data);
+    ssc_data_set_number(data, "ur_metering_option", 2);
+    ssc_number_t p_ur_ec_tou_mat[24] = { 1, 1, 4, 0, 0.10000000000000001, 0.1,
+                             1, 2, 4.5, 0, 0.2, 0.2,
+                             1, 3, 5, 0, 0.3, 0.3,
+                             1, 4, 9.9999999999999998e+37, 0, 0.4, 0.4 };
+    ssc_data_set_matrix(data, "ur_ec_tou_mat", p_ur_ec_tou_mat, 4, 6);
+    ssc_number_t p_ur_ec_sched_weekday[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+    ssc_data_set_matrix(data, "ur_ec_sched_weekday", p_ur_ec_sched_weekday, 12, 24);
+    ssc_number_t p_ur_ec_sched_weekend[288] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+    ssc_data_set_matrix(data, "ur_ec_sched_weekend", p_ur_ec_sched_weekend, 12, 24);
+
+
+    int analysis_period = 25;
+    ssc_data_set_number(data, "system_use_lifetime_output", 1);
+    ssc_data_set_number(data, "analysis_period", analysis_period);
+    set_array(data, "load", load_profile_path, 8760);
+    set_array(data, "gen", gen_path, 8760 * analysis_period);
+
+    int status = run_module(data, "utilityrate5");
+    EXPECT_FALSE(status);
+
+    ensure_outputs_line_up(data);
+
+    int nrows;
+    ssc_number_t* hourly_sales_purchases = ssc_data_get_array(data, "year1_hourly_salespurchases_with_system", &nrows);
+    std::vector<double> hourly_sales(nrows);
+    hourly_sales = util::array_to_vector(hourly_sales_purchases, nrows);
+
+    EXPECT_NEAR(hourly_sales[2], -0.0343, 0.001);
+
+    EXPECT_NEAR(hourly_sales[18], -0.1840, 0.001);
+
+    EXPECT_NEAR(hourly_sales[19], -0.3223, 0.001);
+
+    ssc_data_free(data);
+
+}
+
+TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_inflow_outflow_expire) {
+    ssc_data_t data = new var_table;
+
+    setup_residential_rates(data);
+    ssc_data_set_number(data, "ur_metering_option", 3);
+    ssc_number_t p_ur_ec_tou_mat[24] = { 1, 1, 9.9999999999999998e+37, 0, 0.10000000000000001, 0.10000000000000001,
+                                     2, 1, 9.9999999999999998e+37, 0, 0.050000000000000003, 0.050000000000000003,
+                                     3, 1, 9.9999999999999998e+37, 0, 0.20000000000000001, 0.20000000000000001,
+                                     4, 1, 9.9999999999999998e+37, 0, 0.25, 0.25 };
+    ssc_data_set_matrix(data, "ur_ec_tou_mat", p_ur_ec_tou_mat, 4, 6);
+    ssc_data_set_number(data, "ur_nb_credit_expire", 1);
+    ssc_data_set_number(data, "ur_nb_apply_credit_current_month", 1);
+
+    int analysis_period = 25;
+    ssc_data_set_number(data, "system_use_lifetime_output", 1);
+    ssc_data_set_number(data, "analysis_period", analysis_period);
+    set_array(data, "load", load_profile_path, 8760);
+    set_array(data, "gen", gen_path, 8760 * analysis_period);
+
+    int status = run_module(data, "utilityrate5");
+    EXPECT_FALSE(status);
+
+    ensure_outputs_line_up(data);
+
+    ssc_number_t cost_without_system;
+    ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
+    EXPECT_NEAR(771.8, cost_without_system, 0.1);
+
+    ssc_number_t cost_with_system;
+    ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
+    EXPECT_NEAR(0.0, cost_with_system, 0.01);
+
+    int nrows;
+    int ncols;
+    ssc_number_t* annual_bills = ssc_data_get_matrix(data, "utility_bill_w_sys_ym", &nrows, &ncols);
+    util::matrix_t<double> bill_matrix(nrows, ncols);
+    bill_matrix.assign(annual_bills, nrows, ncols);
+
+    double jan_year_2 = bill_matrix.at((size_t)2, (size_t)0);
+    EXPECT_NEAR(0.0, jan_year_2, 0.1);
+
+    ssc_number_t* true_up_credits = ssc_data_get_matrix(data, "true_up_credits_ym", &nrows, &ncols);
+    util::matrix_t<double> true_up_credits_matrix(nrows, ncols);
+    true_up_credits_matrix.assign(true_up_credits, nrows, ncols);
+
+    double dec_year_1_credits = true_up_credits_matrix.at((size_t)1, (size_t)11);
+    EXPECT_NEAR(0.0, dec_year_1_credits, 0.1);
+
+    ssc_number_t* net_billing_credits = ssc_data_get_matrix(data, "net_billing_credits_ym", &nrows, &ncols);
+    util::matrix_t<double> credits_matrix(nrows, ncols);
+    credits_matrix.assign(net_billing_credits, nrows, ncols);
+
+    double jan_year_2_credits = credits_matrix.at((size_t)2, (size_t)0);
+    EXPECT_NEAR(32.55, jan_year_2_credits, 0.1);
+
+    ssc_data_free(data);
+
+}
+
+TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_inflow_outflow_apply_no_expire) {
+    ssc_data_t data = new var_table;
+
+    setup_residential_rates(data);
+    ssc_data_set_number(data, "ur_metering_option", 3);
+    ssc_number_t p_ur_ec_tou_mat[24] = { 1, 1, 9.9999999999999998e+37, 0, 0.10000000000000001, 0.10000000000000001,
+                                     2, 1, 9.9999999999999998e+37, 0, 0.050000000000000003, 0.050000000000000003,
+                                     3, 1, 9.9999999999999998e+37, 0, 0.20000000000000001, 0.20000000000000001,
+                                     4, 1, 9.9999999999999998e+37, 0, 0.25, 0.25 };
+    ssc_data_set_matrix(data, "ur_ec_tou_mat", p_ur_ec_tou_mat, 4, 6);
+    ssc_data_set_number(data, "ur_nb_credit_expire", 0);
+    ssc_data_set_number(data, "ur_nb_apply_credit_current_month", 1);
+
+    int analysis_period = 25;
+    ssc_data_set_number(data, "system_use_lifetime_output", 1);
+    ssc_data_set_number(data, "analysis_period", analysis_period);
+    set_array(data, "load", load_profile_path, 8760);
+    set_array(data, "gen", gen_path, 8760 * analysis_period);
+
+    int status = run_module(data, "utilityrate5");
+    EXPECT_FALSE(status);
+
+    ensure_outputs_line_up(data);
+
+    ssc_number_t cost_without_system;
+    ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
+    EXPECT_NEAR(771.8, cost_without_system, 0.1);
+
+    ssc_number_t cost_with_system;
+    ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
+    EXPECT_NEAR(-150.02, cost_with_system, 0.01);
+
+    int nrows;
+    int ncols;
+    ssc_number_t* annual_bills = ssc_data_get_matrix(data, "utility_bill_w_sys_ym", &nrows, &ncols);
+    util::matrix_t<double> bill_matrix(nrows, ncols);
+    bill_matrix.assign(annual_bills, nrows, ncols);
+
+    double jan_year_2 = bill_matrix.at((size_t)2, (size_t)0);
+    EXPECT_NEAR(0, jan_year_2, 0.1);
+
+    ssc_number_t* true_up_credits = ssc_data_get_matrix(data, "true_up_credits_ym", &nrows, &ncols);
+    util::matrix_t<double> true_up_credits_matrix(nrows, ncols);
+    true_up_credits_matrix.assign(true_up_credits, nrows, ncols);
+
+    double dec_year_1_credits = true_up_credits_matrix.at((size_t)1, (size_t)11);
+    EXPECT_NEAR(150.02, dec_year_1_credits, 0.1);
+
+    ssc_number_t* net_billing_credits = ssc_data_get_matrix(data, "net_billing_credits_ym", &nrows, &ncols);
+    util::matrix_t<double> credits_matrix(nrows, ncols);
+    credits_matrix.assign(net_billing_credits, nrows, ncols);
+
+    double jan_year_2_credits = credits_matrix.at((size_t)2, (size_t)0);
+    EXPECT_NEAR(32.54, jan_year_2_credits, 0.1);
+
+    ssc_data_free(data);
+
+}
+
+TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing_carryover_inflow_outflow_expire_no_apply) {
+    ssc_data_t data = new var_table;
+
+    setup_residential_rates(data);
+    ssc_data_set_number(data, "ur_metering_option", 3);
+    ssc_number_t p_ur_ec_tou_mat[24] = { 1, 1, 9.9999999999999998e+37, 0, 0.10000000000000001, 0.10000000000000001,
+                                     2, 1, 9.9999999999999998e+37, 0, 0.050000000000000003, 0.050000000000000003,
+                                     3, 1, 9.9999999999999998e+37, 0, 0.20000000000000001, 0.20000000000000001,
+                                     4, 1, 9.9999999999999998e+37, 0, 0.25, 0.25 };
+    ssc_data_set_matrix(data, "ur_ec_tou_mat", p_ur_ec_tou_mat, 4, 6);
+    ssc_data_set_number(data, "ur_nb_credit_expire", 0);
+    ssc_data_set_number(data, "ur_nb_apply_credit_current_month", 1);
+
+    int analysis_period = 25;
+    ssc_data_set_number(data, "system_use_lifetime_output", 1);
+    ssc_data_set_number(data, "analysis_period", analysis_period);
+    set_array(data, "load", load_profile_path, 8760);
+    set_array(data, "gen", gen_path, 8760 * analysis_period);
+
+    int status = run_module(data, "utilityrate5");
+    EXPECT_FALSE(status);
+
+    ensure_outputs_line_up(data);
+
+    ssc_number_t cost_without_system;
+    ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
+    EXPECT_NEAR(771.8, cost_without_system, 0.1);
+
+    ssc_number_t cost_with_system;
+    ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
+    EXPECT_NEAR(-150.02, cost_with_system, 0.01);
+
+    int nrows;
+    int ncols;
+    ssc_number_t* annual_bills = ssc_data_get_matrix(data, "utility_bill_w_sys_ym", &nrows, &ncols);
+    util::matrix_t<double> bill_matrix(nrows, ncols);
+    bill_matrix.assign(annual_bills, nrows, ncols);
+
+    double jan_year_2 = bill_matrix.at((size_t)2, (size_t)0);
+    EXPECT_NEAR(0.0, jan_year_2, 0.1);
+
+    ssc_number_t* true_up_credits = ssc_data_get_matrix(data, "true_up_credits_ym", &nrows, &ncols);
+    util::matrix_t<double> true_up_credits_matrix(nrows, ncols);
+    true_up_credits_matrix.assign(true_up_credits, nrows, ncols);
+
+    double dec_year_1_credits = true_up_credits_matrix.at((size_t)1, (size_t)11);
+    EXPECT_NEAR(150.02, dec_year_1_credits, 0.1);
+
+    ssc_number_t* net_billing_credits = ssc_data_get_matrix(data, "net_billing_credits_ym", &nrows, &ncols);
+    util::matrix_t<double> credits_matrix(nrows, ncols);
+    credits_matrix.assign(net_billing_credits, nrows, ncols);
+
+    double jan_year_2_credits = credits_matrix.at((size_t)2, (size_t)0);
+    EXPECT_NEAR(32.55, jan_year_2_credits, 0.1);
+
+    ssc_data_free(data);
+
+}

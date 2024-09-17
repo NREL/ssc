@@ -389,12 +389,16 @@ public:
     double m_P_ref;                                 // Design Turbine Net Output (W)
     double m_eta_ref;                               // Design cycle thermal efficiency
 
-    double m_m_dot_htfmin;	                        // [kg/s] Minimum loop HTF flow rate
-    double m_m_dot_htfmax;	                        // [kg/s] Maximum loop HTF flow rate
     double m_T_loop_in_des;	                        // [C] Design loop inlet temperature, converted to K in init
-
     double m_T_loop_out_des;                        // [C] Target loop outlet temperature, converted to K in init
     int m_Fluid;			                        // [-] Field HTF fluid number
+
+    int m_use_abs_or_rel_mdot_limit = 0;            // Use mass flow abs (0) or relative (1) limits
+    double m_m_dot_htfmin_in = std::numeric_limits<double>::quiet_NaN();	    //[kg/s] Minimum loop HTF flow rate INPUT
+    double m_m_dot_htfmax_in = std::numeric_limits<double>::quiet_NaN();	    //[kg/s] Maximum loop HTF flow rate INPUT
+    double m_f_htfmin_in = std::numeric_limits<double>::quiet_NaN();	        // Minimum loop HTF fraction of mdot design INPUT
+    double m_f_htfmax_in = std::numeric_limits<double>::quiet_NaN();	        // Maximum loop HTF fraction of mdot design INPUT
+
 
     util::matrix_t<double> m_field_fl_props;	    // [-] User-defined field HTF properties
     double m_T_fp;			                        // [C] Freeze protection temperature (heat trace activation temperature), convert to K in init
@@ -533,6 +537,12 @@ public:
     double m_m_dot_design;	                        // [kg/s] Total solar field mass flow rate at design
     double m_m_dot_loop_des;                        // [kg/s] LOOP design mass flow rate
     double m_q_pb_design;                           // [Wt] Power block design input power
+
+    double m_m_dot_htfmin = std::numeric_limits<double>::quiet_NaN();	                        //[kg/s] Minimum loop HTF flow rate
+    double m_m_dot_htfmax = std::numeric_limits<double>::quiet_NaN();	                        //[kg/s] Maximum loop HTF flow rate
+    double m_f_htfmin = std::numeric_limits<double>::quiet_NaN();	                            // Minimum loop HTF fraction of mdot design
+    double m_f_htfmax = std::numeric_limits<double>::quiet_NaN();	                            // Maximum loop HTF fraction of mdot design
+
 
         // Steady State Design Point Outputs
     double m_dP_des_SS;                             // [bar] FIELD pressure drop at design (calculated in init (via steady_state -> On))

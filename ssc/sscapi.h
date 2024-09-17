@@ -297,6 +297,7 @@ SSCEXPORT ssc_bool_t ssc_data_deep_copy(ssc_data_t source, ssc_data_t dest);
  * Json objects map to SSC_TABLE type
  */
 SSCEXPORT ssc_data_t json_to_ssc_data(const char* json_str);
+SSCEXPORT ssc_data_t json_file_to_ssc_data(const char* json_fn);
 
 SSCEXPORT const char* ssc_data_to_json(ssc_data_t p_data);
 
