@@ -268,8 +268,8 @@ public:
 
     int m_external_fl;
     util::matrix_t<double> m_external_fl_props;
-    int m_tes_fl;
-    util::matrix_t<double> m_tes_fl_props;
+    //int m_tes_fl;
+    //util::matrix_t<double> m_tes_fl_props;
     double m_q_dot_design;                    //[MWe] Design heat rate in and out of tes
     double m_frac_max_q_dot;                  //[-] the max design heat rate as a fraction of the nominal
     double m_Q_tes_des;                       //[MWt-hr] design storage capacity
@@ -315,8 +315,8 @@ public:
 	C_csp_NTHeatTrap_tes(
         int external_fl,
         util::matrix_t<double> external_fl_props,
-        int tes_fl,
-        util::matrix_t<double> tes_fl_props,
+        //int tes_fl,
+        //util::matrix_t<double> tes_fl_props,
         double q_dot_design,                         // [MWt] Design heat rate in and out of tes
         double frac_max_q_dot,                       // [-] the max design heat rate as a fraction of the nominal
         double Q_tes_des,                            // [MWt-hr] design storage capacity

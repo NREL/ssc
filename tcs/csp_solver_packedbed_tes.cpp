@@ -149,6 +149,7 @@ double C_csp_packedbed_tes::get_avg_from_vec(std::vector<double> vec, double fra
 C_csp_packedbed_tes::C_csp_packedbed_tes(
     int external_fl,                                // [-] external fluid identifier
     util::matrix_t<double> external_fl_props,       // [-] external fluid properties
+    double q_dot_design,                            // [MWt] Design heat rate in and out of tes
     double Q_tes_des,                               // [MWt-hr] design storage capacity
     int size_type,                                  // [] Sizing Method (0) use fixed diameter, (1) use fixed height, (2) use preset inputs
     double h_tank_in,			                    // [m] tank height input
@@ -165,17 +166,17 @@ C_csp_packedbed_tes::C_csp_packedbed_tes(
     double k_eff,                                   // [W/m K] Effective thermal conductivity
     double void_frac,                               // [] Packed bed void fraction
     double dens_solid,                              // [kg/m3] solid specific heat 
-    double cp_solid,                                // [J/kg K] solid specific heat
+    double cp_solid,                                // [kJ/kg K] solid specific heat
     double T_hot_delta,                             // [C] Max allowable decrease in hot discharge temp
     double T_cold_delta,                            // [C] Max allowable increase in cold discharge temp
     double T_charge_min_C                           // [C] Min allowable charge temperature
 )
     :
-        m_external_fl(external_fl), m_external_fl_props(external_fl_props), m_Q_tes_des(Q_tes_des),
+        m_external_fl(external_fl), m_external_fl_props(external_fl_props), m_q_dot_design(q_dot_design),  m_Q_tes_des(Q_tes_des),
         m_size_type(size_type), m_h_tank_in(h_tank_in), m_d_tank_in(d_tank_in), m_f_oversize(f_oversize),
         m_f_V_hot_ini(f_V_hot_ini),
         m_n_xstep(n_xstep), m_n_subtimestep(n_subtimestep), m_tes_pump_coef(tes_pump_coef),
-        m_k_eff(k_eff), m_void_frac(void_frac), m_dens_solid(dens_solid), m_cp_solid(cp_solid),
+        m_k_eff(k_eff), m_void_frac(void_frac), m_dens_solid(dens_solid),
         m_T_hot_delta(T_hot_delta), m_T_cold_delta(T_cold_delta)
 {
     // Convert Temperature Units
@@ -184,6 +185,9 @@ C_csp_packedbed_tes::C_csp_packedbed_tes(
     m_T_tank_hot_ini = T_tank_hot_ini_C + 273.15;   //[K]
     m_T_tank_cold_ini = T_tank_cold_ini_C + 273.15; //[K]
     m_T_charge_min = T_charge_min_C + 273.15;       //[K]
+
+    // Convert Specific heat unit
+    m_cp_solid = cp_solid * 1e3;    //[J/kg K]
 
     // Set Subtimestep
     m_subtimestep_nominal = 3600.0 / m_n_subtimestep;   //[s]
@@ -199,7 +203,10 @@ C_csp_packedbed_tes::C_csp_packedbed_tes()
 void C_csp_packedbed_tes::set_T_grad_init(std::vector<double> T_grad_init_C)
 {
     for (double T_C : T_grad_init_C)
+    {
+        m_T_grad_init.push_back(T_C + 273.15);
         m_T_prev_vec.push_back(T_C + 273.15);
+    }
 
     m_use_T_grad_init = true;
 }
@@ -320,6 +327,10 @@ void C_csp_packedbed_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_input
         }
     }
 
+    // Calculate thermal power to PC at design
+    m_q_pb_design = m_q_dot_design * 1.E6;	//[Wt]
+
+    m_ts_hours = m_Q_tes_des / m_q_dot_design;
 }
 
 bool C_csp_packedbed_tes::does_tes_exist()
@@ -372,26 +383,64 @@ double C_csp_packedbed_tes::get_hot_tank_vol_frac()
 
 double C_csp_packedbed_tes::get_initial_charge_energy()
 {
-    return std::numeric_limits<double>::quiet_NaN();
+    //MWh
+    return m_q_pb_design * m_ts_hours * (m_f_V_hot_ini / 100.0) * 1.e-6;
+    
 }
 
 double C_csp_packedbed_tes::get_min_charge_energy()
 {
-    return std::numeric_limits<double>::quiet_NaN();
+    //MWh
+    return 0.;
 }
 
 double C_csp_packedbed_tes::get_max_charge_energy()
 {
-    return std::numeric_limits<double>::quiet_NaN();
+    //MWh
+    return m_q_pb_design * m_ts_hours / 1.e6;
 }
 
 double C_csp_packedbed_tes::get_degradation_rate()
 {
-    return std::numeric_limits<double>::quiet_NaN();
+    // No heat loss in packed bed model
+    return 0.0;
 }
 
 void C_csp_packedbed_tes::reset_storage_to_initial_state()
 {
+    // Define initial temperatures
+    if (m_use_T_grad_init == false)
+    {
+        double dx = m_h_tank_calc / m_n_xstep;               // [m]
+        double x_end = 0;   //[m]
+        double x_mid = 0;   //[m]
+        m_T_prev_vec = std::vector<double>(m_n_xstep + 1);
+        // Loop through space
+        for (int i = 0; i <= m_n_xstep; i++)
+        {
+            // Update position of center of section
+            if (i == 0 || i == m_n_xstep)
+            {
+                x_end += dx * 0.5;
+                x_mid = x_end - (dx * 0.5 * 0.5);
+            }
+            else
+            {
+                x_end += dx;
+                x_mid = x_end - (dx * 0.5);
+            }
+
+            double frac_mid = x_mid / m_h_tank_calc;
+            if (frac_mid < m_f_V_hot_ini * 0.01)
+                m_T_prev_vec[i] = m_T_tank_hot_ini;
+            else
+                m_T_prev_vec[i] = m_T_tank_cold_ini;
+        }
+    }
+    else
+    {
+        m_T_prev_vec = m_T_grad_init;
+    }
     return;
 }
 
@@ -981,24 +1030,4 @@ bool C_csp_packedbed_tes::discharge(double timestep /*s*/, double T_amb /*K*/, d
     q_dot_ch_from_htf = 0.0;    // [MWt]
 
     return true;
-}
-
-double C_csp_packedbed_tes::get_min_storage_htf_temp()
-{
-    return std::numeric_limits<bool>::quiet_NaN();
-}
-
-double C_csp_packedbed_tes::get_max_storage_htf_temp()
-{
-    return std::numeric_limits<bool>::quiet_NaN();
-}
-
-double C_csp_packedbed_tes::get_storage_htf_density()
-{
-    return std::numeric_limits<bool>::quiet_NaN();
-}
-
-double C_csp_packedbed_tes::get_storage_htf_cp()
-{
-    return std::numeric_limits<bool>::quiet_NaN();
 }
