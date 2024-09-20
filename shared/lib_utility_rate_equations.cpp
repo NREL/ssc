@@ -599,7 +599,8 @@ void rate_data::setup_energy_rates(ssc_number_t* ec_weekday, ssc_number_t* ec_we
 	for (m = 0; m < m_month.size(); m++)
 	{
 		int num_periods = 0;
-		int num_tiers = 0; 
+		int num_tiers = 0;
+        std::vector<ssc_number_t> tier_check;
 
 		for (i = 0; i < m_month[m].ec_periods.size(); i++)
 		{
@@ -657,7 +658,18 @@ void rate_data::setup_energy_rates(ssc_number_t* ec_weekday, ssc_number_t* ec_we
 						if (sell_eq_buy)
 							sell = ec_tou_mat.at(r, 4);
 						m_month[m].ec_tou_sr.at(i, j) = sell;
-						found = true;
+
+                        if (tier_check.size() < tier) {
+                            tier_check.push_back(m_month[m].ec_tou_ub.at(i, j));
+                        }
+                        else if (tier_check[tier - 1] != m_month[m].ec_tou_ub.at(i, j)) {
+                            std::ostringstream ss;
+                            ss << "Tier for month " << m << " period " << period << " was expected to be " << tier_check[tier - 1] << " but was ";
+                            ss << m_month[m].ec_tou_ub.at(i, j) << " in tier " << tier << ". Tiers within a month should be the same for TOU rates.";
+                            throw exec_error("lib_utility_rate_equations", ss.str());
+                        }
+
+                        found = true;
 					}
 				}
 
@@ -790,7 +802,7 @@ void rate_data::setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_
 		m_month[m].dc_tou_ch.resize_fill(num_periods, num_tiers, 0); // kWh
 		for (i = 0; i < m_month[m].dc_periods.size(); i++)
 		{
-			// find all periods and check that number of tiers the same for all for the month, if not through error
+			// find all periods and check that number of tiers the same for all for the month, if not throw error
 			std::vector<int>::iterator per_num = std::find(m_dc_tou_periods.begin(), m_dc_tou_periods.end(), m_month[m].dc_periods[i]);
 			period = (*per_num);
 			int ndx = (int)(per_num - m_dc_tou_periods.begin());
