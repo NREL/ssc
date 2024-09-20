@@ -664,7 +664,7 @@ void rate_data::setup_energy_rates(ssc_number_t* ec_weekday, ssc_number_t* ec_we
                         }
                         else if (tier_check[tier - 1] != m_month[m].ec_tou_ub.at(i, j)) {
                             std::ostringstream ss;
-                            ss << "Tier for month " << m << " period " << period << " was expected to be " << tier_check[tier - 1] << " but was ";
+                            ss << "Energy tier for month " << m << " period " << period << " was expected to be " << tier_check[tier - 1] << " but was ";
                             ss << m_month[m].ec_tou_ub.at(i, j) << " in tier " << tier << ". Tiers within a month should be the same for TOU rates.";
                             throw exec_error("lib_utility_rate_equations", ss.str());
                         }
@@ -781,6 +781,7 @@ void rate_data::setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_
 	{
 		int num_periods = 0;
 		int num_tiers = 0;
+        std::vector<ssc_number_t> tier_check;
 		num_periods = (int)m_month[m].dc_periods.size();
 		for (i = 0; i < m_month[m].dc_periods.size(); i++)
 		{
@@ -818,6 +819,17 @@ void rate_data::setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_
 					{
 						m_month[m].dc_tou_ub.at(i, j) = dc_tou_mat.at(r, 2);
 						m_month[m].dc_tou_ch.at(i, j) = dc_tou_mat.at(r, 3);//demand charge;
+
+                        if (tier_check.size() < tier) {
+                            tier_check.push_back(m_month[m].dc_tou_ub.at(i, j));
+                        }
+                        else if (tier_check[tier - 1] != m_month[m].dc_tou_ub.at(i, j)) {
+                            std::ostringstream ss;
+                            ss << "Demand tier for month " << m << " period " << period << " was expected to be " << tier_check[tier - 1] << " but was ";
+                            ss << m_month[m].ec_tou_ub.at(i, j) << " in tier " << tier << ". Tiers within a month should be the same for TOU rates.";
+                            throw exec_error("lib_utility_rate_equations", ss.str());
+                        }
+
 						found = true;
 					}
 				}
