@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include <cstring>
 #include <iostream>
+#include <fstream>
 #include <vector>
 
 #include "lib_util.h"
@@ -44,12 +45,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../rapidjson/error/en.h" // parser errors returned as char strings
 #include "../rapidjson/stringbuffer.h"
 #include "../rapidjson/writer.h"
+#include "../rapidjson/istreamwrapper.h"
 
 #pragma warning (disable : 4706 )
 
 SSCEXPORT int ssc_version()
 {
-	return 279;
+	return 292;
 }
 
 SSCEXPORT const char *ssc_build_info()
@@ -71,10 +73,6 @@ extern module_entry_info
 	cm_entry_iec61853interp,
 	cm_entry_6parsolve,
 	cm_entry_pvsamv1,
-	cm_entry_pvwattsv0,
-	cm_entry_pvwattsv1,
-	cm_entry_pvwattsv1_1ts,
-	cm_entry_pvwattsv1_poa,
 	cm_entry_pvwattsv5,
 	cm_entry_pvwattsv7,
     cm_entry_pvwattsv8,
@@ -89,7 +87,6 @@ extern module_entry_info
 	cm_entry_utilityrate4,
 	cm_entry_utilityrate5,
     cm_entry_utilityrateforecast,
-	cm_entry_annualoutput,
 	cm_entry_cashloan,
 	cm_entry_thirdpartyownership,
 	cm_entry_ippppa,
@@ -105,20 +102,21 @@ extern module_entry_info
 	cm_entry_geothermal,
 	cm_entry_geothermal_costs,
 	cm_entry_windpower,
-	cm_entry_poacalib,
 	cm_entry_snowmodel,
 	cm_entry_generic_system,
 	cm_entry_wfcsvconv,
 	cm_entry_tcstrough_empirical,
 	cm_entry_tcstrough_physical,
 	cm_entry_trough_physical,
-	cm_entry_trough_physical_csp_solver,
-	cm_entry_trough_physical_process_heat,
+    cm_entry_trough_physical_iph,
 	cm_entry_iph_to_lcoefcr,
 	cm_entry_tcsgeneric_solar,
 	cm_entry_tcsmolten_salt,
+    cm_entry_mspt_iph,
     cm_entry_mspt_sf_and_rec_isolated,
     cm_entry_ptes_design_point,
+    cm_entry_fresnel_physical,
+    cm_entry_fresnel_physical_iph,
 	cm_entry_tcslinear_fresnel,
 	cm_entry_linear_fresnel_dsg_iph,
 	cm_entry_tcsmslf,
@@ -152,6 +150,7 @@ extern module_entry_info
 	cm_entry_battwatts,
 	cm_entry_fuelcell,
    	cm_entry_lcoefcr,
+    cm_entry_lcoefcr_design,
 	cm_entry_pv_get_shade_loss_mpp,
 	cm_entry_inv_cec_cg,
 	cm_entry_thermalrate,
@@ -159,10 +158,13 @@ extern module_entry_info
 	cm_entry_mhk_wave,
 	cm_entry_mhk_costs,
 	cm_entry_wave_file_reader,
+    cm_entry_tidal_file_reader,
 	cm_entry_grid,
 	cm_entry_battery_stateful,
-    cm_entry_csp_subcomponent
-	;
+    cm_entry_csp_subcomponent,
+    cm_entry_hybrid_steps,
+    cm_entry_hybrid
+    ;
 
 /* official module table */
 static module_entry_info *module_table[] = {
@@ -173,10 +175,6 @@ static module_entry_info *module_table[] = {
 	&cm_entry_6parsolve,
 	&cm_entry_pv6parmod,
 	&cm_entry_pvsamv1,
-	//&cm_entry_pvwattsv0,
-	&cm_entry_pvwattsv1,
-	&cm_entry_pvwattsv1_1ts,
-	&cm_entry_pvwattsv1_poa,
 	&cm_entry_pvwattsv5,
 	&cm_entry_pvwattsv7,
     &cm_entry_pvwattsv8,
@@ -190,7 +188,6 @@ static module_entry_info *module_table[] = {
 	&cm_entry_utilityrate4,
 	&cm_entry_utilityrate5,
     &cm_entry_utilityrateforecast,
-	&cm_entry_annualoutput,
 	&cm_entry_cashloan,
 	&cm_entry_thirdpartyownership,
 	&cm_entry_ippppa,
@@ -206,19 +203,20 @@ static module_entry_info *module_table[] = {
 	&cm_entry_geothermal,
 	&cm_entry_geothermal_costs,
 	&cm_entry_windpower,
-	&cm_entry_poacalib,
 	&cm_entry_snowmodel,
 	&cm_entry_generic_system,
 	&cm_entry_wfcsvconv,
 	&cm_entry_tcstrough_empirical,
 	&cm_entry_tcstrough_physical,
     &cm_entry_trough_physical,
-	&cm_entry_trough_physical_csp_solver,
-	&cm_entry_trough_physical_process_heat,
+    &cm_entry_trough_physical_iph,
 	&cm_entry_iph_to_lcoefcr,
 	&cm_entry_tcsgeneric_solar,
 	&cm_entry_tcsmolten_salt,
+    &cm_entry_mspt_iph,
     &cm_entry_mspt_sf_and_rec_isolated,
+    &cm_entry_fresnel_physical,
+    &cm_entry_fresnel_physical_iph,
     &cm_entry_ptes_design_point,
 	&cm_entry_tcslinear_fresnel,
 	&cm_entry_linear_fresnel_dsg_iph,
@@ -253,6 +251,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_battwatts,
 	&cm_entry_fuelcell,
 	&cm_entry_lcoefcr,
+    &cm_entry_lcoefcr_design,
 	&cm_entry_pv_get_shade_loss_mpp,
 	&cm_entry_inv_cec_cg,
 	&cm_entry_thermalrate,
@@ -260,10 +259,18 @@ static module_entry_info *module_table[] = {
 	&cm_entry_mhk_wave,
 	&cm_entry_mhk_costs,
 	&cm_entry_wave_file_reader,
+    &cm_entry_tidal_file_reader,
 	&cm_entry_grid,
 	&cm_entry_battery_stateful,
     &cm_entry_csp_subcomponent,
-	0 };
+    &cm_entry_hybrid_steps,
+    &cm_entry_hybrid,
+0 };
+
+extern var_info vtab_oandm[];
+extern var_info vtab_hybrid_tech_inputs[];
+extern var_info vtab_oandm_hybrid[];
+
 
 SSCEXPORT ssc_module_t ssc_module_create( const char *name )
 {
@@ -705,6 +712,16 @@ SSCEXPORT ssc_var_t ssc_data_get_data_matrix(ssc_data_t p_data, const char *name
     }
     return dat;
 }
+
+SSCEXPORT ssc_bool_t ssc_data_deep_copy(ssc_data_t source, ssc_data_t dest) {
+    auto source_vt = static_cast<var_table*>(source);
+    if (!source_vt) return 0;
+    auto dest_vt = static_cast<var_table*>(dest);
+    if (!dest_vt) return 0;
+	*dest_vt = *source_vt;  // invokes operator= for deep copy
+    return 1;
+}
+
 /*
 void json_to_ssc_var(const Json::Value& json_val, ssc_var_t ssc_val){
     if (!ssc_val)
@@ -918,6 +935,37 @@ void json_to_ssc_var(const rapidjson::Value& json_val, ssc_var_t ssc_val) {
         }
         vd->type = SSC_TABLE;
     }
+}
+
+SSCEXPORT ssc_data_t json_file_to_ssc_data(const char* json_fn) {
+    // memory leak if calling program does not do garbage collection
+    auto vt = new var_table;
+    //    std::unique_ptr<var_table> vt = std::unique_ptr<var_table>(new var_table);
+
+    std::ifstream ifs{ json_fn };
+    if (!ifs.is_open())
+    {
+        std::string s = "Could not open file for reading!\n";
+        vt->assign("error", s);
+        return vt;
+    }
+    rapidjson::IStreamWrapper isw{ ifs };
+
+    rapidjson::Document document;
+    document.ParseStream<rapidjson::kParseNanAndInfFlag>(isw); // Allow parsing NaN, Inf, Infinity, -Inf and -Infinity as double values (relaxed JSON syntax).
+    if (document.HasParseError()) {
+        std::string s = rapidjson::GetParseError_En(document.GetParseError());
+        vt->assign("error", s);
+        return vt;
+    }
+    //    static const char* kTypeNames[] = { "Null", "False", "True", "Object", "Array", "String", "Number" };
+    for (rapidjson::Value::ConstMemberIterator itr = document.MemberBegin(); itr != document.MemberEnd(); ++itr) {
+        //printf("Type of member %s is %s\n", itr->name.GetString(), kTypeNames[itr->value.GetType()]);
+        var_data ssc_val;
+        json_to_ssc_var(itr->value, &ssc_val);
+        vt->assign(itr->name.GetString(), ssc_val);
+    }
+    return vt;
 }
 
 SSCEXPORT ssc_data_t json_to_ssc_data(const char* json_str) {
@@ -1284,6 +1332,100 @@ SSCEXPORT void ssc_module_extproc_output( ssc_handler_t p_handler, const char *o
 {
 	handler_interface *hi = static_cast<handler_interface*>( p_handler );
 	if (hi)	hi->on_stdout( output_line );
+}
+
+SSCEXPORT ssc_bool_t ssc_module_add_var_info(ssc_module_t p_mod, ssc_info_t v)
+{
+    compute_module* cm = static_cast<compute_module*>(p_mod);
+    if (!p_mod) return 0;
+
+    var_info* vi = static_cast<var_info*>(v);
+    if (!vi) return 0;
+    cm->add_var_info(vi);
+
+    return 1;
+}
+
+SSCEXPORT ssc_bool_t ssc_module_hybridize(ssc_module_t p_mod)
+{
+    compute_module* cmod = static_cast<compute_module*>(p_mod);
+    if (!p_mod)
+        return 0;
+
+    if (vtab_oandm_hybrid[0].var_type == SSC_INVALID){
+        memcpy(&vtab_oandm_hybrid, &vtab_oandm, 35 * sizeof(var_info));
+
+        for (size_t i=0; i < 35; i++){
+            if (vtab_oandm_hybrid[i].var_type != 0)
+                vtab_oandm_hybrid[i].group = "HybridCosts";
+        }
+    }
+
+    // copy only the subset for the technology
+    std::string cmod_name = cmod->get_name();
+    var_info* vtab_oandm_hybrid_tech[35];
+    for (size_t i=0; i<35; i++)
+        vtab_oandm_hybrid_tech[i] = nullptr;
+
+    size_t copy_counter = 0;
+    for (size_t i=0; i<35; i++){
+        if (vtab_oandm_hybrid[i].var_type == SSC_INVALID)
+            break;
+        std::string name = std::string(vtab_oandm_hybrid[i].name);
+        std::string meta = std::string(vtab_oandm_hybrid[i].meta);
+        if (!meta.size()){
+            // if no meta description on variable, apply it to all technologies
+            if (!cmod->has_info(name)) {
+                vtab_oandm_hybrid_tech[copy_counter] = &vtab_oandm_hybrid[i];
+                copy_counter++;
+            }
+            continue;
+        }
+
+        size_t pos = 0;
+        std::vector<std::string> tokens;
+        while ((pos = meta.find(',')) != std::string::npos){
+            std::string token = meta.substr(0, pos);
+            tokens.push_back(token);
+            meta.erase(0, pos + 1);
+        }
+        if (meta.size())
+            tokens.push_back(meta);
+
+        if (tokens[0][0] == '!'){
+            // apply blocklist
+            bool restricted = false;
+            for (std::string token:tokens){
+                if (cmod_name == token.substr(1)){
+                    restricted = true;
+                    break;
+                }
+            }
+            if (!restricted) {
+                if (!cmod->has_info(name)){
+                    vtab_oandm_hybrid_tech[copy_counter] = &vtab_oandm_hybrid[i];
+                    copy_counter++;
+                }
+                continue;
+            }
+        }
+        else {
+            // apply allowlist
+            for (std::string token:tokens){
+                if (cmod_name == token){
+                    if (!cmod->has_info(name)){
+                        vtab_oandm_hybrid_tech[copy_counter] = &vtab_oandm_hybrid[i];
+                        copy_counter++;
+                    }
+                    break;
+                }
+            }
+        }
+    }    
+
+    cmod->add_var_info(vtab_oandm_hybrid_tech);
+    cmod->add_var_info(vtab_hybrid_tech_inputs);
+    return 1;
 }
 
 SSCEXPORT const char *ssc_module_log( ssc_module_t p_mod, int index, int *item_type, float *time )

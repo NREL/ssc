@@ -183,7 +183,7 @@ bool csp_dispatch_opt::update_horizon_parameters(C_csp_tou& mc_tou)
         C_csp_tou::S_csp_tou_outputs mc_tou_outputs;
 
         mc_tou.call(pointers.siminfo->ms_ts.m_time + t * 3600. / (double)solver_params.steps_per_hour, mc_tou_outputs);
-        params.sell_price.at(t) = mc_tou_outputs.m_price_mult * params.ppa_price_y1;
+        params.sell_price.at(t) = mc_tou_outputs.m_elec_price * 1000.0; // $/kWhe -> $/Mhe     //.m_price_mult * params.ppa_price_y1;
     }
 
     // get the new electricity generation limits
@@ -192,8 +192,13 @@ bool csp_dispatch_opt::update_horizon_parameters(C_csp_tou& mc_tou)
     int hour_start = (int)(ceil(pointers.siminfo->ms_ts.m_time / 3600. - 1.e-6)) - 1;
     for (int t = 0; t < solver_params.optimize_horizon * solver_params.steps_per_hour; t++)
     {
-        for (int d = 0; d < solver_params.steps_per_hour; d++)
-            params.w_lim.at(t * solver_params.steps_per_hour + d) = mc_tou.mc_dispatch_params.m_w_lim_full.at(hour_start + t);
+        for (int d = 0; d < solver_params.steps_per_hour; d++) {
+            double W_dot_max = params.q_pb_max * params.eta_pb_des;     //[kWe]
+            C_csp_tou::S_csp_tou_outputs tou_outputs;
+            mc_tou.call((hour_start + t + 1)*3600.0, tou_outputs);
+            params.w_lim.at(t * solver_params.steps_per_hour + d) = tou_outputs.m_wlim_dispatch * W_dot_max;
+                //params.w_lim.at(t * solver_params.steps_per_hour + d) = mc_tou.mc_dispatch_params.m_w_lim_full.at(hour_start + t);
+        }
     }
 
     return true;
@@ -267,9 +272,11 @@ bool csp_dispatch_opt::predict_performance(int step_start, int ntimeints, int di
             double q_inc = Asf * opt_eff * dni * 1.e-6; //MW
 
             //get thermal efficiency
-            double therm_eff = pointers.col_rec->calculate_thermal_efficiency_approx(pointers.m_weather.ms_outputs, q_inc);
+            double therm_eff = pointers.col_rec->calculate_thermal_efficiency_approx(pointers.m_weather.ms_outputs, q_inc, simloc);
             therm_eff *= params.sf_effadj;
             therm_eff_ave += therm_eff * ave_weight;
+
+            //C_csp_fresnel_collector_receiver x;
 
             //store the predicted field energy output
             // use the cold tank temperature as a surrogate for the loop inlet temperature, as it

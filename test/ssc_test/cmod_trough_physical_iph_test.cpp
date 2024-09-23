@@ -43,16 +43,24 @@ using namespace csp_trough;
 NAMESPACE_TEST(csp_trough, HeatTroughCmod, Default_NoFinancial)
 {
     ssc_data_t defaults = trough_physical_iph_defaults();
-    CmodUnderTest heat_trough = CmodUnderTest("trough_physical_process_heat", defaults);
+    CmodUnderTest heat_trough = CmodUnderTest("trough_physical_iph", defaults);
     int errors = heat_trough.RunModule();
     EXPECT_FALSE(errors);
     if (!errors) {
 
-        EXPECT_NEAR_FRAC(heat_trough.GetOutput("annual_gross_energy"), 24267285, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(heat_trough.GetOutput("annual_energy"), 24267070, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(heat_trough.GetOutput("annual_electricity_consumption"), 92979, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(heat_trough.GetOutput("annual_thermal_consumption"), 215.00, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(heat_trough.GetOutput("annual_tes_freeze_protection"), 215.00, kErrorToleranceHi);
+        //double annual_gross_energy = heat_trough.GetOutput("annual_gross_energy");
+        double annual_energy = heat_trough.GetOutput("annual_energy");
+        double annual_electricity_consumption = heat_trough.GetOutput("annual_electricity_consumption");
+        double annual_thermal_consumption = heat_trough.GetOutput("annual_thermal_consumption");
+        double annual_tes_freeze_protection = heat_trough.GetOutput("annual_tes_freeze_protection");
+        double annual_field_freeze_protection = heat_trough.GetOutput("annual_field_freeze_protection");
+        double annual_total_water_use = heat_trough.GetOutput("annual_total_water_use");
+
+        //EXPECT_NEAR_FRAC(heat_trough.GetOutput("annual_gross_energy"), 24267285, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(heat_trough.GetOutput("annual_energy"), 24142307, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(heat_trough.GetOutput("annual_electricity_consumption"), 94120, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(heat_trough.GetOutput("annual_thermal_consumption"), 217.51, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(heat_trough.GetOutput("annual_tes_freeze_protection"), 217.51, kErrorToleranceHi);
         EXPECT_NEAR(heat_trough.GetOutput("annual_field_freeze_protection"), 0., kErrorToleranceHi);
         EXPECT_NEAR_FRAC(heat_trough.GetOutput("annual_total_water_use"), 176.3, kErrorToleranceHi);
 

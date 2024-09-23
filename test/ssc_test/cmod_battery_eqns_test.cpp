@@ -36,6 +36,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cmod_battery_eqns_test.h"
 
 #include "cmod_battery_eqns.h"
+#include "pvsamv1_common_data.h"
+
 TEST_F(CMBatteryEqns_cmod_battery_eqns, TestStatefulSizeModifications) {
     CreateModel(1.);
 
@@ -59,3 +61,29 @@ TEST_F(CMBatteryEqns_cmod_battery_eqns, TestStatefulSizeModifications) {
     EXPECT_NEAR(3.2033, new_surface_area, m_error_tolerance_lo);
 }
 
+TEST_F(CMBatteryEqns_cmod_battery_eqns, reopt_sizing) {
+    data = ssc_data_create();
+    battery_data_default(data);
+    utility_rate5_default(data);
+    cashloan_default(data);
+
+    ssc_number_t gen[8760] = { 0 };
+    ssc_data_set_array(data, "gen", gen, 8760);
+    ssc_data_set_number(data, "analysis_period", 25);
+    ssc_data_set_number(data, "system_capacity", 5);
+    set_array(data, "load", load_profile_path, 8760); // Load is required for peak shaving controllers
+
+
+    Reopt_size_standalone_battery_params(data);
+
+    auto vd = static_cast<var_table*>(data);
+    ASSERT_TRUE(vd->is_assigned("reopt_scenario"));
+    auto site = vd->lookup("reopt_scenario");
+
+    auto settings = site->table.lookup("Settings");
+    assert(settings->table.lookup("time_steps_per_hour")->num == 1);
+
+    std::vector<std::string> sections = { "ElectricTariff", "ElectricLoad", "Financial", "ElectricStorage"};
+    for (const auto& s : sections)
+        ASSERT_TRUE(site->table.is_assigned(s));
+}

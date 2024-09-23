@@ -59,8 +59,8 @@ NAMESPACE_TEST(csp_trough, TroughLoop, DefaultTest)
 
     trough->on(*time_and_weather, fluid_inlet_state, std::numeric_limits<double>::quiet_NaN(), defocus, trough_outputs, timestep_and_tou);
 
-    EXPECT_NEAR(trough_outputs.m_T_salt_hot, 391.17, 391.17 * kErrorToleranceLo);
-    EXPECT_NEAR(trough_outputs.m_m_dot_salt_tot, 6568369, 6568369 * kErrorToleranceLo);
+    EXPECT_NEAR(trough_outputs.m_T_salt_hot, 391.15, 391.15 * kErrorToleranceLo);
+    EXPECT_NEAR(trough_outputs.m_m_dot_salt_tot, 6645818., 6645818. * kErrorToleranceLo);
 }
 
 // Test a standard trough loop from a homogenous initial condition to steady-state
@@ -130,8 +130,8 @@ NAMESPACE_TEST(csp_trough, TroughLoop, SteadyStateTest)
 
     } while (ss_diff / 200. > tol);
 
-    EXPECT_NEAR(trough->m_T_sys_h_t_end, 656.1, 656.1 * kErrorToleranceLo);     // final loop outlet temperature
-    EXPECT_NEAR(minutes2SS, 35., 35. * kErrorToleranceLo);                      // time to steady-state
+    EXPECT_NEAR(trough->m_T_sys_h_t_end, 659.4, 659.4 * kErrorToleranceLo);     // final loop outlet temperature
+    EXPECT_NEAR(minutes2SS, 40., 40. * kErrorToleranceLo);                      // time to steady-state
 }
 //========/Tests==================================================================================
 
@@ -163,8 +163,8 @@ std::unique_ptr<Trough> TroughFactory::MakeTrough(TroughSpecifications* trough_s
     trough->m_T_loop_in_des = trough_specifications->T_loop_in_des;
     trough->m_T_loop_out_des = trough_specifications->T_loop_out_des;
     trough->m_T_startup = trough_specifications->T_startup;
-    trough->m_m_dot_htfmin = trough_specifications->m_dot_htfmin;
-    trough->m_m_dot_htfmax = trough_specifications->m_dot_htfmax;
+    trough->m_m_dot_htfmin_in = trough_specifications->m_dot_htfmin_in;
+    trough->m_m_dot_htfmax_in = trough_specifications->m_dot_htfmax_in;
     trough->m_field_fl_props = trough_specifications->field_fl_props;
     trough->m_T_fp = trough_specifications->T_fp;
     trough->m_I_bn_des = trough_specifications->I_bn_des;
@@ -261,6 +261,15 @@ std::unique_ptr<Trough> TroughFactory::MakeTrough(TroughSpecifications* trough_s
     trough->m_sf_hdr_wallthicks = trough_specifications->sf_hdr_wallthicks;
     trough->m_sf_hdr_lengths = trough_specifications->sf_hdr_lengths;
 
+    // TMB 11-28-2023 Added parameters for updated Trough
+    //trough->m_trough_loop_control = trough_specifications->trough_loop_control;
+    trough->m_use_solar_mult_or_aperture_area = trough_specifications->use_solar_mult_or_aperture_area;
+    trough->m_specified_solar_mult = trough_specifications->specified_solar_mult;
+    trough->m_P_ref = trough_specifications->P_ref;
+    trough->m_eta_ref = trough_specifications->eta_ref;
+    trough->m_non_solar_field_land_area_multiplier = trough_specifications->non_solar_field_land_area_multiplier;
+
+    trough->design_solar_mult(trough_specifications->trough_loop_control);
     TroughSolvedParams trough_solved_params;
     trough->init(location, trough_solved_params);
 
@@ -318,8 +327,9 @@ std::unique_ptr<TroughSpecifications> DefaultTroughFactory::MakeSpecifications()
     trough_specifications->T_loop_in_des = 293.;
     trough_specifications->T_loop_out_des = 391.;
     trough_specifications->T_startup = 0.67 * trough_specifications->T_loop_in_des + 0.33 * trough_specifications->T_loop_out_des; //[C]
-    trough_specifications->m_dot_htfmin = 1.;
-    trough_specifications->m_dot_htfmax = 12.;
+
+    trough_specifications->m_dot_htfmin_in = 1.;
+    trough_specifications->m_dot_htfmax_in = 12.;
     double vals[] = { 0 };
     trough_specifications->field_fl_props.assign(vals, 1, 1);
     trough_specifications->T_fp = 150.;
@@ -664,6 +674,17 @@ std::unique_ptr<TroughSpecifications> DefaultTroughFactory::MakeSpecifications()
 
     double vals49[] = { -1 };
     trough_specifications->sf_hdr_lengths.assign(vals49, 1, 1);
+
+    // TMB 11-28-2023 Added parameters for updated Trough
+    std::vector<double> trough_loop_vals = { 8, 1, 1, 8, 1, 1, 7, 1, 1, 6, 1, 1, 5, 1, 1, 4, 1, 1, 3, 1, 1, 2, 1, 1, 1 };
+    trough_specifications->trough_loop_control = trough_loop_vals;
+
+    trough_specifications->use_solar_mult_or_aperture_area = 0;
+    trough_specifications->specified_solar_mult = 2;
+    trough_specifications->P_ref = 111e6;
+    trough_specifications->eta_ref = 0.356;
+    trough_specifications->non_solar_field_land_area_multiplier = 1.4;
+
 
     return trough_specifications;
 }

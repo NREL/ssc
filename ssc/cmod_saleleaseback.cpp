@@ -67,48 +67,48 @@ static var_info _cm_vtab_saleleaseback[] = {
     { SSC_OUTPUT, SSC_ARRAY, "cf_utility_bill", "Electricity purchase", "$", "", "", "", "LENGTH_EQUAL=cf_length", "" },
 
 
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_jan",	"Energy produced by year in January",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_sales_jan",	"Energy produced by year in January",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_jan",		"PPA revenue by year for January",	"$",   "",                      "Sale Leaseback",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_feb",	"Energy produced by year in February",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_sales_feb",	"Energy produced by year in February",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_feb",		"PPA revenue by year for February",	"$",   "",                      "Sale Leaseback",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_mar",	"Energy produced by year in March",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_sales_mar",	"Energy produced by year in March",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_mar",		"PPA revenue by year for March",	"$",   "",                      "Sale Leaseback",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_apr",	"Energy produced by year in April",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_sales_apr",	"Energy produced by year in April",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_apr",		"PPA revenue by year for April",	"$",   "",                      "Sale Leaseback",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_may",	"Energy produced by year in May",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_sales_may",	"Energy produced by year in May",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_may",		"PPA revenue by year for May",	"$",   "",                      "Sale Leaseback",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_jun",	"Energy produced by year in June",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_sales_jun",	"Energy produced by year in June",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_jun",		"PPA revenue by year for June",	"$",   "",                      "Sale Leaseback",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_jul",	"Energy produced by year in July",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_sales_jul",	"Energy produced by year in July",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_jul",		"PPA revenue by year for July",	"$",   "",                      "Sale Leaseback",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_aug",	"Energy produced by year in August",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_sales_aug",	"Energy produced by year in August",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_aug",		"PPA revenue by year for August",	"$",   "",                      "Sale Leaseback",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_sep",	"Energy produced by year in September",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_sales_sep",	"Energy produced by year in September",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_sep",		"PPA revenue by year for September",	"$",   "",                      "Sale Leaseback",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_oct",	"Energy produced by year in October",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_sales_oct",	"Energy produced by year in October",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_oct",		"PPA revenue by year for October",	"$",   "",                      "Sale Leaseback",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_nov",	"Energy produced by year in November",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_sales_nov",	"Energy produced by year in November",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_nov",		"PPA revenue by year for November",	"$",   "",                      "Sale Leaseback",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
-	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_net_dec",	"Energy produced by year in December",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
+	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_energy_sales_dec",	"Energy produced by year in December",	"kWh",   "",                      "Sale Leaseback",             "*",						   "LENGTH_EQUAL=cf_length",                 "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_revenue_dec",		"PPA revenue by year for December",	"$",   "",                      "Sale Leaseback",             "*",				   "LENGTH_EQUAL=cf_length",                 "" },
 
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_net_dispatch1", "Energy produced by year in TOD period 1", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_sales_dispatch1", "Energy produced by year in TOD period 1", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_revenue_dispatch1", "PPA revenue by year for TOD period 1", "$", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_net_dispatch2", "Energy produced by year in TOD period 2", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_sales_dispatch2", "Energy produced by year in TOD period 2", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_revenue_dispatch2", "PPA revenue by year for TOD period 2", "$", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_net_dispatch3", "Energy produced by year in TOD period 3", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_sales_dispatch3", "Energy produced by year in TOD period 3", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_revenue_dispatch3", "PPA revenue by year for TOD period 3", "$", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_net_dispatch4", "Energy produced by year in TOD period 4", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_sales_dispatch4", "Energy produced by year in TOD period 4", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_revenue_dispatch4", "PPA revenue by year for TOD period 4", "$", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_net_dispatch5", "Energy produced by year in TOD period 5", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_sales_dispatch5", "Energy produced by year in TOD period 5", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_revenue_dispatch5", "PPA revenue by year for TOD period 5", "$", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_net_dispatch6", "Energy produced by year in TOD period 6", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_sales_dispatch6", "Energy produced by year in TOD period 6", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_revenue_dispatch6", "PPA revenue by year for TOD period 6", "$", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_net_dispatch7", "Energy produced by year in TOD period 7", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_sales_dispatch7", "Energy produced by year in TOD period 7", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_revenue_dispatch7", "PPA revenue by year for TOD period 7", "$", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_net_dispatch8", "Energy produced by year in TOD period 8", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_sales_dispatch8", "Energy produced by year in TOD period 8", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_revenue_dispatch8", "PPA revenue by year for TOD period 8", "$", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_net_dispatch9", "Energy produced by year in TOD period 9", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_sales_dispatch9", "Energy produced by year in TOD period 9", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_revenue_dispatch9", "PPA revenue by year for TOD period 9", "$", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "LENGTH_EQUAL=cf_length", "" },
 
 	{ SSC_OUTPUT, SSC_NUMBER, "firstyear_revenue_dispatch1", "PPA revenue in Year 1 TOD period 1", "$", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
@@ -143,26 +143,26 @@ static var_info _cm_vtab_saleleaseback[] = {
 
 	// first year monthly output for each TOD period
 	//	{ SSC_OUTPUT,        SSC_ARRAY,     "cf_revenue_monthly_firstyear",		      "First year revenue from the system by month",	"",   "",      "Cash Flow Revenue",             "*",				   "",                 "" },
-	//	{ SSC_OUTPUT,        SSC_ARRAY,     "cf_energy_net_monthly_firstyear",	      "First year energy from the system by month",	"",   "",          "Cash Flow Revenue",             "*",				   "",                 "" },
+	//	{ SSC_OUTPUT,        SSC_ARRAY,     "cf_energy_sales_monthly_firstyear",	      "First year energy from the system by month",	"",   "",          "Cash Flow Revenue",             "*",				   "",                 "" },
 
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_revenue_monthly_firstyear_TOD1", "First year revenue from the system by month for TOD period 1", "$", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_net_monthly_firstyear_TOD1", "First year energy from the system by month for TOD period 1", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_sales_monthly_firstyear_TOD1", "First year energy from the system by month for TOD period 1", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_revenue_monthly_firstyear_TOD2", "First year revenue from the system by month for TOD period 2", "$", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_net_monthly_firstyear_TOD2", "First year energy from the system by month for TOD period 2", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_sales_monthly_firstyear_TOD2", "First year energy from the system by month for TOD period 2", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_revenue_monthly_firstyear_TOD3", "First year revenue from the system by month for TOD period 3", "$", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_net_monthly_firstyear_TOD3", "First year energy from the system by month for TOD period 3", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_sales_monthly_firstyear_TOD3", "First year energy from the system by month for TOD period 3", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_revenue_monthly_firstyear_TOD4", "First year revenue from the system by month for TOD period 4", "$", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_net_monthly_firstyear_TOD4", "First year energy from the system by month for TOD period 4", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_sales_monthly_firstyear_TOD4", "First year energy from the system by month for TOD period 4", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_revenue_monthly_firstyear_TOD5", "First year revenue from the system by month for TOD period 5", "$", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_net_monthly_firstyear_TOD5", "First year energy from the system by month for TOD period 5", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_sales_monthly_firstyear_TOD5", "First year energy from the system by month for TOD period 5", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_revenue_monthly_firstyear_TOD6", "First year revenue from the system by month for TOD period 6", "$", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_net_monthly_firstyear_TOD6", "First year energy from the system by month for TOD period 6", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_sales_monthly_firstyear_TOD6", "First year energy from the system by month for TOD period 6", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_revenue_monthly_firstyear_TOD7", "First year revenue from the system by month for TOD period 7", "$", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_net_monthly_firstyear_TOD7", "First year energy from the system by month for TOD period 7", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_sales_monthly_firstyear_TOD7", "First year energy from the system by month for TOD period 7", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_revenue_monthly_firstyear_TOD8", "First year revenue from the system by month for TOD period 8", "$", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_net_monthly_firstyear_TOD8", "First year energy from the system by month for TOD period 8", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_sales_monthly_firstyear_TOD8", "First year energy from the system by month for TOD period 8", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "cf_revenue_monthly_firstyear_TOD9", "First year revenue from the system by month for TOD period 9", "$", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_net_monthly_firstyear_TOD9", "First year energy from the system by month for TOD period 9", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "cf_energy_sales_monthly_firstyear_TOD9", "First year energy from the system by month for TOD period 9", "kWh", "", "Cash Flow Revenue", "ppa_multiplier_model=0", "", "" },
 
 /* inputs in model not currently in SAM 11/15/10 */
 	{ SSC_INPUT,       SSC_NUMBER,      "total_installed_cost",          "Installed cost",                   "$",     "",					  "Sale Leaseback",			 "*",                         "",                             "" },
@@ -482,6 +482,9 @@ static var_info _cm_vtab_saleleaseback[] = {
 /*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_total",		"Total federal first year bonus depreciation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_total",		"Total federal depreciation basis",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 
+    { SSC_OUTPUT,       SSC_NUMBER,     "pre_depr_alloc_basis",		          "Total depreciation basis prior to allocation",	"$", "",	  "Depreciation",             "*",					  "",     			        "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "pre_itc_qual_basis",		              "Total ITC basis prior to qualification",	"$", "",	  "Tax Credits",             "*",					  "",     			        "" },
+
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_percent_total",		"federal ITC percent total",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_fixed_total",		"federal ITC fixed total",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
@@ -713,6 +716,7 @@ extern var_info
 	vtab_payment_incentives[],
     vtab_financial_metrics[],
     vtab_lcos_inputs[],
+    vtab_update_tech_outputs[],
     vtab_battery_replacement_cost[],
     vtab_tod_dispatch_periods[];
 
@@ -969,6 +973,7 @@ public:
         add_var_info(vtab_lcos_inputs);
 		add_var_info(vtab_battery_replacement_cost);
         add_var_info(vtab_tod_dispatch_periods);
+        add_var_info(vtab_update_tech_outputs);
     }
 
 	void exec( )
@@ -1069,7 +1074,7 @@ public:
         ssc_number_t nameplate1 = 0;
         ssc_number_t nameplate2 = 0;
         std::vector<double> battery_discharged(nyears,0);
-        std::vector<double> fuelcell_discharged(nyears+1,0);
+        std::vector<double> fuelcell_discharged(nyears,0);
 
         if (add_om_num_types > 0) //PV Battery
         {
@@ -1095,11 +1100,11 @@ public:
             nameplate2 = as_number("om_fuelcell_nameplate");
             fuelcell_discharged = as_vector_double("fuelcell_annual_energy_discharged");
         }
-        if (fuelcell_discharged.size()== 2) { // ssc #992
-            double first_val = fuelcell_discharged[1];
-            fuelcell_discharged.resize(nyears+1, first_val);
+        if (fuelcell_discharged.size()== 1) { // ssc #992
+            double first_val = fuelcell_discharged[0];
+            fuelcell_discharged.resize(nyears, first_val);
          }
-        if (fuelcell_discharged.size() != nyears+1)
+        if (fuelcell_discharged.size() != nyears)
             throw exec_error("saleleaseback", util::format("fuelcell_discharged size (%d) incorrect",(int)fuelcell_discharged.size()));
 
 
@@ -1270,11 +1275,13 @@ public:
                 cf.at(CF_om_production_expense, i) *= cf.at(CF_energy_sales, i);
             }
             cf.at(CF_om_capacity_expense,i) *= nameplate;
+            cf.at(CF_om_capacity1_expense, i) *= nameplate1;
+            cf.at(CF_om_capacity2_expense, i) *= nameplate2;
 			cf.at(CF_om_fuel_expense,i) *= year1_fuel_use;
 
             //Battery, Fuel Cell Production OM Costs
             cf.at(CF_om_production1_expense, i) *= battery_discharged[i - 1]; //$/MWh * 0.001 MWh/kWh * kWh = $
-            cf.at(CF_om_production2_expense, i) *= fuelcell_discharged[i];
+            cf.at(CF_om_production2_expense, i) *= fuelcell_discharged[i-1];
 
 			cf.at(CF_om_opt_fuel_1_expense,i) *= om_opt_fuel_1_usage;
 			cf.at(CF_om_opt_fuel_2_expense,i) *= om_opt_fuel_2_usage;
@@ -1671,6 +1678,9 @@ public:
 
 		double cost_installed;
 
+        double pre_depr_alloc_basis; // Total costs that could qualify for depreciation before allocations
+        double pre_itc_qual_basis; // Total costs that could qualify for ITC before allocations
+
 		double depr_alloc_macrs_5_frac = as_double("depr_alloc_macrs_5_percent") * 0.01;
 		double depr_alloc_macrs_15_frac = as_double("depr_alloc_macrs_15_percent") * 0.01;
 		double depr_alloc_sl_5_frac = as_double("depr_alloc_sl_5_percent") * 0.01;
@@ -2061,9 +2071,15 @@ public:
 			cf.at(CF_reserve_receivables, 0);
 
 		cost_installed = cost_prefinancing + cost_financing;
-		sale_of_property = cost_prefinancing + sponsor_pretax_development_fee + cost_other_financing + cost_equity_closing + constr_total_financing;
-		// depreciable bases different from other models
-		depr_alloc_total = depr_alloc_total_frac * sale_of_property;
+
+        // Installed costs and construction costs can be claimed in the basis, but reserves are not
+        // TODO: Realign with new understanding of allowable costs: https://github.com/NREL/SAM/issues/1803
+        sale_of_property = cost_prefinancing + sponsor_pretax_development_fee + cost_other_financing + cost_equity_closing + constr_total_financing;
+        pre_depr_alloc_basis = sale_of_property;
+        pre_itc_qual_basis = pre_depr_alloc_basis;
+
+        // depreciable bases different from other models
+		depr_alloc_total = depr_alloc_total_frac * pre_depr_alloc_basis;
 		depr_alloc_macrs_5 = depr_alloc_macrs_5_frac * depr_alloc_total;
 		depr_alloc_macrs_15 = depr_alloc_macrs_15_frac * depr_alloc_total;
 		depr_alloc_sl_5 = depr_alloc_sl_5_frac * depr_alloc_total;
@@ -2836,6 +2852,8 @@ public:
     if (as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1) {
         update_battery_outputs(this, nyears);
     }
+    update_fuelcell_outputs(this, nyears);
+
 
 	double npv_fed_ptc = npv(CF_ptc_fed,nyears,nom_discount_rate);
 	double npv_sta_ptc = npv(CF_ptc_sta,nyears,nom_discount_rate);
@@ -3235,7 +3253,9 @@ public:
 	m_disp_calcs.compute_outputs(ppa_cf);
 
 
-
+    // Intermediate tax credit/depreciation variables 
+    assign("pre_depr_alloc_basis", var_data((ssc_number_t)pre_depr_alloc_basis));
+    assign("pre_itc_qual_basis", var_data((ssc_number_t)pre_itc_qual_basis));
 
 		// State ITC/depreciation table
 		assign("depr_stabas_percent_macrs_5", var_data((ssc_number_t)  (depr_stabas_macrs_5_frac*100.0)));

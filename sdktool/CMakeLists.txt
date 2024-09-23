@@ -84,7 +84,7 @@ target_link_libraries(SDKtool ssc)
 if (${CMAKE_PROJECT_NAME} STREQUAL system_advisor_model)
 	target_link_libraries(SDKtool wex lk)
 else()
-    if (CMAKE_BUILD_TYPE STREQUAL "Release" OR MSVC)
+    if (CMAKE_BUILD_TYPE STREQUAL "Release" OR "Release" IN_LIST CMAKE_CONFIGURATION_TYPES)
         unset(WEX_LIB CACHE)
         unset(LK_LIB CACHE)
         find_library( WEX_LIB
@@ -96,7 +96,7 @@ else()
 	    target_link_libraries(SDKtool optimized ${WEX_LIB} optimized ${LK_LIB})
     endif()
 
-	if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR MSVC)
+	if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR "Debug" IN_LIST CMAKE_CONFIGURATION_TYPES)
 		unset(LKD_LIB CACHE)
 		unset(WEXD_LIB CACHE)
 		find_library( WEXD_LIB

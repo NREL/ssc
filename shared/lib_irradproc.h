@@ -724,6 +724,8 @@ void solarpos_spa(int year, int month, int day, int hour, double minute, double 
 * \param[in] slope_azm azimuth angle of slopted terrain relative to tracker azimuth in radians
 * \param[in] force_to_stow: force the single-axis tracking array to the stow angle specified in the next input
 * \param[in] stow_angle_deg: the angle to force the single-axis tracking array to stow to, in degrees
+* \param[in] useCustomAngle: use custom rotation angles for single axis tracking 0/1
+* \param[in] customAngle: custom rotation angle to use, in degrees
 * \param[out] angle array of elements to return angles to calling function
 * \param[out] angle[0] incident angle in radians
 * \param[out] angle[1] tilt angle of surface from horizontal in radians
@@ -731,7 +733,7 @@ void solarpos_spa(int year, int month, int day, int hour, double minute, double 
 * \param[out] angle[3] tracking axis rotation angle in radians, measured from surface normal of unrotating axis (only for 1 axis trackers)
 * \param[out] angle[4] backtracking difference (rot - ideal_rot) will be zero except in case of backtracking for 1 axis tracking
 */
-void incidence(int mode, double tilt, double sazm, double rlim, double zen, double azm, bool en_backtrack, double gcr, double slope_tilt, double slope_azm, bool force_to_stow, double stow_angle_deg, double angle[5]);
+void incidence(int mode, double tilt, double sazm, double rlim, double zen, double azm, bool en_backtrack, double gcr, double slope_tilt, double slope_azm, bool force_to_stow, double stow_angle_deg, bool useCustomAngle, double customAngle, double angle[5]);
 
 
 /**
@@ -759,7 +761,26 @@ void incidence(int mode, double tilt, double sazm, double rlim, double zen, doub
 * \param[out] diffc[2] horizon brightening
 */
 void perez(double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */);
-
+/**
+* Ineichen model for calculating clearsky irradiance components
+* solar radiation + ground reflected radiation for a tilted surface and returns the total plane-of-array irradiance(poa),
+* see also isotropic(), hdkr().
+*
+* Function does not check all input for valid entries; consequently, this should be
+* done before calling the function.  (Reference: Perez et al, Solar Energy Vol. 44, No.5, pp.271-289,1990.)
+*
+* \param[in] apparent_zenith apparent solar zenith angle in degrees
+* \param[in] absolute_airmass pressure corrected airmass
+* \param[in] linke_turbidity Linke turbidity
+* \param[in] altitude site altitude in meters
+* \param[in] dni_extra extraterrestrial direct normal irradiance (W/m2)
+* \param[in] perez_enhancement is the perez enhcancement factor applied (y/n). Setting to true may produce spurious results for times when the sun is near the horizon and the airmass is high. 
+* \param[out] clear_sky_resuls calculated clearsky  irradiances (W/m2)
+* \param[out] clearsky_results[0] clear sky ghi
+* \param[out] clearsky_results[1] clear sky dni
+* \param[out] clearsky_results[2] clear sky dhi
+*/
+void ineichen(double clearsky_results[3], double apparent_zenith, int month, int day, double pressure, double linke_turbidity, double altitude, double dni_extra, bool perez_enhancement);
 /**
 * Isotropic sky model for diffuse irradiance on a tilted surface, see also perez(), hdkr().
 *
@@ -779,6 +800,7 @@ void perez(double hextra, double dn, double df, double alb, double inc, double t
 * \param[out] diffc[1] circumsolar diffuse
 * \param[out] diffc[2] horizon brightening
 */
+
 void isotropic(double hextra, double dn, double df, double alb, double inc, double tilt, double zen, double poa[3], double diffc[3] /* can be NULL */);
 
 /**
@@ -968,6 +990,13 @@ protected:
     int year, month, day, hour;
     double minute, delt;
 
+    //Enable subhourly clipping correction
+    bool enableSubhourlyClipping;
+
+    //Custom rotation angles for single-axis trackers
+    bool useCustomRotAngles;
+    double customRotAngle;         // custom tracker rotation angle in degrees
+
     // Subarray properties
     double tiltDegrees;				///< Surface tilt of subarray in degrees
     double surfaceAzimuthDegrees;	///< Surface azimuth of subarray in degrees
@@ -995,17 +1024,28 @@ protected:
     double poaRearRowReflections;           ///< Rear row reflected irradiance on rear (W/m2)
     double poaRearGroundReflected;          ///< Ground reflected irradiance onto the rear (W/m2)
     double poaRearSelfShaded;               ///< Irradiance shaded from being incident on the rear (W/m2)
+    double poaRearDirectDiffuseCS;            ///< Direct and sky diffuse irradiance on rear (W/m2)
+    double poaRearRowReflectionsCS;           ///< Rear row reflected irradiance on rear (W/m2)
+    double poaRearGroundReflectedCS;          ///< Ground reflected irradiance onto the rear (W/m2)
+    double poaRearSelfShadedCS;               ///< Irradiance shaded from being incident on the rear (W/m2)
 
     // Outputs
     double sunAnglesRadians[9];				///< Sun angles in radians calculated from solarpos()	
     double surfaceAnglesRadians[5];			///< Surface angles in radians calculated from incidence()
     double planeOfArrayIrradianceFront[3];	///< Front-side plane-of-array irradiance for beam, sky diffuse, ground diffuse (W/m2)
+    double planeOfArrayIrradianceFrontCS[3]; ///< Front-side plane-of-array clearsky irradiance for beam, sky diffuse, ground diffuse (W/m2)
     double planeOfArrayIrradianceRear[3];	///< Rear-side plane-of-array irradiance for beam, sky diffuse, ground diffuse (W/m2)
+    double planeOfArrayIrradianceRearCS[3];
     double diffuseIrradianceFront[3];		///< Front-side diffuse irradiance for isotropic, circumsolar, and horizon (W/m2)
+    double diffuseIrradianceFrontCS[3];		///< Front-side diffuse clearsky irradiance for isotropic, circumsolar, and horizon (W/m2)
     double diffuseIrradianceRear[3];		///< Rear-side diffuse irradiance for isotropic, circumsolar, and horizon (W/m2)
+    double diffuseIrradianceRearCS[3];
     int timeStepSunPosition[3];				///< [0] effective hour of day used for sun position, [1] effective minute of hour used for sun position, [2] is sun up?  (0=no, 1=midday, 2=sunup, 3=sundown)
     double planeOfArrayIrradianceRearAverage; ///< Average rear side plane-of-array irradiance (W/m2)
+    double planeOfArrayIrradianceRearAverageCS; ///< Average rear side clearsky plane-of-array irradiance (W/m2)
+    double clearskyIrradiance[3];           /// [0] clearsky GHI, [1] clearsky DNI, [2] clearsky GHI from Ineichen model (W/m2);
     std::vector<double> planeOfArrayIrradianceRearSpatial;  ///< Spatial rear side plane-of-array irradiance (W/m2), where index 0 is at row bottom
+    std::vector<double> planeOfArrayIrradianceRearSpatialCS;  ///< Spatial rear side clearsky plane-of-array irradiance (W/m2), where index 0 is at row bottom
     std::vector<double> groundIrradianceSpatial;            ///< Spatial irradiance incident on the ground in between rows, where index 0 is towards front of array
 
 public:
@@ -1029,7 +1069,7 @@ public:
         double dtHour, double tiltDegrees, double azimuthDegrees, double trackerRotationLimitDegrees, double stowAngleDegreesIn,
         double groundCoverageRatio, double slopeTilt, double slopeAzm, std::vector<double> monthlyTiltDegrees, std::vector<double> userSpecifiedAlbedo,
         poaDecompReq* poaAllIn,
-        bool useSpatialAlbedos = false, const util::matrix_t<double>* userSpecifiedSpatialAlbedos = nullptr);
+        bool useSpatialAlbedos = false, const util::matrix_t<double>* userSpecifiedSpatialAlbedos = nullptr, bool enableSubhourlyClipping = false, bool useCustomRotAngles = false, double customRotAngle = 0);
 
     /// Construct the irrad class with an Irradiance_IO() object and Subarray_IO() object
     irrad();
@@ -1048,6 +1088,11 @@ public:
 
     // Set optional parameters for solarpos_spa calculation
     void set_optional(double elev = 0, double pres = 1013.25, double t_amb = 15);
+
+    //Set whether to use subhourly clipping model
+    void set_subhourly_clipping(bool enable = false);
+
+    void set_custom_rot_angles(bool enable = false, double angle = 0);
 
     /// Set the sky model for the irradiance processor, using \link Irradiance_IO::SKYMODEL 
     void set_sky_model(int skymodel, double albedo, const std::vector<double> &albedoSpatial = std::vector<double>());
@@ -1105,8 +1150,15 @@ public:
     void get_poa(double* beam, double* skydiff, double* gnddiff,
         double* isotrop, double* circum, double* horizon);
 
+    /// Return the front-side plane-of-array irradiance and diffuse components of irradiation
+    void get_poa_clearsky(double* beam, double* skydiff, double* gnddiff,
+        double* isotrop, double* circum, double* horizon);
+
     /// Return the rear-side average total plane-of-array irradiance
     double get_poa_rear();
+
+    /// Return the rear-side average total plane-of-array clearsky irradiance
+    double get_poa_rear_clearsky();
 
     /// Return the rear-side spatial total plane-of-array irradiance
     std::vector<double> get_poa_rear_spatial();
@@ -1135,6 +1187,8 @@ public:
     /// Return the front-side irradiance components
     void get_irrad(double* ghi, double* dni, double* dhi);
 
+    void get_clearsky_irrad(double* ghi_cs, double* dni_cs, double* dhi_cs);
+
     /// Return the effective hour and fraction used for the sun position calculation
     double get_sunpos_calc_hour();
 
@@ -1155,6 +1209,9 @@ public:
 
     /// Return the back surface irradiances, used by \link calc_rear_side()
     void getBackSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> rearGroundGHI, std::vector<double> frontGroundGHI, std::vector<double> frontReflected, std::vector<double>& rearIrradiance, double& rearAverageIrradiance);
+
+    /// Return the back surface clearsky irradiances, used by \link calc_rear_side()
+    void getBackSurfaceIrradiancesCS(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> rearGroundGHI, std::vector<double> frontGroundGHI, std::vector<double> frontReflected, std::vector<double>& rearIrradiance, double& rearAverageIrradiance);
 
     /// Return the front surface irradiances, used by \link calc_rear_side()
     void getFrontSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> frontGroundGHI, std::vector<double>& frontIrradiance, double& frontAverageIrradiance, std::vector<double>& frontReflected);

@@ -123,6 +123,9 @@ void voltage_table_t::initialize() {
             double V0 = params->voltage_table[i - 1][1];
             slope = (V - V0) / (DOD - DOD0);
             intercept = V0 - (slope * DOD0);
+
+            if (fabs(slope) < 1e-7)
+                throw std::runtime_error("voltage_table_t error: Battery voltage matrix cannot have two identical voltages.");
         }
         slopes.emplace_back(slope);
         intercepts.emplace_back(intercept);
@@ -178,7 +181,7 @@ voltage_t *voltage_table_t::clone() {
     return new voltage_table_t(*this);
 }
 
-double voltage_table_t::calculate_voltage(double DOD) {
+double voltage_table_t::calculate_voltage(double DOD, double I) {
     DOD = fmax(0., DOD);
     DOD = fmin(DOD, 100.);
 
@@ -186,23 +189,27 @@ double voltage_table_t::calculate_voltage(double DOD) {
     while (row < params->voltage_table.size() && DOD > params->voltage_table[row][0]) {
         row++;
     }
+    //
+    if (DOD < tolerance || DOD > 100. - tolerance) {
+        I = 0.0; // At full or empty, current must go to zero
+    }
 
-    return fmax(slopes[row] * DOD + intercepts[row], 0);
+    return fmax(slopes[row] * DOD + intercepts[row], 0) - I * params->resistance;
 }
 
 void voltage_table_t::set_initial_SOC(double init_soc) {
-    state->cell_voltage = calculate_voltage(100. - init_soc);
+    state->cell_voltage = calculate_voltage(100. - init_soc, 0.0);
 }
 
 double voltage_table_t::calculate_voltage_for_current(double I, double q, double qmax, double) {
     double DOD = (q - I * params->dt_hr) / qmax * 100.;
-    return calculate_voltage(DOD) * params->num_cells_series;
+    return calculate_voltage(DOD, I / params->num_strings) * params->num_cells_series;
 }
 
 
-void voltage_table_t::updateVoltage(double q, double qmax, double, const double, double) {
+void voltage_table_t::updateVoltage(double q, double qmax, double I, const double, double) {
     double DOD = 100. * (1 - q / qmax);
-    state->cell_voltage = calculate_voltage(DOD);
+    state->cell_voltage = calculate_voltage(DOD, I / params->num_strings);
 }
 
 // helper fx to calculate depth of discharge from current and max capacities
@@ -212,7 +219,7 @@ double voltage_table_t::calculate_max_charge_w(double q, double qmax, double, do
     double current = (q - qmax) / params->dt_hr;
     if (max_current)
         *max_current = current;
-    return calculate_voltage(0.) * current * params->num_cells_series;
+    return calculate_voltage(0., current / params->num_strings) * current * params->num_cells_series;
 }
 
 double voltage_table_t::calculate_max_discharge_w(double q, double qmax, double, double *max_current) {
@@ -227,7 +234,7 @@ double voltage_table_t::calculate_max_discharge_w(double q, double qmax, double,
         dod = fmin(100, dod);
         dod = fmax(0, dod);
         double current = qmax * ((1. - DOD0 / 100.) - (1. - dod / 100.)) / params->dt_hr;
-        double p = calculate_voltage(dod) * current;
+        double p = calculate_voltage(dod, current / params->num_strings) * current;
         if (p > max_P) {
             max_P = p;
             max_I = current;
@@ -253,9 +260,9 @@ double voltage_table_t::calculate_current_for_target_w(double P_watts, double q,
 
     P_watts /= params->num_cells_series;
     P_watts *= params->dt_hr;
-    double multiplier = 1.;
+    int multiplier = 1;
     if (P_watts < 0)
-        multiplier = -1.;
+        multiplier = -1;
 
     size_t row = 0;
     while (row < params->voltage_table.size() && DOD > params->voltage_table[row][0]) {
@@ -266,12 +273,12 @@ double voltage_table_t::calculate_current_for_target_w(double P_watts, double q,
     double B = qmax / 100.;
 
     double DOD_new = 0.;
-    double incr = 0;
-    double DOD_best = DOD_best = multiplier == -1. ? 0 : 100;
+    int incr = 0;
+    double DOD_best = DOD_best = (multiplier == -1) ? 0 : 100;
     double P_best = 0;
-    while (incr + row < slopes.size() && incr + row >= 0) {
-        size_t i = row + (size_t) incr;
-        incr += 1 * multiplier;
+    while (((incr + row) < slopes.size()) && ((incr + row) >= 0)) {
+        size_t i = row + incr;
+        incr += multiplier;
 
         double a = B * slopes[i];
         double b = A * slopes[i] + B * intercepts[i];
@@ -288,7 +295,8 @@ double voltage_table_t::calculate_current_for_target_w(double P_watts, double q,
         auto DOD_upper = params->voltage_table[upper][0];
         auto DOD_lower = params->voltage_table[lower][0];
         if (DOD_new <= DOD_upper && DOD_new >= DOD_lower) {
-            double P = (q - (100. - DOD_new) * qmax/100) * (a * DOD_new + b);
+            current = qmax * ((1. - DOD / 100.) - (1. - DOD_new / 100.)) / params->dt_hr;
+            double P = current * (a * DOD_new + b - current / params->num_strings * params->resistance);
             if (std::abs(P) > std::abs(P_best)) {
                 P_best = P;
                 DOD_best = DOD_new;

@@ -619,7 +619,7 @@ double C_csp_gen_collector_receiver::calculate_optical_efficiency(const C_csp_we
 	return std::numeric_limits<double>::quiet_NaN();
 }
 
-double C_csp_gen_collector_receiver::calculate_thermal_efficiency_approx(const C_csp_weatherreader::S_outputs &weather, double q_incident /*MW*/)
+double C_csp_gen_collector_receiver::calculate_thermal_efficiency_approx(const C_csp_weatherreader::S_outputs &weather, double q_incident /*MW*/, const C_csp_solver_sim_info& sim)
 {
 	throw(C_csp_exception("C_csp_gen_collector_receiver::calculate_thermal_efficiency_approx() is not complete"));
 

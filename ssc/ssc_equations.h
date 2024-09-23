@@ -82,9 +82,23 @@ struct ssc_equation_entry{
 
 static ssc_equation_entry ssc_equation_table [] = {
         // Marine energy
+        
 		{"me_array_cable_length", me_array_cable_length,
-            "Marine energy", me_array_cable_length_doc,
+            "Marine Energy", me_array_cable_length_doc,
             false, true},
+        {"me_array_cable_length", me_array_cable_length,
+            "Marine Energy", me_array_cable_length_doc,
+            false, true},
+        {"tidal_turbine_calculate_powercurve", tidal_turbine_calculate_powercurve,
+            "Marine Energy", tidal_turbine_calculate_powercurve_doc,
+            false, true},
+        {"me_array_cable_voltage", me_array_cable_voltage,
+            "Marine Energy", me_array_cable_voltage_doc,
+            false, true},
+        {"me_array_cable_voltage", me_array_cable_voltage,
+            "Marine Energy", me_array_cable_voltage_doc,
+            false, true},
+            //"Marine Energy" is wrong module name, replace for next FY25 release
 		{"mp_ancillary_services", mp_ancillary_services,
             "Merchant plant", mp_ancillary_services_doc,
             false, true},
@@ -104,6 +118,9 @@ static ssc_equation_entry ssc_equation_table [] = {
         {"Calculate_thermal_params", Calculate_thermal_params,
             "Battery", calculate_thermal_params_doc,
             false, false},
+        {"Reopt_size_standalone_battery_post",  Reopt_size_standalone_battery_params,
+            "Battery", Reopt_size_standalone_battery_params_doc,
+            false, true},
 
         // Battery stateful
         {"Calculate_thermal_params", Calculate_thermal_params,
@@ -121,36 +138,36 @@ static ssc_equation_entry ssc_equation_table [] = {
 
         // CSP
 
-        // Do not add SSC equations for MSPT, ETES, or PTES
+        // Do not add SSC equations for MSPT, ETES, Trough, or PTES
         // These technologies handle calculated variables through their compute modules
 
         // Physical Trough:
-        {"Physical_Trough_System_Design_Equations", Physical_Trough_System_Design_Equations,
-            "Trough_physical", Physical_Trough_System_Design_Equations_doc,
-            true, false},
-        {"Physical_Trough_Solar_Field_Equations", Physical_Trough_Solar_Field_Equations,
-            "Trough_physical", Physical_Trough_Solar_Field_Equations_doc,
-            true, false},
-        {"Physical_Trough_Collector_Type_Equations", Physical_Trough_Collector_Type_Equations,
-            "Trough_physical", Physical_Trough_Collector_Type_Equations_doc,
-            true, false},
-        {"Physical_Trough_System_Control_Equations", Physical_Trough_System_Control_Equations,
-            "Trough_physical", Physical_Trough_System_Control_Equations_doc,
-            true, false},
+        //{"Physical_Trough_System_Design_Equations", Physical_Trough_System_Design_Equations,
+        //    "Trough_physical", Physical_Trough_System_Design_Equations_doc,
+        //    true, false},
+        //{"Physical_Trough_Solar_Field_Equations", Physical_Trough_Solar_Field_Equations,
+        //    "Trough_physical", Physical_Trough_Solar_Field_Equations_doc,
+        //    true, false},
+        //{"Physical_Trough_Collector_Type_Equations", Physical_Trough_Collector_Type_Equations,
+        //    "Trough_physical", Physical_Trough_Collector_Type_Equations_doc,
+        //    true, false},
+        //{"Physical_Trough_System_Control_Equations", Physical_Trough_System_Control_Equations,
+        //    "Trough_physical", Physical_Trough_System_Control_Equations_doc,
+        //    true, false},
 
         // Trough IPH
-        {"Physical_Trough_Solar_Field_Equations", Physical_Trough_Solar_Field_Equations,
-            "Trough_physical_process_heat", Physical_Trough_Solar_Field_Equations_doc,
-            true, false},
-        {"Physical_Trough_Collector_Type_Equations", Physical_Trough_Collector_Type_Equations,
-            "Trough_physical_process_heat", Physical_Trough_Collector_Type_Equations_doc,
-            true, false},
-        {"Physical_Trough_Collector_Type_UI_Only_Equations", Physical_Trough_Collector_Type_UI_Only_Equations,
-            "Trough_physical_process_heat", Physical_Trough_Collector_Type_UI_Only_Equations_doc,
-            false, false},
-        {"Physical_Trough_System_Control_Equations", Physical_Trough_System_Control_Equations,
-            "Trough_physical_process_heat", Physical_Trough_System_Control_Equations_doc,
-            true, false},
+        //{"Physical_Trough_Solar_Field_Equations", Physical_Trough_Solar_Field_Equations,
+        //    "Trough_physical_process_heat", Physical_Trough_Solar_Field_Equations_doc,
+        //    true, false},
+        //{"Physical_Trough_Collector_Type_Equations", Physical_Trough_Collector_Type_Equations,
+        //    "Trough_physical_process_heat", Physical_Trough_Collector_Type_Equations_doc,
+        //    true, false},
+        //{"Physical_Trough_Collector_Type_UI_Only_Equations", Physical_Trough_Collector_Type_UI_Only_Equations,
+        //    "Trough_physical_process_heat", Physical_Trough_Collector_Type_UI_Only_Equations_doc,
+        //    false, false},
+        //{"Physical_Trough_System_Control_Equations", Physical_Trough_System_Control_Equations,
+        //    "Trough_physical_process_heat", Physical_Trough_System_Control_Equations_doc,
+        //    true, false},
 
 
         // Single owner
@@ -159,8 +176,8 @@ static ssc_equation_entry ssc_equation_table [] = {
             true, false},
 
         // Utility Rate
-        {"ElectricityRates_format_as_URDBv7", ElectricityRates_format_as_URDBv7,
-            "UtilityRate5", ElectricityRates_format_as_URDBv7_doc,
+        {"ElectricityRates_format_as_URDBv8", ElectricityRates_format_as_URDBv8,
+            "UtilityRate5", ElectricityRates_format_as_URDBv8_doc,
             false, true},
 
         // analysis period change

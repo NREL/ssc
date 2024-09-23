@@ -108,7 +108,10 @@ static var_info _cm_vtab_merchantplant[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,     "depr_alloc_none_percent",		          "Non-depreciable federal and state allocation",	"%", "",	  "Depreciation",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "depr_alloc_none",		                  "Non-depreciable federal and state allocation",	"$", "",	  "Depreciation",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "depr_alloc_total",		                  "Total depreciation federal and state allocation",	"$", "",	  "Depreciation",             "*",					  "",     			        "" },
-                                                                                  
+    { SSC_OUTPUT,       SSC_NUMBER,     "pre_depr_alloc_basis",		          "Total depreciation basis prior to allocation",	"$", "",	  "Depreciation",             "*",					  "",     			        "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "pre_itc_qual_basis",		              "Total ITC basis prior to qualification",	"$", "",	  "Tax Credits",             "*",					  "",     			        "" },
+
+
 // state itc table                                                                
 /*1*/ { SSC_OUTPUT,     SSC_NUMBER,     "depr_stabas_percent_macrs_5",		      "5-yr MACRS state percent of total depreciable basis",	"%", "",	  "Depreciation",             "*",					  "",     			        "" },
 	  { SSC_OUTPUT,     SSC_NUMBER,     "depr_alloc_macrs_5",		              "5-yr MACRS depreciation federal and state allocation",	"$", "",	  "Depreciation",             "*",					  "",     			        "" },
@@ -626,7 +629,8 @@ extern var_info
 	vtab_financial_grid[],
 	vtab_fuelcell_replacement_cost[],
     vtab_lcos_inputs[],
-	vtab_battery_replacement_cost[];
+    vtab_update_tech_outputs[],
+    vtab_battery_replacement_cost[];
 
 enum {
 	CF_energy_net,
@@ -877,7 +881,8 @@ public:
 		add_var_info(vtab_financial_capacity_payments);
         add_var_info(vtab_lcos_inputs);
 		add_var_info(vtab_financial_grid);
-	}
+        add_var_info(vtab_update_tech_outputs);
+    }
 
 	void exec( )
 	{
@@ -1031,12 +1036,11 @@ public:
 		std::vector<double> fuel_use;
 		if ((as_integer("system_use_lifetime_output") == 1) && is_assigned("annual_fuel_usage_lifetime")) {
 			fuel_use = as_vector_double("annual_fuel_usage_lifetime");
-			if (fuel_use.size() != (size_t)(nyears + 1)) {
-				throw exec_error("merchantplant", util::format("fuel usage years (%d) not equal to analysis period years (%d).", (int)fuel_use.size()-1, nyears));
+			if (fuel_use.size() != (size_t)(nyears )) {
+				throw exec_error("merchantplant", util::format("fuel usage years (%d) not equal to analysis period years (%d).", (int)fuel_use.size(), nyears));
 			}
 		}
 		else {
-			fuel_use.push_back(0.);
 			for (size_t y = 0; y < (size_t)(nyears); y++) {
 				fuel_use.push_back(year1_fuel_use);
 			}
@@ -1084,7 +1088,7 @@ public:
         ssc_number_t nameplate1 = 0;
         ssc_number_t nameplate2 = 0;
         std::vector<double> battery_discharged(nyears,0);
-        std::vector<double> fuelcell_discharged(nyears+1,0);
+        std::vector<double> fuelcell_discharged(nyears,0);
 
         if (add_om_num_types > 0) //PV Battery
         {
@@ -1110,11 +1114,11 @@ public:
             nameplate2 = as_number("om_fuelcell_nameplate");
             fuelcell_discharged = as_vector_double("fuelcell_annual_energy_discharged");
         }
-        if (fuelcell_discharged.size()== 2) { // ssc #992
-            double first_val = fuelcell_discharged[1];
-            fuelcell_discharged.resize(nyears+1, first_val);
+        if (fuelcell_discharged.size()== 1) { // ssc #992
+            double first_val = fuelcell_discharged[0];
+            fuelcell_discharged.resize(nyears, first_val);
          }
-        if (fuelcell_discharged.size() != nyears+1)
+        if (fuelcell_discharged.size() != nyears)
             throw exec_error("merchantplant", util::format("fuelcell_discharged size (%d) incorrect",(int)fuelcell_discharged.size()));
 
         // battery cost - replacement from lifetime analysis
@@ -1400,11 +1404,11 @@ public:
             cf.at(CF_om_capacity_expense, i) *= nameplate;
 			cf.at(CF_om_capacity1_expense, i) *= nameplate1;
 			cf.at(CF_om_capacity2_expense, i) *= nameplate2;
-			cf.at(CF_om_fuel_expense,i) *= fuel_use[i];
+			cf.at(CF_om_fuel_expense,i) *= fuel_use[i-1];
 
             //Battery Production OM Costs
             cf.at(CF_om_production1_expense, i) *= battery_discharged[i - 1]; //$/MWh * 0.001 MWh/kWh * kWh = $
-            cf.at(CF_om_production2_expense, i) *= fuelcell_discharged[i];
+            cf.at(CF_om_production2_expense, i) *= fuelcell_discharged[i-1];
 
 			cf.at(CF_om_opt_fuel_1_expense,i) *= om_opt_fuel_1_usage;
 			cf.at(CF_om_opt_fuel_2_expense,i) *= om_opt_fuel_2_usage;
@@ -1792,6 +1796,9 @@ public:
 		double cost_financing;
 
 		double cost_installed;
+
+        double pre_depr_alloc_basis; // Total costs that could qualify for depreciation before allocations
+        double pre_itc_qual_basis; // Total costs that could qualify for ITC before allocations
 
 		double depr_alloc_macrs_5_frac = as_double("depr_alloc_macrs_5_percent") * 0.01;
 		double depr_alloc_macrs_15_frac = as_double("depr_alloc_macrs_15_percent") * 0.01;
@@ -2370,7 +2377,7 @@ public:
                     // recalculate debt size with constrained dscr
                     size_of_debt = 0.0;
                     for (i = 0; i <= nyears; i++) {
-                        if (dscr != 0)
+                        if (dscr > 0)
                             cf.at(CF_debt_size, i) = cf.at(CF_pv_cash_for_ds, i) / dscr;
                         else
                             cf.at(CF_debt_size, i) = 0.0; // default behavior of initialization of cash flow line items
@@ -2428,35 +2435,41 @@ public:
 		for (i=1; i<=nyears; i++)
 			cf.at(CF_reserve_interest,i) = reserves_interest * cf.at(CF_reserve_total,i-1);
 
-//		if (constant_dscr_mode)
-//		{
-			cost_financing =
-				cost_debt_closing +
-				cost_debt_fee_frac * size_of_debt +
-				cost_other_financing +
-				cf.at(CF_reserve_debtservice, 0) +
-				constr_total_financing +
-				cf.at(CF_reserve_om, 0) +
-				cf.at(CF_reserve_receivables, 0);
 
-			cost_debt_upfront = cost_debt_fee_frac * size_of_debt; // cpg added this to make cash flow consistent with single_owner.xlsx
+		cost_financing =
+			cost_debt_closing +
+			cost_debt_fee_frac * size_of_debt +
+			cost_other_financing +
+			cf.at(CF_reserve_debtservice, 0) +
+			constr_total_financing +
+			cf.at(CF_reserve_om, 0) +
+			cf.at(CF_reserve_receivables, 0);
 
-			cost_installed = cost_prefinancing + cost_financing
-				- ibi_fed_amount
-				- ibi_sta_amount
-				- ibi_uti_amount
-				- ibi_oth_amount
-				- ibi_fed_per
-				- ibi_sta_per
-				- ibi_uti_per
-				- ibi_oth_per
-				- cbi_fed_amount
-				- cbi_sta_amount
-				- cbi_uti_amount
-				- cbi_oth_amount;
-			
-//		}
-		depr_alloc_total = depr_alloc_total_frac * cost_installed;
+		cost_debt_upfront = cost_debt_fee_frac * size_of_debt; // cpg added this to make cash flow consistent with single_owner.xlsx
+
+		cost_installed = cost_prefinancing + cost_financing
+			- ibi_fed_amount
+			- ibi_sta_amount
+			- ibi_uti_amount
+			- ibi_oth_amount
+			- ibi_fed_per
+			- ibi_sta_per
+			- ibi_uti_per
+			- ibi_oth_per
+			- cbi_fed_amount
+			- cbi_sta_amount
+			- cbi_uti_amount
+			- cbi_oth_amount;
+
+        // Installed costs and construction costs can be claimed in the basis, but reserves are not
+        // TODO: Realign with new understanding of allowable costs: https://github.com/NREL/SAM/issues/1803
+        pre_depr_alloc_basis = cost_prefinancing + cost_financing;
+        // Basis reductions are handled in depr_fed_reduction and depr_sta_reduction
+
+        // Under 2024 law these are understood to be the same, keep seperate variables for reporting out
+        pre_itc_qual_basis = pre_depr_alloc_basis;
+
+		depr_alloc_total = depr_alloc_total_frac * pre_depr_alloc_basis;
 		depr_alloc_macrs_5 = depr_alloc_macrs_5_frac * depr_alloc_total;
 		depr_alloc_macrs_15 = depr_alloc_macrs_15_frac * depr_alloc_total;
 		depr_alloc_sl_5 = depr_alloc_sl_5_frac * depr_alloc_total;
@@ -2739,7 +2752,7 @@ public:
 			if (i==0) cf.at(CF_project_investing_activities,i) += purchase_of_property;
 
 			cf.at(CF_project_financing_activities,i) = -cf.at(CF_debt_payment_principal,i);
-			if (i==0) cf.at(CF_project_financing_activities,i) += issuance_of_equity + size_of_debt + ibi_total + cbi_total;
+            if (i == 0) cf.at(CF_project_financing_activities, i) += issuance_of_equity + size_of_debt;
 
 			cf.at(CF_pretax_cashflow,i) = cf.at(CF_project_operating_activities,i) + cf.at(CF_project_investing_activities,i) + cf.at(CF_project_financing_activities,i);
 
@@ -2969,6 +2982,8 @@ public:
     if (as_integer("en_batt") == 1 || as_integer("en_standalone_batt") == 1) {
         update_battery_outputs(this, nyears);
     }
+    update_fuelcell_outputs(this, nyears);
+
 
 	// DSCR calculations
 	for (i = 0; i <= nyears; i++)
@@ -3323,6 +3338,9 @@ public:
 
 		save_cf(CF_Recapitalization, nyears, "cf_recapitalization");
 
+        // Intermediate tax credit/depreciation variables 
+        assign("pre_depr_alloc_basis", var_data((ssc_number_t)pre_depr_alloc_basis));
+        assign("pre_itc_qual_basis", var_data((ssc_number_t)pre_itc_qual_basis));
 	
 		// State ITC/depreciation table
 		assign("depr_stabas_percent_macrs_5", var_data((ssc_number_t)  (depr_stabas_macrs_5_frac*100.0)));

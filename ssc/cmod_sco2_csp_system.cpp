@@ -331,7 +331,11 @@ public:
 
 	void exec() override
 	{
-		C_sco2_phx_air_cooler c_sco2_cycle;
+        // Uncomment following 2 lines to write cmod to lk script
+        //FILE* fp = fopen("sco2_cmod_to_lk.lk", "w");
+        //write_cmod_to_lk_script(fp, m_vartab);
+
+        C_sco2_phx_air_cooler c_sco2_cycle;
 
 		int sco2_des_err = sco2_design_cmod_common(this, c_sco2_cycle);
 		if (sco2_des_err != 0)
