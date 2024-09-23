@@ -664,8 +664,9 @@ void rate_data::setup_energy_rates(ssc_number_t* ec_weekday, ssc_number_t* ec_we
                         }
                         else if ((std::fabs(tier_check[tier - 1] - m_month[m].ec_tou_ub.at(i, j)) > 1e-7)) {
                             std::ostringstream ss;
-                            ss << "Energy tier for month " << m << " period " << period << " was expected to be " << tier_check[tier - 1] << " but was ";
-                            ss << m_month[m].ec_tou_ub.at(i, j) << " in tier " << tier << ". Tiers within a month should be the same for TOU rates.";
+                            ss << "Energy tier " << tier << " Max. Usage for " << util::schedule_int_to_month(m) << " period " << period << " was expected to be ";
+                            ss << tier_check[tier - 1] << " " << m_month[m].ec_tou_units.at(i, j) << " units " << " but was "; // TODO: fix units!
+                            ss << m_month[m].ec_tou_ub.at(i, j) << " in tier "  << ". Tiers within a month should be the same for TOU rates.";
                             throw exec_error("lib_utility_rate_equations", ss.str());
                         }
 
@@ -826,7 +827,7 @@ void rate_data::setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_
                         else if (std::fabs(tier_check[tier - 1] - m_month[m].dc_tou_ub.at(i, j)) > 1e-7) {
                             std::ostringstream ss;
                             ss << "Demand tier for month " << m << " period " << period << " was expected to be " << tier_check[tier - 1] << " but was ";
-                            ss << m_month[m].ec_tou_ub.at(i, j) << " in tier " << tier << ". Tiers within a month should be the same for TOU rates.";
+                            ss << m_month[m].dc_tou_ub.at(i, j) << " in tier " << tier << ". Tiers within a month should be the same for TOU rates.";
                             throw exec_error("lib_utility_rate_equations", ss.str());
                         }
 
