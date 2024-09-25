@@ -88,6 +88,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
 
     // Solar field
     { SSC_INPUT,     SSC_NUMBER, "field_model_type",                   "0=optimize field and tower/receiver geometry, 1=design field, 2=user specified field, 3=user flux and eta map, pass heliostat_positions to SolarPILOT for layout, 4=user flux and eta maps, no SolarPILOT, input A_sf_in, total_land_area_in, and N_hel", "", "", "Heliostat Field", "*",                      "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "is_design_field_for_sim_type_2",     "0 = no (default), design-only call to cmod will use heliostat_positions, 1 = use SolarPILOT to layout field during design call to cmod (takes time)", "", "",                                  "Heliostat Field",                          "?=0",                                                              "",              ""},    
     { SSC_INPUT,     SSC_NUMBER, "helio_width",                        "Heliostat width",                                                                                                                         "m",            "",                                  "Heliostat Field",                          "field_model_type<4",                                               "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "helio_height",                       "Heliostat height",                                                                                                                        "m",            "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "helio_optical_error_mrad",           "Heliostat optical error",                                                                                                                 "mrad",         "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
@@ -882,8 +883,13 @@ public:
         // 3 = user flux and eta maps, pass heliostat_positions to SolarPILOT for layout
         // 4 = user flux and eta maps, no SolarPILOT, input A_sf_in, total_land_area_in, and N_hel
         int field_model_type = as_integer("field_model_type");
-        if (sim_type == 2 && field_model_type < 2) {
-            field_model_type = 2;  //skip heliostat design, only users maps are not provided
+
+        bool is_design_field_at_sim_type_2 = as_boolean("is_design_field_for_sim_type_2");
+
+        if (!is_design_field_at_sim_type_2) {
+            if (sim_type == 2 && field_model_type < 2) {
+                field_model_type = 2;  //skip heliostat design, only users maps are not provided
+            }
         }
 
         // Run SolarPILOT right away to update values as needed
@@ -996,6 +1002,7 @@ public:
                 }
             }
 
+            // SolarPILOT will check "heliostat_positions_in" to determine if it needs to layout the field
             spi.run(weather_reader.m_weather_data_provider);    // Runs SolarPILOT
 
             // Collect the optical efficiency and flux map data
@@ -1115,7 +1122,7 @@ public:
         size_t n_steps_fixed = (size_t)steps_per_hour * 8760;   //[-]
         if( as_boolean("vacuum_arrays") )
             n_steps_fixed = steps_per_hour * (size_t)( (sim_setup.m_sim_time_end - sim_setup.m_sim_time_start)/3600. );
-        sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;  //[s]
+        sim_setup.m_report_step = 3600.0 / (double)steps_per_hour;  //[s] 
 
         // ***********************************************
         // Power cycle
@@ -1898,7 +1905,7 @@ public:
         m_dot_htf_pc_des /= 3600.0;     // convert from kg/hr to kg/s
         assign("m_dot_htf_cycle_des", m_dot_htf_pc_des);
         assign("q_dot_cycle_des", q_dot_pc_des);
-        assign("W_dot_cycle_lift_des", W_dot_pc_lift_des);
+        assign("W_dot_cycle_lift_des", W_dot_pc_lift_des);          // Includes both PHX lift & cold tank lift
         assign("W_dot_cycle_cooling_des", W_dot_pc_cooling_des);
         assign("n_T_htf_pars_calc", n_T_htf_pars);
         assign("n_T_amb_pars_calc", n_T_amb_pars);
