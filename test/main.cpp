@@ -55,10 +55,11 @@ GTEST_API_ int main(int argc, char **argv) {
     //    filter to include
     ::testing::GTEST_FLAG(filter) = "CmodHybridTest.GenericPVWattsWindFuelCellBatteryHybrid_SingleOwner";
 //    ::testing::GTEST_FLAG(filter) = "CmodHybridTest.PVWattsv8Wind*";
- //     ::testing::GTEST_FLAG(filter) = "CmodSingleOwnerTest.heat_electricity";
+//      ::testing::GTEST_FLAG(filter) = "CmodSingleOwnerTest.heat_electricity";
 //       ::testing::GTEST_FLAG(filter) = "CMGeneric.precheck_exception";
 //    ::testing::GTEST_FLAG(filter) = "CmodSingleOwnerTest.ssc_1047";
     //::testing::GTEST_FLAG(filter) = "CmodHybridTest*";
+//    ::testing::GTEST_FLAG(filter) = "CMGeneric.SingleOwnerWithBattery_cmod_generic";
 
     //   ::testing::GTEST_FLAG(filter) = "CmodCashLoanTest*:CmodSingleOwnerTest*";
     //::testing::GTEST_FLAG(filter) = "Solesca*";

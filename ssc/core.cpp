@@ -332,6 +332,18 @@ void compute_module::add_var_info(var_info vi[]) {
     int i = 0;
     while (vi[i].data_type != SSC_INVALID
            && vi[i].name != NULL) {
+/*        // check for duplicates
+        std::vector<var_info*>::iterator it;
+        for (it = m_varlist.begin(); it != m_varlist.end(); ++it) {
+            if ((*it)->name == vi[i].name) {
+
+                std::ostringstream stringStream;
+                stringStream << "Variable " << vi[i].name << " already exists.";
+                log(stringStream.str(), SSC_ERROR);
+                return;
+                //throw general_error(stringStream.str());
+            }
+        } */
         m_varlist.push_back(&vi[i]);
         i++;
     }
