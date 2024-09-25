@@ -795,7 +795,21 @@ bool C_csp_packedbed_tes::charge(double timestep /*s*/, double T_amb /*K*/, doub
     double& T_hot_ave /*K*/, double& T_cold_ave /*K*/, double& T_hot_final /*K*/, double& T_cold_final /*K*/
 )
 {
-    
+    if (timestep <= 0)
+    {
+        T_htf_cold_out = m_T_prev_vec[m_n_xstep];
+        q_dot_heater = 0;
+        m_dot_tank_to_tank = 0;
+        W_dot_rhtf_pump = 0;
+        q_dot_loss = 0;
+        q_dot_dc_to_htf = 0;
+        q_dot_ch_from_htf = 0;
+        T_hot_ave = m_T_prev_vec[0];               
+        T_cold_ave = m_T_prev_vec[m_n_xstep];
+        T_hot_final = m_T_prev_vec[0];
+        T_cold_final = m_T_prev_vec[m_n_xstep];
+        return true;
+    }
 
     // Calculate subtimestep
     int N_subtimesteps_local = (int)std::ceil(timestep / m_subtimestep_nominal);
