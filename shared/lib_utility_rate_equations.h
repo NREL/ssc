@@ -203,6 +203,7 @@ public:
 
 private:
     bool check_for_kwh_per_kw_rate(int units);
+    bool check_for_daily_rate(int units);
 
 };
 

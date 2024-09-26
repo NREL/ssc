@@ -230,6 +230,10 @@ bool rate_data::check_for_kwh_per_kw_rate(int units) {
     return (units == 1) || (units == 3);
 }
 
+bool rate_data::check_for_daily_rate(int units) {
+    return (units == 2) || (units == 3);
+}
+
 double rate_data::get_billing_demand(int month) {
     int m = 0;
     double curr_billing_demand = bd_minimum;
@@ -647,8 +651,7 @@ void rate_data::setup_energy_rates(ssc_number_t* ec_weekday, ssc_number_t* ec_we
 						m_month[m].ec_tou_ub.at(i, j) = ec_tou_mat.at(r, 2);
 						// units kWh, kWh/kW, kWh daily, kWh/kW daily
 						m_month[m].ec_tou_units.at(i, j) = (int)ec_tou_mat.at(r, 3);
-						if ((m_month[m].ec_tou_units.at(i, j) == 2)
-							|| (m_month[m].ec_tou_units.at(i, j) == 3))
+						if (check_for_daily_rate(m_month[m].ec_tou_units.at(i, j)))
 						{// kWh daily or kWh/kW daily - adjust max usage by number of days in month (or billing cycle per Eric 12/14/15
 							m_month[m].ec_tou_ub.at(i, j) *= util::nday[m];
 						}
@@ -663,10 +666,18 @@ void rate_data::setup_energy_rates(ssc_number_t* ec_weekday, ssc_number_t* ec_we
                             tier_check.push_back(m_month[m].ec_tou_ub.at(i, j));
                         }
                         else if ((std::fabs(tier_check[tier - 1] - m_month[m].ec_tou_ub.at(i, j)) > 1e-7)) {
+                            std::string units = "kWh";
+                            if (check_for_kwh_per_kw_rate(m_month[m].ec_tou_units.at(i, j))) {
+                                units = "kWh/kW";
+                            }
+                            if (check_for_daily_rate(m_month[m].ec_tou_units.at(i, j))) {
+                                units += " daily";
+                            }
+
                             std::ostringstream ss;
                             ss << "Energy tier " << tier << " Max. Usage for " << util::schedule_int_to_month(m) << " period " << period << " was expected to be ";
-                            ss << tier_check[tier - 1] << " " << m_month[m].ec_tou_units.at(i, j) << " units " << " but was "; // TODO: fix units!
-                            ss << m_month[m].ec_tou_ub.at(i, j) << " in tier "  << ". Tiers within a month should be the same for TOU rates.";
+                            ss << tier_check[tier - 1] << " " << units << " but was "; 
+                            ss << m_month[m].ec_tou_ub.at(i, j) << " " << units << ". Tiers should have the same Max. Usage across Periods in the same month for TOU rates.";
                             throw exec_error("lib_utility_rate_equations", ss.str());
                         }
 
@@ -826,8 +837,9 @@ void rate_data::setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_
                         }
                         else if (std::fabs(tier_check[tier - 1] - m_month[m].dc_tou_ub.at(i, j)) > 1e-7) {
                             std::ostringstream ss;
-                            ss << "Demand tier for month " << m << " period " << period << " was expected to be " << tier_check[tier - 1] << " but was ";
-                            ss << m_month[m].dc_tou_ub.at(i, j) << " in tier " << tier << ". Tiers within a month should be the same for TOU rates.";
+                            ss << "Demand tier " << tier << " Max. Usage for " << util::schedule_int_to_month(m) << " period " << period << " was expected to be ";
+                            ss << tier_check[tier - 1] << " kW but was ";
+                            ss << m_month[m].dc_tou_ub.at(i, j) << " kW. Tiers should have the same Max. Usage across Periods in the same month for TOU rates.";
                             throw exec_error("lib_utility_rate_equations", ss.str());
                         }
 
