@@ -49,6 +49,8 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	{C_csp_falling_particle_collector_receiver::E_Q_DOT_STARTUP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_falling_particle_collector_receiver::E_T_HTF_IN, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_falling_particle_collector_receiver::E_T_HTF_OUT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_csp_falling_particle_collector_receiver::E_T_CAV_WALL_MAX, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_csp_falling_particle_collector_receiver::E_T_CAV_WALL_AVG, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	{C_csp_falling_particle_collector_receiver::E_Q_DOT_PIPE_LOSS, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_falling_particle_collector_receiver::E_Q_DOT_LOSS, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_falling_particle_collector_receiver::E_Q_DOT_REFL_LOSS, C_csp_reported_outputs::TS_WEIGHTED_AVE},
@@ -226,6 +228,7 @@ void C_csp_falling_particle_collector_receiver::combine_results()
     // Combine results from the individual field/receivers into aggregated values for the controller and for reporting
     m_combined_outputs.clear();  // Reset all values to zero
     size_t nrec = mc_pt_receivers.size();
+    int n_rec_on = 0;
     for (size_t i = 0; i < nrec; i++)
     {
         m_combined_outputs.q_dot_field_inc += mc_pt_heliostatfields.at(i)->ms_outputs.m_q_dot_field_inc;     // [MWt], total solar power incident on all fields
@@ -251,6 +254,14 @@ void C_csp_falling_particle_collector_receiver::combine_results()
 
         m_combined_outputs.W_dot_tracking += mc_pt_heliostatfields.at(i)->ms_outputs.m_pparasi;                  // [MWe], total parasitic load for all heliostat fields
         m_combined_outputs.W_dot_transport += mc_pt_receivers.at(i)->ms_outputs.m_W_dot_pump;                    // [MWe], total particle lift parasitics
+
+        if (mc_pt_receivers.at(i)->ms_outputs.m_Q_thermal > 0)
+        {
+            n_rec_on += 1;
+            m_combined_outputs.T_cav_wall_max = fmax(m_combined_outputs.T_cav_wall_max, mc_pt_receivers.at(i)->ms_outputs.m_max_T_cav_wall);
+            m_combined_outputs.T_cav_wall_avg += mc_pt_receivers.at(i)->ms_outputs.m_avg_T_cav_wall;
+        }
+
     }
 
     m_combined_outputs.T_salt_hot /= fmax(1e-6, m_combined_outputs.m_dot_salt_tot);         //[C]
@@ -258,7 +269,8 @@ void C_csp_falling_particle_collector_receiver::combine_results()
     m_combined_outputs.eta_field /= fmax(1e-6, m_combined_outputs.q_dot_field_inc);         //[-]  TODO: Would a simple average be better to account for receivers that are off?
     m_combined_outputs.eta_thermal /= fmax(1e-6, m_combined_outputs.q_dot_rec_inc);         //[-]  TODO: Would a simple average be better to account for receivers that are off?
     m_combined_outputs.W_dot_elec_in_tot = m_combined_outputs.W_dot_tracking + m_combined_outputs.W_dot_transport;
-
+    if (n_rec_on>0)
+        m_combined_outputs.T_cav_wall_avg /= n_rec_on;
     return;
 }
 
@@ -287,11 +299,15 @@ void C_csp_falling_particle_collector_receiver::set_outputs(C_csp_collector_rece
     mc_reported_outputs.value(E_Q_DOT_STARTUP, m_combined_outputs.q_dot_startup);		    //[MWt]
     mc_reported_outputs.value(E_T_HTF_IN, m_combined_outputs.T_salt_cold);			        //[C]
     mc_reported_outputs.value(E_T_HTF_OUT, m_combined_outputs.T_salt_hot);		            //[C]
+    mc_reported_outputs.value(E_T_CAV_WALL_MAX, m_combined_outputs.T_cav_wall_max);			//[C]
+    mc_reported_outputs.value(E_T_CAV_WALL_AVG, m_combined_outputs.T_cav_wall_avg);		    //[C]
+
     mc_reported_outputs.value(E_Q_DOT_PIPE_LOSS, m_combined_outputs.q_dot_transport_loss);  //[MWt]
     mc_reported_outputs.value(E_Q_DOT_REFL_LOSS, m_combined_outputs.q_dot_refl_loss);       //[MWt]
     mc_reported_outputs.value(E_Q_DOT_LOSS, m_combined_outputs.q_dot_thermal_loss);         //MWt
     mc_reported_outputs.value(E_W_DOT_TRACKING, m_combined_outputs.W_dot_tracking);         //[MWe]
     mc_reported_outputs.value(E_W_DOT_PUMP, m_combined_outputs.W_dot_transport);            //[MWe]
+
 
     mc_reported_outputs.value(E_CLEARSKY, mc_pt_heliostatfields.at(0)->ms_outputs.m_clearsky_dni);  // All fields have same clear-sky model and same clear-sky DNI
 

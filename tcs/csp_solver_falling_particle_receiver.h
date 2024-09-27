@@ -172,7 +172,8 @@ protected:
     double m_phi0;              // Initial particle curtain volume fraction
 
     // Cavity wall properties
-    double m_cav_emis;          // Cavity wall emissivity [-]
+    double m_cav_abs;           // Cavity wall solar absorptivity [-]
+    double m_cav_emis;          // Cavity wall IR emissivity [-]
     double m_cav_twall;         // Cavity wall thickness [-]
     double m_cav_kwall;         // Cavity wall thermal conductivity [-]
     double m_cav_hext;          // External loss coefficient [W/m2/K]   // TODO: Simplify twall, kwall, hext to an effective loss coefficient
@@ -301,13 +302,13 @@ protected:
 
     void calculate_view_factors();
 
-    util::matrix_t<double> get_reflectivity_vector(util::matrix_t<double>& rhoc_per_group);
+    util::matrix_t<double> get_reflectivity_vector(util::matrix_t<double>& rhoc_per_group, double rhow);
 
-    void calculate_coeff_matrix(util::matrix_t<double>& rhoc, util::matrix_t<double>& tauc, Eigen::MatrixXd& K, Eigen::MatrixXd& Kinv);
+    void calculate_coeff_matrix(util::matrix_t<double>& rhoc, util::matrix_t<double>& tauc, double rhow, Eigen::MatrixXd& K, Eigen::MatrixXd& Kinv);
 
     void calculate_radiative_exchange(util::matrix_t<double>& Ecf, util::matrix_t<double>& Ecb, util::matrix_t<double>& Ebw, double Eap, double Efw,
                                       Eigen::MatrixXd& K, Eigen::MatrixXd& Kinv,
-                                      util::matrix_t<double>& rhoc, util::matrix_t<double>& tauc,
+                                      util::matrix_t<double>& rhoc, util::matrix_t<double>& tauc, double rhow,
                                       util::matrix_t<double>& qnetc, util::matrix_t<double>& qnetw, double& qnetwf, double& qnetap);
 
 
@@ -342,7 +343,7 @@ public:
         int model_type /*-*/, double fixed_efficiency /*-*/, int rad_model_type /*-*/, int hadv_model_type /*-*/, double hadv_user  /*-*/,
         double ap_height /*m*/, double ap_width /*m*/, double ap_height_ratio /*-*/, double ap_width_ratio /*-*/, double ap_curtain_depth_ratio /*-*/, double rec_orientation,
         double particle_dp /*m*/, double particle_abs /*-*/, double curtain_emis /*-*/, double dthdy /*-*/,
-        double cav_emis /*-*/, double cav_twall /*m*/, double cav_kwall /*m*/, double cav_hext /*W/m2/K*/,
+        double cav_abs /*-*/, double cav_emis /*-*/, double cav_twall /*m*/, double cav_kwall /*m*/, double cav_hext /*W/m2/K*/,
         double deltaT_transport_cold /*K*/, double deltaT_transport_hot /*K*/,
         double tauc_mult /*-*/, double hadv_mult /*-*/,
         int n_x, int  n_y, int n_x_rad, int n_y_rad,

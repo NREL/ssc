@@ -64,6 +64,8 @@ private:
         double m_dot_salt_tot;          //[kg/hr]
         double T_salt_hot;              //[C]
         double T_salt_cold;             //[C]
+        double T_cav_wall_max;          //[C]
+        double T_cav_wall_avg;          //[C]
 
         double sf_adjust;               //[-]
         double component_defocus;       //[-]
@@ -83,6 +85,7 @@ private:
             q_startup = q_dot_startup = time_required_su = 0.0;
             eta_field = eta_thermal = 0.0;
             m_dot_salt_tot = T_salt_hot = T_salt_cold = 0.0;
+            T_cav_wall_max = T_cav_wall_avg = 0.0;
             sf_adjust = component_defocus = 0.0;
             W_dot_tracking = W_dot_transport = W_dot_elec_in_tot = 0.0;
         }
@@ -141,6 +144,8 @@ public:
 		E_Q_DOT_STARTUP,		    //[MWt] Receiver startup thermal power consumed
 		E_T_HTF_IN,				    //[C] Receiver HTF inlet temperature
 		E_T_HTF_OUT,			    //[C] Receiver HTF outlet temperature
+        E_T_CAV_WALL_MAX,			//[C] Maximum back cavity wall temperature
+        E_T_CAV_WALL_AVG,           //[C] Average back cavity wall temperature
 		E_Q_DOT_PIPE_LOSS,		    //[MWt] Tower piping losses
         E_Q_DOT_LOSS,               //[MWt] Receiver convection and radiation losses
         E_Q_DOT_REFL_LOSS,          //[MWt] Receiver reflection losses (0 for external)

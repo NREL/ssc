@@ -49,7 +49,7 @@ C_falling_particle_receiver::C_falling_particle_receiver(double h_tower /*m*/,
     int model_type /*-*/, double fixed_efficiency /*-*/, int rad_model_type /*-*/, int hadv_model_type /*-*/, double hadv_user  /*-*/,
     double ap_height /*m*/, double ap_width /*m*/, double ap_height_ratio /*-*/, double ap_width_ratio /*-*/, double ap_curtain_depth_ratio /*-*/, double rec_orientation /*deg*/,
     double particle_dp /*m*/, double particle_abs /*-*/, double curtain_emis /*-*/, double dthdy /*-*/, 
-    double cav_emis /*-*/, double cav_twall /*m*/, double cav_kwall /*m*/, double cav_hext /*W/m2/K*/,
+    double cav_abs /*-*/, double cav_emis /*-*/, double cav_twall /*m*/, double cav_kwall /*m*/, double cav_hext /*W/m2/K*/,
     double deltaT_transport_cold /*K*/, double deltaT_transport_hot /*K*/,
     double tauc_mult /*-*/, double hadv_mult /*-*/,
     int n_x, int n_y, int n_x_rad, int n_y_rad,
@@ -100,6 +100,7 @@ C_falling_particle_receiver::C_falling_particle_receiver(double h_tower /*m*/,
     m_phi0 = 0.6;
 
     // Cavity wall properties
+    m_cav_abs = cav_abs;
     m_cav_emis = cav_emis;
     m_cav_twall = cav_twall;
     m_cav_kwall = cav_kwall;
@@ -311,8 +312,8 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
     double od_control = std::numeric_limits<double>::quiet_NaN();
     s_steady_state_soln soln;
 
-    double m_dot_tot, T_particle_hot, T_particle_hot_rec, eta, T_htf_prop, cp_htf, W_lift;
-    m_dot_tot = T_particle_hot = T_particle_hot_rec = eta = T_htf_prop = cp_htf = W_lift = std::numeric_limits<double>::quiet_NaN();
+    double m_dot_tot, T_particle_hot, T_particle_hot_rec, eta, T_htf_prop, cp_htf, W_lift, T_cav_wall_max, T_cav_wall_avg;
+    m_dot_tot = T_particle_hot = T_particle_hot_rec = eta = T_htf_prop = cp_htf = W_lift = T_cav_wall_max = T_cav_wall_avg = std::numeric_limits<double>::quiet_NaN();
     double Q_inc, Q_refl, Q_adv, Q_rad, Q_cond, Q_transport, Q_thermal, Q_inc_pre_defocus;
     Q_inc = Q_refl = Q_adv = Q_rad = Q_cond = Q_transport = Q_thermal = Q_inc_pre_defocus = std::numeric_limits<double>::quiet_NaN();
 
@@ -517,6 +518,9 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
     T_particle_hot_rec = soln.T_particle_hot_rec;
     eta = soln.eta;     // Efficiency not including transport loss
 
+    T_cav_wall_max = soln.T_back_wall_max;
+    T_cav_wall_avg = soln.T_back_wall_avg;
+
     T_htf_prop = (T_particle_hot + T_particle_cold_in) / 2.0;
     cp_htf = field_htfProps.Cp(T_htf_prop) * 1000.0;
 
@@ -642,6 +646,9 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
         // Set the receiver outlet temperature equal to the inlet design temperature
         T_particle_hot = m_T_htf_cold_des;
 
+        T_cav_wall_max = 273.15;
+        T_cav_wall_avg = 273.15;
+
         Q_inc_pre_defocus = 0.0;
         Q_inc = 0.0;
 
@@ -668,7 +675,9 @@ void C_falling_particle_receiver::call(const C_csp_weatherreader::S_outputs& wea
         outputs.m_q_dot_piping_loss = Q_transport / 1.E6;	//[MWt]
     else
         outputs.m_q_dot_piping_loss = 0.0;		//[MWt]
-    
+
+    outputs.m_max_T_cav_wall = T_cav_wall_max - 273.15;
+    outputs.m_avg_T_cav_wall = T_cav_wall_avg - 273.15;
 
     // Outputs in parent class, but not used or not relevant for falling particle receiver model
     outputs.m_dP_receiver = 0.0;	                    //[bar] receiver pressure drop, convert from Pa
@@ -1024,7 +1033,8 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
     cp_hot = field_htfProps.Cp(m_T_htf_hot_des) * 1000.0;
     T_cold_in_rec = T_cold_in - m_deltaT_transport_cold;  // Inlet temperature to receiver accounting from loss from cold particle transport
 
-    double rhow = 1.0 - m_cav_emis;
+    double rhow_solar = 1.0 - m_cav_abs;
+    double rhow_IR = 1.0 - m_cav_emis;
 
     bool rec_is_off = false;
     bool converged = false;
@@ -1134,15 +1144,15 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
                 {
                     if (j < m_n_y - 1)
                     {
-                        qabs_approx = (1.0 - soln.rhoc.at(j, i) - soln.tauc.at(j, i) + rhow * soln.tauc.at(j, i) + rhow * (1.0 - vf_to_ap) * soln.rhoc.at(j, i)) * soln.q_dot_inc.at(j, i); // Approximate solar energy absorbed by the particle curtain (W/m2)
+                        qabs_approx = (1.0 - soln.rhoc.at(j, i) - soln.tauc.at(j, i) + rhow_solar * soln.tauc.at(j, i) + rhow_solar * (1.0 - vf_to_ap) * soln.rhoc.at(j, i)) * soln.q_dot_inc.at(j, i); // Approximate solar energy absorbed by the particle curtain (W/m2)
                         qnet_approx = qabs_approx - hadv_with_wind * (Tp.at(j, i) - soln.T_amb) - m_curtain_emis * CSP::sigma * (pow(Tp.at(j, i), 4) - pow(soln.T_amb,4));  //Approximate net heat transfer rate using curtain temperature at prior element
                         dh_approx = qnet_approx * (dy / (soln.phip.at(j + 1, i) * soln.thc.at(j + 1, i) * soln.vel.at(j + 1, i) * particle_density));
                         Tp.at(j + 1, i) = fmax(T_cold_in_rec, Tp.at(j, i) + dh_approx / cp);
                         if (Tp.at(j + 1, i) < soln.T_amb)
                             Tp.at(j + 1, i) = soln.T_amb;
                     }
-
-                    qnet_approx = (1.0 - rhow)*(1.0 + rhow*soln.rhoc.at(j,i)) * (m_curtain_emis * CSP::sigma * pow(Tp.at(j, i), 4) + soln.tauc.at(j, i) * soln.q_dot_inc.at(j, i));     // Approximate radiative heat transfer incoming to the back wall (W/m2)
+                    qnet_approx = (1.0 - rhow_solar) * (1.0 + rhow_solar * soln.rhoc.at(j, i)) * (soln.tauc.at(j, i) * soln.q_dot_inc.at(j, i));  // Approximate solar energy absorbed at back wall (W/m2)
+                    qnet_approx += (1.0 - rhow_IR)*(1.0 + rhow_IR*soln.rhoc.at(j,i)) * (m_curtain_emis * CSP::sigma * pow(Tp.at(j, i), 4));             // Add approximate IR radiative heat transfer incoming to the back wall (W/m2)
                     Tw.at(j, i) = fmax(T_cold_in_rec, pow(qnet_approx / (m_cav_emis * CSP::sigma), 0.25));
 
                     flux_avg += soln.q_dot_inc.at(j, i) / (m_n_x*m_n_y);
@@ -1157,21 +1167,35 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
 
         //--- Calculate coefficient matrix for radiative exchange
         // TODO: exclude this calculation if the mass flow rates haven't changed?
-        Eigen::MatrixXd K;
-        Eigen::MatrixXd Kinv;
+        Eigen::MatrixXd K_solar;
+        Eigen::MatrixXd Kinv_solar;
+        Eigen::MatrixXd K_IR;
+        Eigen::MatrixXd Kinv_IR;
+
+
         if (m_rad_model_type == 1)
         {
-            calculate_coeff_matrix(soln.rhoc, soln.tauc, K, Kinv);
+            calculate_coeff_matrix(soln.rhoc, soln.tauc, rhow_solar, K_solar, Kinv_solar);
+            if (fabs(rhow_solar - rhow_IR) < 0.001)
+            {
+                K_IR = K_solar;
+                Kinv_IR = Kinv_solar;
+            }
+            else
+            {
+                calculate_coeff_matrix(soln.rhoc, soln.tauc, rhow_IR, K_IR, Kinv_IR);
+            }
 
-            // Remove this after debugging
+
+            // TODO: Remove this after debugging
             K_sum = Kinv_sum = 0.0;
             int nelem = get_nelem();
             for (int i = 0; i < nelem; i++)
             {
                 for (int j = 0; j < nelem; j++)
                 {
-                    K_sum += K(i, j);
-                    Kinv_sum += Kinv(i, j);
+                    K_sum += K_solar(i, j);
+                    Kinv_sum += Kinv_solar(i, j);
                 }
             }
         }
@@ -1198,11 +1222,11 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
             {
                 for (int j = 0; j < m_n_y; j++)
                 {
-                    jcback_sol = soln.tauc.at(j, i) * soln.q_dot_inc.at(j, i) / (1 - soln.rhoc.at(j, i) * rhow);
-                    jw_sol = rhow * jcback_sol;
+                    jcback_sol = soln.tauc.at(j, i) * soln.q_dot_inc.at(j, i) / (1 - soln.rhoc.at(j, i) * rhow_solar);
+                    jw_sol = rhow_solar * jcback_sol;
                     jcfront_sol = m_vf_rad_type_0 * (soln.rhoc.at(j, i) * soln.q_dot_inc.at(j, i) + soln.tauc.at(j, i) * jw_sol);
                     qnetc_sol.at(j, i) = (soln.q_dot_inc.at(j, i) - jcfront_sol) + (jw_sol - jcback_sol);
-                    qnetw_sol.at(j, i) = (1.0-rhow) * soln.tauc.at(j, i) * soln.q_dot_inc.at(j, i) / (1.0 - soln.rhoc.at(j, i) * rhow);
+                    qnetw_sol.at(j, i) = (1.0-rhow_solar) * soln.tauc.at(j, i) * soln.q_dot_inc.at(j, i) / (1.0 - soln.rhoc.at(j, i) * rhow_solar);
                     if (j < m_n_y - 1)
                         Q_refl += jcfront_sol * m_curtain_elem_area;
                 }
@@ -1221,17 +1245,17 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
                 for (int j = 0; j < m_n_y; j++)
                 {
                     Ecf.at(j,i) = soln.rhoc.at(j, i) * soln.q_dot_inc.at(j, i);         // Energy "source" at front curtain surface = reflected solar energy
-                    Ebw.at(j,i) = rhow * soln.tauc.at(j, i) * soln.q_dot_inc.at(j, i);  // Energy "source" at back wall surface = transmitted and reflected solar energy
+                    Ebw.at(j,i) = rhow_solar * soln.tauc.at(j, i) * soln.q_dot_inc.at(j, i);  // Energy "source" at back wall surface = transmitted and reflected solar energy
                 }
             }
-            calculate_radiative_exchange(Ecf, Ecb, Ebw, 0.0, 0.0, K, Kinv, soln.rhoc, soln.tauc, qnetc_sol, qnetw_sol, qnet_wf_sol, qnet_ap_sol);  // Calculates net incoming radiative energy to each element (total incoming - total outgoing)
+            calculate_radiative_exchange(Ecf, Ecb, Ebw, 0.0, 0.0, K_solar, Kinv_solar, soln.rhoc, soln.tauc, rhow_solar, qnetc_sol, qnetw_sol, qnet_wf_sol, qnet_ap_sol);  // Calculates net incoming radiative energy to each element (total incoming - total outgoing)
 
             // Radiative exchange model provides the net incoming energy to each surface (net outgoing is -qnet). Now calculate the total net incoming solar energy
             for (int i = 0; i < m_n_x; i++)
             {
                 for (int j = 0; j < m_n_y; j++)
                 {
-                    qnetc_sol.at(j,i) += (1 - soln.tauc.at(j, i)) * soln.q_dot_inc.at(j, i);  
+                    qnetc_sol.at(j,i) += (1 - soln.tauc.at(j, i)) * soln.q_dot_inc.at(j, i);
                     qnetw_sol.at(j,i) += soln.tauc.at(j, i) * soln.q_dot_inc.at(j, i);
                 }
             }
@@ -1282,11 +1306,11 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
                     {
                         Ew = m_cav_emis * CSP::sigma * pow(Tw.at(j, i), 4);
                         Ec = m_curtain_emis * CSP::sigma * pow(Tp.at(j, i), 4);
-                        jcback_IR = (Ec + soln.rhoc.at(j, i) * Ew) / (1 - soln.rhoc.at(j, i) * rhow);
-                        jw_IR = Ew + rhow * jcback_IR;
+                        jcback_IR = (Ec + soln.rhoc.at(j, i) * Ew) / (1 - soln.rhoc.at(j, i) * rhow_IR);
+                        jw_IR = Ew + rhow_IR * jcback_IR;
                         jcfront_IR = m_vf_rad_type_0 * (Ec + soln.tauc.at(j, i) * jw_IR);
                         qnetc.at(j, i) = qnetc_sol.at(j, i) - jcfront_IR + (jw_IR - jcback_IR);
-                        qnetw.at(j, i) = qnetw_sol.at(j, i) + ((1 - rhow) * Ec - (1 - soln.rhoc.at(j, i)) * Ew) / (1.0 - soln.rhoc.at(j, i) * rhow);
+                        qnetw.at(j, i) = qnetw_sol.at(j, i) + ((1 - rhow_IR) * Ec - (1 - soln.rhoc.at(j, i)) * Ew) / (1.0 - soln.rhoc.at(j, i) * rhow_IR);
                         if (j < m_n_y - 1)
                             Q_rad += jcfront_IR * m_curtain_elem_area;
                     }
@@ -1308,7 +1332,7 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
                         Ebw.at(j,i) = m_cav_emis * CSP::sigma * pow(Tw.at(j, i), 4);     // Back wall surface
                     }
                 }
-                calculate_radiative_exchange(Ecf, Ecb, Ebw, Eap, Ewf, K, Kinv, soln.rhoc, soln.tauc, qnetc, qnetw, qnet_wf, qnet_ap);    // Calculates net incoming radiative energy to each element (total incoming - total outgoing)
+                calculate_radiative_exchange(Ecf, Ecb, Ebw, Eap, Ewf, K_IR, Kinv_IR, soln.rhoc, soln.tauc, rhow_IR, qnetc, qnetw, qnet_wf, qnet_ap);    // Calculates net incoming radiative energy to each element (total incoming - total outgoing)
                 Q_rad = qnet_ap * m_ap_area;    // IR radiation loss [W]
 
                 //--- Combine solar and IR exchange
@@ -2120,7 +2144,7 @@ double C_falling_particle_receiver::vf_parallel_rect(double x1, double y1, doubl
 }
 
 // Set up array containing reflectivity of all surface elements
-util::matrix_t<double> C_falling_particle_receiver::get_reflectivity_vector(util::matrix_t<double>& rhoc_per_group)
+util::matrix_t<double> C_falling_particle_receiver::get_reflectivity_vector(util::matrix_t<double>& rhoc_per_group, double rhow)
 {
     int ny = m_n_y_rad; 
     int nx = m_n_x_rad;
@@ -2138,7 +2162,7 @@ util::matrix_t<double> C_falling_particle_receiver::get_reflectivity_vector(util
             y = (i - i0 - x) / nx;    // Height position on curtain
             rho.at(i) = rhoc_per_group.at(y, x);
         }
-        else if (i < 1 + 2*(nx * ny))  // Back of curtain
+        else if (i < 1 + 2 * (nx * ny))  // Back of curtain
         {
             i0 = 1 + (nx * ny);
             x = (i - i0) % nx;
@@ -2146,13 +2170,13 @@ util::matrix_t<double> C_falling_particle_receiver::get_reflectivity_vector(util
             rho.at(i) = rhoc_per_group.at(y, x);
         }
         else            // Back cavity wall or front cavity wall
-            rho.at(i) = 1.0 - m_cav_emis;
+            rho.at(i) = rhow;
     }
     return rho;
 }
 
 // Coefficient matrix for radiative exchange including all discretized elements
-void C_falling_particle_receiver::calculate_coeff_matrix(util::matrix_t<double>& rhoc, util::matrix_t<double>& tauc, Eigen::MatrixXd& K, Eigen::MatrixXd& Kinv)
+void C_falling_particle_receiver::calculate_coeff_matrix(util::matrix_t<double>& rhoc, util::matrix_t<double>& tauc, double rhow, Eigen::MatrixXd& K, Eigen::MatrixXd& Kinv)
 {
 
     // TODO: Generalize to include view factors between each curtain element and all back wall elements
@@ -2189,7 +2213,7 @@ void C_falling_particle_receiver::calculate_coeff_matrix(util::matrix_t<double>&
 
     // Create vector with reflectivity of all elements
     util::matrix_t<double> rho(nelem);
-    rho = get_reflectivity_vector(rhoc_per_group);
+    rho = get_reflectivity_vector(rhoc_per_group, rhow);
 
     //--- Calculate coefficient matrix
     int iback, ifront, x, y;
@@ -2233,7 +2257,7 @@ void C_falling_particle_receiver::calculate_coeff_matrix(util::matrix_t<double>&
 // Solve radiative exchange equations and calculate net radiative energy incoming to each element
 void C_falling_particle_receiver::calculate_radiative_exchange(util::matrix_t<double>& Ecf, util::matrix_t<double>& Ecb, util::matrix_t<double>& Ebw, double Eap, double Efw,
                                                                Eigen::MatrixXd& K, Eigen::MatrixXd& Kinv,
-                                                               util::matrix_t<double>& rhoc, util::matrix_t<double>& tauc,
+                                                               util::matrix_t<double>& rhoc, util::matrix_t<double>& tauc, double rhow,
                                                                util::matrix_t<double>& qnetc, util::matrix_t<double>& qnetw, double& qnetwf, double& qnetap)
 {
     // Curtain height/width elements are ordered as (y0,x0), (y0,x1)... (y0,xn), (y1,x0)...
@@ -2301,7 +2325,7 @@ void C_falling_particle_receiver::calculate_radiative_exchange(util::matrix_t<do
 
 
     //-- Solve for total incoming energy and net incoming energy
-    util::matrix_t<double> rho = get_reflectivity_vector(rhoc_per_group);
+    util::matrix_t<double> rho = get_reflectivity_vector(rhoc_per_group, rhow);
     util::matrix_t<double> qin, qnet;
     qin.resize_fill(nelem, 0.0);            // Total incoming energy [W/m2]
     qnet.resize_fill(nelem, 0.0);           // Net incoming energy
