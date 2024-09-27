@@ -66,16 +66,19 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
     {C_csp_falling_particle_collector_receiver::E_Q_DOT_INC_1, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_falling_particle_collector_receiver::E_Q_DOT_INC_2, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_falling_particle_collector_receiver::E_Q_DOT_INC_3, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_csp_falling_particle_collector_receiver::E_Q_DOT_INC_4, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_falling_particle_collector_receiver::E_Q_DOT_THERMAL_1, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_falling_particle_collector_receiver::E_Q_DOT_THERMAL_2, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_falling_particle_collector_receiver::E_Q_DOT_THERMAL_3, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_csp_falling_particle_collector_receiver::E_Q_DOT_THERMAL_4, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_falling_particle_collector_receiver::E_ETA_THERMAL_1, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_falling_particle_collector_receiver::E_ETA_THERMAL_2, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_falling_particle_collector_receiver::E_ETA_THERMAL_3, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_csp_falling_particle_collector_receiver::E_ETA_THERMAL_4, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_falling_particle_collector_receiver::E_FIELD_ETA_OPT_1, C_csp_reported_outputs::TS_WEIGHTED_AVE},
-    {C_csp_falling_particle_collector_receiver::E_FIELD_ETA_OPT_1, C_csp_reported_outputs::TS_WEIGHTED_AVE},
-    {C_csp_falling_particle_collector_receiver::E_FIELD_ETA_OPT_1, C_csp_reported_outputs::TS_WEIGHTED_AVE},
-
+    {C_csp_falling_particle_collector_receiver::E_FIELD_ETA_OPT_2, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_csp_falling_particle_collector_receiver::E_FIELD_ETA_OPT_3, C_csp_reported_outputs::TS_WEIGHTED_AVE},
+    {C_csp_falling_particle_collector_receiver::E_FIELD_ETA_OPT_4, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 	csp_info_invalid	
 };
 
@@ -316,15 +319,19 @@ void C_csp_falling_particle_collector_receiver::set_outputs(C_csp_collector_rece
     mc_reported_outputs.value(E_Q_DOT_INC_1, mc_pt_receivers.at(0)->ms_outputs.m_q_dot_rec_inc);	                //[MWt]
     mc_reported_outputs.value(E_Q_DOT_INC_2, nrec > 1 ? mc_pt_receivers.at(1)->ms_outputs.m_q_dot_rec_inc : 0.0);	//[MWt]
     mc_reported_outputs.value(E_Q_DOT_INC_3, nrec > 2 ? mc_pt_receivers.at(2)->ms_outputs.m_q_dot_rec_inc : 0.0);	//[MWt]
+    mc_reported_outputs.value(E_Q_DOT_INC_4, nrec > 3 ? mc_pt_receivers.at(3)->ms_outputs.m_q_dot_rec_inc : 0.0);	//[MWt]
     mc_reported_outputs.value(E_Q_DOT_THERMAL_1, mc_pt_receivers.at(0)->ms_outputs.m_Q_thermal);	                //[MWt]
-    mc_reported_outputs.value(E_Q_DOT_THERMAL_2, nrec > 1 ? mc_pt_receivers.at(1)->ms_outputs.m_Q_thermal : 0.0);	    //[MWt]
+    mc_reported_outputs.value(E_Q_DOT_THERMAL_2, nrec > 1 ? mc_pt_receivers.at(1)->ms_outputs.m_Q_thermal : 0.0);	 //[MWt]
     mc_reported_outputs.value(E_Q_DOT_THERMAL_3, nrec > 2 ? mc_pt_receivers.at(2)->ms_outputs.m_Q_thermal : 0.0);	//[MWt]
+    mc_reported_outputs.value(E_Q_DOT_THERMAL_4, nrec > 3 ? mc_pt_receivers.at(3)->ms_outputs.m_Q_thermal : 0.0);	//[MWt]
     mc_reported_outputs.value(E_ETA_THERMAL_1, mc_pt_receivers.at(0)->ms_outputs.m_eta_therm);
     mc_reported_outputs.value(E_ETA_THERMAL_2, nrec > 1 ? mc_pt_receivers.at(1)->ms_outputs.m_eta_therm : 0.0);
     mc_reported_outputs.value(E_ETA_THERMAL_3, nrec > 2 ? mc_pt_receivers.at(2)->ms_outputs.m_eta_therm : 0.0);
+    mc_reported_outputs.value(E_ETA_THERMAL_4, nrec > 3 ? mc_pt_receivers.at(3)->ms_outputs.m_eta_therm : 0.0);
     mc_reported_outputs.value(E_FIELD_ETA_OPT_1, mc_pt_heliostatfields.at(0)->ms_outputs.m_eta_field);
     mc_reported_outputs.value(E_FIELD_ETA_OPT_2, nrec > 1 ? mc_pt_heliostatfields.at(1)->ms_outputs.m_eta_field : 0.0);
     mc_reported_outputs.value(E_FIELD_ETA_OPT_3, nrec > 2 ? mc_pt_heliostatfields.at(2)->ms_outputs.m_eta_field : 0.0);
+    mc_reported_outputs.value(E_FIELD_ETA_OPT_4, nrec > 3 ? mc_pt_heliostatfields.at(3)->ms_outputs.m_eta_field : 0.0);
 
     return;
 }

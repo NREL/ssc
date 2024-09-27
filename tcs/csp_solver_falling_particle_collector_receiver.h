@@ -162,15 +162,19 @@ public:
         E_Q_DOT_INC_1,		        //[MWt] Receiver 1 incident thermal power
         E_Q_DOT_INC_2,		        //[MWt] Receiver 2 incident thermal power
         E_Q_DOT_INC_3,		        //[MWt] Receiver 3 incident thermal power
+        E_Q_DOT_INC_4,		        //[MWt] Receiver 4 incident thermal power
         E_Q_DOT_THERMAL_1,		    //[MWt] Receiver 1 thermal power to HTF less piping loss
         E_Q_DOT_THERMAL_2,		    //[MWt] Receiver 2 thermal power to HTF less piping loss
         E_Q_DOT_THERMAL_3,		    //[MWt] Receiver 3 thermal power to HTF less piping loss
+        E_Q_DOT_THERMAL_4,		    //[MWt] Receiver 4 thermal power to HTF less piping loss
         E_ETA_THERMAL_1,		    //[MWt] Receiver 1 thermal efficiency
         E_ETA_THERMAL_2,		    //[MWt] Receiver 2 thermal efficiency
         E_ETA_THERMAL_3,		    //[MWt] Receiver 3 thermal efficiency
+        E_ETA_THERMAL_4,		    //[MWt] Receiver 3 thermal efficiency
         E_FIELD_ETA_OPT_1,		    //[-] Optical efficiency of field 1
         E_FIELD_ETA_OPT_2,		    //[-] Optical efficiency of field 2
         E_FIELD_ETA_OPT_3,		    //[-] Optical efficiency of field 3
+        E_FIELD_ETA_OPT_4,		    //[-] Optical efficiency of field 4
 	};
 	
 	C_csp_reported_outputs mc_reported_outputs;
