@@ -813,7 +813,7 @@ public:
         size_t idx_life = 0;
         float percent = 0;
         int n_alb_errs = 0;
-        irrad irr(wdprov->start_year(), (int)wdprov->tz());
+        irrad irr;
         for (size_t y = 0; y < nyears; y++)
         {
             for (size_t idx = 0; idx < nrec; idx++)

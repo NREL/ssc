@@ -49,6 +49,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static const int __nday[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
+std::unordered_map<spa_table_key, std::vector<double>> spa_table;
+int current_day;
+
 /// Compute the Julian day of year
 static int julian(int yr, int month, int day) {
     int i = 1, jday = 0, k;
@@ -799,6 +802,19 @@ double sun_rise_and_set(double *m_rts, double *h_rts, double *delta_prime, doubl
                         (360.0 * cos(DTOR * (delta_prime[sun])) * cos(DTOR * (latitude)) * sin(DTOR * (h_prime[sun])));
 }
 
+void clear_spa_table() {
+    spa_table.clear();
+    current_day = 0;
+};
+
+// The algorithm reuses the outputs from the last 3 days or so, so the hash table is emptied every 3 days to reduce size
+void roll_spa_table_forward(int day) {
+    if (std::abs(current_day - day) > 3){
+        current_day = day;
+        spa_table.clear();
+    }
+};
+
 void
 calculate_spa(double jd, double lat, double lng, double alt, double pressure, double temp, double delta_t, double tilt,
               double azm_rotation, double ascension_and_declination[2], double needed_values[9]) {
@@ -807,6 +823,28 @@ calculate_spa(double jd, double lat, double lng, double alt, double pressure, do
     double jc = julian_century(jd); // for 2000 standard epoch
     double jde = julian_ephemeris_day(jd,
                                       delta_t); //Adjusted for difference between Earth rotation time and the Terrestrial Time (TT) (derived from observation, reported yearly in Astronomical Almanac)
+
+    bool use_table = true;
+    spa_table_key spa_key_inputs(jd, delta_t, pressure, temp, ascension_and_declination[0], ascension_and_declination[1]);
+    auto spa_pos = spa_table.end();
+    if (use_table)
+        spa_pos = spa_table.find(spa_key_inputs);
+
+    if (spa_pos != spa_table.end()){
+        needed_values[0] = spa_pos->second[0];
+        needed_values[1] = spa_pos->second[1];
+        needed_values[2] = spa_pos->second[2];
+        needed_values[3] = spa_pos->second[3];
+        needed_values[4] = spa_pos->second[4];
+        needed_values[5] = spa_pos->second[5];
+        needed_values[6] = spa_pos->second[6];
+        needed_values[7] = spa_pos->second[7];
+        needed_values[8] = spa_pos->second[8];
+        ascension_and_declination[0] = spa_pos->second[9];
+        ascension_and_declination[1] = spa_pos->second[10];
+        return;
+    }
+    
     double jce = julian_ephemeris_century(jde); //for 2000 standard epoch
     double jme = julian_ephemeris_millennium(jce); // jce/10 (for 2000 standard epoch)
     needed_values[0] = jme;
@@ -903,6 +941,11 @@ calculate_spa(double jd, double lat, double lng, double alt, double pressure, do
         azimuth = M_PI;
     }
 
+    std::vector<double> spa_outputs = {needed_values[0], needed_values[1], needed_values[2], needed_values[3], needed_values[4], needed_values[5], needed_values[6], needed_values[7], needed_values[8],
+        ascension_and_declination[0], ascension_and_declination[1]};
+
+    if (use_table)
+        spa_table[spa_key_inputs] = spa_outputs;
 
     //Calculate the incidence angle for a selected surface (3.16)
     //double aoi = surface_incidence_angle(zenith, azimuth_astro, azm_rotation, tilt); //incidence angle for a surface oriented in any direction (degrees)
@@ -1052,10 +1095,12 @@ solarpos_spa(int year, int month, int day, int hour, double minute, double secon
         delta_t = 66.7;
     }
     double jd = julian_day(year, month, day, hour, minute, second, dut1, tz); //julian day
-    double ascension_and_declination[2]; //preallocate storage for sun right ascension and declination (both degrees)
+    double ascension_and_declination[2] {0, 0}; //preallocate storage for sun right ascension and declination (both degrees)
     double needed_values_spa[9];
     double needed_values_eot[4]; //preallocate storage for output from calculate_spa
     double needed_values_eot_check[4];
+
+    roll_spa_table_forward(day);
     calculate_spa(jd, lat, lng, alt, pressure, temp, delta_t, tilt, azm_rotation, ascension_and_declination,
                   needed_values_spa); //calculate solar position algorithm values
     calculate_eot_and_sun_rise_transit_set(needed_values_spa[0], tz, ascension_and_declination[0], needed_values_spa[2],
@@ -1767,11 +1812,11 @@ void irrad::setup() {
     poaRearRowReflections = 0.;
     poaRearSelfShaded = 0.;
     useCustomRotAngles = 0.;
-
 }
 
 irrad::irrad() {
     setup();
+    clear_spa_table();
 }
 
 irrad::irrad(weather_record wf, weather_header hdr,
