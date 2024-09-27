@@ -302,7 +302,7 @@ double sssky_diffuse_table::compute(double surface_tilt) {
     if (gcr == 0)
         throw std::runtime_error("sssky_diffuse_table::compute error: gcr required in initialization");
     // sky diffuse reduction
-	size_t n_steps = 250;
+	const size_t n_steps = 250;
     double step = 1.0 / (double)n_steps;
     double skydiff = 0.0;
     double tand_stilt = tand(surface_tilt);
