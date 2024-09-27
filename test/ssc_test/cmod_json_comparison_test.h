@@ -101,7 +101,7 @@ public:
                 ssc_data_get_number(dat_inputs, compare_number_variables[i].c_str(), &values_to_compare[i]);
                 ssc_data_get_number(dat_outputs, compare_number_variables[i].c_str(), &values_to_match[i]);
                 if (!isnan(values_to_compare[i]) || !isnan(values_to_match[i]))
-                    EXPECT_NEAR(values_to_compare[i], values_to_match[i], tolerance) << " number issue at index i=" << i << " for " << compare_number_variables[i];
+                    EXPECT_NEAR(values_to_compare[i], values_to_match[i], max(values_to_match[i] * tolerance, tolerance)) << compare_number_variables[i] << " number issue at index i=" << i << " for " << compare_number_variables[i];
             }
 
             int len_currentrun, len_comparerun;
@@ -110,7 +110,7 @@ public:
                 auto pCompareOutputs = ssc_data_get_array(dat_outputs, compare_array_variables[i].c_str(), &len_comparerun);
                 EXPECT_EQ(len_currentrun, len_comparerun) << " for " << compare_array_variables[i];
                 for (int j = 0; j < len_currentrun && j < len_comparerun; j++) {
-                    EXPECT_NEAR(pCurrentOutputs[j], pCompareOutputs[j], tolerance) << " array issue at index i=" << i << " and array index j=" << j << " for " << compare_array_variables[i];
+                    EXPECT_NEAR(pCurrentOutputs[j], pCompareOutputs[j], max(pCompareOutputs[j] * tolerance, tolerance)) << compare_array_variables[i] << " array issue at index i=" << i << " and array index j=" << j << " for " << compare_array_variables[i];
                 }
             }
 

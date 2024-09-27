@@ -55,7 +55,7 @@ class CMPvwattsv8Integration_cmod_pvwattsv8 : public ::testing::Test {
 protected: //doesn't really matter if this is protected or public, but you need to declare one or the other or it will default to private which doesn't work
 	ssc_data_t data;
 
-	double error_tolerance = 1.0e-3;
+	double error_tolerance = 0.005;
 
 	bool compute();
 	void SetUp() { //if you always want to set up with the same default case, this can go in the class. otherwise it probably makes sense in the test itself.

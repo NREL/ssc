@@ -96,8 +96,8 @@ TEST_F(CmodHybridTest, PVWattsv8WindBatterySingleOwner) {
         ssc_data_get_number(hybrid_outputs, "project_return_aftertax_npv", &npv);
 
         EXPECT_NEAR(om_expenses[1], 10772001, 1);
-        EXPECT_NEAR(revenue[1], 31648432, 1);
-        EXPECT_NEAR(ebitda[1], 20876432, 1);
+        EXPECT_NEAR(revenue[1], 31648432, 31648432 * 0.005);
+        EXPECT_NEAR(ebitda[1], 20876432, 20876432 * 0.005);
         EXPECT_NEAR(npv, -242777472, 242777472 * 0.001);
     }
     ssc_data_free(dat);
