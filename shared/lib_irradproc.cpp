@@ -42,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <numeric>
 #include <assert.h>
 
+#include "lib_util.h"
 #include "lib_irradproc.h"
 #include "lib_pv_incidence_modifier.h"
 #include "lib_util.h"
@@ -50,7 +51,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static const int __nday[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 std::unordered_map<spa_table_key, std::vector<double>> spa_table;
-int current_day;
+int spa_table_day;
 
 /// Compute the Julian day of year
 static int julian(int yr, int month, int day) {
@@ -804,13 +805,13 @@ double sun_rise_and_set(double *m_rts, double *h_rts, double *delta_prime, doubl
 
 void clear_spa_table() {
     spa_table.clear();
-    current_day = 0;
+    spa_table_day = 0;
 };
 
 // The algorithm reuses the outputs from the last 3 days or so, so the hash table is emptied every 3 days to reduce size
 void roll_spa_table_forward(int day) {
-    if (std::abs(current_day - day) > 3){
-        current_day = day;
+    if (std::abs(spa_table_day - day) > 3){
+        spa_table_day = day;
         spa_table.clear();
     }
 };
@@ -1108,13 +1109,13 @@ solarpos_spa(int year, int month, int day, int hour, double minute, double secon
                                            tilt, delta_t, azm_rotation,
                                            needed_values_eot); //calculate Equation of Time and sunrise/sunset values
 
-    double n_days[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    double __n_days[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
     if (needed_values_eot[3] <
         needed_values_eot[2]) //sunset is legitimately the next day but we're not in endless days, so recalculate sunset from the previous day
     {
         double sunanglestemp[9];
-        if (day < n_days[month - 1]) //simply decrement day during month
+        if (day < __n_days[month - 1]) //simply decrement day during month
             calculate_eot_and_sun_rise_transit_set(needed_values_spa[0], tz, ascension_and_declination[0],
                                                    needed_values_spa[2], needed_values_spa[3], jd, year, month, day + 1,
                                                    lat, lng, alt, pressure, temp, tilt, delta_t, azm_rotation,
@@ -2148,13 +2149,13 @@ int irrad::calc() {
     */
     double t_cur = hour + minute / 60.0;
 
+    if (!getStoredSolarposOutputs()) {
+
     // calculate sunrise and sunset hours in local standard time for the current day
     solarpos_spa(year, month, day, 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunAnglesRadians);
 
     double t_sunrise = sunAnglesRadians[4];
     double t_sunset = sunAnglesRadians[5];
-    double n_days[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-
 
     if (t_sunset > 24.0 && t_sunset !=
                            100.0) //sunset is legitimately the next day but we're not in endless days, so recalculate sunset from the previous day
@@ -2236,7 +2237,8 @@ int irrad::calc() {
         timeStepSunPosition[1] = (int) minute;
         timeStepSunPosition[2] = 0;
     }
-
+        storeSolarposOutputs();
+    }
     //clearsky
     ineichen(clearskyIrradiance, RTOD * sunAnglesRadians[1], month, day, pressure * 100.0, 1.0, elevation, 0, true);
 

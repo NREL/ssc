@@ -814,6 +814,8 @@ public:
         float percent = 0;
         int n_alb_errs = 0;
         irrad irr;
+        if (nyears > 1)
+            irr.setup_solarpos_outputs_for_lifetime(nrec);
         for (size_t y = 0; y < nyears; y++)
         {
             for (size_t idx = 0; idx < nrec; idx++)

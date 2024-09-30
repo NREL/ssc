@@ -629,8 +629,12 @@ double sun_rise_and_set(double* m_rts, double* h_rts, double* delta_prime, doubl
 * \param[out] needed_values[8] azimuth topocentric azimuth angle (degrees)
 */
 
+
+void calculate_spa(double jd, double lat, double lng, double alt, double pressure, double temp,
+    double delta_t, double tilt, double azm_rotation, double ascension_and_declination[2], double needed_values[9]);
+
 /**
- * Table for storing the recently computed solarpos_spa outputs
+ * Table for storing the recently computed solarpos_spa intermediate outputs
  * The algorithm reuses the outputs from the last 3 days or so, so the hash table is emptied every 3 days to reduce size
  * Latitude, Longitude, Altitude, Tilt and Azimuth are not in the key because they remain constant throughout
  */
@@ -686,9 +690,6 @@ struct std::hash<spa_table_key>
 
 void clear_spa_table();
 void roll_spa_table_forward();
-
-void calculate_spa(double jd, double lat, double lng, double alt, double pressure, double temp,
-    double delta_t, double tilt, double azm_rotation, double ascension_and_declination[2], double needed_values[9]);
 
 /**
 *
@@ -1139,6 +1140,9 @@ public:
     /// Validation method to verify member data is within acceptable ranges
     int check();
 
+    /// Initialize solarpos_outputs_lifetime for lifetime simulations
+    void setup_solarpos_outputs_for_lifetime(size_t n_steps_per_year);
+
     /// Set the time for the irradiance processor
     void set_time(int year, int month, int day, int hour, double minute, double delt_hr);
 
@@ -1274,6 +1278,9 @@ public:
 
     /// Return the front surface irradiances, used by \link calc_rear_side()
     void getFrontSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> frontGroundGHI, std::vector<double>& frontIrradiance, double& frontAverageIrradiance, std::vector<double>& frontReflected);
+
+    /// Return the solarpos outputs for a given timestep
+    bool getStoredSolarposOutputs();
 
     enum RADMODE { DN_DF, DN_GH, GH_DF, POA_R, POA_P };
     enum SKYMODEL { ISOTROPIC, HDKR, PEREZ };
