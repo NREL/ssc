@@ -3845,9 +3845,9 @@ public:
 
 		assign("depr_fedbas_percent_total", var_data((ssc_number_t)  (100.0*(depr_fedbas_macrs_5_frac+depr_fedbas_macrs_15_frac+depr_fedbas_sl_5_frac+depr_fedbas_sl_15_frac+depr_fedbas_sl_20_frac+depr_fedbas_sl_39_frac+depr_fedbas_custom_frac))));
 		assign( "depr_alloc_total", var_data((ssc_number_t) depr_alloc_total ) );
-		assign( "depr_fedbas_ibi_reduc_total", var_data((ssc_number_t) depr_sta_reduction_ibi ) );
-		assign( "depr_fedbas_cbi_reduc_total", var_data((ssc_number_t) depr_sta_reduction_cbi ) );
- 		assign( "depr_fedbas_prior_itc_total", var_data((ssc_number_t) ( depr_alloc_total - depr_sta_reduction_ibi - depr_sta_reduction_cbi)) );
+        assign("depr_fedbas_ibi_reduc_total", var_data((ssc_number_t) depr_fed_reduction_ibi));
+        assign( "depr_fedbas_cbi_reduc_total", var_data((ssc_number_t) depr_fed_reduction_cbi ) );  
+        assign( "depr_fedbas_prior_itc_total", var_data((ssc_number_t) ( depr_alloc_total - depr_fed_reduction_ibi - depr_fed_reduction_cbi)) );
  		assign( "itc_sta_qual_total", var_data((ssc_number_t) itc_sta_qual_total ) );
  		assign( "depr_fedbas_percent_qual_total", var_data((ssc_number_t) 100.0) );
  		assign( "depr_fedbas_percent_amount_total", var_data((ssc_number_t) itc_fed_per) );
