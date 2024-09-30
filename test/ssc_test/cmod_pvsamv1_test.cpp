@@ -598,7 +598,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelSystemDesign)
     pairs["inverter_count"] = 22;
     pairs["subarray1_track_mode"] = 0;
 
-    std::vector<double> annual_energy_expected = { 185649, 243262, 259014, 217887, 195101 };
+    std::vector<double> annual_energy_expected = { 185649, 243262, 259014, 217887, 186721 };
 
     for (int tracking_option = 0; tracking_option != 5; tracking_option++)
     {

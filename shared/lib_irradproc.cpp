@@ -1820,55 +1820,25 @@ irrad::irrad() {
     clear_spa_table();
 }
 
-irrad::irrad(weather_record wf, weather_header hdr,
+irrad::irrad(weather_header hdr,
              int skyModelIn, int radiationModeIn, int trackModeIn,
-             bool useWeatherFileAlbedo, bool instantaneousWeather, bool backtrackingEnabled, bool forceToStowIn,
-             double dtHour, double tiltDegreesIn, double azimuthDegreesIn, double trackerRotationLimitDegreesIn,
-             double stowAngleDegreesIn,
-             double groundCoverageRatioIn, double slopeTiltIn, double slopeAzmIn, std::vector<double> monthlyTiltDegrees,
-             std::vector<double> userSpecifiedAlbedo,
-             poaDecompReq *poaAllIn,
-             bool useSpatialAlbedos, const util::matrix_t<double>* userSpecifiedSpatialAlbedos, bool enableSubhourlyClipping, bool useCustomRotAngles, double customRotAngle) :
+             bool instantaneousWeather, bool backtrackingEnabled, bool forceToStowIn,
+             double dtHour, double tiltDegreesIn, double azimuthDegreesIn, double trackerRotationLimitDegreesIn, double stowAngleDegreesIn,
+             double groundCoverageRatioIn, double slopeTiltIn, double slopeAzmIn, poaDecompReq *poaAllIn, bool enableSubhourlyClipping) :
         skyModel(skyModelIn), radiationMode(radiationModeIn), trackingMode(trackModeIn),
         enableBacktrack(backtrackingEnabled), forceToStow(forceToStowIn),
         delt(dtHour), tiltDegrees(tiltDegreesIn), surfaceAzimuthDegrees(azimuthDegreesIn),
         rotationLimitDegrees(trackerRotationLimitDegreesIn),
         stowAngleDegrees(stowAngleDegreesIn), groundCoverageRatio(groundCoverageRatioIn), slopeTilt(slopeTiltIn), slopeAzm(slopeAzmIn), poaAll(poaAllIn) {
     setup();
-    int month_idx = wf.month - 1;
-    if (useWeatherFileAlbedo && std::isfinite(wf.alb) && wf.alb > 0 && wf.alb < 1) {
-        albedo = wf.alb;
-        albedoSpatial.assign(userSpecifiedSpatialAlbedos->ncols(), albedo);
-    }
-    else if (useSpatialAlbedos) {
-        albedoSpatial = userSpecifiedSpatialAlbedos->row(month_idx).to_vector();
-        albedo = std::accumulate(albedoSpatial.begin(), albedoSpatial.end(), 0.) / albedoSpatial.size();
-    }
-    else {
-        albedo = userSpecifiedAlbedo[month_idx];
-        albedoSpatial.assign(userSpecifiedSpatialAlbedos->ncols(), albedo);
-    }
 
-    set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute,
-             instantaneousWeather ? IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET : dtHour);
-    set_location(hdr.lat, hdr.lon, hdr.tz);
-    set_optional(hdr.elev, wf.pres, wf.tdry);
+    delt = instantaneousWeather ? IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET : dtHour;
+
     set_sky_model(skyModel, albedo, albedoSpatial);
 
     set_subhourly_clipping(enableSubhourlyClipping);
 
-    set_custom_rot_angles(useCustomRotAngles, customRotAngle);
-
-    if (radiationMode == irrad::DN_DF) set_beam_diffuse(wf.dn, wf.df);
-    else if (radiationMode == irrad::DN_GH) set_global_beam(wf.gh, wf.dn);
-    else if (radiationMode == irrad::GH_DF) set_global_diffuse(wf.gh, wf.df);
-    else if (radiationMode == irrad::POA_R) set_poa_reference(wf.poa, poaAllIn);
-    else if (radiationMode == irrad::POA_P) set_poa_pyranometer(wf.poa, poaAllIn);
-
-    if (trackingMode == TRACKING::SEASONAL_TILT) {
-        tiltDegrees = monthlyTiltDegrees[month_idx];
-        trackingMode = TRACKING::FIXED_TILT;
-    }
+    set_location(hdr.lat, hdr.lon, hdr.tz);
 }
 
 int irrad::check() {
@@ -1893,6 +1863,49 @@ int irrad::check() {
         (globalHorizontal < 0 || globalHorizontal > 1500 || diffuseHorizontal < 0 || diffuseHorizontal > 1500))
         return -11;
     return 0;
+}
+
+void irrad::setup_solarpos_outputs_for_lifetime(size_t ts_per_year) {
+    solarpos_outputs_for_lifetime.resize(ts_per_year);
+}
+
+bool irrad::getStoredSolarposOutputs() {
+    if (!solarpos_outputs_for_lifetime.size()) return false;
+
+    size_t timeIndex = util::yearIndex(0, this->month, this->day, this->hour, this->minute, solarpos_outputs_for_lifetime.size() / 8760);
+    
+    auto& outputs = solarpos_outputs_for_lifetime[timeIndex];
+    if (outputs.empty()) return false;
+
+    timeStepSunPosition[0] = (int)outputs[0];
+    timeStepSunPosition[1] = (int)outputs[1];
+    timeStepSunPosition[2] = (int)outputs[2];
+    sunAnglesRadians[0] = outputs[3];
+    sunAnglesRadians[1] = outputs[4];
+    sunAnglesRadians[2] = outputs[5];
+    sunAnglesRadians[3] = outputs[6];
+    sunAnglesRadians[4] = outputs[7];
+    sunAnglesRadians[5] = outputs[8];
+    sunAnglesRadians[6] = outputs[9];
+    sunAnglesRadians[7] = outputs[10];
+    sunAnglesRadians[8] = outputs[11];
+    return true;
+}
+
+void irrad::storeSolarposOutputs() {
+    if (!solarpos_outputs_for_lifetime.size()) return;
+
+    size_t timeIndex = util::yearIndex(0, this->month, this->day, this->hour, this->minute, solarpos_outputs_for_lifetime.size() / 8760);
+    auto& outputs = solarpos_outputs_for_lifetime[timeIndex];
+    if (!outputs.empty()) return;
+
+    outputs = {
+        (double)timeStepSunPosition[0], (double)timeStepSunPosition[1], (double)timeStepSunPosition[2],
+        sunAnglesRadians[0], sunAnglesRadians[1], sunAnglesRadians[2],
+        sunAnglesRadians[3], sunAnglesRadians[4], sunAnglesRadians[5],
+        sunAnglesRadians[6], sunAnglesRadians[7], sunAnglesRadians[8]
+    };
+    // solarpos_outputs_for_lifetime[timeIndex] = outputs;
 }
 
 double irrad::getAlbedo() {
@@ -2132,6 +2145,37 @@ void irrad::set_sun_component(size_t index, double value) {
     }
 }
 
+void irrad::set_from_weather_record(weather_record wf, weather_header hdr, std::vector<double>& monthlyTiltDegrees, bool useWeatherFileAlbedo,
+             std::vector<double>& userSpecifiedAlbedo, poaDecompReq *poaAllIn, bool useSpatialAlbedos, const util::matrix_t<double>* userSpecifiedSpatialAlbedos, 
+             bool useCustomRotAngles, double customRotAngle) {
+    set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, delt);
+    set_optional(hdr.elev, wf.pres, wf.tdry);
+    if (radiationMode == irrad::DN_DF) set_beam_diffuse(wf.dn, wf.df);
+    else if (radiationMode == irrad::DN_GH) set_global_beam(wf.gh, wf.dn);
+    else if (radiationMode == irrad::GH_DF) set_global_diffuse(wf.gh, wf.df);
+    else if (radiationMode == irrad::POA_R) set_poa_reference(wf.poa, poaAllIn);
+    else if (radiationMode == irrad::POA_P) set_poa_pyranometer(wf.poa, poaAllIn);
+
+    int month_idx = wf.month - 1;
+    if (useWeatherFileAlbedo && std::isfinite(wf.alb) && wf.alb > 0 && wf.alb < 1) {
+        albedo = wf.alb;
+        albedoSpatial.assign(userSpecifiedSpatialAlbedos->ncols(), albedo);
+    }
+    else if (useSpatialAlbedos) {
+        albedoSpatial = userSpecifiedSpatialAlbedos->row(month_idx).to_vector();
+        albedo = std::accumulate(albedoSpatial.begin(), albedoSpatial.end(), 0.) / albedoSpatial.size();
+    }
+    else {
+        albedo = userSpecifiedAlbedo[month_idx];
+        albedoSpatial.assign(userSpecifiedSpatialAlbedos->ncols(), albedo);
+    }
+    if (trackingMode == TRACKING::SEASONAL_TILT) {
+        tiltDegrees = monthlyTiltDegrees[month_idx];
+        trackingMode = TRACKING::FIXED_TILT;
+    }
+    set_custom_rot_angles(useCustomRotAngles, customRotAngle);
+}
+
 int irrad::calc() {
     int code = check();
     if (code < 0)
@@ -2151,92 +2195,92 @@ int irrad::calc() {
 
     if (!getStoredSolarposOutputs()) {
 
-    // calculate sunrise and sunset hours in local standard time for the current day
-    solarpos_spa(year, month, day, 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunAnglesRadians);
+        // calculate sunrise and sunset hours in local standard time for the current day
+        solarpos_spa(year, month, day, 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunAnglesRadians);
 
-    double t_sunrise = sunAnglesRadians[4];
-    double t_sunset = sunAnglesRadians[5];
+        double t_sunrise = sunAnglesRadians[4];
+        double t_sunset = sunAnglesRadians[5];
 
-    if (t_sunset > 24.0 && t_sunset !=
-                           100.0) //sunset is legitimately the next day but we're not in endless days, so recalculate sunset from the previous day
-    {
-        double sunanglestemp[9];
-        if (day > 1) //simply decrement day during month
-            solarpos_spa(year, month, day - 1, 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunanglestemp);
-        else if (month > 1) //on the 1st of the month, need to switch to the last day of previous month
-            solarpos_spa(year, month - 1, __nday[month - 2], 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunanglestemp);
-        else //on the first day of the year, need to switch to Dec 31 of last year
-            solarpos_spa(year - 1, 12, 31, 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunanglestemp);
-        //on the last day of endless days, sunset is returned as 100 (hour angle too large for calculation), so use today's sunset time as a proxy
-        if (sunanglestemp[5] == 100.0)
-            t_sunset -= 24.0;
-            //if sunset from yesterday WASN'T today, then it's ok to leave sunset > 24, which will cause the sun to rise today and not set today
-        else if (sunanglestemp[5] >= 24.0)
-            t_sunset = sunanglestemp[5] - 24.0;
-    }
+        if (t_sunset > 24.0 && t_sunset !=
+                            100.0) //sunset is legitimately the next day but we're not in endless days, so recalculate sunset from the previous day
+        {
+            double sunanglestemp[9];
+            if (day > 1) //simply decrement day during month
+                solarpos_spa(year, month, day - 1, 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunanglestemp);
+            else if (month > 1) //on the 1st of the month, need to switch to the last day of previous month
+                solarpos_spa(year, month - 1, __nday[month - 2], 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunanglestemp);
+            else //on the first day of the year, need to switch to Dec 31 of last year
+                solarpos_spa(year - 1, 12, 31, 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunanglestemp);
+            //on the last day of endless days, sunset is returned as 100 (hour angle too large for calculation), so use today's sunset time as a proxy
+            if (sunanglestemp[5] == 100.0)
+                t_sunset -= 24.0;
+                //if sunset from yesterday WASN'T today, then it's ok to leave sunset > 24, which will cause the sun to rise today and not set today
+            else if (sunanglestemp[5] >= 24.0)
+                t_sunset = sunanglestemp[5] - 24.0;
+        }
 
-    if (t_sunrise < 0.0 && t_sunrise !=
-                           -100.0) //sunrise is legitimately the previous day but we're not in endless days, so recalculate for next day
-    {
-        double sunanglestemp[9];
-        if (day < __nday[month - 1]) //simply increment the day during the month, month is 1-indexed and __nday is 0-indexed
-            solarpos_spa(year, month, day + 1, 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunanglestemp);
-        else if (month < 12) //on the last day of the month, need to switch to the first day of the next month
-            solarpos_spa(year, month + 1, 1, 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunanglestemp);
-        else //on the last day of the year, need to switch to Jan 1 of the next year
-            solarpos_spa(year + 1, 1, 1, 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunanglestemp);
-        //on the last day of endless days, sunrise would be returned as -100 (hour angle too large for calculations), so use today's sunrise time as a proxy
-        if (sunanglestemp[4] == -100.0)
-            t_sunrise += 24.0;
-            //if sunrise from tomorrow isn't today, then it's ok to leave sunrise < 0, which will cause the sun to set at the right time and not rise until tomorrow
-        else if (sunanglestemp[4] < 0.0)
-            t_sunrise = sunanglestemp[4] + 24.0;
-    }
+        if (t_sunrise < 0.0 && t_sunrise !=
+                            -100.0) //sunrise is legitimately the previous day but we're not in endless days, so recalculate for next day
+        {
+            double sunanglestemp[9];
+            if (day < __nday[month - 1]) //simply increment the day during the month, month is 1-indexed and __nday is 0-indexed
+                solarpos_spa(year, month, day + 1, 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunanglestemp);
+            else if (month < 12) //on the last day of the month, need to switch to the first day of the next month
+                solarpos_spa(year, month + 1, 1, 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunanglestemp);
+            else //on the last day of the year, need to switch to Jan 1 of the next year
+                solarpos_spa(year + 1, 1, 1, 12, 0.0, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunanglestemp);
+            //on the last day of endless days, sunrise would be returned as -100 (hour angle too large for calculations), so use today's sunrise time as a proxy
+            if (sunanglestemp[4] == -100.0)
+                t_sunrise += 24.0;
+                //if sunrise from tomorrow isn't today, then it's ok to leave sunrise < 0, which will cause the sun to set at the right time and not rise until tomorrow
+            else if (sunanglestemp[4] < 0.0)
+                t_sunrise = sunanglestemp[4] + 24.0;
+        }
 
-    // recall: if delt <= 0.0, do not interpolate sunrise and sunset hours, just use specified time stamp
-    // time step encompasses the sunrise
-    if (delt > 0 && t_cur >= t_sunrise - delt / 2.0 && t_cur < t_sunrise + delt / 2.0) {
-        double t_calc = (t_sunrise + (t_cur + delt / 2.0)) / 2.0; // midpoint of sunrise and end of timestep
-        int hr_calc = (int) t_calc;
-        double min_calc = (t_calc - hr_calc) * 60.0;
+        // recall: if delt <= 0.0, do not interpolate sunrise and sunset hours, just use specified time stamp
+        // time step encompasses the sunrise
+        if (delt > 0 && t_cur >= t_sunrise - delt / 2.0 && t_cur < t_sunrise + delt / 2.0) {
+            double t_calc = (t_sunrise + (t_cur + delt / 2.0)) / 2.0; // midpoint of sunrise and end of timestep
+            int hr_calc = (int) t_calc;
+            double min_calc = (t_calc - hr_calc) * 60.0;
 
-        timeStepSunPosition[0] = hr_calc;
-        timeStepSunPosition[1] = (int) min_calc;
+            timeStepSunPosition[0] = hr_calc;
+            timeStepSunPosition[1] = (int) min_calc;
 
-        solarpos_spa(year, month, day, hr_calc, min_calc, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunAnglesRadians);
+            solarpos_spa(year, month, day, hr_calc, min_calc, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunAnglesRadians);
 
-        timeStepSunPosition[2] = 2;
-    }
-        // timestep encompasses the sunset
-    else if (delt > 0 && t_cur > t_sunset - delt / 2.0 && t_cur <= t_sunset + delt / 2.0) {
-        double t_calc = ((t_cur - delt / 2.0) + t_sunset) / 2.0; // midpoint of beginning of timestep and sunset
-        int hr_calc = (int) t_calc;
-        double min_calc = (t_calc - hr_calc) * 60.0;
+            timeStepSunPosition[2] = 2;
+        }
+            // timestep encompasses the sunset
+        else if (delt > 0 && t_cur > t_sunset - delt / 2.0 && t_cur <= t_sunset + delt / 2.0) {
+            double t_calc = ((t_cur - delt / 2.0) + t_sunset) / 2.0; // midpoint of beginning of timestep and sunset
+            int hr_calc = (int) t_calc;
+            double min_calc = (t_calc - hr_calc) * 60.0;
 
-        timeStepSunPosition[0] = hr_calc;
-        timeStepSunPosition[1] = (int) min_calc;
+            timeStepSunPosition[0] = hr_calc;
+            timeStepSunPosition[1] = (int) min_calc;
 
-        solarpos_spa(year, month, day, hr_calc, min_calc, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunAnglesRadians);
+            solarpos_spa(year, month, day, hr_calc, min_calc, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunAnglesRadians);
 
-        timeStepSunPosition[2] = 3;
-    }
-        // timestep is not sunrise nor sunset, but sun is up  (calculate position at provided t_cur)
-    else if ((t_sunrise < t_sunset && t_cur >= t_sunrise && t_cur <= t_sunset) || //this captures normal daylight cases
-             (t_sunrise > t_sunset && (t_cur <= t_sunset || t_cur >=
-                                                            t_sunrise))) //this captures cases where sunset (from previous day) is 1:30AM, sunrise 2:30AM, in arctic circle
-    {
-        timeStepSunPosition[0] = hour;
-        timeStepSunPosition[1] = (int)minute;
-        solarpos_spa(year, month, day, hour, minute, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunAnglesRadians);
-        timeStepSunPosition[2] = 1;
-    }
-    else {
-        // sun is down, assign sundown values
-        solarpos_spa(year, month, day, hour, minute, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunAnglesRadians);
-        timeStepSunPosition[0] = hour;
-        timeStepSunPosition[1] = (int) minute;
-        timeStepSunPosition[2] = 0;
-    }
+            timeStepSunPosition[2] = 3;
+        }
+            // timestep is not sunrise nor sunset, but sun is up  (calculate position at provided t_cur)
+        else if ((t_sunrise < t_sunset && t_cur >= t_sunrise && t_cur <= t_sunset) || //this captures normal daylight cases
+                (t_sunrise > t_sunset && (t_cur <= t_sunset || t_cur >=
+                                                                t_sunrise))) //this captures cases where sunset (from previous day) is 1:30AM, sunrise 2:30AM, in arctic circle
+        {
+            timeStepSunPosition[0] = hour;
+            timeStepSunPosition[1] = (int)minute;
+            solarpos_spa(year, month, day, hour, minute, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunAnglesRadians);
+            timeStepSunPosition[2] = 1;
+        }
+        else {
+            // sun is down, assign sundown values
+            solarpos_spa(year, month, day, hour, minute, 0.0, latitudeDegrees, longitudeDegrees, timezone, dut1, elevation, pressure, tamb, tiltDegrees, surfaceAzimuthDegrees, sunAnglesRadians);
+            timeStepSunPosition[0] = hour;
+            timeStepSunPosition[1] = (int) minute;
+            timeStepSunPosition[2] = 0;
+        }
         storeSolarposOutputs();
     }
     //clearsky

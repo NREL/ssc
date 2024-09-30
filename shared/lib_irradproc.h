@@ -1108,6 +1108,8 @@ protected:
     std::vector<double> planeOfArrayIrradianceRearSpatialCS;  ///< Spatial rear side clearsky plane-of-array irradiance (W/m2), where index 0 is at row bottom
     std::vector<double> groundIrradianceSpatial;            ///< Spatial irradiance incident on the ground in between rows, where index 0 is towards front of array
 
+    std::vector<std::vector<double>> solarpos_outputs_for_lifetime;     ///< Table of solarpos outputs stored for lifetime simulations
+    void storeSolarposOutputs();
 public:
 
     /// Directive to indicate that if delt_hr is less than zero, do not interpolate sunrise and sunset hours
@@ -1123,13 +1125,11 @@ public:
     static const int groundIrradOutputRes = 10;
 
     /// Default class constructor, calls setup()
-    irrad(weather_record wr, weather_header wh,
+    irrad(weather_header wh,
         int skyModel, int radiationModeIn, int trackModeIn,
-        bool useWeatherFileAlbedo, bool instantaneousWeather, bool backtrackingEnabled, bool forceToStowIn,
+        bool instantaneousWeather, bool backtrackingEnabled, bool forceToStowIn,
         double dtHour, double tiltDegrees, double azimuthDegrees, double trackerRotationLimitDegrees, double stowAngleDegreesIn,
-        double groundCoverageRatio, double slopeTilt, double slopeAzm, std::vector<double> monthlyTiltDegrees, std::vector<double> userSpecifiedAlbedo,
-        poaDecompReq* poaAllIn,
-        bool useSpatialAlbedos = false, const util::matrix_t<double>* userSpecifiedSpatialAlbedos = nullptr, bool enableSubhourlyClipping = false, bool useCustomRotAngles = false, double customRotAngle = 0);
+        double groundCoverageRatio, double slopeTilt, double slopeAzm, poaDecompReq *poaAllIn, bool enableSubhourlyClipping = false);
 
     /// Construct the irrad class with an Irradiance_IO() object and Subarray_IO() object
     irrad();
@@ -1180,6 +1180,11 @@ public:
 
     /// Function to overwrite internally calculated sun position values, primarily to enable testing against other libraries using different sun position calculations
     void set_sun_component(size_t index, double value);
+
+    /// Function to set time, albedo, tracking and optional inputs from weather record
+    void set_from_weather_record(weather_record wf, weather_header hdr, std::vector<double>& monthlyTiltDegrees, bool useWeatherFileAlbedo,
+            std::vector<double>& userSpecifiedAlbedo, poaDecompReq *poaAllIn, bool useSpatialAlbedos, const util::matrix_t<double>* userSpecifiedSpatialAlbedos, 
+            bool useCustomRotAngles = false, double customRotAngle = 0);
 
     /// Run the irradiance processor and calculate the plane-of-array irradiance and diffuse components of irradiance
     int calc();

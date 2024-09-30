@@ -1441,6 +1441,20 @@ void cm_pvsamv1::exec()
         dcStringVoltage.push_back(tmp);
     }
 
+    std::vector<std::shared_ptr<irrad>> irrads;
+    for (size_t nn = 0; nn < num_subarrays; nn++) {
+        auto irr = std::shared_ptr<irrad>(new irrad(Irradiance->weatherHeader, Irradiance->skyModel, Irradiance->radiationMode, Subarrays[nn]->trackMode,
+            Irradiance->instantaneous, Subarrays[nn]->backtrackingEnabled, false,
+            Irradiance->dtHour, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, 0.0, 
+            Subarrays[nn]->groundCoverageRatio, Subarrays[nn]->slopeTilt, Subarrays[nn]->slopeAzm,
+            Subarrays[nn]->poa.poaAll.get(), (as_boolean("enable_subhourly_clipping") || as_boolean("enable_subinterval_distribution"))));
+        
+        if (nyears > 1)
+            irr->setup_solarpos_outputs_for_lifetime(nrec);
+
+        irrads.push_back(irr);
+    }
+
     //idx is the LIFETIME index in the (possibly subhourly) year of weather data, or the normal index in a non-annual array (lifetime is 1)
     size_t idx = 0;
     //for normal annual simulations, this works as expected. for non-annual weather data inputs, nyears is 1,
@@ -1531,15 +1545,14 @@ void cm_pvsamv1::exec()
                     continue; // skip disabled subarrays
 
                 double custom_rot = (Subarrays[nn]->useCustomRotAngles) ? Subarrays[nn]->customRotAngles[inrec] : 0.0;
-                irrad irr(Irradiance->weatherRecord, Irradiance->weatherHeader,
-                    Irradiance->skyModel, Irradiance->radiationMode, Subarrays[nn]->trackMode,
-                    Irradiance->useWeatherFileAlbedo, Irradiance->instantaneous, Subarrays[nn]->backtrackingEnabled, false,
-                    Irradiance->dtHour, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, 0.0, Subarrays[nn]->groundCoverageRatio, Subarrays[nn]->slopeTilt, Subarrays[nn]->slopeAzm,
-                    Subarrays[nn]->monthlyTiltDegrees, Irradiance->userSpecifiedMonthlyAlbedo,
-                    Subarrays[nn]->poa.poaAll.get(),
-                    Irradiance->useSpatialAlbedos, &Irradiance->userSpecifiedMonthlySpatialAlbedos, (as_boolean("enable_subhourly_clipping") || as_boolean("enable_subinterval_distribution")), Subarrays[nn]->useCustomRotAngles, custom_rot);
 
-                int code = irr.calc();
+                std::shared_ptr<irrad> irr = irrads[nn];
+                irr->set_from_weather_record(Irradiance->weatherRecord, Irradiance->weatherHeader, Subarrays[nn]->monthlyTiltDegrees, 
+                    Irradiance->useWeatherFileAlbedo, Irradiance->userSpecifiedMonthlyAlbedo,
+                    Subarrays[nn]->poa.poaAll.get(), Irradiance->useSpatialAlbedos, &Irradiance->userSpecifiedMonthlySpatialAlbedos, 
+                    Subarrays[nn]->useCustomRotAngles, custom_rot);
+
+                int code = irr->calc();
 
                 if (code < 0) //jmf updated 11/30/18 so that negative numbers are errors, positive numbers are warnings, 0 is everything correct. implemented in patch for POA model only, will be added to develop for other irrad models as well
                     throw exec_error("pvsamv1",
@@ -1562,7 +1575,7 @@ void cm_pvsamv1::exec()
                     if (radmode == irrad::POA_R || radmode == irrad::POA_P) {
                         double gh_temp, df_temp, dn_temp;
                         gh_temp = df_temp = dn_temp = 0;
-                        irr.get_irrad(&gh_temp, &dn_temp, &df_temp);
+                        irr->get_irrad(&gh_temp, &dn_temp, &df_temp);
                         Irradiance->p_IrradianceCalculated[1][idx] = (ssc_number_t)df_temp;
                         Irradiance->p_IrradianceCalculated[2][idx] = (ssc_number_t)dn_temp;
                     }
@@ -1573,7 +1586,7 @@ void cm_pvsamv1::exec()
                 double ghi_cs, dni_cs, dhi_cs;
                 double aoi, stilt, sazi, rot, btd;
 
-                irr.get_clearsky_irrad(&ghi_cs, &dni_cs, &dhi_cs);
+                irr->get_clearsky_irrad(&ghi_cs, &dni_cs, &dhi_cs);
 
                 // Ensure that the usePOAFromWF flag is false unless a reference cell has been used.
                 //  This will later get forced to false if any shading has been applied (in any scenario)
@@ -1601,18 +1614,18 @@ void cm_pvsamv1::exec()
 
 
                 // Get Incident angles and irradiances
-                irr.get_sun(&solazi, &solzen, &solalt, 0, 0, 0, &sunup, 0, 0, 0);
-                irr.get_angles(&aoi, &stilt, &sazi, &rot, &btd);
-                irr.get_poa(&ibeam, &iskydiff, &ignddiff, 0, 0, 0);
-                irr.get_poa_clearsky(&ibeam_csky, &iskydiff_csky, &ignddiff_csky, 0, 0, 0);
-                alb = irr.getAlbedo();
-                alb_spatial = irr.getAlbedoSpatial();
+                irr->get_sun(&solazi, &solzen, &solalt, 0, 0, 0, &sunup, 0, 0, 0);
+                irr->get_angles(&aoi, &stilt, &sazi, &rot, &btd);
+                irr->get_poa(&ibeam, &iskydiff, &ignddiff, 0, 0, 0);
+                irr->get_poa_clearsky(&ibeam_csky, &iskydiff_csky, &ignddiff_csky, 0, 0, 0);
+                alb = irr->getAlbedo();
+                alb_spatial = irr->getAlbedoSpatial();
 
 
                 
 
                 if (iyear == 0 || save_full_lifetime_variables == 1)
-                    Irradiance->p_sunPositionTime[idx] = (ssc_number_t)irr.get_sunpos_calc_hour();
+                    Irradiance->p_sunPositionTime[idx] = (ssc_number_t)irr->get_sunpos_calc_hour();
 
                 // save weather file beam, diffuse, and global for output and for use later in pvsamv1- year 1 only
                 /*jmf 2016: these calculations are currently redundant with calculations in irrad.calc() because ibeam and idiff in that function are DNI and DHI, **NOT** in the plane of array
@@ -1922,9 +1935,9 @@ void cm_pvsamv1::exec()
                 // Calculate rear-side irradiance
                 double module_length = Subarrays[nn]->selfShadingInputs.mod_orient == 1 ? Subarrays[nn]->selfShadingInputs.width : Subarrays[nn]->selfShadingInputs.length;
                 double slopeLength = module_length * Subarrays[nn]->selfShadingInputs.nmody;
-                irr.calc_rear_side(Subarrays[nn]->Module->bifacialTransmissionFactor, Subarrays[nn]->Module->groundClearanceHeight, slopeLength);
-                ipoa_rear[nn] = irr.get_poa_rear();
-                ipoa_rear_cs[nn] = irr.get_poa_rear_clearsky();
+                irr->calc_rear_side(Subarrays[nn]->Module->bifacialTransmissionFactor, Subarrays[nn]->Module->groundClearanceHeight, slopeLength);
+                ipoa_rear[nn] = irr->get_poa_rear();
+                ipoa_rear_cs[nn] = irr->get_poa_rear_clearsky();
                 double rack_shading_loss_factor = 0.;
                 if (Subarrays[nn]->calculateRackShading) {
                     //rack_shading_loss_factor = calculated_rack_shading_loss;        // TODO: implement
@@ -1937,23 +1950,23 @@ void cm_pvsamv1::exec()
                 ipoa_rear_after_losses[nn] = ipoa_rear[nn] * rear_irradiance_loss_factor;
                 ipoa_rear_after_losses_cs[nn] = ipoa_rear_cs[nn] * rear_irradiance_loss_factor;
 
-                ipoa_rear_spatial[nn] = irr.get_poa_rear_spatial();
+                ipoa_rear_spatial[nn] = irr->get_poa_rear_spatial();
                 ipoa_rear_spatial_after_losses[nn].clear();
                 for (size_t i = 0; i < ipoa_rear_spatial[nn].size(); i++) {
                     ipoa_rear_spatial_after_losses[nn].push_back(ipoa_rear_spatial[nn].at(i) * rear_irradiance_loss_factor);
                 }
-                ignd_rear[nn] = irr.get_ground_spatial();
+                ignd_rear[nn] = irr->get_ground_spatial();
 
                 double area_subarray = ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
                 ts_accum_poa_front_beam_eff += ibeam * area_subarray;
                 ts_accum_poa_rear += ipoa_rear[nn] * area_subarray;
                 ts_accum_poa_rear_after_losses = ts_accum_poa_rear * rear_irradiance_loss_factor;                               // rear with all losses, minus electrical mismatch
-                ts_accum_ground_incident += irr.get_ground_incident() * area_subarray / Subarrays[nn]->groundCoverageRatio;     // irradiance incident on ground
-                ts_accum_ground_absorbed += irr.get_ground_absorbed() * area_subarray / Subarrays[nn]->groundCoverageRatio;     // irradiance absorbed by ground
-                ts_accum_poa_rear_ground_reflected += irr.get_ground_reflected() * area_subarray;                               // irradiance reflected from ground to rear
-                ts_accum_poa_rear_row_reflections += irr.get_rear_row_reflections() * area_subarray;                            // irradiance reflected from rear row to rear
-                ts_accum_poa_rear_direct_diffuse += irr.get_rear_direct_diffuse() * area_subarray;                              // irradiance from sky beam and diffuse to rear
-                ts_accum_poa_rear_self_shaded += irr.get_rear_self_shaded() * area_subarray;                                    // irradiance blocked by self shading
+                ts_accum_ground_incident += irr->get_ground_incident() * area_subarray / Subarrays[nn]->groundCoverageRatio;     // irradiance incident on ground
+                ts_accum_ground_absorbed += irr->get_ground_absorbed() * area_subarray / Subarrays[nn]->groundCoverageRatio;     // irradiance absorbed by ground
+                ts_accum_poa_rear_ground_reflected += irr->get_ground_reflected() * area_subarray;                               // irradiance reflected from ground to rear
+                ts_accum_poa_rear_row_reflections += irr->get_rear_row_reflections() * area_subarray;                            // irradiance reflected from rear row to rear
+                ts_accum_poa_rear_direct_diffuse += irr->get_rear_direct_diffuse() * area_subarray;                              // irradiance from sky beam and diffuse to rear
+                ts_accum_poa_rear_self_shaded += irr->get_rear_self_shaded() * area_subarray;                                    // irradiance blocked by self shading
                 ts_accum_poa_rack_shaded += ipoa_rear[nn] * area_subarray * rack_shading_loss_factor;                           // irradiance blocked by racks
                 ts_accum_poa_rear_soiled += ipoa_rear[nn] * area_subarray * (1 - rack_shading_loss_factor) * Subarrays[nn]->rearSoilingLossPercent;      // irradiance blocked by soiling
 
