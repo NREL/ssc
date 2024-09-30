@@ -51,7 +51,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 SSCEXPORT int ssc_version()
 {
-	return 290;
+	return 292;
 }
 
 SSCEXPORT const char *ssc_build_info()
@@ -109,8 +109,6 @@ extern module_entry_info
 	cm_entry_tcstrough_physical,
 	cm_entry_trough_physical,
     cm_entry_trough_physical_iph,
-	cm_entry_trough_physical_csp_solver,
-	cm_entry_trough_physical_process_heat,
 	cm_entry_iph_to_lcoefcr,
 	cm_entry_tcsgeneric_solar,
 	cm_entry_tcsmolten_salt,
@@ -211,8 +209,6 @@ static module_entry_info *module_table[] = {
 	&cm_entry_tcstrough_physical,
     &cm_entry_trough_physical,
     &cm_entry_trough_physical_iph,
-	&cm_entry_trough_physical_csp_solver,
-	&cm_entry_trough_physical_process_heat,
 	&cm_entry_iph_to_lcoefcr,
 	&cm_entry_tcsgeneric_solar,
 	&cm_entry_tcsmolten_salt,

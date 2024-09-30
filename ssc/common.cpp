@@ -588,8 +588,8 @@ var_info vtab_grid_curtailment[] = {
 
 var_info vtab_technology_outputs[] = {
 	// instantaneous power at each timestep - consistent with sun position
-{ SSC_OUTPUT, SSC_ARRAY , "gen"                                  , "System power generated"                                         , "kW"                                     , ""                                      , "Time Series"          , "*"              , ""                      , ""},
-{ SSC_OUTPUT, SSC_MATRIX,			"annual_energy_distribution_time",			"Annual energy production as function of time",				"kW",				"",				"Heatmaps",			"",						"",							"" },
+{ SSC_OUTPUT, SSC_ARRAY , "gen",                                   "System power generated",                        "kW",         "", "Time Series",      "*",     "",    ""},
+{ SSC_OUTPUT, SSC_MATRIX, "annual_energy_distribution_time",	   "Annual energy production as function of time",	"kW",		  "", "Heatmaps",		  "",	   "",	  ""},
 
     var_info_invalid };
 
@@ -1010,7 +1010,8 @@ var_info vtab_utility_rate_common[] = {
     { SSC_INPUT,        SSC_NUMBER,     "ur_nm_credit_month",       "Month of year end payout (true-up)",    "mn",       "",                     "Electricity Rates",        "?=11",             "INTEGER,MIN=0,MAX=11",         "" },
     { SSC_INPUT,        SSC_NUMBER,     "ur_nm_credit_rollover",    "Apply net metering true-up credits to future bills", "0/1", "0=disable,1=enable",           "Electricity Rates",        "?=0",              "INTEGER,MIN=0,MAX=1",          "" },
     { SSC_INPUT,        SSC_NUMBER,     "ur_monthly_fixed_charge",  "Monthly fixed charge",                 "$",        "",                     "Electricity Rates",        "?=0.0",            "",                             "" },
-
+    { SSC_INPUT,        SSC_NUMBER,     "ur_nb_credit_expire",       "Credit is lost upon end of year        ", "0/1",  "0=disable,1=enable",     "Electricity Rates",        "?=0",              "INTEGER,MIN=0,MAX=1",          "" },
+    { SSC_INPUT,        SSC_NUMBER,     "ur_nb_apply_credit_current_month", "Apply earned credits to balance before rolling over excess        ", "0/1",  "0=disable,1=enable",     "Electricity Rates",        "?=0",              "INTEGER,MIN=0,MAX=1",          "" },
 
     // optional input that allows sell rates to be overridden with buy rates - defaults to not override
     { SSC_INPUT,        SSC_NUMBER,     "ur_sell_eq_buy",           "Set sell rate equal to buy rate",      "0/1",      "Optional override",    "Electricity Rates",        "?=0",              "BOOLEAN",                      "" },

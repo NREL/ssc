@@ -50,35 +50,40 @@ public:
 	
 	enum
 	{
-		E_FIELD_Q_DOT_INC,		//[MWt] Field incident thermal power
-		E_FIELD_ETA_OPT,		//[-] Optical efficiency including receiver refl
-		E_FIELD_ADJUST,			//[-] Field adjustment factor
+		E_FIELD_Q_DOT_INC,		    //[MWt] Field incident thermal power
+		E_FIELD_ETA_OPT,		    //[-] Optical efficiency including receiver refl
+		E_FIELD_ADJUST,			    //[-] Field adjustment factor
+        E_IS_FIELD_TRACKING_FINAL,  //[-] Is field tracking at end of timestep
 		
-        E_REC_DEFOCUS,          //[-] Receiver component defocus (to satisfy max mass flow rates or flux limits)
-        E_Q_DOT_INC,			//[MWt] Receiver incident thermal power
-		E_ETA_THERMAL,			//[-] Receiver thermal efficiency
-		E_Q_DOT_THERMAL,		//[MWt] Receiver thermal power to HTF less piping loss
-		E_M_DOT_HTF,			//[kg/hr] Receiver mass flow rate
-		E_Q_DOT_STARTUP,		//[MWt] Receiver startup thermal power consumed
-		E_T_HTF_IN,				//[C] Receiver HTF inlet temperature
-		E_T_HTF_OUT,			//[C] Receiver HTF outlet temperature
-		E_Q_DOT_PIPE_LOSS,		//[MWt] Tower piping losses
-        E_Q_DOT_LOSS,           //[MWt] Receiver convection and radiation losses
-        E_Q_DOT_REFL_LOSS,      //[MWt] Receiver reflection losses (0 for external)
-        E_W_DOT_TRACKING,       //[MWe] Heliostat tracking power
-        E_W_DOT_PUMP,           //[MWe] Pumping power
+        E_REC_DEFOCUS,              //[-] Receiver component defocus (to satisfy max mass flow rates or flux limits)
+        E_Q_DOT_INC,			    //[MWt] Receiver incident thermal power
+		E_ETA_THERMAL,			    //[-] Receiver thermal efficiency
+		E_Q_DOT_THERMAL,		    //[MWt] Receiver thermal power to HTF less piping loss
+		E_M_DOT_HTF,			    //[kg/hr] Receiver mass flow rate
+		E_Q_DOT_STARTUP,		    //[MWt] Receiver startup thermal power consumed
+		E_T_HTF_IN,				    //[C] Receiver HTF inlet temperature
+		E_T_HTF_OUT,			    //[C] Receiver HTF outlet temperature
+		E_Q_DOT_PIPE_LOSS,		    //[MWt] Tower piping losses
+        E_Q_DOT_LOSS,               //[MWt] Receiver convection and radiation losses
+        E_Q_DOT_REFL_LOSS,          //[MWt] Receiver reflection losses (0 for external)
+        E_W_DOT_TRACKING,           //[MWe] Heliostat tracking power
+        E_W_DOT_PUMP,               //[MWe] Pumping power
 
-        E_P_HEATTRACE,			//[MWe] Receiver heat trace parasitic
-		E_T_HTF_OUT_END,		//[C] Instantaneous receiver HTF outlet temperature at the end of the time step
-		E_T_HTF_OUT_MAX,		//[C] Receiver maximum HTF outlet temperature at any point during time step
-		E_T_HTF_PANEL_OUT_MAX,	//[C] Receiver panel maximum HTF outlet temperature at any point during time step
-		E_T_WALL_INLET,			//[C] Receiver inlet wall temperature at end of time step
-		E_T_WALL_OUTLET,		//[C] Receiver inlet wall temperature at end of time step
-		E_T_RISER,				//[C] Riser temperature at the end of the time step
-		E_T_DOWNC,				//[C] Downcomer temperature at the end of the time step
-		E_CLEARSKY,				//[W/m2] Clear-sky DNI 
-		E_Q_DOT_THERMAL_CSKY_SS, //[MWt] Thermal power from receiver under steady-state clear-sky conditions
-		E_Q_DOT_THERMAL_SS		//[MWt] Thermal power from receiver under steady-state conditions
+        E_P_HEATTRACE,			    //[MWe] Receiver heat trace parasitic
+		E_T_HTF_OUT_END,		    //[C] Instantaneous receiver HTF outlet temperature at the end of the time step
+		E_T_HTF_OUT_MAX,		    //[C] Receiver maximum HTF outlet temperature at any point during time step
+		E_T_HTF_PANEL_OUT_MAX,	    //[C] Receiver panel maximum HTF outlet temperature at any point during time step
+		E_T_WALL_INLET,			    //[C] Receiver inlet wall temperature at end of time step
+		E_T_WALL_OUTLET,		    //[C] Receiver inlet wall temperature at end of time step
+		E_T_RISER,				    //[C] Riser temperature at the end of the time step
+		E_T_DOWNC,				    //[C] Downcomer temperature at the end of the time step
+		E_CLEARSKY,				    //[W/m2] Clear-sky DNI 
+		E_Q_DOT_THERMAL_CSKY_SS,    //[MWt] Thermal power from receiver under steady-state clear-sky conditions
+		E_Q_DOT_THERMAL_SS,		    //[MWt] Thermal power from receiver under steady-state conditions
+
+        E_REC_OP_MODE_FINAL,        //[-] Final receiver operating mode (see E_csp_cr_modes)
+        E_REC_STARTUP_TIME_REMAIN_FINAL,    //[hr] Final receiver startup time remaining
+        E_REC_STARTUP_ENERGY_REMAIN_FINAL   //[W-hr] Final receiver startup energy remaining
 	};
 	
 	C_csp_reported_outputs mc_reported_outputs;
