@@ -187,7 +187,7 @@ static var_info _cm_vtab_saleleaseback[] = {
 	{ SSC_INPUT,        SSC_NUMBER,     "flip_target_year",		"Return target year",				"",		 "",					  "Sale Leaseback",             "?=11",					  "MIN=1",     			        "" },
 
 /* intermediate outputs */
-	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_financing",   "Financing cost",          "$",   "",					  "Sale Leaseback",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_financing",   "Total financing cost",          "$",   "",					  "Sale Leaseback",			 "*",                         "",                             "" },
 
 		//	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_prefinancingperwatt",   "Installed cost per watt",          "$/W",   "",					  "Sale Leaseback",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "cost_prefinancing",          "Total installed cost",                   "$",     "",					  "Sale Leaseback",			 "*",                         "",                             "" },
@@ -482,8 +482,8 @@ static var_info _cm_vtab_saleleaseback[] = {
 /*11*/	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_first_year_bonus_total",		"Total federal first year bonus depreciation",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "depr_fedbas_total",		"Total federal depreciation basis",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
 
-    { SSC_OUTPUT,       SSC_NUMBER,     "pre_depr_alloc_basis",		          "Total depreciation basis prior to allocation",	"$", "",	  "Depreciation",             "*",					  "",     			        "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "pre_itc_qual_basis",		              "Total ITC basis prior to qualification",	"$", "",	  "Tax Credits",             "*",					  "",     			        "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "pre_depr_alloc_basis",		          "Depreciable basis prior to allocation",	"$", "",	  "Depreciation",             "*",					  "",     			        "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "pre_itc_qual_basis",		              "ITC basis prior to qualification",	"$", "",	  "Tax Credits",             "*",					  "",     			        "" },
 
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "itc_fed_percent_total",		"federal ITC percent total",	"$", "",	  "Sale Leaseback",             "*",					  "",     			        "" },
@@ -2073,7 +2073,7 @@ public:
 		cost_installed = cost_prefinancing + cost_financing;
 
         // Installed costs and construction costs can be claimed in the basis, but reserves are not
-        // TODO: Realign with new understanding of allowable costs: https://github.com/NREL/SAM/issues/1803
+        // See https://github.com/NREL/SAM/issues/1803 and linked issues for more details
         sale_of_property = cost_prefinancing + sponsor_pretax_development_fee + cost_other_financing + cost_equity_closing + constr_total_financing;
         pre_depr_alloc_basis = sale_of_property;
         pre_itc_qual_basis = pre_depr_alloc_basis;
@@ -3596,9 +3596,9 @@ public:
 
 		assign("depr_fedbas_percent_total", var_data((ssc_number_t)  (100.0*(depr_fedbas_macrs_5_frac+depr_fedbas_macrs_15_frac+depr_fedbas_sl_5_frac+depr_fedbas_sl_15_frac+depr_fedbas_sl_20_frac+depr_fedbas_sl_39_frac+depr_fedbas_custom_frac))));
 		assign( "depr_alloc_total", var_data((ssc_number_t) depr_alloc_total ) );
-		assign( "depr_fedbas_ibi_reduc_total", var_data((ssc_number_t) depr_sta_reduction_ibi ) );
-		assign( "depr_fedbas_cbi_reduc_total", var_data((ssc_number_t) depr_sta_reduction_cbi ) );
- 		assign( "depr_fedbas_prior_itc_total", var_data((ssc_number_t) ( depr_alloc_total - depr_sta_reduction_ibi - depr_sta_reduction_cbi)) );
+		assign( "depr_fedbas_ibi_reduc_total", var_data((ssc_number_t) depr_fed_reduction_ibi ) );
+		assign( "depr_fedbas_cbi_reduc_total", var_data((ssc_number_t) depr_fed_reduction_cbi ) );
+ 		assign( "depr_fedbas_prior_itc_total", var_data((ssc_number_t) ( depr_alloc_total - depr_fed_reduction_ibi - depr_fed_reduction_cbi)) );
  		assign( "itc_sta_qual_total", var_data((ssc_number_t) itc_sta_qual_total ) );
  		assign( "depr_fedbas_percent_qual_total", var_data((ssc_number_t) 100.0) );
  		assign( "depr_fedbas_percent_amount_total", var_data((ssc_number_t) itc_fed_per) );
