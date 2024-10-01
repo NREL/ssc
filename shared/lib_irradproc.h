@@ -689,7 +689,6 @@ struct std::hash<spa_table_key>
 };
 
 void clear_spa_table();
-void roll_spa_table_forward();
 
 /**
 *
@@ -1182,8 +1181,8 @@ public:
     void set_sun_component(size_t index, double value);
 
     /// Function to set time, albedo, tracking and optional inputs from weather record
-    void set_from_weather_record(weather_record wf, weather_header hdr, std::vector<double>& monthlyTiltDegrees, bool useWeatherFileAlbedo,
-            std::vector<double>& userSpecifiedAlbedo, poaDecompReq *poaAllIn, bool useSpatialAlbedos, const util::matrix_t<double>* userSpecifiedSpatialAlbedos, 
+    void set_from_weather_record(weather_record wf, weather_header hdr, int trackModeIn, std::vector<double>& monthlyTiltDegrees, 
+            bool useWeatherFileAlbedo, std::vector<double>& userSpecifiedAlbedo, poaDecompReq *poaAllIn, bool useSpatialAlbedos, const util::matrix_t<double>* userSpecifiedSpatialAlbedos, 
             bool useCustomRotAngles = false, double customRotAngle = 0);
 
     /// Run the irradiance processor and calculate the plane-of-array irradiance and diffuse components of irradiance

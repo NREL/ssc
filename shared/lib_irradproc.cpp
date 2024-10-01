@@ -2145,9 +2145,9 @@ void irrad::set_sun_component(size_t index, double value) {
     }
 }
 
-void irrad::set_from_weather_record(weather_record wf, weather_header hdr, std::vector<double>& monthlyTiltDegrees, bool useWeatherFileAlbedo,
-             std::vector<double>& userSpecifiedAlbedo, poaDecompReq *poaAllIn, bool useSpatialAlbedos, const util::matrix_t<double>* userSpecifiedSpatialAlbedos, 
-             bool useCustomRotAngles, double customRotAngle) {
+void irrad::set_from_weather_record(weather_record wf, weather_header hdr, int trackModeIn, std::vector<double>& monthlyTiltDegrees, 
+        bool useWeatherFileAlbedo, std::vector<double>& userSpecifiedAlbedo, poaDecompReq *poaAllIn, bool useSpatialAlbedos, const util::matrix_t<double>* userSpecifiedSpatialAlbedos, 
+        bool useCustomRotAngles, double customRotAngle) {
     set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute, delt);
     set_optional(hdr.elev, wf.pres, wf.tdry);
     if (radiationMode == irrad::DN_DF) set_beam_diffuse(wf.dn, wf.df);
@@ -2169,7 +2169,7 @@ void irrad::set_from_weather_record(weather_record wf, weather_header hdr, std::
         albedo = userSpecifiedAlbedo[month_idx];
         albedoSpatial.assign(userSpecifiedSpatialAlbedos->ncols(), albedo);
     }
-    if (trackingMode == TRACKING::SEASONAL_TILT) {
+    if (trackModeIn == TRACKING::SEASONAL_TILT) {
         tiltDegrees = monthlyTiltDegrees[month_idx];
         trackingMode = TRACKING::FIXED_TILT;
     }

@@ -598,7 +598,7 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelSystemDesign)
     pairs["inverter_count"] = 22;
     pairs["subarray1_track_mode"] = 0;
 
-    std::vector<double> annual_energy_expected = { 185649, 243262, 259014, 217887, 186721 };
+    std::vector<double> annual_energy_expected = { 185649, 243262, 259014, 217887, 195101 };
 
     for (int tracking_option = 0; tracking_option != 5; tracking_option++)
     {
@@ -662,8 +662,8 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelSystemDesign)
                                 185649, 185649, 185641, 185649, 185649, 185649, 185649, 185649, 185649, 185649, 185649,
                                 185649, 185649, 185649, 185649, 179910, 185311, 165057, 179497, 185285, 163576, 181560,
                                 185415, 170979, 181560, 185415, 170979, 185649, 185649, 185649, 185649, 185649, 200730,
-                                207044, 194885, 186036, 185649, 203396, 208568, 195544, 186062, 185649, 197485, 200942,
-                                192248, 185930, 185649, 197486, 200942, 192248, 185930
+                                207044, 194885, 188416, 185649, 203396, 208568, 195544, 188613, 185649, 197485, 200942,
+                                192248, 187628, 185649, 197486, 200942, 192248, 187628
     };
 
     for (size_t i = 0; i != annual_energy_expected.size(); i++)

@@ -1547,7 +1547,7 @@ void cm_pvsamv1::exec()
                 double custom_rot = (Subarrays[nn]->useCustomRotAngles) ? Subarrays[nn]->customRotAngles[inrec] : 0.0;
 
                 std::shared_ptr<irrad> irr = irrads[nn];
-                irr->set_from_weather_record(Irradiance->weatherRecord, Irradiance->weatherHeader, Subarrays[nn]->monthlyTiltDegrees, 
+                irr->set_from_weather_record(Irradiance->weatherRecord, Irradiance->weatherHeader, Subarrays[nn]->trackMode, Subarrays[nn]->monthlyTiltDegrees, 
                     Irradiance->useWeatherFileAlbedo, Irradiance->userSpecifiedMonthlyAlbedo,
                     Subarrays[nn]->poa.poaAll.get(), Irradiance->useSpatialAlbedos, &Irradiance->userSpecifiedMonthlySpatialAlbedos, 
                     Subarrays[nn]->useCustomRotAngles, custom_rot);
