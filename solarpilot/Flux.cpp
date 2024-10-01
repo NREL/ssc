@@ -1636,7 +1636,7 @@ void Flux::hermiteIntegralSetup(double SigXY[2], Heliostat &H, matrix_t<double> 
 		//Set up for cavity model | 2362
         sp_point *hloc = H.getLocation();
 		double hloc_az = atan2(hloc->x, hloc->y);	//Azimuth angle of the heliostat location, receiver is abscissa
-		double rxn = Rv->rec_width.val/tht/2.;		//Normalized half-width of the aperture
+        double rxn = Receiver::getReceiverWidth(*Rv) / tht / 2.;    //Normalized half-width of the aperture
 		double ryn = Rv->rec_height.val/tht/2.;		//Normalized half-height of the aperture
 		sp_point* aim = H.getAimPointFluxPlane();	//In X and Y coordinates, Y being vertical
 		if (Rv->is_snout.val && Rv->rec_type.mapval() == var_receiver::REC_TYPE::FALLING_PARTICLE) {
