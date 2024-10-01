@@ -84,7 +84,7 @@ bool getem_om_cost_calc(ssc_data_t data)
 
     //OM Cost calculations
 
-    double cooling_water_cost = 300; //$/acre-ft //todo provide input
+    double cooling_water_cost = 1.7 * chemical_ppi[ppi_base_year]; //$/acre-ft //todo provide input
     double water_treatment_cost = (conversion_type == 0) ? 0 : cooling_water_flow_rate * cooling_water_cost;
     double non_labor_om_cost = 0.018 * baseline_cost * unit_plant * 1000.0 + water_treatment_cost;
 
