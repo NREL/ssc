@@ -129,8 +129,12 @@ C_falling_particle_receiver::C_falling_particle_receiver(double h_tower /*m*/,
     m_include_back_wall_convection = false;
     m_include_wall_axial_conduction = false;
     
+    m_use_eigen = false;         // Use Eigen for matrix inversion or solving systems of linear equations in the radiative exchange model
+    m_invert_matrices = true;    // Invert coefficient matrix for radiative exchange? If false a linear equation solver will be used instead (this is somewhat slower because the same coefficient matrix is used multiple times in any temperature solution iteration)
+    if (!m_use_eigen)
+        m_invert_matrices = true;
 
-    m_invert_matrices = true;  // Invert coefficient matrix for radiative exchange?  Used multiple times during temperature iterations - test case solution time was faster when the coefficient matrix was inverted up front
+
 
     // Calculated parameters
     m_curtain_height = std::numeric_limits<double>::quiet_NaN();
@@ -900,7 +904,13 @@ util::matrix_t<double> C_falling_particle_receiver::interpolate_flux_1d(util::ma
     dxflux = 1.0 / nflux;
     for (int i = 0; i < n; i++)
     {
-        if (n <= nflux)  // Curtain resolution < flux profile resolution
+        if (nflux == 1)
+        {
+            for (int j = 0; j < nc; j++)
+                flux_interp.at(i, j) = flux_input_loc.at(0, j);
+        }
+
+        else if (n <= nflux)  // Curtain resolution < flux profile resolution
         {
             i0 = fmin(floor(i * dx / dxflux), nflux - 1);           // Flux profile element containing lower bound of element j
             i1 = fmin(floor((i + 1) * dx / dxflux), nflux - 1);     // Flux profile element containing upper bound of element j
@@ -1017,13 +1027,11 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
     double Tp_out, T_particle_prop, T_cold_in_rec, cp, cp_cold, cp_hot, particle_density, err, hadv_with_wind, Twavg, Twmax, Twf;
     double qnetc_avg, qnetc_sol_avg, qnetw_avg, qnetw_sol_avg;
     double tauc_avg, rhoc_avg;
-    double K_sum, Kinv_sum;
 
     Q_refl = Q_rad = Q_adv = Q_cond = Q_thermal = Q_imbalance = 0.0;
     Twavg = Twmax = Twf = Tp_out = hadv_with_wind = 0.0;
     qnetc_avg = qnetc_sol_avg = qnetw_avg = qnetw_sol_avg = 0.0;
     tauc_avg = rhoc_avg = 0.0;
-    K_sum = Kinv_sum = 0.0;
 
     Q_inc = sum_over_rows_and_cols(soln.q_dot_inc, true) * m_curtain_elem_area;  // Total solar power incident on curtain [W]
     T_particle_prop = (m_T_htf_hot_des + T_cold_in) / 2.0; 
@@ -1167,11 +1175,7 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
 
         //--- Calculate coefficient matrix for radiative exchange
         // TODO: exclude this calculation if the mass flow rates haven't changed?
-        Eigen::MatrixXd K_solar;
-        Eigen::MatrixXd Kinv_solar;
-        Eigen::MatrixXd K_IR;
-        Eigen::MatrixXd Kinv_IR;
-
+        util::matrix_t<double> K_solar, Kinv_solar, K_IR, Kinv_IR;
 
         if (m_rad_model_type == 1)
         {
@@ -1186,18 +1190,6 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
                 calculate_coeff_matrix(soln.rhoc, soln.tauc, rhow_IR, K_IR, Kinv_IR);
             }
 
-
-            // TODO: Remove this after debugging
-            K_sum = Kinv_sum = 0.0;
-            int nelem = get_nelem();
-            for (int i = 0; i < nelem; i++)
-            {
-                for (int j = 0; j < nelem; j++)
-                {
-                    K_sum += K_solar(i, j);
-                    Kinv_sum += Kinv_solar(i, j);
-                }
-            }
         }
 
         //--- Initialize quantities needed in radiation models
@@ -1468,8 +1460,6 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
     soln.qnetw_sol_avg = qnetw_sol_avg;
     soln.qnetc_avg = qnetc_avg;
     soln.qnetw_avg = qnetw_avg;
-    soln.K_sum = K_sum;
-    soln.Kinv_sum = Kinv_sum;
 
 	return;
 
@@ -2176,7 +2166,7 @@ util::matrix_t<double> C_falling_particle_receiver::get_reflectivity_vector(util
 }
 
 // Coefficient matrix for radiative exchange including all discretized elements
-void C_falling_particle_receiver::calculate_coeff_matrix(util::matrix_t<double>& rhoc, util::matrix_t<double>& tauc, double rhow, Eigen::MatrixXd& K, Eigen::MatrixXd& Kinv)
+void C_falling_particle_receiver::calculate_coeff_matrix(util::matrix_t<double>& rhoc, util::matrix_t<double>& tauc, double rhow, util::matrix_t<double>& K, util::matrix_t<double>& Kinv)
 {
 
     // TODO: Generalize to include view factors between each curtain element and all back wall elements
@@ -2222,8 +2212,8 @@ void C_falling_particle_receiver::calculate_coeff_matrix(util::matrix_t<double>&
     {
         for (int i2 = 0; i2 < nelem; i2++)
         {
-            K(i1, i2) = (i2 == i1) ? 1.0 : 0.0;
-            K(i1, i2) -= rho.at(i1) * m_vf.at(i1, i2);
+            K.at(i1, i2) = (i2 == i1) ? 1.0 : 0.0;
+            K.at(i1, i2) -= rho.at(i1) * m_vf.at(i1, i2);
 
             // Add modifications accounting for transmissivity of curtain
             if (i1 >= 1 && i1 < 1 + (nx * ny))  // Element on front of curtain
@@ -2232,7 +2222,7 @@ void C_falling_particle_receiver::calculate_coeff_matrix(util::matrix_t<double>&
                 i0 = 1;
                 x = (i1 - i0) % nx;           // Width position on curtain
                 y = (i1 - i0 - x) / nx;       // Height position on curtain
-                K(i1, i2) -= tauc_per_group.at(y, x) * m_vf.at(iback, i2);
+                K.at(i1, i2) -= tauc_per_group.at(y, x) * m_vf.at(iback, i2);
             }
 
             else if (i1 >= 1 + (nx * ny) && i1 < 1 + 2*(nx * ny))  // Element on back of curtain
@@ -2241,14 +2231,35 @@ void C_falling_particle_receiver::calculate_coeff_matrix(util::matrix_t<double>&
                 i0 = 1 + (nx * ny);
                 x = (i1 - i0) % nx;       // Width position on curtain
                 y = (i1 - i0 - x) / nx;   // Height position on curtain
-                K(i1, i2) -= tauc_per_group.at(y, x) * m_vf.at(ifront, i2);
+                K.at(i1, i2) -= tauc_per_group.at(y, x) * m_vf.at(ifront, i2);
             }
         }
     }
 
     //--- Invert coefficient matrix
     if (m_invert_matrices)
-        Kinv = K.inverse();
+    {
+        Kinv = matrix_inverse(K);
+
+        if (m_use_eigen)
+        {
+            Eigen::MatrixXd K_eigen, Kinv_eigen;
+            K_eigen.resize(nelem, nelem);
+            for (int i1 = 0; i1 < nelem; i1++)
+            {
+                for (int i2 = 0; i2 < nelem; i2++)
+                    K_eigen(i1, i2) = K.at(i1, i2);
+            }
+            Kinv_eigen = K_eigen.inverse();
+
+            Kinv.resize(nelem, nelem);
+            for (int i1 = 0; i1 < nelem; i1++)
+            {
+                for (int i2 = 0; i2 < nelem; i2++)
+                    Kinv.at(i1, i2) = Kinv_eigen(i1, i2);
+            }
+        }
+    }
 
     return;
 }
@@ -2256,7 +2267,7 @@ void C_falling_particle_receiver::calculate_coeff_matrix(util::matrix_t<double>&
 
 // Solve radiative exchange equations and calculate net radiative energy incoming to each element
 void C_falling_particle_receiver::calculate_radiative_exchange(util::matrix_t<double>& Ecf, util::matrix_t<double>& Ecb, util::matrix_t<double>& Ebw, double Eap, double Efw,
-                                                               Eigen::MatrixXd& K, Eigen::MatrixXd& Kinv,
+                                                               util::matrix_t<double>& K, util::matrix_t<double>& Kinv,
                                                                util::matrix_t<double>& rhoc, util::matrix_t<double>& tauc, double rhow,
                                                                util::matrix_t<double>& qnetc, util::matrix_t<double>& qnetw, double& qnetwf, double& qnetap)
 {
@@ -2264,7 +2275,8 @@ void C_falling_particle_receiver::calculate_radiative_exchange(util::matrix_t<do
     int ny = m_n_y_rad;  
     int nx = m_n_x_rad;
     int nelem = get_nelem();
-    Eigen::VectorXd Ee, Je;
+
+    util::matrix_t<double> Ee, Je;
     Ee.resize(nelem);
     Je.resize(nelem);
 
@@ -2296,32 +2308,51 @@ void C_falling_particle_receiver::calculate_radiative_exchange(util::matrix_t<do
             }
 
             // Put values in flattened array
-            Ee(1 + j*nx + i) = Ecf_per_group;
-            Ee(1 + ny*nx + j*nx + i) = Ecb_per_group;
-            Ee(1 + 2*ny*nx + j*nx + i) = Ebw_per_group;
+            Ee.at(1 + j*nx + i) = Ecf_per_group;
+            Ee.at(1 + ny*nx + j*nx + i) = Ecb_per_group;
+            Ee.at(1 + 2*ny*nx + j*nx + i) = Ebw_per_group;
 
             i0 += m_nx_per_group.at(i);
         }
         j0 += m_ny_per_group.at(j);
     }
-    Ee(0) = Eap;
-    Ee(nelem - 1) = Efw;
+    Ee.at(0) = Eap;
+    Ee.at(nelem - 1) = Efw;
 
 
     //--- Solve for radiosity (total outgoing energy)
-    if (!m_invert_matrices)
-        Je = K.colPivHouseholderQr().solve(Ee);  // TODO: try different methods?
-    else
+    if (m_invert_matrices)
     {
         for (int i = 0; i < nelem; i++)
         {
-            Je(i) = 0.0;
+            Je.at(i) = 0.0;
             for (int j = 0; j < nelem; j++)
             {
-                Je(i) += Kinv(i, j) * Ee(j);
+                Je.at(i) += Kinv.at(i, j) * Ee.at(j);
             }
         }
     }
+
+    else if (m_use_eigen)
+    {
+        Eigen::MatrixXd K_eigen;
+        Eigen::VectorXd Ee_eigen, Je_eigen;
+        Ee_eigen.resize(nelem);
+        Je_eigen.resize(nelem);
+        K_eigen.resize(nelem, nelem);
+        for (int i = 0; i < nelem; i++)
+        {
+            Ee_eigen(i) = Ee.at(i);
+            for (int j = 0; j < nelem; j++)
+                K_eigen(i, j) = K.at(i, j);
+        }
+
+        Je_eigen = K_eigen.colPivHouseholderQr().solve(Ee_eigen);  // TODO: try different methods?
+        for (int i = 0; i < nelem; i++)
+            Je.at(i) = Je_eigen(i);
+    }
+
+
 
 
     //-- Solve for total incoming energy and net incoming energy
@@ -2333,8 +2364,8 @@ void C_falling_particle_receiver::calculate_radiative_exchange(util::matrix_t<do
     for (int i = 0; i < nelem; i++)
     {
         for (int j = 0; j < nelem; j++)
-            qin.at(i) += m_vf.at(i, j) * Je(j);
-        qnet.at(i) = (1.0 - rho.at(i)) * qin.at(i) - Ee(i);
+            qin.at(i) += m_vf.at(i, j) * Je.at(j);
+        qnet.at(i) = (1.0 - rho.at(i)) * qin.at(i) - Ee.at(i);
 
         // Modification to net incoming energy for curtain elements
         if (i > 0 && i < 1 + 2*nx*ny)
@@ -2367,17 +2398,17 @@ void C_falling_particle_receiver::calculate_radiative_exchange(util::matrix_t<do
             {
                 for (int j1 = 0; j1 < m_ny_per_group.at(j); j1++)       // Discretized y-elements contained in this radiation group
                 {
-                    qnetc.at(j0 + j1, i0 + i1) += qnet.at(kf) + Ee(kf) - Ecf.at(j0 + j1, i0 + i1);
-                    qnetc.at(j0 + j1, i0 + i1) += qnet.at(kb) + Ee(kb) - Ecb.at(j0 + j1, i0 + i1);
-                    qnetw.at(j0 + j1, i0 + i1) += qnet.at(kw) + Ee(kw) - Ebw.at(j0 + j1, i0 + i1);
+                    qnetc.at(j0 + j1, i0 + i1) += qnet.at(kf) + Ee.at(kf) - Ecf.at(j0 + j1, i0 + i1);
+                    qnetc.at(j0 + j1, i0 + i1) += qnet.at(kb) + Ee.at(kb) - Ecb.at(j0 + j1, i0 + i1);
+                    qnetw.at(j0 + j1, i0 + i1) += qnet.at(kw) + Ee.at(kw) - Ebw.at(j0 + j1, i0 + i1);
                 }
 
                 // Assume last vertical node is equal to previous node (this node is not used in the energy balance, this value is just to define something reasonable to complete wall temperature arrays)
                 if (j == ny - 1)
                 {
-                    qnetc.at(m_n_y - 1, i0 + i1) += qnet.at(kf) + Ee(kf) - Ecf.at(m_n_y - 1, i0 + i1);
-                    qnetc.at(m_n_y - 1, i0 + i1) += qnet.at(kb) + Ee(kb) - Ecb.at(m_n_y - 1, i0 + i1);
-                    qnetw.at(m_n_y - 1, i0 + i1) += qnet.at(kw) + Ee(kw) - Ebw.at(m_n_y - 1, i0 + i1);
+                    qnetc.at(m_n_y - 1, i0 + i1) += qnet.at(kf) + Ee.at(kf) - Ecf.at(m_n_y - 1, i0 + i1);
+                    qnetc.at(m_n_y - 1, i0 + i1) += qnet.at(kb) + Ee.at(kb) - Ecb.at(m_n_y - 1, i0 + i1);
+                    qnetw.at(m_n_y - 1, i0 + i1) += qnet.at(kw) + Ee.at(kw) - Ebw.at(m_n_y - 1, i0 + i1);
                 }
 
             }
@@ -2533,6 +2564,41 @@ util::matrix_t<double> C_falling_particle_receiver::matrix_addition(util::matrix
 }
 
 
+util::matrix_t<double> C_falling_particle_receiver::matrix_inverse(util::matrix_t<double>& m)
+{
+    // Gauss-Jordan method for matrix inversion
+    size_t n = m.nrows();
+    util::matrix_t<double> A = m;
+    util::matrix_t<double> B(n, n, 0.0);
+    for (int i = 0; i < n; i++)
+        B.at(i, i) = 1.0;
+
+    double v;
+    for (int i = 0; i < n; i++)
+    {
+        v = A.at(i, i);
+        if (v != 1.0)  // Multiply row i by (1/v) to make diagonal entry in column i equal to 1.0
+        {
+            for (int j = i; j < n; j++)
+                A.at(i, j) *= (1.0 / v);  //(A[i, j] is already zero for j < i)
+            for (int j = 0; j<=i; j++)
+                B.at(i, j) *= (1.0 / v);  //(B[i, j] is already zero for j > i)
+        }
+
+        for (int j = 0; j < n; j++)  // Use row i to eliminate entries in all other rows
+        {
+            v = A.at(j, i);
+            if (i != j && v!=0.0)
+            {
+                for (int k = i; k<n; k++)
+                    A.at(j, k) -= v * A.at(i, k);  //A[i, k] is zero for k < i
+                for (int k = 0; k<=i; k++)
+                    B.at(j, k) -= v * B.at(i, k); // B[i,k] is zero for k > i
+            }
+        }
+    }
+    return B;
+}
 
 
 double C_falling_particle_receiver::estimate_thermal_efficiency(const C_csp_weatherreader::S_outputs& weather, double q_inc)

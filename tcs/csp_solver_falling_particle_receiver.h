@@ -96,10 +96,6 @@ protected:
         double qnetc_avg;           // Average net incoming radiative energy (solar + IR) to the particle curtain (W/m2)
         double qnetw_avg;           // Average net incoming radiative energy (solar + IR) to the back wall (W/m2)
 
-        // TODO: Remove these after debugging...
-        double K_sum;
-        double Kinv_sum;
-
 
         //util::matrix_t<double> m_dot_per_zone;  // Particle mass flow per control zone (kg/s)
         util::matrix_t<double> T_p;			// Particle temperature (K) [ny,nx]
@@ -125,7 +121,6 @@ protected:
             m_dot_tot = T_particle_cold_in = T_particle_hot = T_particle_hot_rec = std::numeric_limits<double>::quiet_NaN();
             Q_inc = Q_refl = Q_rad = Q_adv = Q_transport = Q_thermal = eta = hadv = T_back_wall_avg = T_back_wall_max = T_front_wall = std::numeric_limits<double>::quiet_NaN();
             tauc_avg = rhoc_avg = qnetc_sol_avg = qnetw_sol_avg = qnetc_avg = qnetw_avg = std::numeric_limits<double>::quiet_NaN();
-            K_sum = Kinv_sum = std::numeric_limits<double>::quiet_NaN();
             require_operating_mode = false;
             required_mode = C_csp_collector_receiver::E_csp_cr_modes::OFF;
             rec_is_off = true;
@@ -200,7 +195,9 @@ protected:
     double m_eta_therm_des_est; //[-]
     bool m_include_back_wall_convection;    // Include convective heat transfer to back wall (assuming air velocity is the same as the local particle velocity)
     bool m_include_wall_axial_conduction;   // Include axial conduction in the back wall
+    bool m_use_eigen;
     bool m_invert_matrices;
+    
 
 
     //--- Calculated parameters
@@ -304,10 +301,10 @@ protected:
 
     util::matrix_t<double> get_reflectivity_vector(util::matrix_t<double>& rhoc_per_group, double rhow);
 
-    void calculate_coeff_matrix(util::matrix_t<double>& rhoc, util::matrix_t<double>& tauc, double rhow, Eigen::MatrixXd& K, Eigen::MatrixXd& Kinv);
+    void calculate_coeff_matrix(util::matrix_t<double>& rhoc, util::matrix_t<double>& tauc, double rhow, util::matrix_t<double>& K, util::matrix_t<double>& Kinv);
 
     void calculate_radiative_exchange(util::matrix_t<double>& Ecf, util::matrix_t<double>& Ecb, util::matrix_t<double>& Ebw, double Eap, double Efw,
-                                      Eigen::MatrixXd& K, Eigen::MatrixXd& Kinv,
+                                      util::matrix_t<double>& K, util::matrix_t<double>& Kinv,
                                       util::matrix_t<double>& rhoc, util::matrix_t<double>& tauc, double rhow,
                                       util::matrix_t<double>& qnetc, util::matrix_t<double>& qnetw, double& qnetwf, double& qnetap);
 
@@ -327,6 +324,8 @@ protected:
     double max_over_rows_and_cols(util::matrix_t<double>& mat, bool exclude_last_row);
 
     util::matrix_t<double> matrix_addition(util::matrix_t<double>& m1, util::matrix_t<double>& m2);
+
+    util::matrix_t<double> matrix_inverse(util::matrix_t<double>& m);
 
 
 public:
