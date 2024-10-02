@@ -174,6 +174,12 @@ endif()
 
 
 if (UNIX)
+    set(SCIP_ROOT "/Users/imacuser/Public/Projects/GitHub/NREL/or-tools/install_universal")
+    list(APPEND CMAKE_PREFIX_PATH "/Users/imacuser/Public/Projects/GitHub/NREL/or-tools/build_universal")
+    list(APPEND CMAKE_PREFIX_PATH "/Users/imacuser/Public/Projects/GitHub/NREL/or-tools/install_universal")
+    list(APPEND CMAKE_MODULE_PATH "/Users/imacuser/Public/Projects/GitHub/NREL/or-tools/cmake")
+    list(APPEND CMAKE_PREFIX_PATH "/Users/imacuser/Public/Projects/GitHub/NREL/or-tools/cmake")
+    list(APPEND CMAKE_PREFIX_PATH "/Users/imacuser/Public/Projects/GitHub/NREL/or-tools/install_universal/lib/cmake")
     find_package(ortools
                 CONFIG REQUIRED)
     target_link_libraries(shared ortools::ortools)
