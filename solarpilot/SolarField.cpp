@@ -828,7 +828,7 @@ bool SolarField::UpdateLayoutGroups(double lims[4]){
 	if (Rv->rec_type.mapval() == var_receiver::REC_TYPE::FALLING_PARTICLE) mesh_data.theta = 0.0;
 	//double width;
 	Receiver *rec = _receivers.front();
-	mesh_data.w_rec = Rv->rec_width.val; //sqrt(powf(_receivers.front()->getReceiverWidth(),2) + powf(_receivers.front()->getReceiverHeight(),2));
+    mesh_data.w_rec = Receiver::getReceiverWidth(*Rv); // Rv->rec_width.val; //sqrt(powf(_receivers.front()->getReceiverWidth(),2) + powf(_receivers.front()->getReceiverHeight(),2));
 	mesh_data.flat = rec->getGeometryType() != Receiver::REC_GEOM_TYPE::CYLINDRICAL_CLOSED
 					&& rec->getGeometryType() != Receiver::REC_GEOM_TYPE::CYLINDRICAL_OPEN;
 	mesh_data.f_tol = Sv->zone_div_tol.val;

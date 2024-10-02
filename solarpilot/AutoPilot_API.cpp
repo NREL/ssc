@@ -337,6 +337,11 @@ struct AutoOptHelper
 
         m_all_points.push_back( current );
 
+        // Update falling-particle receiver dependent variables
+        var_map* V = m_variables;
+        if (V->recs.front().rec_type.mapval() == var_receiver::REC_TYPE::FALLING_PARTICLE)
+            update_fp_rec_dep_vars(x);
+
         double obj, cost;
         std::vector<double> flux;
         
@@ -357,29 +362,8 @@ struct AutoOptHelper
         return obj;
     };
 
-    double Simulate_fp_rec(const double* x, int /*n*/, std::string* note = 0)
+    void update_fp_rec_dep_vars(const double* x)
     {
-        /*
-        Run a simulation for multi-receivers and update points as needed. Report outcome from each step.
-        */
-        if (m_autopilot->IsSimulationCancelled())
-        {
-            m_opt_obj->force_stop();
-            return 0.;
-        }
-
-        m_iter += 1;
-
-        vector<double> current;
-
-        //update the objective variables
-        for (int i = 0; i < (int)m_opt_vars.size(); i++)
-        {
-            current.push_back(x[i]);
-            *m_opt_vars.at(i) = current.at(i)/* * m_normalizers.at(i)*/;
-        }
-        m_all_points.push_back(current);
-
         // Update dependent variables based on current point
         var_map* V = m_variables;
         for (auto& rec : V->recs) {
@@ -397,27 +381,7 @@ struct AutoOptHelper
             else
                 V->recs.at(1).rec_azimuth.val = 180.0;   // "South"
         }
-
-
-        double obj, cost;
-        std::vector<double> flux;
-
-        //Evaluate the objective function value
-        if (!
-            m_autopilot->EvaluateDesign(obj, flux, cost)
-            ) {
-            string errmsg = "Optimization failed at iteration " + my_to_string(m_iter) + ". Terminating simulation.";
-            throw spexception(errmsg.c_str());
-        }
-        //Update variables as needed
-        m_autopilot->PostEvaluationUpdate(m_iter, current/*, m_normalizers*/, obj, flux, cost, note);
-
-        m_objective.push_back(obj);
-        m_flux.push_back(flux);
-        m_history_map.add_call(current, obj, flux);
-
-        return obj;
-    };
+    }
 };
 
 double optimize_leastsq_eval(unsigned n, const double *x, double * /*grad*/, void *data)
@@ -489,16 +453,6 @@ double optimize_auto_eval(unsigned n, const double *x, double * /*grad*/, void *
 
     return D->Simulate(x, n);
 };
-
-double optimize_auto_eval_fp_rec(unsigned n, const double* x, double* /*grad*/, void* data)
-{
-    AutoOptHelper* D = static_cast<AutoOptHelper*>(data);
-    //Only calls to methods available in AutoPilot base class are allowed!
-
-    return D->Simulate_fp_rec(x, n);
-};
-
-
 
 void constraint_auto_eval(unsigned m, double *result, unsigned n, const double* x, double* /*gradient*/, void *data)
 {
@@ -974,12 +928,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
     AO.SetObjects( (void*)this,  *V, &nlobj);
     AO.m_opt_vars = optvars;
     //-------
-    if (V->recs.front().rec_type.mapval() == var_receiver::REC_TYPE::FALLING_PARTICLE) {
-        nlobj.set_min_objective(optimize_auto_eval_fp_rec, &AO);
-    }
-    else {
-        nlobj.set_min_objective(optimize_auto_eval, &AO);
-    }
+    nlobj.set_min_objective(optimize_auto_eval, &AO);
     
     nlobj.set_xtol_rel(1.e-4);
     nlobj.set_ftol_rel(V->opt.converge_tol.val);
@@ -1075,15 +1024,31 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
         _summary_siminfo->addSimulationNotice( ol.str() );
         
         //int iopt = 0;
-        int iopt = (int)AO.m_objective.size()-1;
+        int iopt = (int)AO.m_objective.size() - 1;
+        auto it = find(AO.m_objective.begin(), AO.m_objective.end(), fmin);
+        if (it != AO.m_objective.end()) {
+            iopt = it - AO.m_objective.begin();
+        }
 
         //write the optimal point found
         ostringstream oo;
         oo << "Algorithm converged:\n";
         for(int i=0; i<(int)optvars.size(); i++)
             oo << (names == 0 ? "" : names->at(i) + "=" ) << setw(8) << AO.m_all_points.at(iopt).at(i) << "   ";
-        oo << "\nObjective: " << AO.m_objective.back(); //objbest;
+        oo << "\nObjective: " << fmin;
         _summary_siminfo->addSimulationNotice(oo.str() );
+
+        //Set vars to optimal point
+        double* opt_x = new double[(int)optvars.size()];
+        for (int i = 0; i < (int)optvars.size(); i++) {
+            *optvars.at(i) = AO.m_all_points.at(iopt).at(i);
+            opt_x[i] = AO.m_all_points.at(iopt).at(i);
+        }
+        var_map* V = AO.m_variables;
+        if (V->recs.front().rec_type.mapval() == var_receiver::REC_TYPE::FALLING_PARTICLE)
+            AO.update_fp_rec_dep_vars(opt_x);
+        delete[] opt_x;
+
     }
     catch(const std::exception &e){
 		ostringstream oo;

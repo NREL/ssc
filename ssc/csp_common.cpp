@@ -284,8 +284,6 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
             rf->norm_curtain_height.val = norm_curtain_height[input_idx];  // [-]
             rf->norm_curtain_width.val = norm_curtain_width[input_idx];    // [-]
             rf->max_curtain_depth.val = max_curtain_depth[input_idx];      // [m]
-            //rf->curtain_total_height.Setval(norm_curtain_height[input_idx] * rec_height[input_idx]);    // TODO: Do I need to do this calculation?
-            //rf->max_curtain_width.Setval(norm_curtain_width[input_idx] * rec_width[input_idx]);
 
             int curtain_type = m_cmod->as_integer("curtain_type");
             if (curtain_type == 0) {
