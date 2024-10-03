@@ -222,7 +222,7 @@ void C_falling_particle_receiver::init()
     // Calculate view factors
     if (m_model_type == 3 && m_rad_model_type > 0)
     {
-        // Set up radiation groups
+        // Set up radiation groups. If discretized elements can't be distributed evenly per group then the groups at the periphery of the receiver will have more elements
         int ny_extra = (m_n_y - 1) % m_n_y_rad;
         int ny_base = (m_n_y - 1 - ny_extra) / m_n_y_rad;
 
@@ -232,11 +232,21 @@ void C_falling_particle_receiver::init()
         m_ny_per_group.resize_fill(m_n_y_rad, ny_base);
         m_nx_per_group.resize_fill(m_n_x_rad, nx_base);
 
-        for (int j = 0; j < ny_extra; j++)
+        int n = int(ny_extra / 2) + ny_extra % 2;
+        for (int j = 0; j < n; j++)
+        {
             m_ny_per_group.at(j) += 1;
+            if (j < n - 1 || ny_extra % 2 == 0)
+                m_ny_per_group.at(m_n_y_rad - 1 - j) += 1;
+        }
 
-        for (int j = 0; j < nx_extra; j++)
+        n = int(nx_extra / 2) + nx_extra % 2;
+        for (int j = 0; j < n; j++)
+        {
             m_nx_per_group.at(j) += 1;
+            if (j < n - 1 || nx_extra % 2 == 0)
+                m_nx_per_group.at(m_n_x_rad - 1 - j) += 1;
+        }
 
         // Calculate view factors
         calculate_view_factors();
@@ -2239,9 +2249,9 @@ void C_falling_particle_receiver::calculate_coeff_matrix(util::matrix_t<double>&
     //--- Invert coefficient matrix
     if (m_invert_matrices)
     {
-        Kinv = matrix_inverse(K);
-
-        if (m_use_eigen)
+        if (!m_use_eigen)
+            Kinv = matrix_inverse(K);
+        else
         {
             Eigen::MatrixXd K_eigen, Kinv_eigen;
             K_eigen.resize(nelem, nelem);
