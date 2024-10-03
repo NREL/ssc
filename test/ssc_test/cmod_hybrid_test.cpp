@@ -183,7 +183,7 @@ TEST_F(CmodHybridTest, GenericPVWattsWindFuelCellBatteryHybrid_SingleOwner) {
         int len;
         auto outputs = ssc_data_get_table(dat, "output");
 
-        auto gs_outputs = ssc_data_get_table(outputs, "generic_system");
+        auto gs_outputs = ssc_data_get_table(outputs, "custom_generation");
         ssc_data_get_number(gs_outputs, "annual_energy", &genericannualenergy);
         auto gs_om_expenses = ssc_data_get_array(gs_outputs, "cf_operating_expenses", &len);
 

@@ -46,7 +46,7 @@ TEST_F(CMGeneric, SingleOwnerWithBattery_cmod_generic) {
 	// Run with hourly data
 	for (size_t i = 0; i < dispatch_options.size(); i++) {
 		ssc_data_set_number(data, "batt_dispatch_choice", (ssc_number_t)dispatch_options[i]);
-		EXPECT_FALSE(run_module(data, "generic_system"));
+		EXPECT_FALSE(run_module(data, "custom_generation"));
 		EXPECT_FALSE(run_module(data, "battery"));
 		EXPECT_FALSE(run_module(data, "singleowner"));
 	}
@@ -57,7 +57,7 @@ TEST_F(CMGeneric, SingleOwnerWithBattery_cmod_generic) {
 	set_array(data, "batt_room_temperature_celsius", generictest::temperature_path_30min, 8760 * 2);
 	for (size_t i = 0; i < dispatch_options.size(); i++) {
 		ssc_data_set_number(data, "batt_dispatch_choice", (ssc_number_t)dispatch_options[i]);
-		EXPECT_FALSE(run_module(data, "generic_system"));
+		EXPECT_FALSE(run_module(data, "custom_generation"));
 		EXPECT_FALSE(run_module(data, "battery"));
 		EXPECT_FALSE(run_module(data, "singleowner"));
 	}
@@ -65,7 +65,7 @@ TEST_F(CMGeneric, SingleOwnerWithBattery_cmod_generic) {
 	// Test with incorrect combo of data sizes
 	ssc_data_set_number(data, "batt_dispatch_choice", 3);
 	set_array(data, "batt_custom_dispatch", generictest::batt_dispatch_path_30min, 8760*2); // 8760 or 8760 * 3 fails with execution error on Linux and windows
-	EXPECT_FALSE(run_module(data, "generic_system"));
+	EXPECT_FALSE(run_module(data, "custom_generation"));
 	EXPECT_FALSE(run_module(data, "battery"));
 }
 
@@ -82,7 +82,7 @@ TEST_F(CMGeneric, CommercialWithBattery_cmod_generic) {
 		ssc_data_set_number(data, "system_use_lifetime_output", l);
 		for (size_t i = 0; i < dispatch_options.size(); i++) {
 			ssc_data_set_number(data, "batt_dispatch_choice", (ssc_number_t)dispatch_options[i]);
-			EXPECT_FALSE(run_module(data, "generic_system"));
+			EXPECT_FALSE(run_module(data, "custom_generation"));
 			EXPECT_FALSE(run_module(data, "battery"));
 			EXPECT_FALSE(run_module(data, "utilityrate5"));
 			EXPECT_FALSE(run_module(data, "cashloan"));
@@ -100,7 +100,7 @@ TEST_F(CMGeneric, CommercialWithBattery_cmod_generic) {
 		ssc_data_set_number(data, "system_use_lifetime_output", l);
 		for (size_t i = 0; i < dispatch_options.size(); i++) {
 			ssc_data_set_number(data, "batt_dispatch_choice", (ssc_number_t)dispatch_options[i]);
-			EXPECT_FALSE(run_module(data, "generic_system"));
+			EXPECT_FALSE(run_module(data, "custom_generation"));
 			EXPECT_FALSE(run_module(data, "battery"));
 			EXPECT_FALSE(run_module(data, "utilityrate5"));
 			EXPECT_FALSE(run_module(data, "cashloan"));
@@ -116,7 +116,7 @@ TEST_F(CMGeneric, CommercialWithBattery_cmod_generic) {
 	
 	for (size_t l = 0; l < 2; l++) {
 		ssc_data_set_number(data, "system_use_lifetime_output", l);
-		EXPECT_FALSE(run_module(data, "generic_system"));
+		EXPECT_FALSE(run_module(data, "custom_generation"));
 		EXPECT_FALSE(run_module(data, "battery"));
 	}
 }
