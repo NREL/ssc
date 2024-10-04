@@ -1261,7 +1261,7 @@ public:
         int ppa_mode = 1; // specify ppa price input
 
 		bool constant_dscr_mode = (as_integer("debt_option")==1);
-		bool constant_principal = (as_integer("payment_option") == 1);;
+		bool constant_principal = (as_integer("payment_option") == 1);
 		//		log(util::format("debt option=%d and constant dscr mode=%s.",
 //			as_integer("debt_option"), (constant_dscr_mode ? "true":"false")),
 //			SSC_WARNING);
@@ -1890,6 +1890,8 @@ public:
 		double term_int_rate = as_double("term_int_rate")*0.01;
 		double dscr = as_double("dscr");
 		double dscr_reserve_months = as_double("dscr_reserve_months");
+        bool dscr_limit_debt_fraction = as_boolean("dscr_limit_debt_fraction");
+        double dscr_maximum_debt_fraction = as_double("dscr_maximum_debt_fraction") * 0.01;
 		double cash_for_debt_service=0;
 		double pv_cafds=0;
 		double size_of_debt=0;
@@ -2790,6 +2792,55 @@ public:
 				}
 			}
 		}
+
+        /* Github issue 550 update dscr if necessary with limit on maximum debt fraction */
+        if (constant_dscr_mode && dscr_limit_debt_fraction) {
+            // Initial estimate of these costs for subsequent calculations
+            cost_financing =
+                cost_debt_closing +
+                cost_debt_fee_frac * size_of_debt +
+                cost_other_financing +
+                cf.at(CF_reserve_debtservice, 0) +
+                constr_total_financing +
+                cf.at(CF_reserve_om, 0) +
+                cf.at(CF_reserve_receivables, 0);
+
+            // Community Solar adjustment for up-front revenue and costs
+            cost_installed =
+                cost_prefinancing
+                + cost_financing
+                + cs_upfront_cost
+                - cs_upfront_revenue
+                - ibi_fed_amount
+                - ibi_sta_amount
+                - ibi_uti_amount
+                - ibi_oth_amount
+                - ibi_fed_per
+                - ibi_sta_per
+                - ibi_uti_per
+                - ibi_oth_per
+                - cbi_fed_amount
+                - cbi_sta_amount
+                - cbi_uti_amount
+                - cbi_oth_amount;
+
+            if ((std::abs(size_of_debt) > (cost_installed * dscr_maximum_debt_fraction)) || (size_of_debt < 0)) {
+                if ((cost_installed > 0) && (dscr_maximum_debt_fraction > 0)) {
+
+                    dscr = size_of_debt / (cost_installed * dscr_maximum_debt_fraction) * dscr;
+                    // recalculate debt size with constrained dscr
+                    size_of_debt = 0.0;
+                    for (i = 0; i <= nyears; i++) {
+                        if (dscr > 0)
+                            cf.at(CF_debt_size, i) = cf.at(CF_pv_cash_for_ds, i) / dscr;
+                        else
+                            cf.at(CF_debt_size, i) = 0.0; // default behavior of initialization of cash flow line items
+                        size_of_debt += cf.at(CF_debt_size, i);
+                    }
+
+                }
+            }
+        }
 
 		/*
 		// DSCR calculations
