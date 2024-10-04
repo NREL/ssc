@@ -311,7 +311,12 @@ void cm_windpower::exec()
         std::vector<double> ct_curve(ctCurveLength);
         for (size_t i = 0; i < ctCurveLength; i++)
             ct_curve[i] = ctc[i];
-        wt.setCtCurve(ct_curve);
+        bool error = false;
+        error = wt.setCtCurve(ct_curve);
+        if (error) //function will return a zero if it fails
+        {
+            throw exec_error("windpower", wt.errDetails);
+        }
     }
 
 	// create windPowerCalculator using windTurbine
