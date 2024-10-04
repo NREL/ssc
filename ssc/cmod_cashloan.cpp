@@ -1229,6 +1229,7 @@ public:
 		}
 
 		double net_present_value = cf.at(CF_after_tax_cash_flow, 0) + npv(CF_after_tax_cash_flow, nyears, nom_discount_rate );
+        double irr = libfin::irr(cf.row(CF_after_tax_cash_flow).to_vector(),nyears);
 
 		double payback = compute_payback(CF_cumulative_payback_with_expenses, CF_payback_with_expenses, nyears);
 		// Added for Owen Zinaman for Mexico Rates and analyses 9/26/16
