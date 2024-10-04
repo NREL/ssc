@@ -342,6 +342,8 @@ var_info vtab_battery_outputs[] = {
     { SSC_OUTPUT,        SSC_NUMBER,     "annual_crit_load_unmet",                     "Critical load energy unmet (year 1)",                    "kWh",      "",                      "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_NUMBER,     "annual_crit_load_unmet_percentage",          "Critical load unmet percentage (year 1)",                "%",        "",                      "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_NUMBER,     "annual_outage_losses_unmet",                 "Battery and system losses unmet energy (year 1)",        "kWh",      "",                      "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "batt_year1_charge_from_system",             "Battery annual energy charged from system (year 1)",                 "kWh",      "",                      "Battery",       "",                           "",                               "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "batt_year1_charge_from_grid",               "Battery annual energy charged from grid (year 1)",               "kWh",      "",                      "Battery",       "",                           "",                               "" },
 
     // test matrix output
     { SSC_OUTPUT,        SSC_MATRIX,     "batt_dispatch_sched",                        "Battery dispatch schedule",                              "",        "",                     "Battery",       "",                           "",                               "ROW_LABEL=MONTHS,COL_LABEL=HOURS_OF_DAY"  },
@@ -2069,6 +2071,9 @@ void battstor::calculate_monthly_and_annual_outputs(compute_module& cm)
     cm.assign("average_battery_roundtrip_efficiency", var_data((ssc_number_t)outAverageRoundtripEfficiency));
     cm.assign("batt_system_charge_percent", var_data((ssc_number_t)outSystemChargePercent));
     cm.assign("batt_bank_installed_capacity", (ssc_number_t)batt_vars->batt_kwh);
+
+    cm.assign("batt_year1_charge_from_grid", var_data((ssc_number_t)outAnnualGridChargeEnergy[0]));
+    cm.assign("batt_year1_charge_from_system", var_data((ssc_number_t)outAnnualSystemChargeEnergy[0]));
 
     // monthly outputs
     cm.accumulate_monthly_for_year("system_to_batt", "monthly_system_to_batt", _dt_hour, step_per_hour);
