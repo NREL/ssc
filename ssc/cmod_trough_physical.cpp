@@ -1685,7 +1685,7 @@ public:
                     if (is_one_assigned || is_dispatch) {
 
                         elec_pricing_schedule = C_timeseries_schedule_inputs(as_matrix("dispatch_sched_weekday"), as_matrix("dispatch_sched_weekend"),
-                            as_vector_double("dispatch_tod_factors"), std::numeric_limits<double>::quiet_NaN());
+                            as_vector_double("dispatch_tod_factors"), ppa_price_year1);
                     }
                     else {
                         // If electricity pricing data is not available, then dispatch to a uniform schedule
