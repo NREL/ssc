@@ -274,7 +274,7 @@ static var_info _cm_vtab_communitysolar[] = {
 
 /* intermediate outputs */
 	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_debt_upfront",                      "Debt up-front fee",          "$",   "",					  "Intermediate Costs",			 "?=0",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_financing",                         "Financing cost",          "$",   "",					  "Intermediate Costs",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_financing",                         "Total financing cost",          "$",   "",					  "Intermediate Costs",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_prefinancing",                      "Total installed cost",          "$",   "",					  "Intermediate Costs",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_installed",                         "Net capital cost",                   "$",     "",					  "Intermediate Costs",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_installedperwatt",                  "Net capital cost per watt",          "$/W",   "",					  "Intermediate Costs",			 "*",                         "",                             "" },
@@ -285,8 +285,8 @@ static var_info _cm_vtab_communitysolar[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,     "depr_alloc_none_percent",		          "Non-depreciable federal and state allocation",	"%", "",	  "Depreciation",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "depr_alloc_none",		                  "Non-depreciable federal and state allocation",	"$", "",	  "Depreciation",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "depr_alloc_total",		                  "Total depreciation federal and state allocation",	"$", "",	  "Depreciation",             "*",					  "",     			        "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "pre_depr_alloc_basis",		          "Total depreciation basis prior to allocation",	"$", "",	  "Depreciation",             "*",					  "",     			        "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "pre_itc_qual_basis",		              "Total ITC basis prior to qualification",	"$", "",	  "Tax Credits",             "*",					  "",     			        "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "pre_depr_alloc_basis",		              "Depreciable basis prior to allocation",	"$", "",	  "Depreciation",             "*",					  "",     			        "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "pre_itc_qual_basis",		              "ITC basis prior to qualification",	"$", "",	  "Tax Credits",             "*",					  "",     			        "" },
 
 // state itc table                                                                
 /*1*/ { SSC_OUTPUT,     SSC_NUMBER,     "depr_stabas_percent_macrs_5",		      "5-yr MACRS state percent of total depreciable basis",	"%", "",	  "Depreciation",             "*",					  "",     			        "" },
@@ -2919,12 +2919,11 @@ public:
 			- cbi_uti_amount
 			- cbi_oth_amount;
 
-        // Installed costs and construction costs can be claimed in the basis, but reserves are not
-        // TODO: Realign with new understanding of allowable costs: https://github.com/NREL/SAM/issues/1803
+        // Installed costs and construction costs, developer fees, and legal fees can be claimed in the basis, but reserves and financing fees cannot
+        // See https://github.com/NREL/SAM/issues/1803 and linked issues for more details
         pre_depr_alloc_basis = cost_prefinancing
-            + cost_financing
-            + cs_upfront_cost
-            - cs_upfront_revenue;
+            + cost_other_financing
+            + constr_total_financing;
         // Basis reductions are handled in depr_fed_reduction and depr_sta_reduction
 
         // Under 2024 law these are understood to be the same, keep seperate variables for reporting out
@@ -4361,9 +4360,9 @@ public:
 
 		assign("depr_fedbas_percent_total", var_data((ssc_number_t)  (100.0*(depr_fedbas_macrs_5_frac+depr_fedbas_macrs_15_frac+depr_fedbas_sl_5_frac+depr_fedbas_sl_15_frac+depr_fedbas_sl_20_frac+depr_fedbas_sl_39_frac+depr_fedbas_custom_frac))));
 		assign( "depr_alloc_total", var_data((ssc_number_t) depr_alloc_total ) );
-		assign( "depr_fedbas_ibi_reduc_total", var_data((ssc_number_t) depr_sta_reduction_ibi ) );
-		assign( "depr_fedbas_cbi_reduc_total", var_data((ssc_number_t) depr_sta_reduction_cbi ) );
- 		assign( "depr_fedbas_prior_itc_total", var_data((ssc_number_t) ( depr_alloc_total - depr_sta_reduction_ibi - depr_sta_reduction_cbi)) );
+		assign( "depr_fedbas_ibi_reduc_total", var_data((ssc_number_t) depr_fed_reduction_ibi ) );
+		assign( "depr_fedbas_cbi_reduc_total", var_data((ssc_number_t) depr_fed_reduction_cbi ) );
+ 		assign( "depr_fedbas_prior_itc_total", var_data((ssc_number_t) ( depr_alloc_total - depr_fed_reduction_ibi - depr_fed_reduction_cbi)) );
  		assign( "itc_sta_qual_total", var_data((ssc_number_t) itc_sta_qual_total ) );
  		assign( "depr_fedbas_percent_qual_total", var_data((ssc_number_t) 100.0) );
  		assign( "depr_fedbas_percent_amount_total", var_data((ssc_number_t) itc_fed_per) );
