@@ -32,8 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#ifndef _CMOD_CUSTOMGENERATION_TEST_H_
-#define _CMOD_CUSTOMGENERATION_TEST_H_
+#ifndef _CMOD_GENERIC_TEST_H_
+#define _CMOD_GENERIC_TEST_H_
 
 #include <gtest/gtest.h>
 #include <memory>
@@ -44,7 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vartab.h"
 #include "../ssc/common.h"
 #include "../input_cases/code_generator_utilities.h"
-#include "../input_cases/custom_generation_common_data.h"
+#include "../input_cases/generic_common_data.h"
 
 /**
  * CMFuelCell tests the cmod_fuelcell using the SAM code generator to generate data
