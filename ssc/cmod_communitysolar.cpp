@@ -274,7 +274,7 @@ static var_info _cm_vtab_communitysolar[] = {
 
 /* intermediate outputs */
 	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_debt_upfront",                      "Debt up-front fee",          "$",   "",					  "Intermediate Costs",			 "?=0",                         "",                             "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_financing",                         "Financing cost",          "$",   "",					  "Intermediate Costs",			 "*",                         "",                             "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_financing",                         "Total financing cost",          "$",   "",					  "Intermediate Costs",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_prefinancing",                      "Total installed cost",          "$",   "",					  "Intermediate Costs",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_installed",                         "Net capital cost",                   "$",     "",					  "Intermediate Costs",			 "*",                         "",                             "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "cost_installedperwatt",                  "Net capital cost per watt",          "$/W",   "",					  "Intermediate Costs",			 "*",                         "",                             "" },
@@ -285,8 +285,8 @@ static var_info _cm_vtab_communitysolar[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,     "depr_alloc_none_percent",		          "Non-depreciable federal and state allocation",	"%", "",	  "Depreciation",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "depr_alloc_none",		                  "Non-depreciable federal and state allocation",	"$", "",	  "Depreciation",             "*",					  "",     			        "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,     "depr_alloc_total",		                  "Total depreciation federal and state allocation",	"$", "",	  "Depreciation",             "*",					  "",     			        "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "pre_depr_alloc_basis",		          "Total depreciation basis prior to allocation",	"$", "",	  "Depreciation",             "*",					  "",     			        "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "pre_itc_qual_basis",		              "Total ITC basis prior to qualification",	"$", "",	  "Tax Credits",             "*",					  "",     			        "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "pre_depr_alloc_basis",		              "Depreciable basis prior to allocation",	"$", "",	  "Depreciation",             "*",					  "",     			        "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "pre_itc_qual_basis",		              "ITC basis prior to qualification",	"$", "",	  "Tax Credits",             "*",					  "",     			        "" },
 
 // state itc table                                                                
 /*1*/ { SSC_OUTPUT,     SSC_NUMBER,     "depr_stabas_percent_macrs_5",		      "5-yr MACRS state percent of total depreciable basis",	"%", "",	  "Depreciation",             "*",					  "",     			        "" },
@@ -1261,7 +1261,7 @@ public:
         int ppa_mode = 1; // specify ppa price input
 
 		bool constant_dscr_mode = (as_integer("debt_option")==1);
-		bool constant_principal = (as_integer("payment_option") == 1);;
+		bool constant_principal = (as_integer("payment_option") == 1);
 		//		log(util::format("debt option=%d and constant dscr mode=%s.",
 //			as_integer("debt_option"), (constant_dscr_mode ? "true":"false")),
 //			SSC_WARNING);
@@ -1890,6 +1890,8 @@ public:
 		double term_int_rate = as_double("term_int_rate")*0.01;
 		double dscr = as_double("dscr");
 		double dscr_reserve_months = as_double("dscr_reserve_months");
+        bool dscr_limit_debt_fraction = as_boolean("dscr_limit_debt_fraction");
+        double dscr_maximum_debt_fraction = as_double("dscr_maximum_debt_fraction") * 0.01;
 		double cash_for_debt_service=0;
 		double pv_cafds=0;
 		double size_of_debt=0;
@@ -2791,6 +2793,55 @@ public:
 			}
 		}
 
+        /* Github issue 550 update dscr if necessary with limit on maximum debt fraction */
+        if (constant_dscr_mode && dscr_limit_debt_fraction) {
+            // Initial estimate of these costs for subsequent calculations
+            cost_financing =
+                cost_debt_closing +
+                cost_debt_fee_frac * size_of_debt +
+                cost_other_financing +
+                cf.at(CF_reserve_debtservice, 0) +
+                constr_total_financing +
+                cf.at(CF_reserve_om, 0) +
+                cf.at(CF_reserve_receivables, 0);
+
+            // Community Solar adjustment for up-front revenue and costs
+            cost_installed =
+                cost_prefinancing
+                + cost_financing
+                + cs_upfront_cost
+                - cs_upfront_revenue
+                - ibi_fed_amount
+                - ibi_sta_amount
+                - ibi_uti_amount
+                - ibi_oth_amount
+                - ibi_fed_per
+                - ibi_sta_per
+                - ibi_uti_per
+                - ibi_oth_per
+                - cbi_fed_amount
+                - cbi_sta_amount
+                - cbi_uti_amount
+                - cbi_oth_amount;
+
+            if ((std::abs(size_of_debt) > (cost_installed * dscr_maximum_debt_fraction)) || (size_of_debt < 0)) {
+                if ((cost_installed > 0) && (dscr_maximum_debt_fraction > 0)) {
+
+                    dscr = size_of_debt / (cost_installed * dscr_maximum_debt_fraction) * dscr;
+                    // recalculate debt size with constrained dscr
+                    size_of_debt = 0.0;
+                    for (i = 0; i <= nyears; i++) {
+                        if (dscr > 0)
+                            cf.at(CF_debt_size, i) = cf.at(CF_pv_cash_for_ds, i) / dscr;
+                        else
+                            cf.at(CF_debt_size, i) = 0.0; // default behavior of initialization of cash flow line items
+                        size_of_debt += cf.at(CF_debt_size, i);
+                    }
+
+                }
+            }
+        }
+
 		/*
 		// DSCR calculations
 		for (i = 0; i <= nyears; i++)
@@ -2868,12 +2919,11 @@ public:
 			- cbi_uti_amount
 			- cbi_oth_amount;
 
-        // Installed costs and construction costs can be claimed in the basis, but reserves are not
-        // TODO: Realign with new understanding of allowable costs: https://github.com/NREL/SAM/issues/1803
+        // Installed costs and construction costs, developer fees, and legal fees can be claimed in the basis, but reserves and financing fees cannot
+        // See https://github.com/NREL/SAM/issues/1803 and linked issues for more details
         pre_depr_alloc_basis = cost_prefinancing
-            + cost_financing
-            + cs_upfront_cost
-            - cs_upfront_revenue;
+            + cost_other_financing
+            + constr_total_financing;
         // Basis reductions are handled in depr_fed_reduction and depr_sta_reduction
 
         // Under 2024 law these are understood to be the same, keep seperate variables for reporting out
@@ -4310,9 +4360,9 @@ public:
 
 		assign("depr_fedbas_percent_total", var_data((ssc_number_t)  (100.0*(depr_fedbas_macrs_5_frac+depr_fedbas_macrs_15_frac+depr_fedbas_sl_5_frac+depr_fedbas_sl_15_frac+depr_fedbas_sl_20_frac+depr_fedbas_sl_39_frac+depr_fedbas_custom_frac))));
 		assign( "depr_alloc_total", var_data((ssc_number_t) depr_alloc_total ) );
-		assign( "depr_fedbas_ibi_reduc_total", var_data((ssc_number_t) depr_sta_reduction_ibi ) );
-		assign( "depr_fedbas_cbi_reduc_total", var_data((ssc_number_t) depr_sta_reduction_cbi ) );
- 		assign( "depr_fedbas_prior_itc_total", var_data((ssc_number_t) ( depr_alloc_total - depr_sta_reduction_ibi - depr_sta_reduction_cbi)) );
+		assign( "depr_fedbas_ibi_reduc_total", var_data((ssc_number_t) depr_fed_reduction_ibi ) );
+		assign( "depr_fedbas_cbi_reduc_total", var_data((ssc_number_t) depr_fed_reduction_cbi ) );
+ 		assign( "depr_fedbas_prior_itc_total", var_data((ssc_number_t) ( depr_alloc_total - depr_fed_reduction_ibi - depr_fed_reduction_cbi)) );
  		assign( "itc_sta_qual_total", var_data((ssc_number_t) itc_sta_qual_total ) );
  		assign( "depr_fedbas_percent_qual_total", var_data((ssc_number_t) 100.0) );
  		assign( "depr_fedbas_percent_amount_total", var_data((ssc_number_t) itc_fed_per) );
