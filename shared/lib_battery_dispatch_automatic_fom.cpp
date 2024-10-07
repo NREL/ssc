@@ -272,16 +272,27 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         /*! Energy need to charge the battery (kWh) */
         double energyNeededToFillBattery = _Battery->energy_to_fill(m_batteryPower->stateOfChargeMax);
 
+        double interconnectionCapacity = m_batteryPower->powerInterconnectionLimit - m_batteryPower->powerSystem;
+
         /* Booleans to assist decisions */
         bool highDischargeValuePeriod = ppa_cost >= discharge_ppa_cost && ppa_cost >= charge_ppa_cost;
         bool highChargeValuePeriod = ppa_cost <= charge_ppa_cost && ppa_cost <= discharge_ppa_cost;
         bool excessAcCapacity = _inverter_paco > m_batteryPower->powerSystemThroughSharedInverter;
         bool batteryHasDischargeCapacity = _Battery->SOC() >= m_batteryPower->stateOfChargeMin + 1.0;
+        bool interconnectionHasCapacity = interconnectionCapacity > 0.0;
+        bool canChargeFromCurtailedPower = interconnectionCapacity < 0.0;
+
+        revenueToCurtailCharge = canChargeFromCurtailedPower ? *max_ppa_cost * m_etaDischarge - m_cycleCost - m_omCost : 0;
 
         // Always Charge if PV is clipping
         if (m_batteryPower->canClipCharge && m_batteryPower->powerSystemClipped > 0 && revenueToClipCharge >= 0)
         {
             powerBattery = -m_batteryPower->powerSystemClipped;
+        }
+
+        // Always charge if PV is curtailed
+        if (canChargeFromCurtailedPower && revenueToCurtailCharge >= 0) {
+            powerBattery = interconnectionCapacity;
         }
 
         // Increase charge from system (PV) if it is more valuable later than selling now
@@ -332,7 +343,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         }
 
         // Discharge if we are in a high-price period and have battery and inverter capacity
-        if (highDischargeValuePeriod && revenueToDischarge > 0 && excessAcCapacity && batteryHasDischargeCapacity) {
+        if (highDischargeValuePeriod && revenueToDischarge > 0 && excessAcCapacity && batteryHasDischargeCapacity && interconnectionHasCapacity) {
             double loss_kw = _Battery->calculate_loss(m_batteryPower->powerBatteryTarget, lifetimeIndex); // Battery is responsible for covering discharge losses
             if (m_batteryPower->connectionMode == BatteryPower::DC_CONNECTED) {
                 powerBattery = _inverter_paco + loss_kw - m_batteryPower->powerSystem;
@@ -340,6 +351,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
             else {
                 powerBattery = _inverter_paco; // AC connected battery is already maxed out by AC power limit, cannot increase dispatch to ccover losses
             }
+            powerBattery = std::fmin(powerBattery, interconnectionCapacity);
         }
 		// save for extraction
 		m_batteryPower->powerBatteryTarget = powerBattery;

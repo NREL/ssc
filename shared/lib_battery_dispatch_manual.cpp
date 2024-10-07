@@ -209,6 +209,13 @@ bool dispatch_manual_t::check_constraints(double &I, size_t count)
 			else
 				I -= (m_batteryPower->powerBatteryToGrid / std::abs(m_batteryPower->powerBatteryAC)) * std::abs(I);
 		}
+        // Back off discharge if we're violating interconnection limits
+        else if (m_batteryPower->powerInterconnectionLoss > 0 && m_batteryPower->powerBatteryAC > 0) {
+            I -= m_batteryPower->powerInterconnectionLoss / std::abs(m_batteryPower->powerBatteryAC) * std::abs(I);
+            if (I < 0) {
+                I = 0.0;
+            }
+        }
 		else
 			iterate = false;
 

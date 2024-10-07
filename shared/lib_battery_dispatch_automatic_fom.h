@@ -142,6 +142,7 @@ protected:
 	double revenueToGridCharge;
 	double revenueToClipCharge;
 	double revenueToDischarge;
+    double revenueToCurtailCharge;
 };
 
 #endif // __LIB_BATTERY_DISPATCH_AUTOMATIC_FOM_H__
