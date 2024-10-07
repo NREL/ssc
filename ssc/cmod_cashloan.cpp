@@ -87,6 +87,7 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "discounted_payback", "Discounted payback period", "years", "", "Cash Flow", "*", "", "" },
     
     { SSC_OUTPUT, SSC_NUMBER, "npv", "NPV Net present value", "$", "", "Cash Flow", "*", "", "" },
+    { SSC_OUTPUT, SSC_NUMBER, "irr", "IRR Internal rate of return", "$", "", "Cash Flow", "*", "", "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm",                      "Present value of O&M expenses",				   "$",            "",                      "Financial Metrics",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm_nonfuel",              "Present value of non-fuel O&M expenses",				   "$",            "",                      "Financial Metrics",      "*",                       "",                                         "" },
@@ -180,6 +181,7 @@ static var_info vtab_cashloan[] = {
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "wacc",                "WACC Weighted average cost of capital",                          "",    "",                      "Financial Metrics",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "effective_tax_rate",                 "Effective tax rate",                       "%",    "",                      "Financial Metrics",      "*",                       "",                                         "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "nominal_discount_rate",                  "Nominal discount rate",            "%",     "",					  "Financial Metrics",			 "*",                         "",                             "" },
 
 // NTE additions 8/10/17
 	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_with_system",             "Energy value",                       "$",            "",                      "ThirdPartyOwnership",      "*",                       "",                                         "" },
@@ -1229,7 +1231,7 @@ public:
 		}
 
 		double net_present_value = cf.at(CF_after_tax_cash_flow, 0) + npv(CF_after_tax_cash_flow, nyears, nom_discount_rate );
-        double irr = libfin::irr(cf.row(CF_after_tax_cash_flow).to_vector(),nyears);
+        double irr = libfin::irr(cf.row(CF_after_tax_cash_flow).to_vector(),nyears)*100;
 
 		double payback = compute_payback(CF_cumulative_payback_with_expenses, CF_payback_with_expenses, nyears);
 		// Added for Owen Zinaman for Mexico Rates and analyses 9/26/16
@@ -1334,12 +1336,13 @@ public:
 		assign("lcoe_real", var_data((ssc_number_t)lcoe_real));
 		assign( "lcoe_nom", var_data((ssc_number_t)lcoe_nom) );
 		assign( "npv",  var_data((ssc_number_t)net_present_value) );
+        assign("irr", var_data((ssc_number_t)irr));
 
 //		assign("first_year_energy_net", var_data((ssc_number_t) cf.at(CF_energy_net,1)));
 
 		assign( "depr_basis_fed", var_data((ssc_number_t)federal_depr_basis ));
 		assign( "depr_basis_sta", var_data((ssc_number_t)state_depr_basis ));
-		assign( "discount_nominal", var_data((ssc_number_t)(nom_discount_rate*100.0) ));		
+		assign( "nominal_discount_rate", var_data((ssc_number_t)(nom_discount_rate*100.0) ));		
 //		assign( "sales_tax_deduction", var_data((ssc_number_t)total_sales_tax ));		
 		assign( "adjusted_installed_cost", var_data((ssc_number_t)adjusted_installed_cost ));		
 		assign( "first_cost", var_data((ssc_number_t)first_cost ));		
