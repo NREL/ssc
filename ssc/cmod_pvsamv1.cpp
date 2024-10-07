@@ -2433,8 +2433,7 @@ void cm_pvsamv1::exec()
                     }
                     float poa_front = Subarrays[nn]->poa.poaBeamFront + Subarrays[nn]->poa.poaDiffuseFront + Subarrays[nn]->poa.poaGroundFront;
                     float poa = poa_front + Subarrays[nn]->poa.poaRear * bifaciality;
-                    float poa_front_cs = Subarrays[nn]->poa.poaBeamFrontCS + Subarrays[nn]->poa.poaDiffuseFrontCS + Subarrays[nn]->poa.poaGroundFrontCS;
-                    float poa_rear_cs = Subarrays[nn]->poa.poaBeamFrontCS + Subarrays[nn]->poa.poaDiffuseFrontCS + Subarrays[nn]->poa.poaGroundFrontCS + Subarrays[nn]->poa.poaRearCS;
+
                     if (poa != 0) {
                         smLoss *= poa_front / poa;
                     }
