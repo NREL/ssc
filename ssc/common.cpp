@@ -1092,7 +1092,7 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
     if (m_cm->as_boolean(m_prefix +  "_en_timeindex"))
     {
         size_t n;
-        int steps_per_hour = nsteps / 8760;
+        double steps_per_hour = nsteps / 8760.0;
         int month = 0;
         int day = 0;
         int week = 0;
