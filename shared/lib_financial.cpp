@@ -197,7 +197,7 @@ double irr_calc(const std::vector<double>& cf, int count, double initial_guess, 
 
     residual = irr_poly_sum(calculated_irr, cf, count) / scale_factor;  //residual = irr_poly_sum(calculated_irr, cf_line, count) / scale_factor;
 
-    while (!(fabs(residual) <= tolerance) && (number_of_iterations < max_iterations))
+    while (!(std::abs(residual) <= tolerance) && (number_of_iterations < max_iterations))
     {
         deriv_sum = irr_derivative_sum(initial_guess, cf, count); //deriv_sum = irr_derivative_sum(initial_guess, cf_line, count);
         if (deriv_sum != 0.0)
@@ -404,7 +404,7 @@ double libfin::pow1pm1 (double x, double y)
 }
 double libfin::pow1p (double x, double y)
 {
-	return (fabs (x) > 0.5) ? pow (1 + x, y) : exp (y * log(1.0 + x));
+	return (std::abs(x) > 0.5) ? pow (1 + x, y) : exp (y * log(1.0 + x));
 }
 double libfin::fvifa (double rate, double nper)
 {
