@@ -337,11 +337,14 @@ var_info vtab_battery_outputs[] = {
     { SSC_OUTPUT,        SSC_NUMBER,     "average_battery_conversion_efficiency",      "Battery average cycle conversion efficiency",           "%",        "",                      "Annual",        "",                           "",                               "" },
     { SSC_OUTPUT,        SSC_NUMBER,     "average_battery_roundtrip_efficiency",       "Battery average roundtrip efficiency",                  "%",        "",                      "Annual",        "",                           "",                               "" },
     { SSC_OUTPUT,        SSC_NUMBER,     "batt_system_charge_percent",                 "Battery charge energy charged from system",             "%",        "",                      "Annual",        "",                           "",                               "" },
+    { SSC_OUTPUT,        SSC_NUMBER,     "batt_grid_charge_percent",                 "Battery charge energy charged from grid",             "%",        "",                      "Annual",        "",                           "",                               "" },
     { SSC_OUTPUT,        SSC_NUMBER,     "batt_bank_installed_capacity",               "Battery bank installed capacity",                       "kWh",      "",                      "Annual",        "",                           "",                               "" },
     { SSC_OUTPUT,        SSC_NUMBER,     "annual_crit_load",                           "Critical load energy (year 1)",                    "kWh",      "",                           "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_NUMBER,     "annual_crit_load_unmet",                     "Critical load energy unmet (year 1)",                    "kWh",      "",                      "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_NUMBER,     "annual_crit_load_unmet_percentage",          "Critical load unmet percentage (year 1)",                "%",        "",                      "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_NUMBER,     "annual_outage_losses_unmet",                 "Battery and system losses unmet energy (year 1)",        "kWh",      "",                      "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "batt_year1_charge_from_system",             "Battery annual energy charged from system (year 1)",                 "kWh",      "",                      "Battery",       "",                           "",                               "" },
+    { SSC_OUTPUT,        SSC_NUMBER,      "batt_year1_charge_from_grid",               "Battery annual energy charged from grid (year 1)",               "kWh",      "",                      "Battery",       "",                           "",                               "" },
 
     // test matrix output
     { SSC_OUTPUT,        SSC_MATRIX,     "batt_dispatch_sched",                        "Battery dispatch schedule",                              "",        "",                     "Battery",       "",                           "",                               "ROW_LABEL=MONTHS,COL_LABEL=HOURS_OF_DAY"  },
@@ -924,6 +927,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     outUnmetLosses = 0;
     outAverageCycleEfficiency = 0;
     outSystemChargePercent = 0;
+    outGridChargePercent = 0;
     outAnnualSystemChargeEnergy = 0;
     outAnnualGridChargeEnergy = 0;
     outAnnualChargeEnergy = 0;
@@ -1729,6 +1733,7 @@ battstor::battstor(const battstor& orig) {
     outAverageCycleEfficiency = orig.outAverageCycleEfficiency;
     outAverageRoundtripEfficiency = orig.outAverageRoundtripEfficiency;
     outSystemChargePercent = orig.outSystemChargePercent;
+    outGridChargePercent = orig.outGridChargePercent;
 
     // copy models
     if (orig.batt_vars) batt_vars = orig.batt_vars;
@@ -1995,6 +2000,14 @@ void battstor::metrics()
         outSystemChargePercent = 100;
     else if (outSystemChargePercent < 0)
         outSystemChargePercent = 0;
+
+    // Grid charge ratio
+    outGridChargePercent = (ssc_number_t)battery_metrics->grid_charge_percent();
+    if (outGridChargePercent > 100)
+        outGridChargePercent = 100;
+    else if (outGridChargePercent < 0)
+        outGridChargePercent = 0;
+
 }
 
 // function needed to correctly calculate P_grid due to additional losses in P_gen post battery like wiring, curtailment, availablity
@@ -2068,7 +2081,11 @@ void battstor::calculate_monthly_and_annual_outputs(compute_module& cm)
     cm.assign("average_battery_conversion_efficiency", var_data((ssc_number_t)outAverageCycleEfficiency));
     cm.assign("average_battery_roundtrip_efficiency", var_data((ssc_number_t)outAverageRoundtripEfficiency));
     cm.assign("batt_system_charge_percent", var_data((ssc_number_t)outSystemChargePercent));
+    cm.assign("batt_grid_charge_percent", var_data((ssc_number_t)outGridChargePercent));
     cm.assign("batt_bank_installed_capacity", (ssc_number_t)batt_vars->batt_kwh);
+
+    cm.assign("batt_year1_charge_from_grid", var_data((ssc_number_t)outAnnualGridChargeEnergy[0]));
+    cm.assign("batt_year1_charge_from_system", var_data((ssc_number_t)outAnnualSystemChargeEnergy[0]));
 
     // monthly outputs
     cm.accumulate_monthly_for_year("system_to_batt", "monthly_system_to_batt", _dt_hour, step_per_hour);
