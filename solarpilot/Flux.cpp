@@ -2329,7 +2329,7 @@ bool Flux::checkApertureSnout(sp_point& fp_g, sp_point* hloc, sp_point* aim,  va
 	Toolbox::rotation(pi / 2 - rec_el, 0, ap_ip);
 
 	// Test if point is within the aperture
-	double rec_width = rec_var_map->rec_width.val;
+    double rec_width = Receiver::getReceiverWidth(*rec_var_map);
 	double rec_height = rec_var_map->rec_height.val;
 	if (std::abs(ap_ip.x) > rec_width / 2)
 		return false;
