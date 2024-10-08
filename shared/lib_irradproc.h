@@ -990,6 +990,9 @@ protected:
     int year, month, day, hour;
     double minute, delt;
 
+    //Error messages
+    std::string errorCode;
+
     //Enable subhourly clipping correction
     bool enableSubhourlyClipping;
 
@@ -1215,6 +1218,8 @@ public:
 
     /// Return the front surface irradiances, used by \link calc_rear_side()
     void getFrontSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> frontGroundGHI, std::vector<double>& frontIrradiance, double& frontAverageIrradiance, std::vector<double>& frontReflected);
+
+    std::string getErrorCode();
 
     enum RADMODE { DN_DF, DN_GH, GH_DF, POA_R, POA_P };
     enum SKYMODEL { ISOTROPIC, HDKR, PEREZ };

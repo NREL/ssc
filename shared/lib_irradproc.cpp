@@ -1826,27 +1826,64 @@ irrad::irrad(weather_record wf, weather_header hdr,
 }
 
 int irrad::check() {
-    if (year < 0 || month < 0 || day < 0 || hour < 0 || minute < 0 || delt > 1) return -1;
+    if (year < 0 || month < 0 || day < 0 || hour < 0 || minute < 0 || delt > 1) {
+        errorCode = "Invalid year, month, hour, or minute data";
+        return -1;
+    }
     if (latitudeDegrees < -90 || latitudeDegrees > 90 || longitudeDegrees < -180 || longitudeDegrees > 180 ||
-        timezone < -15 || timezone > 15)
+        timezone < -15 || timezone > 15) {
+        errorCode = "Invalid latitude, longitude, ot time zone";
         return -2;
-    if (radiationMode < irrad::DN_DF || radiationMode > irrad::POA_P || skyModel < 0 || skyModel > 2) return -3;
-    if (trackingMode < 0 || trackingMode > 4) return -4;
+    }
+    if (radiationMode < irrad::DN_DF || radiationMode > irrad::POA_P || skyModel < 0 || skyModel > 2) {
+        errorCode = "Invalid radiation mode or sky model";
+        return -3;
+    }
+    if (trackingMode < 0 || trackingMode > 4) {
+        errorCode = "Invalid tracking mode";
+        return -4;
+    }
     if (radiationMode == irrad::DN_DF &&
-        (directNormal < 0 || directNormal > irrad::irradiationMax || diffuseHorizontal < 0 || diffuseHorizontal > 1500))
+        (directNormal < 0 || directNormal > irrad::irradiationMax || diffuseHorizontal < 0 || diffuseHorizontal > 1500)) {
+        errorCode = "Invalid DNI or DHI (negative or out of bounds)";
         return -5;
+    }
     if (radiationMode == irrad::DN_GH &&
-        (globalHorizontal < 0 || globalHorizontal > 1500 || directNormal < 0 || directNormal > 1500))
+        (globalHorizontal < 0 || globalHorizontal > 1500 || directNormal < 0 || directNormal > 1500)) {
+        errorCode = "Invalid GHI or DNI (negative or out of bounds)";
         return -6;
-    if (albedo < 0 || albedo > 1) return -7;
-    if (tiltDegrees < 0 || tiltDegrees > 90) return -8;
-    if (surfaceAzimuthDegrees < 0 || surfaceAzimuthDegrees >= 360) return -9;
-    if (rotationLimitDegrees < -90 || rotationLimitDegrees > 90) return -10;
-    if (stowAngleDegrees < -90 || stowAngleDegrees > 90) return -12;
+    }
+    if (albedo < 0 || albedo > 1) {
+        errorCode = "Invalid albedo, must be greater than 0 and no greater than 1";
+        return -7;
+    }
+    if (tiltDegrees < 0 || tiltDegrees > 90) {
+        errorCode = "Invalid tilt angle, must be greater than 0 and no greater than 90 degrees";
+        return -8;
+    }
+    if (surfaceAzimuthDegrees < 0 || surfaceAzimuthDegrees >= 360) {
+        errorCode = "Invalid azimuth, must be greater than 0 and less than 360 degrees";
+        return -9;
+    }
+    if (rotationLimitDegrees < -90 || rotationLimitDegrees > 90) {
+        errorCode = "Invalid tracker rotation limit, must be greater than -90 and no greater than 90 degrees";
+        return -10;
+    }
+    if (stowAngleDegrees < -90 || stowAngleDegrees > 90) {
+        errorCode = "Invalid stow angle, must be greater than -90 and no greater than 90 degrees";
+        return -12;
+    }
     if (radiationMode == irrad::GH_DF &&
-        (globalHorizontal < 0 || globalHorizontal > 1500 || diffuseHorizontal < 0 || diffuseHorizontal > 1500))
+        (globalHorizontal < 0 || globalHorizontal > 1500 || diffuseHorizontal < 0 || diffuseHorizontal > 1500)) {
+        errorCode = "Invalid GHI or DHI (negative or exceeds theoretical limit)";
         return -11;
+    }
+
     return 0;
+}
+
+std::string irrad::getErrorCode() {
+    return errorCode;
 }
 
 double irrad::getAlbedo() {

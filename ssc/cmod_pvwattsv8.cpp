@@ -391,6 +391,8 @@ public:
         else if (is_assigned("solar_resource_data"))
         {
             wdprov = std::unique_ptr<weather_data_provider>(new weatherdata(lookup("solar_resource_data")));
+            if (!wdprov->ok()) throw exec_error("pvwattsv8", wdprov->message());
+            if (wdprov->has_message()) log(wdprov->message(), SSC_WARNING);
         }
         else
             throw exec_error("pvwattsv8", "No weather data supplied.");
@@ -944,8 +946,8 @@ public:
                 }
                 else if (0 != code)
                     throw exec_error("pvwattsv8",
-                        util::format("Failed to process irradiation on surface (code: %d) [year:%d month:%d day:%d hour:%d minute:%lg].",
-                            code, wf.year, wf.month, wf.day, wf.hour, wf.minute));
+                        util::format("Failed to process irradiation on surface (message: %s) [year:%d month:%d day:%d hour:%d minute:%lg].",
+                            code, irr.getErrorCode().c_str(), wf.year, wf.month, wf.day, wf.hour, wf.minute));
 
                 p_sunup[idx] = (ssc_number_t)sunup;
                 p_aoi[idx] = (ssc_number_t)aoi;
