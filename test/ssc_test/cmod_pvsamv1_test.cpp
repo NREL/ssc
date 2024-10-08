@@ -1037,6 +1037,21 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, SnowModel)
     ssc_data_get_number(data, "annual_energy", &annual_energy);
     EXPECT_NEAR(annual_energy, 11393, m_error_tolerance_hi) << "Annual energy.";
 
+
+    //Check bifacial - snow model interaction
+    //Bifaciality = 0, results should be same as monofacial
+    pairs["cec_is_bifacial"] = 1;
+    pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+    ssc_data_get_number(data, "annual_energy", &annual_energy);
+    EXPECT_NEAR(annual_energy, 11393, m_error_tolerance_hi) << "Annual energy.";
+
+
+    //Bifacial - scale DC snow loss by poa_front / poa_total (including bifaciality)
+    pairs["cec_bifaciality"] = 0.70;
+    pvsam_errors = modify_ssc_data_and_run_module(data, "pvsamv1", pairs);
+    ssc_data_get_number(data, "annual_energy", &annual_energy);
+    EXPECT_NEAR(annual_energy, 11635, m_error_tolerance_hi) << "Annual energy.";
+
 }
 
 TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, SubhourlyClippingCorrectionModel)
