@@ -182,7 +182,6 @@ double libfin::irr(const std::vector<double>& cf_vector, int count, double initi
         if (!is_valid_irr(cf_vector, count, residual, tolerance, number_of_iterations, max_iterations, calculated_irr, scale_factor)) // try 0.1 as initial guess
         {
             calculated_irr = std::numeric_limits<double>::quiet_NaN(); // did not converge
-            //				double calculated_irr = -999;
         }
 
     }
