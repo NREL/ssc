@@ -57,6 +57,7 @@ bool me_array_cable_length(ssc_data_t data)
     vt_get_number(vt, "water_depth", &water_depth);
     vt_get_number(vt, "number_devices", &number_devices);
     vt_get_number(vt, "distance_to_shore", &distance_to_shore);
+    
 
 
 	double length = (devices_per_row - 1) * device_spacing_in_row * number_rows + row_spacing * (number_rows - 1);
@@ -98,9 +99,9 @@ bool tidal_turbine_calculate_powercurve(ssc_data_t data)
 
     double rotor_diameter, cut_in,
         cut_out, rotor_area, number_rotors = 0;
-    double target_cf = 0.3;
     double rated_power_rotor = 0;
     double generator_rated_capacity = 0;
+    double capacity_factor = 0;
     util::matrix_t<double> tidal_resource;
     std::vector<double> pto_efficiency;
     std::vector<double> max_cp;
@@ -112,6 +113,7 @@ bool tidal_turbine_calculate_powercurve(ssc_data_t data)
         vt_get_array_vec(vt, "pto_efficiency", pto_efficiency);
         vt_get_number(vt, "cut_in", &cut_in);
         vt_get_number(vt, "cut_out", &cut_out);
+        vt_get_number(vt, "capacity_factor", &capacity_factor);
         vt_get_matrix(vt, "tidal_resource", tidal_resource);
         //vt_get_number(vt, "generator_rated_capacity", &generator_rated_capacity);
         //vt_get_number(vt, "tidal_turbine_target_cf", &target_cf);
@@ -136,6 +138,7 @@ bool tidal_turbine_calculate_powercurve(ssc_data_t data)
     powercurve_powerout.resize(array_size);
     powercurve_powerout_rated.resize(array_size);
     rotor_area = pow((rotor_diameter / 2), 2) * M_PI * number_rotors;
+    double target_cf = capacity_factor / 100.0;
     double tidal_vel, p_fluid, p_rotor, eff, p_electric;
     double tidal_freq = 0;
     double max_cp_value, pto_eff_value;
