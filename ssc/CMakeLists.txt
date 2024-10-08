@@ -16,13 +16,14 @@ set(SSC_SRC
 		cmod_battery.h
 		cmod_battery_eqns.cpp
 		cmod_battery_eqns.h
-        	cmod_battery_stateful.cpp
-        	cmod_battery_stateful.h
+        cmod_battery_stateful.cpp
+        cmod_battery_stateful.h
 		cmod_battwatts.cpp
 		cmod_battwatts.h
 		cmod_belpe.cpp
 		cmod_biomass.cpp
 		cmod_cashloan.cpp
+		cmod_cashloan_heat.cpp
 		cmod_cb_construction_financing.cpp
 		cmod_cb_empirical_hce_heat_loss.cpp
 		cmod_cb_mspt_system_costs.cpp
@@ -30,7 +31,7 @@ set(SSC_SRC
 		cmod_csp_common_eqns.h
 		cmod_csp_dsg_lf_ui.cpp
 		cmod_csp_subcomponent.cpp
-        	cmod_csp_trough_eqns.cpp
+        cmod_csp_trough_eqns.cpp
 		cmod_csp_trough_eqns.h
 		cmod_etes_electric_resistance.cpp
 		cmod_etes_ptes.cpp
@@ -73,8 +74,8 @@ set(SSC_SRC
 		cmod_mhk_tidal.cpp
 		cmod_mhk_wave.cpp
 		cmod_mspt_sf_and_rec_isolated.cpp
-        	cmod_mspt_iph.cpp
-        	cmod_ptes_design_point.cpp
+        cmod_mspt_iph.cpp
+        cmod_ptes_design_point.cpp
 		cmod_pv6parmod.cpp
 		cmod_pv_get_shade_loss_mpp.cpp
 		cmod_pvsamv1.cpp
@@ -91,6 +92,7 @@ set(SSC_SRC
 		cmod_sco2_csp_ud_pc_tables.cpp
 		cmod_singlediode.cpp
 		cmod_singleowner.cpp
+		cmod_singleowner_heat.cpp
 		cmod_communitysolar.cpp
 		cmod_snowmodel.cpp
 		cmod_solarpilot.cpp
