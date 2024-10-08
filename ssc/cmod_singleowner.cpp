@@ -2801,7 +2801,7 @@ public:
 			cf.at(CF_project_return_pretax,i) = cf.at(CF_pretax_cashflow,i);
 			if (i==0) cf.at(CF_project_return_pretax,i) -= (issuance_of_equity);
 
-			cf.at(CF_project_return_pretax_irr,i) = irr(CF_project_return_pretax,i)*100.0;
+			cf.at(CF_project_return_pretax_irr,i) = libfin::irr(cf.row(CF_project_return_pretax).to_vector(), i) * 100.0;
 			cf.at(CF_project_return_pretax_npv,i) = npv(CF_project_return_pretax,i,nom_discount_rate) +  cf.at(CF_project_return_pretax,0) ;
 
 			cf.at(CF_project_return_aftertax_cash,i) = cf.at(CF_project_return_pretax,i);
@@ -2809,7 +2809,7 @@ public:
 
 
 		cf.at(CF_project_return_aftertax,0) = cf.at(CF_project_return_aftertax_cash,0);
-		cf.at(CF_project_return_aftertax_irr,0) = irr(CF_project_return_aftertax_tax,0)*100.0;
+		cf.at(CF_project_return_aftertax_irr,0) = libfin::irr(cf.row(CF_project_return_aftertax_tax).to_vector(), 0) * 100.0;
 		cf.at(CF_project_return_aftertax_max_irr,0) = cf.at(CF_project_return_aftertax_irr,0);
 		cf.at(CF_project_return_aftertax_npv,0) = cf.at(CF_project_return_aftertax,0) ;
 
@@ -2893,7 +2893,7 @@ public:
 				cf.at(CF_statax,i) + cf.at(CF_fedtax,i) + cf.at(CF_itc_total, i);
 //	SAM 1038		if (i==1) cf.at(CF_project_return_aftertax,i) += itc_total;
 
-			cf.at(CF_project_return_aftertax_irr,i) = irr(CF_project_return_aftertax,i)*100.0;
+			cf.at(CF_project_return_aftertax_irr,i) = libfin::irr(cf.row(CF_project_return_aftertax).to_vector(), i) * 100.0;
 			cf.at(CF_project_return_aftertax_max_irr,i) = max(cf.at(CF_project_return_aftertax_max_irr,i-1),cf.at(CF_project_return_aftertax_irr,i));
 			cf.at(CF_project_return_aftertax_npv,i) = npv(CF_project_return_aftertax,i,nom_discount_rate) +  cf.at(CF_project_return_aftertax,0) ;
 
@@ -3326,7 +3326,7 @@ public:
 
 		assign("issuance_of_equity", var_data((ssc_number_t) issuance_of_equity));
 
- 		assign("project_return_aftertax_irr", var_data((ssc_number_t)  (irr(CF_project_return_aftertax,nyears)*100.0)));
+ 		assign("project_return_aftertax_irr", var_data((ssc_number_t)  (libfin::irr(cf.row(CF_project_return_aftertax).to_vector(), nyears) * 100.0)));
 		assign("project_return_aftertax_npv", var_data((ssc_number_t)  (npv(CF_project_return_aftertax,nyears,nom_discount_rate) +  cf.at(CF_project_return_aftertax,0)) ));
 
 
@@ -3892,7 +3892,7 @@ public:
 
 
         // check financial metric outputs per SAM issue 551
-        ssc_number_t irr_metric_end = irr(CF_project_return_aftertax, nyears) * 100.0;
+        ssc_number_t irr_metric_end = libfin::irr(cf.row(CF_project_return_aftertax).to_vector(), nyears) * 100.0;
         ssc_number_t irr_metric_flip_year = cf.at(CF_project_return_aftertax_irr, flip_target_year);
         ssc_number_t npv_metric = npv(CF_project_return_aftertax, nyears, nom_discount_rate) + cf.at(CF_project_return_aftertax, 0);
 
@@ -4256,167 +4256,6 @@ public:
 
 		return result*rr;
 	}
-
-/* ported from http://code.google.com/p/irr-newtonraphson-calculator/ */
-	bool is_valid_iter_bound(double estimated_return_rate)
-	{
-		return estimated_return_rate != -1 && (estimated_return_rate < std::numeric_limits<int>::max()) && (estimated_return_rate > std::numeric_limits<int>::min());
-	}
-
-	double irr_poly_sum(double estimated_return_rate, int cf_line, int count)
-	{
-		double sum_of_polynomial = 0;
-		if (is_valid_iter_bound(estimated_return_rate))
-		{
-			for (int j = 0; j <= count ; j++)
-			{
-				double val = (pow((1 + estimated_return_rate), j));
-				if (val != 0.0)
-					sum_of_polynomial += cf.at(cf_line,j)/val;
-				else
-					break;
-			}
-		}
-		return sum_of_polynomial;
-	}
-
-	double irr_derivative_sum(double estimated_return_rate,int cf_line, int count)
-	{
-		double sum_of_derivative = 0;
-		if (is_valid_iter_bound(estimated_return_rate))
-			for (int i = 1; i <= count ; i++)
-			{
-				sum_of_derivative += cf.at(cf_line,i)*(i)/pow((1 + estimated_return_rate), i+1);
-			}
-		return sum_of_derivative*-1;
-	}
-
-	double irr_scale_factor( int cf_unscaled, int count)
-	{
-		// scale to max value for better irr convergence
-		if (count<1) return 1.0;
-		int i=0;
-		double max= std::abs(cf.at(cf_unscaled,0));
-		for (i=0;i<=count;i++)
-			if (std::abs(cf.at(cf_unscaled,i))> max) max = std::abs(cf.at(cf_unscaled,i));
-		return (max>0 ? max:1);
-	}
-
-	bool is_valid_irr( int cf_line, int count, double residual, double tolerance, int number_of_iterations, int max_iterations, double calculated_irr, double scale_factor )
-	{
-		double npv_of_irr = npv(cf_line,count,calculated_irr)+cf.at(cf_line,0);
-		double npv_of_irr_plus_delta = npv(cf_line,count,calculated_irr+0.001)+cf.at(cf_line,0);
-		bool is_valid = ( (number_of_iterations<max_iterations) && (std::abs(residual)<tolerance) && (npv_of_irr>npv_of_irr_plus_delta) && (std::abs(npv_of_irr/scale_factor)<tolerance) );
-				//if (!is_valid)
-				//{
-				//std::stringstream outm;
-				//outm <<  "cf_line=" << cf_line << "count=" << count << "residual=" << residual << "number_of_iterations=" << number_of_iterations << "calculated_irr=" << calculated_irr
-				//	<< "npv of irr=" << npv_of_irr << "npv of irr plus delta=" << npv_of_irr_plus_delta;
-				//log( outm.str() );
-				//}
-		return is_valid;
-	}
-
-	double irr( int cf_line, int count, double initial_guess=-2, double tolerance=1e-6, int max_iterations=100 )
-	{
-		int number_of_iterations=0;
-//		double calculated_irr = 0;
-		double calculated_irr = std::numeric_limits<double>::quiet_NaN();
-//		double calculated_irr = -999;
-
-
-		if (count < 1)
-			return calculated_irr;
-
-		// only possible for first value negative
-		if ( (cf.at(cf_line,0) <= 0))
-		{
-			// initial guess from http://zainco.blogspot.com/2008/08/internal-rate-of-return-using-newton.html
-			if ((initial_guess < -1) && (count > 1))// second order
-			{
-				if (cf.at(cf_line,0) !=0)
-				{
-					double b = 2.0+ cf.at(cf_line,1)/cf.at(cf_line,0);
-					double c = 1.0+cf.at(cf_line,1)/cf.at(cf_line,0)+cf.at(cf_line,2)/cf.at(cf_line,0);
-					initial_guess = -0.5*b - 0.5*sqrt(b*b-4.0*c);
-					if ((initial_guess <= 0) || (initial_guess >= 1)) initial_guess = -0.5*b + 0.5*sqrt(b*b-4.0*c);
-				}
-			}
-			else if (initial_guess < 0) // first order
-			{
-				if (cf.at(cf_line,0) !=0) initial_guess = -(1.0 + cf.at(cf_line,1)/cf.at(cf_line,0));
-			}
-
-			double scale_factor = irr_scale_factor(cf_line,count);
-			double residual=DBL_MAX;
-
-			calculated_irr = irr_calc(cf_line,count,initial_guess,tolerance,max_iterations,scale_factor,number_of_iterations,residual);
-
-			if (!is_valid_irr(cf_line,count,residual,tolerance,number_of_iterations,max_iterations,calculated_irr,scale_factor)) // try 0.1 as initial guess
-			{
-				initial_guess=0.1;
-				number_of_iterations=0;
-				residual=0;
-				calculated_irr = irr_calc(cf_line,count,initial_guess,tolerance,max_iterations,scale_factor,number_of_iterations,residual);
-			}
-
-			if (!is_valid_irr(cf_line,count,residual,tolerance,number_of_iterations,max_iterations,calculated_irr,scale_factor)) // try -0.1 as initial guess
-			{
-				initial_guess=-0.1;
-				number_of_iterations=0;
-				residual=0;
-				calculated_irr = irr_calc(cf_line,count,initial_guess,tolerance,max_iterations,scale_factor,number_of_iterations,residual);
-			}
-			if (!is_valid_irr(cf_line,count,residual,tolerance,number_of_iterations,max_iterations,calculated_irr,scale_factor)) // try 0 as initial guess
-			{
-				initial_guess=0;
-				number_of_iterations=0;
-				residual=0;
-				calculated_irr = irr_calc(cf_line,count,initial_guess,tolerance,max_iterations,scale_factor,number_of_iterations,residual);
-			}
-
-			if (!is_valid_irr(cf_line,count,residual,tolerance,number_of_iterations,max_iterations,calculated_irr,scale_factor)) // try 0.1 as initial guess
-			{
-//				calculated_irr = 0.0; // did not converge
-				calculated_irr = std::numeric_limits<double>::quiet_NaN(); // did not converge
-//				double calculated_irr = -999;
-			}
-
-		}
-		return calculated_irr;
-	}
-
-
-	double irr_calc( int cf_line, int count, double initial_guess, double tolerance, int max_iterations, double scale_factor, int &number_of_iterations, double &residual )
-	{
-//		double calculated_irr = 0;
-		double calculated_irr = std::numeric_limits<double>::quiet_NaN();
-//		double calculated_irr = -999;
-		double deriv_sum = irr_derivative_sum(initial_guess, cf_line, count);
-		if (deriv_sum != 0.0)
-			calculated_irr = initial_guess - irr_poly_sum(initial_guess,cf_line,count)/deriv_sum;
-		else
-			return initial_guess;
-
-		number_of_iterations++;
-
-
-		residual = irr_poly_sum(calculated_irr,cf_line,count) / scale_factor;
-
-		while (!(std::abs(residual) <= tolerance) && (number_of_iterations < max_iterations))
-		{
-			deriv_sum = irr_derivative_sum(initial_guess,cf_line,count);
-			if (deriv_sum != 0.0)
-				calculated_irr = calculated_irr - irr_poly_sum(calculated_irr,cf_line,count)/deriv_sum;
-			else
-				break;
-
-			number_of_iterations++;
-			residual = irr_poly_sum(calculated_irr,cf_line,count) / scale_factor;
-		}
-		return calculated_irr;
-	}
-
 
 	double min(double a, double b)
 	{ // handle NaN
