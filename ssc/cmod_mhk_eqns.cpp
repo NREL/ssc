@@ -103,8 +103,10 @@ bool tidal_turbine_calculate_powercurve(ssc_data_t data)
     double generator_rated_capacity = 0;
     double target_cf = 0;
     util::matrix_t<double> tidal_resource;
+    util::matrix_t<double> tidal_vel_freq;
     std::vector<double> pto_efficiency;
     std::vector<double> max_cp;
+    double tidal_resource_model_choice = 0;
 
     try {
         vt_get_number(vt, "tidal_turbine_rotor_diameter", &rotor_diameter);     // ssc input
@@ -115,6 +117,8 @@ bool tidal_turbine_calculate_powercurve(ssc_data_t data)
         vt_get_number(vt, "cut_out", &cut_out);
         vt_get_number(vt, "target_cf", &target_cf);
         vt_get_matrix(vt, "tidal_resource", tidal_resource);
+        vt_get_number(vt, "tidal_resource_model_choice", &tidal_resource_model_choice);
+        vt_get_matrix(vt, "tidal_vel_freq", tidal_vel_freq);
         //vt_get_number(vt, "generator_rated_capacity", &generator_rated_capacity);
         //vt_get_number(vt, "tidal_turbine_target_cf", &target_cf);
 
@@ -130,9 +134,11 @@ bool tidal_turbine_calculate_powercurve(ssc_data_t data)
     util::matrix_t<ssc_number_t> powercurve_hub_efficiency;
 
     char errmsg[250];
-
-
-    size_t array_size = tidal_resource.nrows();
+    size_t array_size = 0;
+    if (tidal_resource_model_choice == 0)
+        array_size = tidal_resource.nrows();
+    else
+        array_size = tidal_vel_freq.nrows();
 
     powercurve_tidespeeds.resize(array_size);
     powercurve_powerout.resize(array_size);
@@ -142,9 +148,17 @@ bool tidal_turbine_calculate_powercurve(ssc_data_t data)
     double tidal_vel, p_fluid, p_rotor, eff, p_electric;
     double tidal_freq = 0;
     double max_cp_value, pto_eff_value;
+
+
     for (size_t i = 0; i < array_size; i += 1) {
-        tidal_vel = tidal_resource.at(i, 0);
-        tidal_freq = tidal_resource.at(i, 1);
+        if (tidal_resource_model_choice == 0) {
+            tidal_vel = tidal_resource.at(i, 0);
+            tidal_freq = tidal_resource.at(i, 1);
+        }
+        else {
+            tidal_vel = tidal_vel_freq.at(i, 0);
+            tidal_freq = tidal_vel_freq.at(i, 1);
+        }
         p_fluid = 0.5 * pow(tidal_vel, 3) * 1.025 * rotor_area;
 
         if (max_cp.size() == 1) {
