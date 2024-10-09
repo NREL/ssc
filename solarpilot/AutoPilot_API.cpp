@@ -944,10 +944,10 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
     //Number of variables to be optimized
 	int nvars = (int)optvars.size();
 	
-    //the initial normalized point is '1'
-	vector<double> start(nvars);
+    //NLopt optimization variable values
+	vector<double> var_values(nvars);
     for(int i=0; i<(int)optvars.size(); i++)
-        start.at(i) = *optvars.at(i);
+        var_values.at(i) = *optvars.at(i);
 
     //Check feasibility
     int itct = 0;
@@ -965,7 +965,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
             if (AO.m_flux.back().at(itct) > rit->peak_flux.val)
             {
                 feas_mult += (AO.m_flux.back().at(itct) / rit->peak_flux.val - 1.)*3.;
-                start.at(iht) *= feas_mult;
+                var_values.at(iht) *= feas_mult;
                 _summary_siminfo->addSimulationNotice("Modifying initial receiver height for feasibility");
             }
         }
@@ -1020,29 +1020,22 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
 
     double fmin;
     try{
-       nlobj.optimize( start, fmin );
+       nlobj.optimize(var_values, fmin );       //
         _summary_siminfo->addSimulationNotice( ol.str() );
         
-        //int iopt = 0;
-        int iopt = (int)AO.m_objective.size() - 1;
-        auto it = find(AO.m_objective.begin(), AO.m_objective.end(), fmin);
-        if (it != AO.m_objective.end()) {
-            iopt = it - AO.m_objective.begin();
-        }
-
         //write the optimal point found
         ostringstream oo;
         oo << "Algorithm converged:\n";
         for(int i=0; i<(int)optvars.size(); i++)
-            oo << (names == 0 ? "" : names->at(i) + "=" ) << setw(8) << AO.m_all_points.at(iopt).at(i) << "   ";
+            oo << (names == 0 ? "" : names->at(i) + "=" ) << setw(8) << var_values.at(i) << "   ";
         oo << "\nObjective: " << fmin;
         _summary_siminfo->addSimulationNotice(oo.str() );
 
         //Set vars to optimal point
         double* opt_x = new double[(int)optvars.size()];
         for (int i = 0; i < (int)optvars.size(); i++) {
-            *optvars.at(i) = AO.m_all_points.at(iopt).at(i);
-            opt_x[i] = AO.m_all_points.at(iopt).at(i);
+            *optvars.at(i) = var_values.at(i);
+            opt_x[i] = var_values.at(i);
         }
         var_map* V = AO.m_variables;
         if (V->recs.front().rec_type.mapval() == var_receiver::REC_TYPE::FALLING_PARTICLE)
