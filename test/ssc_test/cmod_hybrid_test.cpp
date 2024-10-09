@@ -153,7 +153,7 @@ TEST_F(CmodHybridTest, PVWattsv8WindBatteryHostDeveloper) {
     dat = nullptr;
 }
 
-TEST_F(CmodHybridTest, GenericPVWattsWindFuelCellBatteryHybrid_SingleOwner) {
+TEST_F(CmodHybridTest, CustomGenerationPVWattsWindFuelCellBatteryHybrid_SingleOwner) {
     char file_path[256];
     int nfc1 = sprintf(file_path, "%s/test/input_json/hybrids/Generic PVWatts Wind FuelCell Battery Hybrid_Single Owner.json", SSCDIR);
     std::ifstream file(file_path);
