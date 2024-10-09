@@ -256,5 +256,5 @@ public:
 	} // exec
 };
 
-DEFINE_MODULE_ENTRY( custom_generation, "Custom Generation Profile", 1 );
+DEFINE_MODULE_ENTRY( custom_generation, "Custom Generation Profile (formerly Generic System)", 1 );
 
