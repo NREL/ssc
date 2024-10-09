@@ -48,7 +48,7 @@ static var_info _cm_vtab_custom_generation[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "energy_output_array",        "Array of Energy Output Profile",      "kW",           "",      "Plant",      "spec_mode=1",     "",                    "" },
 
 	// optional for lifetime analysis
-	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",                  "Generic lifetime simulation",                               "0/1",      "",                              "Lifetime",             "?=0",                        "INTEGER,MIN=0,MAX=1",          "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",                  "Custom generation profile lifetime simulation",                               "0/1",      "",                              "Lifetime",             "?=0",                        "INTEGER,MIN=0,MAX=1",          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                             "Lifetime analysis period",                             "years",    "",                              "Lifetime",             "system_use_lifetime_output=1",   "",                             "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "generic_degradation",                              "Annual AC degradation",                            "%/year",   "",                              "Lifetime",             "system_use_lifetime_output=1",   "",                             "" },
 
@@ -92,7 +92,7 @@ public:
 		// Warning workaround
 		static bool is32BitLifetime = (__ARCHBITS__ == 32 &&	system_use_lifetime_output);
 		if (is32BitLifetime)
-		throw exec_error( "generic", "Lifetime simulation of generic systems is only available in the 64 bit version of SAM.");
+		throw exec_error( "custom_generation", "Lifetime simulation of custom generation profile systems is only available in the 64 bit version of SAM.");
 
 		// Lifetime setup
 		ssc_number_t *enet = nullptr;
@@ -120,7 +120,7 @@ public:
 
 		adjustment_factors haf(this, "adjust");
 		if (!haf.setup(nrec_load, nyears))
-			throw exec_error("generic system", "failed to setup adjustment factors: " + haf.error());
+			throw exec_error("custom_generation", "failed to setup adjustment factors: " + haf.error());
 
 		if (system_use_lifetime_output)
 		{
@@ -175,11 +175,11 @@ public:
 			size_t steps_per_hour_gen = nrec_gen / 8760;
 
 			if (!enet_in) {
-				throw exec_error("generic", util::format("energy_output_array variable had no values."));
+				throw exec_error("custom_generation", util::format("energy_output_array variable had no values."));
 			}
 
 			if (nrec_gen < nrec_load) {
-				throw exec_error("generic", util::format("energy_output_array %d must be greater than or equal to load array %d", nrec_gen, nrec_load));
+				throw exec_error("custom_generation", util::format("energy_output_array %d must be greater than or equal to load array %d", nrec_gen, nrec_load));
 			}
 			else {
 				nlifetime = nrec_gen * nyears;

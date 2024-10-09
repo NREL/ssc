@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "cmod_custom_generation_test.h"
 
-/// Test Generic System with Battery for SingleOwner PPA
+/// Test Custom Generation Profile with Battery for SingleOwner PPA
 TEST_F(CMCustomGeneration, SingleOwnerWithBattery_cmod_custom_generation) {
 
 	custom_generation_singleowner_battery_60min(data);
