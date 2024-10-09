@@ -55,13 +55,10 @@ static var_info _cm_vtab_singleowner[] = {
 
 
 	{ SSC_INPUT,        SSC_ARRAY,       "gen",                                         "Net power to or from the grid",                            "kW",       "",                    "System Output", "*", "", "" },
-    { SSC_INPUT,        SSC_ARRAY,       "gen_without_battery",                          "Electricity to or from the renewable system, without the battery", "kW", "",                     "System Output", "", "", "" },
+    { SSC_INPUT,        SSC_ARRAY,      "gen_without_battery",                          "Electricity to or from the renewable system, without the battery", "kW", "",                     "System Output", "", "", "" },
 
-	{ SSC_INPUT,        SSC_ARRAY,       "degradation", "Annual energy degradation", "", "", "System Output", "system_use_lifetime_output=0", "", "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "system_capacity",			                 "System nameplate capacity",		                               "kW",                "",                        "System Output",             "?=0",					   "",                      "" },
-
-    { SSC_INPUT,        SSC_NUMBER,      "annual_electricity_consumption",          "Annual electricity consumption w/ avail derate",              "kWe-hr",       "",               "Heat Model Output",          "?=0",                "",              ""},
-
+	{ SSC_INPUT,        SSC_ARRAY, "degradation", "Annual energy degradation", "", "", "System Output", "system_use_lifetime_output=0", "", "" },
+	{ SSC_INPUT,        SSC_NUMBER,     "system_capacity",			              "System nameplate capacity",		                               "kW",                "",                        "System Output",             "?=0",					   "",                      "" },
 
 	/* PPA Buy Rate values */
 	{ SSC_INPUT, SSC_ARRAY, "utility_bill_w_sys", "Electricity bill with system", "$", "", "Utility Bill", "", "", "" },
@@ -544,10 +541,7 @@ static var_info _cm_vtab_singleowner[] = {
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_production2_expense",              "O&M fuel cell production-based expense",       "$",            "",            "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_capacity2_expense",                "O&M fuel cell capacity-based expense",         "$",            "",            "Cash Flow Expenses",      "",                     "LENGTH_EQUAL=cf_length",                "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_fuel_expense",                     "Fuel expense",                   "$",            "",                          "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_elec_price_for_heat_techs",        "Electricity expense in heat models", "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
-
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_opt_fuel_1_expense",               "Feedstock biomass expense",                   "$",            "",             "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_opt_fuel_1_expense",               "Feedstock biomass expense",                   "$",            "",             "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_om_opt_fuel_2_expense",               "Feedstock coal expense",                   "$",            "",                "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_property_tax_assessed_value",         "Property tax net assessed value", "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -694,7 +688,6 @@ enum {
 	CF_om_production2_expense,
 	CF_om_capacity2_expense,
 	CF_om_fuel_expense,
-    CF_om_elec_price_for_heat_techs,
 
 	CF_om_opt_fuel_2_expense,
 	CF_om_opt_fuel_1_expense,
@@ -865,8 +858,6 @@ enum {
     CF_energy_sales,
     CF_energy_purchases,
 
-    CF_elec_purchases_for_heat_techs,
-
     CF_energy_without_battery,
 
 	CF_battery_discharged,
@@ -1014,8 +1005,6 @@ public:
 		// In conjunction with SAM - take installed costs and salestax costs (for deducting if necessary)
 		double cost_prefinancing = as_double("total_installed_cost");
 
-        double annual_electricity_consumption_heat_model = as_double("annual_electricity_consumption");
-
 		// use named range names for variables whenever possible
 		double nameplate = as_double("system_capacity");
 		double year1_fuel_use = as_double("annual_fuel_usage"); // kWht
@@ -1060,8 +1049,6 @@ public:
 		escal_or_annual( CF_om_production_expense, nyears, "om_production", inflation_rate, 0.001, false, as_double("om_production_escal")*0.01 );
 		escal_or_annual( CF_om_capacity_expense, nyears, "om_capacity", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01 );
 		escal_or_annual( CF_om_fuel_expense, nyears, "om_fuel_cost", inflation_rate, as_double("system_heat_rate")*0.001, false, as_double("om_fuel_cost_escal")*0.01 );
-
-        escal_or_annual(CF_om_elec_price_for_heat_techs, nyears, "om_elec_price_for_heat_techs", inflation_rate, 1.0, false, as_double("om_elec_price_for_heat_techs_escal")*0.01 ); 
 
 		escal_or_annual( CF_om_opt_fuel_1_expense, nyears, "om_opt_fuel_1_cost", inflation_rate, 1.0, false, as_double("om_opt_fuel_1_cost_escal")*0.01 );
 		escal_or_annual( CF_om_opt_fuel_2_expense, nyears, "om_opt_fuel_2_cost", inflation_rate, 1.0, false, as_double("om_opt_fuel_2_cost_escal")*0.01 );
@@ -1199,7 +1186,6 @@ public:
 		double first_year_energy = 0.0;
         double first_year_sales = 0.0;
         double first_year_purchases = 0.0;
-        double first_year_elec_purchases_for_heat_techs = as_double("annual_electricity_consumption");       //[kWe-hr]
 
 
 		// degradation
@@ -1230,9 +1216,6 @@ public:
 		// dispatch
 		if (as_integer("system_use_lifetime_output") == 1)
 		{
-            if (first_year_elec_purchases_for_heat_techs > 0.0)
-                throw exec_error("singleowner", "system_use_lifetime_output must be 0 if using electricity purchases for heat technologies option");
-
 			// hourly_enet includes all curtailment, availability
 			for (size_t y = 1; y <= (size_t)nyears; y++)
 			{
@@ -1254,12 +1237,10 @@ public:
 			cf.at(CF_energy_net, 1) = first_year_energy;
             cf.at(CF_energy_sales, 1) = first_year_sales;
             cf.at(CF_energy_purchases, 1) = first_year_purchases;
-            cf.at(CF_elec_purchases_for_heat_techs, 1) = first_year_elec_purchases_for_heat_techs;
             for (i = 1; i <= nyears; i++) {
                 cf.at(CF_energy_net, i) = first_year_energy * cf.at(CF_degradation, i);
                 cf.at(CF_energy_sales, i) = first_year_sales * cf.at(CF_degradation, i);
                 cf.at(CF_energy_purchases, i) = first_year_purchases * cf.at(CF_degradation, i);
-                cf.at(CF_elec_purchases_for_heat_techs, i) = first_year_elec_purchases_for_heat_techs * cf.at(CF_degradation, i);
             }
 
 		}
@@ -1413,8 +1394,6 @@ public:
 			cf.at(CF_om_capacity1_expense, i) *= nameplate1;
 			cf.at(CF_om_capacity2_expense, i) *= nameplate2;
 			cf.at(CF_om_fuel_expense,i) *= fuel_use[i-1];
-
-            cf.at(CF_om_elec_price_for_heat_techs, i) *= cf.at(CF_elec_purchases_for_heat_techs, i);
 
             //Battery Production OM Costs
             cf.at(CF_om_production1_expense, i) *= battery_discharged[i - 1]; //$/MWh * 0.001 MWh/kWh * kWh = $
@@ -1629,7 +1608,6 @@ public:
                 + cf.at(CF_om_production2_expense, i)
                 + cf.at(CF_om_capacity2_expense, i)
                 + cf.at(CF_om_fuel_expense, i)
-                + cf.at(CF_om_elec_price_for_heat_techs, i)
                 + cf.at(CF_om_opt_fuel_1_expense, i)
                 + cf.at(CF_om_opt_fuel_2_expense, i)
                 + cf.at(CF_land_lease_expense, i)
@@ -3470,7 +3448,6 @@ public:
         }
 
 		save_cf( CF_om_fuel_expense, nyears, "cf_om_fuel_expense" );
-        save_cf( CF_om_elec_price_for_heat_techs, nyears, "cf_om_elec_price_for_heat_techs");
 		save_cf( CF_om_opt_fuel_1_expense, nyears, "cf_om_opt_fuel_1_expense" );
 		save_cf( CF_om_opt_fuel_2_expense, nyears, "cf_om_opt_fuel_2_expense" );
         save_cf(CF_land_lease_expense, nyears, "cf_land_lease_expense");
@@ -3898,12 +3875,11 @@ public:
 		double pvFixedOandM = npv(CF_om_capacity_expense, nyears, nom_discount_rate);
 		double pvVariableOandM = npv(CF_om_production_expense, nyears, nom_discount_rate);
 		double pvFuelOandM = npv(CF_om_fuel_expense, nyears, nom_discount_rate);
-        double pvElec_price_for_heat_techs = npv(CF_om_elec_price_for_heat_techs, nyears, nom_discount_rate);
 		double pvOptFuel1OandM = npv(CF_om_opt_fuel_1_expense, nyears, nom_discount_rate);
 		double pvOptFuel2OandM = npv(CF_om_opt_fuel_2_expense, nyears, nom_discount_rate);
 	//	double pvWaterOandM = NetPresentValue(sv[svNominalDiscountRate], cf[cfAnnualWaterCost], analysis_period);
 
-		assign( "present_value_oandm",  var_data((ssc_number_t)(pvAnnualOandM + pvFixedOandM + pvVariableOandM + pvFuelOandM + pvElec_price_for_heat_techs))); // + pvWaterOandM);
+		assign( "present_value_oandm",  var_data((ssc_number_t)(pvAnnualOandM + pvFixedOandM + pvVariableOandM + pvFuelOandM))); // + pvWaterOandM);
 
 		assign( "present_value_oandm_nonfuel", var_data((ssc_number_t)(pvAnnualOandM + pvFixedOandM + pvVariableOandM)));
 		assign( "present_value_fuel", var_data((ssc_number_t)(pvFuelOandM + pvOptFuel1OandM + pvOptFuel2OandM)));
