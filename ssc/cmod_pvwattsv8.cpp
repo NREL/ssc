@@ -947,7 +947,7 @@ public:
                 else if (0 != code)
                     throw exec_error("pvwattsv8",
                         util::format("Failed to process irradiation on surface (message: %s) [year:%d month:%d day:%d hour:%d minute:%lg].",
-                            code, irr.getErrorCode().c_str(), wf.year, wf.month, wf.day, wf.hour, wf.minute));
+                            irr.getErrorMessage().c_str(), wf.year, wf.month, wf.day, wf.hour, wf.minute));
 
                 p_sunup[idx] = (ssc_number_t)sunup;
                 p_aoi[idx] = (ssc_number_t)aoi;
