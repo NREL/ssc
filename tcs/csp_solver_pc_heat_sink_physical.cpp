@@ -112,41 +112,42 @@ void C_pc_heat_sink_physical::init(C_csp_power_cycle::S_solved_params &solved_pa
 	}
 
     // USER INPUTS
-    int m_N_sub_hx = 2000;                        // This should be user input
-    double T_steam_cold = 60;                   //[C] User defined steam inlet temperature design
-    double T_steam_hot = 95;                   //[C] User defined steam outlet temperature design
-    double P_steam_cold = 100;                  //[kPa] User defined steam inlet pressure
-    double P_steam_hot = 100;                   //[kPa] User defined steam outlet pressure
-    double mdot_steam_min = 0.1;                //[kg/s]
-    double mdot_steam_max = 10;                 //[kg/s]
-
+    //int m_N_sub_hx = 2000;                        // This should be user input
+    //double T_steam_cold = 60;                   //[C] User defined steam inlet temperature design
+    //double T_steam_hot = 95;                   //[C] User defined steam outlet temperature design
+    //double P_steam_cold = 100;                  //[kPa] User defined steam inlet pressure
+    //double P_steam_hot = 100;                   //[kPa] User defined steam outlet pressure
+    //double mdot_steam_min = 0.1;                //[kg/s]
+    //double mdot_steam_max = 10;                 //[kg/s]
 
     // Define Heat Exchanger 
     NS_HX_counterflow_eqs::E_UA_target_type target_type = NS_HX_counterflow_eqs::E_UA_target_type::E_calc_UA;
-    m_hx.initialize(ms_params.m_pc_fl, ms_params.m_pc_fl_props, m_N_sub_hx, target_type);
+    this->m_hx.initialize(ms_params.m_pc_fl, ms_params.m_pc_fl_props, ms_params.m_N_sub_hx, target_type);
 
     // Define design point parameters
     C_HX_counterflow_CRM::S_des_calc_UA_par des_par;
     des_par.m_T_h_in = ms_params.m_T_htf_hot_des + 273.15;  // [K] HTF Hot Inlet Design
     des_par.m_P_h_in = 1.0;                                 // Assuming HTF is incompressible...
     des_par.m_P_h_out = 1.0;                                // Assuming HTF is incompressible...
-    des_par.m_T_c_in = T_steam_cold + 273.15;               // [K] Cold Steam inlet temperature
-    des_par.m_P_c_in = P_steam_cold;                        // [kPa] Cold Steam inlet pressure
-    des_par.m_P_c_out = P_steam_hot;                        // [kPa] Cold Steam outlet pressure
-    des_par.m_m_dot_cold_des = std::numeric_limits<double>::quiet_NaN();    // Steam mdot?
+    des_par.m_T_c_in = ms_params.m_T_ext_cold_des + 273.15; // [K] Cold Steam inlet temperature
+    des_par.m_P_c_in = ms_params.m_P_ext_cold_des;          // [kPa] Cold Steam inlet pressure
+    des_par.m_P_c_out = ms_params.m_P_ext_hot_des;          // [kPa] Cold Steam outlet pressure
+    des_par.m_m_dot_cold_des = std::numeric_limits<double>::quiet_NaN();
     des_par.m_m_dot_hot_des = std::numeric_limits<double>::quiet_NaN();
     des_par.m_eff_max = 1.0;
 
     // Design HX
     C_HX_counterflow_CRM::S_des_solved des_solved;
-    m_hx.design_w_temps(des_par, ms_params.m_q_dot_des * 1e3,
-                        ms_params.m_T_htf_cold_des + 273.15, T_steam_hot + 273.15, des_solved);
+    this->m_hx.design_w_temps(des_par, ms_params.m_q_dot_des * 1e3, ms_params.m_T_htf_cold_des + 273.15,
+                        ms_params.m_T_ext_hot_des + 273.15, des_solved);
 
+    // Assign Design External mdot
+    this->m_m_dot_ext_des = des_par.m_m_dot_cold_des;                               //[kg/s]
+    this->m_m_dot_ext_min = this->m_m_dot_ext_des * ms_params.m_f_m_dot_ext_min;    //[kg/s]
+    this->m_m_dot_ext_max = this->m_m_dot_ext_des * ms_params.m_f_m_dot_ext_max;    //[kg/s]
 
-	// Calculate the design point HTF mass flow rate
-	double cp_htf_des = mc_pc_htfProps.Cp_ave(ms_params.m_T_htf_cold_des+273.15, ms_params.m_T_htf_hot_des+273.15);	//[kJ/kg-K]
-
-	m_m_dot_htf_des = ms_params.m_q_dot_des*1.E3 / (cp_htf_des*(ms_params.m_T_htf_hot_des - ms_params.m_T_htf_cold_des));	//[kg/s]
+	// Assign Design HTF mdot
+    this->m_m_dot_htf_des = des_par.m_m_dot_hot_des;	//[kg/s]
 
 	// Set 'solved_params' structure
 	solved_params.m_W_dot_des = 0.0;		//[MWe] Assuming heat sink is not generating electricity FOR THIS MODEL
@@ -154,7 +155,7 @@ void C_pc_heat_sink_physical::init(C_csp_power_cycle::S_solved_params &solved_pa
 	solved_params.m_q_dot_des = ms_params.m_q_dot_des;	//[MWt]
 	solved_params.m_q_startup = 0.0;		//[MWt-hr] Assuming heat sink does not require any startup energy
 	
-    m_max_frac = ms_params.m_max_frac;      //[-]
+    this->m_max_frac = ms_params.m_max_frac;      //[-]
 	solved_params.m_max_frac = m_max_frac;	//[-] For now (set in constructor), make this really large so heat sink can handle any collector-receiver output
 	solved_params.m_max_frac = 1.0;			//[-]
 
@@ -253,14 +254,14 @@ void C_pc_heat_sink_physical::call(const C_csp_weatherreader::S_outputs &weather
 	const C_csp_solver_sim_info &sim_info)
 {
     // User Inputs
-    int m_N_sub_hx = 100;                      // This should be user input
-    double T_steam_cold = 60;                   //[C] User defined steam inlet temperature design
-    double T_steam_hot = 90;                    //[C] User defined steam outlet temperature design
-    double P_steam_cold = 100;                  //[kPa] User defined steam inlet pressure
-    double P_steam_hot = 100;                   //[kPa] User defined steam outlet pressure
-    double mdot_steam_min = 0.1;                //[kg/s]
-    double mdot_steam_max = 10;                 //[kg/s]
-    double od_tol = 1e-3;
+    //int m_N_sub_hx = 100;                      // This should be user input
+    //double T_steam_cold = 60;                   //[C] User defined steam inlet temperature design
+    //double T_steam_hot = 90;                    //[C] User defined steam outlet temperature design
+    //double P_steam_cold = 100;                  //[kPa] User defined steam inlet pressure
+    //double P_steam_hot = 100;                   //[kPa] User defined steam outlet pressure
+    //double mdot_steam_min = 0.1;                //[kg/s]
+    //double mdot_steam_max = 10;                 //[kg/s]
+    //double od_tol = 1e-3;
 
     // Process inputs
     double m_dot_htf = inputs.m_m_dot / 3600.0;	//[kg/s]
@@ -289,8 +290,11 @@ void C_pc_heat_sink_physical::call(const C_csp_weatherreader::S_outputs &weather
         {
             try
             {
-                m_hx.off_design_target_T_cold_out(T_steam_hot + 273.15, T_steam_cold + 273.15, P_steam_cold, P_steam_hot,
-                    htf_state_in.m_temp + 273.15, 1.0, m_dot_htf, 1.0, od_tol, q_dot, T_c_out, T_h_out, m_dot_c);
+                m_hx.off_design_target_T_cold_out(ms_params.m_T_ext_hot_des + 273.15,
+                    m_m_dot_ext_min, m_m_dot_ext_max,
+                    ms_params.m_T_ext_cold_des + 273.15,
+                    ms_params.m_P_ext_cold_des, ms_params.m_P_ext_hot_des,
+                    htf_state_in.m_temp + 273.15, 1.0, m_dot_htf, 1.0, ms_params.m_od_tol, q_dot, T_c_out, T_h_out, m_dot_c);
 
                 out_solver.m_P_cycle = 0.0;		//[MWe] No electricity generation
                 out_solver.m_T_htf_cold = T_h_out - 273.15;		//[C]

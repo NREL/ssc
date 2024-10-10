@@ -750,10 +750,46 @@ public:
 
     virtual void initialize(int hot_fl, int N_sub_hx, NS_HX_counterflow_eqs::E_UA_target_type od_UA_target_type);
 
-    void off_design_target_T_cold_out(double T_c_out_target /*K*/, double T_c_in /*K*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/,
+    void off_design_target_T_cold_out(double T_c_out_target /*K*/,
+        double m_dot_c_min /*kg/s*/, double m_dot_c_max /*kg/s*/,
+        double T_c_in /*K*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/,
         double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
         double od_tol /*-*/,
         double& q_dot /*kWt*/, double& T_c_out /*K*/, double& T_h_out /*K*/, double& m_dot_c /*kg/s*/);
+
+    class C_MEQ__target_T_c_out : public C_monotonic_equation
+    {
+    private:
+        C_HX_counterflow_CRM* mpc_hx;
+
+        double m_T_c_out_target;    //[K]
+        double m_T_c_in;    //[K]
+        double m_P_c_in;    //[kPa]
+        double m_T_h_in;    //[K]
+        double m_P_h_in;    //[kPa]
+        double m_m_dot_h;   //[kg/s]
+
+        double m_tol;       //[-]
+        
+    public:
+
+        C_MEQ__target_T_c_out(C_HX_counterflow_CRM* pc_hx,
+            double T_c_out_target,
+            double T_c_in, double P_c_in,
+            double T_h_in, double P_h_in,
+            double m_dot_h,
+            double tol)
+            : m_T_c_out_target(T_c_out_target),
+            m_T_c_in(T_c_in), m_P_c_in(P_c_in),
+            m_T_h_in(T_h_in), m_P_h_in(P_h_in),
+            m_m_dot_h(m_dot_h), m_tol(tol)
+        {
+            mpc_hx = pc_hx;
+        }
+
+        virtual int operator()(double m_dot_c /*kg/s*/, double* diff_T_c_out /*C/K*/);
+    
+    };
 
 };
 

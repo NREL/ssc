@@ -2649,26 +2649,38 @@ void C_HX_water_to_htf::design_w_temps(C_HX_counterflow_CRM::S_des_calc_UA_par& 
 
 }
 
-void C_HX_water_to_htf::off_design_target_T_cold_out(double T_c_out_target /*K*/, double T_c_in /*K*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/,
+void C_HX_water_to_htf::off_design_target_T_cold_out(double T_c_out_target /*K*/,
+    double m_dot_c_min /*kg/s*/, double m_dot_c_max /*kg/s*/,
+    double T_c_in /*K*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/,
     double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
     double od_tol,
     double& q_dot, double& T_c_out /*K*/, double& T_h_out /*K*/, double& m_dot_c /*kg/s*/)
 {
-    double mdot_steam_max = 40;
-    double mdot_steam_min = 0.1;
     double mdot_guess = 20;
 
 
     double q_dot_local, T_c_out_local, T_h_out_local, m_dot_c_local;
     double P_c_out_local, P_h_out_local;
 
+
+    C_MEQ__target_T_c_out T_out_eq(this, T_c_out_target, T_c_in, P_c_in, T_h_in, P_h_in, m_dot_h, od_tol);
+    C_monotonic_eq_solver T_out_solver(T_out_eq);
+
+    double solver_tol = 1e-3;
+    T_out_solver.settings(solver_tol, 1000, m_dot_c_min, m_dot_c_max, false);
+
+    double m_dot_c_solved, tol_solved;
+    int iter_solved = -1;
+
+    int m_dot_out_code = T_out_solver.solve(m_dot_c_min, m_dot_c_max, 0, m_dot_c_solved, tol_solved, iter_solved);
+
     //off_design_solution_fixed_dP(T_c_in, P_c_in, mdot_guess, P_c_out, T_h_in, P_h_in, m_dot_h, P_h_out, od_tol,
     //                             q_dot_local, T_c_out_local, T_h_out_local);
 
-    off_design_solution_calc_dP(T_c_in, P_c_in, mdot_guess, T_h_in, P_h_in, m_dot_h, od_tol,
-        q_dot_local, T_c_out_local, P_c_out_local, T_h_out_local, P_h_out_local);
+    //off_design_solution_calc_dP(T_c_in, P_c_in, mdot_guess, T_h_in, P_h_in, m_dot_h, od_tol,
+    //   q_dot_local, T_c_out_local, P_c_out_local, T_h_out_local, P_h_out_local);
 
-    double T_c_out_calc = T_c_out_local;
+
 
 
     q_dot = q_dot_local;
@@ -2676,6 +2688,20 @@ void C_HX_water_to_htf::off_design_target_T_cold_out(double T_c_out_target /*K*/
     T_h_out = T_h_out_local;
     m_dot_c = mdot_guess;
 }
+
+int C_HX_water_to_htf::C_MEQ__target_T_c_out::operator()(double m_dot_c /*kg/s*/, double* diff_T_c_out /*C/K*/)
+{
+    double q_dot_local, T_c_out_local, T_h_out_local, m_dot_c_local;
+    double P_c_out_local, P_h_out_local;
+
+    mpc_hx->off_design_solution_calc_dP(m_T_c_in, m_P_c_in, m_dot_c, m_T_h_in, m_P_h_in, m_m_dot_h, m_tol,
+        q_dot_local, T_c_out_local, P_c_out_local, T_h_out_local, P_h_out_local);
+
+    *diff_T_c_out = T_c_out_local - m_T_c_out_target;   //[C/K]
+
+    return 0;
+}
+
 
 double NS_HX_counterflow_eqs::UA_scale_vs_m_dot(double m_dot_cold_over_des /*-*/, double m_dot_hot_over_des /*-*/)
 {
@@ -4213,3 +4239,4 @@ double C_CO2_to_air_cooler::air_pressure(double elevation /*m*/)
 	// http://www.engineeringtoolbox.com/air-altitude-pressure-d_462.html	
 	return 101325.0*pow(1 - 2.25577E-5*elevation, 5.25588);	//[Pa] 
 }
+
