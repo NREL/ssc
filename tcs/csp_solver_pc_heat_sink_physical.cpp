@@ -79,9 +79,6 @@ void C_pc_heat_sink_physical::init(C_csp_power_cycle::S_solved_params &solved_pa
 {
 	check_double_params_are_set();
 
-    // Define initial HX parameters
-    //S_init_par 
-
 	// Declare instance of fluid class for FIELD fluid
 	if( ms_params.m_pc_fl != HTFProperties::User_defined && ms_params.m_pc_fl < HTFProperties::End_Library_Fluids )
 	{
@@ -113,6 +110,38 @@ void C_pc_heat_sink_physical::init(C_csp_power_cycle::S_solved_params &solved_pa
 	{
 		throw(C_csp_exception("Power cycle HTF code is not recognized", "Heat Sink Initialization"));
 	}
+
+    // USER INPUTS
+    int m_N_sub_hx = 2000;                        // This should be user input
+    double T_steam_cold = 60;                   //[C] User defined steam inlet temperature design
+    double T_steam_hot = 95;                   //[C] User defined steam outlet temperature design
+    double P_steam_cold = 100;                  //[kPa] User defined steam inlet pressure
+    double P_steam_hot = 100;                   //[kPa] User defined steam outlet pressure
+    double mdot_steam_min = 0.1;                //[kg/s]
+    double mdot_steam_max = 10;                 //[kg/s]
+
+
+    // Define Heat Exchanger 
+    NS_HX_counterflow_eqs::E_UA_target_type target_type = NS_HX_counterflow_eqs::E_UA_target_type::E_calc_UA;
+    m_hx.initialize(ms_params.m_pc_fl, ms_params.m_pc_fl_props, m_N_sub_hx, target_type);
+
+    // Define design point parameters
+    C_HX_counterflow_CRM::S_des_calc_UA_par des_par;
+    des_par.m_T_h_in = ms_params.m_T_htf_hot_des + 273.15;  // [K] HTF Hot Inlet Design
+    des_par.m_P_h_in = 1.0;                                 // Assuming HTF is incompressible...
+    des_par.m_P_h_out = 1.0;                                // Assuming HTF is incompressible...
+    des_par.m_T_c_in = T_steam_cold + 273.15;               // [K] Cold Steam inlet temperature
+    des_par.m_P_c_in = P_steam_cold;                        // [kPa] Cold Steam inlet pressure
+    des_par.m_P_c_out = P_steam_hot;                        // [kPa] Cold Steam outlet pressure
+    des_par.m_m_dot_cold_des = std::numeric_limits<double>::quiet_NaN();    // Steam mdot?
+    des_par.m_m_dot_hot_des = std::numeric_limits<double>::quiet_NaN();
+    des_par.m_eff_max = 1.0;
+
+    // Design HX
+    C_HX_counterflow_CRM::S_des_solved des_solved;
+    m_hx.design_w_temps(des_par, ms_params.m_q_dot_des * 1e3,
+                        ms_params.m_T_htf_cold_des + 273.15, T_steam_hot + 273.15, des_solved);
+
 
 	// Calculate the design point HTF mass flow rate
 	double cp_htf_des = mc_pc_htfProps.Cp_ave(ms_params.m_T_htf_cold_des+273.15, ms_params.m_T_htf_hot_des+273.15);	//[kJ/kg-K]
@@ -223,33 +252,99 @@ void C_pc_heat_sink_physical::call(const C_csp_weatherreader::S_outputs &weather
 	C_csp_power_cycle::S_csp_pc_out_solver &out_solver,
 	const C_csp_solver_sim_info &sim_info)
 {
-	double T_htf_hot = htf_state_in.m_temp;		//[C]
-	double m_dot_htf = inputs.m_m_dot/3600.0;	//[kg/s]
+    // User Inputs
+    int m_N_sub_hx = 100;                      // This should be user input
+    double T_steam_cold = 60;                   //[C] User defined steam inlet temperature design
+    double T_steam_hot = 90;                    //[C] User defined steam outlet temperature design
+    double P_steam_cold = 100;                  //[kPa] User defined steam inlet pressure
+    double P_steam_hot = 100;                   //[kPa] User defined steam outlet pressure
+    double mdot_steam_min = 0.1;                //[kg/s]
+    double mdot_steam_max = 10;                 //[kg/s]
+    double od_tol = 1e-3;
 
-	double cp_htf = mc_pc_htfProps.Cp_ave(ms_params.m_T_htf_cold_des+273.15, T_htf_hot+273.15);	//[kJ/kg-K]
+    // Process inputs
+    double m_dot_htf = inputs.m_m_dot / 3600.0;	//[kg/s]
+    int standby_control = inputs.m_standby_control;	//[-] 1: On, 2: Standby, 3: Off
 
-	// For now, let's assume the Heat Sink can always return the HTF at the design cold temperature
-	double q_dot_htf = m_dot_htf*cp_htf*(T_htf_hot - ms_params.m_T_htf_cold_des)/1.E3;		//[MWt]
+    double q_dot, T_c_out, T_h_out, m_dot_c;
 
-	out_solver.m_P_cycle = 0.0;		//[MWe] No electricity generation
-	out_solver.m_T_htf_cold = ms_params.m_T_htf_cold_des;		//[C]
-	out_solver.m_m_dot_htf = m_dot_htf*3600.0;	//[kg/hr] Return inlet mass flow rate
+    if (inputs.m_m_dot < 1e-5 && standby_control == ON)
+    {
+        out_solver.m_P_cycle = 0;		//[MWe] No electricity generation
+        out_solver.m_T_htf_cold = htf_state_in.m_temp;		//[C]
+        out_solver.m_m_dot_htf = inputs.m_m_dot;	//[kg/hr] Return inlet mass flow rate
+        out_solver.m_time_required_su = 0;	//[s] No startup requirements, for now
+        out_solver.m_q_dot_htf = 0;		//[MWt] Thermal power form HTF
+        out_solver.m_W_dot_elec_parasitics_tot = 0;  //[MWe]
+
+        out_solver.m_was_method_successful = true;
+        return;
+    }
+
+    switch (standby_control)
+    {
+        case STARTUP:
+        case ON:
+        case STANDBY:
+        {
+            try
+            {
+                m_hx.off_design_target_T_cold_out(T_steam_hot + 273.15, T_steam_cold + 273.15, P_steam_cold, P_steam_hot,
+                    htf_state_in.m_temp + 273.15, 1.0, m_dot_htf, 1.0, od_tol, q_dot, T_c_out, T_h_out, m_dot_c);
+
+                out_solver.m_P_cycle = 0.0;		//[MWe] No electricity generation
+                out_solver.m_T_htf_cold = T_h_out - 273.15;		//[C]
+                out_solver.m_m_dot_htf = m_dot_htf * 3600.0;	//[kg/hr] Return inlet mass flow rate
+                out_solver.m_time_required_su = 0.0;	//[s] No startup requirements, for now
+                out_solver.m_q_dot_htf = q_dot * 1e-3;		//[MWt] Thermal power form HTF
+
+                out_solver.m_was_method_successful = true;
+            }
+            catch (C_csp_exception exc)
+            {
+                double NaN = std::numeric_limits<double>::quiet_NaN();
+                out_solver.m_P_cycle = NaN;		//[MWe] No electricity generation
+                out_solver.m_T_htf_cold = NaN;		//[C]
+                out_solver.m_m_dot_htf = NaN;	//[kg/hr] Return inlet mass flow rate
+                out_solver.m_time_required_su = NaN;	//[s] No startup requirements, for now
+                out_solver.m_q_dot_htf = NaN;		//[MWt] Thermal power form HTF
+                out_solver.m_W_dot_elec_parasitics_tot = NaN;  //[MWe]
+
+                out_solver.m_was_method_successful = false;
+                return;
+            }
+            break;
+        }
+        case OFF:
+        {
+            q_dot = 0;
+            T_h_out = htf_state_in.m_temp + 273.15;
+
+            out_solver.m_P_cycle = 0;		//[MWe] No electricity generation
+            out_solver.m_T_htf_cold = htf_state_in.m_temp;		//[C]
+            out_solver.m_m_dot_htf = inputs.m_m_dot;	//[kg/hr] Return inlet mass flow rate
+            out_solver.m_time_required_su = 0;	//[s] No startup requirements, for now
+            out_solver.m_q_dot_htf = 0;		//[MWt] Thermal power form HTF
+            out_solver.m_W_dot_elec_parasitics_tot = 0;  //[MWe]
+
+            out_solver.m_was_method_successful = true;
+            break;
+        }
+            
+        default:
+            int x = 0;
+
+    }
 
     double W_dot_cooling_parasitic = 0.0;   //[MWe] No cooling load
-
-	out_solver.m_time_required_su = 0.0;	//[s] No startup requirements, for now
-	out_solver.m_q_dot_htf = q_dot_htf;		//[MWt] Thermal power form HTF
-
-    double W_dot_htf_pump = ms_params.m_htf_pump_coef*m_dot_htf/1.E3;   //[MWe]
+    double W_dot_htf_pump = ms_params.m_htf_pump_coef * m_dot_htf / 1.E3;   //[MWe]
     out_solver.m_W_dot_elec_parasitics_tot = W_dot_cooling_parasitic + W_dot_htf_pump;  //[MWe]
-	
-	out_solver.m_was_method_successful = true;
 
-	mc_reported_outputs.value(E_Q_DOT_HEAT_SINK, q_dot_htf);	//[MWt]
+	mc_reported_outputs.value(E_Q_DOT_HEAT_SINK, q_dot*1e-3);	//[MWt]
 	mc_reported_outputs.value(E_W_DOT_PUMPING, W_dot_htf_pump);	//[MWe]
 	mc_reported_outputs.value(E_M_DOT_HTF, m_dot_htf);			//[kg/s]
-	mc_reported_outputs.value(E_T_HTF_IN, T_htf_hot);			//[C]
-	mc_reported_outputs.value(E_T_HTF_OUT, out_solver.m_T_htf_cold);	//[C]
+	mc_reported_outputs.value(E_T_HTF_IN, htf_state_in.m_temp);	//[C]
+	mc_reported_outputs.value(E_T_HTF_OUT, T_h_out - 273.15);	//[C]
 
 	return;
 }

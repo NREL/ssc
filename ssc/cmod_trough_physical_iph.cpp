@@ -42,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_core.h"
 #include "csp_solver_trough_collector_receiver.h"
 #include "csp_solver_pc_heat_sink.h"
+#include "csp_solver_pc_heat_sink_physical.h"
 #include "csp_solver_two_tank_tes.h"
 #include "cst_iph_dispatch.h"
 #include "csp_solver_NTHeatTrap_tes.h"
@@ -1091,7 +1092,12 @@ public:
         }
         
         // Heat Sink
-        C_pc_heat_sink c_heat_sink;
+        int heat_sink_type = 1;
+        C_csp_power_cycle* c_heat_sink_pointer;
+        C_pc_heat_sink c_heat_sink_simple;
+        C_pc_heat_sink_physical c_heat_sink_phys;
+
+        if (heat_sink_type == 0)
         {
             size_t n_f_turbine1 = 0;
             ssc_number_t* p_f_turbine1 = as_array("f_turb_tou_periods", &n_f_turbine1);   // heat sink, not turbine
@@ -1100,24 +1106,60 @@ public:
                 f_turbine_max1 = max(f_turbine_max1, p_f_turbine1[i]);
             }
 
-            c_heat_sink.ms_params.m_T_htf_hot_des = T_htf_hot_des;		//[C] FIELD design outlet temperature
-            c_heat_sink.ms_params.m_T_htf_cold_des = T_htf_cold_des;	//[C] FIELD design inlet temperature
-            c_heat_sink.ms_params.m_q_dot_des = q_dot_hs_des;			//[MWt] HEAT SINK design thermal power (could have field solar multiple...)
+            c_heat_sink_simple.ms_params.m_T_htf_hot_des = T_htf_hot_des;		//[C] FIELD design outlet temperature
+            c_heat_sink_simple.ms_params.m_T_htf_cold_des = T_htf_cold_des;	//[C] FIELD design inlet temperature
+            c_heat_sink_simple.ms_params.m_q_dot_des = q_dot_hs_des;			//[MWt] HEAT SINK design thermal power (could have field solar multiple...)
             // 9.18.2016 twn: assume for now there's no pressure drop though heat sink
-            c_heat_sink.ms_params.m_htf_pump_coef = as_double("pb_pump_coef");		//[kWe/kg/s]
-            c_heat_sink.ms_params.m_max_frac = f_turbine_max1;
+            c_heat_sink_simple.ms_params.m_htf_pump_coef = as_double("pb_pump_coef");		//[kWe/kg/s]
+            c_heat_sink_simple.ms_params.m_max_frac = f_turbine_max1;
 
-            c_heat_sink.ms_params.m_pc_fl = as_integer("Fluid");
-            c_heat_sink.ms_params.m_pc_fl_props = as_matrix("field_fl_props");
+            c_heat_sink_simple.ms_params.m_pc_fl = as_integer("Fluid");
+            c_heat_sink_simple.ms_params.m_pc_fl_props = as_matrix("field_fl_props");
 
 
             // Allocate heat sink outputs
-            c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_Q_DOT_HEAT_SINK, allocate("q_dot_to_heat_sink", n_steps_fixed), n_steps_fixed);
-            c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_W_DOT_PUMPING, allocate("W_dot_pc_pump", n_steps_fixed), n_steps_fixed);
-            c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_M_DOT_HTF, allocate("m_dot_htf_heat_sink", n_steps_fixed), n_steps_fixed);
-            c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_T_HTF_IN, allocate("T_heat_sink_in", n_steps_fixed), n_steps_fixed);
-            c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_T_HTF_OUT, allocate("T_heat_sink_out", n_steps_fixed), n_steps_fixed);
+            c_heat_sink_simple.mc_reported_outputs.assign(C_pc_heat_sink::E_Q_DOT_HEAT_SINK, allocate("q_dot_to_heat_sink", n_steps_fixed), n_steps_fixed);
+            c_heat_sink_simple.mc_reported_outputs.assign(C_pc_heat_sink::E_W_DOT_PUMPING, allocate("W_dot_pc_pump", n_steps_fixed), n_steps_fixed);
+            c_heat_sink_simple.mc_reported_outputs.assign(C_pc_heat_sink::E_M_DOT_HTF, allocate("m_dot_htf_heat_sink", n_steps_fixed), n_steps_fixed);
+            c_heat_sink_simple.mc_reported_outputs.assign(C_pc_heat_sink::E_T_HTF_IN, allocate("T_heat_sink_in", n_steps_fixed), n_steps_fixed);
+            c_heat_sink_simple.mc_reported_outputs.assign(C_pc_heat_sink::E_T_HTF_OUT, allocate("T_heat_sink_out", n_steps_fixed), n_steps_fixed);
+
+            c_heat_sink_pointer = &c_heat_sink_simple;
         }
+        else if (heat_sink_type == 1)
+        {
+            size_t n_f_turbine1 = 0;
+            ssc_number_t* p_f_turbine1 = as_array("f_turb_tou_periods", &n_f_turbine1);   // heat sink, not turbine
+            double f_turbine_max1 = 1.0;
+            for (size_t i = 0; i < n_f_turbine1; i++) {
+                f_turbine_max1 = max(f_turbine_max1, p_f_turbine1[i]);
+            }
+
+            c_heat_sink_phys.ms_params.m_T_htf_hot_des = T_htf_hot_des;		//[C] FIELD design outlet temperature
+            c_heat_sink_phys.ms_params.m_T_htf_cold_des = T_htf_cold_des;	//[C] FIELD design inlet temperature
+            c_heat_sink_phys.ms_params.m_q_dot_des = q_dot_hs_des;			//[MWt] HEAT SINK design thermal power (could have field solar multiple...)
+            // 9.18.2016 twn: assume for now there's no pressure drop though heat sink
+            c_heat_sink_phys.ms_params.m_htf_pump_coef = as_double("pb_pump_coef");		//[kWe/kg/s]
+            c_heat_sink_phys.ms_params.m_max_frac = f_turbine_max1;
+
+            c_heat_sink_phys.ms_params.m_pc_fl = as_integer("Fluid");
+            c_heat_sink_phys.ms_params.m_pc_fl_props = as_matrix("field_fl_props");
+
+
+            // Allocate heat sink outputs
+            c_heat_sink_phys.mc_reported_outputs.assign(C_pc_heat_sink::E_Q_DOT_HEAT_SINK, allocate("q_dot_to_heat_sink", n_steps_fixed), n_steps_fixed);
+            c_heat_sink_phys.mc_reported_outputs.assign(C_pc_heat_sink::E_W_DOT_PUMPING, allocate("W_dot_pc_pump", n_steps_fixed), n_steps_fixed);
+            c_heat_sink_phys.mc_reported_outputs.assign(C_pc_heat_sink::E_M_DOT_HTF, allocate("m_dot_htf_heat_sink", n_steps_fixed), n_steps_fixed);
+            c_heat_sink_phys.mc_reported_outputs.assign(C_pc_heat_sink::E_T_HTF_IN, allocate("T_heat_sink_in", n_steps_fixed), n_steps_fixed);
+            c_heat_sink_phys.mc_reported_outputs.assign(C_pc_heat_sink::E_T_HTF_OUT, allocate("T_heat_sink_out", n_steps_fixed), n_steps_fixed);
+
+            c_heat_sink_pointer = &c_heat_sink_phys;
+        }
+        else
+        {
+            throw exec_error("trough_physical", "heat_sink_type must be 0-1");
+        }
+        
        
         // ********************************
         // ********************************
@@ -1568,7 +1610,7 @@ public:
         // Instantiate Solver
         C_csp_solver csp_solver(weather_reader, 
                                 c_trough,
-                                c_heat_sink,
+                                *c_heat_sink_pointer,
                                 *storage_pointer, 
                                 tou,
                                 dispatch,

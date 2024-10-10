@@ -724,7 +724,38 @@ public:
 
 };
 
+class C_HX_water_to_htf : public C_HX_counterflow_CRM
+{
+private:
 
+
+
+public:
+
+    C_HX_water_to_htf()
+    {
+        m_cost_model = C_HX_counterflow_CRM::E_CARLSON_17_PHX;
+        //m_od_solution_type = C_HX_counterflow_CRM::C_od_thermal_solution_type::E_CRM_UA_PER_NODE;
+
+        m_od_solution_type = C_HX_counterflow_CRM::C_od_thermal_solution_type::E_DEFAULT;
+
+
+    }
+
+    // This method calculates the flow rates and UA given all 4 temperatures and heat exchange
+    void design_w_temps(C_HX_counterflow_CRM::S_des_calc_UA_par& des_par,
+        double q_dot_design /*kWt*/, double T_h_out /*K*/, double T_c_out /*K*/, C_HX_counterflow_CRM::S_des_solved& des_solved);
+
+    virtual void initialize(int hot_fl, util::matrix_t<double> hot_fl_props, int N_sub_hx, NS_HX_counterflow_eqs::E_UA_target_type od_UA_target_type);
+
+    virtual void initialize(int hot_fl, int N_sub_hx, NS_HX_counterflow_eqs::E_UA_target_type od_UA_target_type);
+
+    void off_design_target_T_cold_out(double T_c_out_target /*K*/, double T_c_in /*K*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/,
+        double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
+        double od_tol /*-*/,
+        double& q_dot /*kWt*/, double& T_c_out /*K*/, double& T_h_out /*K*/, double& m_dot_c /*kg/s*/);
+
+};
 
 class C_HX_co2_to_htf : public C_HX_counterflow_CRM
 {

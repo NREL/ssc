@@ -58,7 +58,7 @@ public:
 
 private:
 
-    C_HX_counterflow_CRM m_hx;
+    C_HX_water_to_htf m_hx;
 
 	double m_max_frac;		//[-]
 	double m_m_dot_htf_des;	//[kg/s]
