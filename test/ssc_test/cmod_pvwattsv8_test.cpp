@@ -462,6 +462,14 @@ TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, SnowModelTests_cmod_pvwattsv8) {
     {
         EXPECT_TRUE(hourly_snowderate[hour] == 100 || hourly_snowderate[hour] == 0);
     }
+
+    //Check interaction with bifacial
+    ssc_data_set_number(data, "bifaciality", 0.70);
+    compute();
+    january_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0]; //retrieve only january's value
+    EXPECT_NEAR((double)january_energy, 532.379, 0.01) << "Backtracking energy in January after snow loss";
+
+
 }
 
 /* this test isn't passing currently even though it's working in the UI, so commenting out for now */
