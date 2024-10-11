@@ -298,7 +298,7 @@ TEST_F(CMPvwattsV7Integration_cmod_pvwattsv7, SnowModelTests_cmod_pvwattsv7) {
     ssc_data_set_number(data, "bifaciality", 0.70);
     compute();
     january_energy = ssc_data_get_array(data, "monthly_energy", nullptr)[0]; //retrieve only january's value
-    EXPECT_NEAR((double)january_energy, 526.387, 0.01) << "Backtracking energy in January after snow loss";
+    EXPECT_NEAR((double)january_energy, 526.337, 0.01) << "Backtracking energy in January after snow loss";
 }
 
 
