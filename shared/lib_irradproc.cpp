@@ -1870,7 +1870,7 @@ void irrad::setup_solarpos_outputs_for_lifetime(size_t ts_per_year) {
 }
 
 bool irrad::getStoredSolarposOutputs() {
-    if (!solarpos_outputs_for_lifetime.size()) return false;
+    if (solarpos_outputs_for_lifetime.size() == 0) return false;
 
     size_t timeIndex = util::yearIndex(0, this->month, this->day, this->hour, this->minute, solarpos_outputs_for_lifetime.size() / 8760);
     
