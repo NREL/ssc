@@ -177,13 +177,7 @@ TEST_F(CMWindPowerIntegration, WakeLossMultiplier_cmod_windpower)
     ssc_data_set_number(data, "wind_farm_wake_model", 3);
     ssc_data_set_number(data, "wake_int_loss", 5);
     ssc_data_set_number(data, "wake_loss_multiplier", 1.0);
-    compute();
-    ssc_data_get_number(data, "annual_wake_loss_total_percent", &withoutMultiplier);
-    ssc_data_set_number(data, "wake_loss_multiplier", multiplier);
-    compute();
-    ssc_data_get_number(data, "annual_wake_loss_total_percent", &withMultiplier);
-    if (withoutMultiplier != 0.)
-        EXPECT_NEAR((withMultiplier / withoutMultiplier), multiplier, 0.01) << "Constant Loss Wake Model Multiplier";
+    EXPECT_FALSE( compute() ); //setting wake loss multiplier with constant loss value should return an error
 
 
 }
@@ -207,7 +201,7 @@ TEST_F(CMWindPowerIntegration, CtCurve_cmod_windpower)
     ssc_data_set_array(data, "wind_turbine_ct_curve", ctCurve, 161);
         
     // get new wake loss
-    compute();
+    EXPECT_TRUE(compute());
     ssc_data_get_number(data, "annual_wake_loss_internal_percent", &wakeLoss2); //get the wake loss with Ct curve
 
     ssc_number_t difference = wakeLoss2 - wakeLoss1;

@@ -311,9 +311,9 @@ void cm_windpower::exec()
         std::vector<double> ct_curve(ctCurveLength);
         for (size_t i = 0; i < ctCurveLength; i++)
             ct_curve[i] = ctc[i];
-        bool error = false;
-        error = wt.setCtCurve(ct_curve);
-        if (error) //function will return a zero if it fails
+        bool success = false;
+        success = wt.setCtCurve(ct_curve);
+        if (!success) //function will return a zero if it fails
         {
             throw exec_error("windpower", wt.errDetails);
         }
@@ -385,6 +385,10 @@ void cm_windpower::exec()
 		ssc_number_t gross_energy = turbine_kw * wpc.nTurbines;
 
         annual_wake_int_loss_percent = is_assigned("wake_int_loss") ? as_double("wake_int_loss") : 0.;
+        if (is_assigned("wake_int_loss") && is_assigned("wake_loss_multiplier"))
+        {
+            throw exec_error("windpower", "A wake loss multiplier may not be assigned with a constant wake loss value.");
+        }
         annual_wake_int_loss_percent *= is_assigned("wake_loss_multiplier") ? as_double("wake_loss_multiplier") : 1.;
 		turbine_kw = turbine_kw * lossMultiplier * (1. - annual_wake_int_loss_percent/100.);
 
@@ -440,7 +444,10 @@ void cm_windpower::exec()
     else if (wakeModelChoice == CONSTANTVALUE)
     {
         annual_wake_int_loss_percent = as_double("wake_int_loss");
-        annual_wake_int_loss_percent *= is_assigned("wake_loss_multiplier") ? as_double("wake_loss_multiplier") : 1.; // add any wake loss multipliers to the constant loss value here
+        if (is_assigned("wake_loss_multiplier")) //wake loss multiplier is assigned for constant value wake option, should throw an error
+        {
+            throw exec_error("windpower", "A wake loss multiplier may not be assigned with a constant wake loss value.");
+        }
         wakeModel = std::make_shared<constantWakeModel>(constantWakeModel(wpc.nTurbines, &wt, (100. - annual_wake_int_loss_percent)/100.));
     }
     else{
@@ -457,15 +464,8 @@ void cm_windpower::exec()
             throw exec_error("windpower", wpc.GetErrorDetails());
         }
 
-        if (wakeModelChoice != CONSTANTVALUE)
+        if (wakeModelChoice != CONSTANTVALUE) //we already threw an error if a wake loss multiplier was specified, so may just proceed
         {
-            if (is_assigned("wake_loss_multiplier")) //wake loss multiplier is assigned for constant value wake option above in the wake model setup
-            {
-                double wakeLossMultiplier = as_double("wake_loss_multiplier");
-                double wakeLossBeforeMultiplier = farmPowerGross - farmPower;
-                double newWakeLoss = wakeLossBeforeMultiplier * wakeLossMultiplier;
-                farmPower = farmPowerGross - newWakeLoss;
-            }
             assign("annual_wake_loss_internal_kWh", var_data((ssc_number_t)(farmPowerGross - farmPower)));
             annual_wake_int_loss_percent = (1. - farmPower / farmPowerGross) * 100.;
             assign("annual_wake_loss_internal_percent", var_data((ssc_number_t)annual_wake_int_loss_percent));
@@ -661,7 +661,7 @@ void cm_windpower::exec()
                     &DistCross[0]))
 				throw exec_error("windpower", util::format("error in wind calculation at time %d, details: %s", i, wpc.GetErrorDetails().c_str()));
 
-            if (wakeModelChoice != CONSTANTVALUE && is_assigned("wake_loss_multiplier")) //wake loss multiplier is assigned for constant value wake option above in the wake model setup
+            if (wakeModelChoice != CONSTANTVALUE && is_assigned("wake_loss_multiplier")) //wake loss multiplier isn't available for constant wake loss option
             {
                 double wakeLossMultiplier = as_double("wake_loss_multiplier");
                 double wakeLossBeforeMultiplier = gross_farmp - farmp;
