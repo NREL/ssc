@@ -474,6 +474,7 @@ public:
 	double average_battery_conversion_efficiency();
 	double average_battery_roundtrip_efficiency();
 	double pv_charge_percent();
+    double grid_charge_percent();
 
 protected:
 
@@ -492,6 +493,7 @@ protected:
 
 	/*! This is the percentage of energy charge from the PV system [%] */
 	double _pv_charge_percent;
+    double _grid_charge_percent;
 
 	// annual metrics
 	double _e_charge_from_pv_annual;   // [Kwh]
