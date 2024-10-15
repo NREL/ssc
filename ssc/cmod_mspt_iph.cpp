@@ -2288,6 +2288,7 @@ public:
         ssc_number_t* p_gen = allocate("gen", count);
         ssc_number_t* p_W_dot_parasitic_tot = as_array("W_dot_parasitic_tot", &count);
         ssc_number_t* p_W_dot_par_tot_haf = allocate("W_dot_par_tot_haf", n_steps_fixed);
+        ssc_number_t* p_load = allocate("load", n_steps_fixed); // testing using cmod_utilityrate5 for electricity rates p_load = p_W_dot_par_tot_haf
 
 
         ssc_number_t* p_time_final_hr = as_array("time_hr", &count);
@@ -2298,7 +2299,7 @@ public:
             p_gen[i] = (ssc_number_t)(p_q_dot_heat_sink[i] * 1.E3 * haf(hour));           //[kWt]
             p_W_dot_parasitic_tot[i] *= -1.0;			//[MWe] Label is total parasitics, so change to a positive value
             p_W_dot_par_tot_haf[i] = (ssc_number_t)(p_W_dot_parasitic_tot[i] * haf(hour) * 1.E3);		//[kWe] apply availability derate and convert from MWe 
-
+            p_load[i] = p_W_dot_par_tot_haf[i]; 
         }
 
         ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
