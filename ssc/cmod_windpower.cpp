@@ -466,6 +466,13 @@ void cm_windpower::exec()
 
         if (wakeModelChoice != CONSTANTVALUE) //we already threw an error if a wake loss multiplier was specified, so may just proceed
         {
+            if (is_assigned("wake_loss_multiplier"))
+            {
+                double wakeLossMultiplier = as_double("wake_loss_multiplier");
+                double wakeLossBeforeMultiplier = farmPowerGross - farmPower;
+                double newWakeLoss = wakeLossBeforeMultiplier * wakeLossMultiplier;
+                farmPower = farmPowerGross - newWakeLoss;
+            }
             assign("annual_wake_loss_internal_kWh", var_data((ssc_number_t)(farmPowerGross - farmPower)));
             annual_wake_int_loss_percent = (1. - farmPower / farmPowerGross) * 100.;
             assign("annual_wake_loss_internal_percent", var_data((ssc_number_t)annual_wake_int_loss_percent));
