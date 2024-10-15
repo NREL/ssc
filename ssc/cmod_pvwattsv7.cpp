@@ -751,8 +751,11 @@ public:
 
         pvwatts_celltemp tccalc(pv.inoct + 273.15, PVWATTS_HEIGHT, ts_hour); //in pvwattsv5 there is some code about previous tcell and poa that doesn't appear to get used, so not adding it here
 
-        double annual_kwh = 0;
+        irrad irr;
+        if (nyears > 1)
+            irr.setup_solarpos_outputs_for_lifetime(nrec);
 
+        double annual_kwh = 0;
         size_t idx_life = 0;
         float percent = 0;
         for (size_t y = 0; y < nyears; y++)
@@ -813,7 +816,6 @@ public:
                     alb = wf.alb;
 
 
-                irrad irr;
                 irr.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute,
                     instantaneous ? IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET : ts_hour);
                 irr.set_location(hdr.lat, hdr.lon, hdr.tz);
