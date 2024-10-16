@@ -1532,11 +1532,26 @@ weatherdata::weatherdata( var_data *data_table )
 		return;
 	}
 
-
 	m_hdr.lat = get_number( data_table, "lat" );
+    if (std::isnan(m_hdr.lat)) {
+        m_message = "missing latitude: could not find lat";
+        m_ok = false;
+    }
 	m_hdr.lon = get_number( data_table, "lon" );
+    if (std::isnan(m_hdr.lon)) {
+        m_message = "missing longitude: could not find lon";
+        m_ok = false;
+    }
 	m_hdr.tz = get_number( data_table, "tz" );
+    if (std::isnan(m_hdr.tz)) {
+        m_message = "missing time zone: could not find tz";
+        m_ok = false;
+    }
 	m_hdr.elev = get_number( data_table, "elev" );
+    if (std::isnan(m_hdr.elev)) {
+        m_message = "missing elevation: could not find elev";
+        m_ok = false;
+    }
 
 	// make sure two types of irradiance are provided
 	size_t nrec = 0;
