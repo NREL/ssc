@@ -2414,7 +2414,7 @@ bool CGeothermalAnalyzer::RunAnalysis(bool(*update_function)(float, void*), void
 
 			// Is it possible and do we want to replace the reservoir in the next time step?
 			//bWantToReplaceReservoir = ( md_WorkingTemperatureC < (GetResourceTemperatureC() - geothermal::MAX_TEMPERATURE_DECLINE_C) ) ? true : false;
-			bWantToReplaceReservoir = (md_WorkingTemperatureC < (GetResourceTemperatureC() - mo_geo_in.md_MaxTempDeclineC)) ? true : false;
+			bWantToReplaceReservoir = (md_WorkingTemperatureC < (GetResourceTemperatureC() - mo_geo_in.md_MaxTempDeclineC) && mo_geo_in.md_AllowReservoirReplacements) ? true : false;
 			if (bWantToReplaceReservoir && CanReplaceReservoir(dElapsedTimeInYears + (1.0 / 12)))
 			{
 				ReplaceReservoir(dElapsedTimeInYears); // this will 'reset' temperature back to original resource temp
