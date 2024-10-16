@@ -64,8 +64,10 @@ static var_info _cm_vtab_singleowner_heat[] = {
 
 
 	/* PPA Buy Rate values */
-	{ SSC_INPUT, SSC_ARRAY, "utility_bill_w_sys", "Electricity bill with system", "$", "", "Utility Bill", "", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "cf_utility_bill", "Electricity purchase", "$", "", "", "", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_INPUT, SSC_ARRAY, "utility_bill_w_sys", "Electricity bill with system", "$", "", "Utility Bill", "", "", "" },
+    // parasitic electricity cost from cmod_utilityrate5
+    { SSC_INPUT, SSC_ARRAY, "utility_bill_wo_sys", "Electricity bill without system", "$", "", "Utility Bill", "", "", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "cf_utility_bill", "Electricity purchase", "$", "", "", "", "LENGTH_EQUAL=cf_length", "" },
 
 
 	/*loan moratorium from Sara for India Documentation\India\Loan Moratorum
@@ -865,7 +867,7 @@ enum {
     CF_energy_sales,
     CF_energy_purchases,
 
-    CF_elec_purchases_for_heat_techs,
+//    CF_elec_purchases_for_heat_techs,
 
     CF_energy_without_battery,
 
@@ -1061,7 +1063,13 @@ public:
 		escal_or_annual( CF_om_capacity_expense, nyears, "om_capacity", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01 );
 		escal_or_annual( CF_om_fuel_expense, nyears, "om_fuel_cost", inflation_rate, as_double("system_heat_rate")*0.001, false, as_double("om_fuel_cost_escal")*0.01 );
 
-        escal_or_annual(CF_om_elec_price_for_heat_techs, nyears, "om_elec_price_for_heat_techs", inflation_rate, 1.0, false, as_double("om_elec_price_for_heat_techs_escal")*0.01 ); 
+//        escal_or_annual(CF_om_elec_price_for_heat_techs, nyears, "om_elec_price_for_heat_techs", inflation_rate, 1.0, false, as_double("om_elec_price_for_heat_techs_escal")*0.01 ); 
+        arrp = as_array("utility_bill_wo_sys", &count);
+        for (i = 0; i < count && i <= nyears; i++)
+            cf.at(CF_om_elec_price_for_heat_techs, i) = arrp[i];
+
+
+
 
 		escal_or_annual( CF_om_opt_fuel_1_expense, nyears, "om_opt_fuel_1_cost", inflation_rate, 1.0, false, as_double("om_opt_fuel_1_cost_escal")*0.01 );
 		escal_or_annual( CF_om_opt_fuel_2_expense, nyears, "om_opt_fuel_2_cost", inflation_rate, 1.0, false, as_double("om_opt_fuel_2_cost_escal")*0.01 );
@@ -1254,12 +1262,12 @@ public:
 			cf.at(CF_energy_net, 1) = first_year_energy;
             cf.at(CF_energy_sales, 1) = first_year_sales;
             cf.at(CF_energy_purchases, 1) = first_year_purchases;
-            cf.at(CF_elec_purchases_for_heat_techs, 1) = first_year_elec_purchases_for_heat_techs;
+//            cf.at(CF_elec_purchases_for_heat_techs, 1) = first_year_elec_purchases_for_heat_techs;
             for (i = 1; i <= nyears; i++) {
                 cf.at(CF_energy_net, i) = first_year_energy * cf.at(CF_degradation, i);
                 cf.at(CF_energy_sales, i) = first_year_sales * cf.at(CF_degradation, i);
                 cf.at(CF_energy_purchases, i) = first_year_purchases * cf.at(CF_degradation, i);
-                cf.at(CF_elec_purchases_for_heat_techs, i) = first_year_elec_purchases_for_heat_techs * cf.at(CF_degradation, i);
+ //               cf.at(CF_elec_purchases_for_heat_techs, i) = first_year_elec_purchases_for_heat_techs * cf.at(CF_degradation, i);
             }
 
 		}
@@ -1414,7 +1422,7 @@ public:
 			cf.at(CF_om_capacity2_expense, i) *= nameplate2;
 			cf.at(CF_om_fuel_expense,i) *= fuel_use[i-1];
 
-            cf.at(CF_om_elec_price_for_heat_techs, i) *= cf.at(CF_elec_purchases_for_heat_techs, i);
+ //           cf.at(CF_om_elec_price_for_heat_techs, i) *= cf.at(CF_elec_purchases_for_heat_techs, i);
 
             //Battery Production OM Costs
             cf.at(CF_om_production1_expense, i) *= battery_discharged[i - 1]; //$/MWh * 0.001 MWh/kWh * kWh = $
