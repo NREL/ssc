@@ -1255,6 +1255,13 @@ size_t util::yearOneIndex(double dtHour, size_t lifetimeIndex)
 	return indexYearOne;
 }
 
+size_t util::yearIndex(size_t year, size_t month, size_t day, size_t hour, double minute, size_t steps_per_hour)
+{
+	size_t mins_in_step = (size_t)(60 / steps_per_hour);
+    size_t step_of_hour = (size_t)(minute / mins_in_step);
+    return util::lifetimeIndex((size_t)year, (size_t)util::hour_of_year(month, day, hour), step_of_hour, steps_per_hour);
+}
+
 std::vector<double> util::frequency_table(double* values, size_t n_vals, double bin_width)
 {
     if (!values)
