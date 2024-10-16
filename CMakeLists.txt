@@ -25,17 +25,11 @@ if(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "12" CACHE STRING "Minimum OS X deployment version")
 endif()
 
-if (UNIX AND NOT CMAKE_C_COMPILER)
-	set(CMAKE_C_COMPILER gcc)
-	set(CMAKE_CXX_COMPILER g++)
-endif()
-set(CMAKE_CXX_STANDARD 11)
-
 if ( NOT APPLE)
     set(CURL_DIR build_resources/libcurl_ssl_x64)
 endif()
 
-Project(sam_simulation_core VERSION 1.0.0)
+Project(sam_simulation_core VERSION 1.0.0 LANGUAGES CXX C)
 
 
 #####################################################################################################################
