@@ -932,20 +932,20 @@ size_t util::hour_of_year(size_t month, size_t day, size_t hour)
 			h += days_in_months[m] * 24;
 	}
 	else
-        throw std::runtime_error(util::format("unable to determine hour of year (0-8759) because month is out of range for time stamp month-day-hour: %d-%d-%d", month, day, hour));
+        throw std::runtime_error(util::format("unable to determine hour of year (0-8759) because month is out of range for time stamp (month-day-hour): %d-%d-%d", month, day, hour));
     //then add days in the current month up to the current day
     if (day >= 1 && day <= days_in_months[month - 1])
         h += (day - 1) * 24;
     else if (month == 2 && day == 29) //special check for leap day present in data
         h += (27 * 24); //for leap day, repeat Feb 28 in annual indexes, because hour_of_year is used to index 8760 non-leap-year arrays.
     else
-        throw std::runtime_error(util::format("unable to determine hour of year (0 - 8759) because day is out of range for time stamp month-day-hour: %d-%d-%d", month, day, hour));
+        throw std::runtime_error(util::format("unable to determine hour of year (0 - 8759) because day is out of range for time stamp (month-day-hour): %d-%d-%d", month, day, hour));
 	if (hour >= 0 && hour <= 23)
 		h += hour;
 	else
-        throw std::runtime_error(util::format("unable to determine hour of year (0 - 8759) because hour is out of range for time stamp month-day-hour: %d-%d-%d", month, day, hour));
+        throw std::runtime_error(util::format("unable to determine hour of year (0 - 8759) because hour is out of range for time stamp (month-day-hour): %d-%d-%d", month, day, hour));
 	if (hour > 8759)
-	    throw std::runtime_error(util::format("unable to determine hour of year (0 - 8759) because hour is greater than 8759 for time stamp month-day-hour: %d-%d-%d", month, day, hour));
+	    throw std::runtime_error(util::format("unable to determine hour of year (0 - 8759) because hour is greater than 8759 for time stamp (month-day-hour): %d-%d-%d", month, day, hour));
 	return h;
 }
 
