@@ -157,13 +157,13 @@ bool cst_iph_dispatch_opt::update_horizon_parameters(C_csp_tou& mc_tou)
     params.heat_load.resize(num_steps, 1.e99);
 
     double sec_per_step = 3600. / (double)solver_params.steps_per_hour;
-    double W_dot_max = params.q_hs_max * params.eta_hs_des;                 //[kWe] TODO: Change this to heat only (remove efficiency)
+    double q_dot_max = params.q_hs_max * params.eta_hs_des;                 //[kWe] TODO: Change this to heat only (remove efficiency)
     for (int t = 0; t < num_steps; t++) {
         C_csp_tou::S_csp_tou_outputs tou_outputs;
         mc_tou.call(pointers.siminfo->ms_ts.m_time + t * sec_per_step, tou_outputs);
         params.elec_price.at(t) = tou_outputs.m_elec_price * 1000.0;    // $/kWhe -> $/MWhe
         params.heat_cost.at(t) = tou_outputs.m_heat_price * 1000.0;     // $/kWht -> $/MWht
-        params.heat_load.at(t) = tou_outputs.m_wlim_dispatch * W_dot_max;
+        params.heat_load.at(t) = tou_outputs.m_wlim_dispatch * q_dot_max;
     }
     return true;
 }
@@ -432,7 +432,7 @@ bool cst_iph_dispatch_opt::optimize()
                 // Electric heater charging
                 if (params.is_parallel_heater) {
                     row[t + nt * (i)] = P["delta"] * params.elec_price.at(t) * (1 / tadj) * (1 / P["eta_eh"]);
-                    col[t + nt * (i)] = O.column("qeh", t);
+                    col[t + nt * (i++)] = O.column("qeh", t);
                 }
 
                 tadj *= P["disp_time_weighting"];

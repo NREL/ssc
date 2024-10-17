@@ -49,6 +49,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_system_costs.h"
 //#include "cmod_csp_common_eqns.h"
 
+#include "csp_solver_cr_electric_resistance.h"
+
 #include <ctime>
 #include <algorithm>
 #include <iterator>
@@ -65,6 +67,7 @@ static var_info _cm_vtab_trough_physical_iph[] = {
 
     { SSC_INPUT,        SSC_NUMBER,      "is_dispatch",               "Allow dispatch optimization?",                                                     "",             "",               "System Control", "?=0",                    "",              ""},
     { SSC_INPUT,        SSC_NUMBER,      "sim_type",                  "1 (default): timeseries, 2: design only",                                          "",             "",               "System Control", "?=1",                    "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,        SSC_NUMBER,      "is_parallel_htr",           "Does plant include a HTF heater parallel to solar field?",                         "",             "",               "System Control", "?=0",                     "",                      ""},
 
     // Weather Reader
     { SSC_INPUT,        SSC_STRING,      "file_name",                 "Local weather file with path",                                                     "none",         "",               "weather",        "?",                       "LOCAL_FILE",            "" },
@@ -170,10 +173,16 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_INPUT,        SSC_NUMBER,      "p_start",                   "Collector startup energy, per SCA",                                                "kWe-hr",       "",               "solar_field",    "*",                       "",                      "" },
 
     // Heat Sink
+    { SSC_INPUT,     SSC_NUMBER,         "pb_pump_coef",                "Pumping power to move 1kg of HTF through PB loop",                                      "kW/kg",               "",                              "Heat Sink",           "*",                "",                 "" },
 
-    /*Heat Sink*/{ SSC_INPUT,     SSC_NUMBER,         "pb_pump_coef",                "Pumping power to move 1kg of HTF through PB loop",                                      "kW/kg",               "",                              "Heat Sink",           "*",                "",                 "" },
-
-
+    // Parallel heater parameters
+    { SSC_INPUT,        SSC_NUMBER,      "heater_mult",                 "Heater multiple relative to design cycle thermal power",                         "-",            "",           "Parallel Heater",    "is_parallel_htr=1",              "",               "" },
+    { SSC_INPUT,        SSC_NUMBER,      "heater_efficiency",           "Heater electric to thermal efficiency",                                          "%",            "",           "Parallel Heater",    "is_parallel_htr=1",              "",               "" },
+    { SSC_INPUT,        SSC_NUMBER,      "f_q_dot_des_allowable_su",    "Fraction of design power allowed during startup",                                "-",            "",           "Parallel Heater",    "is_parallel_htr=1",              "",               "" },
+    { SSC_INPUT,        SSC_NUMBER,      "hrs_startup_at_max_rate",     "Duration of startup at max startup power",                                       "hr",           "",           "Parallel Heater",    "is_parallel_htr=1",              "",               "" },
+    { SSC_INPUT,        SSC_NUMBER,      "f_q_dot_heater_min",          "Minimum allowable heater output as fraction of design",                          "",             "",           "Parallel Heater",    "is_parallel_htr=1",              "",               "" },
+    { SSC_INPUT,        SSC_NUMBER,      "heater_spec_cost",            "Heater specific cost",                                                           "$/kWht",       "",           "System Costs",       "is_parallel_htr=1",              "",               "" },
+    { SSC_INPUT,        SSC_NUMBER,      "allow_heater_no_dispatch_opt","Allow heater with no dispatch optimization? SAM UI relies on cmod default",      "",             "",           "System Costs",       "?=0",                            "",               "SIMULATION_PARAMETER" },
 
     // General TES Parameters
     { SSC_INPUT,        SSC_NUMBER,      "tes_type",                  "Standard two tank (0), Packed Bed (1), HeatTrap Single Tank (2)",                  "-",            "",               "TES",            "?=0",                     "",                      "" },
@@ -404,6 +413,10 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_OUTPUT,       SSC_NUMBER,      "dP_sf_SS",                         "Steady State field pressure drop",                                         "bar",           "",               "Solar Field",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "W_dot_pump_SS",                    "Steady State pumping power",                                               "MWe",           "",               "Solar Field",    "*",                                "",                      "" },
 
+    // Heater
+    { SSC_OUTPUT,       SSC_NUMBER,      "q_dot_heater_des",                 "Heater design thermal power",                                              "MWt",           "",               "Heater",         "*",                                "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "W_dot_heater_des",                 "Heater electricity consumption at design",                                 "MWe",           "",               "Heater",         "*",                                "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "E_heater_su_des",                  "Heater startup energy",                                                    "MWt-hr",        "",               "Heater",         "*",                                "",                      "" },
 
     // Thermal Storage
     { SSC_OUTPUT,       SSC_NUMBER,      "vol_tank",                         "Total tank volume",                                                        "m3",            "",               "Thermal Storage","*",                                "",                      "" },
@@ -419,7 +432,8 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_OUTPUT,       SSC_NUMBER,      "tes_htf_avg_temp",                 "HTF Average Temperature at Design",                                        "C",             "",               "Thermal Storage","*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "tes_htf_min_temp",                 "Minimum storage htf temp",                                                 "C",             "",               "Power Cycle",    "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "tes_htf_max_temp",                 "Maximum storage htf temp",                                                 "C",             "",               "Power Cycle",    "*",                                "",                      "" },
-
+    { SSC_OUTPUT,       SSC_NUMBER,      "tshours_field",                    "TES duration at field design output",                                      "hr",            "",               "TES Design Calc","*",                                "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "tshours_heater",                   "TES duration at heater design output",                                     "hr",            "",               "TES Design Calc","*",                                "",                      "" },
 
     // Collector
     { SSC_OUTPUT,       SSC_MATRIX,      "csp_dtr_sca_ap_lengths",           "Length of single module",                                                  "m",             "",               "Collector",      "?=0",                              "",                      "" },
@@ -647,6 +661,10 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "is_rec_su_allowed",         "is receiver startup allowed",                                                      "",             "",               "solver",         "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "is_pc_su_allowed",          "is power cycle startup allowed",                                                   "",             "",               "solver",         "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "is_pc_sb_allowed",          "is power cycle standby allowed",                                                   "",             "",               "solver",         "sim_type=1",                       "",                      "" },
+
+    { SSC_OUTPUT,       SSC_ARRAY,       "is_PAR_HTR_allowed",        "Is parallel electric heater operation allowed",                                    "",             "",               "solver",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_elec_to_PAR_HTR",     "Electric heater thermal power target",                                             "MWt",          "",               "solver",         "sim_type=1",                       "",                      "" },
+
     { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_est_cr_su",           "Estimate rec. startup thermal power",                                              "MWt",           "",              "solver",         "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_est_cr_on",           "Estimate rec. thermal power TO HTF",                                               "MWt",          "",               "solver",         "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "q_dot_est_tes_dc",          "Estimate max TES discharge thermal power",                                         "MWt",          "",               "solver",         "sim_type=1",                       "",                      "" },
@@ -655,7 +673,16 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "operating_modes_a",         "First 3 operating modes tried",                                                    "",             "",               "solver",         "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "operating_modes_b",         "Next 3 operating modes tried",                                                     "",             "",               "solver",         "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "operating_modes_c",         "Final 3 operating modes tried",                                                    "",             "",               "solver",         "sim_type=1",                       "",                      "" },
-                                                                                                                                                                                                                                                                  
+
+    // Heater outputs is_parallel_htr
+    { SSC_OUTPUT,       SSC_ARRAY,      "W_dot_heater",               "Parallel heater electricity consumption",                                          "MWe",          "",               "Parallel Heater","sim_type=1&is_parallel_htr=1",     "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "q_dot_heater_to_htf",        "Parallel heater thermal power to HTF",                                             "MWt",          "",               "Parallel Heater","sim_type=1&is_parallel_htr=1",     "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "q_dot_heater_startup",       "Parallel heater thermal power consumed during startup",                            "MWt",          "",               "Parallel Heater","sim_type=1&is_parallel_htr=1",     "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "m_dot_htf_heater",           "Parallel heater HTF mass flow rate",                                               "kg/s",         "",               "Parallel Heater","sim_type=1&is_parallel_htr=1",     "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "T_htf_heater_in",            "Parallel heater HTF inlet temperature",                                            "C",            "",               "Parallel Heater","sim_type=1&is_parallel_htr=1",     "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "T_htf_heater_out",           "Parallel heater HTF outlet temperature",                                           "C",            "",               "Parallel Heater","sim_type=1&is_parallel_htr=1",     "",                      "" },
+
+    // Dispatch
     { SSC_OUTPUT,       SSC_ARRAY,       "disp_rel_mip_gap",          "Dispatch relative MIP gap",                                                        "",             "",               "tou",            "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "disp_solve_state",          "Dispatch solver state",                                                            "",             "",               "tou",            "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "disp_subopt_flag",          "Dispatch suboptimal solution flag",                                                "",             "",               "tou",            "sim_type=1",                       "",                      "" },
@@ -1089,7 +1116,44 @@ public:
             }
             
         }
-        
+
+        // Check if system configuration includes a heater parallel to primary collector receiver
+        C_csp_collector_receiver* p_heater;
+        C_csp_cr_electric_resistance* p_electric_resistance = NULL;
+        bool is_parallel_heater = as_boolean("is_parallel_htr");    // defaults to false
+        double q_dot_heater_des = 0.0;  //[MWt]
+        double heater_spec_cost = 0.0;
+        if (is_parallel_heater) {
+            if (!is_dispatch && sim_type == 1) {
+                if (!as_boolean("allow_heater_no_dispatch_opt")) {
+                    throw exec_error("trough_physical", "When the IPH physical trough case has an electric HTF charger, dispatch optimization must be selected");
+                }
+            }
+
+            double heater_mult = as_double("heater_mult");      //[-]
+            heater_spec_cost = as_double("heater_spec_cost");   //[$/kWt]
+
+            q_dot_heater_des = q_dot_hs_des * heater_mult;     //[MWt]
+
+            double heater_efficiency = as_double("heater_efficiency") / 100.0;          //[-] convert from % input
+            double f_q_dot_des_allowable_su = as_double("f_q_dot_des_allowable_su");    //[-] fraction of design power allowed during startup
+            double hrs_startup_at_max_rate = as_double("hrs_startup_at_max_rate");      //[hr] duration of startup at max startup power
+            double f_heater_min = as_double("f_q_dot_heater_min");                      //[-] minimum allowable heater output as fraction of design
+
+            p_electric_resistance = new C_csp_cr_electric_resistance(T_htf_cold_des, T_htf_hot_des,
+                q_dot_heater_des, heater_efficiency, f_heater_min,
+                f_q_dot_des_allowable_su, hrs_startup_at_max_rate,
+                as_integer("Fluid"), as_matrix("field_fl_props"), C_csp_cr_electric_resistance::E_elec_resist_startup_mode::INSTANTANEOUS_NO_MAX_ELEC_IN);
+
+            p_electric_resistance->mc_reported_outputs.assign(C_csp_cr_electric_resistance::E_W_DOT_HEATER, allocate("W_dot_heater", n_steps_fixed), n_steps_fixed);
+            p_electric_resistance->mc_reported_outputs.assign(C_csp_cr_electric_resistance::E_Q_DOT_HTF, allocate("q_dot_heater_to_htf", n_steps_fixed), n_steps_fixed);
+            p_electric_resistance->mc_reported_outputs.assign(C_csp_cr_electric_resistance::E_Q_DOT_STARTUP, allocate("q_dot_heater_startup", n_steps_fixed), n_steps_fixed);
+            p_electric_resistance->mc_reported_outputs.assign(C_csp_cr_electric_resistance::E_M_DOT_HTF, allocate("m_dot_htf_heater", n_steps_fixed), n_steps_fixed);
+            p_electric_resistance->mc_reported_outputs.assign(C_csp_cr_electric_resistance::E_T_HTF_IN, allocate("T_htf_heater_in", n_steps_fixed), n_steps_fixed);
+            p_electric_resistance->mc_reported_outputs.assign(C_csp_cr_electric_resistance::E_T_HTF_OUT, allocate("T_htf_heater_out", n_steps_fixed), n_steps_fixed);
+        }
+        p_heater = p_electric_resistance;
+
         // Heat Sink
         C_pc_heat_sink c_heat_sink;
         {
@@ -1555,9 +1619,6 @@ public:
 
         if (is_dispatch && sim_type == 1) {
 
-            double heater_startup_cost = 0.0;       // TODO: Should we add an heater to this model?
-            double q_dot_rec_des = q_dot_hs_des * c_trough.m_solar_mult; //[MWt]
-
             dispatch.solver_params.set_user_inputs(as_integer("disp_steps_per_hour"), as_integer("disp_frequency"), as_integer("disp_horizon"),
                 as_integer("disp_max_iter"), as_double("disp_mip_gap"), as_double("disp_timeout"),
                 as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_spec_scaling"), as_integer("disp_reporting"));
@@ -1573,7 +1634,7 @@ public:
                                 tou,
                                 dispatch,
                                 system,
-                                NULL,
+                                p_heater,
                                 nullptr,
                                 ssc_cmod_update,
                                 (void*)(this));
@@ -1632,6 +1693,9 @@ public:
             csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::EST_Q_DOT_CR_ON, allocate("q_dot_est_cr_on", n_steps_fixed), n_steps_fixed);
             csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::EST_Q_DOT_DC, allocate("q_dot_est_tes_dc", n_steps_fixed), n_steps_fixed);
             csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::EST_Q_DOT_CH, allocate("q_dot_est_tes_ch", n_steps_fixed), n_steps_fixed);
+
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CTRL_IS_PAR_HTR_SU, allocate("is_PAR_HTR_allowed", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::PAR_HTR_Q_DOT_TARGET, allocate("q_dot_elec_to_PAR_HTR", n_steps_fixed), n_steps_fixed);
 
             csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_A, allocate("operating_modes_a", n_steps_fixed), n_steps_fixed);
             csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::CTRL_OP_MODE_SEQ_B, allocate("operating_modes_b", n_steps_fixed), n_steps_fixed);
@@ -1750,6 +1814,20 @@ public:
                 assign("W_dot_pump_SS", c_trough.m_W_dot_pump_SS);      //[MWe]
             }
 
+            // *************************
+            // Heater
+            {
+                assign("q_dot_heater_des", q_dot_heater_des);       //[MWt]
+                double W_dot_heater_des_calc = 0.0;                 //[MWe]
+                double E_heater_su_des = 0.0;                       //[MWt-hr]
+                if (is_parallel_heater) {
+                    p_electric_resistance->get_design_parameters(E_heater_su_des, W_dot_heater_des_calc);
+                }
+                assign("W_dot_heater_des", (ssc_number_t)W_dot_heater_des_calc);    //[MWe]
+                assign("E_heater_su_des", (ssc_number_t)E_heater_su_des);           //[MWt-hr]
+            }
+
+
             // Thermal Storage
             {
                 double V_tes_htf_avail_calc /*m3*/, V_tes_htf_total_calc /*m3*/,
@@ -1805,6 +1883,14 @@ public:
                 assign("tes_htf_avg_temp", T_avg);  // C
                 assign("tes_htf_min_temp", tes_htf_min_temp);
                 assign("tes_htf_max_temp", tes_htf_max_temp);
+                double q_dot_field_des = c_trough.m_solar_mult * q_dot_hs_des;
+                assign("tshours_field", Q_tes_des_calc / q_dot_field_des);  //[hr]
+
+                double tshours_heater = 0.0;
+                if (q_dot_heater_des > 0.0) {
+                    tshours_heater = Q_tes_des_calc / q_dot_heater_des;     //[hr]
+                }
+                assign("tshours_heater", tshours_heater);
             }
 
             // Collector
@@ -1963,23 +2049,24 @@ public:
 
 
             // Define outputs
-            double heat_sink_cost_out, ts_cost_out, site_improvements_cost_out, bop_cost_out, solar_field_cost_out, htf_system_cost_out, dummy_cost_out, contingency_cost_out,
+            double heat_sink_cost_out, ts_cost_out, site_improvements_cost_out, bop_cost_out, solar_field_cost_out, heater_cost_out, htf_system_cost_out, dummy_cost_out, contingency_cost_out,
                 total_direct_cost_out, epc_total_cost_out, plm_total_cost_out, total_indirect_cost_out, sales_tax_total_out, total_installed_cost_out, installed_per_capacity_out;
 
             // Calculate Costs
-            N_mspt::calculate_mslf_costs(site_improvements_area, site_improvements_spec_cost, solar_field_area, solar_field_spec_cost, htf_system_area, htf_system_spec_cost, Q_tes, storage_spec_cost, 0,
+            N_mspt::calculate_mslf_costs(site_improvements_area, site_improvements_spec_cost, solar_field_area, solar_field_spec_cost, q_dot_heater_des /*[MWt]*/, heater_spec_cost, htf_system_area, htf_system_spec_cost, Q_tes, storage_spec_cost, 0,
                 0, heat_sink_mwe, heat_sink_spec_cost, bop_mwe, bop_spec_cost, contingency_percent, c_trough.m_total_land_area, nameplate, epc_cost_per_acre, epc_cost_percent_direct, epc_cost_per_watt,
                 epc_cost_fixed, plm_cost_per_acre, plm_cost_percent_direct, plm_cost_per_watt, plm_cost_fixed, sales_tax_rate, sales_tax_percent,
 
-                heat_sink_cost_out, ts_cost_out, site_improvements_cost_out, bop_cost_out, solar_field_cost_out, htf_system_cost_out, dummy_cost_out, contingency_cost_out,
+                heat_sink_cost_out, ts_cost_out, site_improvements_cost_out, bop_cost_out, solar_field_cost_out, heater_cost_out, htf_system_cost_out, dummy_cost_out, contingency_cost_out,
                 total_direct_cost_out, epc_total_cost_out, plm_total_cost_out, total_indirect_cost_out, sales_tax_total_out, total_installed_cost_out, installed_per_capacity_out);
 
-            double direct_subtotal = site_improvements_cost_out + solar_field_cost_out + htf_system_cost_out + ts_cost_out + heat_sink_cost_out + bop_cost_out;
+            double direct_subtotal = site_improvements_cost_out + solar_field_cost_out + heater_cost_out + htf_system_cost_out + ts_cost_out + heat_sink_cost_out + bop_cost_out;
 
             // Assign Outputs
             {
                 assign("csp.dtr.cost.site_improvements", site_improvements_cost_out);
                 assign("csp.dtr.cost.solar_field", solar_field_cost_out);
+                assign("heater_cost", heater_cost_out);
                 assign("csp.dtr.cost.htf_system", htf_system_cost_out);
                 assign("csp.dtr.cost.storage", ts_cost_out);
                 assign("csp.dtr.cost.heat_sink", heat_sink_cost_out);
