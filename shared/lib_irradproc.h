@@ -628,8 +628,67 @@ double sun_rise_and_set(double* m_rts, double* h_rts, double* delta_prime, doubl
 * \param[out] needed_values[7] zenith topocentric zenith angle (degrees)
 * \param[out] needed_values[8] azimuth topocentric azimuth angle (degrees)
 */
+
+
 void calculate_spa(double jd, double lat, double lng, double alt, double pressure, double temp,
     double delta_t, double tilt, double azm_rotation, double ascension_and_declination[2], double needed_values[9]);
+
+/**
+ * Table for storing the recently computed solarpos_spa intermediate outputs
+ * The algorithm reuses the outputs from the last 3 days or so, so the hash table is emptied every 3 days to reduce size
+ * Latitude, Longitude, Altitude, Tilt and Azimuth are not in the key because they remain constant throughout
+ */
+struct spa_table_key {
+    double jd;
+    double delta_t;
+    int pressure;
+    int temp;
+    // these are both inputs and outputs (e.g. also stored in the output vector)
+    double ascension;
+    double declination;
+
+    bool operator==(const spa_table_key &other) const
+        { return (jd == other.jd
+                && delta_t == other.delta_t
+                && pressure == other.pressure
+                && temp == other.temp
+                && ascension == other.ascension
+                && declination == other.declination
+                );
+        }
+
+    spa_table_key(double j, double dt, double p, double t, double a, double d):
+        jd(j), delta_t(dt), ascension(a), declination(d)
+    {
+        int pressure_bucket = 10;
+        pressure = ((int)(p + pressure_bucket/2) / pressure_bucket) * pressure_bucket;
+        pressure = (int)pressure;
+        int temp_bucket = 5;
+        temp = ((int)(t + temp_bucket / 2) / temp_bucket) * temp_bucket;
+        temp = (int)temp;
+    }
+};
+
+template <>
+struct std::hash<spa_table_key>
+{
+  std::size_t operator()(const spa_table_key& k) const
+  {
+    using std::hash;
+    // Compute individual hash values for first, second, etc and combine them using XOR and bit shifting:
+    return 
+    ((((
+            ((((hash<double>()(k.jd)
+             ^ (hash<double>()(k.delta_t) << 1)) >> 1)
+             ^ (hash<int>()(k.pressure) << 1)) >> 1)
+             ^ (hash<int>()(k.temp) << 1)) >> 1)
+             ^ (hash<double>()(k.ascension) << 1)) >> 1)
+             ^ (hash<double>()(k.declination) << 1)
+             ;
+  }
+};
+
+void clear_spa_table();
 
 /**
 *
@@ -1048,6 +1107,8 @@ protected:
     std::vector<double> planeOfArrayIrradianceRearSpatialCS;  ///< Spatial rear side clearsky plane-of-array irradiance (W/m2), where index 0 is at row bottom
     std::vector<double> groundIrradianceSpatial;            ///< Spatial irradiance incident on the ground in between rows, where index 0 is towards front of array
 
+    std::vector<std::vector<double>> solarpos_outputs_for_lifetime;     ///< Table of solarpos outputs stored for lifetime simulations
+    void storeSolarposOutputs();
 public:
 
     /// Directive to indicate that if delt_hr is less than zero, do not interpolate sunrise and sunset hours
@@ -1063,13 +1124,11 @@ public:
     static const int groundIrradOutputRes = 10;
 
     /// Default class constructor, calls setup()
-    irrad(weather_record wr, weather_header wh,
+    irrad(weather_header wh,
         int skyModel, int radiationModeIn, int trackModeIn,
-        bool useWeatherFileAlbedo, bool instantaneousWeather, bool backtrackingEnabled, bool forceToStowIn,
+        bool instantaneousWeather, bool backtrackingEnabled, bool forceToStowIn,
         double dtHour, double tiltDegrees, double azimuthDegrees, double trackerRotationLimitDegrees, double stowAngleDegreesIn,
-        double groundCoverageRatio, double slopeTilt, double slopeAzm, std::vector<double> monthlyTiltDegrees, std::vector<double> userSpecifiedAlbedo,
-        poaDecompReq* poaAllIn,
-        bool useSpatialAlbedos = false, const util::matrix_t<double>* userSpecifiedSpatialAlbedos = nullptr, bool enableSubhourlyClipping = false, bool useCustomRotAngles = false, double customRotAngle = 0);
+        double groundCoverageRatio, double slopeTilt, double slopeAzm, poaDecompReq *poaAllIn, bool enableSubhourlyClipping = false);
 
     /// Construct the irrad class with an Irradiance_IO() object and Subarray_IO() object
     irrad();
@@ -1079,6 +1138,9 @@ public:
 
     /// Validation method to verify member data is within acceptable ranges
     int check();
+
+    /// Initialize solarpos_outputs_lifetime for lifetime simulations
+    void setup_solarpos_outputs_for_lifetime(size_t n_steps_per_year);
 
     /// Set the time for the irradiance processor
     void set_time(int year, int month, int day, int hour, double minute, double delt_hr);
@@ -1117,6 +1179,11 @@ public:
 
     /// Function to overwrite internally calculated sun position values, primarily to enable testing against other libraries using different sun position calculations
     void set_sun_component(size_t index, double value);
+
+    /// Function to set time, albedo, tracking and optional inputs from weather record
+    void set_from_weather_record(weather_record wf, weather_header hdr, int trackModeIn, std::vector<double>& monthlyTiltDegrees, 
+            bool useWeatherFileAlbedo, std::vector<double>& userSpecifiedAlbedo, poaDecompReq *poaAllIn, bool useSpatialAlbedos, const util::matrix_t<double>* userSpecifiedSpatialAlbedos, 
+            bool useCustomRotAngles = false, double customRotAngle = 0);
 
     /// Run the irradiance processor and calculate the plane-of-array irradiance and diffuse components of irradiance
     int calc();
@@ -1215,6 +1282,9 @@ public:
 
     /// Return the front surface irradiances, used by \link calc_rear_side()
     void getFrontSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> frontGroundGHI, std::vector<double>& frontIrradiance, double& frontAverageIrradiance, std::vector<double>& frontReflected);
+
+    /// Return the solarpos outputs for a given timestep
+    bool getStoredSolarposOutputs();
 
     enum RADMODE { DN_DF, DN_GH, GH_DF, POA_R, POA_P };
     enum SKYMODEL { ISOTROPIC, HDKR, PEREZ };
