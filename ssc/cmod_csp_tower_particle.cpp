@@ -411,6 +411,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "L_tower_piping_calc",                "Tower piping length",                                                                                                                      "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
 
         // Receiver Performance -> TODO: This will need to be arrays...
+    { SSC_OUTPUT,    SSC_ARRAY,  "rec_design_hl",                      "Receiver(s) estimated thermal loss per aperture area used in SolarPILOT of field sizing",                                                                                          "kWt/m2",      "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "q_dot_rec_des",                      "Receiver thermal output at design",                                                                                                       "MWt",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "eta_rec_thermal_des",                "Receiver estimated thermal efficiency at design",                                                                                         "",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "P_tower_lift_des",                   "Receiver and tower estimated particle lift power at design",                                                                              "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
@@ -873,11 +874,9 @@ public:
 
         // Assign design receiver heat loss for SolarPILOT
         std::string hl_msg;
-        ssc_number_t* p_rec_hl = allocate("design_rec_hl", design_heat_loss.size());
+        ssc_number_t* p_rec_hl = allocate("rec_design_hl", design_heat_loss.size());
         for (size_t i = 0; i < design_heat_loss.size(); i++) {
             p_rec_hl[i] = (ssc_number_t)design_heat_loss.at(i);
-            //hl_msg = util::format("Initial receiver (%d) heat loss: %f [kW/m^2]", i, design_heat_loss.at(i));
-            //log(hl_msg, SSC_NOTICE);
         }
 
         // *****************************************************
@@ -1746,31 +1745,24 @@ public:
 
         csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::W_DOT_NET, allocate("P_out_net", n_steps_fixed), n_steps_fixed);
 
-
-
         update("Initialize MSPT model...", 0.0);
 
         int out_type = -1;
         std::string out_msg = "";
-        try
-        {
+        try {
             // Initialize Solver
             csp_solver.init();
         }
-        catch( C_csp_exception &csp_exception )
-        {
+        catch( C_csp_exception &csp_exception ) {
             // Report warning before exiting with error
-            while( csp_solver.mc_csp_messages.get_message(&out_type, &out_msg) )
-            {
+            while( csp_solver.mc_csp_messages.get_message(&out_type, &out_msg) ) {
                 log(out_msg, out_type);
             }
-
             throw exec_error("csp_tower_particle", csp_exception.m_error_message);
         }
 
         // If no exception, then report messages
-        while (csp_solver.mc_csp_messages.get_message(&out_type, &out_msg))
-        {
+        while (csp_solver.mc_csp_messages.get_message(&out_type, &out_msg)) {
             log(out_msg, out_type);
         }
 

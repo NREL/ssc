@@ -257,7 +257,7 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
             throw exec_error("SolarPILOT cmod", "Invalid receiver offsets. Receiver tower offset must have either two or three columns.");
 
         // Get heat loss
-        std::vector<double> design_rec_hl = m_cmod->as_vector_double("design_rec_hl");
+        std::vector<double> rec_design_hl = m_cmod->as_vector_double("rec_design_hl");
 
         // setting receiver parameters
         int input_idx;
@@ -270,7 +270,7 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
             rf->rec_azimuth.val = rec_azimuth[i];               // Required to provide an azimuth for each receiver
             rf->power_fraction.val = power_fraction[input_idx];
             rf->absorptance.val = 1.0;                          // Don't apply absorptivity for falling particle receivers - performance model will do this
-            rf->therm_loss_base.val = design_rec_hl[i];
+            rf->therm_loss_base.val = rec_design_hl[i];
             rf->piping_loss_coef.val = 0.0;                     // Assume no piping losses for now TODO
             rf->peak_flux.val = m_cmod->as_double("flux_max");     //[kW/m2]
 
