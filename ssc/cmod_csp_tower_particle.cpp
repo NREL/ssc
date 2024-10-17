@@ -406,18 +406,29 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_OUTPUT,    SSC_ARRAY,  "rec_width_calc",                     "Receiver width - out",                                                                                                                     "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "rec_azimuth_calc",                   "Receiver azimuth - out",                                                                                                                   "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "h_tower_calc",                       "Tower height - out",                                                                                                                       "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
-    { SSC_OUTPUT,    SSC_NUMBER, "A_rec",                              "Receiver aperture area",                                                                                                                   "m2",           "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
-    { SSC_OUTPUT,    SSC_NUMBER, "A_rec_curtain",                      "Receiver particle curtain area",                                                                                                           "m2",           "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
+
+    { SSC_OUTPUT,    SSC_NUMBER, "A_rec_total",                        "Total receiver aperture area",                                                                                                             "m2",           "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
+    { SSC_OUTPUT,    SSC_ARRAY,  "A_rec",                              "Receiver(s) aperture area",                                                                                                                "m2",           "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "A_rec_curtain_total",                "Total receiver particle curtain area",                                                                                                           "m2",           "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "A_rec_curtain",                      "Receiver(s) particle curtain area",                                                                                                           "m2",           "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "L_tower_piping_calc",                "Tower piping length",                                                                                                                      "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
 
         // Receiver Performance -> TODO: This will need to be arrays...
-    { SSC_OUTPUT,    SSC_ARRAY,  "rec_design_hl",                      "Receiver(s) estimated thermal loss per aperture area used in SolarPILOT of field sizing",                                                                                          "kWt/m2",      "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
-    { SSC_OUTPUT,    SSC_NUMBER, "q_dot_rec_des",                      "Receiver thermal output at design",                                                                                                       "MWt",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "q_dot_rec_des_total",                "Total receiver thermal output at design",                                                                                                       "MWt",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "eta_rec_thermal_des",                "Receiver estimated thermal efficiency at design",                                                                                         "",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "P_tower_lift_des",                   "Receiver and tower estimated particle lift power at design",                                                                              "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "Q_transport_loss_des",               "Receiver estimated particle transport losses at design",                                                                                  "MWt",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "m_dot_htf_rec_des",                  "Receiver HTF mass flow rate at design",                                                                                                   "kg/s",        "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "m_dot_htf_rec_max",                  "Receiver max HTF mass flow rate",                                                                                                         "kg/s",        "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+
+    { SSC_OUTPUT,    SSC_ARRAY,  "rec_design_hl",                      "Receiver(s) estimated thermal loss per aperture area used in SolarPILOT of field sizing",                                                 "kWt/m2",      "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "q_dot_des_per_rec",                  "Receiver(s) thermal output at design",                                                                                                    "MWt",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "eta_rec_thermal_des_per_rec",        "Receiver(s) estimated thermal efficiency at design",                                                                                      "",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "W_dot_rec_lift_des_per_rec",         "Receiver(s) and tower estimated particle lift power at design",                                                                           "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "q_dot_piping_loss_des_per_rec",      "Receiver(s) estimated particle transport losses at design",                                                                               "MWt",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "m_dot_htf_rec_des_per_rec",          "Receiver(s) HTF mass flow rate at design",                                                                                                "kg/s",        "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "m_dot_htf_rec_max_per_rec",          "Receiver(s) max HTF mass flow rate",                                                                                                      "kg/s",        "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "q_dot_inc_per_rec",                  "Receiver(s) incident power per receiver",                                                                                                 "kg/s",        "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
 
         // Heater
     { SSC_OUTPUT,    SSC_NUMBER, "q_dot_heater_des",                   "Heater design thermal power",                                                                                                             "MWt",         "",                                  "Heater",                                   "*",                                                                "",              ""},
@@ -813,10 +824,11 @@ public:
         }
 
         size_t input_idx;
-        double ap_height, ap_width, curtain_height, curtain_width, ap_curtain_depth_ratio, rec_orientation, q_dot_des_per_rec;
+        double ap_height, ap_width, curtain_height, curtain_width, ap_curtain_depth_ratio, rec_orientation;
         double A_rec_curtain_total = 0.0, A_rec_aperture_total = 0.0, power_fraction_sum = 0.0;
         std::vector<double> A_rec_aperture(num_recs);
         std::vector<double> A_rec_curtain(num_recs);
+        std::vector<double> q_dot_des_per_rec(num_recs);
         std::vector<double> design_heat_loss(num_recs);
         std::vector<std::shared_ptr<C_pt_receiver>> receivers(num_recs);
         for (size_t i = 0; i < num_recs; i++) {
@@ -835,12 +847,12 @@ public:
             A_rec_aperture_total += A_rec_aperture.at(i);
             A_rec_curtain_total += A_rec_curtain.at(i);
             ap_curtain_depth_ratio = max_curtain_depth[input_idx] / ap_height;
-            q_dot_des_per_rec = q_dot_rec_des * (power_fraction[input_idx] / power_fraction_sum);  // Receiver design point power
+            q_dot_des_per_rec.at(i) = q_dot_rec_des * (power_fraction[input_idx] / power_fraction_sum);  // Receiver design point power
             rec_orientation = rec_azimuth[i];
 
             receivers.at(i) = std::shared_ptr<C_falling_particle_receiver>(new C_falling_particle_receiver(
                 THT, as_double("T_htf_hot_des"), as_double("T_htf_cold_des"),
-                as_double("f_rec_min"), q_dot_des_per_rec,
+                as_double("f_rec_min"), q_dot_des_per_rec.at(i),
                 as_double("rec_su_delay"), as_double("rec_qf_delay"),
                 as_double("csp.pt.rec.max_oper_frac"), as_double("eta_lift"),
                 as_integer("rec_htf"), as_matrix("field_fl_props"),
@@ -1811,8 +1823,17 @@ public:
             rec_azimuth_calc[i] = rec_azimuth[i];               //[deg]
         }
 
-        assign("A_rec", A_rec_aperture_total);     //[m2]
-        assign("A_rec_curtain", A_rec_curtain_total);     //[m2]
+        assign("A_rec_total", A_rec_aperture_total);            //[m2]
+        assign("A_rec_curtain_total", A_rec_curtain_total);     //[m2]
+        assign("q_dot_rec_des_total", q_dot_rec_des);           //[MWt]
+        ssc_number_t* A_rec = allocate("A_rec", num_recs);
+        ssc_number_t* A_rec_curtain_out = allocate("A_rec_curtain", num_recs);
+        ssc_number_t* q_dot_per_rec = allocate("q_dot_des_per_rec", num_recs);         
+        for (size_t i = 0; i < num_recs; i++) {
+            A_rec[i] = A_rec_aperture.at(i);                 //[m2]
+            A_rec_curtain_out[i] = A_rec_curtain.at(i);      //[m2]
+            q_dot_per_rec[i] = q_dot_des_per_rec.at(i);      //[MWt]
+        }
 
         double L_tower_piping = std::numeric_limits<double>::quiet_NaN();
         double od_tube_NA = std::numeric_limits<double>::quiet_NaN();
@@ -1829,29 +1850,53 @@ public:
         double rec_vel_htf_des;                // Undefined for particle receiver
         double q_dot_piping_loss_des;
 
-        double eta_rec_thermal_des_per_rec, W_dot_rec_lift_des_per_rec, q_dot_piping_loss_des_per_rec, m_dot_htf_rec_des_per_rec, m_dot_htf_rec_max_per_rec, q_dot_inc, q_dot_inc_per_rec;
+        double q_dot_inc;
         eta_rec_thermal_des = W_dot_rec_lift_des = q_dot_piping_loss_des = m_dot_htf_rec_des = m_dot_htf_rec_max = q_dot_inc = 0.0;
+
+        std::vector<double> eta_rec_thermal_des_per_rec(num_recs);
+        std::vector<double> W_dot_rec_lift_des_per_rec(num_recs);
+        std::vector<double> q_dot_piping_loss_des_per_rec(num_recs);
+        std::vector<double> m_dot_htf_rec_des_per_rec(num_recs);
+        std::vector<double> m_dot_htf_rec_max_per_rec(num_recs);
+        std::vector<double> q_dot_inc_per_rec(num_recs);
+
         for (size_t i = 0; i < num_recs; i++)   // loop through receivers
         {
-            receivers.at(i)->get_design_performance(eta_rec_thermal_des_per_rec, W_dot_rec_lift_des_per_rec, W_dot_rec_pump_tower_share_des, W_dot_rec_pump_rec_share_des,
-                rec_pump_coef_des, rec_vel_htf_des, m_dot_htf_rec_des_per_rec, m_dot_htf_rec_max_per_rec, q_dot_piping_loss_des_per_rec);
+            receivers.at(i)->get_design_performance(eta_rec_thermal_des_per_rec.at(i), W_dot_rec_lift_des_per_rec.at(i),
+                W_dot_rec_pump_tower_share_des, W_dot_rec_pump_rec_share_des, rec_pump_coef_des, rec_vel_htf_des,
+                m_dot_htf_rec_des_per_rec.at(i), m_dot_htf_rec_max_per_rec.at(i), q_dot_piping_loss_des_per_rec.at(i));
 
-            q_dot_inc_per_rec = receivers.at(i)->get_q_dot_rec_des() / eta_rec_thermal_des_per_rec;
-            q_dot_inc += q_dot_inc_per_rec;
-            eta_rec_thermal_des += eta_rec_thermal_des_per_rec * q_dot_inc_per_rec;
-            W_dot_rec_lift_des += W_dot_rec_lift_des_per_rec;
-            q_dot_piping_loss_des += q_dot_piping_loss_des_per_rec;
-            m_dot_htf_rec_des += m_dot_htf_rec_des_per_rec;
-            m_dot_htf_rec_max += m_dot_htf_rec_max_per_rec;
-          
+            q_dot_inc_per_rec.at(i) = receivers.at(i)->get_q_dot_rec_des() / eta_rec_thermal_des_per_rec.at(i);
+            q_dot_inc += q_dot_inc_per_rec.at(i);
+
+            eta_rec_thermal_des += eta_rec_thermal_des_per_rec.at(i) * q_dot_inc_per_rec.at(i);
+            W_dot_rec_lift_des += W_dot_rec_lift_des_per_rec.at(i);
+            q_dot_piping_loss_des += q_dot_piping_loss_des_per_rec.at(i);
+            m_dot_htf_rec_des += m_dot_htf_rec_des_per_rec.at(i);
+            m_dot_htf_rec_max += m_dot_htf_rec_max_per_rec.at(i);
         }
         eta_rec_thermal_des /= q_dot_inc;
-        assign("q_dot_rec_des", q_dot_rec_des);                 //[MWt]
+
         assign("eta_rec_thermal_des", eta_rec_thermal_des);     //[-]
         assign("P_tower_lift_des", W_dot_rec_lift_des);         //[MWe]
         assign("Q_transport_loss_des", q_dot_piping_loss_des);  //[MWt]
         assign("m_dot_htf_rec_des", m_dot_htf_rec_des);         //[kg/s]
         assign("m_dot_htf_rec_max", m_dot_htf_rec_max);         //[kg/s]
+
+        ssc_number_t* eta_rec_thermal_des_per_rec_out = allocate("eta_rec_thermal_des_per_rec", num_recs);
+        ssc_number_t* W_dot_rec_lift_des_per_rec_out = allocate("W_dot_rec_lift_des_per_rec", num_recs);
+        ssc_number_t* q_dot_piping_loss_des_per_rec_out = allocate("q_dot_piping_loss_des_per_rec", num_recs);
+        ssc_number_t* m_dot_htf_rec_des_per_rec_out = allocate("m_dot_htf_rec_des_per_rec", num_recs);
+        ssc_number_t* m_dot_htf_rec_max_per_rec_out = allocate("m_dot_htf_rec_max_per_rec", num_recs);
+        ssc_number_t* q_dot_inc_per_rec_out = allocate("q_dot_inc_per_rec", num_recs);
+        for (size_t i = 0; i < num_recs; i++) {
+            eta_rec_thermal_des_per_rec_out[i] = eta_rec_thermal_des_per_rec.at(i);      //[-]
+            W_dot_rec_lift_des_per_rec_out[i] = W_dot_rec_lift_des_per_rec.at(i);        //[MWe]
+            q_dot_piping_loss_des_per_rec_out[i] = q_dot_piping_loss_des_per_rec.at(i);  //[MWt]
+            m_dot_htf_rec_des_per_rec_out[i] = m_dot_htf_rec_des_per_rec.at(i);          //[kg/s]
+            m_dot_htf_rec_max_per_rec_out[i] = m_dot_htf_rec_max_per_rec.at(i);          //[kg/s]
+            q_dot_inc_per_rec_out[i] = q_dot_inc_per_rec.at(i);                          //[MWt]
+        }
 
             // *************************
             // Heater
