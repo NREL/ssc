@@ -36,23 +36,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 
 namespace libfin {
-
-//double irr(double tolerance, int maxIterations, const std::vector<double> &CashFlows, int Count);
+    double min(double a, double b);
+    double max(double a, double b);
     double irr(const std::vector<double>& cf, int count, double initial_guess = -2, double tolerance = 1e-6, int max_iterations = 100);
-//double npv(double Rate, const std::vector<double> &CashFlows, int Count);
     double npv(const std::vector<double>& cf, int nyears, double rate);
     double payback(const std::vector<double> &CumulativePayback, const std::vector<double> &Payback, int Count);
-
-    double pow1pm1 (double x, double y);
-    double pow1p (double x, double y); 
-    double fvifa (double rate, double nper); 
-    double pvif (double rate, double nper); 
-    double pmt (double rate, double nper, double pv, double fv, int type); 
-    double ipmt (double rate, double per, double nper, double pv, double fv, int type) ;
-    double ppmt (double rate, double per, double nper, double pv, double fv, int type) ;
-
     long round_irs(double number);
-
+    double ppmt(double rate, double per, double nper, double pv, double fv, int type);
+    double payback(const std::vector<double>& CumulativePayback, const std::vector<double>& Payback, int Count);
 }
+
+double pow1pm1(double x, double y);
+double pow1p(double x, double y);
+double fvifa(double rate, double nper);
+double pvif(double rate, double nper);
+double pmt(double rate, double nper, double pv, double fv, int type);
+double ipmt(double rate, double per, double nper, double pv, double fv, int type);
 
 #endif

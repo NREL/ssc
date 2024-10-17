@@ -35,7 +35,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <limits>
 #include "lib_financial.h"
 
-using namespace libfin;
+double libfin::min(double a, double b)
+{ // handle NaN
+    if ((a != a) || (b != b))
+        return 0;
+    else
+        return (a < b) ? a : b;
+}
+
+double libfin::max(double a, double b)
+{ // handle NaN
+    if ((a != a) || (b != b))
+        return 0;
+    else
+        return (a > b) ? a : b;
+}
 
 /* ported from http://code.google.com/p/irr-newtonraphson-calculator/ */
 bool is_valid_iter_bound(double estimated_return_rate)
@@ -83,8 +97,8 @@ double irr_scale_factor(const std::vector<double>& cf_vector_unscaled, int count
 
 bool is_valid_irr(const std::vector<double>& cf_vector, int count, double residual, double tolerance, int number_of_iterations, int max_iterations, double calculated_irr, double scale_factor)
 {
-    double npv_of_irr = npv(cf_vector, count, calculated_irr) + cf_vector.at(0);
-    double npv_of_irr_plus_delta = npv(cf_vector, count, calculated_irr + 0.001) + cf_vector.at(0);
+    double npv_of_irr = libfin::npv(cf_vector, count, calculated_irr) + cf_vector.at(0);
+    double npv_of_irr_plus_delta = libfin::npv(cf_vector, count, calculated_irr + 0.001) + cf_vector.at(0);
     bool is_valid = ((number_of_iterations < max_iterations) && (std::abs(residual) < tolerance) && (npv_of_irr > npv_of_irr_plus_delta) && (std::abs(npv_of_irr / scale_factor) < tolerance));
     //if (!is_valid)
     //{
@@ -230,39 +244,40 @@ double libfin::npv(const std::vector<double>& cf_vector, int nyears, double rate
     return result * rr;
 }
 
-double libfin::payback(const std::vector<double> &CumulativePayback, const std::vector<double> &Payback, int Count)
+double libfin::payback(const std::vector<double> &cumulative_payback, const std::vector<double> &payback, int nyears)
 {
 /*
 Return payback in years of inputs streams
 Payback occures when cumulative stream is > 0
 Find exact payback by subtracting cumulative / payback
 */
-  double dPayback = 1e99; // report as > analysis period
-  bool bolPayback = false;
-  int iPayback = 0;
-  int i = 1;
-  while ((i<Count) && (!bolPayback))
-  {
-    if (CumulativePayback[i] > 0)
-	{
-      bolPayback = true;
-      iPayback = i;
-	}
-	i++;
-  }
+    double dpb = std::numeric_limits<double>::quiet_NaN();
+    bool bpb = false;
+    int ipb = 0;
+    int i = 1;
+    while ((i<nyears) && (!bpb))
+    {
+        if (cumulative_payback[i] > 0)
+	    {
+            bpb = true;
+            ipb = i;
+	    }
+	    i++;
+    }
 
-  if (bolPayback)
+  if (bpb)
   {
-	  if (Payback[iPayback] !=0)
+	  if (payback[ipb] !=0)
 	  {
-		  dPayback = iPayback - CumulativePayback[iPayback] /Payback[iPayback];
+		  dpb = ipb - cumulative_payback[ipb] / payback[ipb];
 	  }
 	  else
 	  {
-		  dPayback = iPayback;
+		  dpb = ipb;
 	  }
   }
-  return dPayback;
+
+  return dpb;
 }
 
 
@@ -271,9 +286,9 @@ Returns the payment on the principal for a given period for an investment based 
 
 Syntax
 
-PPMT(rate,per,nper,pv,fv,type)
+libfin::ppmt(rate,per,nper,pv,fv,type)
 
-For a more complete description of the arguments in PPMT, see PV.
+For a more complete description of the arguments in libfin::ppmt, see PV.
 
 Rate   is the interest rate per period.
 
@@ -296,30 +311,30 @@ Make sure that you are consistent about the units you use for specifying rate an
 
 
 */
-double libfin::pow1pm1 (double x, double y)
+double pow1pm1 (double x, double y)
 {
 	return (x <= -1) ? pow (1 + x, y) - 1 : exp(y * log(1.0 + x)) - 1;
 }
-double libfin::pow1p (double x, double y)
+double pow1p (double x, double y)
 {
 	return (std::abs(x) > 0.5) ? pow (1 + x, y) : exp (y * log(1.0 + x));
 }
-double libfin::fvifa (double rate, double nper)
+double fvifa (double rate, double nper)
 {
 	return (rate == 0) ? nper : pow1pm1 (rate, nper) / rate;
 }
 
-double libfin::pvif (double rate, double nper)
+double pvif (double rate, double nper)
 {
 	return pow1p (rate, nper);
 }
 
-double libfin::pmt (double rate, double nper, double pv, double fv, int type)
+double pmt (double rate, double nper, double pv, double fv, int type)
 {
 	return ((-pv * pvif (rate, nper) - fv ) / ((1.0 + rate * type) * fvifa (rate, nper)));
 }
 
-double libfin::ipmt (double rate, double per, double nper, double pv, double fv, int type)
+double ipmt (double rate, double per, double nper, double pv, double fv, int type)
 {
 	double p = pmt (rate, nper, pv, fv, 0);
 	double ip = -(pv * pow1p (rate, per - 1) * rate + p * pow1pm1 (rate, per - 1));

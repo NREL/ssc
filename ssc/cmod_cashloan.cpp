@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_financial.h"
 #include "lib_util.h"
 #include "common_financial.h"
-using namespace libfin;
+
 #include <sstream>
 
 static var_info vtab_cashloan[] = {
@@ -792,14 +792,14 @@ public:
         // SAM 1038
         itc_sta_per = 0.0;
         for (size_t k = 0; k <= nyears; k++) {
-            cf.at(CF_itc_sta_percent_amount, k) = min(cf.at(CF_itc_sta_percent_maxvalue, k), cf.at(CF_itc_sta_percent_amount, k) * state_itc_basis);
+            cf.at(CF_itc_sta_percent_amount, k) = libfin::min(cf.at(CF_itc_sta_percent_maxvalue, k), cf.at(CF_itc_sta_percent_amount, k) * state_itc_basis);
             itc_sta_per += cf.at(CF_itc_sta_percent_amount, k);
         }
 
         // SAM 1038
         itc_fed_per = 0.0;
         for (size_t k = 0; k <= nyears; k++) {
-            cf.at(CF_itc_fed_percent_amount, k) = min(cf.at(CF_itc_fed_percent_maxvalue, k), cf.at(CF_itc_fed_percent_amount, k) * federal_itc_basis);
+            cf.at(CF_itc_fed_percent_amount, k) = libfin::min(cf.at(CF_itc_fed_percent_maxvalue, k), cf.at(CF_itc_fed_percent_amount, k) * federal_itc_basis);
             itc_fed_per += cf.at(CF_itc_fed_percent_amount, k);
         }
 
@@ -958,7 +958,7 @@ public:
 			{
 				cf.at(CF_debt_balance, i-1) = loan_amount;
 				cf.at(CF_debt_payment_interest, i) = loan_amount * loan_rate;
-				cf.at(CF_debt_payment_principal,i) = -ppmt( loan_rate,       // Rate
+				cf.at(CF_debt_payment_principal,i) = -libfin::ppmt( loan_rate,       // Rate
 																i,           // Period
 																loan_term,   // Number periods
 																loan_amount, // Present Value
@@ -1204,10 +1204,10 @@ public:
 
         save_cf(CF_parasitic_cost, nyears, "cf_parasitic_cost");
 
-        double npv_energy_real = npv(CF_energy_sales, nyears, real_discount_rate);
+        double npv_energy_real = libfin::npv(cf.row(CF_energy_sales).to_vector(), nyears, real_discount_rate);
 //		if (npv_energy_real == 0.0) throw general_error("lcoe real failed because energy npv is zero");
-//		double lcoe_real = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) ) * 100 / npv_energy_real;
-		double lcoe_real = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) - npv(CF_parasitic_cost, nyears, nom_discount_rate) ) * 100;
+//		double lcoe_real = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + libfin::npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) ) * 100 / npv_energy_real;
+		double lcoe_real = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + libfin::npv(cf.row(CF_after_tax_net_equity_cost_flow).to_vector(), nyears, nom_discount_rate) - libfin::npv(cf.row(CF_parasitic_cost).to_vector(), nyears, nom_discount_rate)) * 100;
 		if (npv_energy_real == 0.0) 
 		{
 			lcoe_real = std::numeric_limits<double>::quiet_NaN();
@@ -1217,10 +1217,10 @@ public:
 			lcoe_real /= npv_energy_real;
 		}
 
-		double npv_energy_nom = npv( CF_energy_sales, nyears, nom_discount_rate );
+		double npv_energy_nom = libfin::npv(cf.row(CF_energy_sales).to_vector(), nyears, nom_discount_rate );
 //		if (npv_energy_nom == 0.0) throw general_error("lcoe nom failed because energy npv is zero");
-//		double lcoe_nom = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) ) * 100 / npv_energy_nom;
-		double lcoe_nom = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) - npv(CF_parasitic_cost, nyears, nom_discount_rate)) * 100;
+//		double lcoe_nom = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + libfin::npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) ) * 100 / npv_energy_nom;
+		double lcoe_nom = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + libfin::npv(cf.row(CF_after_tax_net_equity_cost_flow).to_vector(), nyears, nom_discount_rate) - libfin::npv(cf.row(CF_parasitic_cost).to_vector(), nyears, nom_discount_rate)) * 100;
 		if (npv_energy_nom == 0.0) 
 		{
 			lcoe_nom = std::numeric_limits<double>::quiet_NaN();
@@ -1230,19 +1230,19 @@ public:
 			lcoe_nom /= npv_energy_nom;
 		}
 
-		double net_present_value = cf.at(CF_after_tax_cash_flow, 0) + npv(CF_after_tax_cash_flow, nyears, nom_discount_rate );
+		double net_present_value = cf.at(CF_after_tax_cash_flow, 0) + libfin::npv(cf.row(CF_after_tax_cash_flow).to_vector(), nyears, nom_discount_rate);
         double irr = libfin::irr(cf.row(CF_after_tax_cash_flow).to_vector(),nyears)*100;
 
-		double payback = compute_payback(CF_cumulative_payback_with_expenses, CF_payback_with_expenses, nyears);
+		double payback = libfin::payback(cf.row(CF_cumulative_payback_with_expenses).to_vector(), cf.row(CF_payback_with_expenses).to_vector(), nyears);
 		// Added for Owen Zinaman for Mexico Rates and analyses 9/26/16
 		//- see C:\Projects\SAM\Documentation\Payback\DiscountedPayback_2016.9.26
-		double discounted_payback = compute_payback(CF_discounted_cumulative_payback, CF_discounted_payback, nyears);
+		double discounted_payback = libfin::payback(cf.row(CF_discounted_cumulative_payback).to_vector(), cf.row(CF_discounted_payback).to_vector(), nyears);
 
 		// save outputs
 
 
-	double npv_fed_ptc = npv(CF_ptc_fed,nyears,nom_discount_rate);
-	double npv_sta_ptc = npv(CF_ptc_sta,nyears,nom_discount_rate);
+	double npv_fed_ptc = libfin::npv(cf.row(CF_ptc_fed).to_vector(), nyears, nom_discount_rate);
+	double npv_sta_ptc = libfin::npv(cf.row(CF_ptc_sta).to_vector(), nyears, nom_discount_rate);
 
 	// TODO check this
 //	npv_fed_ptc /= (1.0 - effective_tax_rate);
@@ -1309,7 +1309,7 @@ public:
 
 		for (i = 0; i < (int)count; i++)
 			cf.at(CF_nte, i) = (double) (ub_wo_sys[i] - ub_w_sys[i]) *100.0;// $ to cents
-		double lnte_real = npv(  CF_nte, nyears, nom_discount_rate ); 
+		double lnte_real = libfin::npv(cf.row(CF_nte).to_vector(), nyears, nom_discount_rate);
 
 		for (i = 0; i < (int)count; i++)
 			if (cf.at(CF_energy_net,i) > 0) cf.at(CF_nte,i) /= cf.at(CF_energy_net,i);
@@ -1486,14 +1486,14 @@ public:
 		save_cf( CF_cumulative_payback_without_expenses, nyears, "cf_cumulative_payback_without_expenses" );
 
 	// for cost stacked bars
-		//npv(CF_energy_value, nyears, nom_discount_rate)
+		//libfin::npv(CF_energy_value, nyears, nom_discount_rate)
 		// present value of o and m value - note - present value is distributive - sum of pv = pv of sum
-		double pvAnnualOandM = npv(CF_om_fixed_expense, nyears, nom_discount_rate);
-		double pvFixedOandM = npv(CF_om_capacity_expense, nyears, nom_discount_rate);
-		double pvVariableOandM = npv(CF_om_production_expense, nyears, nom_discount_rate);
-		double pvFuelOandM = npv(CF_om_fuel_expense, nyears, nom_discount_rate);
-		double pvOptFuel1OandM = npv(CF_om_opt_fuel_1_expense, nyears, nom_discount_rate);
-		double pvOptFuel2OandM = npv(CF_om_opt_fuel_2_expense, nyears, nom_discount_rate);
+		double pvAnnualOandM = libfin::npv(cf.row(CF_om_fixed_expense).to_vector(), nyears, nom_discount_rate);
+		double pvFixedOandM = libfin::npv(cf.row(CF_om_capacity_expense).to_vector(), nyears, nom_discount_rate);
+		double pvVariableOandM = libfin::npv(cf.row(CF_om_production_expense).to_vector(), nyears, nom_discount_rate);
+		double pvFuelOandM = libfin::npv(cf.row(CF_om_fuel_expense).to_vector(), nyears, nom_discount_rate);
+		double pvOptFuel1OandM = libfin::npv(cf.row(CF_om_opt_fuel_1_expense).to_vector(), nyears, nom_discount_rate);
+		double pvOptFuel2OandM = libfin::npv(cf.row(CF_om_opt_fuel_2_expense).to_vector(), nyears, nom_discount_rate);
 	//	double pvWaterOandM = NetPresentValue(sv[svNominalDiscountRate], cf[cfAnnualWaterCost], analysis_period);
 
 		assign( "present_value_oandm",  var_data((ssc_number_t)(pvAnnualOandM + pvFixedOandM + pvVariableOandM + pvFuelOandM))); // + pvWaterOandM);
@@ -1502,8 +1502,8 @@ public:
 		assign( "present_value_fuel", var_data((ssc_number_t)(pvFuelOandM + pvOptFuel1OandM + pvOptFuel2OandM)));
 
 		// present value of insurance and property tax
-		double pvInsurance = npv(CF_insurance_expense, nyears, nom_discount_rate);
-		double pvPropertyTax = npv(CF_property_tax_expense, nyears, nom_discount_rate);
+		double pvInsurance = libfin::npv(cf.row(CF_insurance_expense).to_vector(), nyears, nom_discount_rate);
+		double pvPropertyTax = libfin::npv(cf.row(CF_property_tax_expense).to_vector(), nyears, nom_discount_rate);
 
 		assign( "present_value_insandproptax", var_data((ssc_number_t)(pvInsurance + pvPropertyTax)));
 
@@ -1528,7 +1528,7 @@ public:
 		for (int i=0;i<=nyears;i++)
 			arrp[i] = (ssc_number_t)cf.at(cf_line, i);
 	}
-
+    /*
 	double compute_payback( int cf_cpb, int cf_pb, int nyears )
 	{	
 		// may need to determine last negative to positive transition for high replacement costs - see C:\Projects\SAM\Documentation\FinancialIssues\Payback_2015.9.8
@@ -1555,20 +1555,7 @@ public:
 
 		return dPayback;
 	}
-
-
-	double npv(int cf_line, int nyears, double rate)
-	{		
-		if (rate <= -1.0) throw general_error("cannot calculate NPV with discount rate less or equal to -1.0");
-
-		double rr = 1/(1+rate);
-		double result = 0;
-		for (int i=nyears;i>0;i--)
-			result = rr * result + cf.at(cf_line,i);
-
-		return result*rr;
-	}
-
+    */
 	void compute_production_incentive( int cf_line, int nyears, const std::string &s_val, const std::string &s_term, const std::string &s_escal )
 	{
 		size_t len = 0;
@@ -1599,7 +1586,7 @@ public:
 		if (len == 1)
 		{
 			for (int i=1;i<=nyears;i++)
-				cf.at(cf_line, i) = (i <= term) ? cf.at(CF_energy_sales,i) / 1000.0 * round_irs(1000.0 * parr[0] * pow(1 + escal, i-1)) : 0.0;
+				cf.at(cf_line, i) = (i <= term) ? cf.at(CF_energy_sales,i) / 1000.0 * libfin::round_irs(1000.0 * parr[0] * pow(1 + escal, i-1)) : 0.0;
 		}
 		else
 		{
@@ -1623,7 +1610,7 @@ public:
 		size_t len = 0;
 		ssc_number_t *p = as_array(name, &len);
 		for (int i=1;i<=(int)len && i <= nyears;i++)
-			cf.at(cf_line, i) = min( scale*p[i-1], max );
+			cf.at(cf_line, i) = libfin::min( scale*p[i-1], max );
 	}
 
 	double taxable_incentive_income(int year, const std::string &fed_or_sta)
@@ -1728,22 +1715,6 @@ public:
 					cf.at(cf_line, i+1) = arrp[i]*scale;
 			}
 		}
-	}
-
-	double min(double a, double b)
-	{ // handle NaN
-		if ((a != a) || (b != b))
-			return 0;
-		else
-			return (a < b) ? a : b;
-	}
-
-	double max(double a, double b)
-	{ // handle NaN
-		if ((a != a) || (b != b))
-			return 0;
-		else
-			return (a > b) ? a : b;
 	}
 
 };
