@@ -51,7 +51,17 @@ double libfin::max(double a, double b)
         return (a > b) ? a : b;
 }
 
-/* ported from http://code.google.com/p/irr-newtonraphson-calculator/ */
+
+// irs rounding rules https://www.irs.gov/pub/irs-pdf/n1036.pdf
+// original code from http://www.codeproject.com/Articles/58289/C-Round-Function.aspx
+long libfin::round_irs(double number)
+{
+    return (number >= 0) ? (long)(number + 0.5) : (long)(number - 0.5);
+}
+
+// irr functions
+// orignally ported from http://code.google.com/p/irr-newtonraphson-calculator/
+
 bool is_valid_iter_bound(double estimated_return_rate)
 {
     return estimated_return_rate != -1 && (estimated_return_rate < std::numeric_limits<int>::max()) && (estimated_return_rate > std::numeric_limits<int>::min());
@@ -136,7 +146,6 @@ double irr_calc(const std::vector<double>& cf_vector, int count, double initial_
     return calculated_irr;
 }
 
-
 double libfin::irr(const std::vector<double>& cf_vector, int count, double initial_guess, double tolerance, int max_iterations)
 {
     int number_of_iterations = 0;
@@ -202,36 +211,6 @@ double libfin::irr(const std::vector<double>& cf_vector, int count, double initi
     return calculated_irr;
 }
 
-
-
-
-/*ported directly from Delphi simple geometric sum*/
-//double libfin::npv(double Rate, const std::vector<double> &CashFlows, int Count) //, PaymentTime: TPaymentTime)
-//{
-//	/*
-//{ Caution: The sign of NPV is reversed from what would be expected for standard
-//   cash flows!}
-//*/
-//	if (Rate <= -1.0)
-//	{
-//		// TODO - throw exception?
-//		return -999;
-//	}
-//
-//	if (Count > (int)CashFlows.size())
-//		Count = (int)CashFlows.size();
-//
-//	double rr = 1/(1+Rate);
-//	double result = 0;
-//	for (int i=Count-1;i>0;i--)
-//	{
-//		result = rr * result + CashFlows[i];
-//	}
-////	if PaymentTime = ptEndOfPeriod then result := rr * result;
-//	return result*rr; // assumes end of period payments!!
-//}
-
-//double libfin::npv(int cf_line, int nyears, double rate)
 double libfin::npv(const std::vector<double>& cf_vector, int nyears, double rate)
 {
     //if (rate == -1.0) throw general_error("cannot calculate NPV with discount rate equal to -1.0");
@@ -244,13 +223,12 @@ double libfin::npv(const std::vector<double>& cf_vector, int nyears, double rate
     return result * rr;
 }
 
+// Return payback in years of inputs streams
+// Payback occures when cumulative stream is > 0
+// Find exact payback by subtracting cumulative / payback
 double libfin::payback(const std::vector<double> &cumulative_payback, const std::vector<double> &payback, int nyears)
 {
-/*
-Return payback in years of inputs streams
-Payback occures when cumulative stream is > 0
-Find exact payback by subtracting cumulative / payback
-*/
+
     double dpb = std::numeric_limits<double>::quiet_NaN();
     bool bpb = false;
     int ipb = 0;
@@ -280,8 +258,10 @@ Find exact payback by subtracting cumulative / payback
   return dpb;
 }
 
+// ppmpt and supporting functions
+/* original code source http://www.linkedin.com/answers/technology/software-development/TCH_SFT/445353-4527099?browseCategory=TCH_SFT
+updated link as of October 2024: https://corporatefinanceinstitute.com/resources/excel/ppmt-function/
 
-/* code source http://www.linkedin.com/answers/technology/software-development/TCH_SFT/445353-4527099?browseCategory=TCH_SFT
 Returns the payment on the principal for a given period for an investment based on periodic, constant payments and a constant interest rate.
 
 Syntax
@@ -308,33 +288,31 @@ Set type equal to If payments are due
 
 Remark
 Make sure that you are consistent about the units you use for specifying rate and nper. If you make monthly payments on a four-year loan at 12 percent annual interest, use 12%/12 for rate and 4*12 for nper. If you make annual payments on the same loan, use 12% for rate and 4 for nper.
-
-
 */
-double pow1pm1 (double x, double y)
+double pow1pm1(double x, double y)
 {
 	return (x <= -1) ? pow (1 + x, y) - 1 : exp(y * log(1.0 + x)) - 1;
 }
-double pow1p (double x, double y)
+double pow1p(double x, double y)
 {
 	return (std::abs(x) > 0.5) ? pow (1 + x, y) : exp (y * log(1.0 + x));
 }
-double fvifa (double rate, double nper)
+double fvifa(double rate, double nper)
 {
 	return (rate == 0) ? nper : pow1pm1 (rate, nper) / rate;
 }
 
-double pvif (double rate, double nper)
+double pvif(double rate, double nper)
 {
 	return pow1p (rate, nper);
 }
 
-double pmt (double rate, double nper, double pv, double fv, int type)
+double pmt(double rate, double nper, double pv, double fv, int type)
 {
 	return ((-pv * pvif (rate, nper) - fv ) / ((1.0 + rate * type) * fvifa (rate, nper)));
 }
 
-double ipmt (double rate, double per, double nper, double pv, double fv, int type)
+double ipmt(double rate, double per, double nper, double pv, double fv, int type)
 {
 	double p = pmt (rate, nper, pv, fv, 0);
 	double ip = -(pv * pow1p (rate, per - 1) * rate + p * pow1pm1 (rate, per - 1));
@@ -350,8 +328,3 @@ double libfin::ppmt (double rate, double per, double nper, double pv, double fv,
 	return p - ip;
 }
 
-// from http://www.codeproject.com/Articles/58289/C-Round-Function.aspx
-long libfin::round_irs(double number)
-{
-    return (number >= 0) ? (long)(number + 0.5) : (long)(number - 0.5);
-}
