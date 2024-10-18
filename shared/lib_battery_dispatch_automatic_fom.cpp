@@ -274,6 +274,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         /*! Energy need to charge the battery (kWh) */
         double energyNeededToFillBattery = _Battery->energy_to_fill(m_batteryPower->stateOfChargeMax);
 
+        // Positive: spare power to discharge. Negative: system power will be curtailed. Negative number can be fed directly into powerBattery to support charging
         double interconnectionCapacity = m_batteryPower->powerInterconnectionLimit - m_batteryPower->powerSystem;
 
         /* Booleans to assist decisions */

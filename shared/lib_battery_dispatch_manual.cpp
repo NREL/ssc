@@ -117,6 +117,7 @@ void dispatch_manual_t::prepareDispatch(size_t hour_of_year, size_t )
 	m_batteryPower->canDischarge = _discharge_array[iprofile - 1];
 	m_batteryPower->canGridCharge = _gridcharge_array[iprofile - 1];
     m_batteryPower->canClipCharge = _can_clip_charge;
+    m_batteryPower->canCurtailCharge = _can_curtail_charge;
 
 	if (iprofile <= _fuelcellcharge_array.size()) {
 		m_batteryPower->canFuelCellCharge = _fuelcellcharge_array[iprofile - 1];
@@ -130,7 +131,7 @@ void dispatch_manual_t::prepareDispatch(size_t hour_of_year, size_t )
 	_percent_charge = 0.;
 
 	if (m_batteryPower->canDischarge){ _percent_discharge = _percent_discharge_array[iprofile]; }
-	if (m_batteryPower->canClipCharge || m_batteryPower->canSystemCharge || m_batteryPower->canFuelCellCharge){ _percent_charge = 100.; }
+	if (m_batteryPower->canCurtailCharge || m_batteryPower->canClipCharge || m_batteryPower->canSystemCharge || m_batteryPower->canFuelCellCharge){ _percent_charge = 100.; }
 	if (m_batteryPower->canGridCharge){ _percent_charge = _percent_charge_array[iprofile]; }
 }
 void dispatch_manual_t::dispatch(size_t year,

@@ -1268,7 +1268,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 batt_vars->batt_dispatch, batt_vars->batt_meter_position,
                 batt_vars->batt_discharge_schedule_weekday, batt_vars->batt_discharge_schedule_weekend,
                 batt_vars->batt_can_charge, batt_vars->batt_can_discharge, batt_vars->batt_can_gridcharge, batt_vars->batt_can_fuelcellcharge, batt_vars->batt_btm_can_discharge_to_grid,
-                dm_percent_discharge, dm_percent_gridcharge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->grid_interconnection_limit_kW,
+                dm_percent_discharge, dm_percent_gridcharge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_curtailcharge, batt_vars->grid_interconnection_limit_kW,
                 batt_vars->batt_dispatch_charge_only_system_exceeds_load,
                 batt_vars->batt_dispatch_discharge_only_load_exceeds_system,
                 batt_vars->batt_minimum_outage_SOC,
