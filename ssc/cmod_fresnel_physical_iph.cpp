@@ -215,8 +215,9 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
     { SSC_INPUT,    SSC_ARRAY,          "dispatch_factors_ts",         "Dispatch payment factor array",                                                         "",                    "",                             "tou",                                      "ppa_multiplier_model=1&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
     { SSC_INPUT,    SSC_MATRIX,         "dispatch_sched_weekday",      "PPA pricing weekday schedule, 12x24",                                                   "",                    "",                             "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
     { SSC_INPUT,    SSC_MATRIX,         "dispatch_sched_weekend",      "PPA pricing weekend schedule, 12x24",                                                   "",                    "",                             "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
-    { SSC_INPUT,    SSC_ARRAY,          "dispatch_tod_factors",        "TOD factors for periods 1 through 9",                                                   "",                    "",                             "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",  "SIMULATION_PARAMETER" },
-    { SSC_INPUT,    SSC_ARRAY,          "ppa_price_input",             "PPA solution mode (0=Specify IRR target, 1=Specify PPA price)",                         "",                    "",                             "Financial Solution Mode",                  "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,    SSC_ARRAY,          "dispatch_tod_factors",        "TOD factors for periods 1 through 9",                                                   "",                    "",                             "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,    SSC_ARRAY,          "ppa_price_input_heatBtu",     "PPA prices - yearly",			                                                        "$/MMBtu",	           "",	                           "Revenue",			                       "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1",                  "",      	       "SIMULATION_PARAMETER" },
+
 
 
     // System Control
@@ -404,6 +405,7 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "const_per_principal_total",          "Total principal, all loans",                                                                                                              "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "const_per_interest_total",           "Total interest costs, all loans",                                                                                                         "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "construction_financing_cost",        "Total construction financing cost",                                                                                                       "$",            "",                                  "Financial Parameters",                     "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "ppa_price_input",			           "PPA prices - yearly",			                                                                                                          "$/kWh",	      "",	                               "Revenue",			                       "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1",       "",      	    "" },
 
     // ****************************************************************************************************************************************
     // Timeseries Simulation Outputs here (sim_type = 1):
@@ -560,7 +562,7 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
     { SSC_OUTPUT,       SSC_ARRAY,      "operating_modes_a",                "First 3 operating modes tried",                                        "",             "",         "solver",         "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "operating_modes_b",                "Next 3 operating modes tried",                                         "",             "",         "solver",         "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "operating_modes_c",                "Final 3 operating modes tried",                                        "",             "",         "solver",         "sim_type=1",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "gen",                              "Total thermal power to heat sink with available derate",               "kWe",          "",         "system",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "gen_heat",                         "Total thermal power to heat sink with available derate",               "kWe",          "",         "system",         "sim_type=1",                       "",                      "" },
 
     // Monthly Outputs
     { SSC_OUTPUT,       SSC_ARRAY,      "monthly_energy",                   "Monthly Energy",                                                       "kWh",          "",         "Post-process",   "sim_type=1",              "LENGTH=12",                      "" },
@@ -608,6 +610,26 @@ public:
         double tshours = as_double("tshours");                  //[-]
         double q_dot_pc_des = as_double("q_pb_design");         //[MWt] HEAT SINK design thermal power
         double Q_tes = q_dot_pc_des * tshours;                  //[MWt-hr]
+
+        // Convert IPH Input Units
+        {
+            const double MMBTU_TO_KWh = 293.07107; // 1
+            if (is_assigned("ppa_price_input_heatBtu"))
+            {
+                size_t count_ppa_price_MMBTU_input;
+                ssc_number_t* ppa_price_MMBTU_input_array = as_array("ppa_price_input_heatBtu", &count_ppa_price_MMBTU_input);
+                std::vector<ssc_number_t> ppa_price_input_vec;
+                for (int i = 0; i < count_ppa_price_MMBTU_input; i++)
+                {
+                    ppa_price_input_vec.push_back(ppa_price_MMBTU_input_array[i] / MMBTU_TO_KWh);
+                }
+
+                int size = ppa_price_input_vec.size();
+                ssc_number_t* alloc_vals = allocate("ppa_price_input", size);
+                for (int i = 0; i < size; i++)
+                    alloc_vals[i] = ppa_price_input_vec[i];    // []
+            }
+        }
 
         // Weather reader
         C_csp_weatherreader weather_reader;
@@ -1530,7 +1552,7 @@ public:
         if (!haf.setup(n_steps_fixed))
             throw exec_error("fresnel_physical", "failed to setup adjustment factors: " + haf.error());
 
-        ssc_number_t* p_gen = allocate("gen", n_steps_fixed);
+        ssc_number_t* p_gen = allocate("gen_heat", n_steps_fixed);
         ssc_number_t* p_q_dot_defocus_est = allocate("q_dot_defocus_est", n_steps_fixed);
         ssc_number_t* p_SCAs_def = as_array("SCAs_def", &count);
         if ((int)count != n_steps_fixed)
@@ -1538,6 +1560,8 @@ public:
 
         ssc_number_t* p_W_dot_parasitic_tot = as_array("W_dot_parasitic_tot", &count);
         ssc_number_t* p_W_dot_par_tot_haf = allocate("W_dot_par_tot_haf", n_steps_fixed);
+        ssc_number_t* p_load = allocate("load", n_steps_fixed); // testing using cmod_utilityrate5 for electricity rates p_load = p_W_dot_par_tot_haf
+
 
         ssc_number_t* p_q_dot_htf_sf_out = as_array("q_dot_htf_sf_out", &count);
         if ((int)count != n_steps_fixed)
@@ -1548,14 +1572,15 @@ public:
             p_gen[i] = (ssc_number_t)(p_q_dot_heat_sink[i] * haf(hour) * 1.E3);     //[kWe]
             p_q_dot_defocus_est[i] = (ssc_number_t)(1.0 - p_SCAs_def[i]) * p_q_dot_htf_sf_out[i]; //[MWt]
             p_W_dot_parasitic_tot[i] *= -1.0;			//[MWe] Label is total parasitics, so change to a positive value
-            p_W_dot_par_tot_haf[i] = (ssc_number_t)(p_W_dot_parasitic_tot[i] * haf(hour) * 1.E3);		//[kWe] apply availability derate and convert from MWe 
+            p_W_dot_par_tot_haf[i] = (ssc_number_t)(p_W_dot_parasitic_tot[i] * haf(hour) * 1.E3);		//[kWe] apply availability derate and convert from MWe
+            p_load[i] = p_W_dot_par_tot_haf[i];
         }
 
         // Monthly outputs
-        accumulate_monthly_for_year("gen", "monthly_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1);
+        accumulate_monthly_for_year("gen_heat", "monthly_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1);
 
         // Annual outputs
-        accumulate_annual_for_year("gen", "annual_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
+        accumulate_annual_for_year("gen_heat", "annual_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
 
         // This term currently includes TES freeze protection
         accumulate_annual_for_year("W_dot_par_tot_haf", "annual_electricity_consumption", sim_setup.m_report_step / 3600.0, steps_per_hour);	//[kWe-hr]
