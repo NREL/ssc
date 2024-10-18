@@ -168,15 +168,12 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 	switch (design_method)
 	{
     case var_solarfield::DES_SIM_DETAIL::SUBSET_OF_DAYSHOURS:
-	//case LAYOUT_DETAIL::SUBSET_HOURS:
-
 	{		//Subset of days/hours
 		//Need to add this still
 		V.amb.sim_time_step.Setval(0.);
 		throw spexception("Simulation with a user-specified list of days/hours is not currently supported. Please use another option.");
 		//break;
 	}
-	//case LAYOUT_DETAIL::SINGLE_POINT:
     case var_solarfield::DES_SIM_DETAIL::SINGLE_SIMULATION_POINT:
 	{  //2) Single design point=1;
 		V.amb.sim_time_step.Setval(0.);
@@ -201,14 +198,12 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
         wdatvar->setStep(0, dom, hour, month, P.dni, P.Tamb, P.Patm, P.Vwind, P.Simweight);
 		break;
 	}
-	//case LAYOUT_DETAIL::NO_FILTER:
     case var_solarfield::DES_SIM_DETAIL::DO_NOT_FILTER_HELIOSTATS:
 	{	//3) Do not filter heliostats=0;
 		wdatvar->clear();
 		V.amb.sim_time_step.Setval(0.);
 		break;
 	}
-	//case LAYOUT_DETAIL::FULL_ANNUAL:
     case var_solarfield::DES_SIM_DETAIL::ANNUAL_SIMULATION:
 	{	//4) Annual simulation=3;
 		*wdatvar = WeatherData(V.amb.wf_data.val); //vset["ambient"][0]["wf_data"].value;
@@ -217,7 +212,6 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 		V.amb.sim_time_step.Setval(3600.);
 		break;
 	}
-	//case LAYOUT_DETAIL::MAP_TO_ANNUAL:
     case var_solarfield::DES_SIM_DETAIL::EFFICIENCY_MAP__ANNUAL:
 	{  //Efficiency map + annual simulation
 		V.amb.sim_time_step.Setval(3600.);
@@ -253,8 +247,6 @@ void interop::GenerateSimulationWeatherData(var_map &V, int design_method, Array
 		break;
 
 	}
-	//case LAYOUT_DETAIL::LIMITED_ANNUAL:
-	//case LAYOUT_DETAIL::AVG_PROFILES:
     case var_solarfield::DES_SIM_DETAIL::LIMITED_ANNUAL_SIMULATION:
     case var_solarfield::DES_SIM_DETAIL::REPRESENTATIVE_PROFILES:
 	case -1:  //for optimization
@@ -2413,22 +2405,43 @@ void sim_result::process_raytrace_simulation(SolarField& SF, sim_params& P, int 
 }
 #endif
 
-void sim_result::process_flux(SolarField *SF, bool normalize){
+void sim_result::process_flux(SolarField* SF, bool normalize) {
 	flux_surfaces.clear();
 	receiver_names.clear();
 	int nr = (int)SF->getReceivers()->size();
-	Receiver *rec;
-	for(int i=0; i<nr; i++){
+	Receiver* rec;
+	for (int i = 0; i < nr; i++) {
 		rec = SF->getReceivers()->at(i);
-		if(! rec->isReceiverEnabled() ) continue;
-		flux_surfaces.push_back( *rec->getFluxSurfaces() );
-		if(normalize){
-			for(unsigned int j=0; j<rec->getFluxSurfaces()->size(); j++){
-				flux_surfaces.back().at(j).Normalize();
+		if (!rec->isReceiverEnabled()) continue;
+		int n_surfaces = rec->getFluxSurfaces()->size();
+		flux_surfaces.push_back(*rec->getFluxSurfaces());
+		if (normalize) {
+			if (n_surfaces == 1) {
+				for (unsigned int j = 0; j < rec->getFluxSurfaces()->size(); j++) {
+					flux_surfaces.back().at(j).Normalize();
+				}
+			}
+			else {
+				// For aperture (j = 0), use normalize, because we don't want it to count towards total flux
+				flux_surfaces.back().at(0).Normalize();
+
+				// Sum flux on all receiver panels
+				double flux_tot = 0.0;
+				for (unsigned int j = 1; j < rec->getFluxSurfaces()->size(); j++) {
+					flux_tot += flux_surfaces.back().at(j).getTotalFlux();
+				}
+
+				for (unsigned int j = 1; j < rec->getFluxSurfaces()->size(); j++) {
+					flux_surfaces.back().at(j).Scale(1.0 / flux_tot);
+				}
 			}
 		}
-		receiver_names.push_back( SF->getReceivers()->at(i)->getVarMap()->rec_name.val );
+		receiver_names.push_back(
+			//*SF->getReceivers()->at(i)->getReceiverName() 
+			SF->getReceivers()->at(i)->getVarMap()->rec_name.val
+		);
 	}
+
 }
 
 //------parametric------------------------

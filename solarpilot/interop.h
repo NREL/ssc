@@ -43,7 +43,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "mod_base.h"
 #include "heliodata.h"
 #include "definitions.h"
-#ifdef SP_USE_THREADS
+#ifdef SP_USE_SOLTRACE
 #include "stapi.h"
 #endif
 

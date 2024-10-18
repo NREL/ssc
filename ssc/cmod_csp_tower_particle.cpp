@@ -782,7 +782,7 @@ public:
         //      Receiver model
         // *********************************************************
 
-        // Using cmod inputs as initial guesses for receiver
+        // Initializing receivers with cmod inputs - these are initial guesses when SolarPILOT optimization is used
         double THT = as_double("h_tower");                                  // [m] tower height
         std::vector<double> rec_height = as_vector_double("rec_height");    // [m] receiver height
         std::vector<double> rec_width = as_vector_double("rec_width");      // [m] receiver width
@@ -878,7 +878,7 @@ public:
                 else { // Throw error if not running optimization
                     std::string msg;
                     msg = util::format("Receiver (%d) failed to converge at design condition. "
-                        "Aperture size is too large.", i);
+                        "Aperture size is most likely too large or receiver parameters are unrealistic.", i);
                     throw exec_error("csp_tower_particle", msg);
                 }
             }

@@ -1006,7 +1006,7 @@ bool ST_System::CreateSTSystem(SolarField &SF, Hvector &helios, Vect &sunvect){
 	}
 	/*--- Create a virtual stage ---*/
 
-	/*--- Set the receiever stages ---*/
+	/*--- Set the receiver stages ---*/
 	StageList.push_back(new ST_Stage());
 	ST_Stage *r_stage = StageList.back();
 	//Global origin

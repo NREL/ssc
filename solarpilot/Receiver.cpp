@@ -478,6 +478,15 @@ void FluxSurface::Normalize(){
 
 }
 
+void FluxSurface::Scale(double flux_mult /*-*/) {
+
+	for (int i = 0; i < _nflux_x; i++) {
+		for (int j = 0; j < _nflux_y; j++) {
+			_flux_grid.at(i).at(j).flux *= flux_mult;
+		}
+	}
+}
+
 //-----------------Receiver----------------
 
 void Receiver::Create(var_receiver &V, double tht)

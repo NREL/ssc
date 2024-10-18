@@ -212,7 +212,7 @@ void Ambient::calcSunPosition(double lat, double lon, double timezone, double ts
 
 
 	long retcode = 0;		//Initialize with no errors
-	retcode = S_solpos(pdat);	//Call the solar posotion algorithm
+	retcode = S_solpos(pdat);	//Call the solar position algorithm
 	S_decode(retcode, pdat);	//Check the return code
 
 	//set the calculated values
@@ -243,7 +243,7 @@ void Ambient::calcDaytimeHours(double hrs[2], double lat, double lon, double tim
 
 
 	long retcode = 0;		//Initialize with no errors
-	retcode = S_solpos(pdat);	//Call the solar posotion algorithm
+	retcode = S_solpos(pdat);	//Call the solar position algorithm
 	//srss( pdat );
 	S_decode(retcode, pdat);	//Check the return code
 	hrs[0] = pdat->sretr/60.;
