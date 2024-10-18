@@ -70,6 +70,7 @@ public:
 		bool can_clipcharge,
 		bool can_grid_charge,
 		bool can_fuelcell_charge,
+        bool can_curtail_charge,
 		double inverter_paco,
         std::vector<double> battReplacementCostPerkWh,
 		int battCycleCostChoice,

@@ -167,6 +167,7 @@ var_info vtab_battery_inputs[] = {
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_gridcharge",           "Grid charging allowed for automated dispatch?",          "0/1",       "",                    "BatteryDispatch",       "",                           "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_charge",               "System charging allowed for automated dispatch?",            "0/1",       "",                "BatteryDispatch",       "",                           "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_clipcharge",           "Battery can charge from clipped power?",                 "0/1",   "",                        "BatteryDispatch",       "",                           "",                             "" },
+    { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_can_curtailcharge",        "Battery can charge from curtailed power?",                "0/1",   "",                       "BatteryDispatch",       "",                           "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_auto_btm_can_discharge_to_grid", "Behind the meter battery can discharge to grid?",        "0/1",   "",                       "BatteryDispatch",       "",                           "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_charge_only_system_exceeds_load",  "Battery can charge from system only when system output exceeds load", "0/1",   "",        "BatteryDispatch",       "en_batt=1&en_standalone_batt=0&batt_meter_position=0",                           "",                             "" },
     { SSC_INPUT,        SSC_NUMBER,     "batt_dispatch_discharge_only_load_exceeds_system","Battery can discharge battery only when load exceeds system output", "0/1",   "",        "BatteryDispatch",       "en_batt=1&en_standalone_batt=0&batt_meter_position=0",                           "",                             "" },
@@ -746,6 +747,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             // Common to automated methods
             batt_vars->batt_dispatch_auto_can_charge = true;
             batt_vars->batt_dispatch_auto_can_clipcharge = false;
+            batt_vars->batt_dispatch_auto_can_curtailcharge = false;
             batt_vars->batt_dispatch_auto_can_gridcharge = false;
             batt_vars->batt_dispatch_auto_can_fuelcellcharge = true;
             batt_vars->batt_dispatch_auto_btm_can_discharge_to_grid = false;
@@ -758,6 +760,9 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             }
             if (vt.is_assigned("batt_dispatch_auto_can_clipcharge")) {
                 batt_vars->batt_dispatch_auto_can_clipcharge = vt.as_boolean("batt_dispatch_auto_can_clipcharge");
+            }
+            if (vt.is_assigned("batt_dispatch_auto_can_curtailcharge")) {
+                batt_vars->batt_dispatch_auto_can_curtailcharge = vt.as_boolean("batt_dispatch_auto_can_curtailcharge");
             }
             if (vt.is_assigned("batt_dispatch_auto_can_fuelcellcharge")) {
                 batt_vars->batt_dispatch_auto_can_fuelcellcharge = vt.as_boolean("batt_dispatch_auto_can_fuelcellcharge");
@@ -1296,7 +1301,8 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 batt_vars->batt_minimum_modetime,
                 batt_vars->batt_dispatch, batt_vars->batt_dispatch_wf_forecast, batt_vars->batt_meter_position,
                 nyears, batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
-                batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge, batt_vars->batt_dispatch_auto_can_fuelcellcharge,
+                batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge,
+                batt_vars->batt_dispatch_auto_can_fuelcellcharge, batt_vars->batt_dispatch_auto_can_curtailcharge,
                 batt_vars->inverter_paco, batt_vars->batt_cost_per_kwh,
                 batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost, batt_vars->om_batt_variable_cost_per_kwh,
                 eta_pvcharge, eta_gridcharge, eta_discharge, batt_vars->batt_dispatch_pvs_nameplate_ac,
@@ -1315,7 +1321,8 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 batt_vars->batt_minimum_modetime,
                 batt_vars->batt_dispatch, batt_vars->batt_dispatch_wf_forecast, batt_vars->batt_meter_position,
                 nyears, batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
-                batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge, batt_vars->batt_dispatch_auto_can_fuelcellcharge,
+                batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge,
+                batt_vars->batt_dispatch_auto_can_fuelcellcharge, batt_vars->batt_dispatch_auto_can_curtailcharge,
                 batt_vars->inverter_paco, batt_vars->batt_cost_per_kwh,
                 batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost, batt_vars->om_batt_variable_cost_per_kwh,
                 batt_vars->forecast_price_series_dollar_per_kwh, utilityRate,
@@ -1350,7 +1357,8 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_minimum_modetime,
             batt_vars->batt_dispatch, batt_vars->batt_dispatch_wf_forecast, batt_vars->batt_meter_position, nyears,
             batt_vars->batt_look_ahead_hours, batt_vars->batt_dispatch_update_frequency_hours,
-            batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge, batt_vars->batt_dispatch_auto_can_fuelcellcharge,
+            batt_vars->batt_dispatch_auto_can_charge, batt_vars->batt_dispatch_auto_can_clipcharge, batt_vars->batt_dispatch_auto_can_gridcharge,
+            batt_vars->batt_dispatch_auto_can_fuelcellcharge, batt_vars->batt_dispatch_auto_can_curtailcharge,
             util_rate_data, batt_vars->batt_cost_per_kwh, batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost, batt_vars->om_batt_variable_cost_per_kwh, batt_vars->grid_interconnection_limit_kW,
             batt_vars->batt_dispatch_charge_only_system_exceeds_load, batt_vars->batt_dispatch_discharge_only_load_exceeds_system,
             batt_vars->batt_dispatch_auto_btm_can_discharge_to_grid, batt_vars->batt_minimum_outage_SOC, batt_vars->batt_dispatch_load_forecast

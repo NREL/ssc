@@ -60,6 +60,7 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	bool can_clip_charge,
 	bool can_grid_charge,
 	bool can_fuelcell_charge,
+    bool can_curtail_charge,
 	double inverter_paco,
     std::vector<double> battReplacementCostPerkWh,
 	int battCycleCostChoice,
@@ -71,7 +72,8 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	double etaGridCharge,
 	double etaDischarge,
     double interconnection_limit) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
-		t_min, dispatch_mode, weather_forecast_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge,
+		t_min, dispatch_mode, weather_forecast_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours,
+        can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge, can_curtail_charge,
         battReplacementCostPerkWh, battCycleCostChoice, battCycleCost, battOMCost, interconnection_limit)
 {
 	// if look behind, only allow 24 hours
@@ -280,7 +282,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         bool excessAcCapacity = _inverter_paco > m_batteryPower->powerSystemThroughSharedInverter;
         bool batteryHasDischargeCapacity = _Battery->SOC() >= m_batteryPower->stateOfChargeMin + 1.0;
         bool interconnectionHasCapacity = interconnectionCapacity > 0.0;
-        bool canChargeFromCurtailedPower = interconnectionCapacity < 0.0;
+        bool canChargeFromCurtailedPower = interconnectionCapacity < 0.0 && m_batteryPower->canCurtailCharge;
 
         revenueToCurtailCharge = canChargeFromCurtailedPower ? *max_ppa_cost * m_etaDischarge - m_cycleCost - m_omCost : 0;
 
@@ -290,7 +292,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
             powerBattery = -m_batteryPower->powerSystemClipped;
         }
 
-        // Always charge if PV is curtailed
+        // Always charge if system power is curtailed
         if (canChargeFromCurtailedPower && revenueToCurtailCharge >= 0) {
             powerBattery = interconnectionCapacity;
         }

@@ -94,6 +94,7 @@ BatteryPower::BatteryPower(double dtHour) :
         inverterEfficiencyCutoff(5),
 		canSystemCharge(false),
 		canClipCharge(false),
+        canCurtailCharge(false),
 		canGridCharge(false),
 		canDischarge(false),
         canDischargeToGrid(false),
@@ -162,6 +163,7 @@ BatteryPower::BatteryPower(const BatteryPower& orig) {
     inverterEfficiencyCutoff = orig.inverterEfficiencyCutoff;
     canSystemCharge = orig.canSystemCharge;
     canClipCharge = orig.canClipCharge;
+    canCurtailCharge = orig.canCurtailCharge;
     canGridCharge = orig.canGridCharge;
     canDischarge = orig.canDischarge;
     canDischargeToGrid = orig.canDischargeToGrid;

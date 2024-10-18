@@ -214,6 +214,7 @@ public:
 
 	bool canSystemCharge;	///< A boolean specifying whether the battery is allowed to charge from PV in the timestep
 	bool canClipCharge;	///< A boolean specifying whether the battery is allowed to charge from otherwise clipped PV in the timestep
+    bool canCurtailCharge;	///< A boolean specifying whether the battery is allowed to charge from otherwise curtailed energy in the timestep
 	bool canGridCharge; ///< A boolean specifying whether the battery is allowed to charge from the Grid in the timestep
 	bool canDischarge;  ///< A boolean specifying whether the battery is allowed to discharge in the timestep
     bool canDischargeToGrid; ///< A boolean specifying whether the battery is allowed to discharge to grid in the timestep
