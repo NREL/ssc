@@ -403,10 +403,10 @@ double dispatch_automatic_behind_the_meter_t::compute_costs(size_t idx, size_t y
             year++;
         }
         for (size_t step = 0; step != _steps_per_hour && idx < _P_load_ac.size(); step++)
-        {
+        {   
             double power = _P_load_ac[idx] - _P_pv_ac[idx];
-            // One at a time so we can sort grid points by no-dispatch cost
-            std::vector<double> forecast_power = { -power }; // Correct sign convention for cost forecast
+            // One at a time so we can sort grid points by no-dispatch cost; TODO: consider curtailment limits - would need to pass in a forecast of these...
+            std::vector<double> forecast_power = { std::fmin(-1.0*power, m_batteryPower->powerInterconnectionLimit)}; // Correct sign convention for cost forecast
             double step_cost = noDispatchForecast->forecastCost(forecast_power, year, (hour_of_year + hour) % 8760, step);
             no_dispatch_cost += step_cost;
 
@@ -748,6 +748,13 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
                     }
                 }
                 
+            }
+            else if (m_batteryPower->canCurtailCharge) {
+                if (sorted_grid[i].Grid() < 0) {
+                    double powerLimit = std::fmin(m_batteryPower->powerInterconnectionLimit, m_batteryPower->powerCurtailmentLimit);
+                    requiredPower = sorted_grid[i].Grid() + powerLimit;
+                    requiredPower = std::fmin(0.0, requiredPower);
+                }
             }
 
             if (requiredPower < 0)
