@@ -1032,7 +1032,7 @@ typedef void (__WINAPI set_obj_bound_func)(lprec *lp, REAL obj_bound);
 typedef MYBOOL (__WINAPI set_obj_fn_func)(lprec *lp, REAL *row);
 typedef MYBOOL (__WINAPI set_obj_fnex_func)(lprec *lp, int count, REAL *row, int *colno);
 typedef void (__WINAPI set_obj_in_basis_func)(lprec *lp, MYBOOL obj_in_basis);
-typedef MYBOOL (__WINAPI set_outputfile_func)(lprec *lp, char *filename);
+typedef MYBOOL (__WINAPI set_outputfile_func)(lprec *lp, const char *filename);
 typedef void (__WINAPI set_outputstream_func)(lprec *lp, FILE *stream);
 typedef MYBOOL (__WINAPI set_partialprice_func)(lprec *lp, int blockcount, int *blockstart, MYBOOL isrow);
 typedef void (__WINAPI set_pivoting_func)(lprec *lp, int piv_rule);
@@ -2000,7 +2000,7 @@ void __EXPORT_TYPE __WINAPI print_scales(lprec *lp);
 void __EXPORT_TYPE __WINAPI print_str(lprec *lp, char *str);
 
 void __EXPORT_TYPE __WINAPI set_outputstream(lprec *lp, FILE *stream);
-MYBOOL __EXPORT_TYPE __WINAPI set_outputfile(lprec *lp, char *filename);
+MYBOOL __EXPORT_TYPE __WINAPI set_outputfile(lprec *lp, const char *filename);
 
 void __EXPORT_TYPE __WINAPI set_verbose(lprec *lp, int verbose);
 int __EXPORT_TYPE __WINAPI get_verbose(lprec *lp);
