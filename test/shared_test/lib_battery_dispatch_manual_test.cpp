@@ -737,3 +737,52 @@ TEST_F(ManualTest_lib_battery_dispatch, PVPriorityBatteryFirst)
     EXPECT_NEAR(batteryPower->powerGridToLoad, 50.0, 1.0);
 
 }
+
+TEST_F(ManualTest_lib_battery_dispatch, ManualInterconnectionLimitTest)
+{
+    interconnection_limit = 500;
+    canCurtailCharge = true;
+    // canGridCharge is false by default
+    dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax,
+        currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax,
+        powerDischargeMax, minimumModeTime,
+        dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
+        canDischarge, canGridcharge, canDischargeToGrid, canGridcharge, percentDischarge,
+        percentGridcharge, canClipCharge, canCurtailCharge, interconnection_limit);
+
+    batteryPower = dispatchManual->getBatteryPower();
+    batteryPower->connectionMode = ChargeController::DC_CONNECTED;
+    batteryPower->setSharedInverter(m_sharedInverter);
+
+    // Should charge since PV is being curtailed
+    batteryPower->powerSystem = 600; batteryPower->voltageSystem = 600; batteryPower->powerGridToBattery = 0;
+    dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+    EXPECT_NEAR(batteryPower->powerBatteryDC, -47.9, 0.1);
+    EXPECT_NEAR(batteryPower->powerSystemToBatteryDC, 48.4, 0.1);
+}
+
+TEST_F(ManualTest_lib_battery_dispatch, TestDischargeToGridInterconnectionLimit)
+{
+    interconnection_limit = 10;
+    std::vector<bool> testCanDischargeToGrid;
+    for (int p = 0; p < 6; p++) {
+        testCanDischargeToGrid.push_back(1);
+    }
+    dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax,
+        currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax,
+        powerDischargeMax, minimumModeTime,
+        dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
+        canDischarge, canGridcharge, canGridcharge, testCanDischargeToGrid, percentDischarge,
+        percentGridcharge, canClipCharge, canCurtailCharge, interconnection_limit);
+
+    batteryPower = dispatchManual->getBatteryPower();
+    batteryPower->connectionMode = ChargeController::AC_CONNECTED;
+    batteryPower->inverterEfficiencyCutoff = 0;
+
+    // Test discharge to grid - should only charge at interconnection limit
+    batteryPower->powerSystem = 0; batteryPower->powerLoad = 30; batteryPower->voltageSystem = 600; batteryPower->powerBatteryDC = 1000;
+    dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+    EXPECT_NEAR(batteryPower->powerBatteryDC, 41.66, 1.0);
+    EXPECT_NEAR(batteryPower->powerBatteryToLoad, batteryPower->powerLoad, 2.0);
+    EXPECT_NEAR(batteryPower->powerBatteryToGrid, 10, 0.1);
+}
