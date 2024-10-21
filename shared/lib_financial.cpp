@@ -35,6 +35,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <limits>
 #include "lib_financial.h"
 
+#ifndef WIN32
+#include <float.h>
+#endif
+
 double libfin::min(double a, double b)
 { // handle NaN
     if ((a != a) || (b != b))
