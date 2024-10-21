@@ -391,7 +391,9 @@ public:
         else if (is_assigned("solar_resource_data"))
         {
             wdprov = std::unique_ptr<weather_data_provider>(new weatherdata(lookup("solar_resource_data")));
-            if (!wdprov->ok()) throw exec_error("pvwattsv8", wdprov->message());
+            if (!wdprov->ok()) {
+                throw exec_error("pvwattsv8", wdprov->message());
+            }
             if (wdprov->has_message()) log(wdprov->message(), SSC_WARNING);
         }
         else
