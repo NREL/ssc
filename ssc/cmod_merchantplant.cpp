@@ -30,11 +30,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <sstream>
-
-#ifndef WIN32
-#include <float.h>
-#endif
 #include "common_financial.h"
 #include "common.h"
 #include "lib_financial.h"

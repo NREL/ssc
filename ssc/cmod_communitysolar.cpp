@@ -33,12 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "common_financial.h"
 #include "lib_financial.h"
 
-#include <sstream>
-
-#ifndef WIN32
-#include <float.h>
-#endif
-
 static var_info _cm_vtab_communitysolar[] = {
 
 /*   VARTYPE           DATATYPE         NAME                                      LABEL                                                            UNITS              META                      GROUP                       REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/

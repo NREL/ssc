@@ -34,6 +34,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define __lib_financial_h
 
 #include <vector>
+#include <sstream>
+
+#ifndef WIN32
+#include <float.h>
+#endif
+
 
 namespace libfin {
     double min(double a, double b);

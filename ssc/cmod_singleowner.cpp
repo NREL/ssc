@@ -30,16 +30,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #include "common_financial.h"
 #include "common.h"
 #include "lib_financial.h"
-
-#include <sstream>
-
-#ifndef WIN32
-#include <float.h>
-#endif
 
 static var_info _cm_vtab_singleowner[] = {
 
