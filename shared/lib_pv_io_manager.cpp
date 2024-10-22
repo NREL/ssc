@@ -298,6 +298,9 @@ void Irradiance_IO::AllocateOutputs(compute_module* cm)
     p_weatherFilePOA.push_back(cm->allocate("wfpoa", numberOfWeatherFileRecords));
 
     p_sunPositionTime = cm->allocate("sunpos_hour", numberOfWeatherFileRecords);
+    p_sunriseHour = cm->allocate("sunrise_hour", numberOfWeatherFileRecords);
+    p_sunsetHour = cm->allocate("sunset_time", numberOfWeatherFileRecords);
+    p_tsFraction = cm->allocate("ts_fraction", numberOfWeatherFileRecords);
     p_weatherFileWindSpeed = cm->allocate("wspd", numberOfWeatherFileRecords);
     p_weatherFileAmbientTemp = cm->allocate("tdry", numberOfWeatherFileRecords);
     if (useSpatialAlbedos) {

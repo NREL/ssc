@@ -629,6 +629,7 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "sol_azi",                                    "Sun azimuth angle",                                                 "degrees",    "",                      "Time Series",       "*",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "sunup",                                      "Sun up over horizon",                                               "0/1/2/3", "",                     "Time Series",       "*",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "sunpos_hour",                                "Sun position time",                                     "hour",   "",                      "Time Series",       "",                     "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "ts_fraction",                                "Fraction of time step in which power is generated",                                     "0-1",   "",                      "Time Series",       "",                     "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "airmass",                                    "Absolute air mass",                                                 "",       "",                      "Time Series",       "*",                    "",                              "" },
 
         /* sub-array level outputs */
@@ -1624,8 +1625,17 @@ void cm_pvsamv1::exec()
 
                 
 
-                if (iyear == 0 || save_full_lifetime_variables == 1)
+                if (iyear == 0 || save_full_lifetime_variables == 1) {
                     Irradiance->p_sunPositionTime[idx] = (ssc_number_t)irr->get_sunpos_calc_hour();
+                    Irradiance->p_sunriseHour[idx] = irr->get_sunrise_calc_hour();
+                    Irradiance->p_sunsetHour[idx] = irr->get_sunset_calc_hour();
+                    if (sunup == 0) Irradiance->p_tsFraction[idx] = 0;
+                    else Irradiance->p_tsFraction[idx] = 1; //Change later if hourly average data
+                }
+
+                
+
+                
 
                 // save weather file beam, diffuse, and global for output and for use later in pvsamv1- year 1 only
                 /*jmf 2016: these calculations are currently redundant with calculations in irrad.calc() because ibeam and idiff in that function are DNI and DHI, **NOT** in the plane of array
@@ -2374,10 +2384,28 @@ void cm_pvsamv1::exec()
                     //Clearsky DC power
                     Subarrays[nn]->Module->dcPowerWCS = out_cs[nn].Power;
 
+                    
+
                     // save DC module outputs for this subarray
                     Subarrays[nn]->Module->dcPowerW = out[nn].Power;
                     Subarrays[nn]->Module->dcEfficiency = out[nn].Efficiency * 100;
                     Subarrays[nn]->Module->dcVoltage = out[nn].Voltage;
+
+                    if (!Irradiance->instantaneous) { //flag only true for hourly data without minute column??
+                        if (sunup == 2) { //sunrise
+                            //Scale kW's by fraction of hour between sunrise time and end of timestep (fractional hours)
+                            Subarrays[nn]->Module->dcPowerW *= ceil(Irradiance->p_sunriseHour[idx]) - Irradiance->p_sunriseHour[idx];
+                            Irradiance->p_tsFraction[idx] = ceil(Irradiance->p_sunriseHour[idx]) - Irradiance->p_sunriseHour[idx];
+
+                        }
+                        else if (sunup == 3) { //sunset
+                            //Scale kW's by fraction of hour between beginning of time step and sunset tiem (fractional hours)
+                            Subarrays[nn]->Module->dcPowerW *= Irradiance->p_sunsetHour[idx] - floor(Irradiance->p_sunsetHour[idx]);
+                            Irradiance->p_tsFraction[idx] = Irradiance->p_sunsetHour[idx] - floor(Irradiance->p_sunsetHour[idx]);
+                        }
+                        
+                    }
+
                     if (Subarrays[nn]->useCustomCellTemp) {
                         Subarrays[nn]->Module->temperatureCellCelcius = Subarrays[nn]->customCellTempArray[inrec];
                         Subarrays[nn]->Module->temperatureCellCelciusSS = Subarrays[nn]->customCellTempArray[inrec];

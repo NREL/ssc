@@ -1099,6 +1099,8 @@ protected:
     double diffuseIrradianceFrontCS[3];		///< Front-side diffuse clearsky irradiance for isotropic, circumsolar, and horizon (W/m2)
     double diffuseIrradianceRear[3];		///< Rear-side diffuse irradiance for isotropic, circumsolar, and horizon (W/m2)
     double diffuseIrradianceRearCS[3];
+    double sunriseHour;
+    double sunsetHour;
     int timeStepSunPosition[3];				///< [0] effective hour of day used for sun position, [1] effective minute of hour used for sun position, [2] is sun up?  (0=no, 1=midday, 2=sunup, 3=sundown)
     double planeOfArrayIrradianceRearAverage; ///< Average rear side plane-of-array irradiance (W/m2)
     double planeOfArrayIrradianceRearAverageCS; ///< Average rear side clearsky plane-of-array irradiance (W/m2)
@@ -1258,6 +1260,12 @@ public:
 
     /// Return the effective hour and fraction used for the sun position calculation
     double get_sunpos_calc_hour();
+
+    /// Return the sunrise hour and fraction used for sunrise calculations
+    double get_sunrise_calc_hour();
+
+    /// Return the sunset hour and fraction used for sunset calculations
+    double get_sunset_calc_hour();
 
     /// Return the albedo used by the irradiance processor
     double getAlbedo();

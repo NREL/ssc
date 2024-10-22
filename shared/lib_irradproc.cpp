@@ -1805,6 +1805,7 @@ void irrad::setup() {
     planeOfArrayIrradianceRear[0] = planeOfArrayIrradianceRear[1] = planeOfArrayIrradianceRear[2] = diffuseIrradianceRear[0] = diffuseIrradianceRear[1] = diffuseIrradianceRear[2] = std::numeric_limits<double>::quiet_NaN();
     timeStepSunPosition[0] = timeStepSunPosition[1] = timeStepSunPosition[2] = -999;
     planeOfArrayIrradianceRearAverage = 0;
+    sunriseHour = sunsetHour = 0;
 
     calculatedDirectNormal = directNormal;
     calculatedDiffuseHorizontal = 0.0;
@@ -1918,6 +1919,14 @@ std::vector<double> irrad::getAlbedoSpatial() {
 
 double irrad::get_sunpos_calc_hour() {
     return ((double) timeStepSunPosition[0]) + ((double) timeStepSunPosition[1]) / 60.0;
+}
+
+double irrad::get_sunrise_calc_hour() {
+    return sunriseHour;
+}
+
+double irrad::get_sunset_calc_hour() {
+    return sunsetHour;
 }
 
 void irrad::get_sun(double *solazi,
@@ -2200,6 +2209,8 @@ int irrad::calc() {
 
         double t_sunrise = sunAnglesRadians[4];
         double t_sunset = sunAnglesRadians[5];
+        sunriseHour = t_sunrise;
+        sunsetHour = t_sunset;
 
         if (t_sunset > 24.0 && t_sunset !=
                             100.0) //sunset is legitimately the next day but we're not in endless days, so recalculate sunset from the previous day

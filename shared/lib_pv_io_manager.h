@@ -241,6 +241,9 @@ struct Irradiance_IO
 	ssc_number_t * p_weatherFileDHI;			/// The Direct Normal (Beam) Irradiance from the weather file [W/m2]
 	std::vector<ssc_number_t *> p_weatherFilePOA; /// The Plane of Array Irradiance from the weather file [W/m2]
 	ssc_number_t * p_sunPositionTime;			/// The hour at which the sun position is calculated [fractional hour 0-23]
+    ssc_number_t* p_sunriseHour;                /// The hour at which the sun rises [fractional hour 0-23]
+    ssc_number_t* p_sunsetHour;                 /// The hour at which the sun sets [fractional hour 0-23]
+    ssc_number_t* p_tsFraction;                 /// The fraction of the time step in which power is being generated (0-1)
 	ssc_number_t * p_weatherFileWindSpeed;		/// The Wind Speed from the weather file [m/s]
 	ssc_number_t * p_weatherFileAmbientTemp;	/// The ambient temperature from the weather file [C]
 	ssc_number_t * p_weatherFileAlbedo;			/// The ground albedo from the weather file
