@@ -188,7 +188,7 @@ public:
 	double powerBatteryDischargeMaxAC; ///< The maximum sustained power the battery can discharge (kWac)
 	double powerSystemLoss;        ///< The auxiliary power loss in the system (kW)
 	double powerConversionLoss;    ///< The power loss due to conversions in the battery power electronics (kW)
-    double powerInterconnectionLimit; ///< The size of the grid interconnection (kW). As of July 2021 only applies to discharging, should apply to charging & dispatch
+    double powerInterconnectionLimit; ///< The size of the grid interconnection (kW).
     double powerInterconnectionLoss; ///< The power loss due to interconnection limit, outage, or curtailment (kW)
     double powerCurtailmentLimit; ///< The curtailment limit for the current step (kW)
     double voltageSystem;		   ///< The system voltage
