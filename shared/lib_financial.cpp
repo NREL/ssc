@@ -39,16 +39,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <float.h>
 #endif
 
+// find minimum cash flow value when some values are NaN, e.g., DSCR is NaN after end of repayment period
+// https://stackoverflow.com/questions/72296440/how-to-prevent-stdmin-and-max-to-return-nan-if-the-first-element-of-the-array
 double libfin::min(double a, double b)
-{ // handle NaN
+{
     if ((a != a) || (b != b))
         return 0;
     else
         return (a < b) ? a : b;
 }
 
+// find maximum cash flow value when some values are NaN, e.g., IRR is NaN in Year zero
+// https://stackoverflow.com/questions/72296440/how-to-prevent-stdmin-and-max-to-return-nan-if-the-first-element-of-the-array
 double libfin::max(double a, double b)
-{ // handle NaN
+{
     if ((a != a) || (b != b))
         return 0;
     else
