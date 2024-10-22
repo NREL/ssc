@@ -159,6 +159,8 @@ static var_info _cm_vtab_geothermal[] = {
     // dispatch
     { SSC_INPUT,        SSC_STRING,      "hybrid_dispatch_schedule",           "Daily dispatch schedule",                             "",        "",             "GeoHourly",        "ui_calculations_only=0",    "TOUSCHED",        "" },
 
+    { SSC_INPUT,        SSC_NUMBER,      "allow_reservoir_replacements",           "Allow reservoir replacements",                             "",        "",             "GeoHourly",        "?=0",    "",        "" },
+
 	// OUTPUTS
 	// VARTYPE           DATATYPE         NAME                                   LABEL                                               UNITS      META            GROUP             REQUIRED_IF                    CONSTRAINTS      UI_HINTS
 																																																	             
@@ -365,6 +367,8 @@ public:
 		geo_inputs.md_EGSNumberOfFractures = as_double("num_fractures");
 		geo_inputs.md_EGSFractureWidthM = as_double("fracture_width");
 		geo_inputs.md_EGSFractureAngle = as_double("fracture_angle");
+
+        geo_inputs.md_AllowReservoirReplacements = as_boolean("allow_reservoir_replacements");
 
 		// calculate output array sizes
 		geo_inputs.mi_ModelChoice = as_integer("model_choice");		 // 0=GETEM, 1=Power Block monthly, 2=Power Block hourly
