@@ -3128,6 +3128,7 @@ void cm_pvsamv1::exec()
             }
 
 			// Update battery with final gen to compute grid power
+            // TODO: use this block to apply adjustment losses to PV and battery seperately
             if (en_batt) {
                 if (batt->is_outage_step(idx % nrec)) {
                     batt->update_grid_power(*this, PVSystem->p_systemACPower[idx], p_crit_load_full[idx], idx); // Updates interconnection losses and similar

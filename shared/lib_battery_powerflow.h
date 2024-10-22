@@ -196,7 +196,8 @@ public:
     double acXfmrLoadLoss; ///< Transformer load loss percent (%)
     double acXfmrNoLoadLoss; ///< Transformer no-load loss value (kWac)
     double acXfmrRating; ///< Transformer rating for transformer loss calculations (kWac)
-    double acLossPostBattery; ///< Expected system and daily losses. Applies to the final AC output including the battery (%)
+    double acLossPostBattery; ///< Expected system and daily losses. Applies power limiting to final AC output including the battery (%)
+    double adjustLosses; ///< Battery availability losses (%)
 
     bool   isOutageStep;
 

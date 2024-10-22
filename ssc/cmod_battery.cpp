@@ -2274,6 +2274,7 @@ public:
         add_var_info(_cm_vtab_battery);
         add_var_info(vtab_battery_inputs);
         add_var_info(vtab_forecast_price_signal);
+        add_var_info(vtab_batt_adjustment_factors);
         add_var_info(vtab_battery_outputs);
         add_var_info(vtab_resilience_outputs);
         add_var_info(vtab_utility_rate_common);
