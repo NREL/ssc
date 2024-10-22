@@ -760,6 +760,7 @@ public:
         double annual_kwh = 0;
         size_t idx_life = 0;
         float percent = 0;
+        double elev, pres, t_amb;
         for (size_t y = 0; y < nyears; y++)
         {
             for (size_t idx = 0; idx < nrec; idx++)
@@ -859,6 +860,7 @@ public:
                 irr.get_sun(&solazi, &solzen, &solalt, nullptr, nullptr, nullptr, &sunup, nullptr, nullptr, nullptr); //nullptr used when you don't need to retrieve the output
                 irr.get_angles(&aoi, &stilt, &sazi, &rot, &btd);
                 irr.get_poa(&ibeam, &iskydiff, &ignddiff, nullptr, nullptr, nullptr); //nullptr used when you don't need to retrieve the output
+                irr.get_optional(&elev, &pres, &t_amb);
 
                 if (module.bifaciality > 0)
                 {
@@ -1135,7 +1137,7 @@ public:
                     if (y == 0 && wdprov->annualSimulation()) ld("dc_loss_cover") += (1 - f_cover) * dc_nom * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
 
                     // spectral correction via air mass modifier
-                    double f_AM = air_mass_modifier(solzen, hdr.elev, AMdesoto);
+                    double f_AM = air_mass_modifier(solzen, elev, AMdesoto);
                     if (y == 0 && wdprov->annualSimulation()) ld("dc_loss_spectral") += (1 - f_AM) * dc_nom * ts_hour; //ts_hour required to correctly convert to Wh for subhourly data
 
                     // cell temperature
@@ -1324,7 +1326,7 @@ public:
         assign("lat", var_data((ssc_number_t)hdr.lat));
         assign("lon", var_data((ssc_number_t)hdr.lon));
         assign("tz", var_data((ssc_number_t)hdr.tz));
-        assign("elev", var_data((ssc_number_t)hdr.elev));
+        assign("elev", var_data((ssc_number_t)elev));
         assign("percent_complete", var_data((ssc_number_t)percent));
         
         double gcr_for_land = pv.gcr;

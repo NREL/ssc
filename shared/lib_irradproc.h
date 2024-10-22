@@ -1151,6 +1151,9 @@ public:
     /// Set the location for the irradiance processor
     void set_location(double lat, double lon, double tz);
 
+    /// Get optional parameters for solarpos_spac calculation
+    void get_optional(double* elev, double* pres, double* t_amb);
+
     // Set optional parameters for solarpos_spa calculation
     void set_optional(double elev = 0, double pres = 1013.25, double t_amb = 15);
 

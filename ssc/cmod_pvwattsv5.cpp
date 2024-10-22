@@ -151,6 +151,7 @@ protected:
 
     double ibeam, iskydiff, ignddiff;
     double solazi, solzen, solalt, aoi, stilt, sazi, rot, btd;
+    double elevation, pressure, t_amb;
     int sunup;
 
     std::unique_ptr<pvwatts_celltemp> tccalc;
@@ -257,6 +258,8 @@ public:
         irr.get_sun(&solazi, &solzen, &solalt, 0, 0, 0, &sunup, 0, 0, 0);
         irr.get_angles(&aoi, &stilt, &sazi, &rot, &btd);
         irr.get_poa(&ibeam, &iskydiff, &ignddiff, 0, 0, 0);
+        irr.get_optional(&elevation, &pressure, &t_amb);
+
 
         return code;
     }
@@ -607,7 +610,7 @@ public:
         assign("lat", var_data((ssc_number_t)hdr.lat));
         assign("lon", var_data((ssc_number_t)hdr.lon));
         assign("tz", var_data((ssc_number_t)hdr.tz));
-        assign("elev", var_data((ssc_number_t)hdr.elev));
+        assign("elev", var_data((ssc_number_t)elevation));
         assign("percent_complete", var_data((ssc_number_t)percent));
 
         // for battery model, specify a number of inverters

@@ -2103,8 +2103,15 @@ void irrad::set_optional(double elev, double pres, double t_amb) //defaults of 0
         this->elevation = elev;
     if (!std::isnan(pres) && pres > 800)
         this->pressure = pres;
-    if (!std::isnan(tamb))
+    if (!std::isnan(t_amb))
         this->tamb = t_amb;
+}
+
+void irrad::get_optional(double *elev, double *pres, double *t_amb) //defaults of 0 meters elevation, atmospheric pressure, 15°C average annual temperature
+{
+    *elev = this->elevation;
+    *pres = this->pressure;
+    *t_amb = this->tamb;
 }
 
 void irrad::set_subhourly_clipping(bool enable)
