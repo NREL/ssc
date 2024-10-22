@@ -815,6 +815,9 @@ public:
         size_t idx_life = 0;
         float percent = 0;
         int n_alb_errs = 0;
+        irrad irr;
+        if (nyears > 1)
+            irr.setup_solarpos_outputs_for_lifetime(nrec);
         for (size_t y = 0; y < nyears; y++)
         {
             for (size_t idx = 0; idx < nrec; idx++)
@@ -888,7 +891,6 @@ public:
                 // report albedo value as output
                 p_alb[idx] = (ssc_number_t)alb;
 
-                irrad irr;
                 irr.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute,
                     instantaneous ? IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET : ts_hour);
                 irr.set_location(hdr.lat, hdr.lon, hdr.tz);

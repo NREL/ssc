@@ -454,6 +454,7 @@ struct battstor
 	double outAverageCycleEfficiency;
 	double outAverageRoundtripEfficiency;
 	double outSystemChargePercent;
+    double outGridChargePercent;
 
     //output variables for self-consumption dispatch
     double outTimestepsLoadMetBySystemYear1;
