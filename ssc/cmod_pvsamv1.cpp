@@ -1128,6 +1128,7 @@ void cm_pvsamv1::exec()
     weather_data_provider* wdprov = Irradiance->weatherDataProvider.get();
     int radmode = Irradiance->radiationMode;
     double bifaciality = 0.0;
+    double elev, pres, t_amb;
 
     // Get System or Subarray Inputs
     double aspect_ratio = Subarrays[0]->moduleAspectRatio;
@@ -1618,6 +1619,7 @@ void cm_pvsamv1::exec()
                 irr->get_angles(&aoi, &stilt, &sazi, &rot, &btd);
                 irr->get_poa(&ibeam, &iskydiff, &ignddiff, 0, 0, 0);
                 irr->get_poa_clearsky(&ibeam_csky, &iskydiff_csky, &ignddiff_csky, 0, 0, 0);
+                irr->get_optional(&elev, &pres, &t_amb);
                 alb = irr->getAlbedo();
                 alb_spatial = irr->getAlbedoSpatial();
 
@@ -1708,7 +1710,7 @@ void cm_pvsamv1::exec()
                         // calculate cell temperature using selected temperature model
                         pvinput_t in(ibeam, iskydiff, ignddiff, 0, ipoa[nn],
                             wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
-                            solzen, aoi, hdr.elev,
+                            solzen, aoi, elev,
                             stilt, sazi,
                             ((double)wf.hour) + wf.minute / 60.0,
                             radmode, Subarrays[nn]->poa.usePOAFromWF);
@@ -2137,7 +2139,7 @@ void cm_pvsamv1::exec()
                             //initalize pvinput and pvoutput structures for the model
                             pvinput_t in(Subarrays[nn]->poa.poaBeamFront, Subarrays[nn]->poa.poaDiffuseFront, Subarrays[nn]->poa.poaGroundFront, Subarrays[nn]->poa.poaRear * bifaciality, Subarrays[nn]->poa.poaTotal,
                                 wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
-                                solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, hdr.elev,
+                                solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, elev,
                                 Subarrays[nn]->poa.surfaceTiltDegrees, Subarrays[nn]->poa.surfaceAzimuthDegrees,
                                 ((double)wf.hour) + wf.minute / 60.0,
                                 radmode, Subarrays[nn]->poa.usePOAFromWF);
@@ -2186,14 +2188,14 @@ void cm_pvsamv1::exec()
                     //initalize pvinput and pvoutput structures for the model
                     pvinput_t in_temp(Subarrays[nn]->poa.poaBeamFront, Subarrays[nn]->poa.poaDiffuseFront, Subarrays[nn]->poa.poaGroundFront, Subarrays[nn]->poa.poaRear * bifaciality, Subarrays[nn]->poa.poaTotal,
                         wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
-                        solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, hdr.elev,
+                        solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, elev,
                         Subarrays[nn]->poa.surfaceTiltDegrees, Subarrays[nn]->poa.surfaceAzimuthDegrees,
                         ((double)wf.hour) + wf.minute / 60.0,
                         radmode, Subarrays[nn]->poa.usePOAFromWF);
 
                     pvinput_t in_temp_csky(Subarrays[nn]->poa.poaBeamFrontCS, Subarrays[nn]->poa.poaDiffuseFrontCS, Subarrays[nn]->poa.poaGroundFrontCS, Subarrays[nn]->poa.poaRearCS * bifaciality, Subarrays[nn]->poa.poaTotal,
                         wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
-                        solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, hdr.elev,
+                        solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, elev,
                         Subarrays[nn]->poa.surfaceTiltDegrees, Subarrays[nn]->poa.surfaceAzimuthDegrees,
                         ((double)wf.hour) + wf.minute / 60.0,
                         0, false);
@@ -2540,7 +2542,7 @@ void cm_pvsamv1::exec()
                 Irradiance->p_sunZenithAngle[idx] = (ssc_number_t)solzen;
                 Irradiance->p_sunAltitudeAngle[idx] = (ssc_number_t)solalt;
                 Irradiance->p_sunAzimuthAngle[idx] = (ssc_number_t)solazi;
-                Irradiance->p_absoluteAirmass[idx] = sunup > 0 ? (ssc_number_t)(exp(-0.0001184 * hdr.elev) / (cos(solzen * 3.1415926 / 180) + 0.5057 * pow(96.080 - solzen, -1.634))) : 0.0f;
+                Irradiance->p_absoluteAirmass[idx] = sunup > 0 ? (ssc_number_t)(exp(-0.0001184 * elev) / (cos(solzen * 3.1415926 / 180) + 0.5057 * pow(96.080 - solzen, -1.634))) : 0.0f;
                 Irradiance->p_sunUpOverHorizon[idx] = (ssc_number_t)sunup;
                 if (!Irradiance->useSpatialAlbedos) {
                     Irradiance->p_weatherFileAlbedo[idx] = (ssc_number_t)alb;
@@ -3172,7 +3174,7 @@ void cm_pvsamv1::exec()
     assign("lat", hdr.lat);
     assign("lon", hdr.lon);
     assign("tz", hdr.tz);
-    assign("elev", hdr.elev);
+    assign("elev", elev);
 
     inverter_vdcmax_check();
     inverter_size_check();

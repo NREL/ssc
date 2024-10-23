@@ -209,6 +209,8 @@ public:
         else if (is_assigned("solar_resource_data"))
         {
             wdprov = std::unique_ptr<weather_data_provider>(new weatherdata(lookup("solar_resource_data")));
+            if (!wdprov->ok()) throw exec_error("swh", wdprov->message());
+            if (wdprov->has_message()) log(wdprov->message(), SSC_WARNING);
         }
         else
             throw exec_error("swh", "no weather data supplied");
