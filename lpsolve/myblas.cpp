@@ -166,7 +166,7 @@ void BLAS_CALLMODEL my_daxpy( int *_n, REAL *_da, REAL *dx, int *_incx, REAL *dy
 #ifndef DOFASTMATH
   int      m, mp1;
 #endif
-  register REAL rda;
+  REAL rda;
   REAL     da = *_da;
   int      n = *_n, incx = *_incx, incy = *_incy;
 
@@ -336,7 +336,7 @@ void BLAS_CALLMODEL my_dscal (int *_n, REAL *_da, REAL *dx, int *_incx)
 #ifndef DOFASTMATH
   int      m, mp1, ix;
 #endif
-  register REAL rda;
+  REAL rda;
   REAL      da = *_da;
   int      n = *_n, incx = *_incx;
 
@@ -405,7 +405,7 @@ REAL BLAS_CALLMODEL my_ddot(int *_n, REAL *dx, int *_incx, REAL *dy, int *_incy)
    jack dongarra, linpack, 3/11/78.
    modified 12/3/93, array[1] declarations changed to array[*] */
 
-  register REAL dtemp;
+  REAL dtemp;
   int      i, ix, iy;
 #ifndef DOFASTMATH
   int      m, mp1;
@@ -486,7 +486,7 @@ void BLAS_CALLMODEL my_dswap( int *_n, REAL *dx, int *_incx, REAL *dy, int *_inc
   int   m, mp1, ns;
   REAL  dtemp2, dtemp3;
 #endif
-  register REAL  dtemp1;
+  REAL  dtemp1;
   int   n = *_n, incx = *_incx, incy = *_incy;
 
   if (n <= 0) return;
@@ -654,7 +654,7 @@ int idamin( int n, REAL *x, int is )
 
 int BLAS_CALLMODEL my_idamax( int *_n, REAL *x, int *_is )
 {
-  register REAL xmax, xtest;
+  REAL xmax, xtest;
   int    i, imax = 0;
 #if !defined DOFASTMATH
   int    ii;
@@ -693,7 +693,7 @@ int BLAS_CALLMODEL my_idamax( int *_n, REAL *x, int *_is )
 
 int BLAS_CALLMODEL my_idamin( int *_n, REAL *x, int *_is )
 {
-  register REAL xmin, xtest;
+  REAL xmin, xtest;
   int    i, imin = 0;
 #if !defined DOFASTMATH
   int    ii;
@@ -743,7 +743,7 @@ REAL BLAS_CALLMODEL my_dnormi( int *_n, REAL *x )
    dnormi  returns the infinity-norm of the vector x.
    =============================================================== */
    int      j;
-   register REAL hold, absval;
+   REAL hold, absval;
    int      n = *_n;
 
    x--;
