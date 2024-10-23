@@ -98,6 +98,8 @@ private:
 public: 
 	cm_mhk_tidal() {
 		add_var_info(_cm_vtab_mhk_tidal);
+        add_var_info(vtab_adjustment_factors);
+
 	}
 	
 	void exec() {
@@ -237,6 +239,11 @@ public:
             ssc_number_t* tidal_velocity = as_array("tidal_velocity", &number_records);
             ssc_number_t* p_gen = allocate("gen", number_records);
             int power_bin = 0;
+
+            adjustment_factors haf(this, "adjust");
+            if (!haf.setup(number_records, 1))
+                throw exec_error("mhk_tidal", "Failed to set up adjustment factors: " + haf.error());
+
             //Find velocity bin of power array
             for (int i = 0; i < number_records; i++) {
                 if (tidal_velocity[i] >= tidal_power_curve.at(tidal_power_curve.nrows() - 1, 0)) {
@@ -255,7 +262,7 @@ public:
         
                     }
                 }
-                p_gen[i] = tidal_power_curve.at(power_bin, 1) * (1 - total_loss/100.0) * number_devices; //kW
+                p_gen[i] = tidal_power_curve.at(power_bin, 1) * (1 - total_loss/100.0) * number_devices * haf(i); //kW
                 //p_annual_energy_dist[i] = p_gen[i] * 8760.0 / number_records;
                 annual_energy += p_gen[i] * 8760.0 / number_records;
                 p_annual_energy_dist[power_bin] += p_gen[i] * 8760.0 / number_records;
