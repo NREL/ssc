@@ -2243,6 +2243,7 @@ static var_info _cm_vtab_battery[] = {
     { SSC_INOUT,        SSC_NUMBER,      "percent_complete",                           "Estimated simulation status",                             "%",          "",                     "Simulation",                        "",                            "",                               "" },
     { SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",                 "Lifetime simulation",                                     "0/1",        "0=SingleYearRepeated,1=RunEveryYear",   "Lifetime",        "?=0",                   "BOOLEAN",                              "" },
     { SSC_INPUT,        SSC_NUMBER,      "analysis_period",                            "Lifetime analysis period",                                "years",      "The number of years in the simulation", "Lifetime",        "system_use_lifetime_output=1","",                               "" },
+    { SSC_INPUT,        SSC_NUMBER,      "timestep_minutes",                           "Simulation timestep",                                    "minutes",         "The number of minutes in each timestep", "Simulation",        "en_standalone_batt=1","",                               "" },
     { SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",        "",                     "BatterySystem",                      "?=0",                    "",                               "" },
     { SSC_INPUT,        SSC_NUMBER,      "en_standalone_batt",                         "Enable standalone battery storage model",                 "0/1",        "",                     "BatterySystem",                      "?=0",                    "",                               "" },
     { SSC_INPUT,        SSC_NUMBER,      "en_wave_batt",                         "Enable wave battery storage model",                 "0/1",        "",                     "BatterySystem",                      "?=0",                    "",                               "" },
@@ -2290,26 +2291,17 @@ public:
             std::vector<ssc_number_t> load_lifetime, load_year_one;
             std::vector<ssc_number_t> grid_curtailment;
             size_t nload;
-            size_t ngrid;
             bool use_lifetime = as_boolean("system_use_lifetime_output");
             // System generation output, which is lifetime (if system_lifetime_output == true);
             if (as_boolean("en_standalone_batt")) {
-                if (is_assigned("load")) {
-                    load_year_one = as_vector_ssc_number_t("load");
-                    nload = load_year_one.size();
-                    if (use_lifetime)
-                        power_input_lifetime.resize(nload * as_integer("analysis_period"), 0.0);
-                    else
-                        power_input_lifetime.resize(nload, 0.0);
-                }
-                else {
-                    grid_curtailment = as_vector_ssc_number_t("grid_curtailment");
-                    ngrid = grid_curtailment.size();
-                    if (use_lifetime)
-                        power_input_lifetime.resize(ngrid * as_integer("analysis_period"), 0.0);
-                    else
-                        power_input_lifetime.resize(ngrid, 0.0);
-                }
+                int timestep_minutes = as_number("timestep_minutes");
+                size_t n_rec_year_1 = 8760 * 60 / timestep_minutes;
+
+                if (use_lifetime)
+                    power_input_lifetime.resize(n_rec_year_1 * as_integer("analysis_period"), 0.0);
+                else
+                    power_input_lifetime.resize(n_rec_year_1, 0.0);
+
                 ssc_number_t* p_gen = allocate("gen", power_input_lifetime.size());
                 for (size_t i = 0; i < power_input_lifetime.size(); i++)
                     p_gen[i] = power_input_lifetime[i];
