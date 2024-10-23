@@ -81,6 +81,7 @@ void generic_singleowner_battery_60min(ssc_data_t &data)
 
 
 	ssc_data_set_number( data, "en_batt", 1 );
+    ssc_data_set_number(data, "en_standalone_batt", 0);
 	ssc_data_set_number( data, "batt_replacement_option", 0 );
 	ssc_data_set_number( data, "batt_chem", 1 );
 	ssc_data_set_number( data, "batt_ac_or_dc", 1 );
