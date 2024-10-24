@@ -2291,6 +2291,7 @@ public:
             std::vector<ssc_number_t> load_lifetime, load_year_one;
             std::vector<ssc_number_t> grid_curtailment;
             size_t nload;
+            std::string timestep_source = "weather file";
             bool use_lifetime = as_boolean("system_use_lifetime_output");
             // System generation output, which is lifetime (if system_lifetime_output == true);
             if (as_boolean("en_standalone_batt")) {
@@ -2305,6 +2306,8 @@ public:
                 ssc_number_t* p_gen = allocate("gen", power_input_lifetime.size());
                 for (size_t i = 0; i < power_input_lifetime.size(); i++)
                     p_gen[i] = power_input_lifetime[i];
+
+                timestep_source = "simulation timestep";
             }
             else if (as_boolean("en_wave_batt")) {
                 power_input_lifetime = as_vector_ssc_number_t("energy_hourly_kW");
@@ -2325,7 +2328,7 @@ public:
                 nload = load_year_one.size();
                 // Array length for non-lifetime mode, lifetime mode, and hourly load
                 if (nload != n_rec_lifetime && nload != n_rec_lifetime / analysis_period && nload != 8760)
-                    throw exec_error("battery", "Electric load must have either the same time step as the weather file, or 8760 time steps.");
+                    throw exec_error("battery", "Electric load must have either the same time step as the " + timestep_source + ", or 8760 time steps.");
             }
 
             // resilience metrics for battery
@@ -2338,7 +2341,7 @@ public:
                 p_crit_load = as_vector_ssc_number_t("crit_load");
                 size_t n_crit_load = p_crit_load.size();
                 if (n_crit_load != n_rec_single_year && n_crit_load != 8760)
-                    throw exec_error("battery", "Critical load crit_load must have same number of values as weather file, or 8760.");
+                    throw exec_error("battery", "Critical load crit_load must have same number of values as " + timestep_source + ", or 8760.");
                 if (n_crit_load != nload)
                     throw exec_error("battery", "Critical load crit_load must have same number of values as load.");
 
@@ -2414,7 +2417,7 @@ public:
                 }
                 // Array length for non-lifetime mode, lifetime mode, and hourly load
                 else if (nload != n_rec_lifetime && nload != n_rec_lifetime / analysis_period && nload != 8760) {
-                        throw exec_error("battery", "Electric load forecast must have either the same time step as the weather file, or 8760 time steps.");
+                        throw exec_error("battery", "Electric load forecast must have either the same time step as the " + timestep_source + ", or 8760 time steps.");
                 }
             }
             if (p_load_forecast_in.size() > 0) {
