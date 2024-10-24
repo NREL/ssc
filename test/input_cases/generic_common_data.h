@@ -449,6 +449,7 @@ void generic_commerical_battery_60min(ssc_data_t &data)
     ssc_data_set_number(data, "adjust_constant", 0.0);
 
 	ssc_data_set_number(data, "en_batt", 1);
+    ssc_data_set_number(data, "en_standalone_batt", 0);
 	set_array(data, "load", generictest::load_profile_path_60min, 8760);
 	ssc_data_set_number(data, "batt_replacement_option", 0);
 	ssc_data_set_number(data, "batt_chem", 1);
