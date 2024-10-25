@@ -292,7 +292,7 @@ void BatteryPowerFlow::initialize(double stateOfCharge, bool systemPriorityCharg
             double interconnectionCapacity = std::fmin(m_BatteryPower->powerInterconnectionLimit, m_BatteryPower->powerCurtailmentLimit) - m_BatteryPower->powerSystem;
             if (interconnectionCapacity < 0.0 )
             {
-                m_BatteryPower->powerBatteryDC = interconnectionCapacity;
+                m_BatteryPower->powerBatteryDC = interconnectionCapacity * m_BatteryPower->singlePointEfficiencyACToDC;
             }
         }
 

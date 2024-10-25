@@ -295,7 +295,8 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
 
         // Always charge if system power is curtailed
         if (canChargeFromCurtailedPower && revenueToCurtailCharge >= 0) {
-            powerBattery = interconnectionCapacity;
+            // powerBattery is DC. Convert from AC to DC units to maximize utilization
+            powerBattery = interconnectionCapacity * m_batteryPower->singlePointEfficiencyACToDC;
         }
 
         // Increase charge from system (PV) if it is more valuable later than selling now
