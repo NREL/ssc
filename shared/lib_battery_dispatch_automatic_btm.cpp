@@ -709,6 +709,30 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
         }
     }
 
+    // Iterate over sorted grid to prioritize curtail charging
+    i = 0;
+    if (m_batteryPower->canCurtailCharge) {
+        while (i < _num_steps) {
+            // Don't plan to charge if we were already planning to discharge. 0 is no plan, negative is clipped energy
+            index = sorted_grid[i].Hour() * _steps_per_hour + sorted_grid[i].Step();
+            if (plan.plannedDispatch[index] <= 0.0)
+            {
+                double requiredPower = 0.0;
+                if (sorted_grid[i].Grid() < 0) {
+                    double powerLimit = std::fmin(m_batteryPower->powerInterconnectionLimit, m_batteryPower->powerCurtailmentLimit);
+                    requiredPower = sorted_grid[i].Grid() + powerLimit;
+                    requiredPower = std::fmin(0.0, requiredPower);
+                }
+                // Add to existing clipped energy
+                requiredPower += plan.plannedDispatch[index];
+                // Clipped energy was already counted once, so subtract that off incase requiredPower + clipped hit a current restriction
+                requiredEnergy += (requiredPower - plan.plannedDispatch[index]) * _dt_hour;
+                plan.plannedDispatch[index] = requiredPower;
+            }
+            i++;
+        }
+    }
+
     // Iterating over sorted grid
     std::stable_sort(sorted_grid.begin(), sorted_grid.end(), byLowestMarginalCost());
     // Find m hours to get required energy - hope we got today's energy yesterday (for morning peaks). Apportion between hrs of lowest marginal cost
@@ -749,13 +773,6 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
                 }
                 
             }
-            else if (m_batteryPower->canCurtailCharge) {
-                if (sorted_grid[i].Grid() < 0) {
-                    double powerLimit = std::fmin(m_batteryPower->powerInterconnectionLimit, m_batteryPower->powerCurtailmentLimit);
-                    requiredPower = sorted_grid[i].Grid() + powerLimit;
-                    requiredPower = std::fmin(0.0, requiredPower);
-                }
-            }
 
             if (requiredPower < 0)
             {
@@ -774,9 +791,9 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
 
                 // Clipped energy was already counted once, so subtract that off incase requiredPower + clipped hit a current restriction
                 requiredEnergy += (requiredPower - plan.plannedDispatch[index]) * _dt_hour;
-            }
 
-            plan.plannedDispatch[index] = requiredPower;
+                plan.plannedDispatch[index] = requiredPower;
+            }
 
         }
         i++;
