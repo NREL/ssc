@@ -244,7 +244,7 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     // Prices for *electricity* purchases
     { SSC_INPUT,        SSC_NUMBER,      "ppa_multiplier_model",      "PPA multiplier model 0: dispatch factors dispatch_factorX, 1: hourly multipliers dispatch_factors_ts", "0/1", "0=diurnal,1=timestep", "tou",    "?=0",  /*need a default so this var works in required_if*/  "INTEGER,MIN=0", "SIMULATION_PARAMETER" },
     { SSC_INPUT,        SSC_NUMBER,      "ppa_soln_mode",             "PPA solution mode (0=Specify IRR target, 1=Specify PPA price)",                    "",             "",               "Financial Solution Mode", "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1","",              "SIMULATION_PARAMETER" },
-    { SSC_INPUT,        SSC_ARRAY,       "ppa_price_input_heatBtu",   "PPA prices - yearly",			                                                  "$/MMBtu",	  "",	            "Revenue",			       "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1","",      	     "SIMULATION_PARAMETER" },
+    { SSC_INPUT,        SSC_ARRAY,       "ppa_price_input_heat_btu",  "PPA prices - yearly",			                                                  "$/MMBtu",	  "",	            "Revenue",			       "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1","",      	     "SIMULATION_PARAMETER" },
         // *Electricity* hourly price multipliers from Block Schedule                                                                                                                                                                                                                                
     { SSC_INPUT,        SSC_MATRIX,      "dispatch_sched_weekday",    "12x24 PPA pricing Weekday schedule",                                               "",             "",               "tou",                     "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1","",              "SIMULATION_PARAMETER" },
     { SSC_INPUT,        SSC_MATRIX,      "dispatch_sched_weekend",    "12x24 PPA pricing Weekend schedule",                                               "",             "",               "tou",                     "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1","",              "SIMULATION_PARAMETER" },
@@ -362,7 +362,7 @@ static var_info _cm_vtab_trough_physical_iph[] = {
 
     // Design Point Outputs
     { SSC_OUTPUT,       SSC_NUMBER,      "solar_mult",                       "Actual solar multiple",                                                    "",              "",               "System Design Calc","*",                             "",                      "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "nameplate",                        "Nameplate capacity",                                                       "MWe",           "",               "System Design Calc","*",                             "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "nameplate",                        "Nameplate capacity",                                                       "MWt",           "",               "System Design Calc","*",                             "",                      "" },
 
     // System capacity required by downstream financial model
     { SSC_OUTPUT,       SSC_NUMBER,      "system_capacity",                  "System capacity",                                                          "kWt",          "",                "System Design",  "*",                                "",                      "" },
@@ -704,7 +704,9 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "P_fixed",                   "Parasitic power fixed load",                                                       "MWe",          "",               "system",         "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "P_plant_balance_tot",       "Parasitic power generation-dependent load",                                        "MWe",          "",               "system",         "sim_type=1",                       "",                      "" },
                                                                                                                                                                                                                                                                   
-    { SSC_OUTPUT,       SSC_ARRAY,       "gen_heat",                  "Total thermal power to grid w/ avail. derate",                                    "kWe",          "",               "system",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "gen_heat",                  "Total thermal power to grid w/ avail. derate",                                     "kWt",          "",               "system",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "gen",                       "Total electric power to grid w/ avail. derate",                                    "kWe",          "",               "system",         "sim_type=1",                       "",                      "" },
+
     //{ SSC_OUTPUT,       SSC_NUMBER,      "conversion_factor",         "Gross to Net Conversion Factor",                                                   "%",            "",               "system",         "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",           "Capacity factor",                                                                  "%",            "",               "system",         "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",                "First year kWh/kW",                                                                "kWh/kW",       "",               "system",         "sim_type=1",                       "",                      "" },
@@ -738,7 +740,7 @@ public:
     {
         add_var_info( _cm_vtab_trough_physical_iph );
         add_var_info( vtab_adjustment_factors );
-        add_var_info(vtab_technology_outputs);
+        //add_var_info(vtab_technology_outputs);
         add_var_info(vtab_utility_rate_common); // Required for dispatch w/ utility rates
 
     }
@@ -764,10 +766,10 @@ public:
 
         // Convert IPH Input Units
         {
-            if (is_assigned("ppa_price_input_heatBtu"))
+            if (is_assigned("ppa_price_input_heat_btu"))
             {
                 size_t count_ppa_price_MMBTU_input;
-                ssc_number_t* ppa_price_MMBTU_input_array = as_array("ppa_price_input_heatBtu", &count_ppa_price_MMBTU_input);
+                ssc_number_t* ppa_price_MMBTU_input_array = as_array("ppa_price_input_heat_btu", &count_ppa_price_MMBTU_input);
                 std::vector<ssc_number_t> ppa_price_input_vec;
                 for (int i = 0; i < count_ppa_price_MMBTU_input; i++)
                 {
@@ -2222,7 +2224,8 @@ public:
         if( !haf.setup(n_steps_fixed) )
             throw exec_error("trough_physical", "failed to setup adjustment factors: " + haf.error());
 
-        ssc_number_t *p_gen = allocate("gen_heat", n_steps_fixed);
+        ssc_number_t *p_gen_heat = allocate("gen_heat", n_steps_fixed);
+        ssc_number_t* p_gen = allocate("gen", n_steps_fixed);
         ssc_number_t *p_W_dot_par_tot_haf = allocate("W_dot_par_tot_haf", n_steps_fixed);
         ssc_number_t *p_q_dot_defocus_est = allocate("q_dot_defocus_est", n_steps_fixed);
         ssc_number_t* p_load = allocate("load", n_steps_fixed); // testing using cmod_utilityrate5 for electricity rates p_load = p_W_dot_par_tot_haf
@@ -2259,7 +2262,8 @@ public:
         for(int i = 0; i < n_steps_fixed; i++)
         {
             size_t hour = (size_t)ceil(p_time_final_hr[i]);
-            p_gen[i] = (ssc_number_t)(p_q_dot_heat_sink[i] * haf(hour) * 1.E3);     //[kWe]
+            p_gen_heat[i] = (ssc_number_t)(p_q_dot_heat_sink[i] * haf(hour) * 1.E3);     //[kWt]
+            p_gen[i] = (ssc_number_t)0.0;   //[kWt] (no electrical generation for IPH trough)
             p_W_dot_parasitic_tot[i] *= -1.0;           //[kWe] Label is total parasitics, so change to a positive value
             p_W_dot_par_tot_haf[i] = (ssc_number_t)(p_W_dot_parasitic_tot[i] * haf(hour) * 1.E3);       //[kWe]
             p_q_dot_defocus_est[i] = (ssc_number_t)(1.0 - p_SCAs_def[i])*p_q_dot_htf_sf_out[i]; //[MWt]
@@ -2271,7 +2275,6 @@ public:
             p_elec_purchase_cost[i] = i_elec_cost;                          //[$]
             annual_elec_cost += i_elec_cost;                                //[$]
         }
-
 
         ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
         // Non-timeseries array outputs

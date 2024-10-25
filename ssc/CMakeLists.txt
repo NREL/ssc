@@ -106,6 +106,7 @@ set(SSC_SRC
 		cmod_tcstrough_physical.cpp
 		cmod_test_ud_power_cycle.cpp
 		cmod_thermalrate.cpp
+        cmod_thermalrate_iph.cpp
 		cmod_thirdpartyownership.cpp
 		cmod_timeseq.cpp
 		cmod_trough_physical.cpp

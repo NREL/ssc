@@ -216,7 +216,7 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
     { SSC_INPUT,    SSC_MATRIX,         "dispatch_sched_weekday",      "PPA pricing weekday schedule, 12x24",                                                   "",                    "",                             "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
     { SSC_INPUT,    SSC_MATRIX,         "dispatch_sched_weekend",      "PPA pricing weekend schedule, 12x24",                                                   "",                    "",                             "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
     { SSC_INPUT,    SSC_ARRAY,          "dispatch_tod_factors",        "TOD factors for periods 1 through 9",                                                   "",                    "",                             "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
-    { SSC_INPUT,    SSC_ARRAY,          "ppa_price_input_heatBtu",     "PPA prices - yearly",			                                                        "$/MMBtu",	           "",	                           "Revenue",			                       "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1",                  "",      	       "SIMULATION_PARAMETER" },
+    { SSC_INPUT,    SSC_ARRAY,          "ppa_price_input_heat_btu",    "PPA prices - yearly",			                                                        "$/MMBtu",	           "",	                           "Revenue",			                       "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1",                  "",      	       "SIMULATION_PARAMETER" },
 
 
 
@@ -563,6 +563,8 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
     { SSC_OUTPUT,       SSC_ARRAY,      "operating_modes_b",                "Next 3 operating modes tried",                                         "",             "",         "solver",         "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "operating_modes_c",                "Final 3 operating modes tried",                                        "",             "",         "solver",         "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "gen_heat",                         "Total thermal power to heat sink with available derate",               "kWe",          "",         "system",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "gen",                              "Total electric power to grid w/ avail. derate",                        "kWe",          "",         "system",         "sim_type=1",                       "",                      "" },
+
 
     // Monthly Outputs
     { SSC_OUTPUT,       SSC_ARRAY,      "monthly_energy",                   "Monthly Energy",                                                       "kWh",          "",         "Post-process",   "sim_type=1",              "LENGTH=12",                      "" },
@@ -613,11 +615,11 @@ public:
 
         // Convert IPH Input Units
         {
-            const double MMBTU_TO_KWh = 293.07107; // 1
-            if (is_assigned("ppa_price_input_heatBtu"))
+            const double MMBTU_TO_KWh = 293.07107; // 1 MMBtu = 293.07107 kWh
+            if (is_assigned("ppa_price_input_heat_btu"))
             {
                 size_t count_ppa_price_MMBTU_input;
-                ssc_number_t* ppa_price_MMBTU_input_array = as_array("ppa_price_input_heatBtu", &count_ppa_price_MMBTU_input);
+                ssc_number_t* ppa_price_MMBTU_input_array = as_array("ppa_price_input_heat_btu", &count_ppa_price_MMBTU_input);
                 std::vector<ssc_number_t> ppa_price_input_vec;
                 for (int i = 0; i < count_ppa_price_MMBTU_input; i++)
                 {
@@ -1552,7 +1554,8 @@ public:
         if (!haf.setup(n_steps_fixed))
             throw exec_error("fresnel_physical", "failed to setup adjustment factors: " + haf.error());
 
-        ssc_number_t* p_gen = allocate("gen_heat", n_steps_fixed);
+        ssc_number_t* p_gen_heat = allocate("gen_heat", n_steps_fixed);
+        ssc_number_t* p_gen = allocate("gen", n_steps_fixed);
         ssc_number_t* p_q_dot_defocus_est = allocate("q_dot_defocus_est", n_steps_fixed);
         ssc_number_t* p_SCAs_def = as_array("SCAs_def", &count);
         if ((int)count != n_steps_fixed)
@@ -1569,7 +1572,8 @@ public:
         for (int i = 0; i < n_steps_fixed; i++)
         {
             size_t hour = (size_t)ceil(p_time_final_hr[i]);
-            p_gen[i] = (ssc_number_t)(p_q_dot_heat_sink[i] * haf(hour) * 1.E3);     //[kWe]
+            p_gen_heat[i] = (ssc_number_t)(p_q_dot_heat_sink[i] * haf(hour) * 1.E3);     //[kWe]
+            p_gen[i] = (ssc_number_t)0.0;   //[kWt] (no electrical generation for IPH mslf)
             p_q_dot_defocus_est[i] = (ssc_number_t)(1.0 - p_SCAs_def[i]) * p_q_dot_htf_sf_out[i]; //[MWt]
             p_W_dot_parasitic_tot[i] *= -1.0;			//[MWe] Label is total parasitics, so change to a positive value
             p_W_dot_par_tot_haf[i] = (ssc_number_t)(p_W_dot_parasitic_tot[i] * haf(hour) * 1.E3);		//[kWe] apply availability derate and convert from MWe
