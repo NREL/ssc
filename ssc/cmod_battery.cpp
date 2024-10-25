@@ -1326,7 +1326,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 if (dispatch_automatic_front_of_meter_t* dispatch_fom = dynamic_cast<dispatch_automatic_front_of_meter_t*>(dispatch_model))
                 {
                     if (batt_vars->batt_custom_dispatch.size() != 8760 * step_per_hour) {
-                        throw exec_error("battery", "Length of batt_custom_dispatch must be 8760 * steps_per_hour.");
+                        throw exec_error("battery", util::format("Battery custom dispatch time step (%d minutes) does not match simulation time step (%d minutes). Length of batt_custom_dispatch (%d) must be steps_per_hour (%lg) * 8760.", batt_vars->batt_custom_dispatch.size()/8760*60, (int)(60/step_per_hour), batt_vars->batt_custom_dispatch.size(), (double)step_per_hour));
                     }
                     dispatch_fom->set_custom_dispatch(batt_vars->batt_custom_dispatch);
                 }
@@ -1360,7 +1360,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             if (dispatch_automatic_behind_the_meter_t* dispatch_btm = dynamic_cast<dispatch_automatic_behind_the_meter_t*>(dispatch_model))
             {
                 if (batt_vars->batt_custom_dispatch.size() != 8760 * step_per_hour) {
-                    throw exec_error("battery", "Length of batt_custom_dispach must be 8760 * steps_per_hour.");
+                    throw exec_error("battery", util::format("Input battery power targets time step (%d minutes) does not match simulation time step (%d minutes). Length of batt_custom_dispatch (%d) must be steps_per_hour (%lg) * 8760.", batt_vars->batt_custom_dispatch.size() / 8760 * 60, (int)(60 / step_per_hour), batt_vars->batt_custom_dispatch.size(), (double)step_per_hour));
                 }
                 dispatch_btm->set_custom_dispatch(batt_vars->batt_custom_dispatch);
             }
