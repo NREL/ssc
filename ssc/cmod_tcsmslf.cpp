@@ -357,10 +357,10 @@ static var_info _cm_vtab_tcsmslf[] = {
 //    { SSC_OUTPUT,   SSC_ARRAY,          "hourly_energy",      "Hourly Energy",                                                  "kWh",          "",            "Calculated",     "*",					    "LENGTH=8760",           ""},
 
     // monthly values
-    { SSC_OUTPUT,   SSC_ARRAY,          "monthly_energy",         "Monthly Energy Gross",                                             "kWh",           "",            "mslf",                  "*",        "LENGTH=12",     ""},
+    { SSC_OUTPUT,   SSC_ARRAY,          "monthly_energy",         "Monthly AC energy in Year 1",                                             "kWh",           "",            "mslf",                  "*",        "LENGTH=12",     ""},
 																																					            
     // single values																																            
-    { SSC_OUTPUT,   SSC_NUMBER,         "annual_energy",          "Annual Energy",                                              "kWh",           "",            "mslf",                  "*",        "",              ""},
+    { SSC_OUTPUT,   SSC_NUMBER,         "annual_energy",          "Annual AC energy in Year 1",                                              "kWh",           "",            "mslf",                  "*",        "",              ""},
     { SSC_OUTPUT,   SSC_NUMBER,         "annual_W_cycle_gross",   "Electrical source - Power cycle gross output",               "kWh",           "",            "mslf",                  "*",        "",              ""},
     { SSC_OUTPUT,   SSC_NUMBER,         "conversion_factor",      "Gross to Net Conversion Factor",                             "%",             "",            "Calculated",            "*",        "",              ""},
     { SSC_OUTPUT,   SSC_NUMBER,         "capacity_factor",        "Capacity factor",                                            "%",              "",           "",                      "*",        "",              ""},

@@ -180,7 +180,7 @@ static var_info _cm_vtab_tcsgeneric_solar[] = {
 //    { SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",     "Hourly Energy",                                                  "kWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 
 	// monthly outputs
-	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",    "Monthly Energy Gross",                                                 "kWh",          "",            "Generic CSP",    "*",                       "LENGTH=12",           "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",    "Monthly AC energy in Year 1",                                                 "kWh",          "",            "Generic CSP",    "*",                       "LENGTH=12",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "monthly_w_gr",      "Total gross power production",                                   "kWh",          "",            "Generic CSP",    "*",                       "LENGTH=12",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "monthly_q_sf",      "Solar field delivered thermal power",                            "MWt",          "",            "Generic CSP",    "*",                       "LENGTH=12",           "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "monthly_q_to_pb",   "Thermal energy to the power conversion system",                  "MWt",          "",            "Generic CSP",    "*",                       "LENGTH=12",           "" },
@@ -194,7 +194,7 @@ static var_info _cm_vtab_tcsgeneric_solar[] = {
 
 
 	// annual outputs
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",     "Annual Energy",                                                  "kWh",          "",            "Generic CSP",    "*",                       "",                    "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",     "Annual AC energy in Year 1",                                                  "kWh",          "",            "Generic CSP",    "*",                       "",                    "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "annual_w_gr",       "Total gross power production",                                   "kWh",          "",            "Generic CSP",    "*",                       "",                    "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "annual_q_sf",       "Solar field delivered thermal power",                            "MWht",          "",            "Generic CSP",    "*",                       "",                    "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "annual_q_to_pb",    "Thermal energy to the power conversion system",                  "MWht",          "",            "Generic CSP",    "*",                       "",                    "" },

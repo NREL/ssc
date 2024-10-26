@@ -275,11 +275,11 @@ static var_info _cm_vtab_tcslinear_fresnel[] = {
 //    { SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",      "Hourly Energy",                                                 "kWh",          "",            "Outputs",        "*",                       "LENGTH=8760",           "" },
 
 	// monthly values
-	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",              "Monthly Energy Gross",                                                            "kWh",          "",            "Linear Fresnel", "*",                       "LENGTH=12",             "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",              "Monthly AC energy in Year 1",                                                            "kWh",          "",            "Linear Fresnel", "*",                       "LENGTH=12",             "" },
 
 
 	// single values
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",               "Annual Energy",                                                             "kWh",          "",            "Linear Fresnel", "*",                       "",                      "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",               "Annual AC energy in Year 1",                                                             "kWh",          "",            "Linear Fresnel", "*",                       "",                      "" },
 	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_W_cycle_gross",        "Electrical source - Power cycle gross output",                              "kWh",          "",            "Linear Fresnel", "*",                       "",                      "" },
 	//{ SSC_OUTPUT,       SSC_NUMBER,      "system_use_lifetime_output",  "Use lifetime output",                                                       "0/1",          "",            "Linear Fresnel", "*",                       "INTEGER",               "" },
 	
