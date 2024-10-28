@@ -53,6 +53,7 @@ static var_info _cm_vtab_singleowner_heat[] = {
 	{ SSC_OUTPUT,       SSC_ARRAY,       "revenue_gen",                                "Electricity to grid",                                     "kW",      "",                       "System Output",       "",                           "",                              "" },
  //   { SSC_OUTPUT,       SSC_ARRAY,       "gen_purchases",                              "Electricity from grid",                                    "kW",      "",                       "System Output",       "",                           "",                              "" },
 
+    { SSC_INPUT,        SSC_ARRAY,       "gen_heat",                                         "Thermal power",                            "kWt",       "",                    "System Output", "*", "", "" },
 
 	{ SSC_INPUT,        SSC_ARRAY,       "gen",                                         "Net power to or from the grid",                            "kW",       "",                    "System Output", "*", "", "" },
     { SSC_INPUT,        SSC_ARRAY,       "gen_without_battery",                          "Electricity to or from the renewable system, without the battery", "kW", "",                     "System Output", "", "", "" },
@@ -91,7 +92,7 @@ static var_info _cm_vtab_singleowner_heat[] = {
 	{ SSC_INOUT,        SSC_NUMBER,     "system_use_lifetime_output",		      "Lifetime hourly system outputs",	                               "0/1",                         "0=hourly first year,1=hourly lifetime",                      "Lifetime",             "*",						   "INTEGER,MIN=0",                 "" },
 
 
-
+/*
     { SSC_OUTPUT,       SSC_ARRAY,       "cf_energy_sales_jan",                     "Energy produced by year in January",                      "kWh", "", "Cash Flow Revenue by Month and TOD Period", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "cf_revenue_jan",                        "PPA revenue by year for January",                            "$", "", "Cash Flow Revenue by Month and TOD Period", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "cf_energy_sales_feb",                     "Energy produced by year in February",                     "kWh", "", "Cash Flow Revenue by Month and TOD Period", "*", "LENGTH_EQUAL=cf_length", "" },
@@ -188,7 +189,7 @@ static var_info _cm_vtab_singleowner_heat[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,     "cf_energy_sales_monthly_firstyear_TOD8",   "Energy produced in Year 1 by month for TOD period 8",   "kWh",   "",                      "Cash Flow Revenue by Month and TOD Period",             "ppa_multiplier_model=0",				   "",                 "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,     "cf_revenue_monthly_firstyear_TOD9",      "PPA revenue in Year 1 by month for TOD period 9",  "$",   "",                      "Cash Flow Revenue by Month and TOD Period",             "ppa_multiplier_model=0",				   "",                 "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,     "cf_energy_sales_monthly_firstyear_TOD9",   "Energy produced in Year 1 by month for TOD period 9",   "kWh",   "",                      "Cash Flow Revenue by Month and TOD Period",             "ppa_multiplier_model=0",				   "",                 "" },
-
+*/
 /* inputs in model not currently in M 11/15/10 */
 	{ SSC_INPUT,         SSC_NUMBER,    "total_installed_cost",                   "Installed cost",                                                "$",     "",					  "System Costs",			 "*",                         "",                             "" },
 
@@ -660,23 +661,23 @@ static var_info _cm_vtab_singleowner_heat[] = {
 var_info_invalid };
 
 extern var_info
-    vtab_update_tech_outputs[],
-    vtab_ppa_inout[],
-	vtab_standard_financial[],
-	vtab_oandm[],
-    vtab_equip_reserve[],
-	vtab_tax_credits[],
-	vtab_depreciation_inputs[],
-    vtab_depreciation_outputs[],
-	vtab_payment_incentives[],
-	vtab_debt[],
-    vtab_financial_metrics[],
+vtab_update_tech_outputs[],
+vtab_ppa_inout[],
+vtab_standard_financial[],
+vtab_oandm[],
+vtab_equip_reserve[],
+vtab_tax_credits[],
+vtab_depreciation_inputs[],
+vtab_depreciation_outputs[],
+vtab_payment_incentives[],
+vtab_debt[],
+vtab_financial_metrics[],
 //	vtab_financial_capacity_payments[],
 //	vtab_financial_grid[],
-	vtab_fuelcell_replacement_cost[],
-    vtab_lcos_inputs[],
-	vtab_battery_replacement_cost[],
-    vtab_tod_dispatch_periods[];
+vtab_fuelcell_replacement_cost[],
+vtab_lcos_inputs[],
+vtab_battery_replacement_cost[];
+//    vtab_tod_dispatch_periods[];
 
 enum {
 	CF_energy_net,
@@ -912,7 +913,7 @@ class cm_singleowner_heat : public compute_module
 private:
 	util::matrix_t<double> cf;
     util::matrix_t<double> cf_lcos;
-	dispatch_calculations m_disp_calcs;
+//	dispatch_calculations m_disp_calcs;
 	hourly_energy_calculation hourly_energy_calcs;
 
 
@@ -936,7 +937,7 @@ public:
 //		add_var_info(vtab_financial_grid);
         add_var_info(vtab_lcos_inputs);
         add_var_info(vtab_update_tech_outputs);
-        add_var_info(vtab_tod_dispatch_periods);
+//        add_var_info(vtab_tod_dispatch_periods);
 		add_var_info(vtab_utility_rate_common);
         add_var_info(vtab_hybrid_fin_om);
         add_var_info(vtab_update_tech_outputs);
@@ -1234,7 +1235,7 @@ public:
 			}
 		}
 
-		hourly_energy_calcs.calculate(this);
+		hourly_energy_calcs.calculate(this, true);
 
 		// dispatch
 		if (as_integer("system_use_lifetime_output") == 1)
@@ -1404,7 +1405,7 @@ public:
 		{
 			degrade_cf.push_back(cf.at(CF_degradation, i));
 		}
-		m_disp_calcs.init(this, degrade_cf, hourly_energy_calcs.hourly_sales());
+		//m_disp_calcs.init(this, degrade_cf, hourly_energy_calcs.hourly_sales());
 		// end of energy and dispatch initialization
 
 
@@ -1441,10 +1442,12 @@ public:
 //		double ppa = as_double("ppa_price_input")*100.0; // either initial guess for ppa_mode=1 or final ppa for ppa_mode=0
 		if (ppa_mode == 0) ppa = 0; // initial guess for target irr mode
 
-        // Use PPA values to calculate revenue from purchases and sales
-        size_t n_multipliers;
+        // convert to $/kWht done in iph models 
 
-        ssc_number_t* ppa_multipliers = as_array("ppa_multipliers", &n_multipliers);
+        // Use PPA values to calculate revenue from purchases and sales
+        //size_t n_multipliers;
+
+        //ssc_number_t* ppa_multipliers = as_array("ppa_multipliers", &n_multipliers);
         bool ppa_purchases = !(is_assigned("en_electricity_rates") && as_number("en_electricity_rates") == 1);
         if (as_integer("system_use_lifetime_output") == 1)
         {
@@ -1463,9 +1466,10 @@ public:
                 else
                     cf.at(CF_ppa_price, i) = ppa * pow(1 + ppa_escalation, i - 1); // ppa_mode==0 or single value
                 double ppa_value = cf.at(CF_ppa_price, i);
+                // TODO - verify n_multipliers == 8760
                 for (size_t h = 0; h < 8760; h++) {
                     if (ppa_purchases) {
-                        cf.at(CF_utility_bill, i) += -hourly_energy_calcs.hourly_purchases()[(i - 1) * 8760 + h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
+                        cf.at(CF_utility_bill, i) += -hourly_energy_calcs.hourly_purchases()[(i - 1) * 8760 + h] * cf.at(CF_degradation, i) * ppa_value / 100.0;// *ppa_multipliers[h];
                     }
                 }
             }
@@ -1485,7 +1489,7 @@ public:
                 double ppa_value = cf.at(CF_ppa_price, i);
                 for (size_t h = 0; h < 8760; h++) {
                     if (ppa_purchases) {
-                        cf.at(CF_utility_bill, i) += -hourly_energy_calcs.hourly_purchases()[h] * cf.at(CF_degradation, i) * ppa_value / 100.0 * ppa_multipliers[h];
+                        cf.at(CF_utility_bill, i) += -hourly_energy_calcs.hourly_purchases()[h] * cf.at(CF_degradation, i) * ppa_value / 100.0;// *ppa_multipliers[h];
                     }
                 }
             }
@@ -2382,10 +2386,10 @@ public:
 			}
 			else
 				cf.at(CF_ppa_price, i) = ppa * pow(1 + ppa_escalation, i - 1); // ppa_mode==0 or single value
-//			cf.at(CF_energy_value,i) = cf.at(CF_energy_net,i) * cf.at(CF_ppa_price,i) /100.0;
+			cf.at(CF_energy_value,i) = cf.at(CF_energy_net,i) * cf.at(CF_ppa_price,i) /100.0;
 			// dispatch
-			cf.at(CF_energy_value, i) = cf.at(CF_ppa_price, i) / 100.0 *(
-				m_disp_calcs.tod_energy_value(i));
+//			cf.at(CF_energy_value, i) = cf.at(CF_ppa_price, i) / 100.0 *(
+//				m_disp_calcs.tod_energy_value(i));
 
 //			log(util::format("year %d : energy value =%lg", i, m_disp_calcs.tod_energy_value(i)), SSC_WARNING);
 			// total revenue
@@ -3532,7 +3536,7 @@ public:
 		{
 			ppa_cf.push_back(cf.at(CF_ppa_price, i));
 		}
-		m_disp_calcs.compute_outputs(ppa_cf);
+		//m_disp_calcs.compute_outputs(ppa_cf);
 
         // Intermediate tax credit/depreciation variables 
         assign("pre_depr_alloc_basis", var_data((ssc_number_t)pre_depr_alloc_basis));
