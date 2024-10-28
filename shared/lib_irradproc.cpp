@@ -1842,27 +1842,64 @@ irrad::irrad(weather_header hdr,
 }
 
 int irrad::check() {
-    if (year < 0 || month < 0 || day < 0 || hour < 0 || minute < 0 || delt > 1) return -1;
+    if (year < 0 || month < 0 || day < 0 || hour < 0 || minute < 0 || delt > 1 ) {
+        errorMessage = util::format("Invalid year (%d), month (%d), hour (%d), minute (%d) data, or invalid time step (%lg) hours", year, month, day, hour, minute, delt);
+        return -1;
+    }
     if (latitudeDegrees < -90 || latitudeDegrees > 90 || longitudeDegrees < -180 || longitudeDegrees > 180 ||
-        timezone < -15 || timezone > 15)
+        timezone < -15 || timezone > 15) {
+        errorMessage = util::format("Invalid latitude (%lg), longitude (%lg), or time zone (%lg), latitude must be between -90 and 90 degrees, longitude must be between -180 and 180 degrees, time zone must be between -15 and 15", latitudeDegrees, longitudeDegrees, timezone);
         return -2;
-    if (radiationMode < irrad::DN_DF || radiationMode > irrad::POA_P || skyModel < 0 || skyModel > 2) return -3;
-    if (trackingMode < 0 || trackingMode > 4) return -4;
+    }
+    if (radiationMode < irrad::DN_DF || radiationMode > irrad::POA_P || skyModel < 0 || skyModel > 2) {
+        errorMessage = util::format("Invalid radiation mode (%d) or sky model (%d)", radiationMode, skyModel);
+        return -3;
+    }
+    if (trackingMode < 0 || trackingMode > 4) {
+        errorMessage = util::format("Invalid tracking mode (%d)", trackingMode);
+        return -4;
+    }
     if (radiationMode == irrad::DN_DF &&
-        (directNormal < 0 || directNormal > irrad::irradiationMax || diffuseHorizontal < 0 || diffuseHorizontal > 1500))
+        (directNormal < 0 || directNormal > irrad::irradiationMax || diffuseHorizontal < 0 || diffuseHorizontal > 1500)) {
+        errorMessage = util::format("Invalid DNI (%lg) or DHI (%lg), DNI must be between 0 and %lg W/m2, DHI must be between 0 and 1500 W/m2", directNormal, diffuseHorizontal, irrad::irradiationMax);
         return -5;
+    }
     if (radiationMode == irrad::DN_GH &&
-        (globalHorizontal < 0 || globalHorizontal > 1500 || directNormal < 0 || directNormal > 1500))
+        (globalHorizontal < 0 || globalHorizontal > 1500 || directNormal < 0 || directNormal > 1500)) {
+        errorMessage = util::format("Invalid DNI (%lg) or GHI (%lg), DNI must be between 0 and %lg W/m2, GHI must be between 0 and 1500 W/m2", directNormal, diffuseHorizontal, irrad::irradiationMax);
         return -6;
-    if (albedo < 0 || albedo > 1) return -7;
-    if (tiltDegrees < 0 || tiltDegrees > 90) return -8;
-    if (surfaceAzimuthDegrees < 0 || surfaceAzimuthDegrees >= 360) return -9;
-    if (rotationLimitDegrees < -90 || rotationLimitDegrees > 90) return -10;
-    if (stowAngleDegrees < -90 || stowAngleDegrees > 90) return -12;
+    }
+    if (albedo < 0 || albedo > 1) {
+        errorMessage = util::format("Invalid albedo (%lg), must be between 0 and 1", albedo);
+        return -7;
+    }
+    if (tiltDegrees < 0 || tiltDegrees > 90) {
+        errorMessage = util::format("Invalid tilt angle (%lg), must be between 0 and 90 degrees", tiltDegrees);
+        return -8;
+    }
+    if (surfaceAzimuthDegrees < 0 || surfaceAzimuthDegrees >= 360) {
+        errorMessage = util::format("Invalid azimuth (%lg), must be between 0 and 360 degrees", surfaceAzimuthDegrees);
+        return -9;
+    }
+    if (rotationLimitDegrees < -90 || rotationLimitDegrees > 90) {
+        errorMessage = util::format("Invalid tracker rotation limit (%lg), must be between -90 and 90 degrees", rotationLimitDegrees);
+        return -10;
+    }
+    if (stowAngleDegrees < -90 || stowAngleDegrees > 90) {
+        errorMessage = util::format("Invalid stow angle (%lg), must be between -90 and 90 degrees", stowAngleDegrees);
+        return -12;
+    }
     if (radiationMode == irrad::GH_DF &&
-        (globalHorizontal < 0 || globalHorizontal > 1500 || diffuseHorizontal < 0 || diffuseHorizontal > 1500))
+        (globalHorizontal < 0 || globalHorizontal > 1500 || diffuseHorizontal < 0 || diffuseHorizontal > 1500)) {
+        errorMessage = util::format("Invalid GHI (%lg) or DHI (%lg), must be between 0 and 1500 W/m2", globalHorizontal, diffuseHorizontal);
         return -11;
+    }
+
     return 0;
+}
+
+std::string irrad::getErrorMessage() {
+    return errorMessage;
 }
 
 void irrad::setup_solarpos_outputs_for_lifetime(size_t ts_per_year) {
@@ -2066,8 +2103,15 @@ void irrad::set_optional(double elev, double pres, double t_amb) //defaults of 0
         this->elevation = elev;
     if (!std::isnan(pres) && pres > 800)
         this->pressure = pres;
-    if (!std::isnan(tamb))
+    if (!std::isnan(t_amb))
         this->tamb = t_amb;
+}
+
+void irrad::get_optional(double *elev, double *pres, double *t_amb) //defaults of 0 meters elevation, atmospheric pressure, 15°C average annual temperature
+{
+    *elev = this->elevation;
+    *pres = this->pressure;
+    *t_amb = this->tamb;
 }
 
 void irrad::set_subhourly_clipping(bool enable)
