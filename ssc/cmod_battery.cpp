@@ -1333,7 +1333,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 if (dispatch_automatic_front_of_meter_t* dispatch_fom = dynamic_cast<dispatch_automatic_front_of_meter_t*>(dispatch_model))
                 {
                     if (batt_vars->batt_custom_dispatch.size() != 8760 * step_per_hour) {
-                        throw exec_error("battery", "Length of batt_custom_dispatch must be 8760 * steps_per_hour.");
+                        throw exec_error("battery", util::format("Battery custom dispatch time step (%d minutes) does not match simulation time step (%d minutes). Length of batt_custom_dispatch (%d) must be steps_per_hour (%lg) * 8760.", batt_vars->batt_custom_dispatch.size()/8760*60, (int)(60/step_per_hour), batt_vars->batt_custom_dispatch.size(), (double)step_per_hour));
                     }
                     dispatch_fom->set_custom_dispatch(batt_vars->batt_custom_dispatch);
                 }
@@ -1368,7 +1368,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             if (dispatch_automatic_behind_the_meter_t* dispatch_btm = dynamic_cast<dispatch_automatic_behind_the_meter_t*>(dispatch_model))
             {
                 if (batt_vars->batt_custom_dispatch.size() != 8760 * step_per_hour) {
-                    throw exec_error("battery", "Length of batt_custom_dispach must be 8760 * steps_per_hour.");
+                    throw exec_error("battery", util::format("Input battery power targets time step (%d minutes) does not match simulation time step (%d minutes). Length of batt_custom_dispatch (%d) must be steps_per_hour (%lg) * 8760.", batt_vars->batt_custom_dispatch.size() / 8760 * 60, (int)(60 / step_per_hour), batt_vars->batt_custom_dispatch.size(), (double)step_per_hour));
                 }
                 dispatch_btm->set_custom_dispatch(batt_vars->batt_custom_dispatch);
             }
@@ -2251,6 +2251,7 @@ static var_info _cm_vtab_battery[] = {
     { SSC_INOUT,        SSC_NUMBER,      "percent_complete",                           "Estimated simulation status",                             "%",          "",                     "Simulation",                        "",                            "",                               "" },
     { SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",                 "Lifetime simulation",                                     "0/1",        "0=SingleYearRepeated,1=RunEveryYear",   "Lifetime",        "?=0",                   "BOOLEAN",                              "" },
     { SSC_INPUT,        SSC_NUMBER,      "analysis_period",                            "Lifetime analysis period",                                "years",      "The number of years in the simulation", "Lifetime",        "system_use_lifetime_output=1","",                               "" },
+    { SSC_INPUT,        SSC_NUMBER,      "timestep_minutes",                           "Simulation timestep",                                    "minutes",         "The number of minutes in each timestep", "Simulation",        "en_standalone_batt=1","",                               "" },
     { SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",        "",                     "BatterySystem",                      "?=0",                    "",                               "" },
     { SSC_INPUT,        SSC_NUMBER,      "en_standalone_batt",                         "Enable standalone battery storage model",                 "0/1",        "",                     "BatterySystem",                      "?=0",                    "",                               "" },
     { SSC_INPUT,        SSC_NUMBER,      "en_wave_batt",                         "Enable wave battery storage model",                 "0/1",        "",                     "BatterySystem",                      "?=0",                    "",                               "" },
@@ -2298,29 +2299,23 @@ public:
             std::vector<ssc_number_t> load_lifetime, load_year_one;
             std::vector<ssc_number_t> grid_curtailment;
             size_t nload;
-            size_t ngrid;
+            std::string timestep_source = "weather file";
             bool use_lifetime = as_boolean("system_use_lifetime_output");
             // System generation output, which is lifetime (if system_lifetime_output == true);
             if (as_boolean("en_standalone_batt")) {
-                if (is_assigned("load")) {
-                    load_year_one = as_vector_ssc_number_t("load");
-                    nload = load_year_one.size();
-                    if (use_lifetime)
-                        power_input_lifetime.resize(nload * as_integer("analysis_period"), 0.0);
-                    else
-                        power_input_lifetime.resize(nload, 0.0);
-                }
-                else {
-                    grid_curtailment = as_vector_ssc_number_t("grid_curtailment");
-                    ngrid = grid_curtailment.size();
-                    if (use_lifetime)
-                        power_input_lifetime.resize(ngrid * as_integer("analysis_period"), 0.0);
-                    else
-                        power_input_lifetime.resize(ngrid, 0.0);
-                }
+                int timestep_minutes = as_number("timestep_minutes");
+                size_t n_rec_year_1 = 8760 * 60 / timestep_minutes;
+
+                if (use_lifetime)
+                    power_input_lifetime.resize(n_rec_year_1 * as_integer("analysis_period"), 0.0);
+                else
+                    power_input_lifetime.resize(n_rec_year_1, 0.0);
+
                 ssc_number_t* p_gen = allocate("gen", power_input_lifetime.size());
                 for (size_t i = 0; i < power_input_lifetime.size(); i++)
                     p_gen[i] = power_input_lifetime[i];
+
+                timestep_source = "simulation timestep";
             }
             else if (as_boolean("en_wave_batt")) {
                 power_input_lifetime = as_vector_ssc_number_t("energy_hourly_kW");
@@ -2341,7 +2336,7 @@ public:
                 nload = load_year_one.size();
                 // Array length for non-lifetime mode, lifetime mode, and hourly load
                 if (nload != n_rec_lifetime && nload != n_rec_lifetime / analysis_period && nload != 8760)
-                    throw exec_error("battery", "Electric load must have either the same time step as the weather file, or 8760 time steps.");
+                    throw exec_error("battery", "Electric load must have either the same time step as the " + timestep_source + ", or 8760 time steps.");
             }
 
             // resilience metrics for battery
@@ -2354,7 +2349,7 @@ public:
                 p_crit_load = as_vector_ssc_number_t("crit_load");
                 size_t n_crit_load = p_crit_load.size();
                 if (n_crit_load != n_rec_single_year && n_crit_load != 8760)
-                    throw exec_error("battery", "Critical load crit_load must have same number of values as weather file, or 8760.");
+                    throw exec_error("battery", "Critical load crit_load must have same number of values as " + timestep_source + ", or 8760.");
                 if (n_crit_load != nload)
                     throw exec_error("battery", "Critical load crit_load must have same number of values as load.");
 
@@ -2430,7 +2425,7 @@ public:
                 }
                 // Array length for non-lifetime mode, lifetime mode, and hourly load
                 else if (nload != n_rec_lifetime && nload != n_rec_lifetime / analysis_period && nload != 8760) {
-                        throw exec_error("battery", "Electric load forecast must have either the same time step as the weather file, or 8760 time steps.");
+                        throw exec_error("battery", "Electric load forecast must have either the same time step as the " + timestep_source + ", or 8760 time steps.");
                 }
             }
             if (p_load_forecast_in.size() > 0) {
