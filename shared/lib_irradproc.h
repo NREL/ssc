@@ -1049,6 +1049,9 @@ protected:
     int year, month, day, hour;
     double minute, delt;
 
+    //Error messages
+    std::string errorMessage;
+
     //Enable subhourly clipping correction
     bool enableSubhourlyClipping;
 
@@ -1149,6 +1152,9 @@ public:
 
     /// Set the location for the irradiance processor
     void set_location(double lat, double lon, double tz);
+
+    /// Get optional parameters for solarpos_spac calculation
+    void get_optional(double* elev, double* pres, double* t_amb);
 
     // Set optional parameters for solarpos_spa calculation
     void set_optional(double elev = 0, double pres = 1013.25, double t_amb = 15);
@@ -1290,6 +1296,8 @@ public:
 
     /// Return the front surface irradiances, used by \link calc_rear_side()
     void getFrontSurfaceIrradiances(double pvBackShadeFraction, double rowToRow, double verticalHeight, double clearanceGround, double distanceBetweenRows, double horizontalLength, std::vector<double> frontGroundGHI, std::vector<double>& frontIrradiance, double& frontAverageIrradiance, std::vector<double>& frontReflected);
+
+    std::string getErrorMessage();
 
     /// Return the solarpos outputs for a given timestep
     bool getStoredSolarposOutputs();
