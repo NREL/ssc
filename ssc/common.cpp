@@ -1092,7 +1092,7 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
     if (m_cm->as_boolean(m_prefix +  "_en_timeindex"))
     {
         size_t n;
-        int steps_per_hour = nsteps / 8760;
+        double steps_per_hour = nsteps / 8760.0;
         int month = 0;
         int day = 0;
         int week = 0;
@@ -1110,9 +1110,9 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
                         m_factors[nsteps * a + i] *= (1.0 - p[a*nsteps + i]/100.0); //convert from percentages to factors
                 }
             }
-            else if ((n % 8760 == 0) && n != (size_t)(nsteps * analysis_period)) // give a helpful error for timestep mismatch
+            else if ((n % 8760 == 0 || n % 2920 == 0) && n != (size_t)(nsteps * analysis_period)) // give a helpful error for timestep mismatch
             {
-                m_error = util::format("Availability losses must be the same timestep as the weather file, if they are not daily/weekly/monthly.");
+                m_error = util::format("Time series availability losses must have the same time step as the simulation time step unless losses are daily, weekly, monthly, annual, or single value.");
             }
             else if (n == (size_t)( 12 * analysis_period)) { //Monthly 
                 for (int a = 0; a < analysis_period; a++) {
