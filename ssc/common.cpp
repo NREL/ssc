@@ -1100,7 +1100,7 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
     if (m_cm->as_boolean(m_prefix +  "_en_timeindex"))
     {
         size_t n;
-        int steps_per_hour = nsteps / 8760;
+        double steps_per_hour = nsteps / 8760.0;
         int month = 0;
         int day = 0;
         int week = 0;
@@ -1118,9 +1118,9 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
                         m_factors[nsteps * a + i] *= (1.0 - p[a*nsteps + i]/100.0); //convert from percentages to factors
                 }
             }
-            else if ((n % 8760 == 0) && n != (size_t)(nsteps * analysis_period)) // give a helpful error for timestep mismatch
+            else if ((n % 8760 == 0 || n % 2920 == 0) && n != (size_t)(nsteps * analysis_period)) // give a helpful error for timestep mismatch
             {
-                m_error = util::format("Availability losses must be the same timestep as the weather file, if they are not daily/weekly/monthly.");
+                m_error = util::format("Time series availability losses must have the same time step as the simulation time step unless losses are daily, weekly, monthly, annual, or single value.");
             }
             else if (n == (size_t)( 12 * analysis_period)) { //Monthly 
                 for (int a = 0; a < analysis_period; a++) {
@@ -1540,12 +1540,25 @@ weatherdata::weatherdata( var_data *data_table )
 		return;
 	}
 
-
 	m_hdr.lat = get_number( data_table, "lat" );
+    if (std::isnan(m_hdr.lat)) {
+        m_message = "missing latitude: could not find lat";
+        m_ok = false;
+    }
 	m_hdr.lon = get_number( data_table, "lon" );
+    if (std::isnan(m_hdr.lon)) {
+        m_message = "missing longitude: could not find lon";
+        m_ok = false;
+    }
 	m_hdr.tz = get_number( data_table, "tz" );
+    if (std::isnan(m_hdr.tz)) {
+        m_message = "missing time zone: could not find tz";
+        m_ok = false;
+    }
+    
 	m_hdr.elev = get_number( data_table, "elev" );
-
+    //Handle missing elevation in performance model, not weather file handling
+    
 	// make sure two types of irradiance are provided
 	size_t nrec = 0;
 	int n_irr = 0;
