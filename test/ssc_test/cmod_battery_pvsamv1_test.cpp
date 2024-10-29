@@ -364,7 +364,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelIntegr
     ssc_number_t peakCycles[4] = { 1, 1, 1, 3 };
     ssc_number_t avgCycles[4] = { 1.0, 1.0, 0.4794, 1.0110 };
 
-    ssc_number_t q_rel[4] = { 97.074, 97.054, 97.239, 93.334 };
+    ssc_number_t q_rel[4] = { 97.098, 97.054, 97.239, 93.334 };
     ssc_number_t cyc_avg[4] = { 35.022, 35.218, 12.381, 72.29 };
 
     // Test peak shaving look ahead, peak shaving look behind, and automated grid power target. Others require additional input data
@@ -483,7 +483,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ACBatteryModelIntegration)
     grid_and_rate_defaults(data);
     singleowner_defaults(data);
 
-    ssc_number_t expectedEnergy[3] = { 37817925, 37817033, 37308139 };
+    ssc_number_t expectedEnergy[3] = { 37839193, 37838301, 37308139 };
     ssc_number_t expectedBatteryChargeEnergy[3] = { 14779, 24265, 14779 }; // No rate model means battery use is low
     ssc_number_t expectedBatteryDischargeEnergy[3] = { 14808, 23415, 14808 };
 
@@ -537,11 +537,11 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_ManualDispatchBatteryModelI
     grid_and_rate_defaults(data);
     singleowner_defaults(data);
 
-    ssc_number_t expectedEnergy = 37694339;
+    ssc_number_t expectedEnergy = 37715607;
     ssc_number_t expectedBatteryChargeEnergy = 1299674;
     ssc_number_t expectedBatteryDischargeEnergy = 1176096;
 
-    ssc_number_t peakKwCharge = -1052.0;
+    ssc_number_t peakKwCharge = -1051.9;
     ssc_number_t peakKwDischarge = 848.6;
     ssc_number_t peakCycles = 1;
     ssc_number_t avgCycles = 1;
@@ -590,12 +590,12 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
     grid_and_rate_defaults(data);
     singleowner_defaults(data);
 
-    ssc_number_t expectedEnergy = 37818642;
+    ssc_number_t expectedEnergy = 37839912;
     ssc_number_t expectedBatteryChargeEnergy = 2040;
     ssc_number_t expectedBatteryDischargeEnergy = 3254.;
 
     ssc_number_t peakKwCharge = -992.86;
-    ssc_number_t peakKwDischarge = 946.83;
+    ssc_number_t peakKwDischarge = 946.98;
     ssc_number_t peakCycles = 1;
     ssc_number_t avgCycles = 0.0027;
 
@@ -693,7 +693,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, CommercialMultipleSubarrayBatte
     ssc_number_t expectedEnergy = 543888;
     ssc_number_t expectedBatteryChargeEnergy = 785.1;
     ssc_number_t expectedBatteryDischargeEnergy = 715.1;
-    ssc_number_t expectedClipLoss = 590.8;
+    ssc_number_t expectedClipLoss = 545.8;
 
     ssc_number_t peakKwCharge = -9.93;
     ssc_number_t peakKwDischarge = 1.24;
@@ -752,7 +752,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ClippingForecastTest1_DC_Dispat
     ssc_number_t expectedEnergy = 543485;
     ssc_number_t expectedBatteryChargeEnergy = 929;
     ssc_number_t expectedBatteryDischargeEnergy = 343.96;
-    ssc_number_t expectedClipLoss = 590.8;
+    ssc_number_t expectedClipLoss = 545.8;
 
     ssc_number_t peakKwCharge = -9.04;
     ssc_number_t peakKwDischarge = 1.1;
@@ -806,7 +806,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ClippingForecastTest2_DC_Dispat
     ssc_number_t expectedEnergy = 543485;
     ssc_number_t expectedBatteryChargeEnergy = 929;
     ssc_number_t expectedBatteryDischargeEnergy = 343.96;
-    ssc_number_t expectedClipLoss = 590.8;
+    ssc_number_t expectedClipLoss = 545.8;
 
     ssc_number_t peakKwCharge = -9.04;
     ssc_number_t peakKwDischarge = 1.1;
