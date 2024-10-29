@@ -50,7 +50,7 @@ static var_info _cm_vtab_singleowner_heat[] = {
 	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",     "",                     "BatterySystem",       "?=0",                                 "",                              "" },
     { SSC_INPUT,        SSC_NUMBER,      "en_electricity_rates",                       "Enable electricity rates for grid purchase",              "0/1",     "",                     "Electricity Rates",       "?=0",                                 "",                              "" },
     { SSC_INPUT,        SSC_NUMBER,      "batt_meter_position",                        "Position of battery relative to electric meter",          "",        "",                     "BatterySystem",       "",                           "",                              "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "revenue_gen",                                "Electricity to grid",                                     "kW",      "",                       "System Output",       "",                           "",                              "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "revenue_gen",                                "Thermal energy",                                     "kWht",      "",                       "System Output",       "",                           "",                              "" },
  //   { SSC_OUTPUT,       SSC_ARRAY,       "gen_purchases",                              "Electricity from grid",                                    "kW",      "",                       "System Output",       "",                           "",                              "" },
 
     { SSC_INPUT,        SSC_ARRAY,       "gen_heat",                                         "Thermal power",                            "kWt",       "",                    "System Output", "*", "", "" },
@@ -528,10 +528,10 @@ static var_info _cm_vtab_singleowner_heat[] = {
 /* Production - input as energy_net above */
 
 /* Partial Income Statement: Project */
-	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_net",                          "Electricity to grid net",               "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_sales",                        "Electricity to grid",                   "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_purchases",                    "Electricity from grid",                 "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_without_battery",              "Electricity generated without storage", "kWh", "", "Cash Flow Electricity", "",  "LENGTH_EQUAL=cf_length", "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_net",                          "Thermal energy",               "kWht", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_sales",                        "Thermal energy to grid",                   "kWht", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_purchases",                    "Thermal energy from grid",                 "kWht", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_without_battery",              "Thermal energy generated without storage", "kWht", "", "Cash Flow Electricity", "",  "LENGTH_EQUAL=cf_length", "" },
 
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_ppa_price",                           "PPA price",                     "cents/kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_value",                        "PPA revenue",                     "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
@@ -664,7 +664,7 @@ extern var_info
 vtab_update_tech_outputs[],
 vtab_ppa_inout[],
 vtab_standard_financial[],
-vtab_oandm[],
+vtab_oandm_heat[],
 vtab_equip_reserve[],
 vtab_tax_credits[],
 vtab_depreciation_inputs[],
@@ -922,7 +922,7 @@ public:
 	{
         add_var_info(vtab_ppa_inout );
         add_var_info( vtab_standard_financial );
-		add_var_info( vtab_oandm );
+		add_var_info( vtab_oandm_heat );
 		add_var_info( vtab_equip_reserve );
 		add_var_info( vtab_tax_credits );
 		add_var_info(vtab_depreciation_inputs );
@@ -1061,8 +1061,8 @@ public:
 		// general financial expenses and incentives - stdlib?
 		// precompute expenses from annual schedules or value+escalation
 		escal_or_annual( CF_om_fixed_expense, nyears, "om_fixed", inflation_rate, 1.0, false, as_double("om_fixed_escal")*0.01 );
-		escal_or_annual( CF_om_production_expense, nyears, "om_production", inflation_rate, 0.001, false, as_double("om_production_escal")*0.01 );
-		escal_or_annual( CF_om_capacity_expense, nyears, "om_capacity", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01 );
+		escal_or_annual( CF_om_production_expense, nyears, "om_production_heat", inflation_rate, 0.001, false, as_double("om_production_escal")*0.01 );
+		escal_or_annual( CF_om_capacity_expense, nyears, "om_capacity_heat", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01 );
 		escal_or_annual( CF_om_fuel_expense, nyears, "om_fuel_cost", inflation_rate, as_double("system_heat_rate")*0.001, false, as_double("om_fuel_cost_escal")*0.01 );
 
 //        escal_or_annual(CF_om_elec_price_for_heat_techs, nyears, "om_elec_price_for_heat_techs", inflation_rate, 1.0, false, as_double("om_elec_price_for_heat_techs_escal")*0.01 ); 

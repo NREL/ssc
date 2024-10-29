@@ -99,6 +99,62 @@ var_info vtab_standard_loan[] = {
 { SSC_INPUT,SSC_NUMBER  , "debt_fraction"                        , "Debt percentage"                                                , "%"                                      , ""                                      , "Financial Parameters" , "?=0"            , "MIN=0,MAX=100"         , ""},
 var_info_invalid };
 
+
+var_info vtab_oandm_heat[] = {
+    /*   VARTYPE           DATATYPE         NAME                             LABEL                                UNITS      META                 GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+
+    { SSC_INPUT,        SSC_ARRAY,       "om_fixed",                     "Fixed O&M annual amount",           "$/year",  "",                  "System Costs",            "?=0.0",                 "",                                         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "om_fixed_escal",               "Fixed O&M escalation",              "%/year",  "",                  "System Costs",            "?=0.0",                 "",                                         "" },
+    { SSC_INPUT,        SSC_ARRAY,       "om_production_heat",                "Production-based O&M amount",       "$/MWht",   "",                  "System Costs",            "?=0.0",                 "",                                         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "om_production_escal",          "Production-based O&M escalation",   "%/year",  "",                  "System Costs",            "?=0.0",                 "",                                         "" },
+    { SSC_INPUT,        SSC_ARRAY,       "om_capacity_heat",                  "Capacity-based O&M amount",         "$/kWt-yr", "",                  "System Costs",            "?=0.0",                 "",                                         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "om_capacity_escal",            "Capacity-based O&M escalation",     "%/year",  "",                  "System Costs",            "?=0.0",                 "",                                         "" },
+    { SSC_INPUT,        SSC_ARRAY,		 "om_fuel_cost",                 "Fuel cost",                         "$/MMBtu", "generic_system,fuelcell,tcslinearfresnel,tcstroughempirical,tcsgenericsolar,fresnelphysical",                  "System Costs",            "?=0.0",                 "",                                         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "om_fuel_cost_escal",           "Fuel cost escalation",              "%/year",  "generic_system,fuelcell,tcslinearfresnel,tcstroughempirical,tcsgenericsolar,fresnelphysical",                  "System Costs",            "?=0.0",                 "",                                         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "annual_fuel_usage",            "Fuel usage (yr 1)",                 "kWht",    "generic_system,fuelcell,tcslinearfresnel,tcstroughempirical,tcsgenericsolar,fresnelphysical",                  "System Costs",            "?=0",                     "MIN=0",                                         "" },
+    { SSC_INPUT,        SSC_ARRAY,       "annual_fuel_usage_lifetime",   "Fuel usage (lifetime)",             "kWht",    "generic_system,fuelcell,tcslinearfresnel,tcstroughempirical,tcsgenericsolar,fresnelphysical",                  "System Costs",            "",                     "",                                         "" },
+
+    { SSC_INPUT,        SSC_ARRAY,		 "om_elec_price_for_heat_techs",       "Electricity price for purchases in heat model",                "$/kWh",   "", "System Costs",  "?=0.0",           "",                                         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "om_elec_price_for_heat_techs_escal", "Escalation for electricity price for purchases in heat model", "%/year",  "", "System Costs",  "?=0.0",           "",                                         "" },
+
+
+    // replacements
+    { SSC_INPUT,SSC_ARRAY   , "om_batt_replacement_cost"                 , "Replacement cost 1"               , "$/kWh"   , "battery"                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_ARRAY   , "om_fuelcell_replacement_cost"                 , "Replacement cost 2"            , "$/kW", "fuelcell"                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_NUMBER  , "om_replacement_cost_escal"            , "Replacement cost escalation"           , "%/year", "battery,fuelcell"                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+
+    // optional fuel o and m for Biopower - usage can be in any unit and cost is in $ per usage unit
+    { SSC_INPUT,SSC_NUMBER  , "om_opt_fuel_1_usage"                  , "Biomass feedstock usage"            , "unit"    , "biomass"                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_ARRAY   , "om_opt_fuel_1_cost"                   , "Biomass feedstock cost"           , "$/unit"    , "biomass"                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_NUMBER  , "om_opt_fuel_1_cost_escal"             , "Biomass feedstock cost escalation" , "%/year"   , "biomass"                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_NUMBER  , "om_opt_fuel_2_usage"                  , "Coal feedstock usage"               , "unit"    , "biomass"                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_ARRAY   , "om_opt_fuel_2_cost"                   , "Coal feedstock cost"                , "$/unit"  , "biomass"                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_NUMBER  , "om_opt_fuel_2_cost_escal"             , "Coal feedstock cost escalation"     , "%/year"  , "biomass"                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+
+    // optional additional base o and m types
+    { SSC_INPUT,SSC_NUMBER  , "add_om_num_types"                     , "Number of O and M types" , "" , "battery,fuelcell"                                      , "System Costs"         , "?=0"            , "INTEGER,MIN=0,MAX=2"   , ""},
+    { SSC_INPUT,SSC_NUMBER  , "om_batt_nameplate"               , "Battery capacity for System Costs values"                       , "kW", "battery"                                      , "System Costs"         , "?=0"            , ""                      , ""},
+    { SSC_INPUT,SSC_ARRAY   , "om_production1_values"                , "Battery production for System Costs values"                     , "kWh", "battery"                                      , "System Costs"         , "?=0"            , ""                      , ""},
+
+    { SSC_INPUT,SSC_ARRAY   , "om_batt_fixed_cost"                            , "Battery fixed System Costs annual amount"                       , "$/year",    "battery",   "System Costs"         , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_ARRAY   , "om_batt_variable_cost"                       , "Battery production-based System Costs amount"                   , "$/MWh", "battery"    , "System Costs"         , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_ARRAY   , "om_batt_capacity_cost"                         , "Battery capacity-based System Costs amount"                     , "$/kWcap", "battery"    , "System Costs"         , "?=0.0"          , ""                      , ""},
+
+    { SSC_INPUT,SSC_NUMBER  , "om_fuelcell_nameplate"               , "Fuel cell capacity for System Costs values"                     , "kW", "fuelcell"                                      , "System Costs"         , "?=0"            , ""                      , ""},
+    { SSC_INPUT,SSC_ARRAY   , "om_production2_values"                , "Fuel cell production for System Costs values"                   , "kWh", "fuelcell"                                      , "System Costs"         , "?=0"            , ""                      , ""},
+
+    { SSC_INPUT,SSC_ARRAY   , "om_fuelcell_fixed_cost"                            , "Fuel cell fixed System Costs annual amount"                     , "$/year", "fuelcell" , "System Costs"         , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_ARRAY   , "om_fuelcell_variable_cost"                       , "Fuel cell production-based System Costs amount"                 , "$/MWh", "fuelcell"    , "System Costs"         , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_ARRAY   , "om_fuelcell_capacity_cost"                         , "Fuel cell capacity-based System Costs amount"                   , "$/kWcap", "fuelcell"    , "System Costs"         , "?=0.0"          , ""                      , ""},
+
+    // optional land lease
+    { SSC_INPUT,        SSC_NUMBER,     "land_area",                      "Total land area",	                                                "acres",                "",                        "Land Lease",            "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_ARRAY,      "om_land_lease",	                    "Land lease cost",	                                                "$/acre",               "",                        "Land Lease",            "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,     "om_land_lease_escal",                  "Land lease cost escalation",	                                    "%/yr",                 "",                        "Land Lease",            "?=0",					   "",                              "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_land_lease_expense",                "Land lease expense",                                       "$",                    "",                         "Land Lease",            "", "LENGTH_EQUAL=cf_length", "" },
+
+var_info_invalid };
+
 // meta should be either a blocklist (!gen,!gen) or an allowlist. Cannot do both blocked and allowed gens
 var_info vtab_oandm[] = {
 /*   VARTYPE           DATATYPE         NAME                             LABEL                                UNITS      META                 GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
@@ -113,10 +169,6 @@ var_info vtab_oandm[] = {
 { SSC_INPUT,        SSC_NUMBER,      "om_fuel_cost_escal",           "Fuel cost escalation",              "%/year",  "generic_system,fuelcell,tcslinearfresnel,tcstroughempirical,tcsgenericsolar,fresnelphysical",                  "System Costs",            "?=0.0",                 "",                                         "" },
 { SSC_INPUT,        SSC_NUMBER,      "annual_fuel_usage",            "Fuel usage (yr 1)",                 "kWht",    "generic_system,fuelcell,tcslinearfresnel,tcstroughempirical,tcsgenericsolar,fresnelphysical",                  "System Costs",            "?=0",                     "MIN=0",                                         "" },
 { SSC_INPUT,        SSC_ARRAY,       "annual_fuel_usage_lifetime",   "Fuel usage (lifetime)",             "kWht",    "generic_system,fuelcell,tcslinearfresnel,tcstroughempirical,tcsgenericsolar,fresnelphysical",                  "System Costs",            "",                     "",                                         "" },
-
-{ SSC_INPUT,        SSC_ARRAY,		 "om_elec_price_for_heat_techs",       "Electricity price for purchases in heat model",                "$/kWh",   "", "System Costs",  "?=0.0",           "",                                         "" },
-{ SSC_INPUT,        SSC_NUMBER,      "om_elec_price_for_heat_techs_escal", "Escalation for electricity price for purchases in heat model", "%/year",  "", "System Costs",  "?=0.0",           "",                                         "" },
-
 
 // replacements
 { SSC_INPUT,SSC_ARRAY   , "om_batt_replacement_cost"                 , "Replacement cost 1"               , "$/kWh"   , "battery"                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
