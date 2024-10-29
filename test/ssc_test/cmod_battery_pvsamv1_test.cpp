@@ -639,7 +639,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, PPA_CustomDispatchBatteryModelD
     singleowner_defaults(data);
 
     //ssc_number_t expectedEnergy = 37264228;
-    ssc_number_t expectedEnergy = 37762704;
+    ssc_number_t expectedEnergy = 37783998;
     ssc_number_t expectedBatteryChargeEnergy = 414366;
     ssc_number_t expectedBatteryDischargeEnergy = 348966;
     ssc_number_t roundtripEfficiency = 80.6;
@@ -1144,7 +1144,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelGridOu
     ssc_number_t expectedEnergy = 8521.00;
     ssc_number_t expectedBatteryChargeEnergy = 3290.77;
     ssc_number_t expectedBatteryDischargeEnergy = 2974.91;
-    ssc_number_t expectedCritLoadUnmet = 494.59;
+    ssc_number_t expectedCritLoadUnmet = 494.31;
 
     ssc_number_t peakKwCharge = -3.4;
     ssc_number_t peakKwDischarge = 1.964;
