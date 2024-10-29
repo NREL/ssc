@@ -5,7 +5,7 @@ casename_base =  "dc_ac_ratio_";
 
 // update folder based on where you would like the generated json files (one for input and one for output comparison for each configuration)
 // Windows
-folder = "C:/Users/mprillim/Documents/SAM_2024_testing/json";
+folder = "C:/Projects/SAM/Documentation/GitHub/Issues/ssc_870/json";
 
 // to test all financial compute modules
 cmod_list="pvwattsv8";
