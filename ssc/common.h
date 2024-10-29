@@ -97,13 +97,23 @@ class forecast_price_signal
 {
 	var_table *vartab;
 	std::vector<ssc_number_t> m_forecast_price;
+    std::vector<ssc_number_t> m_cleared_capacity;
 	std::string m_error;
+
 public:
 	forecast_price_signal(var_table *vt);
 	bool setup(size_t step_per_hour);
 	std::vector<ssc_number_t> forecast_price() { return m_forecast_price; }
+    std::vector<ssc_number_t> cleared_capacity() { return m_cleared_capacity;  }
 	ssc_number_t operator()(size_t time);
 	std::string error() { return m_error; }
+
+    enum FORECAST_TYPE {
+        PRICE_ONLY,
+        CAPACITY_ONLY,
+        PRICE_AND_CAPACITY
+    };
+    FORECAST_TYPE forecast_type;
 };
 
 class shading_factor_calculator
