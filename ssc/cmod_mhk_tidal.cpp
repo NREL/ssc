@@ -240,7 +240,7 @@ public:
             ssc_number_t* p_gen = allocate("gen", number_records);
             int power_bin = 0;
 
-            adjustment_factors haf(this, "adjust");
+            adjustment_factors haf(this->get_var_table(), "adjust");
             if (!haf.setup(number_records, 1))
                 throw exec_error("mhk_tidal", "Failed to set up adjustment factors: " + haf.error());
 

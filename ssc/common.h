@@ -81,12 +81,12 @@ void prepend_to_output(compute_module* cm, std::string var_name, size_t count, s
 
 class adjustment_factors
 {
-	compute_module *m_cm;
+	var_table *m_vt;
 	std::vector<ssc_number_t> m_factors;
 	std::string m_error;
 	std::string m_prefix;
 public:
-	adjustment_factors(compute_module *cm, const std::string &prefix);
+	adjustment_factors(var_table *vt, const std::string &prefix);
 	bool setup(int nsteps=8760, int analysis_period=1);
 	ssc_number_t operator()(size_t time);
     size_t size();
