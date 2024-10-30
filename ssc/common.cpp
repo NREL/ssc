@@ -857,7 +857,7 @@ bool forecast_price_signal::setup(size_t step_per_hour)
         std::vector<double> as_capacity_extrapolated_ancserv_4(nsteps, 0.0);
 
         // Users can mix and match percent of generation and cleared capacity. Determine what percent is available for cleared capacity calcs
-        double cleared_capacity_percent = 1 - (mp_market_percent_gen + ancserv1_percent_gen + ancserv2_percent_gen
+        cleared_capacity_percent = 1 - (mp_market_percent_gen + ancserv1_percent_gen + ancserv2_percent_gen
             + ancserv3_percent_gen + ancserv4_percent_gen);
 
         for (size_t y = 0; y < nyears; y++) {
@@ -875,7 +875,7 @@ bool forecast_price_signal::setup(size_t step_per_hour)
                         as_revenue.push_back(mp_energy_market_revenue_mat.at(0, 0) / 1000.0);
                     }
                     else {
-                        as_capacity.push_back(mp_energy_market_revenue_mat.at(0, 0));
+                        as_capacity.push_back(mp_energy_market_revenue_mat.at(0, 0) * 1000.0);
                         as_revenue.push_back(mp_energy_market_revenue_mat.at(0, 1) / 1000.0);
                     }
                 }
@@ -884,7 +884,7 @@ bool forecast_price_signal::setup(size_t step_per_hour)
                 for (size_t j = y * n_marketrevenue_per_year; j < (y + 1) * n_marketrevenue_per_year; j++) {
                     as_revenue.push_back(mp_energy_market_revenue_mat.at(j, 1 - mp_enable_market_percent_gen) / 1000.0);
                     if (!mp_enable_market_percent_gen) {
-                        as_capacity.push_back(mp_energy_market_revenue_mat.at(j, 0));
+                        as_capacity.push_back(mp_energy_market_revenue_mat.at(j, 0) * 1000.0);
                     }
                 }
             }
@@ -903,7 +903,7 @@ bool forecast_price_signal::setup(size_t step_per_hour)
                         as_revenue.push_back(mp_ancserv_1_revenue_mat.at(0, 0) / 1000.0);
                     }
                     else {
-                        as_capacity.push_back(mp_ancserv_1_revenue_mat.at(0, 0));
+                        as_capacity.push_back(mp_ancserv_1_revenue_mat.at(0, 0) * 1000.0);
                         as_revenue.push_back(mp_ancserv_1_revenue_mat.at(0, 1) / 1000.0);
                     }
                 }
@@ -912,7 +912,7 @@ bool forecast_price_signal::setup(size_t step_per_hour)
                 for (size_t j = y * n_ancserv_1_revenue_per_year; j < (y + 1) * n_ancserv_1_revenue_per_year; j++) {
                     as_revenue.push_back(mp_ancserv_1_revenue_mat.at(j, 1 - mp_enable_ancserv1_percent_gen) / 1000.0);
                     if (!mp_enable_ancserv1_percent_gen) {
-                        as_capacity.push_back(mp_ancserv_1_revenue_mat.at(j, 0));
+                        as_capacity.push_back(mp_ancserv_1_revenue_mat.at(j, 0) * 1000.0);
                     }
                 }
             }
@@ -930,7 +930,7 @@ bool forecast_price_signal::setup(size_t step_per_hour)
                         as_revenue.push_back(mp_ancserv_2_revenue_mat.at(0, 0) / 1000.0);
                     }
                     else {
-                        as_capacity.push_back(mp_ancserv_2_revenue_mat.at(0, 0));
+                        as_capacity.push_back(mp_ancserv_2_revenue_mat.at(0, 0) * 1000.0);
                         as_revenue.push_back(mp_ancserv_2_revenue_mat.at(0, 1) / 1000.0);
                     }
                 }
@@ -939,7 +939,7 @@ bool forecast_price_signal::setup(size_t step_per_hour)
                 for (size_t j = y * n_ancserv_2_revenue_per_year; j < (y + 1) * n_ancserv_2_revenue_per_year; j++) {
                     as_revenue.push_back(mp_ancserv_2_revenue_mat.at(j, 1 - mp_enable_ancserv2_percent_gen) / 1000.0);
                     if (!mp_enable_ancserv2_percent_gen) {
-                        as_capacity.push_back(mp_ancserv_2_revenue_mat.at(j, 0));
+                        as_capacity.push_back(mp_ancserv_2_revenue_mat.at(j, 0) * 1000.0);
                     }
                 }
             }
@@ -957,7 +957,7 @@ bool forecast_price_signal::setup(size_t step_per_hour)
                         as_revenue.push_back(mp_ancserv_3_revenue_mat.at(0, 0) / 1000.0);
                     }
                     else {
-                        as_capacity.push_back(mp_ancserv_3_revenue_mat.at(0, 0));
+                        as_capacity.push_back(mp_ancserv_3_revenue_mat.at(0, 0) * 1000.0);
                         as_revenue.push_back(mp_ancserv_3_revenue_mat.at(0, 1) / 1000.0);
                     }
                 }
@@ -966,7 +966,7 @@ bool forecast_price_signal::setup(size_t step_per_hour)
                 for (size_t j = y * n_ancserv_3_revenue_per_year; j < (y + 1) * n_ancserv_3_revenue_per_year; j++) {
                     as_revenue.push_back(mp_ancserv_3_revenue_mat.at(j, 1 - mp_enable_ancserv3_percent_gen) / 1000.0);
                     if (!mp_enable_ancserv3_percent_gen) {
-                        as_capacity.push_back(mp_ancserv_3_revenue_mat.at(j, 0));
+                        as_capacity.push_back(mp_ancserv_3_revenue_mat.at(j, 0) * 1000.0);
                     }
                 }
             }
@@ -984,7 +984,7 @@ bool forecast_price_signal::setup(size_t step_per_hour)
                         as_revenue.push_back(mp_ancserv_4_revenue_mat.at(0, 0) / 1000.0);
                     }
                     else {
-                        as_capacity.push_back(mp_ancserv_4_revenue_mat.at(0, 0));
+                        as_capacity.push_back(mp_ancserv_4_revenue_mat.at(0, 0) * 1000.0);
                         as_revenue.push_back(mp_ancserv_4_revenue_mat.at(0, 1) / 1000.0);
                     }
                 }
@@ -993,7 +993,7 @@ bool forecast_price_signal::setup(size_t step_per_hour)
                 for (size_t j = y * n_ancserv_4_revenue_per_year; j < (y + 1) * n_ancserv_4_revenue_per_year; j++) {
                     as_revenue.push_back(mp_ancserv_4_revenue_mat.at(j, 1 - mp_enable_ancserv4_percent_gen) / 1000.0);
                     if (!mp_enable_ancserv4_percent_gen) {
-                        as_capacity.push_back(mp_ancserv_4_revenue_mat.at(j, 0));
+                        as_capacity.push_back(mp_ancserv_4_revenue_mat.at(j, 0) * 1000.0);
                     }
                 }
             }
@@ -1041,10 +1041,18 @@ bool forecast_price_signal::setup(size_t step_per_hour)
                 }
 
             }
-
-
-            // TODO: figure out forecast_type for mp
         }
+
+        if (cleared_capacity_percent < 1e-7) {
+            forecast_type = dispatch_t::PRICE_ONLY;
+        }
+        else if (cleared_capacity_percent > (1 - 1e-7)) {
+            forecast_type = dispatch_t::CAPACITY_ONLY;
+        }
+        else {
+            forecast_type = dispatch_t::PRICE_AND_CAPACITY;
+        }
+
 	}
 	else
 	{
@@ -1063,7 +1071,8 @@ bool forecast_price_signal::setup(size_t step_per_hour)
         m_forecast_price.reserve(nsteps* nyears);
         for (size_t i = 0; i < nsteps * nyears; i++)
             m_forecast_price.push_back(0.0);
-        forecast_type = PRICE_ONLY;
+        forecast_type = dispatch_t::PRICE_ONLY;
+        cleared_capacity_percent = 0.0;
         m_cleared_capacity.clear();
 
         std::vector<double> as_revenue;

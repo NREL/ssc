@@ -72,6 +72,9 @@ protected:
     std::vector<double> omCost = { 0.0 };
 
     double interconnection_limit = 1e+38;
+    std::vector<double> cleared_capacity;
+    dispatch_t::CAPACITY_FORECAST_TYPE capacity_forecast_type = dispatch_t::PRICE_ONLY;
+    double cleared_cap_percent = 0.0;
 public:
 
     void CreateBattery(double dtHour)

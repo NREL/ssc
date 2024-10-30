@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_utility_rate.h"
 
 #include <numeric>
+#include <limits>
 
 dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	battery_t * Battery,
@@ -71,7 +72,10 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	double etaPVCharge,
 	double etaGridCharge,
 	double etaDischarge,
-    double interconnection_limit) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
+    double interconnection_limit,
+    std::vector<double> cleared_capacities_kw,
+    dispatch_t::CAPACITY_FORECAST_TYPE cleared_capacity_type,
+    double cleared_cap_percent) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
 		t_min, dispatch_mode, weather_forecast_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours,
         can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge, can_curtail_charge,
         battReplacementCostPerkWh, battCycleCostChoice, battCycleCost, battOMCost, interconnection_limit)
@@ -82,6 +86,9 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 
 	_inverter_paco = inverter_paco;
 	_forecast_price_rt_series = forecast_price_series_dollar_per_kwh;
+    cleared_capacities = cleared_capacities_kw;
+    capacity_type = cleared_capacity_type;
+    cleared_capacity_percent = cleared_cap_percent;
 
 	// only create utility rate calculator if utility rate is defined
 	if (utilityRate) {
@@ -107,6 +114,9 @@ void dispatch_automatic_front_of_meter_t::init_with_pointer(const dispatch_autom
 	_forecast_hours = tmp->_forecast_hours;
 	_inverter_paco = tmp->_inverter_paco;
 	_forecast_price_rt_series = tmp->_forecast_price_rt_series;
+    cleared_capacities = tmp->cleared_capacities;
+    capacity_type = tmp->capacity_type;
+    cleared_capacity_percent = tmp->cleared_capacity_percent;
     ppa_prices = tmp->ppa_prices;
 
     discharge_hours = tmp->discharge_hours;
@@ -204,6 +214,11 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         auto charge_ppa_cost = ppa_prices[discharge_hours];
         auto discharge_ppa_cost = ppa_prices[ppa_prices.size() - discharge_hours - 1]; 
         double ppa_cost = _forecast_price_rt_series[lifetimeIndex];
+        double cleared_capacity = std::numeric_limits<double>::max();
+        if (capacity_type != PRICE_ONLY && cleared_capacities.size() > lifetimeIndex) {
+            // Divide by zero error covered by != PRICE_ONLY above (see common.cpp)
+            cleared_capacity = cleared_capacities[lifetimeIndex] / cleared_capacity_percent;
+        }
 
         /*! Cost to purchase electricity from the utility */
         double usage_cost = ppa_cost;
@@ -274,15 +289,25 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         /*! Energy need to charge the battery (kWh) */
         double energyNeededToFillBattery = _Battery->energy_to_fill(m_batteryPower->stateOfChargeMax);
 
+        double grid_capacity = std::fmin(m_batteryPower->powerInterconnectionLimit, m_batteryPower->powerCurtailmentLimit);
+
+        bool discharge_to_meet_cleared_capacity_w_price = false;
+        if (capacity_type == dispatch_t::PRICE_AND_CAPACITY) {
+            discharge_to_meet_cleared_capacity_w_price = (cleared_capacity - m_batteryPower->powerSystem - m_batteryPower->powerPVInverterDraw) > 0;
+        }
+
+        if (capacity_type == dispatch_t::CAPACITY_ONLY || discharge_to_meet_cleared_capacity_w_price) {
+            grid_capacity = std::fmin(cleared_capacity, grid_capacity);
+        }
         // Positive: spare power to discharge. Negative: system power will be curtailed. Negative number can be fed directly into powerBattery to support charging
-        double interconnectionCapacity = std::fmin(m_batteryPower->powerInterconnectionLimit, m_batteryPower->powerCurtailmentLimit) - m_batteryPower->powerSystem;
+        double interconnectionCapacity = grid_capacity - m_batteryPower->powerSystem - m_batteryPower->powerPVInverterDraw; // Add in PV inverter draw to support meeting cleared capacity for merchant plant
 
         /* Booleans to assist decisions */
         bool highDischargeValuePeriod = ppa_cost >= discharge_ppa_cost && ppa_cost >= charge_ppa_cost;
         bool highChargeValuePeriod = ppa_cost <= charge_ppa_cost && ppa_cost <= discharge_ppa_cost;
         bool excessAcCapacity = _inverter_paco > m_batteryPower->powerSystemThroughSharedInverter;
         bool batteryHasDischargeCapacity = _Battery->SOC() >= m_batteryPower->stateOfChargeMin + 1.0;
-        bool interconnectionHasCapacity = interconnectionCapacity > 0.0;
+        bool interconnectionHasCapacity = interconnectionCapacity > 0.0 || discharge_to_meet_cleared_capacity_w_price;
         bool canChargeFromCurtailedPower = interconnectionCapacity < 0.0 && m_batteryPower->canCurtailCharge;
 
         revenueToCurtailCharge = canChargeFromCurtailedPower ? *max_ppa_cost * m_etaDischarge - m_cycleCost - m_omCost : 0;
@@ -347,7 +372,9 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         }
 
         // Discharge if we are in a high-price period and have battery and inverter capacity
-        if (highDischargeValuePeriod && revenueToDischarge > 0 && excessAcCapacity && batteryHasDischargeCapacity && interconnectionHasCapacity) {
+        bool economic_discharge_period = highDischargeValuePeriod && revenueToDischarge > 0 && excessAcCapacity && batteryHasDischargeCapacity && interconnectionHasCapacity;
+        bool cleared_capacity_discharge_period = interconnectionHasCapacity && (capacity_type == dispatch_t::CAPACITY_ONLY || discharge_to_meet_cleared_capacity_w_price);
+        if (economic_discharge_period || cleared_capacity_discharge_period ) {
             double loss_kw = _Battery->calculate_loss(m_batteryPower->powerBatteryTarget, lifetimeIndex); // Battery is responsible for covering discharge losses
             if (m_batteryPower->connectionMode == BatteryPower::DC_CONNECTED) {
                 powerBattery = _inverter_paco + loss_kw - m_batteryPower->powerSystem;
@@ -355,7 +382,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
             else {
                 powerBattery = _inverter_paco; // AC connected battery is already maxed out by AC power limit, cannot increase dispatch to ccover losses
             }
-            powerBattery = std::fmin(powerBattery, interconnectionCapacity);
+            powerBattery = std::fmin(powerBattery, interconnectionCapacity / m_batteryPower->singlePointEfficiencyDCToAC);
         }
 		// save for extraction
 		m_batteryPower->powerBatteryTarget = powerBattery;
