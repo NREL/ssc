@@ -681,18 +681,18 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCAutoWithInterconnectionLimit)
     batteryPower->voltageSystem = 600;
     batteryPower->setSharedInverter(m_sharedInverter);
 
-    std::vector<double> targetkW = { 28396.7, -10052.4, 5515.3, -7205.42, -1854.59, 0., // 0 - 5
-                                        -84205.39, -62954.24, -37954.25, -12954.27, 0., 0., // 6 - 11
+    std::vector<double> targetkW = { 28396.7, -19294.27, 5515.3, -35296.51, -35570.30, -34754.11, // 0 - 5
+                                        -12969.9, -1797.387, -250.22, -35.16, 0., 0., // 6 - 11
                                         0., 0., 0., 0., 0., 50000, // 12 - 17
                                         50000, 50000, 50000, 50000, 50000, 0. }; // 18 - 23
-    std::vector<double> dispatchedkW = { 27100.68, -10052.4, 5515.3, -7205.42, -1854.59, 0., // 0 - 5
-                                        -28862.74, -29079.68, -29217.47, -12954.27, 0., 0., // 6 - 11
-                                        0., 0., 0., 0., 0., 28106.43, // 18
-                                        27931.56, 27637.25, 27037.66, 25146.14, 7713.26, 0. }; // 24
-    std::vector<double> SOC = { 33.33, 39.3, 35.97, 40.25, 41.36, 41.36, //  0 - 5
-                                58.03, 74.69, 91.36, 98.8, 98.8, 98.8, // 6 - 11
-                                98.8, 98.8, 98.8, 98.8, 98.8, 82.13, // 12 - 17
-                                65.47, 48.80, 32.13, 15.47, 10, 10 }; // 18 - 23
+    std::vector<double> dispatchedkW = { 27100.68, -19294.27, 5515.3, -28862.56, -29079.57, -29217.40, // 0 - 5
+                                        -12969.9, -1797.387, -250.22, -35.16, 0., 0., // 6 - 11
+                                        0., 0., 0., 0., 0., 28116.27, // 18
+                                        27947.03, 27664.92, 27100.53, 25407.36, 9381.21, 0. }; // 24
+    std::vector<double> SOC = { 33.33, 44.65, 41.35, 58.02, 74.68, 91.35, //  0 - 5
+                                98.8, 99.8, 99.97, 99.99, 99.99, 99.99, // 6 - 11
+                                99.99, 99.99, 99.99, 99.99, 99.99, 83.33, // 12 - 17
+                                66.66, 50.0, 33.33, 16.66, 10.0, 10.0 }; // 18 - 23
     for (size_t h = 0; h < 24; h++) {
         batteryPower->powerGeneratedBySystem = pv[h];
         batteryPower->powerSystem = pv[h];
@@ -713,7 +713,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_ACAutoWithInterconnectionLimit)
     CreateBattery(dtHour);
     interconnection_limit = 50000;
     dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHour, 10, 100, 1, 49960, 49960, max_power,
-        max_power, max_power, max_power, 1, dispatch_t::FOM_AUTOMATED_ECONOMIC, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, dispatch_t::FRONT, 1, 18, 1, true, true, false,
+        max_power, max_power, max_power, 1, dispatch_t::FOM_AUTOMATED_ECONOMIC, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, dispatch_t::FRONT, 1, 18, 1, true, false, false,
         false, false, 77000, replacementCost, 1, cyclingCost, omCost, ppaRate, ur, 98, 98, 98, interconnection_limit);
 
     // battery setup
@@ -726,18 +726,18 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_ACAutoWithInterconnectionLimit)
 
     // A few hours at the beginnging flip from discharge to charge since the PV will be curtailed
     // Note on hour 3: the price here is both the 2nd highest price and the 2nd lowest price. A non-zero replacement cost could prevent cycling here.
-    std::vector<double> targetkW = { 28396.7, -10052.4, 5515.3, -7205.42, -1854.5, 0., // 0 - 5
-                                    -84205.39, -62954.24, -37954.25, -12954.27, 0., 0., // 6 - 11
+    std::vector<double> targetkW = { 28396.7, -19294.27, 5515.3, -35296.51, -35570.30, -34754.11, // 0 - 5
+                                    -84205.39, -78854.6, -67702.19, -31516.09, 0., 0., // 6 - 11
                                     0., 0., 0., 0., 0., 50000, // 12 - 17
                                     50000, 50000, 50000, 50000, 50000, 0. }; // 18 - 23
-    std::vector<double> dispatchedkW = { 27100.68, -10052.4, 5515.3, -7205.42, -1854.5, 0., // 0 - 5
-                                -28862.74, -29079.68, -29217.47, -12954.27, 0., 0.,// 6 - 11
-                                0., 0., 0., 0., 0., 28106.43, // 12 - 17
-                                27931.56, 27637.25, 27037.66, 25146.14, 7713.26, 0. }; // 18 - 23
-    std::vector<double> SOC = { 33.3, 39.30, 35.97, 40.25, 41.36, 41.36, // 0 - 5
-                                58.03, 74.69, 91.36, 98.80, 98.80, 98.80, // 6 - 11
-                                98.80, 98.80, 98.80, 98.80, 98.80, 82.13, // 12 - 17
-                                65.47, 48.80, 32.13, 15.47, 10.0, 10.0 }; // 18 - 23
+    std::vector<double> dispatchedkW = { 27100.68, -19294.27, 5515.3, -28862.56, -29079.57, -29217.40, // 0 - 5
+                                -15235.74, 0.0, 0.0, 0.0, 0., 0.,// 6 - 11
+                                0., 0., 0., 0., 0., 28116.30, // 12 - 17
+                                27947.03, 27664.92, 27100.69, 25408.03, 9385.81, 0. }; // 18 - 23
+    std::vector<double> SOC = { 33.3, 44.65, 41.35, 58.02, 74.68, 91.35, // 0 - 5
+                                100.0, 100.0, 100.0, 100.0, 100.0, 100.0, // 6 - 11
+                                100.0, 100.0, 100.0, 100.0, 100.0, 83.33, // 12 - 17
+                                66.66, 50.0, 33.33, 16.66, 10.0, 10.0 }; // 18 - 23
     for (size_t h = 0; h < 24; h++) {
         batteryPower->powerGeneratedBySystem = pv[h];
         batteryPower->powerSystem = pv[h];

@@ -711,7 +711,7 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
 
     // Iterate over sorted grid to prioritize curtail charging
     i = 0;
-    if (m_batteryPower->canCurtailCharge) {
+    if (m_batteryPower->canCurtailCharge || m_batteryPower->canSystemCharge) {
         while (i < _num_steps) {
             // Don't plan to charge if we were already planning to discharge. 0 is no plan, negative is clipped energy
             index = sorted_grid[i].Hour() * _steps_per_hour + sorted_grid[i].Step();

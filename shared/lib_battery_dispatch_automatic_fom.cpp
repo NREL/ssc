@@ -283,7 +283,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         bool excessAcCapacity = _inverter_paco > m_batteryPower->powerSystemThroughSharedInverter;
         bool batteryHasDischargeCapacity = _Battery->SOC() >= m_batteryPower->stateOfChargeMin + 1.0;
         bool interconnectionHasCapacity = interconnectionCapacity > 0.0;
-        bool canChargeFromCurtailedPower = interconnectionCapacity < 0.0 && m_batteryPower->canCurtailCharge;
+        bool canChargeFromCurtailedPower = interconnectionCapacity < 0.0 && (m_batteryPower->canCurtailCharge || m_batteryPower->canSystemCharge);
 
         revenueToCurtailCharge = canChargeFromCurtailedPower ? *max_ppa_cost * m_etaDischarge - m_cycleCost - m_omCost : 0;
 
