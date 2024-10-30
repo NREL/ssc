@@ -533,7 +533,8 @@ static var_info _cm_vtab_singleowner_heat[] = {
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_purchases",                    "Thermal energy from grid",                 "kWht", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_without_battery",              "Thermal energy generated without storage", "kWht", "", "Cash Flow Electricity", "",  "LENGTH_EQUAL=cf_length", "" },
 
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_ppa_price",                           "PPA price",                     "cents/kWh",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_ppa_price",                           "PPA price",                     "cents/kWht",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_ppa_price_heat_btu",                           "PPA price",                     "cents/MMBtu",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_value",                        "PPA revenue",                     "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_thermal_value",                       "Thermal revenue",                     "$",      "",                      "Cash Flow Revenues",             "*",                      "LENGTH_EQUAL=cf_length",                             "" },
 
@@ -686,7 +687,8 @@ enum {
 	CF_thermal_value,
 //	CF_curtailment_value,
 //	CF_capacity_payment,
-	CF_ppa_price,
+    CF_ppa_price,
+    CF_ppa_price_heat_btu,
 
 	CF_om_fixed_expense,
 	CF_om_production_expense,
@@ -3457,7 +3459,11 @@ public:
 //		save_cf(CF_curtailment_value, nyears, "cf_curtailment_value");
 //		save_cf(CF_capacity_payment, nyears, "cf_capacity_payment");
 //		save_cf(CF_energy_curtailed, nyears, "cf_energy_curtailed");
-		save_cf( CF_ppa_price, nyears, "cf_ppa_price" );
+        const double MMBTU_TO_KWh = 293.07107; // 1
+        save_cf(CF_ppa_price, nyears, "cf_ppa_price");
+        for (size_t i = 0; i < nyears; i++)
+            cf.at(CF_ppa_price_heat_btu, i) = cf.at(CF_ppa_price, i) * MMBTU_TO_KWh;
+    	save_cf( CF_ppa_price_heat_btu, nyears, "cf_ppa_price_heat_btu" );
 		save_cf( CF_om_fixed_expense, nyears, "cf_om_fixed_expense" );
 		save_cf( CF_om_production_expense, nyears, "cf_om_production_expense" );
 		save_cf( CF_om_capacity_expense, nyears, "cf_om_capacity_expense" );
