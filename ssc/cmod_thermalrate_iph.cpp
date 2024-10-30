@@ -57,13 +57,15 @@ static var_info vtab_thermal_rate_iph[] = {
 	{ SSC_INPUT, SSC_ARRAY, "thermal_load_escalation", "Annual load escalation", "%/year", "", "Thermal Rate", "?=0", "", "" },
 	{ SSC_INPUT, SSC_ARRAY, "thermal_rate_escalation",          "Annual thermal rate escalation",  "%/year", "",                      "Thermal Rate",             "?=0",                       "",                              "" },
 
-	{ SSC_INPUT, SSC_NUMBER, "thermal_buy_rate_option", "Thermal buy rate option", "0/1", "0=flat,1=timestep", "Thermal Rate", "?=0", "INTEGER,MIN=0,MAX=1", "" },
-	{ SSC_INPUT, SSC_ARRAY,  "thermal_buy_rate_heat_btu",          "Thermal buy rate",  "$/(MMBtu/hr)", "",                      "Thermal Rate",             "?=0",                       "",                              "" },
-	{ SSC_INPUT, SSC_NUMBER, "thermal_buy_rate_flat_heat_btu",     "Thermal buy rate flat",  "$/(MMBtu/hr)", "",                      "Thermal Rate",             "?=0",                       "",                              "" },
+	{ SSC_INPUT, SSC_NUMBER, "thermal_buy_rate_option",             "Thermal buy rate option",   "0-2",          "0=flat,1=timestep,2=monthly", "Thermal Rate",       "?=0",                       "INTEGER,MIN=0,MAX=2",           "" },
+    { SSC_INPUT, SSC_NUMBER, "thermal_buy_rate_flat_heat_btu",      "Thermal buy rate flat",     "$/(MMBtu/hr)", "",                      "Thermal Rate",             "?=0",                       "",                              "" },
+    { SSC_INPUT, SSC_ARRAY,  "thermal_timestep_buy_rate_heat_btu",  "Thermal buy rate",          "$/(MMBtu/hr)", "",                      "Thermal Rate",             "?=0",                       "",                              "" },
+    { SSC_INPUT, SSC_ARRAY,  "thermal_monthly_buy_rate_heat_btu",   "Monthly thermal buy rate",  "$/(MMBtu/hr)", "",                      "Thermal Rate",             "?=0",                       "",                              "" },
 
-	{ SSC_INPUT, SSC_NUMBER, "thermal_sell_rate_option", "Thermal sell rate option", "0/1", "0=flat,1=timestep", "Thermal Rate", "?=0", "INTEGER,MIN=0,MAX=1", "" },
-	{ SSC_INPUT, SSC_ARRAY,  "thermal_sell_rate_heat_btu",          "Thermal sell rate",  "$/(MMBtu/hr)", "",                      "Thermal Rate",             "?=0",                       "",                              "" },
-	{ SSC_INPUT, SSC_NUMBER, "thermal_sell_rate_flat_heat_btu",     "Thermal sell rate flat",  "$/(MMBtu/hr)", "",                      "Thermal Rate",             "?=0",                       "",                              "" },
+    { SSC_INPUT, SSC_NUMBER, "thermal_sell_rate_option",            "Thermal sell rate option",  "0/1", "0=flat,1=timestep",              "Thermal Rate",             "?=0",                       "INTEGER,MIN=0,MAX=2",           "" },
+	{ SSC_INPUT, SSC_NUMBER, "thermal_sell_rate_flat_heat_btu",     "Thermal sell rate flat",    "$/(MMBtu/hr)", "",                      "Thermal Rate",             "?=0",                       "",                              "" },
+    { SSC_INPUT, SSC_ARRAY,  "thermal_timestep_sell_rate_heat_btu", "Thermal sell rate timestep","$/(MMBtu/hr)", "",                      "Thermal Rate",             "?=0",                       "",                              "" },
+    { SSC_INPUT, SSC_ARRAY,  "thermal_monthly_sell_rate_heat_btu",  "Thermal sell rate monthly", "$/(MMBtu/hr)", "",                      "Thermal Rate",             "?=0",                       "",                              "" },
 
 
 	{ SSC_OUTPUT, SSC_ARRAY, "annual_thermal_value", "Thermal value", "$", "", "Annual", "*", "", "" },
@@ -246,11 +248,12 @@ public:
 
 		size_t idx = 0;
 
+        // Timestep Buy Rate
 		if (as_integer("thermal_buy_rate_option") == 1)
 		{
 			size_t nbuyrate,step_per_hour_br;
 			ssc_number_t br;
-			pbuyrate = as_array("thermal_buy_rate_heat_btu", &nbuyrate);
+			pbuyrate = as_array("thermal_timestep_buy_rate_heat_btu", &nbuyrate);
 			step_per_hour_br = nbuyrate / 8760;
 			if (step_per_hour_br < 1 || step_per_hour_br > 60 || step_per_hour_br * 8760 != nbuyrate)
 				throw exec_error("thermalrate", util::format("invalid number of buy rate records (%d): must be an integer multiple of 8760", (int)nbuyrate));
@@ -270,6 +273,26 @@ public:
 				}
 			}
 		}
+        // Monthly Buy Rate
+        else if (as_integer("thermal_buy_rate_option") == 2)
+        {
+            std::vector<double> br_monthly = as_vector_double("thermal_monthly_buy_rate_heat_btu");
+            if (br_monthly.size() != 12)
+            {
+                throw exec_error("thermalrate", util::format("invalid number of monthly buy rate records (%d): must be equal to 12", (int)br_monthly.size()));
+            }
+            // Assign buy rate for every hour in each month
+            int hr_count = 0;
+            for (int month = 1; month <= 12; month++)
+            {
+                int hr_in_current_month = util::hours_in_month(month);
+                for (int hr_in_mnth = 0; hr_in_mnth < hr_in_current_month; hr_in_mnth++)
+                {
+                    p_buyrate[hr_count] = br_monthly[month - 1];
+                    hr_count++;
+                }
+            }
+        }
 		else // flat rate
 		{
 			ssc_number_t br = as_number("thermal_buy_rate_flat_heat_btu");
@@ -277,11 +300,12 @@ public:
 				p_buyrate[i] = br;
 		}
 
+        // Time step input
 		if (as_integer("thermal_sell_rate_option") == 1)
 		{
 			size_t nsellrate, step_per_hour_br;
 			ssc_number_t br;
-			psellrate = as_array("thermal_sell_rate_heat_btu", &nsellrate);
+			psellrate = as_array("thermal_timestep_sell_rate_heat_btu", &nsellrate);
 			step_per_hour_br = nsellrate / 8760;
 			if (step_per_hour_br < 1 || step_per_hour_br > 60 || step_per_hour_br * 8760 != nsellrate)
 				throw exec_error("thermalrate", util::format("invalid number of sell rate records (%d): must be an integer multiple of 8760", (int)nsellrate));
@@ -301,6 +325,26 @@ public:
 				}
 			}
 		}
+        // Monthly input
+        else if (as_integer("thermal_sell_rate_option") == 2)
+        {
+            std::vector<double> sr_monthly = as_vector_double("thermal_monthly_sell_rate_heat_btu");
+            if (sr_monthly.size() != 12)
+            {
+                throw exec_error("thermalrate", util::format("invalid number of monthly sell rate records (%d): must be equal to 12", (int)sr_monthly.size()));
+            }
+            // Assign sell rate for every hour in each month
+            int hr_count = 0;
+            for (int month = 1; month <= 12; month++)
+            {
+                int hr_in_current_month = util::hours_in_month(month);
+                for (int hr_in_mnth = 0; hr_in_mnth < hr_in_current_month; hr_in_mnth++)
+                {
+                    p_sellrate[hr_count] = sr_monthly[month - 1];
+                    hr_count++;
+                }
+            }
+        }
 		else // flat rate
 		{
 			ssc_number_t br = as_number("thermal_sell_rate_flat_heat_btu");
