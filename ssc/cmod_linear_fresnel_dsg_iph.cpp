@@ -127,7 +127,10 @@ static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
 
 		// Heat Sink
     { SSC_INPUT,        SSC_NUMBER,      "heat_sink_dP_frac", "Fractional pressure drop through heat sink",									         "",              "",            "heat_sink",      "*",                       "",                      "" },
-	
+
+    // Prices for heat purchases
+    { SSC_INPUT,        SSC_ARRAY,       "ppa_price_input_heat_btu",  "PPA prices - yearly",			                                             "$/MMBtu",	  "",	             "Revenue",		   "",                        "",      	               "" },
+
 
     // *************************************************************************************************
 	//       OUTPUTS
@@ -180,6 +183,9 @@ static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
 																									             
 		// SYSTEM																					             
     { SSC_OUTPUT,   SSC_ARRAY,   "W_dot_parasitic_tot", "System total electrical parasitic", "MWe",              "",       "Controller",     "*",        "",     "" },
+    { SSC_OUTPUT,   SSC_ARRAY,   "gen_heat",      "Total thermal power to grid w/ avail. derate",      "kWt",    "",       "system",         "*",        "",     "" },
+    { SSC_OUTPUT,   SSC_ARRAY,   "gen",           "Total electric power to grid w/ avail. derate",     "kWe",    "",       "system",         "*",        "",     "" },
+
 
 		// Controller
 	{ SSC_OUTPUT,   SSC_ARRAY,   "op_mode_1",            "1st operating mode",               "",                 "",       "Controller",     "*",        "",     "" },
@@ -195,6 +201,9 @@ static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
 	{ SSC_OUTPUT,   SSC_NUMBER,  "capacity_factor",					"Capacity factor",											"%",        "",   "Post-process",     "*",       "",   "" },
 	{ SSC_OUTPUT,   SSC_NUMBER,  "kwh_per_kw",						"First year kWh/kW",										"kWht/kWt", "",   "Post-process",     "*",       "",   "" },
 
+        // Financing
+    { SSC_OUTPUT,   SSC_ARRAY,   "ppa_price_input",			        "PPA prices - yearly",			                            "$/kWh",	"",	  "Revenue",		  "","",      	   "" },
+
 
 	var_info_invalid };
 
@@ -206,11 +215,30 @@ public:
 	{
 		add_var_info(_cm_vtab_linear_fresnel_dsg_iph);
 		add_var_info(vtab_adjustment_factors);
-		add_var_info(vtab_technology_outputs);
+		//add_var_info(vtab_technology_outputs);
 	}
 
 	void exec( )
 	{
+        // Convert IPH Input Units
+        {
+            const double MMBTU_TO_KWh = 293.07107;
+            if (is_assigned("ppa_price_input_heat_btu"))
+            {
+                size_t count_ppa_price_MMBTU_input;
+                ssc_number_t* ppa_price_MMBTU_input_array = as_array("ppa_price_input_heat_btu", &count_ppa_price_MMBTU_input);
+                std::vector<ssc_number_t> ppa_price_input_vec;
+                for (int i = 0; i < count_ppa_price_MMBTU_input; i++)
+                {
+                    ppa_price_input_vec.push_back(ppa_price_MMBTU_input_array[i] / MMBTU_TO_KWh);
+                }
+                int size = ppa_price_input_vec.size();
+                ssc_number_t* alloc_vals = allocate("ppa_price_input", size);
+                for (int i = 0; i < size; i++)
+                    alloc_vals[i] = ppa_price_input_vec[i];    // []
+            }
+        }
+
 		// Weather reader
 		C_csp_weatherreader weather_reader;
         if (is_assigned("file_name")) {
@@ -586,15 +614,20 @@ public:
 		if( !haf.setup(n_steps_fixed) )
 			throw exec_error("linear_fresnel_dsg_iph", "failed to setup adjustment factors: " + haf.error());
 
-		ssc_number_t *p_gen = allocate("gen", n_steps_fixed);
+		ssc_number_t *p_gen_heat = allocate("gen_heat", n_steps_fixed);
+        ssc_number_t *p_gen = allocate("gen", n_steps_fixed);
 		ssc_number_t *p_W_dot_par_tot_haf = allocate("W_dot_par_tot_haf", n_steps_fixed);
 		ssc_number_t *p_W_dot_parasitic_tot = as_array("W_dot_parasitic_tot", &count);
+        ssc_number_t* p_load = allocate("load", n_steps_fixed); // testing using cmod_utilityrate5 for electricity rates p_load = p_W_dot_par_tot_haf
+
 		for( size_t i = 0; i < n_steps_fixed; i++ )
 		{
 			size_t hour = (size_t)ceil(p_time_final_hr[i]);
-			p_gen[i] = p_q_dot_heat_sink[i] * (ssc_number_t)(haf(hour) * 1.E3);		//[kWt]
+			p_gen_heat[i] = p_q_dot_heat_sink[i] * (ssc_number_t)(haf(hour) * 1.E3);		//[kWt]
+            p_gen[i] = (ssc_number_t)0.0;   //[kWt] (no electrical generation for direct steam linear fresnel IPH)
 			p_W_dot_parasitic_tot[i] *= -1.0;			//[kWe] Label is total parasitics, so change to a positive value
 			p_W_dot_par_tot_haf[i] = (ssc_number_t)(p_W_dot_parasitic_tot[i] * haf(hour) * 1.E3);		//[kWe]
+            p_load[i] = p_W_dot_par_tot_haf[i];
 		}
 
         ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
