@@ -94,16 +94,18 @@ private:
     combined_outputs m_combined_outputs;
 
     // Receiver and field results from the most recent estimates call
-    bool m_fix_mode_from_estimates;     // Require receiver state to match that from estimates call, even if receiver can't achieve target exit temperature?
+    bool m_allow_separate_modes;        // Allow individual receivers to have separate operating modes (e.g. one can be operating while others are off)
+    bool m_fix_mode_from_estimates;     // Require receiver state to match that from estimates call during defocus, even if receiver can't achieve target exit temperature?
     bool m_fixed_mode_mflow_method;     // Method for setting mass flow when m_is_mode_fixed_to_input_mode = True.   0 = fix mass flow rate, 1 = solve for mass flow rate at maximum exit temperature
     std::vector<double> m_qthermal_from_estimates;   // Receiver Qthermal from estimates call (MWt)
     std::vector<double> m_mdot_from_estimates;       // Receiver mass flow from estimates call (kg/s)
     std::vector<bool> m_is_on_from_estimates;        // Is receiver on after estimates call?
+    std::vector<bool> m_is_startup_from_estimates;   
     int m_n_on_from_estimates;                      // Number of receiver on after estimates call
     std::vector<double> m_approx_min_focus;         
     std::vector<double> m_approx_min_focus_at_T;    
 
-    std::vector<double> split_focus(double avg_focus, std::vector<bool>& is_rec_on);
+    std::vector<double> split_focus(double avg_focus, std::vector<bool>& is_rec_on, std::vector<bool>& is_rec_startup);
 
     void update_limits(std::vector<double>& focus_fractions, std::vector<bool>& is_on, std::vector<bool>& is_at_T, double bound_tol,
         std::vector<double>& focus_min_sim_on, std::vector<double>& focus_max_sim_off,
@@ -167,6 +169,10 @@ public:
         E_Q_DOT_THERMAL_2,		    //[MWt] Receiver 2 thermal power to HTF less piping loss
         E_Q_DOT_THERMAL_3,		    //[MWt] Receiver 3 thermal power to HTF less piping loss
         E_Q_DOT_THERMAL_4,		    //[MWt] Receiver 4 thermal power to HTF less piping loss
+        E_Q_DOT_STARTUP_1,		    //[MWt] Receiver 1 startup thermal power
+        E_Q_DOT_STARTUP_2,		    //[MWt] Receiver 2 startup thermal power
+        E_Q_DOT_STARTUP_3,		    //[MWt] Receiver 3 startup thermal power
+        E_Q_DOT_STARTUP_4,		    //[MWt] Receiver 4 startup thermal power
         E_ETA_THERMAL_1,		    //[MWt] Receiver 1 thermal efficiency
         E_ETA_THERMAL_2,		    //[MWt] Receiver 2 thermal efficiency
         E_ETA_THERMAL_3,		    //[MWt] Receiver 3 thermal efficiency
@@ -179,7 +185,7 @@ public:
 	
 	C_csp_reported_outputs mc_reported_outputs;
 	
-    C_csp_falling_particle_collector_receiver(std::vector<C_pt_sf_perf_interp*> pt_heliostatfields, std::vector<std::shared_ptr<C_pt_receiver>> pt_receivers);
+    C_csp_falling_particle_collector_receiver(std::vector<C_pt_sf_perf_interp*> pt_heliostatfields, std::vector<std::shared_ptr<C_pt_receiver>> pt_receivers, bool is_sep_states);
 
 	~C_csp_falling_particle_collector_receiver();
 
@@ -236,7 +242,7 @@ public:
 		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
 		//C_csp_collector_receiver::S_csp_cr_out_report &cr_out_report,
 		const C_csp_solver_sim_info &sim_info,
-        bool is_fixed_states);
+        bool is_fixed_states, bool is_for_estimates);
 
 };
 
