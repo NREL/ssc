@@ -92,6 +92,7 @@ public:
 
         int numberOfInverters = 40;
         m_sharedInverter = new SharedInverter(SharedInverter::SANDIA_INVERTER, numberOfInverters, sandia, partload, ond);
+        cleared_capacity.clear();
     }
     void CreateBatteryWithLosses(double dtHour)
     {
@@ -112,6 +113,7 @@ public:
 
         int numberOfInverters = 40;
         m_sharedInverter = new SharedInverter(SharedInverter::SANDIA_INVERTER, numberOfInverters, sandia, partload, ond);
+        cleared_capacity.clear();
     }
     void TearDown()
     {
