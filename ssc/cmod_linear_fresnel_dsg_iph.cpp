@@ -202,7 +202,12 @@ static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
 	{ SSC_OUTPUT,   SSC_NUMBER,  "kwh_per_kw",						"First year kWh/kW",										"kWht/kWt", "",   "Post-process",     "*",       "",   "" },
 
         // Financing
-    { SSC_OUTPUT,   SSC_ARRAY,   "ppa_price_input",			        "PPA prices - yearly",			                            "$/kWh",	"",	  "Revenue",		  "","",      	   "" },
+    { SSC_OUTPUT,   SSC_ARRAY,   "ppa_price_input",			        "PPA prices - yearly",			                            "$/kWh",	"",	  "Revenue",		  "",        "",   "" },
+
+    // System capacity required by downstream financial model
+    { SSC_OUTPUT,   SSC_NUMBER,  "nameplate",                       "Nameplate capacity",                                       "MWt",      "",   "System Design",    "*",       "",   "" },
+    { SSC_OUTPUT,   SSC_NUMBER,  "system_capacity",                 "System capacity",                                          "kWt",      "",   "System Design",    "*",       "",   "" },
+    { SSC_OUTPUT,   SSC_NUMBER,  "cp_system_nameplate",             "System capacity for capacity payments",                    "MWt",      "",   "System Design",    "*",       "",   "" },
 
 
 	var_info_invalid };
@@ -651,6 +656,10 @@ public:
 		double kWh_per_kW = ae / nameplate;
 		assign("capacity_factor", (ssc_number_t)(kWh_per_kW / 8760. * 100.));
 		assign("kwh_per_kw", (ssc_number_t)kWh_per_kW);
+
+        assign("nameplate", nameplate * 1.e-3);             //[MWt]
+        assign("system_capacity", nameplate);               //[kWt]
+        assign("cp_system_nameplate", nameplate * 1.e-3);   //[MWt]
 	}
 
 };
