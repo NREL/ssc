@@ -89,6 +89,9 @@ struct batt_variables
 	/*! Determines if the battery is allowed to charge from PV clipping using automated control*/
 	bool batt_dispatch_auto_can_clipcharge;
 
+    /*! Determines if the battery is allowed to charge from curtailed energy using automated control*/
+    bool batt_dispatch_auto_can_curtailcharge;
+
 	/*! Determines if the battery is allowed to charge from fuel cell using automated control*/
 	bool batt_dispatch_auto_can_fuelcellcharge;
 

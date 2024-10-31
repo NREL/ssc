@@ -38,7 +38,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOMInput) {
     double dtHourFOM = 1.0;
     CreateBattery(dtHourFOM);
     dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHourFOM, 15, 95, 1, 999, 999, max_power, max_power,
-                                                           max_power, max_power, 1, dispatch_t::FOM_CUSTOM_DISPATCH, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, dispatch_t::FRONT, 1, 24, 1, true, true, false, true, 0,
+                                                           max_power, max_power, 1, dispatch_t::FOM_CUSTOM_DISPATCH, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, dispatch_t::FRONT, 1, 24, 1, true, true, false, true, false, 0,
                                                           replacementCost, 0, cyclingCost, omCost, ppaRate, ur, 98, 98, 98, interconnection_limit);
 
     std::vector<double> P_batt = {-336.062, 336.062};
@@ -74,7 +74,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOMInputWithLosses) {
     double dtHourFOM = 1.0;
     CreateBatteryWithLosses(dtHourFOM);
     dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHourFOM, 15, 95, 1, 999, 999, max_power, max_power,
-        max_power, max_power, 1, dispatch_t::FOM_CUSTOM_DISPATCH, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, dispatch_t::FRONT, 1, 24, 1, true, true, false, true, 0,
+        max_power, max_power, 1, dispatch_t::FOM_CUSTOM_DISPATCH, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, dispatch_t::FRONT, 1, 24, 1, true, true, false, true, false, 0,
         replacementCost, 0, cyclingCost, omCost, ppaRate, ur, 98, 98, 98, interconnection_limit);
 
     std::vector<double> P_batt = { -336.062, 336.062 };
@@ -112,7 +112,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOMInputSubhourly) {
     double dtHourFOM = 0.5;
     CreateBattery(dtHourFOM);
     dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHourFOM, 15, 95, 1, 999, 999, max_power, max_power,
-                                                           max_power, max_power, 1, dispatch_t::FOM_CUSTOM_DISPATCH, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, dispatch_t::FRONT, 1, 24, 1, true, true, false, true, 0,
+                                                           max_power, max_power, 1, dispatch_t::FOM_CUSTOM_DISPATCH, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, dispatch_t::FRONT, 1, 24, 1, true, true, false, true, false, 0,
                                                             replacementCost, 0, cyclingCost, omCost, ppaRate, ur, 98, 98, 98, interconnection_limit);
 
     std::vector<double> P_batt = {-336.062, 336.062};
@@ -149,7 +149,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCCustomCharge) {
     CreateBattery(dtHour);
     dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHour, 10, 100, 1, 49960, 49960, max_power,
                                                            max_power, max_power, max_power, 1, dispatch_t::FOM_CUSTOM_DISPATCH, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, dispatch_t::FRONT, 1, 18, 1, true,
-                                                           true, true, false, 77000, replacementCost, 1, cyclingCost, omCost, ppaRate, ur, 98, 98,
+                                                           true, true, false, false, 77000, replacementCost, 1, cyclingCost, omCost, ppaRate, ur, 98, 98,
                                                            98, interconnection_limit);
 
     std::vector<double> P_batt(6, -25000);
@@ -201,7 +201,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCCustomChargeSubhourly) {
     CreateBattery(dtHour);
     dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHour, 10, 100, 1, 49960, 49960, max_power,
                                                            max_power, max_power, max_power, 1, dispatch_t::FOM_CUSTOM_DISPATCH, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, dispatch_t::FRONT, 1, 18, 1, true,
-                                                           true, true, false, 77000, replacementCost, 1, cyclingCost, omCost, ppaRate, ur, 98, 98,
+                                                           true, true, false, false, 77000, replacementCost, 1, cyclingCost, omCost, ppaRate, ur, 98, 98,
                                                            98, interconnection_limit);
 
     std::vector<double> P_batt(12, -25000);
@@ -256,7 +256,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCAuto) {
     CreateBattery(dtHour);
     dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHour, 10, 100, 1, 49960, 49960, max_power,
                                                            max_power, max_power, max_power, 1, dispatch_t::FOM_AUTOMATED_ECONOMIC, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, dispatch_t::FRONT, 1, 18, 1, true, true, false,
-                                                           false, 77000, replacementCost, 1, cyclingCost, omCost, ppaRate, ur, 98, 98, 98, interconnection_limit);
+                                                           false, false, 77000, replacementCost, 1, cyclingCost, omCost, ppaRate, ur, 98, 98, 98, interconnection_limit);
 
     // battery setup
     dispatchAuto->update_pv_data(pv);
@@ -298,7 +298,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCAutoWithLosses) {
     CreateBatteryWithLosses(dtHour);
     dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHour, 10, 100, 1, 49960, 49960, max_power,
         max_power, max_power, max_power, 1, dispatch_t::FOM_AUTOMATED_ECONOMIC, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, dispatch_t::FRONT, 1, 18, 1, true, true, false,
-        false, 77000, replacementCost, 1, cyclingCost, omCost, ppaRate, ur, 98, 98, 98, interconnection_limit);
+        false, false, 77000, replacementCost, 1, cyclingCost, omCost, ppaRate, ur, 98, 98, 98, interconnection_limit);
 
     // battery setup
     dispatchAuto->update_pv_data(pv);
@@ -339,7 +339,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCAutoSubhourly) {
     CreateBattery(dtHour);
     dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHour, 10, 100, 1, 49960, 49960, max_power,
                                                            max_power, max_power, max_power, 1, dispatch_t::FOM_AUTOMATED_ECONOMIC, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, dispatch_t::FRONT, 1, 18, 1, true, true, false,
-                                                           false, 77000, replacementCost, 1, cyclingCost, omCost, ppaRate, ur, 98, 98, 98, interconnection_limit);
+                                                           false, false, 77000, replacementCost, 1, cyclingCost, omCost, ppaRate, ur, 98, 98, 98, interconnection_limit);
 
     // battery setup
     dispatchAuto->update_pv_data(pv);
@@ -375,7 +375,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_ACCustomCharge) {
     CreateBattery(dtHour);
     dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHour, 10, 100, 1, 49960, 49960, max_power,
                                                            max_power, max_power, max_power, 1, dispatch_t::FOM_CUSTOM_DISPATCH, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, dispatch_t::FRONT, 1, 18, 1, true,
-                                                             true, true, false, 77000, replacementCost, 1, cyclingCost, omCost, ppaRate, ur, 98, 98,
+                                                             true, true, false, false, 77000, replacementCost, 1, cyclingCost, omCost, ppaRate, ur, 98, 98,
                                                              98, interconnection_limit);
 
     std::vector<double> P_batt(6, -25000);
@@ -426,7 +426,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_ACCustomChargeSubhourly) {
     CreateBattery(dtHour);
     dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHour, 10, 100, 1, 49960, 49960, max_power,
                                                            max_power, max_power, max_power, 1, dispatch_t::FOM_CUSTOM_DISPATCH, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, dispatch_t::FRONT, 1, 18, 1, true,
-                                                           true, true, false, 77000, replacementCost, 1, cyclingCost, omCost, ppaRate, ur, 98, 98,
+                                                           true, true, false, false, 77000, replacementCost, 1, cyclingCost, omCost, ppaRate, ur, 98, 98,
                                                            98, interconnection_limit);
 
     std::vector<double> P_batt(12, -25000);
@@ -480,7 +480,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_ACAuto) {
     CreateBattery(dtHour);
     dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHour, 10, 100, 1, 49960, 49960, max_power,
                                                            max_power, max_power, max_power, 1, dispatch_t::FOM_AUTOMATED_ECONOMIC, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, dispatch_t::FRONT, 1, 18, 1, true, true, false,
-                                                           false, 77000, replacementCost, 1, cyclingCost, omCost, ppaRate, ur, 98, 98, 98, interconnection_limit);
+                                                           false, false, 77000, replacementCost, 1, cyclingCost, omCost, ppaRate, ur, 98, 98, 98, interconnection_limit);
 
     // battery setup
     dispatchAuto->update_pv_data(pv); // PV Resource is available for the 1st 10 hrs
@@ -523,7 +523,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_ACAutoWithLosses) {
     CreateBatteryWithLosses(dtHour);
     dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHour, 10, 100, 1, 49960, 49960, max_power,
         max_power, max_power, max_power, 1, dispatch_t::FOM_AUTOMATED_ECONOMIC, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, dispatch_t::FRONT, 1, 18, 1, true, true, false,
-        false, 77000, replacementCost, 1, cyclingCost, omCost, ppaRate, ur, 98, 98, 98, interconnection_limit);
+        false, false, 77000, replacementCost, 1, cyclingCost, omCost, ppaRate, ur, 98, 98, 98, interconnection_limit);
 
     // battery setup
     dispatchAuto->update_pv_data(pv); // PV Resource is available for the 1st 10 hrs
@@ -566,7 +566,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_ACAutoSubhourly) {
     CreateBattery(dtHour);
     dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHour, 10, 100, 1, 49960, 49960, max_power,
                                                            max_power, max_power, max_power, 1, dispatch_t::FOM_AUTOMATED_ECONOMIC, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, dispatch_t::FRONT, 1, 18, 1, true, true, false,
-                                                           false, 77000, replacementCost, 1, cyclingCost, omCost, ppaRate, ur, 98, 98, 98, interconnection_limit);
+                                                           false, false, 77000, replacementCost, 1, cyclingCost, omCost, ppaRate, ur, 98, 98, 98, interconnection_limit);
 
     // battery setup
     dispatchAuto->update_pv_data(pv);
@@ -624,7 +624,7 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCAuto_ClipChargeFlatRate) {
 
     dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHour, 10, 100, 1, 49960, 49960, max_power,
         max_power, max_power, max_power, 1, dispatch_t::FOM_AUTOMATED_ECONOMIC, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, dispatch_t::FRONT, 1, 18, 1, true, true, false,
-        false, 77000, replacementCost, 1, cyclingCost, omCost, ppaRate, ur, 98, 98, 98, interconnection_limit);
+        false, false, 77000, replacementCost, 1, cyclingCost, omCost, ppaRate, ur, 98, 98, 98, interconnection_limit);
 
     // battery setup
     dispatchAuto->update_pv_data(pv);
@@ -662,5 +662,93 @@ TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCAuto_ClipChargeFlatRate) {
         EXPECT_NEAR(batteryPower->powerBatteryDC, dispatchedkW[h], 0.1) << "error in dispatched power at hour " << h;
         EXPECT_NEAR(dispatchAuto->battery_soc(), SOC[h], 0.1) << "error in SOC at hour " << h;
 
+    }
+}
+
+TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_DCAutoWithInterconnectionLimit) {
+    double dtHour = 1;
+    CreateBattery(dtHour);
+    interconnection_limit = 50000;
+    dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHour, 10, 100, 1, 49960, 49960, max_power,
+        max_power, max_power, max_power, 1, dispatch_t::FOM_AUTOMATED_ECONOMIC, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, dispatch_t::FRONT, 1, 18, 1, true, true, false,
+        false, false, 77000, replacementCost, 1, cyclingCost, omCost, ppaRate, ur, 98, 98, 98, interconnection_limit);
+
+    // battery setup
+    dispatchAuto->update_pv_data(pv);
+    dispatchAuto->update_cliploss_data(clip);
+    batteryPower = dispatchAuto->getBatteryPower();
+    batteryPower->connectionMode = ChargeController::DC_CONNECTED;
+    batteryPower->voltageSystem = 600;
+    batteryPower->setSharedInverter(m_sharedInverter);
+
+    std::vector<double> targetkW = { 28396.7, -19294.27, 5515.3, -35296.51, -35570.30, -34754.11, // 0 - 5
+                                        -12969.9, -1797.387, -250.22, -35.16, 0., 0., // 6 - 11
+                                        0., 0., 0., 0., 0., 50000, // 12 - 17
+                                        50000, 50000, 50000, 50000, 50000, 0. }; // 18 - 23
+    std::vector<double> dispatchedkW = { 27100.68, -19294.27, 5515.3, -28862.56, -29079.57, -29217.40, // 0 - 5
+                                        -12969.9, -1797.387, -250.22, -35.16, 0., 0., // 6 - 11
+                                        0., 0., 0., 0., 0., 28116.27, // 18
+                                        27947.03, 27664.92, 27100.53, 25407.36, 9381.21, 0. }; // 24
+    std::vector<double> SOC = { 33.33, 44.65, 41.35, 58.02, 74.68, 91.35, //  0 - 5
+                                98.8, 99.8, 99.97, 99.99, 99.99, 99.99, // 6 - 11
+                                99.99, 99.99, 99.99, 99.99, 99.99, 83.33, // 12 - 17
+                                66.66, 50.0, 33.33, 16.66, 10.0, 10.0 }; // 18 - 23
+    for (size_t h = 0; h < 24; h++) {
+        batteryPower->powerGeneratedBySystem = pv[h];
+        batteryPower->powerSystem = pv[h];
+        batteryPower->powerSystemClipped = clip[h];
+
+        dispatchAuto->update_dispatch(0, h, 0, h);
+        EXPECT_NEAR(batteryPower->powerBatteryTarget, targetkW[h], 0.1) << "error in expected target at hour " << h;
+
+        dispatchAuto->dispatch(0, h, 0);
+        EXPECT_NEAR(batteryPower->powerBatteryDC, dispatchedkW[h], 0.1) << "error in dispatched power at hour " << h;
+        EXPECT_NEAR(dispatchAuto->battery_soc(), SOC[h], 0.1) << "error in SOC at hour " << h;
+
+    }
+}
+
+TEST_F(AutoFOM_lib_battery_dispatch, DispatchFOM_ACAutoWithInterconnectionLimit) {
+    double dtHour = 1;
+    CreateBattery(dtHour);
+    interconnection_limit = 50000;
+    dispatchAuto = new dispatch_automatic_front_of_meter_t(batteryModel, dtHour, 10, 100, 1, 49960, 49960, max_power,
+        max_power, max_power, max_power, 1, dispatch_t::FOM_AUTOMATED_ECONOMIC, dispatch_t::WEATHER_FORECAST_CHOICE::WF_LOOK_AHEAD, dispatch_t::FRONT, 1, 18, 1, true, false, false,
+        false, false, 77000, replacementCost, 1, cyclingCost, omCost, ppaRate, ur, 98, 98, 98, interconnection_limit);
+
+    // battery setup
+    dispatchAuto->update_pv_data(pv); // PV Resource is available for the 1st 10 hrs
+    dispatchAuto->update_cliploss_data(clip); // Clip charging is available for the 1st 5 hrs
+    batteryPower = dispatchAuto->getBatteryPower();
+    batteryPower->connectionMode = ChargeController::AC_CONNECTED;
+    batteryPower->voltageSystem = 600;
+    batteryPower->setSharedInverter(m_sharedInverter);
+
+    // A few hours at the beginnging flip from discharge to charge since the PV will be curtailed
+    // Note on hour 3: the price here is both the 2nd highest price and the 2nd lowest price. A non-zero replacement cost could prevent cycling here.
+    std::vector<double> targetkW = { 28396.7, -19294.27, 5515.3, -35296.51, -35570.30, -34754.11, // 0 - 5
+                                    -84205.39, -78854.6, -67702.19, -31516.09, 0., 0., // 6 - 11
+                                    0., 0., 0., 0., 0., 50000, // 12 - 17
+                                    50000, 50000, 50000, 50000, 50000, 0. }; // 18 - 23
+    std::vector<double> dispatchedkW = { 27100.68, -19294.27, 5515.3, -28862.56, -29079.57, -29217.40, // 0 - 5
+                                -15235.74, 0.0, 0.0, 0.0, 0., 0.,// 6 - 11
+                                0., 0., 0., 0., 0., 28116.30, // 12 - 17
+                                27947.03, 27664.92, 27100.69, 25408.03, 9385.81, 0. }; // 18 - 23
+    std::vector<double> SOC = { 33.3, 44.65, 41.35, 58.02, 74.68, 91.35, // 0 - 5
+                                100.0, 100.0, 100.0, 100.0, 100.0, 100.0, // 6 - 11
+                                100.0, 100.0, 100.0, 100.0, 100.0, 83.33, // 12 - 17
+                                66.66, 50.0, 33.33, 16.66, 10.0, 10.0 }; // 18 - 23
+    for (size_t h = 0; h < 24; h++) {
+        batteryPower->powerGeneratedBySystem = pv[h];
+        batteryPower->powerSystem = pv[h];
+        batteryPower->powerSystemClipped = clip[h];
+
+        dispatchAuto->update_dispatch(0, h, 0, h);
+        EXPECT_NEAR(batteryPower->powerBatteryTarget, targetkW[h], 0.1) << "error in expected target at hour " << h;
+
+        dispatchAuto->dispatch(0, h, 0);
+
+        EXPECT_NEAR(batteryPower->powerBatteryDC, dispatchedkW[h], 0.1) << "error in dispatched power at hour " << h;
+        EXPECT_NEAR(dispatchAuto->battery_soc(), SOC[h], 0.1) << "error in SOC at hour " << h;
     }
 }
