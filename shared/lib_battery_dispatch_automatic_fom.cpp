@@ -382,6 +382,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
             else {
                 powerBattery = _inverter_paco; // AC connected battery is already maxed out by AC power limit, cannot increase dispatch to ccover losses
             }
+
             powerBattery = std::fmin(powerBattery, interconnectionCapacity / m_batteryPower->singlePointEfficiencyDCToAC);
         }
 		// save for extraction
