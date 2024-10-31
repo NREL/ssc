@@ -649,7 +649,7 @@ var_info vtab_technology_outputs[] = {
 
     var_info_invalid };
 
-ssc_number_t* gen_heatmap(compute_module* cm, double step_per_hour) {
+ssc_number_t* gen_heatmap(compute_module* cm, double step_per_hour, bool heat) {
     if (!cm)
         return 0;
     size_t count = (size_t)(8760 * step_per_hour);
@@ -657,7 +657,12 @@ ssc_number_t* gen_heatmap(compute_module* cm, double step_per_hour) {
     size_t iday = 0;
     size_t hour;
     size_t count_gen;
-    ssc_number_t* p_gen = cm->as_array("gen", &count_gen);
+    ssc_number_t* p_gen = NULL;
+    if (heat)
+        p_gen = cm->as_array("gen_heat", &count_gen);
+    else
+        p_gen = cm->as_array("gen", &count_gen);
+
     ssc_number_t* p_annual_energy_dist_time = cm->allocate("annual_energy_distribution_time", 25, 366);
     for (size_t i = 0; i < count; i++) {
         hour = (size_t)fmod(floor(double(i) / step_per_hour), 24);

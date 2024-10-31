@@ -215,7 +215,7 @@ public:
 	{
 		add_var_info(_cm_vtab_linear_fresnel_dsg_iph);
 		add_var_info(vtab_adjustment_factors);
-		//add_var_info(vtab_technology_outputs);
+		add_var_info(vtab_technology_outputs);
 	}
 
 	void exec( )
@@ -630,7 +630,7 @@ public:
             p_load[i] = p_W_dot_par_tot_haf[i];
 		}
 
-        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
+        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour, true);
 
 
 		accumulate_annual_for_year("gen", "annual_field_energy", sim_setup.m_report_step / 3600.0, steps_per_hour);	//[kWt-hr]

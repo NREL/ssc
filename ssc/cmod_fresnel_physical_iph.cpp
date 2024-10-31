@@ -1625,7 +1625,7 @@ public:
 
         // Do unit post-processing here
 
-        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
+        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour, true);
         // Non-timeseries array outputs
         double P_adj = storage.P_in_des; // slightly adjust all field design pressures to account for pressure drop in TES before hot tank
         transform(c_fresnel.m_P_rnr_dsn.begin(), c_fresnel.m_P_rnr_dsn.end(), c_fresnel.m_P_rnr_dsn.begin(), [P_adj](double x) {return x + P_adj; });

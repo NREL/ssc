@@ -740,7 +740,7 @@ public:
     {
         add_var_info( _cm_vtab_trough_physical_iph );
         add_var_info( vtab_adjustment_factors );
-        //add_var_info(vtab_technology_outputs);
+        add_var_info(vtab_technology_outputs);
         add_var_info(vtab_utility_rate_common); // Required for dispatch w/ utility rates
 
     }
@@ -2276,7 +2276,7 @@ public:
             annual_elec_cost += i_elec_cost;                                //[$]
         }
 
-        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour);
+        ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour, true);
         // Non-timeseries array outputs
         double P_adj = 0; // slightly adjust all field design pressures to account for pressure drop in TES before hot tank
         if (tes_type == C_csp_tes::csp_tes_types::E_TES_TWO_TANK)

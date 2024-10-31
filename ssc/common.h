@@ -75,7 +75,7 @@ bool calculate_p50p90(compute_module *cm);
 
 void calculate_resilience_outputs(compute_module *cm, std::unique_ptr<resilience_runner> &resilience);
 
-ssc_number_t* gen_heatmap(compute_module* cm, double step_per_hour);
+ssc_number_t* gen_heatmap(compute_module* cm, double step_per_hour, bool heat=false);
 
 void prepend_to_output(compute_module* cm, std::string var_name, size_t count, ssc_number_t value);
 
