@@ -651,6 +651,7 @@ dispatch_automatic_t::dispatch_automatic_t(
 	bool can_clip_charge,
 	bool can_grid_charge,
 	bool can_fuelcell_charge,
+    bool can_curtail_charge,
     std::vector<double> battReplacementCostPerkWh,
     int battCycleCostChoice,
     std::vector<double> battCycleCost,
@@ -684,6 +685,7 @@ dispatch_automatic_t::dispatch_automatic_t(
     _safety_factor = 0.0;
 
 	m_batteryPower->canClipCharge = can_clip_charge;
+    m_batteryPower->canCurtailCharge = can_curtail_charge;
 	m_batteryPower->canSystemCharge = can_charge;
 	m_batteryPower->canGridCharge = can_grid_charge;
 	m_batteryPower->canFuelCellCharge = can_fuelcell_charge;
