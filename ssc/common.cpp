@@ -681,11 +681,11 @@ var_info vtab_forecast_price_signal[] = {
     { SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv2_percent_gen",		      "Enable percent demand cleared capacity option for ancillary service 2",   "0/1",   "",    "Revenue",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
     { SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv3_percent_gen",		      "Enable percent demand cleared capacity option for ancillary service 3",   "0/1",   "",    "Revenue",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
     { SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv4_percent_gen",		      "Enable percent demand cleared capacity option for ancillary service 4",   "0/1",   "",    "Revenue",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
-    { SSC_INPUT,        SSC_NUMBER,     "mp_market_percent_gen",                 "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "mp_enable_market_percent_gen=1", "MIN=0,MAX=100", "" },
-    { SSC_INPUT,        SSC_NUMBER,     "mp_ancserv1_percent_gen",               "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "mp_enable_ancserv1_percent_gen=1", "MIN=0,MAX=100", "" },
-    { SSC_INPUT,        SSC_NUMBER,     "mp_ancserv2_percent_gen",               "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "mp_enable_ancserv2_percent_gen=1", "MIN=0,MAX=100", "" },
-    { SSC_INPUT,        SSC_NUMBER,     "mp_ancserv3_percent_gen",               "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "mp_enable_ancserv3_percent_gen=1", "MIN=0,MAX=100", "" },
-    { SSC_INPUT,        SSC_NUMBER,     "mp_ancserv4_percent_gen",               "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "mp_enable_ancserv4_percent_gen=1", "MIN=0,MAX=100", "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_market_percent_gen",                 "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "forecast_price_signal_model=1&mp_enable_market_percent_gen=1", "MIN=0,MAX=100", "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_ancserv1_percent_gen",               "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "forecast_price_signal_model=1&mp_enable_ancserv1_percent_gen=1", "MIN=0,MAX=100", "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_ancserv2_percent_gen",               "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "forecast_price_signal_model=1&mp_enable_ancserv2_percent_gen=1", "MIN=0,MAX=100", "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_ancserv3_percent_gen",               "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "forecast_price_signal_model=1&mp_enable_ancserv3_percent_gen=1", "MIN=0,MAX=100", "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_ancserv4_percent_gen",               "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "forecast_price_signal_model=1&mp_enable_ancserv4_percent_gen=1", "MIN=0,MAX=100", "" },
 
 var_info_invalid };
 
