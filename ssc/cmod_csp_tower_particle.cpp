@@ -1540,7 +1540,7 @@ public:
                 // Get first year base ppa price
                 bool is_ppa_price_input_assigned = is_assigned("ppa_price_input");
                 if (is_dispatch && !is_ppa_price_input_assigned) {
-                    throw exec_error("tcsmolten_salt", "\n\nYou selected dispatch optimization which requires that the array input ppa_price_input is defined\n");
+                    throw exec_error("csp_tower_particle", "\n\nYou selected dispatch optimization which requires that the array input ppa_price_input is defined\n");
                 }
 
                 if (is_ppa_price_input_assigned) {
@@ -1554,7 +1554,7 @@ public:
 
                 int ppa_soln_mode = as_integer("ppa_soln_mode");    // PPA solution mode (0=Specify IRR target, 1=Specify PPA price)
                 if (ppa_soln_mode == 0 && is_dispatch) {
-                    throw exec_error("tcsmolten_salt", "\n\nYou selected dispatch optimization and the Specify IRR Target financial solution mode, "
+                    throw exec_error("csp_tower_particle", "\n\nYou selected dispatch optimization and the Specify IRR Target financial solution mode, "
                         "but dispatch optimization requires known absolute electricity prices. Dispatch optimization requires "
                         "the Specify PPA Price financial solution mode. You can continue using dispatch optimization and iteratively "
                         "solve for the PPA that results in a target IRR by running a SAM Parametric analysis or script.\n");
@@ -1562,7 +1562,7 @@ public:
 
                 int en_electricity_rates = as_integer("en_electricity_rates");  // 0 = Use PPA, 1 = Use Retail
                 if (en_electricity_rates == 1 && is_dispatch) {
-                    throw exec_error("tcsmolten_salt", "\n\nYou selected dispatch optimization and the option to Use Retail Electricity Rates on the Electricity Purchases page, "
+                    throw exec_error("csp_tower_particle", "\n\nYou selected dispatch optimization and the option to Use Retail Electricity Rates on the Electricity Purchases page, "
                         "but the dispatch optimization model currently does not accept separate buy and sell prices. Please use the Use PPA or Market Prices option "
                         "on the Electricity Purchases page.\n");
                 }
@@ -1604,7 +1604,7 @@ public:
                     size_t n_rows = mp_energy_market_revenue.nrows();
                     if (n_rows < n_steps_fixed) {
                         string ppa_msg = util::format("mp_energy_market_revenue input has %d rows but there are %d number of timesteps", n_rows, n_steps_fixed);
-                        throw exec_error("tcsmolten_salt", ppa_msg);
+                        throw exec_error("csp_tower_particle", ppa_msg);
                     }
 
                     double conv_dolmwh_to_centkwh = 0.1;
@@ -1622,9 +1622,9 @@ public:
                     elec_pricing_schedule = C_timeseries_schedule_inputs(1.0, std::numeric_limits<double>::quiet_NaN());
                 }
             }
-            else if (csp_financial_model == 8) {        // No Financial Model
+            else if (csp_financial_model == 7 || csp_financial_model == 8) {    // LCOE (7) and None (8)
                 if (is_dispatch) {
-                    throw exec_error("tcsmolten_salt", "Can't select dispatch optimization if No Financial model");
+                    throw exec_error("csp_tower_particle", "Can't select dispatch optimization if No Financial model");
                 }
                 else { // if no dispatch optimization, don't need an input pricing schedule
                     // If electricity pricing data is not available, then dispatch to a uniform schedule
@@ -1632,7 +1632,7 @@ public:
                 }
             }
             else {
-                throw exec_error("tcsmolten_salt", "csp_financial_model must be 1, 2, 3, 4, or 6");
+                throw exec_error("csp_tower_particle", "csp_financial_model must be 1, 2, 3, 4, or 6");
             }
         }
         else if (sim_type == 2) {
