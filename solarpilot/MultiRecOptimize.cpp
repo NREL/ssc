@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <set>
 #include <iomanip>
+#include <numeric>
 
 #include "SolarField.h"
 #include "MultiRecOptimize.h"
@@ -234,9 +235,10 @@ int multi_rec_opt_helper::run(SolarField *SF)
 
     //calculate receiver design point power values
     std::vector< double > rec_design_power;
-    
     for (int i = 0; i < Nrec; i++)
         rec_design_power.push_back( 1.e6 * recs->at(i)->getVarMap()->q_rec_des.Val() / recs->at(i)->getVarMap()->therm_eff.Val() );
+
+    double sum_rec_des_pow = std::accumulate(rec_design_power.begin(), rec_design_power.end(), 0);
 
     int Nh = (int)helios.size();
 
@@ -303,7 +305,7 @@ int multi_rec_opt_helper::run(SolarField *SF)
             {
                 //summation of all power values delivered from heliostat 'i' to receiver 'j'
                 col[j*Nh + i] = O.column("x", i, j);
-                row[j*Nh + i] = power_allocs[helios.at(i)->getId()].at(j)* (1. - rfact/2. + rfact*(double)rand()/(double)RAND_MAX);
+                row[j*Nh + i] = power_allocs[helios.at(i)->getId()].at(j) * (1. - rfact/2. + rfact*(double)rand()/(double)RAND_MAX) /sum_rec_des_pow; // normalize for scaling
             }
         }
     }
@@ -369,7 +371,7 @@ int multi_rec_opt_helper::run(SolarField *SF)
                 {
                     int id = helios.at(i)->getId();
                     col[i] = O.column("x", i, 0);
-                    row[i] = power_allocs.at(id).at(0) / rec_design_power.at(0) / gamma_0;
+                    row[i] = power_allocs.at(id).at(0) / sum_rec_des_pow / gamma_0;
                 }
 
                 double gamma_r = SF->getVarMap()->recs.at(j).q_rec_des.Val() / SF->getVarMap()->sf.q_des.val;
@@ -378,7 +380,7 @@ int multi_rec_opt_helper::run(SolarField *SF)
                 {
                     int id = helios.at(i)->getId();
                     col[Nh + i] = O.column("x", i, j);
-                    row[Nh + i] = -power_allocs.at(id).at(j) / rec_design_power.at(j) / gamma_r;
+                    row[Nh + i] = -power_allocs.at(id).at(j) / sum_rec_des_pow / gamma_r;
                 }
                 //the constraint means sum of power from receiver 0 minus sum of power from receiver 'r' equals zero when scaled by their power fractions.
                 add_constraintex(lp, Nh*2, row, col, EQ, 0.);
@@ -397,7 +399,6 @@ int multi_rec_opt_helper::run(SolarField *SF)
                 row[i] = power_allocs[id].at(j) / rec_design_power.at(j);
             }
             //minimum power must be met. If insufficient power is available for any receiver, the problem fails as infeasible
-            //add_constraintex(lp, Nh, row, col, GE, rec_design_power.at(j));
             add_constraintex(lp, Nh, row, col, GE, 1.0);
 
         }
@@ -440,6 +441,25 @@ int multi_rec_opt_helper::run(SolarField *SF)
 #ifdef _DEBUG
     set_outputfile(lp, "aimpoint_optimization_log.txt");
     set_verbose(lp, FULL);
+
+    //if (is_field_assigned) {
+    //    set_outputfile(lp, "field_assign_setup.txt");
+    //    print_lp(lp);
+    //    set_outputfile(lp, "field_assign_solution.txt");
+    //    print_solution(lp, 1);
+    //}
+    //else if (is_performance) {
+    //    set_outputfile(lp, "performance_setup.txt");
+    //    print_lp(lp);
+    //    set_outputfile(lp, "performance_solution.txt");
+    //    print_solution(lp, 1);
+    //}
+    //else {
+    //    set_outputfile(lp, "setup.txt");
+    //    print_lp(lp);
+    //    set_outputfile(lp, "solution.txt");
+    //    print_solution(lp, 1);
+    //}
 #else
     set_verbose(lp, IMPORTANT); //DETAILED //http://web.mit.edu/lpsolve/doc/set_verbose.htm
 #endif
