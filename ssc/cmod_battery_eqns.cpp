@@ -127,7 +127,7 @@ bool Reopt_size_standalone_battery_params(ssc_data_t data) {
 
     // financial inputs
     map_optional_input(vt, "itc_fed_percent", &reopt_batt, "total_itc_fraction", 0., true);
-    // TODO: what about reopt vars total_rebate_us_dollars_per_kw?
+    // TODO: what about reopt vars total_rebate_per_kw?
 
     vd = vt->lookup("total_installed_cost");
     if (vd) {
@@ -212,7 +212,7 @@ bool Reopt_size_standalone_battery_params(ssc_data_t data) {
     vd = vt->lookup("federal_tax_rate");
     vd2 = vt->lookup("state_tax_rate");
     if (vd && vd2) {
-        reopt_fin.assign("offtaker_tax_pct", vd->num[0] / 100. + vd2->num[0] / 100.);
+        reopt_fin.assign("offtaker_tax_rate_fraction", vd->num[0] / 100. + vd2->num[0] / 100.);
     }
 
     vt_get_number(vt, "inflation_rate", &val1);
