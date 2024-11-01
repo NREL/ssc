@@ -132,7 +132,6 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_INPUT,     SSC_NUMBER, "opt_flux_penalty",                   "Optimization flux overage penalty",                                                                                                       "",             "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "opt_algorithm",                      "Optimization algorithm",                                                                                                                  "",             "",                                  "Heliostat Field",                          "?=1",                                                              "",              ""},
 
-    
     // Receiver parameters - general
     { SSC_INPUT,     SSC_NUMBER, "num_recs",                           "Number of receivers",                                                                                                                     "",             "",                                  "Tower and Receiver",                       "?=1",                                                              "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "is_sep_rec_modes",                   "Are separate operating modes per receiver allowed?",                                                                                      "",             "",                                  "Tower and Receiver",                       "?=1",                                                              "",              ""},
@@ -200,7 +199,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
         // If field_model_type = 1, tower/receiver dimensions are used as guess values
         //        and optimized values are reported as _calc outputs
     { SSC_INPUT,     SSC_MATRIX, "helio_positions",                    "Heliostat position table - in",                                                                                                           "",             "",                                  "Heliostat Field",                          "field_model_type=2|field_model_type=3",                            "", "COL_LABEL=XY_POSITION" },
-    { SSC_INPUT,     SSC_ARRAY,  "rec_height",                         "Receiver height - in",                                                                                                                    "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
+    { SSC_INPUT,     SSC_ARRAY,  "fp_rec_height",                      "Receiver height - in",                                                                                                                    "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_ARRAY,  "rec_width",                          "Receiver width - in",                                                                                                                     "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "h_tower",                            "Tower height - in",                                                                                                                       "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
 
@@ -389,12 +388,14 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "cp_battery_nameplate",               "Battery nameplate",                                                                                                                       "MWe",          "",                                  "System Costs",                             "*",                                                                "",              ""},
 
         // Solar Field
-    { SSC_OUTPUT,    SSC_ARRAY,  "N_hel_calc",                         "Number of heliostats - out",                                                                                                               "",             "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
+    { SSC_OUTPUT,    SSC_NUMBER, "N_hel_tot_calc",                     "Total number of heliostats - out",                                                                                                               "",             "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "N_hel_calc",                         "Number of heliostats per receiver - out",                                                                                                               "",             "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "refl_image_error",                   "Reflected image error",                                                                                                                    "mrad",         "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "heliostat_area",                     "Active area of heliostat",                                                                                                                 "m^2",          "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "average_attenuation",                "Average solar field attenuation",                                                                                                          "%",            "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_MATRIX, "helio_positions_calc",               "Heliostat position table - out",                                                                                                           "",             "",                                  "Heliostat Field",                          "*",                                                                "",              "COL_LABEL=XY_POSITION" },
-    { SSC_OUTPUT,    SSC_ARRAY,  "A_sf",                               "Solar field area",                                                                                                                         "m^2",          "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
+    { SSC_OUTPUT,    SSC_NUMBER, "A_sf_tot",                           "Total solar field area",                                                                                                                   "m^2",          "",                                  "Heliostat Field",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "A_sf",                               "Solar field area per receiver",                                                                                                            "m^2",          "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "land_min_abs",                       "Min distance from tower to heliostat",                                                                                                     "m",            "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "land_max_abs",                       "Max distance from tower to heliostat",                                                                                                     "m",            "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "land_area_base_calc",                "Land area occupied by heliostats",                                                                                                         "acre",         "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
@@ -413,7 +414,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
     { SSC_OUTPUT,    SSC_ARRAY,  "A_rec_curtain",                      "Receiver(s) particle curtain area",                                                                                                           "m2",           "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "L_tower_piping_calc",                "Tower piping length",                                                                                                                      "m",            "",                                  "Tower and Receiver",                       "*",                                                                "",              ""},
 
-        // Receiver Performance -> TODO: This will need to be arrays...
+        // Receiver Performance
     { SSC_OUTPUT,    SSC_NUMBER, "q_dot_rec_des_total",                "Total receiver thermal output at design",                                                                                                       "MWt",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "eta_rec_thermal_des",                "Receiver estimated thermal efficiency at design",                                                                                         "",            "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "P_tower_lift_des",                   "Receiver and tower estimated particle lift power at design",                                                                              "MWe",         "",                                  "Tower and Receiver",                       "*",                                                                "",              "" },
@@ -476,6 +477,7 @@ static var_info _cm_vtab_csp_tower_particle[] = {
 
         // Costs
     { SSC_OUTPUT,    SSC_NUMBER, "h_rec_input_to_cost_model",          "Receiver height for cost model selected from receiver type",                                                                              "m",            "",                                  "System Costs",                             "*",                                                                "",              ""},
+    { SSC_OUTPUT,    SSC_NUMBER, "tower_total_height",                 "Total tower height used in cost model calculations",                                                                                      "m",            "",                                  "System Costs",                             "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "csp.pt.cost.site_improvements",      "Site improvement cost",                                                                                                                   "$",            "",                                  "System Costs",                             "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "csp.pt.cost.heliostats",             "Heliostat cost",                                                                                                                          "$",            "",                                  "System Costs",                             "*",                                                                "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "csp.pt.cost.tower",                  "Tower cost",                                                                                                                              "$",            "",                                  "System Costs",                             "*",                                                                "",              ""},
@@ -760,6 +762,8 @@ public:
         double q_dot_rec_des = q_dot_pc_des * as_number("solarm");  // [MWt]
 
         size_t num_recs = as_integer("num_recs");
+        if (num_recs > 4)
+            throw exec_error("csp_tower_particle", "Invalid number of receivers. Maximum number of receivers supported is 4.");
         bool duplicate_recs = as_boolean("is_recs_duplicate");
 
         // *****************************************************
@@ -787,10 +791,10 @@ public:
         // *********************************************************
 
         // Initializing receivers with cmod inputs - these are initial guesses when SolarPILOT optimization is used
-        double THT = as_double("h_tower");                                  // [m] tower height
-        std::vector<double> rec_height = as_vector_double("rec_height");    // [m] receiver height
-        std::vector<double> rec_width = as_vector_double("rec_width");      // [m] receiver width
-        if (!duplicate_recs && (rec_height.size() != num_recs || rec_width.size() != num_recs))
+        double THT = as_double("h_tower");                                      // [m] tower height
+        std::vector<double> rec_height = as_vector_double("fp_rec_height");     // [m] receiver height
+        std::vector<double> rec_width = as_vector_double("rec_width");          // [m] receiver width
+        if (!duplicate_recs && (rec_height.size() < num_recs || rec_width.size() < num_recs))
             throw exec_error("csp_tower_particle", "Invalid receiver height and/or width input. For non-duplicate receivers, input arrays must have a length of " + util::to_string((int)num_recs));
 
         bool is_rec_model_clearsky = as_double("rec_clearsky_fraction") > 0.0;
@@ -810,11 +814,11 @@ public:
 
         // Checking array lengths 
         if (!duplicate_recs
-            && (rec_azimuth.size() != num_recs
-                || power_fraction.size() != num_recs
-                || norm_curtain_height.size() != num_recs
-                || norm_curtain_width.size() != num_recs
-                || max_curtain_depth.size() != num_recs))
+            && (rec_azimuth.size() < num_recs
+                || power_fraction.size() < num_recs
+                || norm_curtain_height.size() < num_recs
+                || norm_curtain_width.size() < num_recs
+                || max_curtain_depth.size() < num_recs))
                 throw exec_error("csp_tower_particle", "Invalid receiver input. For nonduplicate receivers input array must have a length of " + util::to_string((int)num_recs));
 
         // setting receiver parameters
@@ -880,10 +884,15 @@ public:
                     log(msg, SSC_WARNING);
                 }
                 else { // Throw error if not running optimization
-                    std::string msg;
-                    msg = util::format("Receiver (%d) failed to converge at design condition. "
-                        "Aperture size is most likely too large or receiver parameters are unrealistic.", i);
-                    throw exec_error("csp_tower_particle", msg);
+                    if (sim_type == 1) {
+                        std::string msg;
+                        msg = util::format("Receiver (%d) failed to converge at design condition. "
+                            "Aperture size is most likely too large or receiver parameters are unrealistic.", i);
+                        throw exec_error("csp_tower_particle", msg);
+                    }
+                    else {
+                        design_heat_loss.at(i) = std::numeric_limits<double>::quiet_NaN();
+                    }
                 }
             }
         }
@@ -967,7 +976,7 @@ public:
                 rec_height.resize(num_recs);
                 rec_width.resize(num_recs);
                 rec_azimuth.resize(num_recs);
-                ssc_number_t* p_rec_height_opt = allocate("rec_height", num_recs);
+                ssc_number_t* p_rec_height_opt = allocate("fp_rec_height", num_recs);
                 ssc_number_t* p_rec_width_opt = allocate("rec_width", num_recs);
                 ssc_number_t* p_rec_azimuth_opt = allocate("rec_azimuth", num_recs);
                 for (size_t i = 0; i < spi_opt.recs.size(); i++) {
@@ -1025,6 +1034,13 @@ public:
                 }
             }
 
+            if (sim_type == 2) {
+                // For design-point a single receiver is adequate for the UI outputs
+                // Multi-receivers requires receiver-heliostat assignment problem to be solved
+                //      each UI callback -> results in UI delay.
+                assign("num_recs", 1);
+            }
+
             // SolarPILOT will check "heliostat_positions_in" to determine if it needs to layout the field
             spi.run(weather_reader.m_weather_data_provider);    // Runs SolarPILOT
 
@@ -1037,7 +1053,7 @@ public:
                 else { // sim_type == 2
                     // Filling maps with dummy values
                     mt_eta_map.resize_fill(1, (size_t)(2 + num_recs), std::numeric_limits<double>::quiet_NaN());
-                    mt_flux_maps.resize_fill(as_integer("n_flux_y"), as_integer("n_flux_x"), std::numeric_limits<double>::quiet_NaN());
+                    mt_flux_maps.resize_fill(as_integer("n_flux_y"), as_integer("n_flux_x") * num_recs, std::numeric_limits<double>::quiet_NaN());
                 }
             }
             else if (field_model_type == 3) { // Read in user efficiency and flux maps
@@ -1056,18 +1072,21 @@ public:
             N_hel.clear();
             N_hel.resize(num_recs, 0);
             int tot_N_hel = (int)spi.layout.heliostat_positions.size();
-            helio_pos.resize(tot_N_hel, 2);
+            helio_pos.resize(tot_N_hel, 3);
             for (int i = 0; i < tot_N_hel; i++) {
                 helio_pos(i, 0) = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.x;
                 helio_pos(i, 1) = (ssc_number_t)spi.layout.heliostat_positions.at(i).location.y;
+                //helio_pos(i, 2) = (ssc_number_t)spi.layout.heliostat_positions.at(i).which_rec;
                 N_hel[spi.layout.heliostat_positions.at(i).which_rec]++;
             }
 
             THT = spi.sf.tht.val;
 
-            size_t sp_num_recs = spi.recs.size();
-            if (sp_num_recs != num_recs)
-                throw exec_error("csp_tower_particle", "Unexpected error: SolarPILOT's receivers count is inconsistent with user input.");
+            if (sim_type == 1) {    // Only check this when annual simulation is taking place.
+                size_t sp_num_recs = spi.recs.size();
+                if (sp_num_recs != num_recs)
+                    throw exec_error("csp_tower_particle", "Unexpected error: SolarPILOT's receivers count is inconsistent with user input.");
+            }
 
             rec_height.resize(num_recs);
             rec_width.resize(num_recs);
@@ -1089,8 +1108,8 @@ public:
             land_min_abs = as_double("land_min") * THT;     //[m]
             land_max_abs = as_double("land_max") * THT;     //[m]
 
-            total_land_area = spi.GetTotalLandArea();           // [acres] Total land area
-            land_area_base = spi.GetBaseLandArea();             // [acres] Land area occupied by heliostats
+            total_land_area = spi.GetTotalLandArea();       // [acres] Total land area
+            land_area_base = spi.GetBaseLandArea();         // [acres] Land area occupied by heliostats
         }
         else if (field_model_type == 4) {
             // User input flux and efficiency maps, no SolarPILOT needed
@@ -1408,9 +1427,6 @@ public:
             collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_ETA_THERMAL_4, allocate("eta_therm_4", n_steps_fixed), n_steps_fixed);
             collector_receiver.mc_reported_outputs.assign(C_csp_falling_particle_collector_receiver::E_FIELD_ETA_OPT_4, allocate("eta_field_4", n_steps_fixed), n_steps_fixed);
         }
-
-
-
 
 
         // *****************************************************
@@ -1792,6 +1808,7 @@ public:
 
             // *************************
             // Solar field
+        assign("N_hel_tot_calc", std::accumulate(N_hel.begin(), N_hel.end(), 0.0));     // [-] Total number of Heliostats
         assign("refl_image_error", refl_image_error);           //[mrad]
         assign("heliostat_area", heliostat_area);               //[m2]
         assign("average_attenuation", average_attenuation);     //[%]
@@ -1812,6 +1829,7 @@ public:
         for (size_t i = 0; i < n_helio_pos_rows; i++) {
             p_helio_positions_calc[i * 2] = (ssc_number_t)helio_pos(i, 0);       //[m] x
             p_helio_positions_calc[i * 2 + 1] = (ssc_number_t)helio_pos(i, 1);   //[m] y
+            //p_helio_positions_calc[i * 3 + 2] = (ssc_number_t)helio_pos(i, 2);   //[-] receiver assignment -> requires update to COL_LABEL=XY_POSITION
         }
 
         double W_dot_col_tracking_des = collector_receiver.get_tracking_power();    //[MWe]
@@ -1826,10 +1844,10 @@ public:
         ssc_number_t* rec_azimuth_calc = allocate("rec_azimuth_calc", num_recs);
         for (size_t i = 0; i < num_recs; i++) {
             input_idx = duplicate_recs ? 0 : i;
-            rec_height_calc[i] = rec_height[input_idx];                 //[m]
-            rec_width_calc[i] = rec_width[input_idx];                   //[m]
-            rec_aspect[i] = rec_height[input_idx] / rec_width[input_idx];       //[-]
-            rec_azimuth_calc[i] = rec_azimuth[i];               //[deg]
+            rec_height_calc[i] = rec_height[input_idx];                     //[m]
+            rec_width_calc[i] = rec_width[input_idx];                       //[m]
+            rec_aspect[i] = rec_height[input_idx] / rec_width[input_idx];   //[-]
+            rec_azimuth_calc[i] = rec_azimuth[i];                           //[deg]
         }
 
         assign("A_rec_total", A_rec_aperture_total);            //[m2]
@@ -2009,6 +2027,7 @@ public:
             // *****************************
             // ******* System Costs ********
         double tot_A_sf = std::accumulate(A_sf.begin(), A_sf.end(), 0.0);   // Total solar field area
+        assign("A_sf_tot", tot_A_sf);
 
         double site_improvement_cost =
             N_mspt::site_improvement_cost(tot_A_sf, as_double("site_spec_cost"));
@@ -2023,21 +2042,21 @@ public:
         double max_rec_height_offset = 0.0;
         for (size_t i = 0; i < num_recs; i++) {
             input_idx = duplicate_recs ? 0 : i;
-            double half_ap_height = (norm_curtain_height[input_idx] - 0.5) * rec_height[input_idx];   // height of curtain above half aperture 
-            if (rec_tower_offset.ncols() == 3) {
-                max_rec_height_offset = max(max_rec_height_offset, half_ap_height + rec_tower_offset.at(i, 2));
-            }
-            else {
-                max_rec_height_offset = max(max_rec_height_offset, half_ap_height);
-            }
+            double half_ap_height = (norm_curtain_height[input_idx] - 0.5) * rec_height[input_idx];   // height of curtain above half aperture
+            double rec_offset = 0.0;
+            if (rec_tower_offset.ncols() == 3)
+                rec_offset = rec_tower_offset.at(i, 2);
+            max_rec_height_offset = max(max_rec_height_offset, half_ap_height + rec_offset);
         }
 
         // Calculating tower height based on MAX height of tower (i.e., top of curtain to ground)
-        // TODO: This does impact system cost... Discuss with Ty? and Janna?
         double h_helio = as_double("helio_height");     //[m] Heliostat height - for system costing
         double tower_cost =
             N_mspt::tower_cost(THT + max_rec_height_offset, 0.0, h_helio, as_double("tower_fixed_cost"), as_double("tower_exp"));
+        //Repeated calc for UI
+        double tower_total_height = THT + max_rec_height_offset + h_helio / 2.0;
         assign("h_rec_input_to_cost_model", (ssc_number_t)max_rec_height_offset);       //[m]
+        assign("tower_total_height", (ssc_number_t)tower_total_height);                 //[m]
         assign("csp.pt.cost.tower", (ssc_number_t)tower_cost);
 
         double receiver_cost = 0.0;
