@@ -638,7 +638,7 @@ public:
         ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour, true);
 
 
-		accumulate_annual_for_year("gen", "annual_field_energy", sim_setup.m_report_step / 3600.0, steps_per_hour);	//[kWt-hr]
+		accumulate_annual_for_year("gen_heat", "annual_field_energy", sim_setup.m_report_step / 3600.0, steps_per_hour);	//[kWt-hr]
 		accumulate_annual_for_year("W_dot_par_tot_haf", "annual_electricity_consumption", sim_setup.m_report_step / 3600.0, steps_per_hour);	//[kWe-hr]
 		accumulate_annual_for_year("q_dot_freeze_prot", "annual_thermal_consumption", sim_setup.m_report_step/3600.0*1.E3, steps_per_hour);		//[kWt-hr]
 
