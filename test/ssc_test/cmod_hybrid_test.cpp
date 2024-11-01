@@ -153,9 +153,9 @@ TEST_F(CmodHybridTest, PVWattsv8WindBatteryHostDeveloper) {
     dat = nullptr;
 }
 
-TEST_F(CmodHybridTest, GenericPVWattsWindFuelCellBatteryHybrid_SingleOwner) {
+TEST_F(CmodHybridTest, CustomGenerationPVWattsWindFuelCellBatteryHybrid_SingleOwner) {
     char file_path[256];
-    int nfc1 = sprintf(file_path, "%s/test/input_json/hybrids/Generic PVWatts Wind FuelCell Battery Hybrid_Single Owner.json", SSCDIR);
+    int nfc1 = sprintf(file_path, "%s/test/input_json/hybrids/CustomGeneration PVWatts Wind FuelCell Battery Hybrid_Single Owner.json", SSCDIR);
     std::ifstream file(file_path);
     std::ostringstream tmp;
     tmp << file.rdbuf();
@@ -183,7 +183,7 @@ TEST_F(CmodHybridTest, GenericPVWattsWindFuelCellBatteryHybrid_SingleOwner) {
         int len;
         auto outputs = ssc_data_get_table(dat, "output");
 
-        auto gs_outputs = ssc_data_get_table(outputs, "generic_system");
+        auto gs_outputs = ssc_data_get_table(outputs, "custom_generation");
         ssc_data_get_number(gs_outputs, "annual_energy", &genericannualenergy);
         auto gs_om_expenses = ssc_data_get_array(gs_outputs, "cf_operating_expenses", &len);
 
