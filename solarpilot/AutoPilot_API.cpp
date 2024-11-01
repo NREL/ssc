@@ -974,7 +974,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
     
     //Add a formatted simulation notice
     ostringstream os;
-    int width = 9;
+    int width = 12;
     os << "\n\nBeginning Simulation\nIter | ";
 
     for (int j = 0; ; j++)      //header line counter
@@ -1001,7 +1001,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
     }
     os << "| Obj.    | Flux    ";
     for (size_t i = 0; i < _SF->getVarMap()->recs.size(); i++)
-        os << setw(8) << " ";
+        os << setw(width) << " ";
     os << "| Plant cost";
 
     int maxlinelen = 0;
@@ -1083,15 +1083,16 @@ sp_optimize *AutoPilot::GetOptimizationObject()
 
 void AutoPilot::PostEvaluationUpdate(int iter, vector<double> &pos, /*vector<double> &normalizers, */double &obj, std::vector<double> &flux, double &cost, std::string *note)
 {
+    int width = 12;
 	ostringstream os;
     os << "[" << setw(3) << iter << "]  ";
     for(int i=0; i<(int)pos.size(); i++)
-        os << setw(8) << pos.at(i) /** normalizers.at(i)*/ << " |";
+        os << setw(width) << pos.at(i) /** normalizers.at(i)*/ << " |";
 
-    os << "|" << setw(8) << obj << " |";
+    os << "|" << setw(width) << obj << " |";
     for (size_t i = 0; i < flux.size(); i++)
-        os << setw(8) << flux.at(i) << (flux.size()>0 ? "  " : "");
-    os << " | $" << setw(8) << cost;
+        os << setw(width) << flux.at(i) << (flux.size()>0 ? "  " : "");
+    os << " | $" << setw(width) << cost;
 
     if( note != 0 )
         os << *note;
