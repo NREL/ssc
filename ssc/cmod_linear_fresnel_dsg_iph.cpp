@@ -193,10 +193,10 @@ static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
 	{ SSC_OUTPUT,   SSC_ARRAY,   "op_mode_3",            "3rd op. mode, if applicable",      "",                 "",       "Controller",     "*",        "",     "" },
 	
 		// Annual Outputs
-	{ SSC_OUTPUT,   SSC_NUMBER,  "annual_energy",                   "Annual Net Thermal Energy Production w/ avail derate",     "kWt-hr",   "",   "Post-process",     "*",       "",   "" },
-	{ SSC_OUTPUT,   SSC_NUMBER,  "annual_field_energy",             "Annual Gross Thermal Energy Production w/ avail derate",   "kWt-hr",   "",   "Post-process",     "*",       "",   "" },
-	{ SSC_OUTPUT,   SSC_NUMBER,  "annual_thermal_consumption",      "Annual thermal freeze protection required",                "kWt-hr",   "",   "Post-process",     "*",       "",   "" },
-	{ SSC_OUTPUT,   SSC_NUMBER,  "annual_electricity_consumption",  "Annual electricity consumptoin w/ avail derate",           "kWe-hr",   "",   "Post-process",     "*",       "",   "" },
+	{ SSC_OUTPUT,   SSC_NUMBER,  "annual_energy",                   "Annual Net Thermal Energy Production w/ avail derate",     "kWht",   "",   "Post-process",     "*",       "",   "" },
+	{ SSC_OUTPUT,   SSC_NUMBER,  "annual_field_energy",             "Annual Gross Thermal Energy Production w/ avail derate",   "kWht",   "",   "Post-process",     "*",       "",   "" },
+	{ SSC_OUTPUT,   SSC_NUMBER,  "annual_thermal_consumption",      "Annual thermal freeze protection required",                "kWht",   "",   "Post-process",     "*",       "",   "" },
+	{ SSC_OUTPUT,   SSC_NUMBER,  "annual_electricity_consumption",  "Annual electricity consumptoin w/ avail derate",           "kWhe",   "",   "Post-process",     "*",       "",   "" },
 	{ SSC_OUTPUT,   SSC_NUMBER,  "annual_total_water_use",          "Total Annual Water Usage",                                 "m^3",      "",   "Post-process",     "*",       "",   "" },
 	{ SSC_OUTPUT,   SSC_NUMBER,  "capacity_factor",					"Capacity factor",											"%",        "",   "Post-process",     "*",       "",   "" },
 	{ SSC_OUTPUT,   SSC_NUMBER,  "kwh_per_kw",						"First year kWh/kW",										"kWht/kWt", "",   "Post-process",     "*",       "",   "" },
@@ -638,20 +638,20 @@ public:
         ssc_number_t* p_annual_energy_dist_time = gen_heatmap(this, steps_per_hour, true);
 
 
-		accumulate_annual_for_year("gen_heat", "annual_field_energy", sim_setup.m_report_step / 3600.0, steps_per_hour);	//[kWt-hr]
-		accumulate_annual_for_year("W_dot_par_tot_haf", "annual_electricity_consumption", sim_setup.m_report_step / 3600.0, steps_per_hour);	//[kWe-hr]
-		accumulate_annual_for_year("q_dot_freeze_prot", "annual_thermal_consumption", sim_setup.m_report_step/3600.0*1.E3, steps_per_hour);		//[kWt-hr]
+		accumulate_annual_for_year("gen_heat", "annual_field_energy", sim_setup.m_report_step / 3600.0, steps_per_hour);	//[kWht]
+		accumulate_annual_for_year("W_dot_par_tot_haf", "annual_electricity_consumption", sim_setup.m_report_step / 3600.0, steps_per_hour);	//[kWhe]
+		accumulate_annual_for_year("q_dot_freeze_prot", "annual_thermal_consumption", sim_setup.m_report_step/3600.0*1.E3, steps_per_hour);		//[kWht]
 
-		ssc_number_t annual_field_energy = as_number("annual_field_energy");	//[kWt-hr]
-		ssc_number_t annual_thermal_consumption = as_number("annual_thermal_consumption");	//[kWt-hr]
-		assign("annual_energy", annual_field_energy - annual_thermal_consumption);	//[kWt-hr]
+		ssc_number_t annual_field_energy = as_number("annual_field_energy");	//[kWht]
+		ssc_number_t annual_thermal_consumption = as_number("annual_thermal_consumption");	//[kWht]
+		assign("annual_energy", annual_field_energy - annual_thermal_consumption);	//[kWht]
 
 		// Calculate water use
 		double A_aper_tot = csp_solver.get_cr_aperture_area();	//[m2]
 		double V_water_mirrors = as_double("csp.lf.sf.water_per_wash") / 1000.0*A_aper_tot*as_double("csp.lf.sf.washes_per_year");
 		assign("annual_total_water_use", (ssc_number_t)V_water_mirrors);		//[m3]
 
-		ssc_number_t ae = as_number("annual_energy");			//[kWt-hr]
+		ssc_number_t ae = as_number("annual_energy");			//[kWht]
 		double nameplate = as_double("q_pb_des") * 1.e3;		//[kWt]
 		double kWh_per_kW = ae / nameplate;
 		assign("capacity_factor", (ssc_number_t)(kWh_per_kW / 8760. * 100.));
