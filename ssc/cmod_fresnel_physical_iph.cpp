@@ -564,13 +564,17 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
     { SSC_OUTPUT,       SSC_ARRAY,      "operating_modes_c",                "Final 3 operating modes tried",                                        "",             "",         "solver",         "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "gen_heat",                         "Total thermal power to heat sink with available derate",               "kWe",          "",         "system",         "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "gen",                              "Total electric power to grid w/ avail. derate",                        "kWe",          "",         "system",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "gen_heat_btu",                     "Total thermal power to heat sink with available derate in MMBtu/hr",   "MMBtu/hr",     "",         "system",         "sim_type=1",                       "",                      "" },
 
 
     // Monthly Outputs
     { SSC_OUTPUT,       SSC_ARRAY,      "monthly_energy",                   "Monthly Energy",                                                       "kWh",          "",         "Post-process",   "sim_type=1",              "LENGTH=12",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "monthly_energy_heat_btu",          "Monthly Energy in MMBtu",                                              "MMBtu",        "",         "Post-process",   "sim_type=1",              "LENGTH=12",                      "" },
+
 
     // Annual Outputs
-    { SSC_OUTPUT,       SSC_NUMBER,     "annual_energy",                    "Annual Net Electrical Energy Production w/ avail derate",              "kWhe",       "",         "Post-process",   "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "annual_energy",                    "Annual Net Thermal Energy Production w/ avail derate",                 "kWhe",       "",         "Post-process",   "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "annual_energy_heat_btu",           "Annual Net Thermal Energy Production w/ avail derate in MMBtu",        "MMBtu",      "",         "Post-process",   "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "annual_thermal_consumption",       "Annual thermal freeze protection required",                            "kWht",       "",         "Post-process",   "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "annual_electricity_consumption",   "Annual electricity consumption w/ avail derate",                       "kWhe",       "",         "Post-process",   "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "annual_total_water_use",           "Total Annual Water Usage",                                             "m^3",          "",         "Post-process",   "sim_type=1",                       "",                      "" },
@@ -612,10 +616,10 @@ public:
         double tshours = as_double("tshours");                  //[-]
         double q_dot_pc_des = as_double("q_pb_design");         //[MWt] HEAT SINK design thermal power
         double Q_tes = q_dot_pc_des * tshours;                  //[MWt-hr]
+        const double MMBTU_TO_KWh = 293.07107; // 1 MMBtu = 293.07107 kWh
 
         // Convert IPH Input Units
         {
-            const double MMBTU_TO_KWh = 293.07107; // 1 MMBtu = 293.07107 kWh
             if (is_assigned("ppa_price_input_heat_btu"))
             {
                 size_t count_ppa_price_MMBTU_input;
@@ -1556,6 +1560,7 @@ public:
 
         ssc_number_t* p_gen_heat = allocate("gen_heat", n_steps_fixed);
         ssc_number_t* p_gen = allocate("gen", n_steps_fixed);
+        ssc_number_t* p_gen_heat_btu = allocate("gen_heat_btu", n_steps_fixed);
         ssc_number_t* p_q_dot_defocus_est = allocate("q_dot_defocus_est", n_steps_fixed);
         ssc_number_t* p_SCAs_def = as_array("SCAs_def", &count);
         if ((int)count != n_steps_fixed)
@@ -1574,6 +1579,7 @@ public:
             size_t hour = (size_t)ceil(p_time_final_hr[i]);
             p_gen_heat[i] = (ssc_number_t)(p_q_dot_heat_sink[i] * haf(hour) * 1.E3);     //[kWe]
             p_gen[i] = (ssc_number_t)0.0;   //[kWt] (no electrical generation for IPH mslf)
+            p_gen_heat_btu[i] = p_gen_heat[i] / MMBTU_TO_KWh;   //[MMBtu/hr]
             p_q_dot_defocus_est[i] = (ssc_number_t)(1.0 - p_SCAs_def[i]) * p_q_dot_htf_sf_out[i]; //[MWt]
             p_W_dot_parasitic_tot[i] *= -1.0;			//[MWe] Label is total parasitics, so change to a positive value
             p_W_dot_par_tot_haf[i] = (ssc_number_t)(p_W_dot_parasitic_tot[i] * haf(hour) * 1.E3);		//[kWe] apply availability derate and convert from MWe
@@ -1582,9 +1588,12 @@ public:
 
         // Monthly outputs
         accumulate_monthly_for_year("gen_heat", "monthly_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1);
+        accumulate_monthly_for_year("gen_heat_btu", "monthly_energy_heat_btu", sim_setup.m_report_step / 3600.0, steps_per_hour, 1);
 
         // Annual outputs
         accumulate_annual_for_year("gen_heat", "annual_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
+        accumulate_annual_for_year("gen_heat_btu", "annual_energy_heat_btu", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
+
 
         // This term currently includes TES freeze protection
         accumulate_annual_for_year("W_dot_par_tot_haf", "annual_electricity_consumption", sim_setup.m_report_step / 3600.0, steps_per_hour);	//[kWhe]
