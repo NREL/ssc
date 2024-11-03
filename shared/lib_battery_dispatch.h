@@ -317,6 +317,7 @@ public:
 		bool can_clipcharge,
 		bool can_grid_charge,
 		bool can_fuelcell_charge,
+        bool can_curtail_charge,
         std::vector<double> battReplacementCostPerkWh,
         int battCycleCostChoice,
         std::vector<double> battCycleCost,

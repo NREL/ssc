@@ -94,6 +94,7 @@ BatteryPower::BatteryPower(double dtHour) :
         inverterEfficiencyCutoff(5),
 		canSystemCharge(false),
 		canClipCharge(false),
+        canCurtailCharge(false),
 		canGridCharge(false),
 		canDischarge(false),
         canDischargeToGrid(false),
@@ -162,6 +163,7 @@ BatteryPower::BatteryPower(const BatteryPower& orig) {
     inverterEfficiencyCutoff = orig.inverterEfficiencyCutoff;
     canSystemCharge = orig.canSystemCharge;
     canClipCharge = orig.canClipCharge;
+    canCurtailCharge = orig.canCurtailCharge;
     canGridCharge = orig.canGridCharge;
     canDischarge = orig.canDischarge;
     canDischargeToGrid = orig.canDischargeToGrid;
@@ -280,10 +282,18 @@ void BatteryPowerFlow::initialize(double stateOfCharge, bool systemPriorityCharg
 		m_BatteryPower->powerBatteryDC = m_BatteryPower->powerBatteryDischargeMaxDC;
 	}
 	// Is there extra power from system
-	else if ((((m_BatteryPower->powerSystem > m_BatteryPower->powerLoad) || !m_BatteryPower->chargeOnlySystemExceedLoad) && m_BatteryPower->canSystemCharge) || m_BatteryPower->canGridCharge || m_BatteryPower->canClipCharge)
+	else if ((((m_BatteryPower->powerSystem > m_BatteryPower->powerLoad) || !m_BatteryPower->chargeOnlySystemExceedLoad) && m_BatteryPower->canSystemCharge) || m_BatteryPower->canGridCharge || m_BatteryPower->canClipCharge || m_BatteryPower->canCurtailCharge)
 	{
         if (m_BatteryPower->canClipCharge) {
             m_BatteryPower->powerBatteryDC = -m_BatteryPower->powerSystemClipped;
+        }
+
+        if (m_BatteryPower->canCurtailCharge) {
+            double interconnectionCapacity = std::fmin(m_BatteryPower->powerInterconnectionLimit, m_BatteryPower->powerCurtailmentLimit) - m_BatteryPower->powerSystem;
+            if (interconnectionCapacity < 0.0 )
+            {
+                m_BatteryPower->powerBatteryDC = interconnectionCapacity * m_BatteryPower->singlePointEfficiencyACToDC;
+            }
         }
 
 		if (m_BatteryPower->canSystemCharge)
@@ -364,7 +374,7 @@ void BatteryPowerFlow::calculateACConnected()
     if (P_battery_ac <= 0)
     {
         // Test if battery is charging erroneously
-        if (!(m_BatteryPower->canSystemCharge || m_BatteryPower->canGridCharge || m_BatteryPower->canFuelCellCharge) && P_battery_ac < 0) {
+        if (!(m_BatteryPower->canSystemCharge || m_BatteryPower->canGridCharge || m_BatteryPower->canFuelCellCharge || m_BatteryPower->canCurtailCharge) && P_battery_ac < 0) {
             P_pv_to_batt_ac = P_grid_to_batt_ac = P_fuelcell_to_batt_ac = 0;
             P_battery_ac = 0;
         }
@@ -381,7 +391,7 @@ void BatteryPowerFlow::calculateACConnected()
         }
 
         // Excess PV can go to battery, if PV can cover charging losses
-        if (m_BatteryPower->canSystemCharge) {
+        if (m_BatteryPower->canSystemCharge || m_BatteryPower->canCurtailCharge) {
             P_pv_to_batt_ac = std::abs(P_battery_ac);
             P_available_pv = P_pv_ac - P_pv_to_load_ac - P_system_loss_ac;
             if (P_pv_to_batt_ac > P_available_pv)
@@ -606,6 +616,9 @@ void BatteryPowerFlow::calculateACConnected()
         P_grid_ac = 0;
     if (std::abs(P_crit_load_unmet_ac) < m_BatteryPower->tolerance)
         P_crit_load_unmet_ac = 0;
+    if (std::abs(P_interconnection_loss_ac) < m_BatteryPower->tolerance) {
+        P_interconnection_loss_ac = 0;
+    }
    
 	// assign outputs
 	m_BatteryPower->powerBatteryAC = P_battery_ac;
@@ -699,7 +712,7 @@ void BatteryPowerFlow::calculateDCConnected()
     {
         // First check whether battery charging came from PV.
         // Assumes that if battery is charging and can charge from PV, that it will charge from PV before using the grid
-        if (m_BatteryPower->canSystemCharge || m_BatteryPower->canClipCharge) {
+        if (m_BatteryPower->canSystemCharge || m_BatteryPower->canClipCharge || m_BatteryPower->canCurtailCharge) {
             P_pv_to_batt_dc = std::abs(P_battery_dc);
             if (P_pv_to_batt_dc > P_pv_dc - P_system_loss_dc) {
                 P_pv_to_batt_dc = P_pv_dc - P_system_loss_dc;
@@ -1011,6 +1024,9 @@ void BatteryPowerFlow::calculateDCConnected()
         P_grid_ac = 0;
     if (std::abs(P_crit_load_unmet_ac) < m_BatteryPower->tolerance)
         P_crit_load_unmet_ac = 0;
+    if (std::abs(P_interconnection_loss_ac) < m_BatteryPower->tolerance) {
+        P_interconnection_loss_ac = 0;
+    }
 
 	// assign outputs
     m_BatteryPower->singlePointEfficiencyDCToAC = efficiencyDCAC;

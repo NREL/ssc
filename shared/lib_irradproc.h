@@ -603,6 +603,48 @@ double sun_rise_and_set(double* m_rts, double* h_rts, double* delta_prime, doubl
     double* h_prime, double h0_prime, int sun);
 
 /**
+ * Table for storing the recently computed solarpos_spa intermediate outputs
+ * The algorithm reuses the outputs from the last 3 days or so, so the hash table is emptied every 3 days to reduce size
+ * Latitude, Longitude, Altitude, Tilt and Azimuth are not in the key because they remain constant throughout
+ */
+
+struct spa_table_key {
+    double jd;
+    double delta_t;
+    int pressure;
+    int temp;
+    // these are both inputs and outputs (e.g. also stored in the output vector)
+    double ascension;
+    double declination;
+
+    bool operator==(const spa_table_key &other) const;
+
+    spa_table_key(double j, double dt, double p, double t, double a, double d);
+};
+
+template <>
+struct std::hash<spa_table_key>
+{
+  std::size_t operator()(const spa_table_key& k) const;
+};
+
+class solarpos_lookup
+{
+    std::unordered_map<spa_table_key, std::vector<double>> spa_table;
+    int spa_table_day;
+    void clear_spa_table();
+
+    public:
+
+    solarpos_lookup();
+    void roll_spa_table_forward(int day);
+
+    std::vector<double>* find(spa_table_key spa_key_inputs);
+    void insert(spa_table_key spa_key_inputs, std::vector<double> spa_outputs);
+};
+
+
+/**
 *   calculate_spa function combines numerous functions to calculate the Solar Position Algorithm parameters
 *
 * \param[in] jd julian day calculated outside of function for compatibility with sunrise sunset calcs
@@ -629,66 +671,10 @@ double sun_rise_and_set(double* m_rts, double* h_rts, double* delta_prime, doubl
 * \param[out] needed_values[8] azimuth topocentric azimuth angle (degrees)
 */
 
-
 void calculate_spa(double jd, double lat, double lng, double alt, double pressure, double temp,
-    double delta_t, double tilt, double azm_rotation, double ascension_and_declination[2], double needed_values[9]);
+    double delta_t, double tilt, double azm_rotation, double ascension_and_declination[2], double needed_values[9],
+    std::shared_ptr<solarpos_lookup> spa_table=nullptr);
 
-/**
- * Table for storing the recently computed solarpos_spa intermediate outputs
- * The algorithm reuses the outputs from the last 3 days or so, so the hash table is emptied every 3 days to reduce size
- * Latitude, Longitude, Altitude, Tilt and Azimuth are not in the key because they remain constant throughout
- */
-struct spa_table_key {
-    double jd;
-    double delta_t;
-    int pressure;
-    int temp;
-    // these are both inputs and outputs (e.g. also stored in the output vector)
-    double ascension;
-    double declination;
-
-    bool operator==(const spa_table_key &other) const
-        { return (jd == other.jd
-                && delta_t == other.delta_t
-                && pressure == other.pressure
-                && temp == other.temp
-                && ascension == other.ascension
-                && declination == other.declination
-                );
-        }
-
-    spa_table_key(double j, double dt, double p, double t, double a, double d):
-        jd(j), delta_t(dt), ascension(a), declination(d)
-    {
-        int pressure_bucket = 10;
-        pressure = ((int)(p + pressure_bucket/2) / pressure_bucket) * pressure_bucket;
-        pressure = (int)pressure;
-        int temp_bucket = 5;
-        temp = ((int)(t + temp_bucket / 2) / temp_bucket) * temp_bucket;
-        temp = (int)temp;
-    }
-};
-
-template <>
-struct std::hash<spa_table_key>
-{
-  std::size_t operator()(const spa_table_key& k) const
-  {
-    using std::hash;
-    // Compute individual hash values for first, second, etc and combine them using XOR and bit shifting:
-    return 
-    ((((
-            ((((hash<double>()(k.jd)
-             ^ (hash<double>()(k.delta_t) << 1)) >> 1)
-             ^ (hash<int>()(k.pressure) << 1)) >> 1)
-             ^ (hash<int>()(k.temp) << 1)) >> 1)
-             ^ (hash<double>()(k.ascension) << 1)) >> 1)
-             ^ (hash<double>()(k.declination) << 1)
-             ;
-  }
-};
-
-void clear_spa_table();
 
 /**
 *
@@ -763,7 +749,8 @@ void calculate_eot_and_sun_rise_transit_set(double jme, double tz, double alpha,
 * \param[out] sunn[7] true solar time (hrs)
 * \param[out] sunn[8] extraterrestrial solar irradiance on horizontal at particular time (W/m2)
 */
-void solarpos_spa(int year, int month, int day, int hour, double minute, double second, double lat, double lng, double tz, double dut1, double alt, double pressure, double temp, double tilt, double azm_rotation, double sunn[9]);
+void solarpos_spa(int year, int month, int day, int hour, double minute, double second, double lat, double lng, double tz, double dut1, double alt, double pressure, double temp, double tilt, double azm_rotation, double sunn[9],
+    std::shared_ptr<solarpos_lookup> spa_table=nullptr);
 /** @} */ // end of solarpos_spa group
 
 /**
@@ -1112,6 +1099,9 @@ protected:
 
     std::vector<std::vector<double>> solarpos_outputs_for_lifetime;     ///< Table of solarpos outputs stored for lifetime simulations
     void storeSolarposOutputs();
+
+    std::shared_ptr<solarpos_lookup> spa_table;
+
 public:
 
     /// Directive to indicate that if delt_hr is less than zero, do not interpolate sunrise and sunset hours
