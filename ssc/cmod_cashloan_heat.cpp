@@ -201,6 +201,8 @@ extern var_info
     vtab_fuelcell_replacement_cost[],
     vtab_tax_credits[],
     vtab_payment_incentives[],
+    vtab_tax_credits_heat[],
+    vtab_payment_incentives_heat[],
     vtab_lcos_inputs[],
     vtab_update_tech_outputs[],
     vtab_utility_rate_common[];
@@ -360,6 +362,8 @@ public:
 		add_var_info( vtab_depreciation );
 		add_var_info( vtab_tax_credits );
 		add_var_info( vtab_payment_incentives );
+        add_var_info(vtab_tax_credits_heat);
+        add_var_info(vtab_payment_incentives_heat);
 		add_var_info(vtab_battery_replacement_cost);
 		add_var_info(vtab_fuelcell_replacement_cost);
 		add_var_info(vtab_cashloan_heat);
@@ -420,7 +424,7 @@ public:
 
         
 
-        hourly_energy_calcs.calculate(this);
+        hourly_energy_calcs.calculate(this, true);
 
         // dispatch
         if (as_integer("system_use_lifetime_output") == 1)
@@ -687,6 +691,35 @@ public:
 		if (ibi_uti_per > as_double("ibi_uti_percent_maxvalue")) ibi_uti_per = as_double("ibi_uti_percent_maxvalue"); 
 		ibi_oth_per = as_double("ibi_oth_percent")*0.01*total_cost;
 		if (ibi_oth_per > as_double("ibi_oth_percent_maxvalue")) ibi_oth_per = as_double("ibi_oth_percent_maxvalue"); 
+
+        // for heat models, convert input incentives to kW (capacity) and kWh (production)
+        const double BTUh_TO_W = 293.07107e-3; // 1
+
+        assign("cbi_fed_amount", var_data(as_double("cbi_fed_amount_heat_btu") / BTUh_TO_W));
+        assign("cbi_sta_amount", var_data(as_double("cbi_sta_amount_heat_btu") / BTUh_TO_W));
+        assign("cbi_uti_amount", var_data(as_double("cbi_uti_amount_heat_btu") / BTUh_TO_W));
+        assign("cbi_oth_amount", var_data(as_double("cbi_oth_amount_heat_btu") / BTUh_TO_W));
+        /*
+        auto vd = as_vector_double("pbi_fed_amount_heat_btu");
+        for (auto& d : vd)
+            d = d / MMBTU_TO_KWh;
+*/
+        auto funcVecMMBTUtokWh = [](compute_module* cm, const char* name) {
+            const double MMBTU_TO_KWh = 293.07107; // 1
+            auto vd = cm->as_vector_double(name);// only working for multiple value inputs - not single value
+            for (auto& d : vd)
+                d = d / MMBTU_TO_KWh;
+            return vd;
+            };
+
+        assign("pbi_fed_amount", var_data(funcVecMMBTUtokWh(this, "pbi_fed_amount_heat_btu")));
+        assign("pbi_sta_amount", var_data(funcVecMMBTUtokWh(this, "pbi_sta_amount_heat_btu")));
+        assign("pbi_uti_amount", var_data(funcVecMMBTUtokWh(this, "pbi_uti_amount_heat_btu")));
+        assign("pbi_oth_amount", var_data(funcVecMMBTUtokWh(this, "pbi_oth_amount_heat_btu")));
+
+        assign("ptc_fed_amount", var_data(funcVecMMBTUtokWh(this, "ptc_fed_amount_heat_btu")));
+        assign("ptc_sta_amount", var_data(funcVecMMBTUtokWh(this, "ptc_sta_amount_heat_btu")));
+
 
 		// cbi
 		cbi_fed_amount = 1000.0*nameplate*as_double("cbi_fed_amount");

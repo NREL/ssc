@@ -319,6 +319,13 @@ var_info vtab_depreciation_outputs[] = {
 var_info_invalid
 };
 
+var_info vtab_tax_credits_heat[] = {
+{ SSC_INPUT,SSC_ARRAY   , "ptc_fed_amount_heat_btu"                       , "Federal PTC amount"                                             , "$/MMBtu"                                  , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY   , "ptc_sta_amount_heat_btu"                       , "State PTC amount"                                             , "$/MMBtu"                                  , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
+var_info_invalid
+};
+
+
 var_info vtab_tax_credits[] = {
 { SSC_INPUT,SSC_ARRAY  , "itc_fed_amount"                       , "Federal amount-based ITC amount"                                , "$"                                      , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
 { SSC_INPUT,SSC_NUMBER  , "itc_fed_amount_deprbas_fed"           , "Federal amount-based ITC reduces federal depreciation basis"    , "0/1"                                    , ""                                      , "Tax Credit Incentives", "?=1"            , "BOOLEAN"               , ""},
@@ -346,6 +353,19 @@ var_info vtab_tax_credits[] = {
 { SSC_INPUT,SSC_NUMBER  , "ptc_sta_term"                         , "State PTC term"                                                 , "years"                                  , ""                                      , "Tax Credit Incentives", "?=10"           , ""                      , ""},
 { SSC_INPUT,SSC_NUMBER  , "ptc_sta_escal"                        , "State PTC escalation"                                           , "%/year"                                 , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
 var_info_invalid };
+
+var_info vtab_payment_incentives_heat[] = {
+    { SSC_INPUT,SSC_NUMBER  , "cbi_fed_amount_heat_btu"                       , "Federal CBI amount"                                             , "$/(Btu/hr))"                                 , ""                                      , "Payment Incentives"   , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_NUMBER  , "cbi_sta_amount_heat_btu"                       , "State CBI amount"                                             , "$/(Btu/hr))"                                 , ""                                      , "Payment Incentives"   , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_NUMBER  , "cbi_uti_amount_heat_btu"                       , "Utility CBI amount"                                             , "$/(Btu/hr))"                                 , ""                                      , "Payment Incentives"   , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_NUMBER  , "cbi_oth_amount_heat_btu"                       , "Other CBI amount"                                             , "$/(Btu/hr))"                                 , ""                                      , "Payment Incentives"   , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_ARRAY   , "pbi_fed_amount_heat_btu"                       , "Federal PBI amount"                                             , "$/MMBtu"                                  , ""                                      , "Payment Incentives"   , "?=0"            , ""                      , ""},
+    { SSC_INPUT,SSC_ARRAY   , "pbi_sta_amount_heat_btu"                       , "State PBI amount"                                             , "$/MMBtu"                                  , ""                                      , "Payment Incentives"   , "?=0"            , ""                      , ""},
+    { SSC_INPUT,SSC_ARRAY   , "pbi_uti_amount_heat_btu"                       , "Utility PBI amount"                                             , "$/MMBtu"                                  , ""                                      , "Payment Incentives"   , "?=0"            , ""                      , ""},
+    { SSC_INPUT,SSC_ARRAY   , "pbi_oth_amount_heat_btu"                       , "Other PBI amount"                                             , "$/MMBtu"                                  , ""                                      , "Payment Incentives"   , "?=0"            , ""                      , ""},
+
+var_info_invalid };
+
 
 var_info vtab_payment_incentives[] = {
 { SSC_INPUT,SSC_NUMBER  , "ibi_fed_amount"                       , "Federal amount-based IBI amount"                                , "$"                                      , ""                                      , "Payment Incentives"   , "?=0"            , ""                      , ""},

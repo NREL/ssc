@@ -52,6 +52,8 @@ extern var_info vtab_depreciation_inputs[];
 extern var_info vtab_depreciation_outputs[];
 extern var_info vtab_tax_credits[];
 extern var_info vtab_payment_incentives[];
+extern var_info vtab_tax_credits_heat[];
+extern var_info vtab_payment_incentives_heat[];
 extern var_info vtab_debt[];
 extern var_info vtab_ppa_inout[];
 extern var_info vtab_financial_metrics[];

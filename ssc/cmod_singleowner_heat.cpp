@@ -671,6 +671,8 @@ vtab_tax_credits[],
 vtab_depreciation_inputs[],
 vtab_depreciation_outputs[],
 vtab_payment_incentives[],
+vtab_tax_credits_heat[],
+vtab_payment_incentives_heat[],
 vtab_debt[],
 vtab_financial_metrics[],
 //	vtab_financial_capacity_payments[],
@@ -926,8 +928,10 @@ public:
         add_var_info( vtab_standard_financial );
 		add_var_info( vtab_oandm_heat );
 		add_var_info( vtab_equip_reserve );
-		add_var_info( vtab_tax_credits );
-		add_var_info(vtab_depreciation_inputs );
+        add_var_info(vtab_tax_credits);
+        add_var_info(vtab_tax_credits_heat);
+        add_var_info(vtab_payment_incentives_heat);
+        add_var_info(vtab_depreciation_inputs );
         add_var_info(vtab_depreciation_outputs );
         add_var_info( vtab_payment_incentives );
 		add_var_info( vtab_debt );
@@ -1748,8 +1752,38 @@ public:
                 cf.at(CF_itc_fed_percent_maxvalue, k + 1) = itc_fed_percent_maxvalue[k];
         }
 
+        // for heat models, convert input incentives to kW (capacity) and kWh (production)
+        const double BTUh_TO_W = 293.07107e-3; // 1
+        const double MMBTU_TO_KWh = 293.07107; // 1
 
-		// cbi
+        assign("cbi_fed_amount", var_data(as_double("cbi_fed_amount_heat_btu") / BTUh_TO_W));
+        assign("cbi_sta_amount", var_data(as_double("cbi_sta_amount_heat_btu") / BTUh_TO_W));
+        assign("cbi_uti_amount", var_data(as_double("cbi_uti_amount_heat_btu") / BTUh_TO_W));
+        assign("cbi_oth_amount", var_data(as_double("cbi_oth_amount_heat_btu") / BTUh_TO_W));
+
+        /*
+        auto vd = as_vector_double("pbi_fed_amount_heat_btu");
+        for (auto& d : vd)
+            d = d / MMBTU_TO_KWh;
+*/
+        auto funcVecMMBTUtokWh = [](compute_module* cm, const char* name) {
+            const double MMBTU_TO_KWh = 293.07107; // 1
+            auto vd = cm->as_vector_double(name);// only working for multiple value inputs - not single value
+            for (auto& d : vd)
+                d = d / MMBTU_TO_KWh;
+            return vd;
+            };
+
+        assign("pbi_fed_amount", var_data(funcVecMMBTUtokWh(this, "pbi_fed_amount_heat_btu")));
+        assign("pbi_sta_amount", var_data(funcVecMMBTUtokWh(this, "pbi_sta_amount_heat_btu")));
+        assign("pbi_uti_amount", var_data(funcVecMMBTUtokWh(this, "pbi_uti_amount_heat_btu")));
+        assign("pbi_oth_amount", var_data(funcVecMMBTUtokWh(this, "pbi_oth_amount_heat_btu")));
+
+        assign("ptc_fed_amount", var_data(funcVecMMBTUtokWh(this, "ptc_fed_amount_heat_btu")));
+        assign("ptc_sta_amount", var_data(funcVecMMBTUtokWh(this, "ptc_sta_amount_heat_btu")));
+
+
+        // cbi
 		double cbi_fed_amount = 1000.0*nameplate*as_double("cbi_fed_amount");
 		if (cbi_fed_amount > as_double("cbi_fed_maxvalue")) cbi_fed_amount = as_double("cbi_fed_maxvalue");
 		double cbi_sta_amount = 1000.0*nameplate*as_double("cbi_sta_amount");
@@ -3459,7 +3493,7 @@ public:
 //		save_cf(CF_curtailment_value, nyears, "cf_curtailment_value");
 //		save_cf(CF_capacity_payment, nyears, "cf_capacity_payment");
 //		save_cf(CF_energy_curtailed, nyears, "cf_energy_curtailed");
-        const double MMBTU_TO_KWh = 293.07107; // 1
+//        const double MMBTU_TO_KWh = 293.07107; // 1
         save_cf(CF_ppa_price, nyears, "cf_ppa_price");
         for (size_t i = 0; i < nyears; i++)
             cf.at(CF_ppa_price_heat_btu, i) = cf.at(CF_ppa_price, i) * MMBTU_TO_KWh;
