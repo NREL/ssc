@@ -61,6 +61,7 @@ dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
 	bool can_clip_charge,
 	bool can_grid_charge,
 	bool can_fuelcell_charge,
+    bool can_curtail_charge,
     rate_data* util_rate,
     std::vector<double> battReplacementCostPerkWh,
     int battCycleCostChoice,
@@ -73,7 +74,8 @@ dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
     double SOC_min_outage,
     int load_forecast_mode
 	) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max_kwdc, Pd_max_kwdc, Pc_max_kwac, Pd_max_kwac,
-		t_min, dispatch_mode, weather_forecast_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge,
+		t_min, dispatch_mode, weather_forecast_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours,
+        can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge, can_curtail_charge,
         battReplacementCostPerkWh, battCycleCostChoice, battCycleCost, battOMCost, interconnection_limit, chargeOnlySystemExceedLoad, dischargeOnlyLoadExceedSystem,
         behindTheMeterDischargeToGrid, SOC_min_outage)
 {
@@ -401,10 +403,10 @@ double dispatch_automatic_behind_the_meter_t::compute_costs(size_t idx, size_t y
             year++;
         }
         for (size_t step = 0; step != _steps_per_hour && idx < _P_load_ac.size(); step++)
-        {
+        {   
             double power = _P_load_ac[idx] - _P_pv_ac[idx];
-            // One at a time so we can sort grid points by no-dispatch cost
-            std::vector<double> forecast_power = { -power }; // Correct sign convention for cost forecast
+            // One at a time so we can sort grid points by no-dispatch cost; TODO: consider curtailment limits - would need to pass in a forecast of these...
+            std::vector<double> forecast_power = { std::fmin(-1.0*power, m_batteryPower->powerInterconnectionLimit)}; // Correct sign convention for cost forecast
             double step_cost = noDispatchForecast->forecastCost(forecast_power, year, (hour_of_year + hour) % 8760, step);
             no_dispatch_cost += step_cost;
 
@@ -707,6 +709,30 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
         }
     }
 
+    // Iterate over sorted grid to prioritize curtail charging
+    i = 0;
+    if (m_batteryPower->canCurtailCharge || m_batteryPower->canSystemCharge) {
+        while (i < _num_steps) {
+            // Don't plan to charge if we were already planning to discharge. 0 is no plan, negative is clipped energy
+            index = sorted_grid[i].Hour() * _steps_per_hour + sorted_grid[i].Step();
+            if (plan.plannedDispatch[index] <= 0.0)
+            {
+                double requiredPower = 0.0;
+                if (sorted_grid[i].Grid() < 0) {
+                    double powerLimit = std::fmin(m_batteryPower->powerInterconnectionLimit, m_batteryPower->powerCurtailmentLimit);
+                    requiredPower = sorted_grid[i].Grid() + powerLimit;
+                    requiredPower = std::fmin(0.0, requiredPower);
+                }
+                // Add to existing clipped energy
+                requiredPower += plan.plannedDispatch[index];
+                // Clipped energy was already counted once, so subtract that off incase requiredPower + clipped hit a current restriction
+                requiredEnergy += (requiredPower - plan.plannedDispatch[index]) * _dt_hour;
+                plan.plannedDispatch[index] = requiredPower;
+            }
+            i++;
+        }
+    }
+
     // Iterating over sorted grid
     std::stable_sort(sorted_grid.begin(), sorted_grid.end(), byLowestMarginalCost());
     // Find m hours to get required energy - hope we got today's energy yesterday (for morning peaks). Apportion between hrs of lowest marginal cost
@@ -765,9 +791,9 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
 
                 // Clipped energy was already counted once, so subtract that off incase requiredPower + clipped hit a current restriction
                 requiredEnergy += (requiredPower - plan.plannedDispatch[index]) * _dt_hour;
-            }
 
-            plan.plannedDispatch[index] = requiredPower;
+                plan.plannedDispatch[index] = requiredPower;
+            }
 
         }
         i++;

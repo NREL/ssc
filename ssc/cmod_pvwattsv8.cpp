@@ -143,7 +143,7 @@ static var_info _cm_vtab_pvwattsv8[] = {
         { SSC_INPUT,        SSC_NUMBER,      "rotlim",                         "Tracker rotation angle limit",                "degrees",       "",                                             "System Design",      "?=45.0",                  "",                              "" },
 
         { SSC_INPUT,        SSC_ARRAY,       "soiling",                        "Soiling loss",                                "%",         "",                                             "System Design",      "?",                       "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "losses",						   "Other DC losses",                             "%",         "total system losses",                          "System Design",      "*",                       "MIN=-5,MAX=99",                 "" },
+        { SSC_INPUT,        SSC_NUMBER,      "losses",						   "DC system losses",                             "%",         "total system losses",                          "System Design",      "*",                       "MIN=-5,MAX=99",                 "" },
 
         { SSC_INPUT,        SSC_NUMBER,      "enable_wind_stow",               "Enable tracker stow at high wind speeds",     "0/1",       "",                                             "System Design",      "?=0",                     "BOOLEAN",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "stow_wspd",                      "Tracker stow wind speed threshold",           "m/s",       "",                                             "System Design",      "?=10",                    "",                              "" },

@@ -109,10 +109,10 @@ var_info vtab_oandm[] = {
 { SSC_INPUT,        SSC_NUMBER,      "om_production_escal",          "Production-based O&M escalation",   "%/year",  "",                  "System Costs",            "?=0.0",                 "",                                         "" },
 { SSC_INPUT,        SSC_ARRAY,       "om_capacity",                  "Capacity-based O&M amount",         "$/kWcap", "!battery,!fuelcell",                  "System Costs",            "?=0.0",                 "",                                         "" },
 { SSC_INPUT,        SSC_NUMBER,      "om_capacity_escal",            "Capacity-based O&M escalation",     "%/year",  "",                  "System Costs",            "?=0.0",                 "",                                         "" },
-{ SSC_INPUT,        SSC_ARRAY,		 "om_fuel_cost",                 "Fuel cost",                         "$/MMBtu", "generic_system,fuelcell,tcslinearfresnel,tcstroughempirical,tcsgenericsolar,fresnelphysical",                  "System Costs",            "?=0.0",                 "",                                         "" },
-{ SSC_INPUT,        SSC_NUMBER,      "om_fuel_cost_escal",           "Fuel cost escalation",              "%/year",  "generic_system,fuelcell,tcslinearfresnel,tcstroughempirical,tcsgenericsolar,fresnelphysical",                  "System Costs",            "?=0.0",                 "",                                         "" },
-{ SSC_INPUT,        SSC_NUMBER,      "annual_fuel_usage",            "Fuel usage (yr 1)",                 "kWht",    "generic_system,fuelcell,tcslinearfresnel,tcstroughempirical,tcsgenericsolar,fresnelphysical",                  "System Costs",            "?=0",                     "MIN=0",                                         "" },
-{ SSC_INPUT,        SSC_ARRAY,       "annual_fuel_usage_lifetime",   "Fuel usage (lifetime)",             "kWht",    "generic_system,fuelcell,tcslinearfresnel,tcstroughempirical,tcsgenericsolar,fresnelphysical",                  "System Costs",            "",                     "",                                         "" },
+{ SSC_INPUT,        SSC_ARRAY,		 "om_fuel_cost",                 "Fuel cost",                         "$/MMBtu", "custom_generation,fuelcell,tcslinearfresnel,tcstroughempirical,tcsgenericsolar,fresnelphysical",                  "System Costs",            "?=0.0",                 "",                                         "" },
+{ SSC_INPUT,        SSC_NUMBER,      "om_fuel_cost_escal",           "Fuel cost escalation",              "%/year",  "custom_generation,fuelcell,tcslinearfresnel,tcstroughempirical,tcsgenericsolar,fresnelphysical",                  "System Costs",            "?=0.0",                 "",                                         "" },
+{ SSC_INPUT,        SSC_NUMBER,      "annual_fuel_usage",            "Fuel usage (yr 1)",                 "kWht",    "custom_generation,fuelcell,tcslinearfresnel,tcstroughempirical,tcsgenericsolar,fresnelphysical",                  "System Costs",            "?=0",                     "MIN=0",                                         "" },
+{ SSC_INPUT,        SSC_ARRAY,       "annual_fuel_usage_lifetime",   "Fuel usage (lifetime)",             "kWht",    "custom_generation,fuelcell,tcslinearfresnel,tcstroughempirical,tcsgenericsolar,fresnelphysical",                  "System Costs",            "",                     "",                                         "" },
 
 // replacements
 { SSC_INPUT,SSC_ARRAY   , "om_batt_replacement_cost"                 , "Replacement cost 1"               , "$/kWh"   , "battery"                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
@@ -1092,7 +1092,7 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
     if (m_cm->as_boolean(m_prefix +  "_en_timeindex"))
     {
         size_t n;
-        int steps_per_hour = nsteps / 8760;
+        double steps_per_hour = nsteps / 8760.0;
         int month = 0;
         int day = 0;
         int week = 0;
@@ -1110,9 +1110,9 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
                         m_factors[nsteps * a + i] *= (1.0 - p[a*nsteps + i]/100.0); //convert from percentages to factors
                 }
             }
-            else if ((n % 8760 == 0) && n != (size_t)(nsteps * analysis_period)) // give a helpful error for timestep mismatch
+            else if ((n % 8760 == 0 || n % 2920 == 0) && n != (size_t)(nsteps * analysis_period)) // give a helpful error for timestep mismatch
             {
-                m_error = util::format("Availability losses must be the same timestep as the weather file, if they are not daily/weekly/monthly.");
+                m_error = util::format("Time series availability losses must have the same time step as the simulation time step unless losses are daily, weekly, monthly, annual, or single value.");
             }
             else if (n == (size_t)( 12 * analysis_period)) { //Monthly 
                 for (int a = 0; a < analysis_period; a++) {
