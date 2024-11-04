@@ -101,7 +101,7 @@ static var_info vtab_cashloan_heat[] = {
     { SSC_OUTPUT, SSC_NUMBER, "total_cost", "Total installed cost", "$", "", "Financial Metrics", "*", "", "" },
 		
 
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_net",            "Electricity net generation",                               "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_net",                          "Thermal energy",               "kWht", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_sales",          "Electricity generation",                                   "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_purchases",      "Electricity from grid to system",                          "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_without_battery","Electricity generated without the battery or curtailment", "kWh", "", "Cash Flow Electricity", "",  "LENGTH_EQUAL=cf_length", "" },
@@ -124,6 +124,8 @@ static var_info vtab_cashloan_heat[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fuel_expense",        "Fuel expense",                   "$",            "",                          "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_opt_fuel_1_expense",  "Feedstock biomass expense",                   "$",            "",             "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_opt_fuel_2_expense",  "Feedstock coal expense",                   "$",            "",                "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_elec_price_for_heat_techs",        "Electricity expense in heat models", "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_property_tax_assessed_value","Property tax net assessed value", "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -195,7 +197,7 @@ var_info_invalid };
 extern var_info
     vtab_standard_financial[],
     vtab_standard_loan[],
-    vtab_oandm[],
+    vtab_oandm_heat[],
     vtab_depreciation[],
     vtab_battery_replacement_cost[],
     vtab_fuelcell_replacement_cost[],
@@ -301,6 +303,9 @@ enum {
     CF_om_production2_expense,
     CF_om_capacity2_expense,
     CF_om_fuel_expense,
+    CF_om_elec_price_for_heat_techs,
+
+
     CF_energy_charged_grid,
     CF_energy_charged_pv,
     CF_energy_discharged,
@@ -358,7 +363,7 @@ public:
 	{
 		add_var_info( vtab_standard_financial );
 		add_var_info( vtab_standard_loan );
-		add_var_info( vtab_oandm );
+		add_var_info( vtab_oandm_heat );
 		add_var_info( vtab_depreciation );
 		add_var_info( vtab_tax_credits );
 		add_var_info( vtab_payment_incentives );
@@ -581,9 +586,15 @@ public:
 				
 		// precompute expenses from annual schedules or value+escalation
 		escal_or_annual( CF_om_fixed_expense, nyears, "om_fixed", inflation_rate, 1.0, false, as_double("om_fixed_escal")*0.01 );
-		escal_or_annual( CF_om_production_expense, nyears, "om_production", inflation_rate, 0.001, false, as_double("om_production_escal")*0.01 );  
-		escal_or_annual( CF_om_capacity_expense, nyears, "om_capacity", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01 );  
+		escal_or_annual( CF_om_production_expense, nyears, "om_production_heat", inflation_rate, 0.001, false, as_double("om_production_escal")*0.01 );  
+		escal_or_annual( CF_om_capacity_expense, nyears, "om_capacity_heat", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01 );  
 		escal_or_annual( CF_om_fuel_expense, nyears, "om_fuel_cost", inflation_rate, as_double("system_heat_rate")*0.001, false, as_double("om_fuel_cost_escal")*0.01 );
+
+        arrp = as_array("utility_bill_wo_sys", &count);
+        for (i = 0; i < count && i <= nyears; i++)
+            cf.at(CF_om_elec_price_for_heat_techs, i) = arrp[i];
+
+
 
         // additional o and m sub types (e.g. batteries and fuel cells)
         int add_om_num_types = as_integer("add_om_num_types");
@@ -971,6 +982,7 @@ public:
 				+ cf.at(CF_om_production2_expense, i)
 				+ cf.at(CF_om_capacity2_expense, i)
 				+ cf.at(CF_om_fuel_expense,i)
+                + cf.at(CF_om_elec_price_for_heat_techs, i)
 				+ cf.at(CF_om_opt_fuel_1_expense,i)
 				+ cf.at(CF_om_opt_fuel_2_expense,i)
 				+ cf.at(CF_property_tax_expense,i)
@@ -1422,6 +1434,9 @@ public:
             save_cf(CF_om_production2_expense, nyears, "cf_om_production2_expense");
             save_cf(CF_om_capacity2_expense, nyears, "cf_om_capacity2_expense");
         }
+
+        save_cf(CF_om_elec_price_for_heat_techs, nyears, "cf_om_elec_price_for_heat_techs");
+
 		save_cf( CF_om_fuel_expense, nyears, "cf_om_fuel_expense" );
 		save_cf( CF_om_opt_fuel_1_expense, nyears, "cf_om_opt_fuel_1_expense" );
 		save_cf( CF_om_opt_fuel_2_expense, nyears, "cf_om_opt_fuel_2_expense" );
@@ -1521,13 +1536,15 @@ public:
 		double pvFixedOandM = npv(CF_om_capacity_expense, nyears, nom_discount_rate);
 		double pvVariableOandM = npv(CF_om_production_expense, nyears, nom_discount_rate);
 		double pvFuelOandM = npv(CF_om_fuel_expense, nyears, nom_discount_rate);
+        double pvElec_price_for_heat_techs = npv(CF_om_elec_price_for_heat_techs, nyears, nom_discount_rate);
+
 		double pvOptFuel1OandM = npv(CF_om_opt_fuel_1_expense, nyears, nom_discount_rate);
 		double pvOptFuel2OandM = npv(CF_om_opt_fuel_2_expense, nyears, nom_discount_rate);
 	//	double pvWaterOandM = NetPresentValue(sv[svNominalDiscountRate], cf[cfAnnualWaterCost], analysis_period);
 
-		assign( "present_value_oandm",  var_data((ssc_number_t)(pvAnnualOandM + pvFixedOandM + pvVariableOandM + pvFuelOandM))); // + pvWaterOandM);
+		assign( "present_value_oandm",  var_data((ssc_number_t)(pvAnnualOandM + pvFixedOandM + pvVariableOandM + pvFuelOandM + pvElec_price_for_heat_techs))); // + pvWaterOandM);
 
-		assign( "present_value_oandm_nonfuel", var_data((ssc_number_t)(pvAnnualOandM + pvFixedOandM + pvVariableOandM)));
+		assign( "present_value_oandm_nonfuel", var_data((ssc_number_t)(pvAnnualOandM + pvFixedOandM + pvVariableOandM + pvElec_price_for_heat_techs)));
 		assign( "present_value_fuel", var_data((ssc_number_t)(pvFuelOandM + pvOptFuel1OandM + pvOptFuel2OandM)));
 
 		// present value of insurance and property tax

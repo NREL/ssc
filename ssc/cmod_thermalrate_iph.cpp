@@ -46,7 +46,7 @@ static var_info vtab_thermal_rate_iph[] = {
 
 	// First year or lifetime hourly or subhourly
 	// load and gen expected to be > 0
-	{ SSC_INPUT, SSC_ARRAY, "gen_heat", "Thermal power generated", "kW-t", "", "Thermal Rate", "*", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "gen_heat", "Thermal power generated", "kWt", "", "Thermal Rate", "*", "", "" },
 	 
 	// input from user as MMBtu/hr and output as MMBtu/hr
 	{ SSC_INOUT, SSC_ARRAY, "thermal_load_heat_btu", "Thermal load (year 1)", "MMBtu/hr", "", "Thermal Rate", "", "", "" },
@@ -72,9 +72,11 @@ static var_info vtab_thermal_rate_iph[] = {
 
 
 	{ SSC_OUTPUT, SSC_ARRAY, "annual_thermal_value", "Thermal value", "$", "", "Annual", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "thermal_revenue_with_system", "Thermal revenue with system", "$", "", "Time Series", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "thermal_revenue_without_system", "Thermal revenue without system", "$", "", "Time Series", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "thermal_load_year1", "Thermal load (year 1)", "$", "", "", "*", "", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "thermal_revenue_with_system", "Thermal revenue with system", "$", "", "Time Series", "*", "", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "thermal_revenue_without_system", "Thermal revenue without system", "$", "", "Time Series", "*", "", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "thermal_cost_with_system", "Thermal cost with system", "$", "", "Time Series", "*", "", "" },
+    { SSC_OUTPUT, SSC_ARRAY, "thermal_cost_without_system", "Thermal cost without system", "$", "", "Time Series", "*", "", "" },
+    { SSC_OUTPUT, SSC_NUMBER, "thermal_load_year1", "Thermal load total", "MMBtu/hr", "", "", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "thermal_savings_year1", "Thermal savings (year 1)", "$", "", "", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "thermal_cost_with_system_year1", "Thermal cost with sytem (year 1)", "$", "", "", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "thermal_cost_without_system_year1", "Thermal cost without system (year 1)", "$", "", "", "*", "", "" },
@@ -217,6 +219,18 @@ public:
 		ssc_number_t ts_hour_gen = 1.0f / step_per_hour_gen;
 		m_num_rec_yearly = nrec_gen_per_year;
 
+
+        // prepare timestep arrays for load and grid values
+        std::vector<ssc_number_t>
+            e_sys_cy(m_num_rec_yearly), p_sys_cy(m_num_rec_yearly),
+            p_load(m_num_rec_yearly), // to handle no load, or num load != num gen resets above assignment
+            p_buyrate(m_num_rec_yearly),
+            p_sellrate(m_num_rec_yearly),
+            e_grid_cy(m_num_rec_yearly), p_grid_cy(m_num_rec_yearly),
+            e_load_cy(m_num_rec_yearly), p_load_cy(m_num_rec_yearly); // current year load (accounts for escal)
+
+
+
 		if (is_assigned("thermal_load_heat_btu"))
 		{ // hourly or sub hourly loads for single year
 
@@ -236,15 +250,6 @@ public:
 //		ssc_number_t ts_hour_load = 1.0f / step_per_hour_load;
 
 
-
-	// prepare timestep arrays for load and grid values
-		std::vector<ssc_number_t>
-			e_sys_cy(m_num_rec_yearly), p_sys_cy(m_num_rec_yearly),
-			p_load(m_num_rec_yearly), // to handle no load, or num load != num gen
-			p_buyrate(m_num_rec_yearly),
-			p_sellrate(m_num_rec_yearly),
-			e_grid_cy(m_num_rec_yearly), p_grid_cy(m_num_rec_yearly),
-			e_load_cy(m_num_rec_yearly), p_load_cy(m_num_rec_yearly); // current year load (accounts for escal)
 
 
 
