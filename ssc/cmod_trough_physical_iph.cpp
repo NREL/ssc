@@ -730,8 +730,6 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "pipe_tes_P_dsn",            "Pressure in TES pipes at design conditions",                                       "bar",          "",               "TES",            "sim_type=1&tes_type=0",            "",                      "" },
 
     //{ SSC_OUTPUT,       SSC_ARRAY,       "defocus",                   "Field optical focus fraction",                                                     "",             "",               "solver",         "*",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "electricity_rate",         "Electricity price = calculated annual elec cost / total elec energy consusmed",    "$/kWhe",       "",               "Post-process",   "sim_type=1&csp_financial_model=7",                       "",                      "" },
-
 
     var_info_invalid };
     
@@ -1501,33 +1499,14 @@ public:
 
         if (sim_type == 1)
         {
-            if (csp_financial_model == 8) {        // No Financial Model
+            if (csp_financial_model == 8 || csp_financial_model == 7) {        // No Financial Model or LCOH
                 if (is_dispatch) {
-                    throw exec_error("trough_physical_iph", "Can't select dispatch optimization if No Financial model");
+                    throw exec_error("trough_physical_iph", "Can't select dispatch optimization if No Financial or LCOH model");
                 }
                 else { // if no dispatch optimization, don't need an input pricing schedule
                     // If electricity pricing data is not available, then dispatch to a uniform schedule
                     elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0, std::numeric_limits<double>::quiet_NaN());
                 }
-            }
-            else if (csp_financial_model == 7) {    // LCOH
-
-                size_t count_ppa_price_input;
-                ssc_number_t* ppa_price_input_array = as_array("ppa_price_input", &count_ppa_price_input);
-                double ppa_price_year1 = (double)ppa_price_input_array[0];  // [$/kWh]
-
-                // Time-of-Delivery factors by time step:
-                int ppa_mult_model = as_integer("ppa_multiplier_model");
-                if (ppa_mult_model == 1)    // use dispatch_ts input
-                {
-                    auto vec = as_vector_double("dispatch_factors_ts");
-                    elec_pricing_schedule = C_timeseries_schedule_inputs(vec, ppa_price_year1);
-                }
-                else if (ppa_mult_model == 0) // standard diuranal input
-                {
-                    elec_pricing_schedule = C_timeseries_schedule_inputs(as_matrix("dispatch_sched_weekday"),
-                        as_matrix("dispatch_sched_weekend"), as_vector_double("dispatch_tod_factors"), ppa_price_year1);
-                }             
             }
             else if (csp_financial_model == 1) {    // Single Owner
 
@@ -2372,8 +2351,6 @@ public:
         accumulate_annual_for_year("W_dot_par_tot_haf", "annual_electricity_consumption", sim_setup.m_report_step / 3600.0, steps_per_hour);	//[kWhe]
 
         double annual_electricity_consumption = as_double("annual_electricity_consumption");    //[kWhe]
-        double electricity_rate_calc = annual_elec_cost / annual_electricity_consumption;       //[$/kWhe]
-        assign("electricity_rate", electricity_rate_calc);
 
         ssc_number_t annual_field_fp = accumulate_annual_for_year("q_dot_freeze_prot", "annual_field_freeze_protection", sim_setup.m_report_step / 3600.0*1.E3, steps_per_hour);    //[kWht]
         ssc_number_t annual_tes_fp = accumulate_annual_for_year("q_tes_heater", "annual_tes_freeze_protection", sim_setup.m_report_step / 3600.0*1.E3, steps_per_hour); //[kWht]

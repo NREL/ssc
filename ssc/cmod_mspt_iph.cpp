@@ -1617,7 +1617,7 @@ public:
         if (sim_type == 1) {
             if (csp_financial_model == 8 || csp_financial_model == 7) {        // No Financial Model or LCOH
                 if (is_dispatch) {
-                    throw exec_error("mspt_iph", "Can't select dispatch optimization if No Financial model");
+                    throw exec_error("mspt_iph", "Can't select dispatch optimization if No Financial or LCOH model");
                 }
                 else { // if no dispatch optimization, don't need an input pricing schedule
                     // If electricity pricing data is not available, then dispatch to a uniform schedule
