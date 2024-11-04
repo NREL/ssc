@@ -57,6 +57,8 @@ extern var_info vtab_payment_incentives_heat[];
 extern var_info vtab_debt[];
 extern var_info vtab_ppa_inout[];
 extern var_info vtab_financial_metrics[];
+extern var_info vtab_ppa_inout_heat[];
+extern var_info vtab_financial_metrics_heat[];
 
 extern var_info vtab_adjustment_factors[];
 extern var_info vtab_dc_adjustment_factors[];

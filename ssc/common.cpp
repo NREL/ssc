@@ -533,6 +533,27 @@ var_info vtab_ppa_inout[] = {
 
 var_info_invalid };
 
+
+var_info vtab_ppa_inout_heat[] = {
+{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_mode",                          "PPA solution mode",                              "0/1",   "0=solve ppa,1=specify ppa", "Revenue",         "?=0",                     "INTEGER,MIN=0,MAX=1",            "" },
+{ SSC_INPUT,        SSC_NUMBER,     "ppa_soln_tolerance",                     "PPA solution tolerance",                         "",                 "", "Revenue", "?=1e-5", "", "" },
+{ SSC_INPUT,        SSC_NUMBER,     "ppa_soln_min",                           "PPA solution minimum ppa",                       "cents/kWht",        "", "Revenue", "?=0", "", "" },
+{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max",                           "PPA solution maximum ppa",                       "cents/kWht",        "", "Revenue",         "?=100",                     "",            "" },
+{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max_iterations",                "PPA solution maximum number of iterations",      "",                 "", "Revenue",         "?=100",                     "INTEGER,MIN=1",            "" },
+
+{ SSC_INPUT,        SSC_ARRAY,      "ppa_price_input",			              "PPA price in first year input",			            "$/kWht",	        "",	"Revenue",			 "*",         "",      			"" },
+{ SSC_INPUT,        SSC_NUMBER,     "ppa_escalation",                         "PPA escalation rate",                            "%/year",           "", "Revenue", "?=0", "", "" },
+
+{ SSC_OUTPUT,       SSC_NUMBER,     "lppa_real",                              "LPPA Levelized PPA price real",                         "cents/kWht",               "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "lppa_nom",                               "LPPA Levelized PPA price nominal",                      "cents/kWht",               "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "ppa",                                    "PPA price in Year 1",                        "cents/kWht",               "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "ppa_escalation",                         "PPA price escalation",                      "%/year",              "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "npv_ppa_revenue",                        "Present value of PPA revenue",              "$",                   "", "Metrics", "*", "", "" },
+
+var_info_invalid };
+
+
+
 var_info vtab_financial_metrics[] = {
 //	{ SSC_OUTPUT,       SSC_NUMBER,     "first_year_energy_net",                  "Annual energy",                             "kWh",                 "", "Metrics", "*", "", "" },
 { SSC_OUTPUT,       SSC_NUMBER,     "debt_fraction",                          "Debt percent",                             "%", "", "Metrics", "*", "", "" },
@@ -560,6 +581,38 @@ var_info vtab_financial_metrics[] = {
 { SSC_OUTPUT,       SSC_NUMBER,     "analysis_period_irr",                    "IRR at end of analysis period",             "%",                   "", "Metrics", "*", "", "" },
 var_info_invalid
 };
+
+
+
+var_info vtab_financial_metrics_heat[] = {
+    //	{ SSC_OUTPUT,       SSC_NUMBER,     "first_year_energy_net",                  "Annual energy",                             "kWh",                 "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "debt_fraction",                          "Debt percent",                             "%", "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "flip_target_year",                       "Target year to meet IRR",                   "",                    "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "flip_target_irr",                        "IRR target",                                "%",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "flip_actual_year",                       "Year target IRR was achieved",              "year",                    "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "flip_actual_irr",                        "IRR in target year",                        "%",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "lcoe_real",                              "LCOH Levelized cost of heat real",                               "cents/kWht",               "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "lcoe_nom",                               "LCOH Levelized cost of heat nominal",                            "cents/kWht",               "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "lcos_real",                              "LCOS Levelized cost of storage real",                               "cents/kWht",               "", "Metrics", "?", "", "" },
+    //{ SSC_OUTPUT,       SSC_NUMBER,     "lcos_nom",                               "LCOS Levelized cost of storage nominal",                            "cents/kWh",               "", "Metrics", "?", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "npv_energy_nom",                         "Present value of annual energy nominal",     "kWht",                 "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "npv_energy_real",                        "Present value of annual energy real",     "kWht",                 "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "present_value_oandm",                    "Present value of O&M",				       "$",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "present_value_oandm_nonfuel",            "Present value of non-fuel O&M",         "$",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "present_value_fuel",                     "Present value of fuel O&M",             "$",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "present_value_insandproptax",            "Present value of insurance and prop tax",   "$",                   "", "Metrics", "*", "", "" },
+
+    { SSC_OUTPUT,       SSC_NUMBER,     "lcoptc_fed_real",                        "Levelized federal PTC real",              "cents/kWht",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "lcoptc_fed_nom",                         "Levelized federal PTC nominal",           "cents/kWht",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "lcoptc_sta_real",                        "Levelized state PTC real",                "cents/kWht",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "lcoptc_sta_nom",                         "Levelized state PTC nominal",             "cents/kWht",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "wacc",                                   "WACC Weighted average cost of capital",   "$",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "effective_tax_rate",                     "Effective tax rate",                        "%",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "analysis_period_irr",                    "IRR at end of analysis period",             "%",                   "", "Metrics", "*", "", "" },
+    var_info_invalid
+};
+
+
 
 var_info vtab_debt[] = {
 /* term financing */

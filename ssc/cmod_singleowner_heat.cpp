@@ -663,7 +663,7 @@ var_info_invalid };
 
 extern var_info
 vtab_update_tech_outputs[],
-vtab_ppa_inout[],
+vtab_ppa_inout_heat[],
 vtab_standard_financial[],
 vtab_oandm_heat[],
 vtab_equip_reserve[],
@@ -674,7 +674,7 @@ vtab_payment_incentives[],
 vtab_tax_credits_heat[],
 vtab_payment_incentives_heat[],
 vtab_debt[],
-vtab_financial_metrics[],
+vtab_financial_metrics_heat[],
 //	vtab_financial_capacity_payments[],
 //	vtab_financial_grid[],
 vtab_fuelcell_replacement_cost[],
@@ -924,7 +924,7 @@ private:
 public:
 	cm_singleowner_heat()
 	{
-        add_var_info(vtab_ppa_inout );
+        add_var_info(vtab_ppa_inout_heat );
         add_var_info( vtab_standard_financial );
 		add_var_info( vtab_oandm_heat );
 		add_var_info( vtab_equip_reserve );
@@ -935,7 +935,7 @@ public:
         add_var_info(vtab_depreciation_outputs );
         add_var_info( vtab_payment_incentives );
 		add_var_info( vtab_debt );
-		add_var_info( vtab_financial_metrics );
+		add_var_info( vtab_financial_metrics_heat );
 		add_var_info( _cm_vtab_singleowner_heat );
 		add_var_info(vtab_battery_replacement_cost);
 		add_var_info(vtab_fuelcell_replacement_cost);
