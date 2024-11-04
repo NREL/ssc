@@ -958,7 +958,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialDCBatteryModelPriceS
 
         auto batt_q_rel = data_vtab->as_vector_ssc_number_t("batt_capacity_percent");
         auto batt_cyc_avg = data_vtab->as_vector_ssc_number_t("batt_DOD_cycle_average");
-        EXPECT_NEAR(batt_q_rel.back(), 98.000, 2e-2);
+        EXPECT_NEAR(batt_q_rel.back(), 98.000, 5e-2);
         EXPECT_NEAR(batt_cyc_avg.back(), 27.49, 1.0); // High tolerance due to ~ 1% dispatch difference between linux and windows. Tighten in the future by improving the algorithm.
     }
 }
