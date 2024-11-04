@@ -732,7 +732,7 @@ public:
     {
         E_TES_TWO_TANK,
         E_TES_PACKED_BED,
-        E_TES_NT
+        E_TES_CYL
     };
 
     // Class to save messages for up stream classes

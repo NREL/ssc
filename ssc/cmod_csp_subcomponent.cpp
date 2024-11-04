@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "core.h"
 #include "csp_solver_two_tank_tes.h"
-#include "csp_solver_NTHeatTrap_tes.h"
+#include "csp_solver_piston_cylinder_tes.h"
 #include "csp_solver_packedbed_tes.h"
 
 // Forward declarations
@@ -62,7 +62,7 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_INPUT,        SSC_NUMBER,      "pb_pump_coef",              "Pumping power to move 1kg of HTF through PB loop",                                 "kW/kg",        "",               "powerblock",     "*",                       "",                      "" },
 
     // General TES Parameters
-    { SSC_INPUT,        SSC_NUMBER,      "tes_type",                  "Standard two tank (0), Packed Bed (1), HeatTrap Single Tank (2)",                  "-",            "",               "TES",            "?=0",                     "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_type",                  "Standard two tank (0), Packed Bed (1), Piston Cylinder (2)",                       "-",            "",               "TES",            "?=0",                     "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "Fluid",                     "Field HTF fluid ID number",                                                        "-",            "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_MATRIX,      "field_fl_props",            "User defined field fluid property data",                                           "-",            "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "tshours",                   "Equivalent full-load thermal storage hours",                                       "hr",           "",               "TES",            "*",                       "",                      "" },
@@ -114,12 +114,12 @@ static var_info _cm_vtab_csp_subcomponent[] = {
     { SSC_INPUT,        SSC_NUMBER,      "tes_pb_f_oversize",         "Packed bed oversize factor",                                                       "",             "",               "TES",            "tes_type=1",              "",                      "" },
     { SSC_INPUT,        SSC_ARRAY,       "tes_pb_T_grad_ini",         "TES Temperature gradient at beginning of timestep",                                "C",            "",               "TES",            "?=[-274]",                "",                      "" },
 
-    // TES Norwich HeatTrap
-    { SSC_INPUT,        SSC_NUMBER,      "tes_nt_tank_thick",         "Tank wall thickness (used for Norwich HeatTrap)",                                  "m",            "",               "TES",            "tes_type=2",              "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "tes_nt_tank_cp",            "Tank wall cp (used for Norwich HeatTrap)",                                         "kJ/kg-K",      "",               "TES",            "tes_type=2",              "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "tes_nt_tank_dens",          "Tank wall thickness (used for Norwich HeatTrap)",                                  "kg/m3",        "",               "TES",            "tes_type=2",              "",                      "" },
-    { SSC_INPUT,        SSC_ARRAY,       "tes_nt_piston_loss_poly",   "Polynomial coefficients describing piston heat loss function (f(kg/s)=%)",         "",             "",               "TES",            "tes_type=2",              "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "tes_nt_tank_insul_percent", "Percent additional wall mass due to insulation (used for Norwich HeatTrap)",       "%",            "",               "TES",            "?=0",                     "",                      "" },
+    // TES Piston Cylinder
+    { SSC_INPUT,        SSC_NUMBER,      "tes_cyl_tank_thick",         "Tank wall thickness (used for Piston Cylinder)",                                  "m",            "",               "TES",            "tes_type=2",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_cyl_tank_cp",            "Tank wall cp (used for Piston Cylinder)",                                         "kJ/kg-K",      "",               "TES",            "tes_type=2",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_cyl_tank_dens",          "Tank wall thickness (used for Piston Cylinder)",                                  "kg/m3",        "",               "TES",            "tes_type=2",              "",                      "" },
+    { SSC_INPUT,        SSC_ARRAY,       "tes_cyl_piston_loss_poly",   "Polynomial coefficients describing piston heat loss function (f(kg/s)=%)",         "",             "",               "TES",            "tes_type=2",              "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "tes_cyl_tank_insul_percent", "Percent additional wall mass due to insulation (used for Piston Cylinder)",       "%",            "",               "TES",            "?=0",                     "",                      "" },
 
     // Outputs
     { SSC_OUTPUT,       SSC_ARRAY,       "T_src_in",                  "Temperature to heat source",                                                       "C",            "",               "TES",            "*",                       "",                      "" },
@@ -184,7 +184,7 @@ public:
 
         C_csp_tes* storage_pointer;
         C_csp_two_tank_tes storage_two_tank;
-        C_csp_NTHeatTrap_tes storage_NT;
+        C_csp_piston_cylinder_tes storage_cyl;
         C_csp_packedbed_tes storage_packedbed;
 
         double P_ref = as_double("P_ref");
@@ -298,8 +298,8 @@ public:
             storage_pointer = &storage_packedbed;
 
         }
-        // Norwich HeatTrap
-        else if (tes_type == C_csp_tes::csp_tes_types::E_TES_NT)
+        // Piston Cylinder
+        else if (tes_type == C_csp_tes::csp_tes_types::E_TES_CYL)
         {
 
             int nstep = as_integer("tes_n_tsteps");
@@ -325,8 +325,8 @@ public:
             }
 
             // Modify wall density to account for insulation mass
-            double mass_factor = 1.0 + (0.01 * as_double("tes_nt_tank_insul_percent"));
-            double dens_orig = as_double("tes_nt_tank_dens");
+            double mass_factor = 1.0 + (0.01 * as_double("tes_cyl_tank_insul_percent"));
+            double dens_orig = as_double("tes_cyl_tank_dens");
             double dens_w_insulation = dens_orig * mass_factor;
 
             double T_tank_hot_ini = is_assigned("T_tank_hot_ini") == true ? as_double("T_tank_hot_ini") : as_double("T_loop_out");
@@ -335,7 +335,7 @@ public:
             double h_tank_in = is_assigned("h_tank_in") == true ? as_double("h_tank_in") : std::numeric_limits<double>::quiet_NaN();
             double d_tank_in = is_assigned("d_tank_in") == true ? as_double("d_tank_in") : std::numeric_limits<double>::quiet_NaN();
 
-            storage_NT = C_csp_NTHeatTrap_tes(
+            storage_cyl = C_csp_piston_cylinder_tes(
                 as_integer("Fluid"),                                                // [-] field fluid identifier
                 as_matrix("field_fl_props"),                                        // [-] field fluid properties
                 //as_integer("store_fluid"),                                          // [-] tes fluid identifier
@@ -359,11 +359,11 @@ public:
                 as_double("h_tank_min"),                                            // [m] Minimum allowable HTF height in storage tank
                 as_double("init_hot_htf_percent"),                                  // [%] Initial fraction of available volume that is hot
                 as_double("pb_pump_coef"),                                          // [kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle
-                as_double("tes_nt_tank_cp") * 1000,                                 // convert to J/kgK
+                as_double("tes_cyl_tank_cp") * 1000,                                 // convert to J/kgK
                 dens_w_insulation,                                                  // Tank Wall density
-                as_double("tes_nt_tank_thick"),                                     // Tank wall thickness
+                as_double("tes_cyl_tank_thick"),                                     // Tank wall thickness
                 nstep,                                                              // Number subtimesteps
-                as_vector_double("tes_nt_piston_loss_poly"),                        // Leakage polynomial (%)
+                as_vector_double("tes_cyl_piston_loss_poly"),                        // Leakage polynomial (%)
                 as_double("V_tes_des"),                                             // [m/s] Design-point velocity for sizing the diameters of the TES piping
                 as_boolean("calc_design_pipe_vals"),                                // [-] Should the HTF state be calculated at design conditions
                 as_double("tes_pump_coef"),                                         // [kW/kg/s] Pumping power to move 1 kg/s of HTF through tes loop
@@ -380,7 +380,7 @@ public:
                 as_double("DP_SGS")                                                 // [bar] Pressure drop on the TES discharge side (e.g., within the steam generator)
             );
 
-            storage_pointer = &storage_NT;
+            storage_pointer = &storage_cyl;
         }
         else
         {
@@ -427,9 +427,9 @@ public:
             storage_packedbed.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
                 h_tank_calc, d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
         }
-        else if (tes_type == C_csp_tes::csp_tes_types::E_TES_NT)
+        else if (tes_type == C_csp_tes::csp_tes_types::E_TES_CYL)
         {
-            storage_NT.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
+            storage_cyl.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
                 h_tank_calc, d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
         }
 
@@ -510,21 +510,21 @@ public:
             
 
             // Add NT specific outputs
-            if (tes_type == C_csp_tes::csp_tes_types::E_TES_NT)
+            if (tes_type == C_csp_tes::csp_tes_types::E_TES_CYL)
             {
                 double piston_location, piston_fraction;
-                storage_NT.calc_piston_location(piston_location, piston_fraction);
+                storage_cyl.calc_piston_location(piston_location, piston_fraction);
 
                 piston_loc_vec.push_back(piston_location);
                 piston_frac_vec.push_back(piston_fraction);
 
-                double tes_error = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_ERROR);
-                double tes_error_percent = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_ERROR_PERCENT);
-                double tes_error_leak = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_LEAK_ERROR);
-                double tes_E_hot = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_E_HOT);
-                double tes_E_cold = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_E_COLD);
-                double tes_wall_error = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_WALL_ERROR);
-                double tes_error_corrected = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_ERROR_CORRECTED);
+                double tes_error = storage_cyl.mc_reported_outputs.value(C_csp_piston_cylinder_tes::E_ERROR);
+                double tes_error_percent = storage_cyl.mc_reported_outputs.value(C_csp_piston_cylinder_tes::E_ERROR_PERCENT);
+                double tes_error_leak = storage_cyl.mc_reported_outputs.value(C_csp_piston_cylinder_tes::E_LEAK_ERROR);
+                double tes_E_hot = storage_cyl.mc_reported_outputs.value(C_csp_piston_cylinder_tes::E_E_HOT);
+                double tes_E_cold = storage_cyl.mc_reported_outputs.value(C_csp_piston_cylinder_tes::E_E_COLD);
+                double tes_wall_error = storage_cyl.mc_reported_outputs.value(C_csp_piston_cylinder_tes::E_WALL_ERROR);
+                double tes_error_corrected = storage_cyl.mc_reported_outputs.value(C_csp_piston_cylinder_tes::E_ERROR_CORRECTED);
 
                 tes_error_vec.push_back(tes_error);
                 tes_error_percent_vec.push_back(tes_error_percent);
@@ -534,13 +534,13 @@ public:
                 tes_wall_error_vec.push_back(tes_wall_error);
                 tes_error_corrected_vec.push_back(tes_error_corrected);
 
-                hot_tank_mass_perc[i] = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_HOT_TANK_HTF_PERC_FINAL);
-                exp_wall_mass[i] = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_EXP_WALL_MASS);
-                exp_length[i] = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_EXP_LENGTH);
-                mass_hot[i] = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_MASS_HOT_TANK);
-                mass_cold[i] = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_MASS_COLD_TANK);
-                V_cold[i] = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_VOL_COLD);
-                V_hot[i] = storage_NT.mc_reported_outputs.value(C_csp_NTHeatTrap_tes::E_VOL_HOT);
+                hot_tank_mass_perc[i] = storage_cyl.mc_reported_outputs.value(C_csp_piston_cylinder_tes::E_HOT_TANK_HTF_PERC_FINAL);
+                exp_wall_mass[i] = storage_cyl.mc_reported_outputs.value(C_csp_piston_cylinder_tes::E_EXP_WALL_MASS);
+                exp_length[i] = storage_cyl.mc_reported_outputs.value(C_csp_piston_cylinder_tes::E_EXP_LENGTH);
+                mass_hot[i] = storage_cyl.mc_reported_outputs.value(C_csp_piston_cylinder_tes::E_MASS_HOT_TANK);
+                mass_cold[i] = storage_cyl.mc_reported_outputs.value(C_csp_piston_cylinder_tes::E_MASS_COLD_TANK);
+                V_cold[i] = storage_cyl.mc_reported_outputs.value(C_csp_piston_cylinder_tes::E_VOL_COLD);
+                V_hot[i] = storage_cyl.mc_reported_outputs.value(C_csp_piston_cylinder_tes::E_VOL_HOT);
             }    
 
             // Add packed bed specific outputs
@@ -555,7 +555,7 @@ public:
 
         }
 
-        if (tes_type == C_csp_tes::csp_tes_types::E_TES_NT)
+        if (tes_type == C_csp_tes::csp_tes_types::E_TES_CYL)
         {
             set_vector("piston_loc", piston_loc_vec);
             set_vector("piston_frac", piston_frac_vec);

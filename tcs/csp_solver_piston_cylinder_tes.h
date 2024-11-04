@@ -30,15 +30,15 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef __csp_solver_NTHeatTrap_tes_
-#define __csp_solver_NTHeatTrap_tes_
+#ifndef __csp_solver_piston_cylinder_tes_
+#define __csp_solver_piston_cylinder_tes_
 
 #include "csp_solver_core.h"
 #include "csp_solver_util.h"
 #include "sam_csp_util.h"
 #include "csp_solver_tes_core.h"
 
-class C_storage_tank_dynamic_NT
+class C_storage_tank_dynamic_cyl
 {
 private:
     HTFProperties mc_htf;
@@ -97,7 +97,7 @@ private:
 
 public:
 
-    C_storage_tank_dynamic_NT();
+    C_storage_tank_dynamic_cyl();
 
     double calc_mass_at_prev();
 
@@ -170,15 +170,15 @@ public:
     
 };
 
-class C_csp_NTHeatTrap_tes : public C_csp_tes
+class C_csp_piston_cylinder_tes : public C_csp_tes
 {
 private:
 
 	HTFProperties mc_external_htfProps;		// Instance of HTFProperties class for external HTF
 	HTFProperties mc_store_htfProps;		// Instance of HTFProperties class for storage HTF
 
-    C_storage_tank_dynamic_NT mc_cold_tank_NT;			// Instance of storage tank class for the cold tank
-    C_storage_tank_dynamic_NT mc_hot_tank_NT;				// Instance of storage tank class for the hot tank	
+    C_storage_tank_dynamic_cyl mc_cold_tank_cyl;			// Instance of storage tank class for the cold tank
+    C_storage_tank_dynamic_cyl mc_hot_tank_cyl;				// Instance of storage tank class for the hot tank	
 
 	// member string for exception messages
 	std::string error_msg;
@@ -205,7 +205,7 @@ private:
 
 	double m_m_dot_tes_des_over_m_dot_external_des;	//[-]
 
-    // Added for NT
+    // Added for Piston cylinder model
     double m_tank_wall_cp;      //[J/kg-K]
     double m_tank_wall_dens;    //[kg/m3]
     double m_tank_wall_thick;   //[m]
@@ -243,7 +243,7 @@ public:
 		E_HOT_TANK_HTF_PERC_FINAL,   //[%] Final percent fill of available hot tank mass
 		E_W_DOT_HTF_PUMP,    //[MWe]
 
-        // NT Only Outputs
+        // Piston Cylinder Only Outputs
         E_VOL_COLD,
         E_VOL_HOT,
         E_VOL_TOT,
@@ -312,7 +312,7 @@ public:
     double P_in_des;                             //[bar] Pressure at the inlet to the TES, at the external system side
 
 
-	C_csp_NTHeatTrap_tes(
+	C_csp_piston_cylinder_tes(
         int external_fl,
         util::matrix_t<double> external_fl_props,
         //int tes_fl,
@@ -358,9 +358,9 @@ public:
         double dP_discharge = std::numeric_limits<double>::quiet_NaN()          // [bar] Pressure drop on the TES discharge side (e.g., within the steam generator)
     );
 
-    C_csp_NTHeatTrap_tes();
+    C_csp_piston_cylinder_tes();
 
-    ~C_csp_NTHeatTrap_tes() {};
+    ~C_csp_piston_cylinder_tes() {};
 
 	virtual void init(const C_csp_tes::S_csp_tes_init_inputs init_inputs);
 
