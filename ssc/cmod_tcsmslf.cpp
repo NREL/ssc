@@ -800,7 +800,7 @@ public:
         std::copy(sgs_P_dsn, sgs_P_dsn + nv, sgs_P_dsn_cm);
 
 		// performance adjustement factors
-		adjustment_factors haf(this, "adjust");
+		adjustment_factors haf(this->get_var_table(), "adjust");
 		if (!haf.setup())
 			throw exec_error("tcsmslf", "failed to setup adjustment factors: " + haf.error());
 		

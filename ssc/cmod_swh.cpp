@@ -344,7 +344,7 @@ public:
 		double ts_hour = 1.0/step_per_hour;
 		double ts_sec = 3600.0/step_per_hour;
 
-        adjustment_factors haf( this, "adjust" );
+        adjustment_factors haf( this->get_var_table(), "adjust" );
 		if ( !haf.setup(nrec) )
 			throw exec_error("swh", "failed to setup adjustment factors: " + haf.error() );
 

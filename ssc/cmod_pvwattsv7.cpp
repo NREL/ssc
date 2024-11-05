@@ -687,7 +687,7 @@ public:
         size_t nrec = wdprov->nrecords();
         size_t nlifetime = nrec * nyears;
 
-        adjustment_factors haf(this, "adjust");
+        adjustment_factors haf(this->get_var_table(), "adjust");
         if (!haf.setup(nrec, nyears))
             throw exec_error("pvwattsv7", "Failed to set up adjustment factors: " + haf.error());
 
