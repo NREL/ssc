@@ -1224,12 +1224,12 @@ void cm_pvsamv1::exec()
     //dc hourly adjustment factors
     int nyears_haf = nyears;
     if (!system_use_lifetime_output) nyears_haf = 1;
-    adjustment_factors dc_haf(this, "dc_adjust");
+    adjustment_factors dc_haf(this->get_var_table(), "dc_adjust");
     if (!dc_haf.setup((int)nrec, nyears_haf))
         throw exec_error("pvsamv1", "failed to setup DC adjustment factors: " + dc_haf.error());
 
     // hourly adjustment factors
-    adjustment_factors haf(this, "adjust");
+    adjustment_factors haf(this->get_var_table(), "adjust");
     if (!haf.setup((int)nrec, nyears_haf))
         throw exec_error("pvsamv1", "failed to setup AC adjustment factors: " + haf.error());
 
