@@ -188,7 +188,7 @@ public:
 	double powerBatteryDischargeMaxAC; ///< The maximum sustained power the battery can discharge (kWac)
 	double powerSystemLoss;        ///< The auxiliary power loss in the system (kW)
 	double powerConversionLoss;    ///< The power loss due to conversions in the battery power electronics (kW)
-    double powerInterconnectionLimit; ///< The size of the grid interconnection (kW). As of July 2021 only applies to discharging, should apply to charging & dispatch
+    double powerInterconnectionLimit; ///< The size of the grid interconnection (kW).
     double powerInterconnectionLoss; ///< The power loss due to interconnection limit, outage, or curtailment (kW)
     double powerCurtailmentLimit; ///< The curtailment limit for the current step (kW)
     double voltageSystem;		   ///< The system voltage
@@ -215,6 +215,7 @@ public:
 
 	bool canSystemCharge;	///< A boolean specifying whether the battery is allowed to charge from PV in the timestep
 	bool canClipCharge;	///< A boolean specifying whether the battery is allowed to charge from otherwise clipped PV in the timestep
+    bool canCurtailCharge;	///< A boolean specifying whether the battery is allowed to charge from otherwise curtailed energy in the timestep
 	bool canGridCharge; ///< A boolean specifying whether the battery is allowed to charge from the Grid in the timestep
 	bool canDischarge;  ///< A boolean specifying whether the battery is allowed to discharge in the timestep
     bool canDischargeToGrid; ///< A boolean specifying whether the battery is allowed to discharge to grid in the timestep
