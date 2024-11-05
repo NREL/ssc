@@ -311,7 +311,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 { SSC_INPUT, SSC_NUMBER,   "cec_adjust",                           "Temperature coefficient adjustment",                  "%",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
 { SSC_INPUT, SSC_NUMBER,   "cec_alpha_sc",                         "Short circuit current temperature coefficient",       "A/C",    "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
 { SSC_INPUT, SSC_NUMBER,   "cec_beta_oc",                          "Open circuit voltage temperature coefficient",        "V/C",    "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
-{ SSC_INPUT, SSC_NUMBER,   "cec_gamma_r",                          "Maximum power point temperature coefficient",         "%/C",    "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
 { SSC_INPUT, SSC_NUMBER,   "cec_i_l_ref",                          "Light current",                                       "A",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
 { SSC_INPUT, SSC_NUMBER,   "cec_i_mp_ref",                         "Maximum power point current",                         "A",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
 { SSC_INPUT, SSC_NUMBER,   "cec_i_o_ref",                          "Saturation current",                                  "A",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
@@ -655,7 +654,7 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_ss_reflected_derate",        "Subarray 1 Self-shading non-linear ground diffuse irradiance factor",  "frac",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_ss_derate",                  "Subarray 1 Self-shading non-linear DC factor",                         "frac",   "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "shadedb_subarray1_shade_frac",         "Subarray 1 Partial external shading DC factor",                        "frac",   "", "Time Series (Subarray 1)",       "",                     "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_snow_coverage",              "Subarray 1 Snow cover",                                                "0..1",   "", "Time Series (Subarray 1)",       "",                     "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_snow_coverage",              "Subarray 1 Fraction of row covered by snow",                                                "0..1",   "", "Time Series (Subarray 1)",       "",                     "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_snow_loss",                  "Subarray 1 Snow cover DC power loss",                                  "kW",     "", "Time Series (Subarray 1)",       "",                     "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_modeff",                     "Subarray 1 Module efficiency",                                         "%",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray1_celltemp",                   "Subarray 1 Cell temperature",                                          "C",      "", "Time Series (Subarray 1)",       "*",                    "",                              "" },
@@ -693,7 +692,7 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_ss_reflected_derate",        "Subarray 2 Self-shading non-linear ground diffuse irradiance factor",  "frac",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_ss_derate",                  "Subarray 2 Self-shading non-linear DC factor",                         "frac",   "", "Time Series (Subarray 2)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "shadedb_subarray2_shade_frac",         "Subarray 2 Partial shading DC factor",                                 "frac",   "", "Time Series (Subarray 2)",       "",                     "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_snow_coverage",				 "Subarray 2 Snow cover",                                                "0..1",   "", "Time Series (Subarray 2)",       "",                     "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_snow_coverage",				 "Subarray 2 Fraction of row covered by snow",                                                "0..1",   "", "Time Series (Subarray 2)",       "",                     "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_snow_loss",					 "Subarray 2 Snow cover DC power loss",                                  "kW",     "", "Time Series (Subarray 2)",       "",                     "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_modeff",                     "Subarray 2 Module efficiency",                                         "%",      "", "Time Series (Subarray 2)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray2_celltemp",                   "Subarray 2 Cell temperature",                                          "C",      "", "Time Series (Subarray 2)",       "",                    "",                              "" },
@@ -730,7 +729,7 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_ss_reflected_derate",        "Subarray 3 Self-shading non-linear ground diffuse irradiance factor",  "frac",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_ss_derate",                  "Subarray 3 Self-shading non-linear DC factor",                         "frac",   "", "Time Series (Subarray 3)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "shadedb_subarray3_shade_frac",         "Subarray 3 Partial external shading DC factor",                        "frac",   "", "Time Series (Subarray 3)",       "",                     "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_snow_coverage",				 "Subarray 3 Snow cover",                                                "0..1",   "", "Time Series (Subarray 3)",       "",                     "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_snow_coverage",				 "Subarray 3 Fraction of row covered by snow",                                                "0..1",   "", "Time Series (Subarray 3)",       "",                     "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_snow_loss",					 "Subarray 3 Snow cover DC power loss",			                         "kW",     "", "Time Series (Subarray 3)",       "",                     "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_modeff",                     "Subarray 3 Module efficiency",                                         "%",      "", "Time Series (Subarray 3)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray3_celltemp",                   "Subarray 3 Cell temperature",                                          "C",      "", "Time Series (Subarray 3)",       "",                    "",                              "" },
@@ -767,7 +766,7 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_ss_reflected_derate",        "Subarray 4 Self-shading non-linear ground diffuse irradiance factor",  "frac",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_ss_derate",                  "Subarray 4 Self-shading non-linear DC factor",                         "frac",   "", "Time Series (Subarray 4)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "shadedb_subarray4_shade_frac",         "Subarray 4 Partial external shading DC factor",                        "frac",   "", "Time Series (Subarray 4)",       "",                     "",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_snow_coverage",				 "Subarray 4 Snow cover",                                                "0..1",   "", "Time Series (Subarray 4)",       "",                     "",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_snow_coverage",				 "Subarray 4 Fraction of row covered by snow",                                                "0..1",   "", "Time Series (Subarray 4)",       "",                     "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_snow_loss",					 "Subarray 4 Snow cover DC power loss",                                  "kW",     "", "Time Series (Subarray 4)",       "",                     "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_modeff",                     "Subarray 4 Module efficiency",                                         "%",      "", "Time Series (Subarray 4)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "subarray4_celltemp",                   "Subarray 4 Cell temperature",                                          "C",      "", "Time Series (Subarray 4)",       "",                    "",                              "" },
@@ -1128,6 +1127,7 @@ void cm_pvsamv1::exec()
     weather_data_provider* wdprov = Irradiance->weatherDataProvider.get();
     int radmode = Irradiance->radiationMode;
     double bifaciality = 0.0;
+    double elev, pres, t_amb;
 
     // Get System or Subarray Inputs
     double aspect_ratio = Subarrays[0]->moduleAspectRatio;
@@ -1441,6 +1441,20 @@ void cm_pvsamv1::exec()
         dcStringVoltage.push_back(tmp);
     }
 
+    std::vector<std::shared_ptr<irrad>> irrads;
+    for (size_t nn = 0; nn < num_subarrays; nn++) {
+        auto irr = std::shared_ptr<irrad>(new irrad(Irradiance->weatherHeader, Irradiance->skyModel, Irradiance->radiationMode, Subarrays[nn]->trackMode,
+            Irradiance->instantaneous, Subarrays[nn]->backtrackingEnabled, false,
+            Irradiance->dtHour, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, 0.0, 
+            Subarrays[nn]->groundCoverageRatio, Subarrays[nn]->slopeTilt, Subarrays[nn]->slopeAzm,
+            Subarrays[nn]->poa.poaAll.get(), (as_boolean("enable_subhourly_clipping") || as_boolean("enable_subinterval_distribution"))));
+        
+        if (nyears > 1)
+            irr->setup_solarpos_outputs_for_lifetime(nrec);
+
+        irrads.push_back(irr);
+    }
+
     //idx is the LIFETIME index in the (possibly subhourly) year of weather data, or the normal index in a non-annual array (lifetime is 1)
     size_t idx = 0;
     //for normal annual simulations, this works as expected. for non-annual weather data inputs, nyears is 1,
@@ -1531,15 +1545,14 @@ void cm_pvsamv1::exec()
                     continue; // skip disabled subarrays
 
                 double custom_rot = (Subarrays[nn]->useCustomRotAngles) ? Subarrays[nn]->customRotAngles[inrec] : 0.0;
-                irrad irr(Irradiance->weatherRecord, Irradiance->weatherHeader,
-                    Irradiance->skyModel, Irradiance->radiationMode, Subarrays[nn]->trackMode,
-                    Irradiance->useWeatherFileAlbedo, Irradiance->instantaneous, Subarrays[nn]->backtrackingEnabled, false,
-                    Irradiance->dtHour, Subarrays[nn]->tiltDegrees, Subarrays[nn]->azimuthDegrees, Subarrays[nn]->trackerRotationLimitDegrees, 0.0, Subarrays[nn]->groundCoverageRatio, Subarrays[nn]->slopeTilt, Subarrays[nn]->slopeAzm,
-                    Subarrays[nn]->monthlyTiltDegrees, Irradiance->userSpecifiedMonthlyAlbedo,
-                    Subarrays[nn]->poa.poaAll.get(),
-                    Irradiance->useSpatialAlbedos, &Irradiance->userSpecifiedMonthlySpatialAlbedos, (as_boolean("enable_subhourly_clipping") || as_boolean("enable_subinterval_distribution")), Subarrays[nn]->useCustomRotAngles, custom_rot);
 
-                int code = irr.calc();
+                std::shared_ptr<irrad> irr = irrads[nn];
+                irr->set_from_weather_record(Irradiance->weatherRecord, Irradiance->weatherHeader, Subarrays[nn]->trackMode, Subarrays[nn]->monthlyTiltDegrees, 
+                    Irradiance->useWeatherFileAlbedo, Irradiance->userSpecifiedMonthlyAlbedo,
+                    Subarrays[nn]->poa.poaAll.get(), Irradiance->useSpatialAlbedos, &Irradiance->userSpecifiedMonthlySpatialAlbedos, 
+                    Subarrays[nn]->useCustomRotAngles, custom_rot);
+
+                int code = irr->calc();
 
                 if (code < 0) //jmf updated 11/30/18 so that negative numbers are errors, positive numbers are warnings, 0 is everything correct. implemented in patch for POA model only, will be added to develop for other irrad models as well
                     throw exec_error("pvsamv1",
@@ -1562,7 +1575,7 @@ void cm_pvsamv1::exec()
                     if (radmode == irrad::POA_R || radmode == irrad::POA_P) {
                         double gh_temp, df_temp, dn_temp;
                         gh_temp = df_temp = dn_temp = 0;
-                        irr.get_irrad(&gh_temp, &dn_temp, &df_temp);
+                        irr->get_irrad(&gh_temp, &dn_temp, &df_temp);
                         Irradiance->p_IrradianceCalculated[1][idx] = (ssc_number_t)df_temp;
                         Irradiance->p_IrradianceCalculated[2][idx] = (ssc_number_t)dn_temp;
                     }
@@ -1573,7 +1586,7 @@ void cm_pvsamv1::exec()
                 double ghi_cs, dni_cs, dhi_cs;
                 double aoi, stilt, sazi, rot, btd;
 
-                irr.get_clearsky_irrad(&ghi_cs, &dni_cs, &dhi_cs);
+                irr->get_clearsky_irrad(&ghi_cs, &dni_cs, &dhi_cs);
 
                 // Ensure that the usePOAFromWF flag is false unless a reference cell has been used.
                 //  This will later get forced to false if any shading has been applied (in any scenario)
@@ -1601,18 +1614,19 @@ void cm_pvsamv1::exec()
 
 
                 // Get Incident angles and irradiances
-                irr.get_sun(&solazi, &solzen, &solalt, 0, 0, 0, &sunup, 0, 0, 0);
-                irr.get_angles(&aoi, &stilt, &sazi, &rot, &btd);
-                irr.get_poa(&ibeam, &iskydiff, &ignddiff, 0, 0, 0);
-                irr.get_poa_clearsky(&ibeam_csky, &iskydiff_csky, &ignddiff_csky, 0, 0, 0);
-                alb = irr.getAlbedo();
-                alb_spatial = irr.getAlbedoSpatial();
+                irr->get_sun(&solazi, &solzen, &solalt, 0, 0, 0, &sunup, 0, 0, 0);
+                irr->get_angles(&aoi, &stilt, &sazi, &rot, &btd);
+                irr->get_poa(&ibeam, &iskydiff, &ignddiff, 0, 0, 0);
+                irr->get_poa_clearsky(&ibeam_csky, &iskydiff_csky, &ignddiff_csky, 0, 0, 0);
+                irr->get_optional(&elev, &pres, &t_amb);
+                alb = irr->getAlbedo();
+                alb_spatial = irr->getAlbedoSpatial();
 
 
                 
 
                 if (iyear == 0 || save_full_lifetime_variables == 1)
-                    Irradiance->p_sunPositionTime[idx] = (ssc_number_t)irr.get_sunpos_calc_hour();
+                    Irradiance->p_sunPositionTime[idx] = (ssc_number_t)irr->get_sunpos_calc_hour();
 
                 // save weather file beam, diffuse, and global for output and for use later in pvsamv1- year 1 only
                 /*jmf 2016: these calculations are currently redundant with calculations in irrad.calc() because ibeam and idiff in that function are DNI and DHI, **NOT** in the plane of array
@@ -1695,7 +1709,7 @@ void cm_pvsamv1::exec()
                         // calculate cell temperature using selected temperature model
                         pvinput_t in(ibeam, iskydiff, ignddiff, 0, ipoa[nn],
                             wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
-                            solzen, aoi, hdr.elev,
+                            solzen, aoi, elev,
                             stilt, sazi,
                             ((double)wf.hour) + wf.minute / 60.0,
                             radmode, Subarrays[nn]->poa.usePOAFromWF);
@@ -1922,9 +1936,9 @@ void cm_pvsamv1::exec()
                 // Calculate rear-side irradiance
                 double module_length = Subarrays[nn]->selfShadingInputs.mod_orient == 1 ? Subarrays[nn]->selfShadingInputs.width : Subarrays[nn]->selfShadingInputs.length;
                 double slopeLength = module_length * Subarrays[nn]->selfShadingInputs.nmody;
-                irr.calc_rear_side(Subarrays[nn]->Module->bifacialTransmissionFactor, Subarrays[nn]->Module->groundClearanceHeight, slopeLength);
-                ipoa_rear[nn] = irr.get_poa_rear();
-                ipoa_rear_cs[nn] = irr.get_poa_rear_clearsky();
+                irr->calc_rear_side(Subarrays[nn]->Module->bifacialTransmissionFactor, Subarrays[nn]->Module->groundClearanceHeight, slopeLength);
+                ipoa_rear[nn] = irr->get_poa_rear();
+                ipoa_rear_cs[nn] = irr->get_poa_rear_clearsky();
                 double rack_shading_loss_factor = 0.;
                 if (Subarrays[nn]->calculateRackShading) {
                     //rack_shading_loss_factor = calculated_rack_shading_loss;        // TODO: implement
@@ -1937,23 +1951,23 @@ void cm_pvsamv1::exec()
                 ipoa_rear_after_losses[nn] = ipoa_rear[nn] * rear_irradiance_loss_factor;
                 ipoa_rear_after_losses_cs[nn] = ipoa_rear_cs[nn] * rear_irradiance_loss_factor;
 
-                ipoa_rear_spatial[nn] = irr.get_poa_rear_spatial();
+                ipoa_rear_spatial[nn] = irr->get_poa_rear_spatial();
                 ipoa_rear_spatial_after_losses[nn].clear();
                 for (size_t i = 0; i < ipoa_rear_spatial[nn].size(); i++) {
                     ipoa_rear_spatial_after_losses[nn].push_back(ipoa_rear_spatial[nn].at(i) * rear_irradiance_loss_factor);
                 }
-                ignd_rear[nn] = irr.get_ground_spatial();
+                ignd_rear[nn] = irr->get_ground_spatial();
 
                 double area_subarray = ref_area_m2 * Subarrays[nn]->nModulesPerString * Subarrays[nn]->nStrings;
                 ts_accum_poa_front_beam_eff += ibeam * area_subarray;
                 ts_accum_poa_rear += ipoa_rear[nn] * area_subarray;
                 ts_accum_poa_rear_after_losses = ts_accum_poa_rear * rear_irradiance_loss_factor;                               // rear with all losses, minus electrical mismatch
-                ts_accum_ground_incident += irr.get_ground_incident() * area_subarray / Subarrays[nn]->groundCoverageRatio;     // irradiance incident on ground
-                ts_accum_ground_absorbed += irr.get_ground_absorbed() * area_subarray / Subarrays[nn]->groundCoverageRatio;     // irradiance absorbed by ground
-                ts_accum_poa_rear_ground_reflected += irr.get_ground_reflected() * area_subarray;                               // irradiance reflected from ground to rear
-                ts_accum_poa_rear_row_reflections += irr.get_rear_row_reflections() * area_subarray;                            // irradiance reflected from rear row to rear
-                ts_accum_poa_rear_direct_diffuse += irr.get_rear_direct_diffuse() * area_subarray;                              // irradiance from sky beam and diffuse to rear
-                ts_accum_poa_rear_self_shaded += irr.get_rear_self_shaded() * area_subarray;                                    // irradiance blocked by self shading
+                ts_accum_ground_incident += irr->get_ground_incident() * area_subarray / Subarrays[nn]->groundCoverageRatio;     // irradiance incident on ground
+                ts_accum_ground_absorbed += irr->get_ground_absorbed() * area_subarray / Subarrays[nn]->groundCoverageRatio;     // irradiance absorbed by ground
+                ts_accum_poa_rear_ground_reflected += irr->get_ground_reflected() * area_subarray;                               // irradiance reflected from ground to rear
+                ts_accum_poa_rear_row_reflections += irr->get_rear_row_reflections() * area_subarray;                            // irradiance reflected from rear row to rear
+                ts_accum_poa_rear_direct_diffuse += irr->get_rear_direct_diffuse() * area_subarray;                              // irradiance from sky beam and diffuse to rear
+                ts_accum_poa_rear_self_shaded += irr->get_rear_self_shaded() * area_subarray;                                    // irradiance blocked by self shading
                 ts_accum_poa_rack_shaded += ipoa_rear[nn] * area_subarray * rack_shading_loss_factor;                           // irradiance blocked by racks
                 ts_accum_poa_rear_soiled += ipoa_rear[nn] * area_subarray * (1 - rack_shading_loss_factor) * Subarrays[nn]->rearSoilingLossPercent;      // irradiance blocked by soiling
 
@@ -2124,7 +2138,7 @@ void cm_pvsamv1::exec()
                             //initalize pvinput and pvoutput structures for the model
                             pvinput_t in(Subarrays[nn]->poa.poaBeamFront, Subarrays[nn]->poa.poaDiffuseFront, Subarrays[nn]->poa.poaGroundFront, Subarrays[nn]->poa.poaRear * bifaciality, Subarrays[nn]->poa.poaTotal,
                                 wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
-                                solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, hdr.elev,
+                                solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, elev,
                                 Subarrays[nn]->poa.surfaceTiltDegrees, Subarrays[nn]->poa.surfaceAzimuthDegrees,
                                 ((double)wf.hour) + wf.minute / 60.0,
                                 radmode, Subarrays[nn]->poa.usePOAFromWF);
@@ -2173,14 +2187,14 @@ void cm_pvsamv1::exec()
                     //initalize pvinput and pvoutput structures for the model
                     pvinput_t in_temp(Subarrays[nn]->poa.poaBeamFront, Subarrays[nn]->poa.poaDiffuseFront, Subarrays[nn]->poa.poaGroundFront, Subarrays[nn]->poa.poaRear * bifaciality, Subarrays[nn]->poa.poaTotal,
                         wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
-                        solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, hdr.elev,
+                        solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, elev,
                         Subarrays[nn]->poa.surfaceTiltDegrees, Subarrays[nn]->poa.surfaceAzimuthDegrees,
                         ((double)wf.hour) + wf.minute / 60.0,
                         radmode, Subarrays[nn]->poa.usePOAFromWF);
 
                     pvinput_t in_temp_csky(Subarrays[nn]->poa.poaBeamFrontCS, Subarrays[nn]->poa.poaDiffuseFrontCS, Subarrays[nn]->poa.poaGroundFrontCS, Subarrays[nn]->poa.poaRearCS * bifaciality, Subarrays[nn]->poa.poaTotal,
                         wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
-                        solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, hdr.elev,
+                        solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, elev,
                         Subarrays[nn]->poa.surfaceTiltDegrees, Subarrays[nn]->poa.surfaceAzimuthDegrees,
                         ((double)wf.hour) + wf.minute / 60.0,
                         0, false);
@@ -2425,13 +2439,19 @@ void cm_pvsamv1::exec()
                 {
                     float smLoss = 0.0f;
 
-                    if (!Subarrays[nn]->snowModel.getLoss((float)(Subarrays[nn]->poa.poaBeamFront + Subarrays[nn]->poa.poaDiffuseFront + Subarrays[nn]->poa.poaGroundFront),
+                    if (!Subarrays[nn]->snowModel.getLoss((float)(Subarrays[nn]->poa.poaBeamFront + Subarrays[nn]->poa.poaDiffuseFront + Subarrays[nn]->poa.poaGroundFront + ipoa_rear_after_losses[nn]),
                         (float)Subarrays[nn]->poa.surfaceTiltDegrees, (float)wf.wspd, (float)wf.tdry, (float)wf.snow, sunup, 1.0f / step_per_hour, smLoss))
                     {
                         if (!Subarrays[nn]->snowModel.good)
                             throw exec_error("pvsamv1", Subarrays[nn]->snowModel.msg);
                     }
+                    float poa_front = Subarrays[nn]->poa.poaBeamFront + Subarrays[nn]->poa.poaDiffuseFront + Subarrays[nn]->poa.poaGroundFront;
+                    float poa = poa_front + Subarrays[nn]->poa.poaRear * bifaciality;
 
+                    if (poa != 0) {
+                        smLoss *= poa_front / poa;
+                    }
+                 
                     if (iyear == 0 || save_full_lifetime_variables == 1)
                     {
                         PVSystem->p_snowLoss[nn][idx] = (ssc_number_t)(util::watt_to_kilowatt * Subarrays[nn]->dcPowerSubarray * smLoss);
@@ -2440,9 +2460,11 @@ void cm_pvsamv1::exec()
                         if (iyear == 0) annual_snow_loss += (ssc_number_t)(util::watt_to_kilowatt * Subarrays[nn]->dcPowerSubarray * smLoss);
                         Subarrays[nn]->dcPowerSubarray *= (1 - smLoss);
                         Subarrays[nn]->dcPowerSubarrayCS *= (1 - smLoss);
+                        
                     }
-
+                    
                     Subarrays[nn]->Module->dcPowerW *= (1 - smLoss);
+
                     Subarrays[nn]->Module->dcPowerWCS *= (1 - smLoss);
                     if (iyear == 0 || save_full_lifetime_variables == 1) mpptVoltageClipping[nn] *= (1 - smLoss);
                 }
@@ -2519,7 +2541,7 @@ void cm_pvsamv1::exec()
                 Irradiance->p_sunZenithAngle[idx] = (ssc_number_t)solzen;
                 Irradiance->p_sunAltitudeAngle[idx] = (ssc_number_t)solalt;
                 Irradiance->p_sunAzimuthAngle[idx] = (ssc_number_t)solazi;
-                Irradiance->p_absoluteAirmass[idx] = sunup > 0 ? (ssc_number_t)(exp(-0.0001184 * hdr.elev) / (cos(solzen * 3.1415926 / 180) + 0.5057 * pow(96.080 - solzen, -1.634))) : 0.0f;
+                Irradiance->p_absoluteAirmass[idx] = sunup > 0 ? (ssc_number_t)(exp(-0.0001184 * elev) / (cos(solzen * 3.1415926 / 180) + 0.5057 * pow(96.080 - solzen, -1.634))) : 0.0f;
                 Irradiance->p_sunUpOverHorizon[idx] = (ssc_number_t)sunup;
                 if (!Irradiance->useSpatialAlbedos) {
                     Irradiance->p_weatherFileAlbedo[idx] = (ssc_number_t)alb;
@@ -3151,7 +3173,7 @@ void cm_pvsamv1::exec()
     assign("lat", hdr.lat);
     assign("lon", hdr.lon);
     assign("tz", hdr.tz);
-    assign("elev", hdr.elev);
+    assign("elev", elev);
 
     inverter_vdcmax_check();
     inverter_size_check();

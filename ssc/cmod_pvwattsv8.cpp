@@ -143,7 +143,7 @@ static var_info _cm_vtab_pvwattsv8[] = {
         { SSC_INPUT,        SSC_NUMBER,      "rotlim",                         "Tracker rotation angle limit",                "degrees",       "",                                             "System Design",      "?=45.0",                  "",                              "" },
 
         { SSC_INPUT,        SSC_ARRAY,       "soiling",                        "Soiling loss",                                "%",         "",                                             "System Design",      "?",                       "",                              "" },
-        { SSC_INPUT,        SSC_NUMBER,      "losses",						   "Other DC losses",                             "%",         "total system losses",                          "System Design",      "*",                       "MIN=-5,MAX=99",                 "" },
+        { SSC_INPUT,        SSC_NUMBER,      "losses",						   "DC system losses",                             "%",         "total system losses",                          "System Design",      "*",                       "MIN=-5,MAX=99",                 "" },
 
         { SSC_INPUT,        SSC_NUMBER,      "enable_wind_stow",               "Enable tracker stow at high wind speeds",     "0/1",       "",                                             "System Design",      "?=0",                     "BOOLEAN",                              "" },
         { SSC_INPUT,        SSC_NUMBER,      "stow_wspd",                      "Tracker stow wind speed threshold",           "m/s",       "",                                             "System Design",      "?=10",                    "",                              "" },
@@ -193,6 +193,7 @@ static var_info _cm_vtab_pvwattsv8[] = {
         { SSC_OUTPUT,       SSC_ARRAY,       "tpoa",                           "Transmitted plane of array irradiance",       "W/m2",      "",                                             "Time Series",      "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "tcell",                          "Module temperature",                          "C",         "",                                             "Time Series",      "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "dcsnowderate",                   "DC power loss due to snow",            "%",         "",                                             "Time Series",      "*",                       "",                          "" },
+        { SSC_OUTPUT,       SSC_ARRAY,       "snow_cover",                     "Fraction of row covered by snow",            "0..1",         "",                                             "Time Series",      "*",                       "",                          "" },
 
         { SSC_OUTPUT,       SSC_ARRAY,       "dc",                             "DC inverter input power",                              "W",         "",                                             "Time Series",      "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "ac",                             "AC inverter output power",                           "W",         "",                                             "Time Series",      "*",                       "",                          "" },
@@ -390,6 +391,10 @@ public:
         else if (is_assigned("solar_resource_data"))
         {
             wdprov = std::unique_ptr<weather_data_provider>(new weatherdata(lookup("solar_resource_data")));
+            if (!wdprov->ok()) {
+                throw exec_error("pvwattsv8", wdprov->message());
+            }
+            if (wdprov->has_message()) log(wdprov->message(), SSC_WARNING);
         }
         else
             throw exec_error("pvwattsv8", "No weather data supplied.");
@@ -800,6 +805,7 @@ public:
         ssc_number_t* p_soiling_f = allocate("soiling_f", nrec);
         ssc_number_t* p_dcshadederate = allocate("dcshadederate", nrec);
         ssc_number_t* p_dcsnowderate = allocate("dcsnowderate", nrec);
+        ssc_number_t* p_snowcover = allocate("snow_cover", nrec);
         ssc_number_t* p_poa = allocate("poa", nrec);
         ssc_number_t* p_tpoa = allocate("tpoa", nrec);
         ssc_number_t* p_dc = allocate("dc", nrec);
@@ -813,6 +819,10 @@ public:
         size_t idx_life = 0;
         float percent = 0;
         int n_alb_errs = 0;
+        double elev, pres, t_amb;
+        irrad irr;
+        if (nyears > 1)
+            irr.setup_solarpos_outputs_for_lifetime(nrec);
         for (size_t y = 0; y < nyears; y++)
         {
             for (size_t idx = 0; idx < nrec; idx++)
@@ -886,7 +896,6 @@ public:
                 // report albedo value as output
                 p_alb[idx] = (ssc_number_t)alb;
 
-                irrad irr;
                 irr.set_time(wf.year, wf.month, wf.day, wf.hour, wf.minute,
                     instantaneous ? IRRADPROC_NO_INTERPOLATE_SUNRISE_SUNSET : ts_hour);
                 irr.set_location(hdr.lat, hdr.lon, hdr.tz);
@@ -928,6 +937,7 @@ public:
                 irr.get_sun(&solazi, &solzen, &solalt, nullptr, nullptr, nullptr, &sunup, nullptr, nullptr, nullptr); //nullptr used when you don't need to retrieve the output
                 irr.get_angles(&aoi, &stilt, &sazi, &rot, &btd);
                 irr.get_poa(&ibeam, &iskydiff, &ignddiff, nullptr, nullptr, nullptr); //nullptr used when you don't need to retrieve the output
+                irr.get_optional(&elev, &pres, &t_amb);
 
                 if (module.bifaciality > 0)
                 {
@@ -942,8 +952,8 @@ public:
                 }
                 else if (0 != code)
                     throw exec_error("pvwattsv8",
-                        util::format("Failed to process irradiation on surface (code: %d) [year:%d month:%d day:%d hour:%d minute:%lg].",
-                            code, wf.year, wf.month, wf.day, wf.hour, wf.minute));
+                        util::format("Failed to process irradiation on surface (message: %s) [year:%d month:%d day:%d hour:%d minute:%lg].",
+                            irr.getErrorMessage().c_str(), wf.year, wf.month, wf.day, wf.hour, wf.minute));
 
                 p_sunup[idx] = (ssc_number_t)sunup;
                 p_aoi[idx] = (ssc_number_t)aoi;
@@ -1197,11 +1207,12 @@ public:
 
                     // run the snow loss model
                     double f_snow = 1.0;
+                    double snow_cover = 0;
                     if (en_snowloss)
                     {
                         float smLoss = 0.0f;
                         if (!snowmodel.getLoss(
-                            (float)poa, (float)stilt,
+                            (float)(poa_front + irr.get_poa_rear()), (float)stilt,
                             (float)wf.wspd, (float)wf.tdry, (float)wf.snow,
                             sunup, (float)ts_hour,
                             smLoss))
@@ -1209,7 +1220,9 @@ public:
                             if (!snowmodel.good)
                                 throw exec_error("pvwattsv8", snowmodel.msg);
                         }
+                        if (poa != 0) smLoss *= poa_front / poa;
                         f_snow = (1.0 - smLoss);
+                        snow_cover = snowmodel.coverage;
                     }
 
                     // dc snow loss
@@ -1230,7 +1243,7 @@ public:
                     //pvinput_t in((f_nonlinear < 1.0 && poa > 0.0) ? ibeam_unselfshaded : ibeam, iskydiff, ignddiff, irear* module.bifaciality, poa_for_power,
                     pvinput_t in((f_nonlinear < 1.0 && poa > 0.0) ? ibeam_unselfshaded : ibeam, iskydiff, ignddiff, irear, poa_for_power,
                         wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
-                        solzen, aoi, hdr.elev,
+                        solzen, aoi, elev,
                         stilt, sazi,
                         ((double)wf.hour) + wf.minute / 60.0,
                         irrad::DN_DF, false);
@@ -1255,7 +1268,7 @@ public:
                         double f_cover = 1.0;
                         f_cover = tpoa / poa_front;
                         // spectral correction via air mass modifier
-                        double f_AM = air_mass_modifier(solzen, hdr.elev, AMdesoto);
+                        double f_AM = air_mass_modifier(solzen, elev, AMdesoto);
 
                         // derate poa irradiance and record losses for loss diagram
                         poa_for_power *= f_cover * f_AM; //derate irradiance for module cover and spectral effects
@@ -1284,6 +1297,7 @@ public:
                     p_dcshadederate[idx] = (ssc_number_t)f_nonlinear;
                     //p_dcsnowderate[idx] = (ssc_number_t)f_snow; // output is percentage - calculated value is derate
                     p_dcsnowderate[idx] =  (1.0 - f_snow) * 100.0;
+                    p_snowcover[idx] = snow_cover;
 
                     // apply DC degradation
                     dc *= degradationFactor[y];
@@ -1418,7 +1432,7 @@ public:
         assign("lat", var_data((ssc_number_t)hdr.lat));
         assign("lon", var_data((ssc_number_t)hdr.lon));
         assign("tz", var_data((ssc_number_t)hdr.tz));
-        assign("elev", var_data((ssc_number_t)hdr.elev));
+        assign("elev", var_data((ssc_number_t)elev));
         assign("percent_complete", var_data((ssc_number_t)percent));
 
         double gcr_for_land = pv.gcr;
