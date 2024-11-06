@@ -879,15 +879,15 @@ public:
                 if (as_integer("field_model_type") == 0) { // Heliostat field optimization to follow
                     design_heat_loss.at(i) = 0.0;
                     std::string msg;
-                    msg = util::format("Receiver (%d) failed to converge at design condition. Setting receiver heat loss to 0.0 for SolarPILOT. \n"
-                        "Resulting heliostat field could be undersized.", i);
+                    msg = util::format("Receiver %d failed to converge at design condition. Setting receiver heat loss to 0.0 for SolarPILOT. \n"
+                        "Resulting heliostat field could be undersized.", i+1);
                     log(msg, SSC_WARNING);
                 }
                 else { // Throw error if not running optimization
                     if (sim_type == 1) {
                         std::string msg;
-                        msg = util::format("Receiver (%d) failed to converge at design condition. "
-                            "Aperture size is most likely too large or receiver parameters are unrealistic.", i);
+                        msg = util::format("Receiver %d failed to converge at design condition. "
+                            "Aperture size is most likely too large or receiver parameters are unrealistic.", i+1);
                         throw exec_error("csp_tower_particle", msg);
                     }
                     else {
