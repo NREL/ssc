@@ -529,7 +529,7 @@ bool solarpilot_invoke::run(std::shared_ptr<weather_data_provider> wdata)
                     vector<double> step_size(nv);
                     vector<string> names(nv);
 
-                    // NOTE: If variable order changes, update Simulate_fp_rec() within AutoPilot_API.cpp
+                    // NOTE: If variable order changes, update update_fp_rec_dep_vars() within AutoPilot_API.cpp
                     //pointers
                     opt_vars.at(0) = &sf.tht.val;
                     opt_vars.at(1) = &recs.front().rec_height.val;

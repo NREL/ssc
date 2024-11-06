@@ -175,7 +175,7 @@ static var_info _cm_vtab_solarpilot[] = {
 	{ SSC_OUTPUT,       SSC_NUMBER,      "rec_aspect_opt",            "Optimized receiver aspect ratio",                                                                                                        "-",      "",         "SolarPILOT",   "receiver_type=0",  "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "cav_rec_aper_width_opt",    "Optimized cavity receiver aperture width",                                                                                               "-",      "",         "SolarPILOT",   "receiver_type=1",  "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "rec_width_opt",             "Optimized receiver width",                                                                                                               "m",      "",         "SolarPILOT",   "receiver_type=3",  "",                "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "rec_azimuth_opt",           "Optimized receiver azimuth",                                                                                                             "deg",    "",         "SolarPILOT",   "receiver_type=3",  "",                "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "rec_azimuth_opt",           "Optimized receiver azimuth",                                                                                                             "deg",    "",         "SolarPILOT",   "receiver_type=3",  "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "flux_max_observed",         "Maximum observed flux at design",                                                                                                        "kW/m2",  "",         "SolarPILOT",   "check_max_flux=1", "",                "" },
 
     { SSC_OUTPUT,       SSC_NUMBER,      "cost_rec_tot",              "Total receiver cost",                                                                                                                    "$",      "",         "SolarPILOT",   "*",                "",                "" },
@@ -244,7 +244,11 @@ public:
         }
         else if (rec_type == 3) { // free-falling receiver
             assign("rec_width_opt", (ssc_number_t)spi.recs.front().rec_width.val);
-            assign("rec_azimuth_opt", (ssc_number_t)spi.recs.front().rec_azimuth.val);
+
+            ssc_number_t* rec_azi_opt = allocate("rec_azimuth_opt", spi.recs.size());
+            for (size_t i = 0; i < spi.recs.size(); i++) {
+                rec_azi_opt[i] = (ssc_number_t)spi.recs.at(i).rec_azimuth.val;
+            }
         }
 
 		assign("h_tower_opt", (ssc_number_t)spi.sf.tht.val);

@@ -329,8 +329,7 @@ struct AutoOptHelper
         vector<double> current;
 
         //update the objective variables
-        for(int i=0; i<(int)m_opt_vars.size(); i++)
-        {
+        for(int i=0; i<(int)m_opt_vars.size(); i++) {
             current.push_back( x[i] );
             *m_opt_vars.at(i) = current.at(i)/* * m_normalizers.at(i)*/;
         }
