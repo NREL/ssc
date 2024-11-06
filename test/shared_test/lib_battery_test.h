@@ -100,6 +100,7 @@ protected:
     std::vector<double> dischargingLosses;
 
     std::vector<double> fullLosses;
+    std::vector<double> adjustLosses;
 
     double dt_hour = 1;
     int nyears = 1;
@@ -114,6 +115,7 @@ public:
         }
         for (size_t i = 0; i < 8760; i++) {
             fullLosses.push_back((double)i/8760);
+            adjustLosses.push_back(0.0);
         }
     }
 };
@@ -207,6 +209,7 @@ public:
     std::vector<double> fullLosses;
     std::vector<double> fullLossesMinute;
     int lossChoice;
+    std::vector<double> adjustLosses;
 
     // battery
     int chemistry;
@@ -273,6 +276,10 @@ public:
             fullLossesMinute.push_back(0);
         }
         lossChoice = 0;
+        for (size_t i = 0; i < 8760; i++) {
+            adjustLosses.push_back(0);
+        }
+
 
         // battery
         chemistry = 1;
@@ -283,7 +290,7 @@ public:
                                              C_rate, resistance, dtHour );
         lifetimeModel = new lifetime_calendar_cycle_t(cycleLifeMatrix, dtHour, 1.02, 2.66e-3, -7280, 930);
         thermalModel = new thermal_t(dtHour, mass, surface_area, resistance, Cp, h, capacityVsTemperature, T_room);
-        lossModel = new losses_t(monthlyLosses, monthlyLosses, monthlyLosses);
+        lossModel = new losses_t(monthlyLosses, monthlyLosses, monthlyLosses, adjustLosses);
         batteryModel = std::unique_ptr<battery_t>(new battery_t(dtHour, chemistry, capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel));
     }
 

@@ -296,7 +296,7 @@ void write_battery_state(const battery_state& state, var_table* vt) {
         }
     }
 
-    vt->assign_match_case("loss_kw", state.losses->loss_kw);
+    vt->assign_match_case("loss_kw", state.losses->ancillary_loss_kw);
 
     vt->assign_match_case("n_replacements", state.replacement->n_replacements);
     vt->assign_match_case("indices_replaced", state.replacement->indices_replaced);
@@ -410,7 +410,7 @@ void read_battery_state(battery_state& state, var_table* vt) {
         }
     }
 
-    vt_get_number(vt, "loss_kw", &state.losses->loss_kw);
+    vt_get_number(vt, "loss_kw", &state.losses->ancillary_loss_kw);
 
     vt_get_int(vt, "n_replacements", &state.replacement->n_replacements);
     vt_get_array_vec(vt, "indices_replaced", state.replacement->indices_replaced);

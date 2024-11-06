@@ -436,7 +436,7 @@ void dispatch_t::runDispatch(size_t lifetimeIndex)
 
         // Run Battery Model to update charge based on charge/discharge
         m_batteryPower->powerBatteryDC = _Battery->run(lifetimeIndex, I);
-        m_batteryPower->powerSystemLoss = _Battery->getLoss();
+        m_batteryPower->powerSystemLoss = _Battery->getAncillaryLoss();
 
         // Update power flow calculations, calculate AC power, and check the constraints
         m_batteryPowerFlow->calculate();

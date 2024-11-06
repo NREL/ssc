@@ -361,13 +361,13 @@ void dispatch_pvsmoothing_front_of_meter_t::update_dispatch(size_t year, size_t 
 
         // adjust for loss and efficiencies
         m_batteryPower->powerBatteryTarget = (m_batt_dispatch_pvs_nameplate_ac > 0 ? m_batt_dispatch_pvs_nameplate_ac * m_batt_dispatch_pvs_battpower : m_batt_dispatch_pvs_battpower);
-        double loss_kw = _Battery->calculate_loss(m_batteryPower->powerBatteryTarget, lifetimeIndex); // Battery is responsible for covering discharge losses
+        double ancillary_loss_kw = _Battery->calculate_loss(m_batteryPower->powerBatteryTarget, lifetimeIndex); // Battery is responsible for covering discharge losses
         if (m_batteryPower->connectionMode == AC_CONNECTED) {
-            m_batteryPower->powerBatteryTarget = m_batteryPower->adjustForACEfficiencies(m_batteryPower->powerBatteryTarget, loss_kw);
+            m_batteryPower->powerBatteryTarget = m_batteryPower->adjustForACEfficiencies(m_batteryPower->powerBatteryTarget, ancillary_loss_kw);
         }
         else if (m_batteryPower->powerBatteryTarget > 0) {
             // Adjust for DC discharge losses
-            m_batteryPower->powerBatteryTarget += loss_kw;
+            m_batteryPower->powerBatteryTarget += ancillary_loss_kw;
         }
 
         m_batteryPower->powerBatteryDC = m_batteryPower->powerBatteryTarget;

@@ -124,8 +124,9 @@ public:
         std::vector<double> charging_losses(12, 1); // Monthly losses
         std::vector<double> discharging_losses(12, 2);
         std::vector<double> idle_losses(12, 0.5);
+        std::vector<double> adjust_losses(8760, 0);
 
-        lossModel = new losses_t(charging_losses, discharging_losses, idle_losses);
+        lossModel = new losses_t(charging_losses, discharging_losses, idle_losses, adjust_losses);
         batteryModel = new battery_t(dtHour, chemistry, capacityModel, voltageModel, lifetimeModel, thermalModel, lossModel);
 
         int numberOfInverters = 1;

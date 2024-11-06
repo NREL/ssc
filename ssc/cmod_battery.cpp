@@ -1172,13 +1172,15 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_Qfull_flow, batt_vars->batt_initial_SOC, batt_vars->batt_maximum_SOC, batt_vars->batt_minimum_SOC, dt_hr);
     }
 
+    // TODO: fix this!
+    std::vector<double> adj_losses;
     if (batt_vars->batt_loss_choice == losses_params::MONTHLY) {
         if (*std::min_element(batt_vars->batt_losses_charging.begin(), batt_vars->batt_losses_charging.end()) < 0
             || *std::min_element(batt_vars->batt_losses_discharging.begin(), batt_vars->batt_losses_discharging.end()) < 0
             || *std::min_element(batt_vars->batt_losses_idle.begin(), batt_vars->batt_losses_idle.end()) < 0) {
             throw exec_error("battery", "Battery loss inputs batt_losses_charging, batt_losses_discharging, and batt_losses_idle cannot include negative numbers.");
         }
-        losses_model = new losses_t(batt_vars->batt_losses_charging, batt_vars->batt_losses_discharging, batt_vars->batt_losses_idle);
+        losses_model = new losses_t(batt_vars->batt_losses_charging, batt_vars->batt_losses_discharging, batt_vars->batt_losses_idle, adj_losses);
     }
     else if (batt_vars->batt_loss_choice == losses_params::SCHEDULE) {
         if (!(batt_vars->batt_losses.size() == 1 || batt_vars->batt_losses.size() == nrec)) {
@@ -1187,7 +1189,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
         if (*std::min_element(batt_vars->batt_losses.begin(), batt_vars->batt_losses.end()) < 0) {
             throw exec_error("battery", "Battery loss input batt_losses cannot include negative numbers.");
         }
-        losses_model = new losses_t(batt_vars->batt_losses);
+        losses_model = new losses_t(batt_vars->batt_losses, adj_losses);
     }
     else {
         losses_model = new losses_t();
