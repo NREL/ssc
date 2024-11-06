@@ -39,6 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "core.h"
 #include "lib_battery.h"
 #include "lib_utility_rate.h"
+#include "lib_battery_dispatch.h"
 #include "cmod_utilityrate5.h"
 
 // forward declarations to speed up build
@@ -220,6 +221,9 @@ struct batt_variables
 
 	/*! PPA price */
 	std::vector<double> forecast_price_series_dollar_per_kwh;
+    std::vector<double> forecast_cleared_capacities_kw;
+    dispatch_t::CAPACITY_FORECAST_TYPE capacity_forecast_type;
+    double cleared_capacity_percent;
 
 	/*! Energy rates */
 	bool ec_rate_defined, ec_use_realtime;

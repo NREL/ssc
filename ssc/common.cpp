@@ -681,6 +681,11 @@ var_info vtab_forecast_price_signal[] = {
     { SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv2_percent_gen",		      "Enable percent demand cleared capacity option for ancillary service 2",   "0/1",   "",    "Revenue",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
     { SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv3_percent_gen",		      "Enable percent demand cleared capacity option for ancillary service 3",   "0/1",   "",    "Revenue",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
     { SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv4_percent_gen",		      "Enable percent demand cleared capacity option for ancillary service 4",   "0/1",   "",    "Revenue",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_market_percent_gen",                 "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "forecast_price_signal_model=1&mp_enable_market_percent_gen=1", "MIN=0,MAX=100", "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_ancserv1_percent_gen",               "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "forecast_price_signal_model=1&mp_enable_ancserv1_percent_gen=1", "MIN=0,MAX=100", "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_ancserv2_percent_gen",               "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "forecast_price_signal_model=1&mp_enable_ancserv2_percent_gen=1", "MIN=0,MAX=100", "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_ancserv3_percent_gen",               "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "forecast_price_signal_model=1&mp_enable_ancserv3_percent_gen=1", "MIN=0,MAX=100", "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_ancserv4_percent_gen",               "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "forecast_price_signal_model=1&mp_enable_ancserv4_percent_gen=1", "MIN=0,MAX=100", "" },
 
 var_info_invalid };
 
@@ -711,6 +716,22 @@ bool forecast_price_signal::setup(size_t step_per_hour)
         int mp_enable_ancserv2_percent_gen = vartab->as_integer("mp_enable_ancserv2_percent_gen");
         int mp_enable_ancserv3_percent_gen = vartab->as_integer("mp_enable_ancserv3_percent_gen");
         int mp_enable_ancserv4_percent_gen = vartab->as_integer("mp_enable_ancserv4_percent_gen");
+
+        double mp_market_percent_gen = 0;
+        if (vartab->is_assigned("mp_market_percent_gen") && mp_enable_market_percent_gen)
+            mp_market_percent_gen = vartab->as_number("mp_market_percent_gen") / 100.0;
+        double ancserv1_percent_gen = 0;
+        if (vartab->is_assigned("mp_ancserv1_percent_gen") && mp_enable_ancserv1_percent_gen)
+            ancserv1_percent_gen = vartab->as_number("mp_ancserv1_percent_gen") / 100.0;
+        double ancserv2_percent_gen = 0;
+        if (vartab->is_assigned("mp_ancserv2_percent_gen") && mp_enable_ancserv2_percent_gen)
+            ancserv2_percent_gen = vartab->as_number("mp_ancserv2_percent_gen") / 100.0;
+        double ancserv3_percent_gen = 0;
+        if (vartab->is_assigned("mp_ancserv3_percent_gen") && mp_enable_ancserv3_percent_gen)
+            ancserv3_percent_gen = vartab->as_number("mp_ancserv3_percent_gen") / 100.0;
+        double ancserv4_percent_gen = 0;
+        if (vartab->is_assigned("mp_ancserv4_percent_gen") && mp_enable_ancserv4_percent_gen)
+            ancserv4_percent_gen = vartab->as_number("mp_ancserv4_percent_gen") / 100.0;
 
 		// cleared capacity and price columns
 		// assume cleared capacities valid and use as generation for forecasting - will verify after generation in the financial models.
@@ -815,56 +836,223 @@ bool forecast_price_signal::setup(size_t step_per_hour)
             return false;
         }
         m_forecast_price.reserve(nsteps * nyears);
-        for (size_t i = 0; i < nsteps * nyears; i++)
+        m_cleared_capacity.reserve(nsteps * nyears);
+        for (size_t i = 0; i < nsteps * nyears; i++) {
             m_forecast_price.push_back(0.0);
+            m_cleared_capacity.push_back(0.0);
+        }
 
 		// calculate revenue and consolidate to m_forecast_price
 		std::vector<double> as_revenue;
-		std::vector<double> as_revenue_extrapolated(nsteps,0.0);
+		std::vector<double> as_revenue_extrapolated_em(nsteps,0.0);
+		std::vector<double> as_revenue_extrapolated_ancserv_1(nsteps,0.0);
+		std::vector<double> as_revenue_extrapolated_ancserv_2(nsteps,0.0);
+		std::vector<double> as_revenue_extrapolated_ancserv_3(nsteps,0.0);
+		std::vector<double> as_revenue_extrapolated_ancserv_4(nsteps,0.0);
+        std::vector<double> as_capacity;
+        std::vector<double> as_capacity_extrapolated_em(nsteps, 0.0);
+        std::vector<double> as_capacity_extrapolated_ancserv_1(nsteps, 0.0);
+        std::vector<double> as_capacity_extrapolated_ancserv_2(nsteps, 0.0);
+        std::vector<double> as_capacity_extrapolated_ancserv_3(nsteps, 0.0);
+        std::vector<double> as_capacity_extrapolated_ancserv_4(nsteps, 0.0);
+
+        // Users can mix and match percent of generation and cleared capacity. Determine what percent is available for cleared capacity calcs
+        cleared_capacity_percent = 1 - (mp_market_percent_gen + ancserv1_percent_gen + ancserv2_percent_gen
+            + ancserv3_percent_gen + ancserv4_percent_gen);
 
         for (size_t y = 0; y < nyears; y++) {
             size_t forecast_start = y * nsteps;
             size_t forecast_end = (y + 1) * nsteps;
+            // First: adapt all merchant plant timeseries to the simulation timestep
             size_t n_marketrevenue_per_year = mp_energy_market_revenue_mat.nrows() / (size_t)nyears;
             as_revenue.clear();
             as_revenue.reserve(n_marketrevenue_per_year);
-            for (size_t j = y * n_marketrevenue_per_year; j < (y + 1) * n_marketrevenue_per_year; j++)
-                as_revenue.push_back(mp_energy_market_revenue_mat.at(j, 1 - mp_enable_market_percent_gen) / 1000.0);
-            as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
-            std::transform(m_forecast_price.begin() + forecast_start, m_forecast_price.begin() + forecast_end, as_revenue_extrapolated.begin(), m_forecast_price.begin() + forecast_start, std::plus<double>());
+            as_capacity.clear();
+            as_capacity.reserve(n_marketrevenue_per_year);
+            if (n_marketrevenue_per_year == 0) {
+                if (mp_energy_market_revenue_mat.nrows() == 1) {
+                    if (mp_enable_market_percent_gen) {
+                        as_revenue.push_back(mp_energy_market_revenue_mat.at(0, 0) / 1000.0);
+                    }
+                    else {
+                        as_capacity.push_back(mp_energy_market_revenue_mat.at(0, 0) * 1000.0);
+                        as_revenue.push_back(mp_energy_market_revenue_mat.at(0, 1) / 1000.0);
+                    }
+                }
+            }
+            else {
+                for (size_t j = y * n_marketrevenue_per_year; j < (y + 1) * n_marketrevenue_per_year; j++) {
+                    as_revenue.push_back(mp_energy_market_revenue_mat.at(j, 1 - mp_enable_market_percent_gen) / 1000.0);
+                    if (!mp_enable_market_percent_gen) {
+                        as_capacity.push_back(mp_energy_market_revenue_mat.at(j, 0) * 1000.0);
+                    }
+                }
+            }
 
+            as_revenue_extrapolated_em = extrapolate_timeseries(as_revenue, step_per_hour);
+            as_capacity_extrapolated_em = extrapolate_timeseries(as_capacity, step_per_hour);
+            
             size_t n_ancserv_1_revenue_per_year = mp_ancserv_1_revenue_mat.nrows() / (size_t)nyears;
             as_revenue.clear();
             as_revenue.reserve(n_ancserv_1_revenue_per_year);
-            for (size_t j = y * n_ancserv_1_revenue_per_year; j < (y + 1) * n_ancserv_1_revenue_per_year; j++)
-                as_revenue.push_back(mp_ancserv_1_revenue_mat.at(j, 1 - mp_enable_ancserv1_percent_gen) / 1000.0);
-            as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
-            std::transform(m_forecast_price.begin() + forecast_start, m_forecast_price.begin() + forecast_end, as_revenue_extrapolated.begin(), m_forecast_price.begin() + forecast_start, std::plus<double>());
-
+            as_capacity.clear();
+            as_capacity.reserve(n_ancserv_1_revenue_per_year);
+            if (n_ancserv_1_revenue_per_year == 0) {
+                if (mp_ancserv_1_revenue_mat.nrows() == 1) {
+                    if (mp_enable_ancserv1_percent_gen) {
+                        as_revenue.push_back(mp_ancserv_1_revenue_mat.at(0, 0) / 1000.0);
+                    }
+                    else {
+                        as_capacity.push_back(mp_ancserv_1_revenue_mat.at(0, 0) * 1000.0);
+                        as_revenue.push_back(mp_ancserv_1_revenue_mat.at(0, 1) / 1000.0);
+                    }
+                }
+            }
+            else {
+                for (size_t j = y * n_ancserv_1_revenue_per_year; j < (y + 1) * n_ancserv_1_revenue_per_year; j++) {
+                    as_revenue.push_back(mp_ancserv_1_revenue_mat.at(j, 1 - mp_enable_ancserv1_percent_gen) / 1000.0);
+                    if (!mp_enable_ancserv1_percent_gen) {
+                        as_capacity.push_back(mp_ancserv_1_revenue_mat.at(j, 0) * 1000.0);
+                    }
+                }
+            }
+            as_revenue_extrapolated_ancserv_1 = extrapolate_timeseries(as_revenue, step_per_hour);
+            as_capacity_extrapolated_ancserv_1 = extrapolate_timeseries(as_capacity, step_per_hour);
+            
             size_t n_ancserv_2_revenue_per_year = mp_ancserv_2_revenue_mat.nrows() / (size_t)nyears;
             as_revenue.clear();
             as_revenue.reserve(n_ancserv_2_revenue_per_year);
-            for (size_t j = y * n_ancserv_2_revenue_per_year; j < (y + 1) * n_ancserv_2_revenue_per_year; j++)
-                as_revenue.push_back(mp_ancserv_2_revenue_mat.at(j, 1 - mp_enable_ancserv2_percent_gen) / 1000.0);
-            as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
-            std::transform(m_forecast_price.begin() + forecast_start, m_forecast_price.begin() + forecast_end, as_revenue_extrapolated.begin(), m_forecast_price.begin() + forecast_start, std::plus<double>());
-
+            as_capacity.clear();
+            as_capacity.reserve(n_ancserv_2_revenue_per_year);
+            if (n_ancserv_2_revenue_per_year == 0) {
+                if (mp_ancserv_2_revenue_mat.nrows() == 1) {
+                    if (mp_enable_ancserv2_percent_gen) {
+                        as_revenue.push_back(mp_ancserv_2_revenue_mat.at(0, 0) / 1000.0);
+                    }
+                    else {
+                        as_capacity.push_back(mp_ancserv_2_revenue_mat.at(0, 0) * 1000.0);
+                        as_revenue.push_back(mp_ancserv_2_revenue_mat.at(0, 1) / 1000.0);
+                    }
+                }
+            }
+            else {
+                for (size_t j = y * n_ancserv_2_revenue_per_year; j < (y + 1) * n_ancserv_2_revenue_per_year; j++) {
+                    as_revenue.push_back(mp_ancserv_2_revenue_mat.at(j, 1 - mp_enable_ancserv2_percent_gen) / 1000.0);
+                    if (!mp_enable_ancserv2_percent_gen) {
+                        as_capacity.push_back(mp_ancserv_2_revenue_mat.at(j, 0) * 1000.0);
+                    }
+                }
+            }
+            as_revenue_extrapolated_ancserv_2 = extrapolate_timeseries(as_revenue, step_per_hour);
+            as_capacity_extrapolated_ancserv_2 = extrapolate_timeseries(as_capacity, step_per_hour);
+            
             size_t n_ancserv_3_revenue_per_year = mp_ancserv_3_revenue_mat.nrows() / (size_t)nyears;
             as_revenue.clear();
             as_revenue.reserve(n_ancserv_3_revenue_per_year);
-            for (size_t j = y * n_ancserv_3_revenue_per_year; j < (y + 1) * n_ancserv_3_revenue_per_year; j++)
-                as_revenue.push_back(mp_ancserv_3_revenue_mat.at(j, 1 - mp_enable_ancserv3_percent_gen) / 1000.0);
-            as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
-            std::transform(m_forecast_price.begin() + forecast_start, m_forecast_price.begin() + forecast_end, as_revenue_extrapolated.begin(), m_forecast_price.begin() + forecast_start, std::plus<double>());
-
+            as_capacity.clear();
+            as_capacity.reserve(n_ancserv_3_revenue_per_year);
+            if (n_ancserv_3_revenue_per_year == 0) {
+                if (mp_ancserv_3_revenue_mat.nrows() == 1) {
+                    if (mp_enable_ancserv3_percent_gen) {
+                        as_revenue.push_back(mp_ancserv_3_revenue_mat.at(0, 0) / 1000.0);
+                    }
+                    else {
+                        as_capacity.push_back(mp_ancserv_3_revenue_mat.at(0, 0) * 1000.0);
+                        as_revenue.push_back(mp_ancserv_3_revenue_mat.at(0, 1) / 1000.0);
+                    }
+                }
+            }
+            else {
+                for (size_t j = y * n_ancserv_3_revenue_per_year; j < (y + 1) * n_ancserv_3_revenue_per_year; j++) {
+                    as_revenue.push_back(mp_ancserv_3_revenue_mat.at(j, 1 - mp_enable_ancserv3_percent_gen) / 1000.0);
+                    if (!mp_enable_ancserv3_percent_gen) {
+                        as_capacity.push_back(mp_ancserv_3_revenue_mat.at(j, 0) * 1000.0);
+                    }
+                }
+            }
+            as_revenue_extrapolated_ancserv_3 = extrapolate_timeseries(as_revenue, step_per_hour);
+            as_capacity_extrapolated_ancserv_3 = extrapolate_timeseries(as_capacity, step_per_hour);
+            
             size_t n_ancserv_4_revenue_per_year = mp_ancserv_4_revenue_mat.nrows() / (size_t)nyears;
             as_revenue.clear();
             as_revenue.reserve(n_ancserv_4_revenue_per_year);
-            for (size_t j = y * n_ancserv_4_revenue_per_year; j < (y + 1) * n_ancserv_4_revenue_per_year; j++)
-                as_revenue.push_back(mp_ancserv_4_revenue_mat.at(j, 1 - mp_enable_ancserv4_percent_gen) / 1000.0);
-            as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
-            std::transform(m_forecast_price.begin() + forecast_start, m_forecast_price.begin() + forecast_end, as_revenue_extrapolated.begin(), m_forecast_price.begin() + forecast_start, std::plus<double>());
+            as_capacity.clear();
+            as_capacity.reserve(n_ancserv_4_revenue_per_year);
+            if (n_ancserv_4_revenue_per_year == 0) {
+                if (mp_ancserv_4_revenue_mat.nrows() == 1) {
+                    if (mp_enable_ancserv4_percent_gen) {
+                        as_revenue.push_back(mp_ancserv_4_revenue_mat.at(0, 0) / 1000.0);
+                    }
+                    else {
+                        as_capacity.push_back(mp_ancserv_4_revenue_mat.at(0, 0) * 1000.0);
+                        as_revenue.push_back(mp_ancserv_4_revenue_mat.at(0, 1) / 1000.0);
+                    }
+                }
+            }
+            else {
+                for (size_t j = y * n_ancserv_4_revenue_per_year; j < (y + 1) * n_ancserv_4_revenue_per_year; j++) {
+                    as_revenue.push_back(mp_ancserv_4_revenue_mat.at(j, 1 - mp_enable_ancserv4_percent_gen) / 1000.0);
+                    if (!mp_enable_ancserv4_percent_gen) {
+                        as_capacity.push_back(mp_ancserv_4_revenue_mat.at(j, 0) * 1000.0);
+                    }
+                }
+            }
+            as_revenue_extrapolated_ancserv_4 = extrapolate_timeseries(as_revenue, step_per_hour);
+            as_capacity_extrapolated_ancserv_4 = extrapolate_timeseries(as_capacity, step_per_hour);
+
+            // Then: sum weighted average prices for timeseries use
+            for (size_t j = 0; j < nsteps; j++) {
+                m_cleared_capacity[j + forecast_start] = as_capacity_extrapolated_em[j] + as_capacity_extrapolated_ancserv_1[j]
+                    + as_capacity_extrapolated_ancserv_2[j] + as_capacity_extrapolated_ancserv_3[j] + as_capacity_extrapolated_ancserv_4[j];
+
+                if (mp_enable_market_percent_gen) {
+                    m_forecast_price[j + forecast_start] += as_revenue_extrapolated_em[j] * mp_market_percent_gen;
+                }
+                else if (m_cleared_capacity[j + forecast_start] > 0) {
+                    m_forecast_price[j + forecast_start] += as_capacity_extrapolated_em[j] / m_cleared_capacity[j + forecast_start] * cleared_capacity_percent;
+                }
+
+                if (mp_enable_ancserv1_percent_gen) {
+                    m_forecast_price[j + forecast_start] += as_revenue_extrapolated_ancserv_1[j] * ancserv1_percent_gen;
+                }
+                else if (m_cleared_capacity[j + forecast_start] > 0) {
+                    m_forecast_price[j + forecast_start] += as_capacity_extrapolated_ancserv_1[j] / m_cleared_capacity[j + forecast_start] * cleared_capacity_percent;
+                }
+
+                if (mp_enable_ancserv2_percent_gen) {
+                    m_forecast_price[j + forecast_start] += as_revenue_extrapolated_ancserv_2[j] * ancserv2_percent_gen;
+                }
+                else if (m_cleared_capacity[j + forecast_start] > 0) {
+                    m_forecast_price[j + forecast_start] += as_capacity_extrapolated_ancserv_2[j] / m_cleared_capacity[j + forecast_start] * cleared_capacity_percent;
+                }
+
+                if (mp_enable_ancserv3_percent_gen) {
+                    m_forecast_price[j + forecast_start] += as_revenue_extrapolated_ancserv_3[j] * ancserv3_percent_gen;
+                }
+                else if (m_cleared_capacity[j + forecast_start] > 0) {
+                    m_forecast_price[j + forecast_start] += as_capacity_extrapolated_ancserv_3[j] / m_cleared_capacity[j + forecast_start] * cleared_capacity_percent;
+                }
+
+                if (mp_enable_ancserv4_percent_gen) {
+                    m_forecast_price[j + forecast_start] += as_revenue_extrapolated_ancserv_4[j] * ancserv4_percent_gen;
+                }
+                else if (m_cleared_capacity[j + forecast_start] > 0) {
+                    m_forecast_price[j + forecast_start] += as_capacity_extrapolated_ancserv_4[j] / m_cleared_capacity[j + forecast_start] * cleared_capacity_percent;
+                }
+
+            }
         }
+
+        if (cleared_capacity_percent < 1e-7) {
+            forecast_type = dispatch_t::PRICE_ONLY;
+        }
+        else if (cleared_capacity_percent > (1 - 1e-7)) {
+            forecast_type = dispatch_t::CAPACITY_ONLY;
+        }
+        else {
+            forecast_type = dispatch_t::PRICE_AND_CAPACITY;
+        }
+
 	}
 	else
 	{
@@ -883,6 +1071,10 @@ bool forecast_price_signal::setup(size_t step_per_hour)
         m_forecast_price.reserve(nsteps* nyears);
         for (size_t i = 0; i < nsteps * nyears; i++)
             m_forecast_price.push_back(0.0);
+        forecast_type = dispatch_t::PRICE_ONLY;
+        cleared_capacity_percent = 0.0;
+        m_cleared_capacity.clear();
+
         std::vector<double> as_revenue;
 
         for (size_t y = 0; y < nyears; y++) {
