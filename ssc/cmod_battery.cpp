@@ -2267,7 +2267,7 @@ static var_info _cm_vtab_battery[] = {
     { SSC_INOUT,        SSC_NUMBER,      "capacity_factor",                            "Capacity factor",                                         "%",          "",                     "System Output",                             "",                    "",                               "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor_sales",                      "Capacity factor based on AC electricity to grid",                                         "%",          "",                     "System Output",                             "",                    "",                               "" },
 
-    { SSC_INOUT,        SSC_NUMBER,      "annual_energy",                              "Annual Energy",                                           "kWh",        "",                     "System Output",                      "?=0",                    "",                               "" },
+    { SSC_INOUT,        SSC_NUMBER,      "annual_energy",                              "Annual AC energy in Year 1",                                           "kWh",        "",                     "System Output",                      "?=0",                    "",                               "" },
 
     // other variables come from battstor common table
     var_info_invalid };

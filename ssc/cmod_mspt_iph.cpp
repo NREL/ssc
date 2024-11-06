@@ -606,11 +606,11 @@ static var_info _cm_vtab_mspt_iph[] = {
 { SSC_OUTPUT,    SSC_ARRAY,  "gen",                                "Total thermal power to heat sink with available derate",                                                                                  "kWt",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
 
 // Annual single-value outputs
-{ SSC_OUTPUT,    SSC_NUMBER, "annual_energy",                      "Annual Thermal Energy to Heat Sink w/ avail derate",                                  "kWt-hr",       "",                    "Post-process",          "sim_type=1",                "",              ""},
+{ SSC_OUTPUT,    SSC_NUMBER, "annual_energy",                      "Annual thermal energy to heat sink with availability derate",                                  "kWt-hr",       "",                    "Post-process",          "sim_type=1",                "",              ""},
 { SSC_OUTPUT,    SSC_NUMBER, "annual_q_rec_htf",                   "Annual receiver power delivered to HTF",                                              "MWt-hr",       "",                    "Tower and Receiver",    "sim_type=1",                "",              ""},
 
 
-{ SSC_OUTPUT,    SSC_NUMBER, "annual_electricity_consumption",     "Annual electricity consumption w/ avail derate",                                      "kWe-hr",       "",                    "Post-process",          "sim_type=1",                "",              ""},
+{ SSC_OUTPUT,    SSC_NUMBER, "annual_electricity_consumption",     "Annual electricity consumption with availability derate",                                      "kWe-hr",       "",                    "Post-process",          "sim_type=1",                "",              ""},
 
 { SSC_OUTPUT,    SSC_NUMBER, "capacity_factor",                    "Capacity factor",                                                                     "%",            "",                    "Post-process",          "sim_type=1",                "",              ""},
 { SSC_OUTPUT,    SSC_NUMBER, "kwh_per_kw",                         "First year kWh/kW",                                                                   "kWth/kWt",     "",                    "Post-process",          "sim_type=1",                "",              ""},

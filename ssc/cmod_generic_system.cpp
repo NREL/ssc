@@ -56,12 +56,12 @@ static var_info _cm_vtab_generic_system[] = {
 //    OUTPUTS ----------------------------------------------------------------------------								      														   
 //	  VARTYPE           DATATYPE         NAME                          LABEL                                   UNITS           META     GROUP                 REQUIRED_IF        CONSTRAINTS           UI_HINTS
 //	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",              "Hourly Energy",                        "kWh",           "",      "Time Series",      "*",               "LENGTH=8760",         "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",             "Monthly Energy Gross",                       "kWh",          "",      "Monthly",      "*",               "LENGTH=12",           "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",              "Annual Energy",                        "kWh",          "",      "Annual",      "*",               "",                    "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",             "Monthly AC energy in Year 1",                       "kWh",          "",      "Monthly",      "*",               "LENGTH=12",           "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",              "Annual AC energy in Year 1",                        "kWh",          "",      "Annual",      "*",               "",                    "" },
 
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_fuel_usage",           "Annual Fuel Usage",                    "kWht",         "",      "Annual",      "*",               "",                    "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "water_usage",                "Annual Water Usage",                   "",             "",      "Annual",      "*",               "",                    "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "system_heat_rate",           "Heat Rate Conversion Factor",          "MMBTUs/MWhe",  "",      "Annual",      "*",               "",                    "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_fuel_usage",           "Annual fuel usage",                    "kWht",         "",      "Annual",      "*",               "",                    "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "water_usage",                "Annual water usage",                   "",             "",      "Annual",      "*",               "",                    "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "system_heat_rate",           "Heat rate conversion factor",          "MMBTUs/MWhe",  "",      "Annual",      "*",               "",                    "" },
 
 	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "%", "", "Annual", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "kWh/kW", "", "Annual", "*", "", "" },
