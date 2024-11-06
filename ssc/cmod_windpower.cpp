@@ -348,7 +348,7 @@ void cm_windpower::exec()
 		throw exec_error("windpower", util::format("the wind model is only configured to handle up to %d turbines.", wpc.GetMaxTurbines()));
 
 	// create adjustment factors and losses - set them up initially here for the Weibull distribution method, rewrite them later with nrec for the time series method
-	adjustment_factors haf(this, "adjust");
+	adjustment_factors haf(this->get_var_table(), "adjust");
 	if (!haf.setup())
 		throw exec_error("windpower", "failed to setup adjustment factors: " + haf.error());
 

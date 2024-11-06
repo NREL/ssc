@@ -981,7 +981,7 @@ public:
         std::copy(sgs_P_dsn, sgs_P_dsn + nv, sgs_P_dsn_cm);
 		
 		// performance adjustment factors
-		adjustment_factors haf(this, "adjust");
+		adjustment_factors haf(this->get_var_table(), "adjust");
 		if (!haf.setup(nrec))
 			throw exec_error("tcstrough_physical", "failed to setup adjustment factors: " + haf.error());
 

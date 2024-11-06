@@ -1531,7 +1531,7 @@ public:
             throw exec_error("fresnel_physical", "The number of fixed steps does not match the length of output data arrays");
 
         // 'adjustment_factors' class stores factors in hourly array, so need to index as such
-        adjustment_factors haf(this, "adjust");
+        adjustment_factors haf(this->get_var_table(), "adjust");
         if (!haf.setup(n_steps_fixed))
             throw exec_error("fresnel_physical", "failed to setup adjustment factors: " + haf.error());
 

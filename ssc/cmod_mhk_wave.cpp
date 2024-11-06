@@ -578,7 +578,7 @@ public:
                 sys_degradation.push_back(1); // single year mode - degradation handled in financial models.
             }
 
-            adjustment_factors haf(this, "adjust");
+            adjustment_factors haf(this->get_var_table(), "adjust");
             if (!haf.setup(number_records, nyears))
                 throw exec_error("mhk_wave", "Failed to set up adjustment factors: " + haf.error());
 

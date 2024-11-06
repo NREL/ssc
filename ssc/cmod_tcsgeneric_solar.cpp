@@ -377,7 +377,7 @@ public:
         size_t hours = 8760;
 
         //Load the solar field adjustment factors
-        adjustment_factors sf_haf(this, "sf_adjust");
+        adjustment_factors sf_haf(this->get_var_table(), "sf_adjust");
         if (!sf_haf.setup(hours))
 			throw exec_error("tcsgeneric_solar", "failed to setup sf adjustment factors: " + sf_haf.error());
         //allocate array to pass to tcs
@@ -400,7 +400,7 @@ public:
 		if (!enet || count != 8760)
 			throw exec_error("tcsgeneric_solar", "Failed to retrieve hourly net energy");
 
-		adjustment_factors haf(this, "adjust");
+		adjustment_factors haf(this->get_var_table(), "adjust");
 		if (!haf.setup(count))
 			throw exec_error("tcsgeneric_solar", "failed to setup adjustment factors: " + haf.error());
 

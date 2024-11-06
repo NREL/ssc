@@ -523,7 +523,7 @@ public:
 			ssc_number_t * p_gen = allocate("gen", n_rec);
 
 			// TODO - implement performance factors 
-			adjustment_factors haf(this, "adjust");
+			adjustment_factors haf(this->get_var_table(), "adjust");
 			if (!haf.setup(8760, geo_inputs.mi_ProjectLifeYears))
 				throw exec_error("geothermal", "failed to setup adjustment factors: " + haf.error());
             std::vector<double> haf_input;

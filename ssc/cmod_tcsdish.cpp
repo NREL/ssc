@@ -517,7 +517,7 @@ public:
 		ssc_number_t *po8 = allocate("hourly_Q_rec_losses", count);
 
 
-		adjustment_factors haf(this, "adjust");
+		adjustment_factors haf(this->get_var_table(), "adjust");
 		if (!haf.setup(count))
 			throw exec_error("dish", "failed to setup adjustment factors: " + haf.error());
 
