@@ -951,10 +951,10 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutageWithAvailabili
         if (h < 6) {
             batteryPower->isOutageStep = true;
             batteryPower->powerCritLoad = 50;
-            batteryPower->acLossPostBattery = 1;
+            batteryPower->acLossSystemAvailability = 1;
         }
         else {
-            batteryPower->acLossPostBattery = 0;
+            batteryPower->acLossSystemAvailability = 0;
             batteryPower->isOutageStep = false;
         }
 
@@ -1023,10 +1023,10 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutageWithAvailabili
         if (h < 6) {
             batteryPower->isOutageStep = true;
             batteryPower->powerCritLoad = 50;
-            batteryPower->acLossPostBattery = 1;
+            batteryPower->acLossSystemAvailability = 1;
         }
         else {
-            batteryPower->acLossPostBattery = 0;
+            batteryPower->acLossSystemAvailability = 0;
             batteryPower->isOutageStep = false;
         }
 

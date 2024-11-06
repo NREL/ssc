@@ -1841,7 +1841,7 @@ void battstor::advance(var_table*, double P_gen, double V_gen, double P_load, do
     powerflow->powerCritLoad = P_crit_load;
     powerflow->voltageSystem = V_gen;
     powerflow->acLossWiring = ac_wiring_loss;
-    powerflow->acLossPostBattery = ac_loss_post_battery;
+    powerflow->acLossSystemAvailability = ac_loss_post_battery;
     powerflow->acXfmrLoadLoss = xfmr_ll;
     powerflow->acXfmrNoLoadLoss = xfmr_nll;
     powerflow->powerSystemClipped = P_gen_clipped;
