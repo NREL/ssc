@@ -941,7 +941,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
     nlobj.add_inequality_mconstraint(constraint_auto_eval, &AO, std::vector<double>(_SF->getActiveReceiverCount(), 0.));
 
     //Number of variables to be optimized
-	int nvars = nvars;
+	int nvars = (int)optvars.size();
 	
     //NLopt optimization variable values
 	vector<double> var_values(nvars);
