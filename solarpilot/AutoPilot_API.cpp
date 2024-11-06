@@ -339,7 +339,7 @@ struct AutoOptHelper
         // Update falling-particle receiver dependent variables
         var_map* V = m_variables;
         if (V->recs.front().rec_type.mapval() == var_receiver::REC_TYPE::FALLING_PARTICLE)
-            update_fp_rec_dep_vars(x);
+            update_fp_rec_dep_vars(current);
 
         double obj, cost;
         std::vector<double> flux;
@@ -361,18 +361,18 @@ struct AutoOptHelper
         return obj;
     };
 
-    void update_fp_rec_dep_vars(const double* x)
+    void update_fp_rec_dep_vars(std::vector<double> x)
     {
         // Update dependent variables based on current point
         var_map* V = m_variables;
         for (auto& rec : V->recs) {
-            rec.rec_height.val = x[1];
-            rec.rec_width.val = x[1];   // Assumes a square aspect ratio
+            rec.rec_height.val = x.at(1);
+            rec.rec_width.val = x.at(1);   // Assumes a square aspect ratio
         }
         // azimuth angle
         if (V->recs.size() == 2 || V->recs.size() == 3) {
-            V->recs.front().rec_azimuth.val = x[2];   // "East"
-            V->recs.back().rec_azimuth.val = -x[2];   // "West"
+            V->recs.front().rec_azimuth.val = x.back();   // "East"
+            V->recs.back().rec_azimuth.val = -x.back();   // "West"
         }
         if (V->recs.size() == 3) {
             if (V->amb.latitude.val > 0.0)
@@ -941,11 +941,11 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
     nlobj.add_inequality_mconstraint(constraint_auto_eval, &AO, std::vector<double>(_SF->getActiveReceiverCount(), 0.));
 
     //Number of variables to be optimized
-	int nvars = (int)optvars.size();
+	int nvars = nvars;
 	
     //NLopt optimization variable values
 	vector<double> var_values(nvars);
-    for(int i=0; i<(int)optvars.size(); i++)
+    for(int i=0; i<nvars; i++)
         var_values.at(i) = *optvars.at(i);
 
     //Check feasibility
@@ -955,10 +955,10 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
         unsigned int iht = (unsigned int)(std::find(names->begin(), names->end(), rit->rec_height.name) - names->begin());
         if (iht < names->size())
         {
-            double *xtemp = new double[optvars.size()];
-            for (int i = 0; i < (int)optvars.size(); i++)
+            double *xtemp = new double[nvars];
+            for (int i = 0; i < nvars; i++)
                 xtemp[i] = 1.;
-            AO.Simulate(xtemp, (int)optvars.size());
+            AO.Simulate(xtemp, nvars);
             delete[] xtemp;
             double feas_mult = 1.;
             if (AO.m_flux.back().at(itct) > rit->peak_flux.val)
@@ -979,7 +979,7 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
     for (int j = 0; ; j++)      //header line counter
     {
         bool all_written = true;    //initialize
-        for (int i = 0; i < (int)optvars.size(); i++)
+        for (int i = 0; i < nvars; i++)
         {
             size_t nch = names->at(i).size();
 
@@ -1025,20 +1025,20 @@ bool AutoPilot::Optimize(vector<double*> &optvars, vector<double> &upper_range, 
         //write the optimal point found
         ostringstream oo;
         oo << "Algorithm converged:\n";
-        for(int i=0; i<(int)optvars.size(); i++)
+        for(int i=0; i<nvars; i++)
             oo << (names == 0 ? "" : names->at(i) + "=" ) << setw(8) << var_values.at(i) << "   ";
         oo << "\nObjective: " << fmin;
         _summary_siminfo->addSimulationNotice(oo.str() );
 
         //Set vars to optimal point
-        double* opt_x = new double[(int)optvars.size()];
-        for (int i = 0; i < (int)optvars.size(); i++) {
+        double* opt_x = new double[nvars];
+        for (int i = 0; i < nvars; i++) {
             *optvars.at(i) = var_values.at(i);
             opt_x[i] = var_values.at(i);
         }
         var_map* V = AO.m_variables;
         if (V->recs.front().rec_type.mapval() == var_receiver::REC_TYPE::FALLING_PARTICLE)
-            AO.update_fp_rec_dep_vars(opt_x);
+            AO.update_fp_rec_dep_vars(var_values);
         delete[] opt_x;
 
     }
