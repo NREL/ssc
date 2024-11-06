@@ -279,7 +279,7 @@ void BatteryPowerFlow::initialize(double stateOfCharge, bool systemPriorityCharg
 		(m_BatteryPower->powerSystem < m_BatteryPower->powerLoad || !m_BatteryPower->dischargeOnlyLoadExceedSystem || m_BatteryPower->meterPosition == dispatch_t::FRONT))
 	{
 		// try to discharge full amount.  Will only use what battery can provide
-		m_BatteryPower->powerBatteryDC = m_BatteryPower->powerBatteryDischargeMaxDC;
+		m_BatteryPower->powerBatteryDC = m_BatteryPower->powerBatteryDischargeMaxDC * (1 - m_BatteryPower->adjustLosses);
 	}
 	// Is there extra power from system
 	else if ((((m_BatteryPower->powerSystem > m_BatteryPower->powerLoad) || !m_BatteryPower->chargeOnlySystemExceedLoad) && m_BatteryPower->canSystemCharge) || m_BatteryPower->canGridCharge || m_BatteryPower->canClipCharge || m_BatteryPower->canCurtailCharge)

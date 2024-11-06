@@ -364,18 +364,20 @@ bool dispatch_t::restrict_power(double& I)
         // charging
         if (powerBattery < 0)
         {
-            if (std::abs(powerBattery) > m_batteryPower->powerBatteryChargeMaxDC * (1 + low_tolerance))
+            double max_charge_dc = (1 - m_batteryPower->adjustLosses) * m_batteryPower->powerBatteryChargeMaxDC;
+            double max_charge_ac = (1 - m_batteryPower->adjustLosses) * m_batteryPower->powerBatteryChargeMaxAC;
+            if (std::abs(powerBattery) > max_charge_dc * (1 + low_tolerance))
             {
-                dP = std::abs(m_batteryPower->powerBatteryChargeMaxDC - std::abs(powerBattery));
+                dP = std::abs(max_charge_dc - std::abs(powerBattery));
 
                 // increase (reduce) charging magnitude by percentage
                 I -= (dP / std::abs(powerBattery)) * I;
                 iterate = true;
             }
             else if (m_batteryPower->connectionMode == m_batteryPower->AC_CONNECTED &&
-                std::fabs(powerBatteryAC) > m_batteryPower->powerBatteryChargeMaxAC * (1 + low_tolerance))
+                std::fabs(powerBatteryAC) > max_charge_ac * (1 + low_tolerance))
             {
-                dP = std::abs(m_batteryPower->powerBatteryChargeMaxAC - std::abs(powerBatteryAC));
+                dP = std::abs(max_charge_ac - std::abs(powerBatteryAC));
 
                 // increase (reduce) charging magnitude by percentage
                 I -= (dP / std::abs(powerBattery)) * I;
@@ -394,17 +396,19 @@ bool dispatch_t::restrict_power(double& I)
         }
         else
         {
-            if (std::abs(powerBattery) > m_batteryPower->powerBatteryDischargeMaxDC * (1 + low_tolerance))
+            double max_discharge_dc = (1 - m_batteryPower->adjustLosses) * m_batteryPower->powerBatteryDischargeMaxDC;
+            double max_discharge_ac = (1 - m_batteryPower->adjustLosses) * m_batteryPower->powerBatteryDischargeMaxAC;
+            if (std::abs(powerBattery) > max_discharge_dc * (1 + low_tolerance))
             {
-                dP = std::abs(m_batteryPower->powerBatteryDischargeMaxDC - powerBattery);
+                dP = std::abs(max_discharge_dc - powerBattery);
 
                 // decrease discharging magnitude
                 I -= (dP / std::abs(powerBattery)) * I;
                 iterate = true;
             }
-            else if (std::abs(powerBatteryAC) > m_batteryPower->powerBatteryDischargeMaxAC * (1 + low_tolerance))
+            else if (std::abs(powerBatteryAC) > max_discharge_ac * (1 + low_tolerance))
             {
-                dP = std::abs(m_batteryPower->powerBatteryDischargeMaxAC - powerBatteryAC);
+                dP = std::abs(max_discharge_ac - powerBatteryAC);
 
                 // decrease discharging magnitude
                 I -= (dP / std::abs(powerBattery)) * I;
@@ -482,9 +486,9 @@ void dispatch_t::dispatch_dc_outage_step(size_t lifetimeIndex) {
     double pv_kwac = m_batteryPower->sharedInverter->powerAC_kW;
 
     double max_discharge_kwdc = _Battery->calculate_max_discharge_kw();
-    max_discharge_kwdc = std::fmin(max_discharge_kwdc, m_batteryPower->powerBatteryDischargeMaxDC);
+    max_discharge_kwdc = std::fmin(max_discharge_kwdc, m_batteryPower->powerBatteryDischargeMaxDC * (1 - m_batteryPower->adjustLosses));
     double max_charge_kwdc = _Battery->calculate_max_charge_kw();
-    max_charge_kwdc = std::fmax(max_charge_kwdc, -1.0 * m_batteryPower->powerBatteryChargeMaxDC); // Max, since charging numbers are negative
+    max_charge_kwdc = std::fmax(max_charge_kwdc, -1.0 * m_batteryPower->powerBatteryChargeMaxDC * (1 - m_batteryPower->adjustLosses)); // Max, since charging numbers are negative
     double batt_losses = _Battery->calculate_loss(max_charge_kwdc, lifetimeIndex);
 
     // Setup battery iteration
@@ -768,6 +772,10 @@ bool dispatch_automatic_t::check_constraints(double& I, size_t count)
         double I_initial = I;
         double P_battery = I * _Battery->V() * util::watt_to_kilowatt;
         double P_target = m_batteryPower->powerBatteryTarget;
+        double charge_max_dc = m_batteryPower->powerBatteryChargeMaxDC * (1 - m_batteryPower->adjustLosses);
+        double charge_max_ac = m_batteryPower->powerBatteryChargeMaxAC * (1 - m_batteryPower->adjustLosses);
+        double discharge_max_dc = m_batteryPower->powerBatteryDischargeMaxDC * (1 - m_batteryPower->adjustLosses);
+        double discharge_max_ac = m_batteryPower->powerBatteryDischargeMaxAC * (1 - m_batteryPower->adjustLosses);
 
         // Common to automated behind the meter and front of meter
         iterate = true;
@@ -801,14 +809,14 @@ bool dispatch_automatic_t::check_constraints(double& I, size_t count)
                 }
                 // Don't charge more if would violate current or power charge limits
                 if (I > m_batteryPower->currentChargeMax - tolerance ||
-                    std::abs(P_battery) > m_batteryPower->powerBatteryChargeMaxDC - powerflow_tolerance ||
-                    std::abs(m_batteryPower->powerBatteryAC) > m_batteryPower->powerBatteryChargeMaxAC - powerflow_tolerance) {
+                    std::abs(P_battery) > charge_max_dc - powerflow_tolerance ||
+                    std::abs(m_batteryPower->powerBatteryAC) > charge_max_ac - powerflow_tolerance) {
                     iterate = false;
                 }
                 // restrict based on power limits
                 else {
-                    double dP_max = fmin(fmin(dP, m_batteryPower->powerBatteryChargeMaxDC - std::abs(P_battery)),
-                        m_batteryPower->powerBatteryChargeMaxAC - std::abs(m_batteryPower->powerBatteryAC));
+                    double dP_max = fmin(fmin(dP, charge_max_dc - std::abs(P_battery)),
+                        charge_max_ac - std::abs(m_batteryPower->powerBatteryAC));
                     dP = fmax(dP_max, 0);
                 }
             }
@@ -820,14 +828,14 @@ bool dispatch_automatic_t::check_constraints(double& I, size_t count)
                 }
                 // Don't discharge more if would violate current or power discharge limits
                 if (I > m_batteryPower->currentDischargeMax - tolerance ||
-                    P_battery > m_batteryPower->powerBatteryDischargeMaxDC - powerflow_tolerance ||
-                    m_batteryPower->powerBatteryAC > m_batteryPower->powerBatteryDischargeMaxAC - powerflow_tolerance) {
+                    P_battery > discharge_max_dc - powerflow_tolerance ||
+                    m_batteryPower->powerBatteryAC > discharge_max_ac - powerflow_tolerance) {
                     iterate = false;
                 }
                 // restrict based on power limits
                 else {
-                    double dP_max = fmax(fmax(dP, P_battery - m_batteryPower->powerBatteryDischargeMaxDC),
-                        m_batteryPower->powerBatteryAC - m_batteryPower->powerBatteryChargeMaxAC);
+                    double dP_max = fmax(fmax(dP, P_battery - discharge_max_dc),
+                        m_batteryPower->powerBatteryAC - discharge_max_ac);
                     dP = fmin(dP_max, 0);
                 }
             }

@@ -3055,14 +3055,8 @@ void cm_pvsamv1::exec()
 
             if (en_batt && batt_topology == ChargeController::AC_CONNECTED)
             {
-                double delivered_percent = adj_factor; // Delivered percent is effectively 1 before this line, so just set it to adj_factor
-                if (system_use_lifetime_output && PVSystem->enableACLifetimeLosses)
-                {
-                    int ac_loss_index = (int)iyear * 365 + (int)floor(hour_of_year / 24); //in units of days
-                    delivered_percent *= (1 - PVSystem->acLifetimeLosses[ac_loss_index] / 100); // loss in kWac
-                }
                 double ac_loss_post_inverter = 0; // Already accounted for in pv AC power (including transformer losses)
-                double ac_loss_post_batt = 1 - delivered_percent;
+                double ac_loss_post_batt = 0.0; // With AC connected battery, losses only apply to PV
 
                 // calculate timestep in hour for battery models
                 // jj represents which timestep within the hour you're on, 0-indexed
