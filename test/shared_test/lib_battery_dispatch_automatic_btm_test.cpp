@@ -936,12 +936,12 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutageWithAvailabili
 
     // Battery will discharge as much as possible for the outage, charge when PV is available, then discharge when load increases at 7 pm
     std::vector<double> expectedPower = { 52.1, 52.1, 52.1, 52.1, 39.4, 3.7,
-                                            0, -48, -48, -48, -48, -48,
-                                        -48, -48, -48, -48.0, -11, 0,
-                                        0, 52.1, 52.1, 52.1, 52.1, 52.1 };
+                                            0, 0, 0, 0, 0, 0,
+                                        0, -48, -48, -48.0, -48.0, -48.0,
+                                        0, 52.1, 52.1, 52.28, 52.48, 27.6 };
 
-    std::vector<double> expectedCritLoadUnmet = { 50, 50, 50, 50, 50, 50, // Losses below prevent any crit load from being met in first hours
-                                                0, 0, 0, 0, 0, 0,
+    std::vector<double> expectedCritLoadUnmet = { 0, 0, 0, 0, 12.19, 46.46,
+                                                50, 50, 50, 50, 50, 50, // Losses below prevent any crit load from being met in hrs 6 - 12 while battery is discharged
                                                 0, 0, 0, 0, 0, 0,
                                                 0, 0, 0, 0, 0, 0 };
 
@@ -951,15 +951,19 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutageWithAvailabili
         if (h < 6) {
             batteryPower->isOutageStep = true;
             batteryPower->powerCritLoad = 50;
-            batteryPower->acLossSystemAvailability = 1; // TODO: redo this! This number only applies to PV now
+            batteryPower->acLossSystemAvailability = 0;
+        }
+        else if (h < 12) {
+            batteryPower->acLossSystemAvailability = 1;
+            batteryPower->powerCritLoad = 50;
         }
         else {
             batteryPower->acLossSystemAvailability = 0;
             batteryPower->isOutageStep = false;
         }
 
-        if (h > 6 && h < 18) {
-            batteryPower->powerSystem = 700; // Match the predicted PV
+        if (h > 12 && h < 18) {
+            batteryPower->powerSystem = 700; // PV is 0 hrs 6 - 11 due to availability loss
         }
         else if (h > 18) {
             batteryPower->powerLoad = 600; // Match the predicted load

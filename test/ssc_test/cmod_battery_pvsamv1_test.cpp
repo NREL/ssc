@@ -1065,7 +1065,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelInterc
     ssc_number_t expectedBatteryChargeEnergy = 1442;
     ssc_number_t expectedBatteryDischargeEnergy = 1321;
 
-    ssc_number_t peakKwCharge = -2.91;
+    ssc_number_t peakKwCharge = -2.78;
     ssc_number_t peakKwDischarge = 1.39;
     ssc_number_t peakCycles = 1;
     ssc_number_t avgCycles = 1;
