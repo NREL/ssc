@@ -398,6 +398,9 @@ bool dispatch_t::restrict_power(double& I)
         {
             double max_discharge_dc = (1 - m_batteryPower->adjustLosses) * m_batteryPower->powerBatteryDischargeMaxDC;
             double max_discharge_ac = (1 - m_batteryPower->adjustLosses) * m_batteryPower->powerBatteryDischargeMaxAC;
+            if (m_batteryPower->connectionMode == m_batteryPower->DC_CONNECTED) {
+                max_discharge_ac *= (1 - m_batteryPower->acLossSystemAvailability);
+            }
             if (std::abs(powerBattery) > max_discharge_dc * (1 + low_tolerance))
             {
                 dP = std::abs(max_discharge_dc - powerBattery);
@@ -558,9 +561,9 @@ void dispatch_t::dispatch_ac_outage_step(size_t lifetimeIndex) {
     double ac_loss_percent = m_batteryPower->acLossSystemAvailability;
 
     double max_discharge_kwdc = _Battery->calculate_max_discharge_kw();
-    max_discharge_kwdc = std::fmin(max_discharge_kwdc, m_batteryPower->powerBatteryDischargeMaxDC);
+    max_discharge_kwdc = std::fmin(max_discharge_kwdc, m_batteryPower->powerBatteryDischargeMaxDC * (1 - m_batteryPower->adjustLosses));
     double max_discharge_kwac = max_discharge_kwdc * m_batteryPower->singlePointEfficiencyDCToDC;
-    max_discharge_kwac = std::fmin(max_discharge_kwac, m_batteryPower->powerBatteryDischargeMaxAC);
+    max_discharge_kwac = std::fmin(max_discharge_kwac, m_batteryPower->powerBatteryDischargeMaxAC * (1 - m_batteryPower->adjustLosses));
     double max_charge_kwdc = _Battery->calculate_max_charge_kw();
     max_charge_kwdc = std::fmax(max_charge_kwdc, -1.0 * m_batteryPower->powerBatteryChargeMaxDC); // Max, since charging numbers are negative
 
