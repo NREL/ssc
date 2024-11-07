@@ -417,6 +417,9 @@ public:
     // Get the losses at the current step
     double getAncillaryLoss();
 
+    // Get the adjust loss at the current timestep
+    double getAvailabilityLoss(size_t lifetimeIndex);
+
     battery_state get_state();
 
     battery_params get_params();

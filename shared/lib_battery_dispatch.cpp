@@ -217,20 +217,21 @@ bool dispatch_t::check_constraints(double& I, size_t count)
         m_batteryPower->powerBatteryDC = m_batteryPower->powerBatteryTarget;
         I = _Battery_initial->calculate_current_for_power_kw(m_batteryPower->powerBatteryTarget);
     }
+
     // Don't allow battery to discharge if it gets wasted due to inverter efficiency limitations
-    // Typically, this would be due to low power flow, so just cut off battery.
+// Typically, this would be due to low power flow, so just cut off battery.
     if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED && m_batteryPower->sharedInverter->efficiencyAC < m_batteryPower->inverterEfficiencyCutoff)
     {
         // The requested DC power
         double powerBatterykWdc = _Battery->I() * _Battery->V() * util::watt_to_kilowatt;
 
-		// if battery discharging, see if can back off to get higher efficiency
-		if (m_batteryPower->powerBatteryDC > 0) {
+        // if battery discharging, see if can back off to get higher efficiency
+        if (m_batteryPower->powerBatteryDC > 0) {
             double max_dc = m_batteryPower->powerSystem + powerBatterykWdc; // Only used by "inverter::NONE"
-            double inverter_max_dc = m_batteryPower->sharedInverter->getInverterDCMaxPower(max_dc) * util::watt_to_kilowatt;
-			if (powerBatterykWdc + m_batteryPower->powerSystem > inverter_max_dc) {
-				powerBatterykWdc = inverter_max_dc - m_batteryPower->powerSystem;
-				powerBatterykWdc = fmax(powerBatterykWdc, 0);
+            double inverter_max_dc = m_batteryPower->sharedInverter->getInverterDCMaxPower(max_dc) * util::watt_to_kilowatt * (1 - m_batteryPower->acLossSystemAvailability);
+            if (powerBatterykWdc + m_batteryPower->powerSystem > inverter_max_dc) {
+                powerBatterykWdc = inverter_max_dc - m_batteryPower->powerSystem;
+                powerBatterykWdc = fmax(powerBatterykWdc, 0);
                 m_batteryPower->powerBatteryTarget = powerBatterykWdc;
                 I = _Battery->calculate_current_for_power_kw(m_batteryPower->powerBatteryTarget);
             }
@@ -239,7 +240,7 @@ bool dispatch_t::check_constraints(double& I, size_t count)
         else if (m_batteryPower->powerBatteryDC < 0 && m_batteryPower->powerGridToBattery > 0) {
             I *= fmax(1.0 - std::abs(m_batteryPower->powerGridToBattery * m_batteryPower->sharedInverter->efficiencyAC * 0.01 / m_batteryPower->powerBatteryDC), 0);
             m_batteryPower->powerBatteryTarget = _Battery->calculate_voltage_for_current(I) * I * util::watt_to_kilowatt;
-        }
+        }     
     }
 
     iterate = std::abs(I_initial - I) > tolerance;
@@ -330,17 +331,19 @@ bool dispatch_t::restrict_current(double& I)
     {
         if (I < 0)
         {
-            if (std::abs(I) > m_batteryPower->currentChargeMax)
+            double max_current_charge = (1 - m_batteryPower->adjustLosses) * m_batteryPower->currentChargeMax;
+            if (std::abs(I) > max_current_charge)
             {
-                I = -m_batteryPower->currentChargeMax;
+                I = -max_current_charge;
                 iterate = true;
             }
         }
         else
         {
-            if (I > m_batteryPower->currentDischargeMax)
+            double max_current_discharge = (1 - m_batteryPower->adjustLosses) * m_batteryPower->currentDischargeMax;
+            if (I > max_current_discharge)
             {
-                I = m_batteryPower->currentDischargeMax;
+                I = max_current_discharge;
                 iterate = true;
             }
         }

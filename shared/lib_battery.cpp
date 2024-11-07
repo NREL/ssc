@@ -786,6 +786,10 @@ double battery_t::getAncillaryLoss() {
     return losses->getAncillaryLoss();
 }
 
+double battery_t::getAvailabilityLoss(size_t lifetimeIndex) {
+    return losses->getAvailabilityLoss(lifetimeIndex);
+}
+
 battery_state battery_t::get_state() { return *state; }
 
 battery_params battery_t::get_params() { return *params; }
