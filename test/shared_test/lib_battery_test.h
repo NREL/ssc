@@ -42,8 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lib_battery_lifetime_test.h"
 #include "lib_battery_lifetime_nmc.h"
 
-static void compareState(thermal_state tested_state, thermal_state expected_state, const std::string& msg){
-    double tol = 0.02;
+static void compareState(thermal_state tested_state, thermal_state expected_state, const std::string& msg, double tol=0.02){
     EXPECT_NEAR(tested_state.T_batt, expected_state.T_batt, tol) << msg;
     EXPECT_NEAR(tested_state.T_room, expected_state.T_room, tol) << msg;
     EXPECT_NEAR(tested_state.q_relative_thermal, expected_state.q_relative_thermal, tol) << msg;
@@ -137,7 +136,7 @@ struct battery_state_test{
 
 static void compareState(std::unique_ptr<battery_t>&model, const battery_state_test& expected_state, const std::string& msg, double tol=0.01){
     auto tested_state = model->get_state();
-    compareState(*tested_state.capacity, expected_state.capacity, msg);
+    compareState(*tested_state.capacity, expected_state.capacity, msg, tol);
 
     EXPECT_NEAR(tested_state.V, expected_state.batt_voltage, 0.01) << msg;
 
@@ -158,8 +157,7 @@ static void compareState(std::unique_ptr<battery_t>&model, const battery_state_t
     EXPECT_NEAR(lifetime_tested->cycle->rainflow_Ylt, cyc_expected.rainflow_Ylt, tol) << msg;
     EXPECT_NEAR(lifetime_tested->cycle->rainflow_jlt, cyc_expected.rainflow_jlt, tol) << msg;
 
-    compareState(*tested_state.thermal, expected_state.thermal, msg);
-
+    compareState(*tested_state.thermal, expected_state.thermal, msg, tol);
 }
 
 class lib_battery_test : public ::testing::Test
