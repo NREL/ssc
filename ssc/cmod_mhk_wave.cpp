@@ -78,7 +78,7 @@ static var_info _cm_vtab_mhk_wave[] = {
 
 
 	{ SSC_OUTPUT,			SSC_NUMBER,			"device_average_power",					"Average power production of a single device",											"kW",			"",				"MHKWave",			"*",						"",							"" },
-	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production of array",											"kWh",			"",				"MHKWave",			"",						"",							"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual AC energy in Year 1",											"kWh",			"",				"MHKWave",			"",						"",							"" },
     { SSC_OUTPUT,           SSC_ARRAY,          "energy_hourly_kWh",                        "Energy production of array",                                            "kWh",          "", "Time Series",          "wave_resource_model_choice=1",                        "",          "" },
     { SSC_OUTPUT,           SSC_ARRAY,          "energy_hourly_kW",                        "Power output of array",                                            "kW",          "", "Time Series",          "wave_resource_model_choice=1",                        "",          "" },
 
@@ -578,7 +578,7 @@ public:
                 sys_degradation.push_back(1); // single year mode - degradation handled in financial models.
             }
 
-            adjustment_factors haf(this, "adjust");
+            adjustment_factors haf(this->get_var_table(), "adjust");
             if (!haf.setup(number_records, nyears))
                 throw exec_error("mhk_wave", "Failed to set up adjustment factors: " + haf.error());
 

@@ -37,7 +37,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "common.h"
 #include "core.h"
 #include "lib_battery.h"
-#include "lib_battery_dispatch.h"
 #include "lib_battery_dispatch_automatic_btm.h"
 #include "lib_battery_dispatch_automatic_fom.h"
 #include "lib_battery_dispatch_pvsmoothing_fom.h"
@@ -625,6 +624,9 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                     forecast_price_signal fps(&vt);
                     fps.setup(step_per_hour);
                     batt_vars->forecast_price_series_dollar_per_kwh = fps.forecast_price();
+                    batt_vars->forecast_cleared_capacities_kw = fps.cleared_capacity();
+                    batt_vars->capacity_forecast_type = fps.forecast_type;
+                    batt_vars->cleared_capacity_percent = fps.cleared_capacity_percent;
                     outMarketPrice = vt.allocate("market_sell_rate_series_yr1", batt_vars->forecast_price_series_dollar_per_kwh.size());
                     for (i = 0; i < batt_vars->forecast_price_series_dollar_per_kwh.size(); i++) {
                         outMarketPrice[i] = (ssc_number_t)(batt_vars->forecast_price_series_dollar_per_kwh[i] * 1000.0);
@@ -1326,7 +1328,8 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 batt_vars->inverter_paco, batt_vars->batt_cost_per_kwh,
                 batt_vars->batt_cycle_cost_choice, batt_vars->batt_cycle_cost, batt_vars->om_batt_variable_cost_per_kwh,
                 batt_vars->forecast_price_series_dollar_per_kwh, utilityRate,
-                eta_pvcharge, eta_gridcharge, eta_discharge,  batt_vars->grid_interconnection_limit_kW);
+                eta_pvcharge, eta_gridcharge, eta_discharge,  batt_vars->grid_interconnection_limit_kW,
+                batt_vars->forecast_cleared_capacities_kw, batt_vars->capacity_forecast_type, batt_vars->cleared_capacity_percent);
 
             if (batt_vars->batt_dispatch == dispatch_t::FOM_CUSTOM_DISPATCH)
             {
@@ -2267,7 +2270,7 @@ static var_info _cm_vtab_battery[] = {
     { SSC_INOUT,        SSC_NUMBER,      "capacity_factor",                            "Capacity factor",                                         "%",          "",                     "System Output",                             "",                    "",                               "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor_sales",                      "Capacity factor based on AC electricity to grid",                                         "%",          "",                     "System Output",                             "",                    "",                               "" },
 
-    { SSC_INOUT,        SSC_NUMBER,      "annual_energy",                              "Annual Energy",                                           "kWh",        "",                     "System Output",                      "?=0",                    "",                               "" },
+    { SSC_INOUT,        SSC_NUMBER,      "annual_energy",                              "Annual AC energy in Year 1",                                           "kWh",        "",                     "System Output",                      "?=0",                    "",                               "" },
 
     // other variables come from battstor common table
     var_info_invalid };

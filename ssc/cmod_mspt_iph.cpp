@@ -1447,7 +1447,7 @@ public:
         heliostatfield.ms_params.mv_clearsky_data = clearsky_data;
 
         //Load the solar field adjustment factors
-        adjustment_factors sf_haf(this, "sf_adjust");
+        adjustment_factors sf_haf(this->get_var_table(), "sf_adjust");
         if (!sf_haf.setup((int)n_steps_full))
             throw exec_error("mspt_iph", "failed to setup sf adjustment factors: " + sf_haf.error());
         //allocate array to pass to tcs
@@ -2305,7 +2305,7 @@ public:
         ssc_number_t* p_q_dot_heat_sink = as_array("q_dot_to_heat_sink", &count);
 
         // 'adjustment_factors' class stores factors in hourly array, so need to index as such
-        adjustment_factors haf(this, "adjust");
+        adjustment_factors haf(this->get_var_table(), "adjust");
         if (!haf.setup(count))
             throw exec_error("mspt_iph", "failed to setup adjustment factors: " + haf.error());
 

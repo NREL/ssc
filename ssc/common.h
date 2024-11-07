@@ -85,12 +85,12 @@ void prepend_to_output(compute_module* cm, std::string var_name, size_t count, s
 
 class adjustment_factors
 {
-	compute_module *m_cm;
+	var_table *m_vt;
 	std::vector<ssc_number_t> m_factors;
 	std::string m_error;
 	std::string m_prefix;
 public:
-	adjustment_factors(compute_module *cm, const std::string &prefix);
+	adjustment_factors(var_table *vt, const std::string &prefix);
 	bool setup(int nsteps=8760, int analysis_period=1);
 	ssc_number_t operator()(size_t time);
     size_t size();
@@ -100,14 +100,20 @@ public:
 class forecast_price_signal
 {
 	var_table *vartab;
-	std::vector<ssc_number_t> m_forecast_price;
+	std::vector<ssc_number_t> m_forecast_price; // units: $/kWh
+    std::vector<ssc_number_t> m_cleared_capacity; // units: kW
 	std::string m_error;
+
 public:
 	forecast_price_signal(var_table *vt);
 	bool setup(size_t step_per_hour);
 	std::vector<ssc_number_t> forecast_price() { return m_forecast_price; }
+    std::vector<ssc_number_t> cleared_capacity() { return m_cleared_capacity;  }
 	ssc_number_t operator()(size_t time);
 	std::string error() { return m_error; }
+    double cleared_capacity_percent; // 0 - 1, 0: all markets are set by percent of generation, 1: all markets are set by cleared capacity
+
+    dispatch_t::CAPACITY_FORECAST_TYPE forecast_type;
 };
 
 class shading_factor_calculator
