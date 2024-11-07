@@ -1175,7 +1175,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     }
 
     // TODO: fix this!
-    std::vector<double> adj_losses;
+    std::vector<double> adj_losses(8760, 0.0);
     if (batt_vars->batt_loss_choice == losses_params::MONTHLY) {
         if (*std::min_element(batt_vars->batt_losses_charging.begin(), batt_vars->batt_losses_charging.end()) < 0
             || *std::min_element(batt_vars->batt_losses_discharging.begin(), batt_vars->batt_losses_discharging.end()) < 0

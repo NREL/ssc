@@ -951,7 +951,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutageWithAvailabili
         if (h < 6) {
             batteryPower->isOutageStep = true;
             batteryPower->powerCritLoad = 50;
-            batteryPower->acLossSystemAvailability = 1;
+            batteryPower->acLossSystemAvailability = 1; // TODO: redo this! This number only applies to PV now
         }
         else {
             batteryPower->acLossSystemAvailability = 0;

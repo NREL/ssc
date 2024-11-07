@@ -81,6 +81,7 @@ BatteryPower::BatteryPower(double dtHour) :
         voltageSystem(0),
         acLossWiring(0.0),
         acLossSystemAvailability(0.0),
+        adjustLosses(0.0),
         acXfmrLoadLoss(0.0),
         acXfmrNoLoadLoss(0.0),
         acXfmrRating(0.0),
@@ -151,6 +152,7 @@ BatteryPower::BatteryPower(const BatteryPower& orig) {
     voltageSystem = orig.voltageSystem;
     acLossWiring = orig.acLossWiring;
     acLossSystemAvailability = orig.acLossSystemAvailability;
+    adjustLosses = orig.adjustLosses;
     acXfmrLoadLoss = orig.acXfmrLoadLoss;
     acXfmrNoLoadLoss = orig.acXfmrNoLoadLoss;
     acXfmrRating = orig.acXfmrRating;
@@ -218,6 +220,7 @@ void BatteryPower::reset()
 	voltageSystem = 0;
     acLossWiring = 0.0;
     acLossSystemAvailability = 0.0;
+    adjustLosses = 0.0;
     acXfmrLoadLoss = 0.0;
     acXfmrNoLoadLoss = 0.0;
     isOutageStep = false;
@@ -332,7 +335,6 @@ void BatteryPowerFlow::calculateACConnected()
     double P_load_ac = m_BatteryPower->powerLoad;
     double P_crit_load_ac = m_BatteryPower->powerCritLoad;
     double P_system_loss_ac = m_BatteryPower->powerSystemLoss;
-    double system_availability_loss = m_BatteryPower->acLossSystemAvailability; // Losses due to system availability. Inverter losses are accounted for in the PV numbers already
     double P_pv_to_batt_ac, P_grid_to_batt_ac, P_fuelcell_to_batt_ac,
         P_batt_to_load_ac, P_grid_to_load_ac, P_pv_to_load_ac, P_fuelcell_to_load_ac, P_available_pv,
         P_pv_to_grid_ac, P_batt_to_grid_ac, P_fuelcell_to_grid_ac, P_gen_ac, P_grid_ac,
@@ -364,8 +366,6 @@ void BatteryPowerFlow::calculateACConnected()
 
     // Code simplification to remove redundancy for code that should use either critical load or actual load
     double calc_load_ac = (m_BatteryPower->isOutageStep ? P_crit_load_ac : P_load_ac);
-
-    P_pv_ac *= (1 - system_availability_loss);
 
     // charging and idle
     if (P_battery_ac <= 0)
