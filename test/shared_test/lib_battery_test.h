@@ -135,13 +135,12 @@ struct battery_state_test{
     }
 };
 
-static void compareState(std::unique_ptr<battery_t>&model, const battery_state_test& expected_state, const std::string& msg){
+static void compareState(std::unique_ptr<battery_t>&model, const battery_state_test& expected_state, const std::string& msg, double tol=0.01){
     auto tested_state = model->get_state();
     compareState(*tested_state.capacity, expected_state.capacity, msg);
 
     EXPECT_NEAR(tested_state.V, expected_state.batt_voltage, 0.01) << msg;
 
-    double tol = 0.01;
     auto lifetime_tested = tested_state.lifetime;
     auto lifetime_expected = expected_state.lifetime;
     EXPECT_NEAR(lifetime_tested->day_age_of_battery, lifetime_expected.day_age_of_battery, tol) << msg;

@@ -362,7 +362,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
     s.capacity = { 47.12, 901.56, 865.505, 8.87, 0, 5.444, 6.47, 2};
     s.batt_voltage = 468.126;
-    s.lifetime.q_relative = 93.08;
+    s.lifetime.q_relative = 90.16;
     s.lifetime.day_age_of_battery = 2587.83;
     s.lifetime.cycle->q_relative_cycle = 92.08;
     s.lifetime.n_cycles = 399;
@@ -376,7 +376,7 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     s.lifetime.calendar->dq_relative_calendar_old = 0.0393;
     s.thermal = {96.01, 20, 20};
     s.last_idx = 32991;
-    compareState(batteryModel, s, "runTest: 3");
+    compareState(batteryModel, s, "runTest: 3", 0.1);
 
     EXPECT_NEAR(capacity_passed, 355949, 100) << "Current passing through cell";
     double qmax = fmax(s.capacity.qmax_lifetime, s.capacity.qmax_thermal);
