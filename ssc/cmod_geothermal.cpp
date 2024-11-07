@@ -198,7 +198,7 @@ static var_info _cm_vtab_geothermal[] = {
 
     { SSC_OUTPUT,       SSC_ARRAY,      "monthly_resource_temperature",       "Monthly avg resource temperature",                    "C",       "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "monthly_power",                      "Monthly power",                                       "kW",      "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "monthly_energy",                     "AC energy (year 1)",              "kWh/mo",    "",                 "GeoHourly",       "",                    "LENGTH=12",                              "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "monthly_energy",                     "Monthly AC energy in Year 1",              "kWh/mo",    "",                 "GeoHourly",       "",                    "LENGTH=12",                              "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "monthly_energy_lifetime",            "Monthly energy before performance adjustments",       "kWh",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
 
     { SSC_OUTPUT,       SSC_ARRAY,      "timestep_resource_temperature",      "Resource temperature",              "C",       "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
@@ -208,9 +208,9 @@ static var_info _cm_vtab_geothermal[] = {
     { SSC_OUTPUT,       SSC_ARRAY,      "timestep_dry_bulb",                  "Dry bulb temperature",              "C",       "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "timestep_wet_bulb",                  "Wet bulb temperature",              "C",       "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
 																																																	             
-    { SSC_OUTPUT,       SSC_NUMBER,     "lifetime_output",                    "Lifetime Output",                                     "kWh",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
-	{ SSC_OUTPUT,		SSC_NUMBER,		"first_year_output",				  "First Year Output",									 "kWh",		"",				 "GeoHourly",		 "ui_calculations_only=0",	 "",				"" },
-	{ SSC_OUTPUT,		SSC_NUMBER,		"annual_energy",					  "Annual Energy",										"kWh",		"",				"GeoHourly",		 "ui_calculations_only=0",	"",					"" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "lifetime_output",                    "Lifetime output",                                     "kWh",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
+	{ SSC_OUTPUT,		SSC_NUMBER,		"first_year_output",				  "First year output",									 "kWh",		"",				 "GeoHourly",		 "ui_calculations_only=0",	 "",				"" },
+	{ SSC_OUTPUT,		SSC_NUMBER,		"annual_energy",					  "Annual AC energy in Year 1",										"kWh",		"",				"GeoHourly",		 "ui_calculations_only=0",	"",					"" },
 
 
 	{ SSC_OUTPUT,		SSC_NUMBER,		"capacity_factor",					  "Capacity factor",									"",			"",					 "",					"*",				"",					"" },
@@ -523,7 +523,7 @@ public:
 			ssc_number_t * p_gen = allocate("gen", n_rec);
 
 			// TODO - implement performance factors 
-			adjustment_factors haf(this, "adjust");
+			adjustment_factors haf(this->get_var_table(), "adjust");
 			if (!haf.setup(8760, geo_inputs.mi_ProjectLifeYears))
 				throw exec_error("geothermal", "failed to setup adjustment factors: " + haf.error());
             std::vector<double> haf_input;

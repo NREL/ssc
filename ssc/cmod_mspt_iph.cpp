@@ -606,11 +606,11 @@ static var_info _cm_vtab_mspt_iph[] = {
 { SSC_OUTPUT,    SSC_ARRAY,  "gen",                                "Total thermal power to heat sink with available derate",                                                                                  "kWt",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
 
 // Annual single-value outputs
-{ SSC_OUTPUT,    SSC_NUMBER, "annual_energy",                      "Annual Thermal Energy to Heat Sink w/ avail derate",                                  "kWt-hr",       "",                    "Post-process",          "sim_type=1",                "",              ""},
+{ SSC_OUTPUT,    SSC_NUMBER, "annual_energy",                      "Annual thermal energy to heat sink with availability derate",                                  "kWt-hr",       "",                    "Post-process",          "sim_type=1",                "",              ""},
 { SSC_OUTPUT,    SSC_NUMBER, "annual_q_rec_htf",                   "Annual receiver power delivered to HTF",                                              "MWt-hr",       "",                    "Tower and Receiver",    "sim_type=1",                "",              ""},
 
 
-{ SSC_OUTPUT,    SSC_NUMBER, "annual_electricity_consumption",     "Annual electricity consumption w/ avail derate",                                      "kWe-hr",       "",                    "Post-process",          "sim_type=1",                "",              ""},
+{ SSC_OUTPUT,    SSC_NUMBER, "annual_electricity_consumption",     "Annual electricity consumption with availability derate",                                      "kWe-hr",       "",                    "Post-process",          "sim_type=1",                "",              ""},
 
 { SSC_OUTPUT,    SSC_NUMBER, "capacity_factor",                    "Capacity factor",                                                                     "%",            "",                    "Post-process",          "sim_type=1",                "",              ""},
 { SSC_OUTPUT,    SSC_NUMBER, "kwh_per_kw",                         "First year kWh/kW",                                                                   "kWth/kWt",     "",                    "Post-process",          "sim_type=1",                "",              ""},
@@ -1428,7 +1428,7 @@ public:
         heliostatfield.ms_params.mv_clearsky_data = clearsky_data;
 
         //Load the solar field adjustment factors
-        adjustment_factors sf_haf(this, "sf_adjust");
+        adjustment_factors sf_haf(this->get_var_table(), "sf_adjust");
         if (!sf_haf.setup((int)n_steps_full))
             throw exec_error("mspt_iph", "failed to setup sf adjustment factors: " + sf_haf.error());
         //allocate array to pass to tcs
@@ -2290,7 +2290,7 @@ public:
         ssc_number_t* p_q_dot_heat_sink = as_array("q_dot_to_heat_sink", &count);
 
         // 'adjustment_factors' class stores factors in hourly array, so need to index as such
-        adjustment_factors haf(this, "adjust");
+        adjustment_factors haf(this->get_var_table(), "adjust");
         if (!haf.setup(count))
             throw exec_error("mspt_iph", "failed to setup adjustment factors: " + haf.error());
 

@@ -311,7 +311,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 { SSC_INPUT, SSC_NUMBER,   "cec_adjust",                           "Temperature coefficient adjustment",                  "%",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
 { SSC_INPUT, SSC_NUMBER,   "cec_alpha_sc",                         "Short circuit current temperature coefficient",       "A/C",    "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
 { SSC_INPUT, SSC_NUMBER,   "cec_beta_oc",                          "Open circuit voltage temperature coefficient",        "V/C",    "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
-{ SSC_INPUT, SSC_NUMBER,   "cec_gamma_r",                          "Maximum power point temperature coefficient",         "%/C",    "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
 { SSC_INPUT, SSC_NUMBER,   "cec_i_l_ref",                          "Light current",                                       "A",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
 { SSC_INPUT, SSC_NUMBER,   "cec_i_mp_ref",                         "Maximum power point current",                         "A",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
 { SSC_INPUT, SSC_NUMBER,   "cec_i_o_ref",                          "Saturation current",                                  "A",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
@@ -839,7 +838,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 
        // monthly and annual outputs
 
-        { SSC_OUTPUT,		 SSC_NUMBER,     "annual_energy",						 "Annual AC energy",                                       "kWh",       "",                      "Annual (Year 1)", "", "", "" },
+        { SSC_OUTPUT,		 SSC_NUMBER,     "annual_energy",						 "Annual AC energy in Year 1",                                       "kWh",       "",                      "Annual (Year 1)", "", "", "" },
 
         { SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_invmppt_loss",               "Inverter clipping loss DC MPPT voltage limits",          "kWh/yr",    "",                      "Annual (Year 1)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_cliploss",                  "Inverter clipping loss AC power limit",                  "kWh/yr",    "",                      "Annual (Year 1)",       "",                    "",                              "" },
@@ -863,8 +862,8 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "monthly_poa_eff",                             "POA irradiance total after shading and soiling",          "kWh/mo",    "",                      "Monthly",       "",                    "LENGTH=12",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "monthly_poa_beam_eff",                        "POA front-side irradiance beam after shading and soiling",           "kWh/mo",    "",                      "Monthly",       "",                    "LENGTH=12",                              "" },
 
-        { SSC_OUTPUT,        SSC_ARRAY,      "monthly_dc",                                  "DC energy",                                   "kWh/mo",    "",                      "Monthly",       "",                    "LENGTH=12",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "monthly_energy",                              "AC energy gross",                                     "kWh/mo",    "",                      "Monthly",       "",                    "LENGTH=12",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "monthly_dc",                                  "Monthly DC energy in Year 1",                                   "kWh/mo",    "",                      "Monthly",       "",                    "LENGTH=12",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "monthly_energy",                              "Monthly AC energy in Year 1",                                     "kWh/mo",    "",                      "Monthly",       "",                    "LENGTH=12",                              "" },
 
         { SSC_OUTPUT,        SSC_NUMBER,     "annual_gh",                                   "Annual GHI",                                                    "Wh/m2/yr",  "",                      "Annual (Year 1)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_nom",                              "POA front-side irradiance total nominal",                       "kWh/yr",    "",                      "Annual (Year 1)",       "",                    "",                              "" },
@@ -1225,12 +1224,12 @@ void cm_pvsamv1::exec()
     //dc hourly adjustment factors
     int nyears_haf = nyears;
     if (!system_use_lifetime_output) nyears_haf = 1;
-    adjustment_factors dc_haf(this, "dc_adjust");
+    adjustment_factors dc_haf(this->get_var_table(), "dc_adjust");
     if (!dc_haf.setup((int)nrec, nyears_haf))
         throw exec_error("pvsamv1", "failed to setup DC adjustment factors: " + dc_haf.error());
 
     // hourly adjustment factors
-    adjustment_factors haf(this, "adjust");
+    adjustment_factors haf(this->get_var_table(), "adjust");
     if (!haf.setup((int)nrec, nyears_haf))
         throw exec_error("pvsamv1", "failed to setup AC adjustment factors: " + haf.error());
 

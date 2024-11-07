@@ -119,9 +119,9 @@ static var_info _cm_vtab_windpower[] = {
     { SSC_OUTPUT , SSC_ARRAY   , "wake_loss_internal_percent"        , "Internal wake loss percent"               , "%"       ,""                                    , "Time Series"                          , ""                                                , ""                                                , "" } ,
 
     // monthly and annual outputs
-	{ SSC_OUTPUT , SSC_ARRAY  , "monthly_energy"                     , "Monthly Energy Gross"                     , "kWh"     ,""                                    , "Monthly"                              , "*"                                               , "LENGTH=12"                                       , "" } ,
-	{ SSC_OUTPUT , SSC_NUMBER , "annual_energy"                      , "Annual Energy"                            , "kWh"     ,""                                    , "Annual"                               , "*"                                               , ""                                                , "" } ,
-	{ SSC_OUTPUT , SSC_NUMBER , "annual_gross_energy"                , "Annual Gross Energy"                      , "kWh"     ,""                                    , "Annual"                               , "*"                                               , ""                                                , "" } ,
+	{ SSC_OUTPUT , SSC_ARRAY  , "monthly_energy"                     , "Monthly AC energy in Year 1"                     , "kWh"     ,""                                    , "Monthly"                              , "*"                                               , "LENGTH=12"                                       , "" } ,
+	{ SSC_OUTPUT , SSC_NUMBER , "annual_energy"                      , "Annual AC energy in Year 1"                            , "kWh"     ,""                                    , "Annual"                               , "*"                                               , ""                                                , "" } ,
+	{ SSC_OUTPUT , SSC_NUMBER , "annual_gross_energy"                , "Annual gross AC energy in Year 1"                      , "kWh"     ,""                                    , "Annual"                               , "*"                                               , ""                                                , "" } ,
 	{ SSC_OUTPUT , SSC_NUMBER , "capacity_factor"                    , "Capacity factor"                          , "%"       ,""                                    , "Annual"                               , "*"                                               , ""                                                , "" } ,
 	{ SSC_OUTPUT , SSC_NUMBER , "kwh_per_kw"                         , "First year kWh/kW"                        , "kWh/kW"  ,""                                    , "Annual"                               , "*"                                               , ""                                                , "" } ,
     { SSC_OUTPUT , SSC_NUMBER , "wind_speed_average"                 , "Average Wind speed"                       , "m/s"     ,""                                    , "Annual"                               , ""                                                , ""                                                , "" } ,
@@ -348,7 +348,7 @@ void cm_windpower::exec()
 		throw exec_error("windpower", util::format("the wind model is only configured to handle up to %d turbines.", wpc.GetMaxTurbines()));
 
 	// create adjustment factors and losses - set them up initially here for the Weibull distribution method, rewrite them later with nrec for the time series method
-	adjustment_factors haf(this, "adjust");
+	adjustment_factors haf(this->get_var_table(), "adjust");
 	if (!haf.setup())
 		throw exec_error("windpower", "failed to setup adjustment factors: " + haf.error());
 

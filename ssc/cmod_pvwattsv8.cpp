@@ -203,16 +203,16 @@ static var_info _cm_vtab_pvwattsv8[] = {
 
         { SSC_OUTPUT,       SSC_ARRAY,       "poa_monthly",                    "Plane of array irradiance",                   "kWh/m2",    "",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
         { SSC_OUTPUT,       SSC_ARRAY,       "solrad_monthly",                 "Daily average solar irradiance",              "kWh/m2/day","",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
-        { SSC_OUTPUT,       SSC_ARRAY,       "dc_monthly",                     "DC output",                             "kWh",       "",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
-        { SSC_OUTPUT,       SSC_ARRAY,       "ac_monthly",                     "AC output",                            "kWh",       "",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
-        { SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",                 "Monthly energy",                              "kWh",       "",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
-        { SSC_OUTPUT,	    SSC_MATRIX,		 "annual_energy_distribution_time","Annual energy production as function of Time",				"",				"",				"Heatmaps",			"",						"",							"" },
+        { SSC_OUTPUT,       SSC_ARRAY,       "dc_monthly",                     "Monthly DC energy",                             "kWh",       "",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
+        { SSC_OUTPUT,       SSC_ARRAY,       "ac_monthly",                     "Monthly AC energy",                            "kWh",       "",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
+        { SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",                 "Monthly AC energy in Year 1",                              "kWh",       "",                                             "Monthly",          "",                       "LENGTH=12",                          "" },
+        { SSC_OUTPUT,	    SSC_MATRIX,		 "annual_energy_distribution_time","Annual energy production as function of time",				"",				"",				"Heatmaps",			"",						"",							"" },
 
         { SSC_OUTPUT,       SSC_NUMBER,      "solrad_annual",                  "Daily average solar irradiance",              "kWh/m2/day","",                                              "Annual",      "",                       "",                          "" },
         { SSC_OUTPUT,       SSC_NUMBER,      "ac_annual",                      "Annual AC output",                     "kWh",       "",                                                     "Annual",      "",                       "",                          "" },
         { SSC_OUTPUT,       SSC_NUMBER,      "ac_annual_pre_adjust",                      "Annual AC output before system availability",                     "kWh",       "",                                                     "Annual",      "",                       "",                          "" },
 
-        { SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",                  "Annual energy",                               "kWh",       "",                                              "Annual",      "",                       "",                          "" },
+        { SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",                  "Annual AC energy in Year 1",                               "kWh",       "",                                              "Annual",      "",                       "",                          "" },
         { SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",                "Capacity factor based on nameplate DC capacity",    "%",         "",                                           "Annual",        "",                       "",                          "" },
         { SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor_ac",             "Capacity factor based on total AC capacity",    "%",         "",                                           "Annual",        "",                       "",                          "" },
         { SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",                     "Energy yield",                           "kWh/kW",          "",                                             "Annual",        "",                       "",                          "" },
@@ -746,7 +746,7 @@ public:
         size_t nrec = wdprov->nrecords();
         size_t nlifetime = nrec * nyears;
 
-        adjustment_factors haf(this, "adjust");
+        adjustment_factors haf(this->get_var_table(), "adjust");
         if (!haf.setup(nrec, nyears))
             throw exec_error("pvwattsv8", "Failed to set up adjustment factors: " + haf.error());
 

@@ -990,7 +990,7 @@ var_info vtab_hybrid_fin_om[] = {
     /*   VARTYPE           DATATYPE         NAME                           LABEL                UNITS     META                      GROUP           REQUIRED_IF      CONSTRAINTS     UI_HINTS*/
     { SSC_INPUT,          SSC_NUMBER,     "is_hybrid",              "hybrid configuration",      "0/1", "0=singletech,1=hybrid",    "HybridFin",       "?=0",      "",             "" },
     { SSC_INPUT,          SSC_ARRAY,      "cf_hybrid_om_sum",       "Hybrid O&M costs",          "$",   "",                         "HybridFin",       "",         "",             "" },
-    { SSC_INOUT,          SSC_ARRAY,      "monthly_energy",         "Monthly energy",            "kWh", "",                         "Monthly",         "",         "LENGTH = 12",  "" },
+    { SSC_INOUT,          SSC_ARRAY,      "monthly_energy",         "Monthly AC energy in Year 1",            "kWh", "",                         "Monthly",         "",         "LENGTH = 12",  "" },
 
 var_info_invalid };
 
@@ -1063,22 +1063,22 @@ var_info vtab_utility_rate_common[] = {
     var_info_invalid
 };
 
-adjustment_factors::adjustment_factors( compute_module *cm, const std::string &prefix )
-: m_cm(cm), m_prefix(prefix)
+adjustment_factors::adjustment_factors(var_table* vt, const std::string &prefix )
+: m_vt(vt), m_prefix(prefix)
 {
 }
 
 //adjustment factors changed from derates to percentages jmf 1/9/15
 bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set to 8760 in this declaration function in common.h
 {
-    ssc_number_t f = m_cm->as_number(m_prefix + "_constant");
+    ssc_number_t f = m_vt->as_number(m_prefix + "_constant");
     f = 1.0 - f / 100.0; //convert from percentage to factor
 	m_factors.resize( nsteps * analysis_period, f);
 
-    if (m_cm->is_assigned(m_prefix + "_en_hourly")) {
-        if (m_cm->as_boolean(m_prefix + "_en_hourly")) {
+    if (m_vt->is_assigned(m_prefix + "_en_hourly")) {
+        if (m_vt->as_boolean(m_prefix + "_en_hourly")) {
             size_t n;
-            ssc_number_t* p = m_cm->as_array(m_prefix + "_hourly", &n);
+            ssc_number_t* p = m_vt->as_array(m_prefix + "_hourly", &n);
             if (p != 0 && n == 8760)
             {
                 for (int i = 0; i < 8760; i++)
@@ -1089,14 +1089,14 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
             }
         }
     }
-    if (m_cm->as_boolean(m_prefix +  "_en_timeindex"))
+    if (m_vt->as_boolean(m_prefix +  "_en_timeindex"))
     {
         size_t n;
         double steps_per_hour = nsteps / 8760.0;
         int month = 0;
         int day = 0;
         int week = 0;
-        ssc_number_t* p = m_cm->as_array(m_prefix + "_timeindex", &n);
+        ssc_number_t* p = m_vt->as_array(m_prefix + "_timeindex", &n);
         if (p != 0) {
             if (n == 1) {
                 for (int a = 0; a < analysis_period; a++) {
@@ -1152,10 +1152,10 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
             }
         }
     }
-    if (m_cm->as_boolean(m_prefix + "_en_periods"))
+    if (m_vt->as_boolean(m_prefix + "_en_periods"))
     {
 		size_t nr, nc;
-        ssc_number_t* mat = m_cm->as_matrix(m_prefix + "_periods", &nr, &nc);
+        ssc_number_t* mat = m_vt->as_matrix(m_prefix + "_periods", &nr, &nc);
         double ts_mult = nsteps / 8760.0;
 		if ( mat != 0 && nc == 3 )
 		{
