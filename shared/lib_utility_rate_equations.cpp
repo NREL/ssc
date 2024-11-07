@@ -678,7 +678,7 @@ void rate_data::setup_energy_rates(ssc_number_t* ec_weekday, ssc_number_t* ec_we
                             tier_check.push_back(m_month[m].ec_tou_ub.at(i, j));
                             tier_units.push_back(m_month[m].ec_tou_units.at(i, j));
                         }
-                        else if ((std::fabs(tier_check[tier - 1] - m_month[m].ec_tou_ub.at(i, j)) > 1e-7)) {
+                        else if ((std::fabs(tier_check[tier - 1] - m_month[m].ec_tou_ub.at(i, j)) > 1e-7 * std::fmin(tier_check[tier - 1], m_month[m].ec_tou_ub.at(i, j)))) {
                             std::string original_units = get_units_text(tier_units[tier - 1]);
                             std::string new_units = get_units_text(m_month[m].ec_tou_units.at(i, j));
 
@@ -843,7 +843,7 @@ void rate_data::setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_
                         if (tier_check.size() < tier) {
                             tier_check.push_back(m_month[m].dc_tou_ub.at(i, j));
                         }
-                        else if (std::fabs(tier_check[tier - 1] - m_month[m].dc_tou_ub.at(i, j)) > 1e-7) {
+                        else if (std::fabs(tier_check[tier - 1] - m_month[m].dc_tou_ub.at(i, j)) > 1e-7 * std::fmin(tier_check[tier - 1], m_month[m].dc_tou_ub.at(i, j))) {
                             std::ostringstream ss;
                             ss << "Demand tier " << tier << " Max. Usage for " << util::schedule_int_to_month(m) << " period " << period << " was expected to be ";
                             ss << tier_check[tier - 1] << " kW but was ";
