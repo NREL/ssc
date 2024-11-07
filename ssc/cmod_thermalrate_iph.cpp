@@ -61,14 +61,14 @@ static var_info vtab_thermal_rate_iph[] = {
 
 
 	{ SSC_INPUT, SSC_NUMBER, "thermal_buy_rate_option",             "Thermal buy rate option",   "0-2",          "0=flat,1=timestep,2=monthly", "Thermal Rate",       "?=0",                       "INTEGER,MIN=0,MAX=2",           "" },
-    { SSC_INPUT, SSC_NUMBER, "thermal_buy_rate_flat_heat_btu",      "Thermal buy rate flat",     "$/(MMBtu/hr)", "",                      "Thermal Rate",             "?=0",                       "",                              "" },
-    { SSC_INPUT, SSC_ARRAY,  "thermal_timestep_buy_rate_heat_btu",  "Thermal buy rate",          "$/(MMBtu/hr)", "",                      "Thermal Rate",             "?=0",                       "",                              "" },
-    { SSC_INPUT, SSC_ARRAY,  "thermal_monthly_buy_rate_heat_btu",   "Monthly thermal buy rate",  "$/(MMBtu/hr)", "",                      "Thermal Rate",             "?=0",                       "",                              "" },
+    { SSC_INPUT, SSC_NUMBER, "thermal_buy_rate_flat_heat_btu",      "Thermal buy rate flat",     "$/MMBtu",      "",                      "Thermal Rate",             "?=0",                       "",                              "" },
+    { SSC_INPUT, SSC_ARRAY,  "thermal_timestep_buy_rate_heat_btu",  "Thermal buy rate",          "$/MMBtu",      "",                      "Thermal Rate",             "?=0",                       "",                              "" },
+    { SSC_INPUT, SSC_ARRAY,  "thermal_monthly_buy_rate_heat_btu",   "Monthly thermal buy rate",  "$/MMBtu",      "",                      "Thermal Rate",             "?=0",                       "",                              "" },
 
-    { SSC_INPUT, SSC_NUMBER, "thermal_sell_rate_option",            "Thermal sell rate option",  "0/1", "0=flat,1=timestep",              "Thermal Rate",             "?=0",                       "INTEGER,MIN=0,MAX=2",           "" },
-	{ SSC_INPUT, SSC_NUMBER, "thermal_sell_rate_flat_heat_btu",     "Thermal sell rate flat",    "$/(MMBtu/hr)", "",                      "Thermal Rate",             "?=0",                       "",                              "" },
-    { SSC_INPUT, SSC_ARRAY,  "thermal_timestep_sell_rate_heat_btu", "Thermal sell rate timestep","$/(MMBtu/hr)", "",                      "Thermal Rate",             "?=0",                       "",                              "" },
-    { SSC_INPUT, SSC_ARRAY,  "thermal_monthly_sell_rate_heat_btu",  "Thermal sell rate monthly", "$/(MMBtu/hr)", "",                      "Thermal Rate",             "?=0",                       "",                              "" },
+    { SSC_INPUT, SSC_NUMBER, "thermal_sell_rate_option",            "Thermal sell rate option",  "0-2", "0=flat,1=timestep,2=monthly",    "Thermal Rate",             "?=0",                       "INTEGER,MIN=0,MAX=2",           "" },
+	{ SSC_INPUT, SSC_NUMBER, "thermal_sell_rate_flat_heat_btu",     "Thermal sell rate flat",    "$/MMBtu",      "",                      "Thermal Rate",             "?=0",                       "",                              "" },
+    { SSC_INPUT, SSC_ARRAY,  "thermal_timestep_sell_rate_heat_btu", "Thermal sell rate timestep","$/MMBtu",      "",                      "Thermal Rate",             "?=0",                       "",                              "" },
+    { SSC_INPUT, SSC_ARRAY,  "thermal_monthly_sell_rate_heat_btu",  "Thermal sell rate monthly", "$/MMBtu",      "",                      "Thermal Rate",             "?=0",                       "",                              "" },
 
 
 	{ SSC_OUTPUT, SSC_ARRAY, "annual_thermal_value", "Thermal value", "$", "", "Annual", "*", "", "" },
@@ -235,10 +235,9 @@ public:
 		{ // hourly or sub hourly loads for single year
 
             // Convert thermal load units
-            std::vector<double> thermal_load_MMBtu_per_hr = as_vector_double("thermal_load_heat_btu"); //[MMBtu/hr]
 			bload = true;
-            pload = &thermal_load_MMBtu_per_hr[0];
-            nrec_load = thermal_load_MMBtu_per_hr.size();
+            pload = as_array("thermal_load_heat_btu", &nrec_load);//[MMBtu/hr]
+
 
 
 			step_per_hour_load = nrec_load / 8760;
