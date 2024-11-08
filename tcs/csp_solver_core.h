@@ -730,7 +730,7 @@ public:
 
     enum csp_tes_types
     {
-        E_TES_TWO_TANK,
+        E_TES_TWO_TANK = 1,
         E_TES_PACKED_BED,
         E_TES_CYL
     };
