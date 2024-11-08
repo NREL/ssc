@@ -1174,11 +1174,14 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_Qfull_flow, batt_vars->batt_initial_SOC, batt_vars->batt_maximum_SOC, batt_vars->batt_minimum_SOC, dt_hr);
     }
 
-    std::vector<double> adj_losses;
-    adjustment_factors haf(&vt, "batt_adjust");
-    haf.setup(nrec);
-    for (size_t i = 0; i < nrec; i++) {
-        adj_losses.push_back(1.0 - haf(i)); // Convert to convention within powerflow and capacity code
+    std::vector<double> adj_losses(1, 0.0);
+    if (vt.is_assigned("batt_adjust")) {
+        adj_losses.clear();
+        adjustment_factors haf(&vt, "batt_adjust");
+        haf.setup(nrec);
+        for (size_t i = 0; i < nrec; i++) {
+            adj_losses.push_back(1.0 - haf(i)); // Convert to convention within powerflow and capacity code
+        }
     }
 
     if (batt_vars->batt_loss_choice == losses_params::MONTHLY) {
