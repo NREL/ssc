@@ -53,8 +53,8 @@ void BatteryPowerFlowTest_lib_battery_powerflow::SetUp()
 	m_batteryPower->singlePointEfficiencyACToDC = 0.96;
 	m_batteryPower->singlePointEfficiencyDCToAC = 0.96;
 	m_batteryPower->singlePointEfficiencyDCToDC = 0.98;
-	m_batteryPower->powerBatteryChargeMaxDC = 100;
-	m_batteryPower->powerBatteryDischargeMaxDC = 50;
+	m_batteryPower->setMaxDCChargePower(100);
+	m_batteryPower->setMaxDCDischargePower(50);
 	m_batteryPower->connectionMode = ChargeController::AC_CONNECTED;
 
     // setup Sandia inverter using SMA America: SB3800TL-US-22 (240V) [CEC 2013]
@@ -87,14 +87,14 @@ TEST_F(BatteryPowerFlowTest_lib_battery_powerflow, TestInitialize)
     // Grid charging Scenario
     m_batteryPower->canGridCharge = true;
     m_batteryPowerFlow->initialize(50, false);
-    EXPECT_EQ(m_batteryPower->powerBatteryDC, -m_batteryPower->powerBatteryChargeMaxDC);
+    EXPECT_EQ(m_batteryPower->powerBatteryDC, -m_batteryPower->getMaxDCChargePower());
 
 	// Discharging Scenario
 	m_batteryPower->canDischarge = true;
 	m_batteryPower->powerSystem = 50;
 	m_batteryPower->powerLoad = 100;
 	m_batteryPowerFlow->initialize(50, false);
-	EXPECT_EQ(m_batteryPower->powerBatteryDC, m_batteryPower->powerBatteryDischargeMaxDC);
+	EXPECT_EQ(m_batteryPower->powerBatteryDC, m_batteryPower->getMaxDCDischargePower());
 }
 
 // Excess PV production

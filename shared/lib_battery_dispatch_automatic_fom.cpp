@@ -102,7 +102,7 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 
 	revenueToClipCharge = revenueToDischarge = revenueToGridCharge = revenueToPVCharge = 0;
 
-    discharge_hours = (size_t) std::ceil(_Battery->energy_max(m_batteryPower->stateOfChargeMax, m_batteryPower->stateOfChargeMin) / (m_batteryPower->powerBatteryDischargeMaxDC * (1 - m_batteryPower->adjustLosses))) - 1;
+    discharge_hours = (size_t) std::ceil(_Battery->energy_max(m_batteryPower->stateOfChargeMax, m_batteryPower->stateOfChargeMin) / (m_batteryPower->getMaxDCDischargePower())) - 1;
 
     costToCycle();
     omCost();
@@ -268,14 +268,14 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
 
         /*! Computed revenue to charge from PV in each of next X hours ($/kWh)*/
         size_t t_duration = static_cast<size_t>(ceilf( (float)
-                _Battery->energy_nominal() / (float) m_batteryPower->powerBatteryChargeMaxDC));
+                _Battery->energy_nominal() / (float) m_batteryPower->getMaxDCChargePower()));
         size_t pv_hours_on;
         double revenueToPVChargeMax = 0;
         if (m_batteryPower->canSystemCharge) {
             std::vector<double> revenueToPVChargeForecast;
             for (size_t i = lifetimeIndex; i < lifetimeIndex + idx_lookahead && i < _P_pv_ac.size(); i++) {
                 // when considering grid charging, require PV output to exceed battery input capacity before accepting as a better option
-                bool system_on = _P_pv_ac[i] >= m_batteryPower->powerBatteryChargeMaxDC ? 1 : 0;
+                bool system_on = _P_pv_ac[i] >= m_batteryPower->getMaxDCChargePower() ? 1 : 0;
                 if (system_on) {
                     revenueToPVChargeForecast.push_back(system_on * (*max_ppa_cost * m_etaDischarge - _forecast_price_rt_series[i] / m_etaPVCharge - m_cycleCost - m_omCost));
                 }

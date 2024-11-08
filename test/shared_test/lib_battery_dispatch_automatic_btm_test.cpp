@@ -70,7 +70,7 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridCharging) {
     batteryPower = dispatchAutoBTM->getBatteryPower();
     batteryPower->connectionMode = ChargeController::AC_CONNECTED;
 
-    EXPECT_EQ(batteryPower->powerBatteryChargeMaxAC, 50);
+    EXPECT_EQ(batteryPower->getMaxACChargePower(), 50);
 
     // TEST 1: Verify no grid charging since disallowed  (_P_battery_use target is ~ -50)
     dispatchAutoBTM->dispatch(0, 0, 0);     // original target for battery power is

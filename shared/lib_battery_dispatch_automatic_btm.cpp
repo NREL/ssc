@@ -179,7 +179,7 @@ void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
     {
 
         forecast_setup rate_setup(_steps_per_hour, _nyears);
-        rate_setup.setup(rate.get(), _P_pv_ac, _P_load_ac, m_batteryPower->powerBatteryDischargeMaxAC);
+        rate_setup.setup(rate.get(), _P_pv_ac, _P_load_ac, m_batteryPower->getMaxACChargePower());
 
         rate_forecast = std::shared_ptr<UtilityRateForecast>(new UtilityRateForecast(rate.get(), _steps_per_hour, rate_setup.monthly_net_load, rate_setup.monthly_gen, rate_setup.monthly_gross_load, _nyears, rate_setup.monthly_peaks));
         rate_forecast->initializeMonth(0, 0);

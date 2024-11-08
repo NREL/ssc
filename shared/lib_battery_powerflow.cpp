@@ -252,6 +252,29 @@ double BatteryPower::adjustForDCEfficiencies(double power, double loss) {
     }
 }
 
+double BatteryPower::getMaxACChargePower() {
+    return (1 - adjustLosses) * powerBatteryChargeMaxAC;
+}
+double BatteryPower::getMaxACDischargePower() {
+    double max_discharge_ac = (1 - adjustLosses) * powerBatteryDischargeMaxAC;
+    if (connectionMode == DC_CONNECTED) {
+        max_discharge_ac *= (1 - acLossSystemAvailability);
+    }
+    return max_discharge_ac;
+}
+double BatteryPower::getMaxDCChargePower() {
+    return (1 - adjustLosses) * powerBatteryChargeMaxDC;
+}
+double BatteryPower::getMaxDCDischargePower() {
+    return (1 - adjustLosses) * powerBatteryDischargeMaxDC;
+}
+double BatteryPower::getMaxChargeCurrent() {
+    return (1 - adjustLosses) * currentChargeMax;
+}
+double BatteryPower::getMaxDischargeCurrent() {
+    return (1 - adjustLosses) * currentDischargeMax;
+}
+
 BatteryPowerFlow::BatteryPowerFlow(double dtHour)
 {
     std::unique_ptr<BatteryPower> tmp(new BatteryPower(dtHour));
@@ -282,7 +305,7 @@ void BatteryPowerFlow::initialize(double stateOfCharge, bool systemPriorityCharg
 		(m_BatteryPower->powerSystem < m_BatteryPower->powerLoad || !m_BatteryPower->dischargeOnlyLoadExceedSystem || m_BatteryPower->meterPosition == dispatch_t::FRONT))
 	{
 		// try to discharge full amount.  Will only use what battery can provide
-		m_BatteryPower->powerBatteryDC = m_BatteryPower->powerBatteryDischargeMaxDC * (1 - m_BatteryPower->adjustLosses);
+		m_BatteryPower->powerBatteryDC = m_BatteryPower->getMaxDCDischargePower();
 	}
 	// Is there extra power from system
 	else if ((((m_BatteryPower->powerSystem > m_BatteryPower->powerLoad) || !m_BatteryPower->chargeOnlySystemExceedLoad) && m_BatteryPower->canSystemCharge) || m_BatteryPower->canGridCharge || m_BatteryPower->canClipCharge || m_BatteryPower->canCurtailCharge)
@@ -311,7 +334,7 @@ void BatteryPowerFlow::initialize(double stateOfCharge, bool systemPriorityCharg
 		}
 		// if we want to charge from grid in addition to, or without array, we can always charge at max power
 		if (m_BatteryPower->canGridCharge) {
-			m_BatteryPower->powerBatteryDC = -m_BatteryPower->powerBatteryChargeMaxDC;
+			m_BatteryPower->powerBatteryDC = -m_BatteryPower->getMaxDCChargePower();
 		}
 	}
     m_BatteryPower->powerBatteryTarget = m_BatteryPower->powerBatteryDC;
