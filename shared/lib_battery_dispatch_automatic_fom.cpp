@@ -364,7 +364,6 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t year, size_t ho
         }
 
         // Also charge from grid if it is valuable to do so, still leaving EnergyToStoreClipped capacity in battery
-        // TODO: Grid charging needs to check cleared capacity!
         if (m_batteryPower->canGridCharge &&
             ((revenueToGridCharge >= revenueToPVChargeMax &&
             revenueToGridCharge > 0 &&

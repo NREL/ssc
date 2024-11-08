@@ -1174,8 +1174,13 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_Qfull_flow, batt_vars->batt_initial_SOC, batt_vars->batt_maximum_SOC, batt_vars->batt_minimum_SOC, dt_hr);
     }
 
-    // TODO: fix this!
-    std::vector<double> adj_losses(8760, 0.0);
+    std::vector<double> adj_losses;
+    adjustment_factors haf(&vt, "batt_adjust");
+    haf.setup(nrec);
+    for (size_t i = 0; i < nrec; i++) {
+        adj_losses.push_back(1.0 - haf(i)); // Convert to convention within powerflow and capacity code
+    }
+
     if (batt_vars->batt_loss_choice == losses_params::MONTHLY) {
         if (*std::min_element(batt_vars->batt_losses_charging.begin(), batt_vars->batt_losses_charging.end()) < 0
             || *std::min_element(batt_vars->batt_losses_discharging.begin(), batt_vars->batt_losses_discharging.end()) < 0
@@ -1845,6 +1850,9 @@ void battstor::advance(var_table*, double P_gen, double V_gen, double P_load, do
     powerflow->acXfmrLoadLoss = xfmr_ll;
     powerflow->acXfmrNoLoadLoss = xfmr_nll;
     powerflow->powerSystemClipped = P_gen_clipped;
+
+    size_t lifetime_index = util::lifetimeIndex(year, hour, step, _dt_hour);
+    powerflow->adjustLosses = battery_model->getAvailabilityLoss(lifetime_index);
 
     charge_control->run(year, hour, step, year_index);
     outputs_fixed();
