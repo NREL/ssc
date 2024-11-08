@@ -209,6 +209,8 @@ bool Reopt_size_standalone_battery_params(ssc_data_t data) {
     map_optional_input(vt, "value_of_lost_load", &reopt_fin, "value_of_lost_load_per_kwh", 0);
     reopt_fin.assign("microgrid_upgrade_cost_fraction", 0);
 
+
+
     vd = vt->lookup("federal_tax_rate");
     vd2 = vt->lookup("state_tax_rate");
     if (vd && vd2) {
@@ -242,6 +244,7 @@ bool Reopt_size_standalone_battery_params(ssc_data_t data) {
     }
     reopt_load.assign("loads_kw", var_data(&vec[0], sim_len));
     reopt_load.assign("loads_kw_is_net", false);
+    reopt_load.assign("year", 2018); // recent common year starting on Monday
 
     vd = vt->lookup("crit_load");
     if (vd) {
@@ -259,10 +262,11 @@ bool Reopt_size_standalone_battery_params(ssc_data_t data) {
         }
         reopt_load.assign("critical_loads_kw", var_data(&vec[0], vec_size));
         reopt_load.assign("year", 2018); // recent common year starting on Monday
+        reopt_load.assign("critical_loads_kw_is_net", false);
     }
 
     reopt_settings.assign_match_case("time_steps_per_hour", var_data((int)(sim_len / 8760)));
-    reopt_settings.assign("solver_name", var_data("SCIP")); // "HiGHS" option does not work with large numbers like 1e38 for tier max values per https://github.com/NREL/SAM/issues/1742
+    //reopt_settings.assign("solver_name", var_data("SCIP")); // "HiGHS" option does not work with large numbers like 1e38 for tier max values per https://github.com/NREL/SAM/issues/1742
 
     // assign the reopt parameter table and log messages
     reopt_table->assign_match_case("Settings", reopt_settings);
