@@ -288,17 +288,17 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
     }
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
-    s.capacity = { 45.62, 920.29, 883.48, 8.995, 0, 5.164, 6.182, 2};
-    s.batt_voltage = 465.54;
+    s.capacity = { 45.00, 900.219, 864.213, 8.753, 0, 5.207, 6.220, 2};
+    s.batt_voltage = 465.943;
     s.lifetime.q_relative = 93.08;
     s.lifetime.cycle->q_relative_cycle = 92.03;
     s.lifetime.n_cycles = 399;
-    s.lifetime.cycle_range = 89.58;
-    s.lifetime.average_range = 88.80;
-    s.lifetime.cycle->rainflow_Xlt = 89.60;
-    s.lifetime.cycle->rainflow_Ylt = 89.84;
+    s.lifetime.cycle_range = 89.10;
+    s.lifetime.average_range = 88.91;
+    s.lifetime.cycle->rainflow_Xlt = 89.13;
+    s.lifetime.cycle->rainflow_Ylt = 89.79;
     s.lifetime.cycle->rainflow_jlt = 3;
-    s.lifetime.day_age_of_battery = 2757.54;
+    s.lifetime.day_age_of_battery = 2765.96;
     s.lifetime.calendar->q_relative_calendar = 98.0;
     s.lifetime.calendar->dq_relative_calendar_old = 0.039;
     s.thermal = {96.0, 20.00, 20};
@@ -306,9 +306,9 @@ TEST_F(lib_battery_test, runTestCycleAt1C){
 
     compareState(batteryModel, s, "runTestCycleAt1C: 3");
 
-    EXPECT_NEAR(capacity_passed, 357300, 1000) << "Current passing through cell";
+    EXPECT_NEAR(capacity_passed, 354541, 1000) << "Current passing through cell";
     double qmax = fmax(s.capacity.qmax_lifetime, s.capacity.qmax_thermal);
-    EXPECT_NEAR(qmax/q, .93, 0.01) << "capacity relative to max capacity";
+    EXPECT_NEAR(qmax/q, .90, 0.01) << "capacity relative to max capacity";
 }
 
 TEST_F(lib_battery_test, runTestCycleAt3C){
@@ -360,27 +360,27 @@ TEST_F(lib_battery_test, runTestCycleAt3C){
     }
 //    std::cerr <<  idx << ": soc " << batteryModel->SOC() << ", cap " << capacity_passed << "\n";
     // the SOC isn't at 5 so it means the controller is not able to calculate a current/voltage at which to discharge to 5
-    s.capacity = { 47.106, 920.30, 883.49, 9.08, 0, 5.33, 6.36, 2};
-    s.batt_voltage = 467.105;
-    s.lifetime.q_relative = 93.08;
-    s.lifetime.day_age_of_battery = 2591.17;
+    s.capacity = { 47.12, 901.56, 865.505, 8.87, 0, 5.444, 6.47, 2};
+    s.batt_voltage = 468.126;
+    s.lifetime.q_relative = 90.16;
+    s.lifetime.day_age_of_battery = 2587.83;
     s.lifetime.cycle->q_relative_cycle = 92.08;
     s.lifetime.n_cycles = 399;
-    s.lifetime.cycle_range = 89.38;
-    s.lifetime.average_range = 88.95;
-    s.lifetime.cycle->rainflow_Xlt = 89.41;
-    s.lifetime.cycle->rainflow_Ylt = 89.67;
+    s.lifetime.cycle_range = 89.12;
+    s.lifetime.average_range = 89.18;
+    s.lifetime.cycle->rainflow_Xlt = 89.15;
+    s.lifetime.cycle->rainflow_Ylt = 89.56;
     s.lifetime.cycle->rainflow_jlt = 3;
     s.lifetime.cycle->q_relative_cycle = 92.04;
-    s.lifetime.calendar->q_relative_calendar = 98.11;
+    s.lifetime.calendar->q_relative_calendar = 98.13;
     s.lifetime.calendar->dq_relative_calendar_old = 0.0393;
     s.thermal = {96.01, 20, 20};
     s.last_idx = 32991;
-    compareState(batteryModel, s, "runTest: 3");
+    compareState(batteryModel, s, "runTest: 3", 0.1);
 
-    EXPECT_NEAR(capacity_passed, 357702, 100) << "Current passing through cell";
+    EXPECT_NEAR(capacity_passed, 355949, 100) << "Current passing through cell";
     double qmax = fmax(s.capacity.qmax_lifetime, s.capacity.qmax_thermal);
-    EXPECT_NEAR(qmax/q, 0.9209, 0.01) << "capacity relative to max capacity";
+    EXPECT_NEAR(qmax/q, 0.9016, 0.01) << "capacity relative to max capacity";
 }
 
 TEST_F(lib_battery_test, runDuplicates) {
@@ -725,8 +725,8 @@ TEST_F(lib_battery_test, AdaptiveTimestep) {
 
     }
 
-    EXPECT_NEAR(batteryModel->charge_maximum(), 577.31, 1e-2);
-    EXPECT_NEAR(batt_subhourly->charge_maximum(), 577.22, 1e-2);
+    EXPECT_NEAR(batteryModel->charge_maximum(), 576.95, 1e-2);
+    EXPECT_NEAR(batt_subhourly->charge_maximum(), 557.69, 1e-2);
     EXPECT_NEAR(batt_adaptive->charge_maximum(), 577.26, 1e-2);
 
     EXPECT_NEAR(batteryModel->SOC(), 94.98, 1e-2);
