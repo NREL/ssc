@@ -1178,7 +1178,9 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     if (vt.is_assigned("batt_adjust_costant") || vt.is_assigned("batt_adjust_periods") || vt.is_assigned("batt_adjust_timeindex")) {
         adj_losses.clear();
         adjustment_factors haf(&vt, "batt_adjust");
-        haf.setup(nrec);
+        if (!haf.setup(nrec)) {
+            throw exec_error("battery", "failed to setup battery adjustment factors: " + haf.error());
+        }
         for (size_t i = 0; i < nrec; i++) {
             adj_losses.push_back(1.0 - haf(i)); // Convert to convention within powerflow and capacity code
         }
