@@ -1175,7 +1175,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     }
 
     std::vector<double> adj_losses(1, 0.0);
-    if (vt.is_assigned("batt_adjust")) {
+    if (vt.is_assigned("batt_adjust_costant") || vt.is_assigned("batt_adjust_periods") || vt.is_assigned("batt_adjust_timeindex")) {
         adj_losses.clear();
         adjustment_factors haf(&vt, "batt_adjust");
         haf.setup(nrec);
