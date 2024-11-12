@@ -65,6 +65,7 @@ public:
 	enum CURRENT_CHOICE { RESTRICT_POWER, RESTRICT_CURRENT, RESTRICT_BOTH };
 	enum CYCLE_COST {MODEL_CYCLE_COST, INPUT_CYCLE_COST};
 	enum CONNECTION { DC_CONNECTED, AC_CONNECTED };
+    enum CAPACITY_FORECAST_TYPE { PRICE_ONLY, CAPACITY_ONLY, PRICE_AND_CAPACITY };
 
 	dispatch_t(battery_t * Battery,
 		double dt,
@@ -317,6 +318,7 @@ public:
 		bool can_clipcharge,
 		bool can_grid_charge,
 		bool can_fuelcell_charge,
+        bool can_curtail_charge,
         std::vector<double> battReplacementCostPerkWh,
         int battCycleCostChoice,
         std::vector<double> battCycleCost,

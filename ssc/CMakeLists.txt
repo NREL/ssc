@@ -32,6 +32,7 @@ set(SSC_SRC
 		cmod_csp_subcomponent.cpp
         	cmod_csp_trough_eqns.cpp
 		cmod_csp_trough_eqns.h
+        cmod_custom_generation.cpp
 		cmod_etes_electric_resistance.cpp
 		cmod_etes_ptes.cpp
 		cmod_equpartflip.cpp
@@ -44,7 +45,6 @@ set(SSC_SRC
 		cmod_fuelcell.h
 		cmod_generic_system-builder.cpp
 		cmod_generic_system-builder.h
-		cmod_generic_system.cpp
 		cmod_geothermal.cpp
 		cmod_geothermal_costs.cpp
         cmod_geothermal_eqns.cpp

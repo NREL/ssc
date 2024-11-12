@@ -311,7 +311,6 @@ static var_info _cm_vtab_pvsamv1[] = {
 { SSC_INPUT, SSC_NUMBER,   "cec_adjust",                           "Temperature coefficient adjustment",                  "%",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
 { SSC_INPUT, SSC_NUMBER,   "cec_alpha_sc",                         "Short circuit current temperature coefficient",       "A/C",    "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
 { SSC_INPUT, SSC_NUMBER,   "cec_beta_oc",                          "Open circuit voltage temperature coefficient",        "V/C",    "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
-{ SSC_INPUT, SSC_NUMBER,   "cec_gamma_r",                          "Maximum power point temperature coefficient",         "%/C",    "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
 { SSC_INPUT, SSC_NUMBER,   "cec_i_l_ref",                          "Light current",                                       "A",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
 { SSC_INPUT, SSC_NUMBER,   "cec_i_mp_ref",                         "Maximum power point current",                         "A",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
 { SSC_INPUT, SSC_NUMBER,   "cec_i_o_ref",                          "Saturation current",                                  "A",      "",                                                                                                                                                                                      "CEC Performance Model with Module Database",            "module_model=1",                     "",                    "" },
@@ -839,7 +838,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 
        // monthly and annual outputs
 
-        { SSC_OUTPUT,		 SSC_NUMBER,     "annual_energy",						 "Annual AC energy",                                       "kWh",       "",                      "Annual (Year 1)", "", "", "" },
+        { SSC_OUTPUT,		 SSC_NUMBER,     "annual_energy",						 "Annual AC energy in Year 1",                                       "kWh",       "",                      "Annual (Year 1)", "", "", "" },
 
         { SSC_OUTPUT,        SSC_NUMBER,     "annual_dc_invmppt_loss",               "Inverter clipping loss DC MPPT voltage limits",          "kWh/yr",    "",                      "Annual (Year 1)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_NUMBER,     "annual_inv_cliploss",                  "Inverter clipping loss AC power limit",                  "kWh/yr",    "",                      "Annual (Year 1)",       "",                    "",                              "" },
@@ -863,8 +862,8 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,      "monthly_poa_eff",                             "POA irradiance total after shading and soiling",          "kWh/mo",    "",                      "Monthly",       "",                    "LENGTH=12",                              "" },
         { SSC_OUTPUT,        SSC_ARRAY,      "monthly_poa_beam_eff",                        "POA front-side irradiance beam after shading and soiling",           "kWh/mo",    "",                      "Monthly",       "",                    "LENGTH=12",                              "" },
 
-        { SSC_OUTPUT,        SSC_ARRAY,      "monthly_dc",                                  "DC energy",                                   "kWh/mo",    "",                      "Monthly",       "",                    "LENGTH=12",                              "" },
-        { SSC_OUTPUT,        SSC_ARRAY,      "monthly_energy",                              "AC energy gross",                                     "kWh/mo",    "",                      "Monthly",       "",                    "LENGTH=12",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "monthly_dc",                                  "Monthly DC energy in Year 1",                                   "kWh/mo",    "",                      "Monthly",       "",                    "LENGTH=12",                              "" },
+        { SSC_OUTPUT,        SSC_ARRAY,      "monthly_energy",                              "Monthly AC energy in Year 1",                                     "kWh/mo",    "",                      "Monthly",       "",                    "LENGTH=12",                              "" },
 
         { SSC_OUTPUT,        SSC_NUMBER,     "annual_gh",                                   "Annual GHI",                                                    "Wh/m2/yr",  "",                      "Annual (Year 1)",       "",                    "",                              "" },
         { SSC_OUTPUT,        SSC_NUMBER,     "annual_poa_nom",                              "POA front-side irradiance total nominal",                       "kWh/yr",    "",                      "Annual (Year 1)",       "",                    "",                              "" },
@@ -1128,6 +1127,7 @@ void cm_pvsamv1::exec()
     weather_data_provider* wdprov = Irradiance->weatherDataProvider.get();
     int radmode = Irradiance->radiationMode;
     double bifaciality = 0.0;
+    double elev, pres, t_amb;
 
     // Get System or Subarray Inputs
     double aspect_ratio = Subarrays[0]->moduleAspectRatio;
@@ -1224,12 +1224,12 @@ void cm_pvsamv1::exec()
     //dc hourly adjustment factors
     int nyears_haf = nyears;
     if (!system_use_lifetime_output) nyears_haf = 1;
-    adjustment_factors dc_haf(this, "dc_adjust");
+    adjustment_factors dc_haf(this->get_var_table(), "dc_adjust");
     if (!dc_haf.setup((int)nrec, nyears_haf))
         throw exec_error("pvsamv1", "failed to setup DC adjustment factors: " + dc_haf.error());
 
     // hourly adjustment factors
-    adjustment_factors haf(this, "adjust");
+    adjustment_factors haf(this->get_var_table(), "adjust");
     if (!haf.setup((int)nrec, nyears_haf))
         throw exec_error("pvsamv1", "failed to setup AC adjustment factors: " + haf.error());
 
@@ -1618,6 +1618,7 @@ void cm_pvsamv1::exec()
                 irr->get_angles(&aoi, &stilt, &sazi, &rot, &btd);
                 irr->get_poa(&ibeam, &iskydiff, &ignddiff, 0, 0, 0);
                 irr->get_poa_clearsky(&ibeam_csky, &iskydiff_csky, &ignddiff_csky, 0, 0, 0);
+                irr->get_optional(&elev, &pres, &t_amb);
                 alb = irr->getAlbedo();
                 alb_spatial = irr->getAlbedoSpatial();
 
@@ -1708,7 +1709,7 @@ void cm_pvsamv1::exec()
                         // calculate cell temperature using selected temperature model
                         pvinput_t in(ibeam, iskydiff, ignddiff, 0, ipoa[nn],
                             wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
-                            solzen, aoi, hdr.elev,
+                            solzen, aoi, elev,
                             stilt, sazi,
                             ((double)wf.hour) + wf.minute / 60.0,
                             radmode, Subarrays[nn]->poa.usePOAFromWF);
@@ -2137,7 +2138,7 @@ void cm_pvsamv1::exec()
                             //initalize pvinput and pvoutput structures for the model
                             pvinput_t in(Subarrays[nn]->poa.poaBeamFront, Subarrays[nn]->poa.poaDiffuseFront, Subarrays[nn]->poa.poaGroundFront, Subarrays[nn]->poa.poaRear * bifaciality, Subarrays[nn]->poa.poaTotal,
                                 wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
-                                solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, hdr.elev,
+                                solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, elev,
                                 Subarrays[nn]->poa.surfaceTiltDegrees, Subarrays[nn]->poa.surfaceAzimuthDegrees,
                                 ((double)wf.hour) + wf.minute / 60.0,
                                 radmode, Subarrays[nn]->poa.usePOAFromWF);
@@ -2186,14 +2187,14 @@ void cm_pvsamv1::exec()
                     //initalize pvinput and pvoutput structures for the model
                     pvinput_t in_temp(Subarrays[nn]->poa.poaBeamFront, Subarrays[nn]->poa.poaDiffuseFront, Subarrays[nn]->poa.poaGroundFront, Subarrays[nn]->poa.poaRear * bifaciality, Subarrays[nn]->poa.poaTotal,
                         wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
-                        solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, hdr.elev,
+                        solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, elev,
                         Subarrays[nn]->poa.surfaceTiltDegrees, Subarrays[nn]->poa.surfaceAzimuthDegrees,
                         ((double)wf.hour) + wf.minute / 60.0,
                         radmode, Subarrays[nn]->poa.usePOAFromWF);
 
                     pvinput_t in_temp_csky(Subarrays[nn]->poa.poaBeamFrontCS, Subarrays[nn]->poa.poaDiffuseFrontCS, Subarrays[nn]->poa.poaGroundFrontCS, Subarrays[nn]->poa.poaRearCS * bifaciality, Subarrays[nn]->poa.poaTotal,
                         wf.tdry, wf.tdew, wf.wspd, wf.wdir, wf.pres,
-                        solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, hdr.elev,
+                        solzen, Subarrays[nn]->poa.angleOfIncidenceDegrees, elev,
                         Subarrays[nn]->poa.surfaceTiltDegrees, Subarrays[nn]->poa.surfaceAzimuthDegrees,
                         ((double)wf.hour) + wf.minute / 60.0,
                         0, false);
@@ -2540,7 +2541,7 @@ void cm_pvsamv1::exec()
                 Irradiance->p_sunZenithAngle[idx] = (ssc_number_t)solzen;
                 Irradiance->p_sunAltitudeAngle[idx] = (ssc_number_t)solalt;
                 Irradiance->p_sunAzimuthAngle[idx] = (ssc_number_t)solazi;
-                Irradiance->p_absoluteAirmass[idx] = sunup > 0 ? (ssc_number_t)(exp(-0.0001184 * hdr.elev) / (cos(solzen * 3.1415926 / 180) + 0.5057 * pow(96.080 - solzen, -1.634))) : 0.0f;
+                Irradiance->p_absoluteAirmass[idx] = sunup > 0 ? (ssc_number_t)(exp(-0.0001184 * elev) / (cos(solzen * 3.1415926 / 180) + 0.5057 * pow(96.080 - solzen, -1.634))) : 0.0f;
                 Irradiance->p_sunUpOverHorizon[idx] = (ssc_number_t)sunup;
                 if (!Irradiance->useSpatialAlbedos) {
                     Irradiance->p_weatherFileAlbedo[idx] = (ssc_number_t)alb;
@@ -3172,7 +3173,7 @@ void cm_pvsamv1::exec()
     assign("lat", hdr.lat);
     assign("lon", hdr.lon);
     assign("tz", hdr.tz);
-    assign("elev", hdr.elev);
+    assign("elev", elev);
 
     inverter_vdcmax_check();
     inverter_size_check();

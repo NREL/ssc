@@ -153,7 +153,6 @@ TEST_F(IrradTest, sunriseAndSunsetAtDifferentLocationsTest_spa_lib_irradproc) {
     for (size_t i = 0; i < latitudes.size(); i++)
     {
         //run the solarpos function and check sunrise and sunset for each location
-        clear_spa_table();
         solarpos_spa(2010, month[i], day[i], 14, 30, 0, latitudes[i], longitudes[i], time_zones[i], 0, alt[i], 0, 1016, 15, 180, sun_results);
         EXPECT_NEAR((double)sun_results[4], sunrise_times[i], e) << "sunrise time for lat " << latitudes[i] << " long " << longitudes[i] << " failed\n";
         EXPECT_NEAR((double)sun_results[5], sunset_times[i], e) << "sunset time for lat " << latitudes[i] << " long " << longitudes[i] << "failed\n";
@@ -200,6 +199,21 @@ TEST_F(IrradTest, ineichenTest) {
     EXPECT_NEAR(clearskyIrradiance[0], 591.519294, e) << "clearsky GHI";
     EXPECT_NEAR(clearskyIrradiance[1], 1128.028, e) << "clearsky DNI";
     EXPECT_NEAR(clearskyIrradiance[2], 27.505294, e) << "clearsky GHI";
+}
+
+TEST_F(DayCaseIrradProc, OptionalInputTest) {
+
+    elev = std::numeric_limits<double>::quiet_NaN();
+    pres = std::numeric_limits<double>::quiet_NaN();
+    tdry = std::numeric_limits<double>::quiet_NaN();
+    
+    irr_hourly_day.set_optional(elev, pres, tdry);
+    //set_optional will not use nan values, will keep previously assigned values or internal defaults
+    double elev_out, pres_out, t_amb_out;
+    irr_hourly_day.get_optional(&elev_out, &pres_out, &t_amb_out);
+    EXPECT_NEAR(elev_out, 234, 0) << "elevation";
+    EXPECT_NEAR(pres_out, 1013.25, 0) << "pressure";
+    EXPECT_NEAR(t_amb_out, 15, 0) << "ambient temperature";
 }
 
 
