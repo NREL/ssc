@@ -182,10 +182,10 @@ static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
     { SSC_OUTPUT,   SSC_ARRAY,   "W_dot_heat_sink_pump",   "Heat sink pumping power",        "MWe",              "",       "Heat_Sink",      "*",        "",     "" },
 																									             
 		// SYSTEM																					             
-    { SSC_OUTPUT,   SSC_ARRAY,   "W_dot_parasitic_tot", "System total electrical parasitic", "MWe",              "",       "Controller",     "*",        "",     "" },
-    { SSC_OUTPUT,   SSC_ARRAY,   "gen_heat",      "System net thermal power generated with availability derate","kWt",  "","system",         "*",        "",     "" },
-    { SSC_OUTPUT,   SSC_ARRAY,   "gen",           "System net electric power generated with availability derate","kWe", "","system",         "*",        "",     "" },
-    { SSC_OUTPUT,   SSC_ARRAY,   "gen_heat_btu",  "System net thermal power generated with availability derate in MMBtu/hr","MMBtu/hr","","system", "*", "",     "" },
+    { SSC_OUTPUT,   SSC_ARRAY,   "W_dot_parasitic_tot", "System total electrical parasitic",        "MWe",       "",       "Controller",     "*",        "",     "" },
+    { SSC_OUTPUT,   SSC_ARRAY,   "gen_heat",      "System net thermal power w/ avail. derate",      "kWt",       "",       "system",         "*",        "",     "" },
+    { SSC_OUTPUT,   SSC_ARRAY,   "gen",           "System net electrical power w/ avail. derate",   "kWe",       "",       "system",         "*",        "",     "" },
+    { SSC_OUTPUT,   SSC_ARRAY,   "gen_heat_btu",  "System net thermal power w/ avail. derate",      "MMBtu/hr",  "",       "system",         "*", "",     "" },
 
 
 		// Controller
@@ -194,8 +194,8 @@ static var_info _cm_vtab_linear_fresnel_dsg_iph[] = {
 	{ SSC_OUTPUT,   SSC_ARRAY,   "op_mode_3",            "3rd op. mode, if applicable",      "",                 "",       "Controller",     "*",        "",     "" },
 	
 		// Annual Outputs
-	{ SSC_OUTPUT,   SSC_NUMBER,  "annual_energy",                   "Annual net thermal energy generated with availability derate", "kWht",   "",   "Post-process",     "*",       "",   "" },
-    { SSC_OUTPUT,   SSC_NUMBER,  "annual_energy_heat_btu",          "Annual net thermal energy generated with availability derate in MMBtu","MMBtu","","Post - process",   "",        "",   "" },
+	{ SSC_OUTPUT,   SSC_NUMBER,  "annual_energy",                   "Annual net thermal energy w/ avail. derate",               "kWht",   "",   "Post-process",     "*",       "",   "" },
+    { SSC_OUTPUT,   SSC_NUMBER,  "annual_energy_heat_btu",          "Annual net thermal energy w/ avail. derate",               "MMBtu",  "",   "Post-process",     "*",       "",   "" },
     { SSC_OUTPUT,   SSC_NUMBER,  "annual_field_energy",             "Annual Gross Thermal Energy Production w/ avail derate",   "kWht",   "",   "Post-process",     "*",       "",   "" },
 	{ SSC_OUTPUT,   SSC_NUMBER,  "annual_thermal_consumption",      "Annual thermal freeze protection required",                "kWht",   "",   "Post-process",     "*",       "",   "" },
 	{ SSC_OUTPUT,   SSC_NUMBER,  "annual_electricity_consumption",  "Annual electricity consumptoin w/ avail derate",           "kWhe",   "",   "Post-process",     "*",       "",   "" },
