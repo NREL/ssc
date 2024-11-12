@@ -158,7 +158,7 @@ C_csp_collector_receiver::E_csp_cr_modes C_csp_falling_particle_collector_receiv
     else  // Receivers all have to be in the same state at any point in time
     {
         // Report OFF (or OFF_NO_SU_REQ) if any receiver is OFF
-        // Report ON or STARTUP only if all receivers are in 
+        // Report ON or STARTUP only if all receivers are in that state 
         op_mode = E_csp_cr_modes::ON;
         for (size_t i = 0; i < mc_pt_receivers.size(); i++)
         {
@@ -334,7 +334,7 @@ void C_csp_falling_particle_collector_receiver::set_outputs(C_csp_collector_rece
     mc_reported_outputs.value(E_Q_DOT_THERMAL, m_combined_outputs.q_thermal);	            //[MWt]
     mc_reported_outputs.value(E_M_DOT_HTF, m_combined_outputs.m_dot_salt_tot);	            //[kg/hr]
 
-    mc_reported_outputs.value(E_Q_DOT_STARTUP, m_combined_outputs.q_dot_startup);		    //[MWt]. 
+    mc_reported_outputs.value(E_Q_DOT_STARTUP, m_combined_outputs.q_dot_startup);		    //[MWht]. 
     mc_reported_outputs.value(E_T_HTF_IN, m_combined_outputs.T_salt_cold);			        //[C]
     mc_reported_outputs.value(E_T_HTF_OUT, m_combined_outputs.T_salt_hot);		            //[C]
     mc_reported_outputs.value(E_T_CAV_WALL_MAX, m_combined_outputs.T_cav_wall_max);			//[C]
@@ -356,7 +356,7 @@ void C_csp_falling_particle_collector_receiver::set_outputs(C_csp_collector_rece
     mc_reported_outputs.value(E_Q_DOT_INC_3, nrec > 2 ? mc_pt_receivers.at(2)->ms_outputs.m_q_dot_rec_inc : 0.0);	//[MWt]
     mc_reported_outputs.value(E_Q_DOT_INC_4, nrec > 3 ? mc_pt_receivers.at(3)->ms_outputs.m_q_dot_rec_inc : 0.0);	//[MWt]
     mc_reported_outputs.value(E_Q_DOT_THERMAL_1, mc_pt_receivers.at(0)->ms_outputs.m_Q_thermal);	                //[MWt]
-    mc_reported_outputs.value(E_Q_DOT_THERMAL_2, nrec > 1 ? mc_pt_receivers.at(1)->ms_outputs.m_Q_thermal : 0.0);	 //[MWt]
+    mc_reported_outputs.value(E_Q_DOT_THERMAL_2, nrec > 1 ? mc_pt_receivers.at(1)->ms_outputs.m_Q_thermal : 0.0);	//[MWt]
     mc_reported_outputs.value(E_Q_DOT_THERMAL_3, nrec > 2 ? mc_pt_receivers.at(2)->ms_outputs.m_Q_thermal : 0.0);	//[MWt]
     mc_reported_outputs.value(E_Q_DOT_THERMAL_4, nrec > 3 ? mc_pt_receivers.at(3)->ms_outputs.m_Q_thermal : 0.0);	//[MWt]
     mc_reported_outputs.value(E_Q_DOT_STARTUP_1, mc_pt_receivers.at(0)->ms_outputs.m_q_startup / (mc_pt_receivers.at(0)->ms_outputs.m_time_required_su / 3600.0));	                //[MWt]
@@ -861,8 +861,9 @@ void C_csp_falling_particle_collector_receiver::run_component_models(const C_csp
                     mc_pt_receivers.at(i)->ms_outputs.m_q_dot_rec_inc *= f;
 
                     // Report nonzero startup quantities (only for reporting/plotting purposes, the startup thermal energy reported to the controller will be zero)
+                    // Report full time step length here instead of actual time required to start up. This will make the reported startup power (q_startup / m_time_required_su) correspond to the average power over the full time step
                     mc_pt_receivers.at(i)->ms_outputs.m_q_startup = q_startup;                // MWt-hr
-                    mc_pt_receivers.at(i)->ms_outputs.m_time_required_su = time_required_su;  // [s]
+                    mc_pt_receivers.at(i)->ms_outputs.m_time_required_su = sim_info.ms_ts.m_step; // time_required_su;  // [s] 
                 }
 
             }
