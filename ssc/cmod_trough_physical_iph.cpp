@@ -419,11 +419,11 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     // Heater
     { SSC_OUTPUT,       SSC_NUMBER,      "q_dot_heater_des",                 "Heater design thermal power",                                              "MWt",           "",               "Heater",         "*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "W_dot_heater_des",                 "Heater electricity consumption at design",                                 "MWe",           "",               "Heater",         "*",                                "",                      "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "E_heater_su_des",                  "Heater startup energy",                                                    "MWt-hr",        "",               "Heater",         "*",                                "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "E_heater_su_des",                  "Heater startup energy",                                                    "MWht",          "",               "Heater",         "*",                                "",                      "" },
 
     // Thermal Storage
     { SSC_OUTPUT,       SSC_NUMBER,      "vol_tank",                         "Total tank volume",                                                        "m3",            "",               "Thermal Storage","*",                                "",                      "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "q_tes",                            "TES design capacity",                                                      "MWt-hr",        "",               "Thermal Storage","*",                                "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "q_tes",                            "TES design capacity",                                                      "MWht",          "",               "Thermal Storage","*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "csp_pt_tes_tank_diameter",         "Tank diameter",                                                            "m",             "",               "Thermal Storage","*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "csp_pt_tes_tank_height",           "Tank height",                                                              "m",             "",               "Thermal Storage","*",                                "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "q_dot_tes_est",                    "Estimated TES Heat Loss",                                                  "MW",            "",               "Thermal Storage","*",                                "",                      "" },
@@ -652,8 +652,8 @@ static var_info _cm_vtab_trough_physical_iph[] = {
 
 
     // Annual Outputs
-    { SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",                   "Annual Net Thermal Energy Production w/ avail derate",                       "kWht",       "",               "Post-process",   "sim_type=1",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "annual_energy_heat_btu",          "Annual Net Thermal Energy Production w/ avail derate in MMBtu",              "MMBtu",       "",               "Post-process",   "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",                   "Annual net thermal energy generated with availability derate",               "kWht",       "",               "Post-process",   "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "annual_energy_heat_btu",          "Annual net thermal energy generated with availability derate in MMBtu",      "MMBtu",       "",               "Post-process",   "sim_type=1",                       "",                      "" },
 
     //{ SSC_OUTPUT,       SSC_NUMBER,      "annual_gross_energy",             "Annual Gross Electrical Energy Production w/ avail derate",                  "kWhe",       "",               "Post-process",   "*",                       "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "annual_thermal_consumption",      "Annual thermal freeze protection required",                                  "kWht",       "",               "Post-process",   "sim_type=1",                       "",                      "" },
@@ -716,9 +716,9 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "P_fixed",                   "Parasitic power fixed load",                                                       "MWe",          "",               "system",         "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "P_plant_balance_tot",       "Parasitic power generation-dependent load",                                        "MWe",          "",               "system",         "sim_type=1",                       "",                      "" },
                                                                                                                                                                                                                                                                   
-    { SSC_OUTPUT,       SSC_ARRAY,       "gen_heat",                  "Total thermal power to grid w/ avail. derate",                                     "kWt",          "",               "system",         "sim_type=1",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "gen",                       "Total electric power to grid w/ avail. derate",                                    "kWe",          "",               "system",         "sim_type=1",                       "",                      "" },
-    { SSC_OUTPUT,       SSC_ARRAY,       "gen_heat_btu",              "Total thermal power to grid w/ avail. derate in MMBtu/hr",                         "MMBtu/hr",     "",               "system",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "gen_heat",                  "System net thermal power generated with availability derate",                      "kWt",          "",               "system",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "gen",                       "System net electric power generated with availability derate",                     "kWe",          "",               "system",         "sim_type=1",                       "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,       "gen_heat_btu",              "System net thermal power generated with availability derate in MMBtu/hr",          "MMBtu/hr",     "",               "system",         "sim_type=1",                       "",                      "" },
 
     //{ SSC_OUTPUT,       SSC_NUMBER,      "conversion_factor",         "Gross to Net Conversion Factor",                                                   "%",            "",               "system",         "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",           "Capacity factor",                                                                  "%",            "",               "system",         "sim_type=1",                       "",                      "" },
@@ -770,7 +770,7 @@ public:
         double T_htf_hot_des = as_double("T_loop_out");      //[C]
         double tshours = as_double("tshours");                  //[-]
         double q_dot_hs_des = as_double("q_pb_design");         //[MWt] HEAT SINK design thermal power
-        double Q_tes = q_dot_hs_des * tshours;                  //[MWt-hr]
+        double Q_tes = q_dot_hs_des * tshours;                  //[MWht]
         int is_dispatch = as_boolean("is_dispatch");
         
         int tes_type = as_integer("tes_type");
@@ -1288,7 +1288,7 @@ public:
                 as_integer("Fluid"),                                                // [-] field fluid identifier
                 as_matrix("field_fl_props"),                                        // [-] field fluid properties
                 q_dot_hs_des,                                                       // [MWt] Design heat rate in and out of tes
-                Q_tes,                                                              // [MWt-hr] design storage capacity
+                Q_tes,                                                              // [MWht] design storage capacity
                 as_integer("is_h_tank_fixed"),                                      // [] Sizing Method (0) use fixed diameter, (1) use fixed height, (2) use preset inputs
                 as_double("h_tank_in"),                                             // [m] Tank height
                 as_double("d_tank_in"),                                             // [m] Tank diameter
@@ -1855,12 +1855,12 @@ public:
             {
                 assign("q_dot_heater_des", q_dot_heater_des);       //[MWt]
                 double W_dot_heater_des_calc = 0.0;                 //[MWe]
-                double E_heater_su_des = 0.0;                       //[MWt-hr]
+                double E_heater_su_des = 0.0;                       //[MWhr]
                 if (is_parallel_heater) {
                     p_electric_resistance->get_design_parameters(E_heater_su_des, W_dot_heater_des_calc);
                 }
                 assign("W_dot_heater_des", (ssc_number_t)W_dot_heater_des_calc);    //[MWe]
-                assign("E_heater_su_des", (ssc_number_t)E_heater_su_des);           //[MWt-hr]
+                assign("E_heater_su_des", (ssc_number_t)E_heater_su_des);           //[MWhr]
             }
 
 
@@ -1869,7 +1869,7 @@ public:
                 double V_tes_htf_avail_calc /*m3*/, V_tes_htf_total_calc /*m3*/,
                     h_tank_calc /*m*/, d_tank_calc /*m*/,
                     q_dot_loss_tes_des_calc /*MWt*/, dens_store_htf_at_T_ave_calc /*kg/m3*/,
-                    Q_tes_des_calc /*MWt-hr*/;
+                    Q_tes_des_calc /*MWht*/;
 
                 double tes_htf_min_temp = 0;
                 double tes_htf_max_temp = 0;
@@ -1906,7 +1906,7 @@ public:
                 double V_tank_hot_ini = hot_vol_frac * V_tes_htf_total_calc; // m3
                 double T_avg = (as_double("T_loop_in_des") + as_double("T_loop_out")) / 2.0;    // C
 
-                assign("q_tes", Q_tes_des_calc); // MWt-hr
+                assign("q_tes", Q_tes_des_calc); // MWht
                 assign("tes_avail_vol", V_tes_htf_avail_calc); // m3
                 assign("vol_tank", V_tes_htf_total_calc);   // m3
                 assign("csp_pt_tes_tank_height", h_tank_calc);    // m
