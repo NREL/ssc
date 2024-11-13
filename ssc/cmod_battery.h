@@ -430,8 +430,8 @@ struct battstor
         * outBatteryConversionPowerLoss,
         * outBatterySystemLoss,
         * outBatteryToInverterDC,
-		* outInterconnectionLoss,
-		* outCritLoadUnmet,
+        * outInterconnectionLoss,
+        * outCritLoadUnmet,
         * outCritLoad,
         * outUnmetLosses,
         * outAnnualSystemChargeEnergy,
@@ -455,8 +455,8 @@ struct battstor
         * outPVS_violation_list,
         * outPVS_P_pv_ac, // testing with input pv output
         * outPVS_PV_ramp_interval, // testing with sampled input pv output
-        * outPVS_forecast_pv_energy; // testing with forecast based on input pv output
-
+        * outPVS_forecast_pv_energy, // testing with forecast based on input pv output
+        * outAdjustLosses;
 
 	double outAverageCycleEfficiency;
 	double outAverageRoundtripEfficiency;

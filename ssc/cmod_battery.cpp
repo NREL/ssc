@@ -1003,6 +1003,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     outBatteryToSystemLoad = vt.allocate("batt_to_system_load", nrec * nyears);
     outBatteryToGrid = vt.allocate("batt_to_grid", nrec * nyears);
     outBatteryToInverterDC = vt.allocate("batt_to_inverter_dc", nrec * nyears);
+    outAdjustLosses = vt.allocate("batt_perf_adj_loss", nrec * nyears);
 
     if (batt_vars->batt_meter_position == dispatch_t::BEHIND)
     {
@@ -1758,6 +1759,8 @@ battstor::battstor(const battstor& orig) {
     outSystemChargePercent = orig.outSystemChargePercent;
     outGridChargePercent = orig.outGridChargePercent;
 
+    outAdjustLosses = orig.outAdjustLosses;
+
     // copy models
     if (orig.batt_vars) batt_vars = orig.batt_vars;
     battery_metrics = new battery_metrics_t(orig._dt_hour);
@@ -1902,6 +1905,7 @@ void battstor::outputs_fixed()
     outDOD[index] = (ssc_number_t)(state.lifetime->cycle_range);
     outDODCycleAverage[index] = (ssc_number_t)(state.lifetime->average_range);
     outCapacityPercent[index] = (ssc_number_t)(state.lifetime->q_relative);
+    outAdjustLosses[index] = (ssc_number_t)(state.losses->adjust_loss_percent * 100.0);
     if (batt_vars->batt_life_model == lifetime_params::CALCYC) {
         outCapacityPercentCycle[index] = (ssc_number_t)(state.lifetime->cycle->q_relative_cycle);
         outCapacityPercentCalendar[index] = (ssc_number_t)(state.lifetime->calendar->q_relative_calendar);
