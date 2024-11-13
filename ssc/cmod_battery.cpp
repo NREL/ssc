@@ -1178,7 +1178,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     if (vt.is_assigned("batt_adjust_costant") || vt.is_assigned("batt_adjust_periods") || vt.is_assigned("batt_adjust_timeindex")) {
         adj_losses.clear();
         adjustment_factors haf(&vt, "batt_adjust");
-        if (!haf.setup(nrec, batt_vars->analysis_period)) {
+        if (!haf.setup(nrec, nyears)) {
             throw exec_error("battery", "failed to setup battery adjustment factors: " + haf.error());
         }
         for (size_t i = 0; i < haf.size(); i++) {
