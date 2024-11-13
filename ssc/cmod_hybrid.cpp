@@ -414,7 +414,6 @@ public:
                 prepend_to_output((var_table*)compute_module_outputs, "annual_fuel_usage_lifetime", arr_length, yr_0_value);
                 prepend_to_output((var_table*)compute_module_outputs, "fuelcell_annual_energy_discharged", arr_length, yr_0_value);
 
-
                 ssc_data_set_table(outputs, compute_module.c_str(), compute_module_outputs);
                 ssc_module_free(module);
                 ssc_data_free(compute_module_outputs);
@@ -591,9 +590,23 @@ public:
                         pHybridOMSum[y] += om_landlease[y];
                 }
             }
+
+            ssc_number_t* pThermalPower = ((var_table*)outputs)->allocate("fuelcell_power_thermal", genLength);
+            size_t thermalPowerLen = 0;
+
+
             for (size_t f = 0; f < fuelcells.size(); f++) {
                 var_table fuelcell_outputs = ((var_table*)outputs)->lookup(fuelcells[f])->table;
                 size_t count_fc;
+                ssc_number_t* fc_thermalpower = fuelcell_outputs.as_array("fuelcell_power_thermal", &thermalPowerLen);
+                if(thermalPowerLen != genLength) {
+                    throw exec_error("hybrid", util::format("fuel cell power thermal size (%d) incorrect", (int)thermalPowerLen));
+                }
+                else {
+                    for (size_t i = 0; i < genLength; i++)
+                        pThermalPower[i] = fc_thermalpower[i];
+                }
+
                 ssc_number_t* om_production = fuelcell_outputs.as_array("cf_om_production", &count_fc);
                 ssc_number_t* om_fixed = fuelcell_outputs.as_array("cf_om_fixed", &count_fc);
                 ssc_number_t* om_capacity = fuelcell_outputs.as_array("cf_om_capacity", &count_fc);
@@ -630,6 +643,9 @@ public:
 
                 if (batteries.size() > 0)
                     ssc_data_set_number(static_cast<ssc_data_t>(&input), "is_hybrid", 1); // for updating battery outputs to annual length in update_battery_outputs in common_financial.cpp
+
+                if (fuelcells.size() > 0)
+                    ssc_data_set_array(static_cast<ssc_data_t>(&input), "fuelcell_power_thermal", pThermalPower, (int)thermalPowerLen); // for running cmod_thermalrate
 
                 ssc_data_set_number(static_cast<ssc_data_t>(&input), "system_use_lifetime_output", 1);
 
