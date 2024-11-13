@@ -833,7 +833,7 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT,        SSC_ARRAY,     "ac_transmission_loss",                   "Transmission loss",                                     "kW", "",    "Time Series (Transmission)",                 "",                     "",                   "" },
 
         // Post batt AC losses - record so the powerflows from PV and batt to grid add up properly
-        { SSC_OUTPUT,        SSC_ARRAY,     "ac_perf_adj_loss",                       "AC performance adjustment loss",                             "kW", "",    "Time Series (AC Loss)",                 "",                     "",                   "" },
+        { SSC_OUTPUT,        SSC_ARRAY,     "ac_perf_adj_loss",                       "AC availability loss",                                   "kW", "",    "Time Series (AC Loss)",                 "",                     "",                   "" },
         { SSC_OUTPUT,        SSC_ARRAY,     "ac_lifetime_loss",                       "AC lifetime daily loss",                                     "kW", "",    "Time Series (AC Loss)",                 "",                     "",                   "" },
 
        // monthly and annual outputs
@@ -966,7 +966,7 @@ static var_info _cm_vtab_pvsamv1[] = {
         { SSC_OUTPUT, SSC_NUMBER, "annual_dc_tracking_loss_percent", "DC tracking loss", "%", "", "Loss", "", "", "" },
         { SSC_OUTPUT, SSC_NUMBER, "annual_dc_nameplate_loss_percent", "DC nameplate loss", "%", "", "Loss", "", "", "" },
         { SSC_OUTPUT, SSC_NUMBER, "annual_dc_optimizer_loss_percent", "DC power optimizer loss", "%", "", "Loss", "", "", "" },
-        { SSC_OUTPUT, SSC_NUMBER, "annual_dc_perf_adj_loss_percent", "DC performance adjustment loss", "%", "", "Loss", "", "", "" },
+        { SSC_OUTPUT, SSC_NUMBER, "annual_dc_perf_adj_loss_percent", "DC availability loss", "%", "", "Loss", "", "", "" },
         { SSC_OUTPUT, SSC_NUMBER, "annual_dc_lifetime_loss_percent", "Lifetime daily DC loss- year 1", "%", "", "Loss", "", "", "" },
         { SSC_OUTPUT, SSC_NUMBER, "annual_dc_battery_loss_percent", "DC connected battery loss- year 1", "%", "", "Loss", "", "", "" },
         { SSC_OUTPUT, SSC_NUMBER, "annual_dc_inv_tdc_loss_percent", "DC inverter thermal derate loss", "%", "", "Loss", "", "", "" },
@@ -990,7 +990,7 @@ static var_info _cm_vtab_pvsamv1[] = {
 
 
             // annual_ac_net
-            { SSC_OUTPUT, SSC_NUMBER, "annual_ac_perf_adj_loss_percent", "AC performance adjustment loss", "%", "", "Loss", "", "", "" },
+            { SSC_OUTPUT, SSC_NUMBER, "annual_ac_perf_adj_loss_percent", "AC availability loss", "%", "", "Loss", "", "", "" },
             // annual_energy
 
             /*
