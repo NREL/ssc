@@ -1003,7 +1003,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     outBatteryToSystemLoad = vt.allocate("batt_to_system_load", nrec * nyears);
     outBatteryToGrid = vt.allocate("batt_to_grid", nrec * nyears);
     outBatteryToInverterDC = vt.allocate("batt_to_inverter_dc", nrec * nyears);
-    outAdjustLosses = vt.allocate("batt_perf_adj_loss", nrec * nyears);
+    outAdjustLosses = vt.allocate("batt_availability_loss", nrec * nyears);
 
     if (batt_vars->batt_meter_position == dispatch_t::BEHIND)
     {
