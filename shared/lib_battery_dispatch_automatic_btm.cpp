@@ -179,7 +179,7 @@ void dispatch_automatic_behind_the_meter_t::setup_rate_forecast()
     {
 
         forecast_setup rate_setup(_steps_per_hour, _nyears);
-        rate_setup.setup(rate.get(), _P_pv_ac, _P_load_ac, m_batteryPower->powerBatteryDischargeMaxAC);
+        rate_setup.setup(rate.get(), _P_pv_ac, _P_load_ac, m_batteryPower->getMaxACChargePower());
 
         rate_forecast = std::shared_ptr<UtilityRateForecast>(new UtilityRateForecast(rate.get(), _steps_per_hour, rate_setup.monthly_net_load, rate_setup.monthly_gen, rate_setup.monthly_gross_load, _nyears, rate_setup.monthly_peaks));
         rate_forecast->initializeMonth(0, 0);
@@ -244,13 +244,13 @@ void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t year, size_t 
 	{
         // extract input power by modifying lifetime index to year 1
         m_batteryPower->powerBatteryTarget = _P_battery_use[idx % (8760 * _steps_per_hour)];
-        double loss_kw = _Battery->calculate_loss(m_batteryPower->powerBatteryTarget, idx); // Battery is responsible for covering discharge losses
+        double ancillary_loss_kw = _Battery->calculate_loss(m_batteryPower->powerBatteryTarget, idx); // Battery is responsible for covering discharge losses
         if (m_batteryPower->connectionMode == AC_CONNECTED) {
-            m_batteryPower->powerBatteryTarget = m_batteryPower->adjustForACEfficiencies(m_batteryPower->powerBatteryTarget, loss_kw);
+            m_batteryPower->powerBatteryTarget = m_batteryPower->adjustForACEfficiencies(m_batteryPower->powerBatteryTarget, ancillary_loss_kw);
         }
         else if (m_batteryPower->powerBatteryTarget > 0) {
             // Adjust for DC discharge losses
-            m_batteryPower->powerBatteryTarget += loss_kw;
+            m_batteryPower->powerBatteryTarget += ancillary_loss_kw;
         }
 	}
 
@@ -882,14 +882,14 @@ void dispatch_automatic_behind_the_meter_t::check_power_restrictions(double& pow
 
 void dispatch_automatic_behind_the_meter_t::set_battery_power(size_t idx, size_t day_index, FILE *p, const bool debug)
 {
-    double loss_kw = _Battery->calculate_loss(_P_battery_use[day_index], idx); // Units are kWac for AC connected batteries, and kWdc for DC connected
+    double ancillary_loss_kw = _Battery->calculate_loss(_P_battery_use[day_index], idx); // Units are kWac for AC connected batteries, and kWdc for DC connected
 
 	// At this point the target power is expressed in AC, must convert to DC for battery
 	if (m_batteryPower->connectionMode == m_batteryPower->AC_CONNECTED) {
-        _P_battery_use[day_index] = m_batteryPower->adjustForACEfficiencies(_P_battery_use[day_index], loss_kw);
+        _P_battery_use[day_index] = m_batteryPower->adjustForACEfficiencies(_P_battery_use[day_index], ancillary_loss_kw);
 	}
     else {
-        _P_battery_use[day_index] = m_batteryPower->adjustForDCEfficiencies(_P_battery_use[day_index], loss_kw);
+        _P_battery_use[day_index] = m_batteryPower->adjustForDCEfficiencies(_P_battery_use[day_index], ancillary_loss_kw);
     }
 	
 	if (debug)
