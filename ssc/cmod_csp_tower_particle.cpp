@@ -1320,8 +1320,8 @@ public:
         }
 
         //Load the solar field adjustment factors.  Assume the same adjustment factors apply to each heliostat field
-        adjustment_factors sf_haf(this, "sf_adjust");
-        if (!sf_haf.setup((int)n_steps_full))
+        adjustment_factors sf_haf(this->get_var_table(), "sf_adjust");
+        if (!sf_haf.setup(n_steps_full))
             throw exec_error("csp_tower_particle", "failed to setup sf adjustment factors: " + sf_haf.error());
 
 
@@ -2339,8 +2339,8 @@ public:
         ssc_number_t *p_time_final_hr = as_array("time_hr", &count);
 
         // 'adjustment_factors' class stores factors in hourly array, so need to index as such
-        adjustment_factors haf(this, "adjust");
-        if( !haf.setup((int)count) )
+        adjustment_factors haf(this->get_var_table(), "adjust");
+        if (!haf.setup(n_steps_full))
             throw exec_error("csp_tower_particle", "failed to setup adjustment factors: " + haf.error());
 
         ssc_number_t *p_gen = allocate("gen", count);
