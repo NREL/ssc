@@ -4,7 +4,7 @@
 #
 #####################################################################################################################
 
-include_directories(. ../nlopt ../shared ../splinter ../lpsolve ../solarpilot)
+include_directories(. ../nlopt ../shared ../lpsolve ../solarpilot $ENV{ORTOOLSDIR}/include/eigen3)
 
 set(TCS_SRC
 		atmospheric_aod.cpp
