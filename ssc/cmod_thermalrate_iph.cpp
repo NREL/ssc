@@ -81,6 +81,7 @@ static var_info vtab_thermal_rate_iph[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "thermal_cost_with_system_year1", "Thermal cost with sytem (year 1)", "$", "", "", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "thermal_cost_without_system_year1", "Thermal cost without system (year 1)", "$", "", "", "*", "", "" },
 
+    { SSC_OUTPUT, SSC_ARRAY, "year1_monthly_load_heat", "Thermal load", "kWht/mo", "", "Monthly", "*", "LENGTH=12", "" },
 
 
 
@@ -238,8 +239,6 @@ public:
 			bload = true;
             pload = as_array("thermal_load_heat_btu", &nrec_load);//[MMBtu/hr]
 
-
-
 			step_per_hour_load = nrec_load / 8760;
 			if (step_per_hour_load < 1 || step_per_hour_load > 60 || step_per_hour_load * 8760 != nrec_load)
 				throw exec_error("thermalrate_iph", util::format("invalid number of load records (%d): must be an integer multiple of 8760", (int)nrec_load));
@@ -396,17 +395,15 @@ public:
 
 		assign("thermal_load_year1", year1_thermal_load* ts_hour_gen);
 
-		
 		/* allocate intermediate data arrays */
 		std::vector<ssc_number_t> revenue_w_sys(m_num_rec_yearly), revenue_wo_sys(m_num_rec_yearly),
 			payment(m_num_rec_yearly), income(m_num_rec_yearly), 
 			thermal_charge_w_sys(m_num_rec_yearly), thermal_charge_wo_sys(m_num_rec_yearly),
 			load(m_num_rec_yearly), salespurchases(m_num_rec_yearly);
-		std::vector<ssc_number_t> monthly_revenue_w_sys(12), monthly_revenue_wo_sys(12),
-			monthly_thermal_charges(12),
-			monthly_ec_rates(12),
-			monthly_salespurchases(12),
-			monthly_load(12), monthly_system_generation(12), monthly_bill(12), monthly_peak(12), monthly_test(12);
+        std::vector<ssc_number_t>
+            monthly_salespurchases(12),
+            monthly_load_heat_btu(12),
+            monthly_load_heat(12);
 
 		/* allocate outputs */		
 		ssc_number_t *annual_net_revenue = allocate("annual_thermal_value", nyears+1);
@@ -417,48 +414,36 @@ public:
 		ssc_number_t *annual_thermal_cost_w_sys = allocate("thermal_cost_with_system", nyears+1);
 		ssc_number_t *annual_thermal_cost_wo_sys = allocate("thermal_cost_without_system", nyears+1);
 
-
-		// matrices
-		//ssc_number_t *thermal_bill_w_sys_ym = allocate("thermal_bill_w_sys_ym", nyears + 1, 12);
-		//ssc_number_t *thermal_bill_wo_sys_ym = allocate("thermal_bill_wo_sys_ym", nyears + 1, 12);
-
-
-		// annual sums
-		//ssc_number_t *thermal_bill_w_sys = allocate("thermal_bill_w_sys", nyears + 1);
-		//ssc_number_t *utility_bill_wo_sys = allocate("thermal_bill_wo_sys", nyears + 1);
-
+        size_t steps_per_hour = m_num_rec_yearly / 8760;
+        int c = 0;
+        for (int m = 0; m < 12; m++)
+        {
+            monthly_load_heat_btu[m] = 0;
+            monthly_load_heat[m] = 0;
+            for (int d = 0; d < (int)util::nday[m]; d++)
+            {
+                for (int h = 0; h < 24; h++)
+                {
+                    for (int s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
+                    {
+                        monthly_load_heat_btu[m] -= p_load[c];  //[MMBtu]
+                        monthly_load_heat[m] -= p_load[c] * MMBTU_TO_KWh;  //[kWht]
+                        c++;
+                    }
+                }
+            }
+        }
+        // Assign monthly load
+        assign("year1_monthly_load_heat", var_data(&monthly_load_heat[0], 12));
 
 		// lifetime hourly load
 		ssc_number_t *lifetime_load = allocate("lifetime_thermal_load", nrec_gen);
-
 
 		idx = 0;
 		for (i=0;i<nyears;i++)
 		{
 			for (j = 0; j<m_num_rec_yearly; j++)
 			{
-				/* for future implementation for lifetime loads
-				// update e_load and p_load per year if lifetime output
-				// lifetime load values? sell values
-				if ((as_integer("system_use_lifetime_output") == 1) && (idx < nrec_load))
-				{
-					e_load[j] = p_load[j] = 0.0;
-					for (size_t ii = 0; (ii < step_per_hour_load) && (idx < nrec_load); ii++)
-					{
-						ts_load = (bload ? pload[idx] : 0);
-						e_load[i] += ts_load * ts_hour_load;
-						p_load[i] = ((ts_load > p_load[i]) ? ts_load : p_load[i]);
-						idx++;
-					}
-					lifetime_hourly_load[i*8760 + j] = e_load[i];
-					// sign correction for utility rate calculations
-					e_load[i] = -e_load[i];
-					p_load[i] = -p_load[i];
-				}
-				*/
-				// apply load escalation appropriate for current year
-//				e_load_cy[j] = e_load[j] * load_scale[i];
-//				p_load_cy[j] = p_load[j] * load_scale[i];
 				e_load_cy[j] = p_load[j] * load_scale[i] * ts_hour_gen;
 				p_load_cy[j] = p_load[j] * load_scale[i];
 
@@ -466,10 +451,6 @@ public:
 				// update e_sys per year if lifetime output
 				if ((as_integer("system_use_lifetime_output") == 1) && ( idx < nrec_gen ))
 				{
-//					e_sys[j] = p_sys[j] = 0.0;
-//					ts_power = (idx < nrec_gen) ? pgen[idx] : 0;
-//					e_sys[j] = ts_power * ts_hour_gen;
-//					p_sys[j] = ((ts_power > p_sys[j]) ? ts_power : p_sys[j]);
 					e_sys_cy[j] = pgen[idx] * ts_hour_gen;
 					p_sys_cy[j] = pgen[idx];
 					// until lifetime load fully implemented
@@ -534,11 +515,7 @@ public:
 			if (i == 0)
 			{
 				assign("year1_hourly_charge_with_system", var_data(&thermal_charge_w_sys[0], (int)m_num_rec_yearly));
-
 				assign("thermal_revenue_with_system", var_data(&revenue_w_sys[0], (int)m_num_rec_yearly));
-				assign("year1_monthly_load", var_data(&monthly_load[0], 12));
-				assign("year1_monthly_system_generation", var_data(&monthly_system_generation[0], 12));
-				assign("year1_monthly_thermal_bill_w_sys", var_data(&monthly_bill[0], 12));
 
 				// output and demand per Paul's email 9/10/10
 				// positive demand indicates system does not produce enough thermal to meet load
@@ -597,49 +574,6 @@ public:
 		assign("thermal_cost_without_system_year1", annual_thermal_cost_wo_sys[1]);
 		assign("thermal_savings_year1", annual_thermal_cost_wo_sys[1] - annual_thermal_cost_w_sys[1]);
 	}
-
-	void monthly_outputs(ssc_number_t *e_load, ssc_number_t *e_sys, ssc_number_t *e_grid, ssc_number_t *salespurchases, ssc_number_t monthly_load[12], ssc_number_t monthly_generation[12], ssc_number_t monthly_thermal_to_grid[12], ssc_number_t monthly_thermal_needed_from_grid[12], ssc_number_t monthly_salespurchases[12])
-	{
-		// calculate the monthly net energy and monthly hours
-		int m,d,h,s;
-		ssc_number_t energy_use[12]; // 12 months
-		int c=0;
-
-		size_t steps_per_hour = m_num_rec_yearly / 8760;
-		for (m=0;m<12;m++)
-		{
-			energy_use[m] = 0;
-			monthly_load[m] = 0;
-			monthly_generation[m] = 0;
-			monthly_thermal_to_grid[m] = 0;
-			monthly_salespurchases[m] = 0;
-			for (d=0;d<(int)util::nday[m];d++)
-			{
-				for(h=0;h<24;h++)
-				{
-					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
-					{
-						energy_use[m] += e_grid[c];
-						monthly_load[m] -= e_load[c];
-						monthly_generation[m] += e_sys[c]; // does not include first year sys_scale
-						monthly_thermal_to_grid[m] += e_grid[c];
-						monthly_salespurchases[m] += salespurchases[c];
-						c++;
-					}
-				}
-			}
-		}
-		//
-		
-		for (m=0;m<12;m++)
-		{
-			if (monthly_thermal_to_grid[m] > 0)
-				monthly_thermal_needed_from_grid[m] = monthly_thermal_to_grid[m];
-			else
-				monthly_thermal_needed_from_grid[m]=0;
-		}
-	}
-
 
 	void tr_calc_timestep(ssc_number_t *e_in, ssc_number_t *p_in, ssc_number_t *br_in, ssc_number_t *sr_in,
 		ssc_number_t *revenue, ssc_number_t *payment, ssc_number_t *income,
