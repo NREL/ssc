@@ -61,7 +61,7 @@ static var_info _cm_vtab_mhk_tidal[] = {
 //	{ SSC_OUTPUT,			SSC_NUMBER,			"device_rated_capacity",				"Rated capacity of device",													"kW",			"",				"MHKTidal",			"calculate_capacity=0",		"",						"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"device_rated_capacity",				"Rated capacity of device",													"kW",			"",				"MHKTidal",			"",		"",						"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"device_average_power",					"Average power production of a single device",								"kW",			"",				"MHKTidal",			"*",						"",						"" },
-	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production of array",										"kWh",			"",				"MHKTidal",			"*",						"",						"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual AC energy in Year 1",										"kWh",			"",				"MHKTidal",			"*",						"",						"" },
     { SSC_OUTPUT,			SSC_ARRAY,			"gen",			                        "System power generated",					"kW",			"",				"MHKTidal",			"",						"",						"" },
 
     { SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity factor",													"%",			"",				"MHKTidal",			"*",						"",						"" },
@@ -240,7 +240,7 @@ public:
             ssc_number_t* p_gen = allocate("gen", number_records);
             int power_bin = 0;
 
-            adjustment_factors haf(this, "adjust");
+            adjustment_factors haf(this->get_var_table(), "adjust");
             if (!haf.setup(number_records, 1))
                 throw exec_error("mhk_tidal", "Failed to set up adjustment factors: " + haf.error());
 

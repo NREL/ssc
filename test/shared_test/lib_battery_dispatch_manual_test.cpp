@@ -563,6 +563,31 @@ TEST_F(ManualTest_lib_battery_dispatch_losses, TestLossesWithDispatch)
     EXPECT_NEAR(batteryPower->powerBatteryToLoad, batteryPower->powerLoad, 0.5);
 }
 
+TEST_F(ManualTest_lib_battery_dispatch_availability_losses, TestAvailabilityLossesWithDispatch)
+{
+    dispatchManual = new dispatch_manual_t(batteryModel, dtHour, SOC_min, SOC_max, currentChoice, currentChargeMax,
+        currentDischargeMax, powerChargeMax, powerDischargeMax, powerChargeMax,
+        powerDischargeMax, minimumModeTime,
+        dispatchChoice, meterPosition, scheduleWeekday, scheduleWeekend, canCharge,
+        canDischarge, canGridcharge, canDischargeToGrid, canGridcharge, percentDischarge,
+        percentGridcharge, canClipCharge, canCurtailCharge, interconnection_limit);
+
+    batteryPower = dispatchManual->getBatteryPower();
+    batteryPower->connectionMode = ChargeController::DC_CONNECTED;
+    batteryPower->setSharedInverter(m_sharedInverter);
+
+    // Test max charge power constraint
+    batteryPower->powerSystem = 40; batteryPower->voltageSystem = 600; batteryPower->adjustLosses = 0.5;
+    dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+    EXPECT_NEAR(batteryPower->powerSystemToBatteryAC, powerChargeMax * batteryPower->adjustLosses - batteryPower->powerSystemLoss, 1);
+
+    // Test max discharge power constraint
+    batteryPower->powerSystem = 0; batteryPower->voltageSystem = 600; batteryPower->powerLoad = 40; batteryPower->adjustLosses = 0.5;
+    dispatchManual->dispatch(year, hour_of_year, step_of_hour);
+    EXPECT_NEAR(batteryPower->powerGeneratedBySystem, powerDischargeMax * batteryPower->adjustLosses * batteryPower->singlePointEfficiencyDCToAC, 0.5); // Constraints drive efficiency lower, meaning some grid power is used to meet load (<0.5 kW)
+    EXPECT_NEAR(batteryPower->powerBatteryToLoad, powerDischargeMax * batteryPower->adjustLosses * batteryPower->singlePointEfficiencyDCToAC, 0.5);
+}
+
 TEST_F(ManualTest_lib_battery_dispatch, TestDischargeToGrid)
 {
     std::vector<bool> testCanDischargeToGrid;

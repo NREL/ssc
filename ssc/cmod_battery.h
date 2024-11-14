@@ -39,6 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "core.h"
 #include "lib_battery.h"
 #include "lib_utility_rate.h"
+#include "lib_battery_dispatch.h"
 #include "cmod_utilityrate5.h"
 
 // forward declarations to speed up build
@@ -220,6 +221,9 @@ struct batt_variables
 
 	/*! PPA price */
 	std::vector<double> forecast_price_series_dollar_per_kwh;
+    std::vector<double> forecast_cleared_capacities_kw;
+    dispatch_t::CAPACITY_FORECAST_TYPE capacity_forecast_type;
+    double cleared_capacity_percent;
 
 	/*! Energy rates */
 	bool ec_rate_defined, ec_use_realtime;
@@ -426,8 +430,8 @@ struct battstor
         * outBatteryConversionPowerLoss,
         * outBatterySystemLoss,
         * outBatteryToInverterDC,
-		* outInterconnectionLoss,
-		* outCritLoadUnmet,
+        * outInterconnectionLoss,
+        * outCritLoadUnmet,
         * outCritLoad,
         * outUnmetLosses,
         * outAnnualSystemChargeEnergy,
@@ -451,8 +455,8 @@ struct battstor
         * outPVS_violation_list,
         * outPVS_P_pv_ac, // testing with input pv output
         * outPVS_PV_ramp_interval, // testing with sampled input pv output
-        * outPVS_forecast_pv_energy; // testing with forecast based on input pv output
-
+        * outPVS_forecast_pv_energy, // testing with forecast based on input pv output
+        * outAdjustLosses;
 
 	double outAverageCycleEfficiency;
 	double outAverageRoundtripEfficiency;
