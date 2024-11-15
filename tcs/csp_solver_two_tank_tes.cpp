@@ -879,7 +879,6 @@ void C_csp_two_tank_tes::init(const C_csp_tes::S_csp_tes_init_inputs init_inputs
     double rho_cold_des = mc_store_htfProps.dens(T_tes_cold_des, 1.0);
     double rho_hot = mc_store_htfProps.dens(m_T_tank_hot_ini, 1.0);
     double rho_cold = mc_store_htfProps.dens(m_T_tank_cold_ini, 1.0);
-    //TODO (Bill): volume fraction needs to be used here
     double m_hot_ini = m_f_V_hot_ini * 0.01 * m_mass_total_active + V_inactive * rho_hot_des * tes_packed_vol_frac;  // Updating initial storage charge calculation to avoid variation in total mass with specified initial T
     double m_cold_ini = (1.0 - m_f_V_hot_ini * 0.01) * m_mass_total_active + V_inactive * rho_cold_des * tes_packed_vol_frac;
     double V_hot_ini = m_hot_ini / (rho_hot * tes_packed_vol_frac);

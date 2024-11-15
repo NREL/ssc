@@ -1843,7 +1843,7 @@ public:
             as_double("tes_init_hot_htf_percent"),
             as_double("pb_pump_coef"),
             as_boolean("tanks_in_parallel"),        //[-]
-            1.0,                                    //[-]
+            1.0,                                    //[-] packed volume fraction
             1.85,                                   //[m/s]
             false                                   // for now, to get 'tanks_in_parallel' to work
         );

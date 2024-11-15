@@ -624,7 +624,7 @@ public:
             as_double("tes_init_hot_htf_percent"),
             as_double("pb_pump_coef"),
             false,                        //[-] False: Field HTF always goes to TES. PC HTF always comes from TES. ETES should not simultaneously operate heater and cycle
-            1.0,
+            1.0,                          // Packed volume fraction
             1.85,                         //[m/s]
             false                         // for now, to get 'tanks_in_parallel' to work
         );

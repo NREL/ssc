@@ -845,6 +845,7 @@ public:
                 as_double("init_hot_htf_percent"),
                 as_double("pb_pump_coef"),
                 as_boolean("tanks_in_parallel"),
+                1.0,                    // packed volume fraction
                 V_tes_des,
                 false,
                 as_double("tes_pump_coef")
