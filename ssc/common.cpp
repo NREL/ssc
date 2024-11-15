@@ -563,6 +563,16 @@ var_info vtab_sf_adjustment_factors[] = {
 { SSC_INPUT,SSC_MATRIX  , "sf_adjust_periods"                    , "SF Period-based Adjustment Factors"                             , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "sf_adjust_en_periods=1"              , "COLS=3"                , ""},
 var_info_invalid };
 
+var_info vtab_batt_adjustment_factors[] = {
+{ SSC_INPUT,SSC_NUMBER  , "batt_adjust_constant"                   , "Battery Constant loss adjustment",        "%", "",                "Adjustment Factors", "?=0"               , "MAX=100"               , ""},
+{ SSC_INPUT, SSC_NUMBER,     "batt_adjust_en_timeindex"        , "Enable battery lifetime adjustment factors",     "0/1",      "",                      "Adjustment Factors",      "?=0",                       "BOOLEAN",                                         "" },
+{ SSC_INPUT, SSC_NUMBER,     "batt_adjust_en_periods"        , "Enable battery period-based adjustment factors",     "0/1",      "",                      "Adjustment Factors",      "?=0",                       "BOOLEAN",                                         "" },
+{ SSC_INPUT,SSC_ARRAY   , "batt_adjust_timeindex"                        , "Battery Lifetime Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "batt_adjust_en_timeindex=1"              , ""           , ""},
+{ SSC_INPUT,SSC_MATRIX  , "batt_adjust_periods"                    , "Battery Period-based Adjustment Factors"                             , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "batt_adjust_en_periods=1"               , "COLS=3"                , ""},
+{ SSC_OUTPUT, SSC_ARRAY,  "batt_availability_loss",                  "Battery availability loss",                             "%", "",    "Time Series",                 "",                     "",                   "" },
+
+var_info_invalid };
+
 var_info vtab_financial_capacity_payments[] = {
 
 	/*   VARTYPE           DATATYPE         NAME                                    LABEL                                             UNITS        META                               GROUP                    REQUIRED_IF           CONSTRAINTS               UI_HINTS	*/

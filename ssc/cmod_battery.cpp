@@ -1003,6 +1003,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     outBatteryToSystemLoad = vt.allocate("batt_to_system_load", nrec * nyears);
     outBatteryToGrid = vt.allocate("batt_to_grid", nrec * nyears);
     outBatteryToInverterDC = vt.allocate("batt_to_inverter_dc", nrec * nyears);
+    outAdjustLosses = vt.allocate("batt_availability_loss", nrec * nyears);
 
     if (batt_vars->batt_meter_position == dispatch_t::BEHIND)
     {
@@ -1174,13 +1175,25 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             batt_vars->batt_Qfull_flow, batt_vars->batt_initial_SOC, batt_vars->batt_maximum_SOC, batt_vars->batt_minimum_SOC, dt_hr);
     }
 
+    std::vector<double> adj_losses(1, 0.0);
+    if (vt.is_assigned("batt_adjust_costant") || vt.is_assigned("batt_adjust_periods") || vt.is_assigned("batt_adjust_timeindex")) {
+        adj_losses.clear();
+        adjustment_factors haf(&vt, "batt_adjust");
+        if (!haf.setup(nrec, nyears)) {
+            throw exec_error("battery", "failed to setup battery adjustment factors: " + haf.error());
+        }
+        for (size_t i = 0; i < haf.size(); i++) {
+            adj_losses.push_back(1.0 - haf(i)); // Convert to convention within powerflow and capacity code
+        }
+    }
+
     if (batt_vars->batt_loss_choice == losses_params::MONTHLY) {
         if (*std::min_element(batt_vars->batt_losses_charging.begin(), batt_vars->batt_losses_charging.end()) < 0
             || *std::min_element(batt_vars->batt_losses_discharging.begin(), batt_vars->batt_losses_discharging.end()) < 0
             || *std::min_element(batt_vars->batt_losses_idle.begin(), batt_vars->batt_losses_idle.end()) < 0) {
             throw exec_error("battery", "Battery loss inputs batt_losses_charging, batt_losses_discharging, and batt_losses_idle cannot include negative numbers.");
         }
-        losses_model = new losses_t(batt_vars->batt_losses_charging, batt_vars->batt_losses_discharging, batt_vars->batt_losses_idle);
+        losses_model = new losses_t(batt_vars->batt_losses_charging, batt_vars->batt_losses_discharging, batt_vars->batt_losses_idle, adj_losses);
     }
     else if (batt_vars->batt_loss_choice == losses_params::SCHEDULE) {
         if (!(batt_vars->batt_losses.size() == 1 || batt_vars->batt_losses.size() == nrec)) {
@@ -1189,7 +1202,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
         if (*std::min_element(batt_vars->batt_losses.begin(), batt_vars->batt_losses.end()) < 0) {
             throw exec_error("battery", "Battery loss input batt_losses cannot include negative numbers.");
         }
-        losses_model = new losses_t(batt_vars->batt_losses);
+        losses_model = new losses_t(batt_vars->batt_losses, adj_losses);
     }
     else {
         losses_model = new losses_t();
@@ -1746,6 +1759,8 @@ battstor::battstor(const battstor& orig) {
     outSystemChargePercent = orig.outSystemChargePercent;
     outGridChargePercent = orig.outGridChargePercent;
 
+    outAdjustLosses = orig.outAdjustLosses;
+
     // copy models
     if (orig.batt_vars) batt_vars = orig.batt_vars;
     battery_metrics = new battery_metrics_t(orig._dt_hour);
@@ -1839,10 +1854,13 @@ void battstor::advance(var_table*, double P_gen, double V_gen, double P_load, do
     powerflow->powerCritLoad = P_crit_load;
     powerflow->voltageSystem = V_gen;
     powerflow->acLossWiring = ac_wiring_loss;
-    powerflow->acLossPostBattery = ac_loss_post_battery;
+    powerflow->acLossSystemAvailability = ac_loss_post_battery;
     powerflow->acXfmrLoadLoss = xfmr_ll;
     powerflow->acXfmrNoLoadLoss = xfmr_nll;
     powerflow->powerSystemClipped = P_gen_clipped;
+
+    size_t lifetime_index = util::lifetimeIndex(year, hour, step, _dt_hour);
+    powerflow->adjustLosses = battery_model->getAvailabilityLoss(lifetime_index);
 
     charge_control->run(year, hour, step, year_index);
     outputs_fixed();
@@ -1887,6 +1905,7 @@ void battstor::outputs_fixed()
     outDOD[index] = (ssc_number_t)(state.lifetime->cycle_range);
     outDODCycleAverage[index] = (ssc_number_t)(state.lifetime->average_range);
     outCapacityPercent[index] = (ssc_number_t)(state.lifetime->q_relative);
+    outAdjustLosses[index] = (ssc_number_t)(state.losses->adjust_loss_percent * 100.0);
     if (batt_vars->batt_life_model == lifetime_params::CALCYC) {
         outCapacityPercentCycle[index] = (ssc_number_t)(state.lifetime->cycle->q_relative_cycle);
         outCapacityPercentCalendar[index] = (ssc_number_t)(state.lifetime->calendar->q_relative_calendar);
@@ -2286,6 +2305,7 @@ public:
         add_var_info(_cm_vtab_battery);
         add_var_info(vtab_battery_inputs);
         add_var_info(vtab_forecast_price_signal);
+        add_var_info(vtab_batt_adjustment_factors);
         add_var_info(vtab_battery_outputs);
         add_var_info(vtab_resilience_outputs);
         add_var_info(vtab_utility_rate_common);
