@@ -102,6 +102,7 @@ static var_info vtab_cashloan_heat[] = {
 		
 
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_net",                          "Thermal energy",               "kWht", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_net_heat_btu",                 "Thermal energy",               "MMBtu", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_sales",          "Electricity generation",                                   "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_purchases",      "Electricity from grid to system",                          "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_without_battery","Electricity generated without the battery or curtailment", "kWh", "", "Cash Flow Electricity", "",  "LENGTH_EQUAL=cf_length", "" },
@@ -1563,7 +1564,13 @@ public:
         save_cf(CF_itc_sta, nyears, "cf_itc_sta");
         save_cf(CF_itc_total, nyears, "cf_itc_total");
 
-
+        // Save cf_energy_net_heat_btu (converted from cf_energy_net)
+        const double MMBTU_TO_KWh = 293.07107; // 1 MMBtu = 293.07107 kWh
+        std::vector<double> cf_energy_net_vec = as_vector_double("cf_energy_net");  //[kWht]
+        int cf_energy_net_size = cf_energy_net_vec.size();
+        ssc_number_t* cf_energy_net_heat_btu_arr = allocate("cf_energy_net_heat_btu", cf_energy_net_size);
+        for (int i = 0; i <= cf_energy_net_size; i++)
+            cf_energy_net_heat_btu_arr[i] = (ssc_number_t)(cf_energy_net_vec[i] / MMBTU_TO_KWh); //[MMBtu]
 	}
 
 /* These functions can be placed in common financial library with matrix and constants passed? */

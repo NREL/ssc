@@ -529,6 +529,7 @@ static var_info _cm_vtab_singleowner_heat[] = {
 
 /* Partial Income Statement: Project */
 	{ SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_net",                          "Thermal energy",               "kWht", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_net_heat_btu",                 "Thermal energy",               "MMBtu", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_sales",                        "Thermal energy to grid",                   "kWht", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_purchases",                    "Thermal energy from grid",                 "kWht", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_without_battery",              "Thermal energy generated without storage", "kWht", "", "Cash Flow Electricity", "",  "LENGTH_EQUAL=cf_length", "" },
@@ -3988,6 +3989,13 @@ public:
         save_cf(CF_itc_sta, nyears, "cf_itc_sta");
         save_cf(CF_itc_total, nyears, "cf_itc_total");
 
+
+        // Save cf_energy_net_heat_btu (converted from cf_energy_net)
+        std::vector<double> cf_energy_net_vec = as_vector_double("cf_energy_net");  //[kWht]
+        int cf_energy_net_size = cf_energy_net_vec.size();
+        ssc_number_t* cf_energy_net_heat_btu_arr = allocate("cf_energy_net_heat_btu", cf_energy_net_size);
+        for (int i = 0; i <= cf_energy_net_size; i++)
+            cf_energy_net_heat_btu_arr[i] = (ssc_number_t)(cf_energy_net_vec[i] / MMBTU_TO_KWh); //[MMBtu]
 	}
 
 
