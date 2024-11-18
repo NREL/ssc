@@ -1569,7 +1569,7 @@ public:
         std::vector<double> cf_energy_net_vec = as_vector_double("cf_energy_net");  //[kWht]
         int cf_energy_net_size = cf_energy_net_vec.size();
         ssc_number_t* cf_energy_net_heat_btu_arr = allocate("cf_energy_net_heat_btu", cf_energy_net_size);
-        for (int i = 0; i <= cf_energy_net_size; i++)
+        for (int i = 0; i < cf_energy_net_size; i++)
             cf_energy_net_heat_btu_arr[i] = (ssc_number_t)(cf_energy_net_vec[i] / MMBTU_TO_KWh); //[MMBtu]
 	}
 
