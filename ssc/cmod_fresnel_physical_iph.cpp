@@ -177,8 +177,18 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
 
 
     // System Control
-    { SSC_INPUT,    SSC_NUMBER,         "is_timestep_load_fractions",  "Use turbine load fraction for each timestep instead of block dispatch?",                "",                    "",                             "tou",                  "?=0",              "",             "SIMULATION_PARAMETER" },
-    { SSC_INPUT,    SSC_ARRAY,          "timestep_load_fractions",     "Turbine load fraction for each timestep, alternative to block dispatch",                "",                    "",                             "tou",                  "is_timestep_load_fractions=1", "", "SIMULATION_PARAMETER" },
+    { SSC_INPUT,    SSC_NUMBER,         "is_timestep_load_fractions",  "0: block dispatch, 1: hourly load fraction, 2: absolute load",                          "",                    "",                             "tou",                  "?=0",              "",                 "" },
+    { SSC_INPUT,    SSC_ARRAY,          "timestep_load_fractions",     "Turbine load fraction for each timestep, alternative to block dispatch",                "",                    "",                             "tou",                  "is_timestep_load_fractions=1", "",     "" },
+    { SSC_INPUT,    SSC_MATRIX,         "weekday_schedule",            "12x24 Time of Use Values for week days",                                                "",                    "",                             "tou",                  "is_timestep_load_fractions=0", "",     "" },
+    { SSC_INPUT,    SSC_MATRIX,         "weekend_schedule",            "12x24 Time of Use Values for week end days",                                            "",                    "",                             "tou",                  "is_timestep_load_fractions=0", "",     "" },
+    { SSC_INPUT,    SSC_ARRAY,          "f_turb_tou_periods",          "Dispatch logic for turbine load fraction",                                              "-",                   "",                             "tou",                  "is_timestep_load_fractions=0", "",     "" },
+    { SSC_INPUT,    SSC_ARRAY,          "timestep_load_abs",           "Heat sink hourly load (not normalized)",                                                "kWt",                 "",                             "tou",                  "is_timestep_load_fractions=2", "",     "" },
+    { SSC_INPUT,    SSC_NUMBER,         "timestep_load_abs_factor",    "Heat sink hourly load scale factor",                                                    "",                    "",                             "tou",                  "?=1",                          "",     "" },
+
+
+    { SSC_INPUT,    SSC_NUMBER,         "is_tod_pc_target_also_pc_max","Is the TOD target cycle heat input also the max cycle heat input?",                     "",                    "",                             "tou",                  "?=0",              "",                 "" },
+
+
 
     { SSC_INPUT,    SSC_NUMBER,         "pb_fixed_par",                "Fixed parasitic load - runs at all times",                                              "",                    "",                             "Sys_Control",          "*",                "",                 "" },
     { SSC_INPUT,    SSC_ARRAY,          "bop_array",                   "Balance of plant parasitic power fraction",                                             "",                    "",                             "Sys_Control",          "*",                "",                 "" },
@@ -217,15 +227,6 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
     { SSC_INPUT,    SSC_MATRIX,         "dispatch_sched_weekend",      "PPA pricing weekend schedule, 12x24",                                                   "",                    "",                             "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
     { SSC_INPUT,    SSC_ARRAY,          "dispatch_tod_factors",        "TOD factors for periods 1 through 9",                                                   "",                    "",                             "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
     { SSC_INPUT,    SSC_ARRAY,          "ppa_price_input_heat_btu",    "PPA prices - yearly",			                                                        "$/MMBtu",	           "",	                           "Revenue",			                       "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1",                  "",      	       "SIMULATION_PARAMETER" },
-
-
-
-    // System Control
-    { SSC_INPUT,    SSC_MATRIX,         "weekday_schedule",            "12x24 Time of Use Values for week days",                                                "",                    "",                             "Sys_Control",          "*",                "",                 "" },
-    { SSC_INPUT,    SSC_MATRIX,         "weekend_schedule",            "12x24 Time of Use Values for week end days",                                            "",                    "",                             "Sys_Control",          "*",                "",                 "" },
-    { SSC_INPUT,    SSC_NUMBER,         "is_tod_pc_target_also_pc_max","Is the TOD target cycle heat input also the max cycle heat input?",                     "",                    "",                             "tou",                  "?=0",              "",                 "" },
-    { SSC_INPUT,    SSC_ARRAY,          "f_turb_tou_periods",          "Dispatch logic for turbine load fraction",                                              "-",                   "",                             "tou",                  "*",                "",                 "" },
-
 
     // Capital Costs
                 // Direct Capital Costs
@@ -359,8 +360,13 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
     // System Control
     { SSC_OUTPUT,       SSC_NUMBER,     "W_dot_bop_design",                 "BOP parasitics at design",                                             "MWe",          "",         "Power Cycle",                              "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "W_dot_fixed",                      "Fixed parasitic at design",                                            "MWe",          "",         "Power Cycle",                              "*",                                                                "",              "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "aux_design",                       "Aux parasitics at design",                                             "MWe",          "",         "System Control",                              "*",                                                                "",              "" },
-    
+    { SSC_OUTPUT,       SSC_NUMBER,     "aux_design",                       "Aux parasitics at design",                                             "MWe",          "",         "System Control",                           "*",                                                                "",              "" },
+
+    { SSC_OUTPUT,       SSC_ARRAY,      "timestep_load_fractions_calc",     "Calculated timestep load fractions",                                   "",             "",         "System Control",                           "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "timestep_load_abs_calc",           "Calculated timestep load data",                                        "kWt",          "",         "System Control",                           "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "thermal_load_heat_btu",            "Thermal load (year 1)",                                                "MMBtu/hr",     "",         "Thermal Rate",                             "csp_financial_model=5",                                            "",              "" },
+
+
     // Capital Costs
     
         // Direct Capital Costs
@@ -600,6 +606,7 @@ public:
         add_var_info(_cm_vtab_fresnel_physical_iph);
         add_var_info(vtab_adjustment_factors);
         add_var_info(vtab_technology_outputs);
+        add_var_info(vtab_utility_rate_common); // Required for dispatch w/ utility rates
     }
 
     void exec()
@@ -813,35 +820,6 @@ public:
 
         }
 
-        // Heat Sink
-        C_pc_heat_sink c_heat_sink;
-        {
-            size_t n_f_turbine1 = 0;
-            ssc_number_t* p_f_turbine1 = as_array("f_turb_tou_periods", &n_f_turbine1);   // heat sink, not turbine
-            double f_turbine_max1 = 1.0;
-            for (size_t i = 0; i < n_f_turbine1; i++) {
-                f_turbine_max1 = max(f_turbine_max1, p_f_turbine1[i]);
-            }
-
-            c_heat_sink.ms_params.m_T_htf_hot_des = T_htf_hot_des;		//[C] FIELD design outlet temperature
-            c_heat_sink.ms_params.m_T_htf_cold_des = T_htf_cold_des;	//[C] FIELD design inlet temperature
-            c_heat_sink.ms_params.m_q_dot_des = q_dot_pc_des;			//[MWt] HEAT SINK design thermal power (could have field solar multiple...)
-            // 9.18.2016 twn: assume for now there's no pressure drop though heat sink
-            c_heat_sink.ms_params.m_htf_pump_coef = as_double("pb_pump_coef");		//[kWe/kg/s]
-            c_heat_sink.ms_params.m_max_frac = f_turbine_max1;
-
-            c_heat_sink.ms_params.m_pc_fl = as_integer("Fluid");
-            c_heat_sink.ms_params.m_pc_fl_props = as_matrix("field_fl_props");
-
-
-            // Allocate heat sink outputs
-            c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_Q_DOT_HEAT_SINK, allocate("q_dot_to_heat_sink", n_steps_fixed), n_steps_fixed);
-            c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_W_DOT_PUMPING, allocate("W_dot_pc_pump", n_steps_fixed), n_steps_fixed);
-            c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_M_DOT_HTF, allocate("m_dot_htf_heat_sink", n_steps_fixed), n_steps_fixed);
-            c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_T_HTF_IN, allocate("T_heat_sink_in", n_steps_fixed), n_steps_fixed);
-            c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_T_HTF_OUT, allocate("T_heat_sink_out", n_steps_fixed), n_steps_fixed);
-        }
-        
         // TES
         C_csp_two_tank_tes storage;
         {
@@ -899,16 +877,69 @@ public:
 
         // Off-taker schedule
         C_timeseries_schedule_inputs offtaker_schedule;
-        bool is_timestep_load_fractions = as_boolean("is_timestep_load_fractions");
-        if (is_timestep_load_fractions) {
+        int is_timestep_load_fractions = as_integer("is_timestep_load_fractions");
+        std::vector<double> timestep_load_fractions_calc;
+        std::vector<double> timestep_load_abs_calc;
+
+        // Block schedules
+        if (is_timestep_load_fractions == 0) {
+            C_timeseries_schedule_inputs offtaker_block = C_timeseries_schedule_inputs(as_matrix("weekday_schedule"),
+                as_matrix("weekend_schedule"), as_vector_double("f_turb_tou_periods"), std::numeric_limits<double>::quiet_NaN());
+            offtaker_schedule = offtaker_block;
+        }
+        else if (is_timestep_load_fractions == 1) {
             auto vec = as_vector_double("timestep_load_fractions");
             C_timeseries_schedule_inputs offtaker_series = C_timeseries_schedule_inputs(vec, std::numeric_limits<double>::quiet_NaN());
             offtaker_schedule = offtaker_series;
         }
-        else {      // Block schedules
-            C_timeseries_schedule_inputs offtaker_block = C_timeseries_schedule_inputs(as_matrix("weekday_schedule"),
-                as_matrix("weekend_schedule"), as_vector_double("f_turb_tou_periods"), std::numeric_limits<double>::quiet_NaN());
-            offtaker_schedule = offtaker_block;
+        else if (is_timestep_load_fractions == 2) {
+            std::vector<double> vec_abs = as_vector_double("timestep_load_abs");    //[kWt]
+            double scale_factor = as_double("timestep_load_abs_factor");
+            std::vector<double> vec_abs_scaled;
+            for (double abs_val : vec_abs)
+                vec_abs_scaled.push_back(abs_val * scale_factor);                   //[kWt]
+            std::vector<double> vec_norm;
+            double q_pb_design_kW = q_dot_pc_des * 1.e3;                //[kWt]
+            for (double abs_val_scaled : vec_abs_scaled)
+                vec_norm.push_back(abs_val_scaled / q_pb_design_kW);
+            C_timeseries_schedule_inputs offtaker_series = C_timeseries_schedule_inputs(vec_norm, std::numeric_limits<double>::quiet_NaN());
+            offtaker_schedule = offtaker_series;
+        }
+        else
+        {
+            throw exec_error("fresnel_physical_iph", "Variable is_timestep_load_fractions must be 0-2");
+        }
+
+        // Heat Sink
+        C_pc_heat_sink c_heat_sink;
+        {
+            //size_t n_f_turbine1 = 0;
+            //ssc_number_t* p_f_turbine1 = as_array("f_turb_tou_periods", &n_f_turbine1);   // heat sink, not turbine
+            //double f_turbine_max1 = 1.0;
+            //for (size_t i = 0; i < n_f_turbine1; i++) {
+            //    f_turbine_max1 = max(f_turbine_max1, p_f_turbine1[i]);
+            //}
+            double f_turbine_max1 = 1.0;
+            for (S_timeseries_schedule_data data : offtaker_schedule.mv_timeseries_schedule_data)
+                f_turbine_max1 = max(f_turbine_max1, data.nondim_value);
+
+            c_heat_sink.ms_params.m_T_htf_hot_des = T_htf_hot_des;		//[C] FIELD design outlet temperature
+            c_heat_sink.ms_params.m_T_htf_cold_des = T_htf_cold_des;	//[C] FIELD design inlet temperature
+            c_heat_sink.ms_params.m_q_dot_des = q_dot_pc_des;			//[MWt] HEAT SINK design thermal power (could have field solar multiple...)
+            // 9.18.2016 twn: assume for now there's no pressure drop though heat sink
+            c_heat_sink.ms_params.m_htf_pump_coef = as_double("pb_pump_coef");		//[kWe/kg/s]
+            c_heat_sink.ms_params.m_max_frac = f_turbine_max1;
+
+            c_heat_sink.ms_params.m_pc_fl = as_integer("Fluid");
+            c_heat_sink.ms_params.m_pc_fl_props = as_matrix("field_fl_props");
+
+
+            // Allocate heat sink outputs
+            c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_Q_DOT_HEAT_SINK, allocate("q_dot_to_heat_sink", n_steps_fixed), n_steps_fixed);
+            c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_W_DOT_PUMPING, allocate("W_dot_pc_pump", n_steps_fixed), n_steps_fixed);
+            c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_M_DOT_HTF, allocate("m_dot_htf_heat_sink", n_steps_fixed), n_steps_fixed);
+            c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_T_HTF_IN, allocate("T_heat_sink_in", n_steps_fixed), n_steps_fixed);
+            c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_T_HTF_OUT, allocate("T_heat_sink_out", n_steps_fixed), n_steps_fixed);
         }
 
         // Electricity pricing schedule
@@ -983,13 +1014,23 @@ public:
                 }
 
             }
+            else if (csp_financial_model == 5) {    // Commercial
+
+                bool is_ur_assigned = is_assigned("ur_en_ts_sell_rate");
+
+                // rate data setup from ~ line 1336 in cmod_battery.cpp
+                rate_data* util_rate_data = new rate_data();
+                rate_setup::setup(m_vartab, 8760, 1, *util_rate_data, "cmod_fresnel_physical_iph");
+
+                // Need to figure out dispatch, but for now, just use something so that annual simulation solves
+                elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0, std::numeric_limits<double>::quiet_NaN());
+            }
             else {
-                throw exec_error("fresnel_physical_iph", "csp_financial_model must be 1, 7, or 8");
+                throw exec_error("fresnel_physical_iph", "csp_financial_model must be 1, 5, 7, or 8");
             }
         }
         else if (sim_type == 2) {
             elec_pricing_schedule = C_timeseries_schedule_inputs(-1.0, std::numeric_limits<double>::quiet_NaN());
-
         }
 
         // Set dispatch model type
@@ -1361,15 +1402,35 @@ public:
             }
 
             // System Control
-            // temporary fix
             vector<double> aux_vec = as_vector_double("aux_array");
             double W_dot_cycle_des = 0;
             double aux_design = aux_vec[0] * aux_vec[1] * (aux_vec[2] + aux_vec[3] + aux_vec[4]) * W_dot_cycle_des;
+            assign("aux_design", aux_design);
 
-            // Assign
+            std::vector<double> timestep_load_fractions_calc;
+            std::vector<double> timestep_load_abs_calc;
+            for (S_timeseries_schedule_data data : offtaker_schedule.mv_timeseries_schedule_data)
             {
-                assign("aux_design", aux_design);
+                double frac_val = data.nondim_value;
+                double abs_val = q_dot_pc_des * frac_val * 1.e3;    //[kWt]
+                timestep_load_fractions_calc.push_back(frac_val);
+                timestep_load_abs_calc.push_back(abs_val);
             }
+
+            set_vector("timestep_load_fractions_calc", timestep_load_fractions_calc);
+            set_vector("timestep_load_abs_calc", timestep_load_abs_calc);
+
+            // Need to assign thermal load in Btu for thermalrate_iph cmod if commercial
+            if (csp_financial_model == 5)
+            {
+                std::vector<double> load_abs_MMBtu;
+                for (double val_kW : timestep_load_abs_calc)
+                {
+                    load_abs_MMBtu.push_back(val_kW / MMBTU_TO_KWh);
+                }
+                set_vector("thermal_load_heat_btu", load_abs_MMBtu);
+            }
+
         }
 
         // Calculate Costs and assign outputs
@@ -1696,13 +1757,17 @@ public:
         ssc_number_t* p_pipe_tes_P_dsn = allocate("pipe_tes_P_dsn", storage.pipe_P_des.ncells());
         std::copy(storage.pipe_P_des.data(), storage.pipe_P_des.data() + storage.pipe_P_des.ncells(), p_pipe_tes_P_dsn);
 
-
-        
-
-
-
-
     }
+
+    template <typename T>
+    void set_vector(const std::string& name, const vector<T> vec)
+    {
+        int size = vec.size();
+        ssc_number_t* alloc_vals = allocate(name, size);
+        for (int i = 0; i < size; i++)
+            alloc_vals[i] = vec[i];    // []
+    }
+
 };
 
 DEFINE_MODULE_ENTRY(fresnel_physical_iph, "Physical Fresnel IPH applications", 1)

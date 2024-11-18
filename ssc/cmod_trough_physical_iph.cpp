@@ -1490,6 +1490,10 @@ public:
             C_timeseries_schedule_inputs offtaker_series = C_timeseries_schedule_inputs(vec_norm, std::numeric_limits<double>::quiet_NaN());
             offtaker_schedule = offtaker_series;
         }
+        else
+        {
+            throw exec_error("trough_physical_iph", "Variable is_timestep_load_fractions must be 0-2");
+        }
 
         // Heat Sink
         C_pc_heat_sink c_heat_sink;
