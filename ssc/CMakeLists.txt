@@ -250,11 +250,16 @@ set( DEPENDENCIES
 	splinter
 	)
 foreach( name ${DEPENDENCIES} )
-	target_link_libraries(ssc ${name})
+	target_link_libraries(ssc PUBLIC ${name})
 endforeach()
 
 if (UNIX)
-	target_link_libraries(ssc -lpthread -lm -ldl -lstdc++)
+	find_package(Threads REQUIRED)
+	target_link_libraries(ssc PUBLIC Threads::Threads ${CMAKE_DL_LIBS}) 
+	find_library(MATH_LIBRARY m)
+	if(MATH_LIBRARY)
+		target_link_libraries(ssc PUBLIC ${MATH_LIBRARY})
+	endif()
 endif()
 
 

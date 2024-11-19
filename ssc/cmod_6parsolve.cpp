@@ -108,7 +108,7 @@ public:
         int err = m.solve_with_sanity_and_heuristics<double>(300, 1e-7);
 
         int err_keys[10] = { -1, -2, -3, -4, -5, -6, -7, -33, -44, -55 };
-        int x;
+        int x=0;
         for (int i = 0; i < 10; i++)
             if (err_keys[i] == err)
                 x = i;
