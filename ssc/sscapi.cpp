@@ -51,7 +51,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 SSCEXPORT int ssc_version()
 {
-	return 292;
+	return 295;
 }
 
 SSCEXPORT const char *ssc_build_info()
@@ -87,14 +87,16 @@ extern module_entry_info
 	cm_entry_utilityrate4,
 	cm_entry_utilityrate5,
     cm_entry_utilityrateforecast,
-	cm_entry_cashloan,
-	cm_entry_thirdpartyownership,
+    cm_entry_cashloan,
+    cm_entry_cashloan_heat,
+    cm_entry_thirdpartyownership,
 	cm_entry_ippppa,
 	cm_entry_timeseq,
 	cm_entry_levpartflip,
 	cm_entry_equpartflip,
 	cm_entry_saleleaseback,
     cm_entry_singleowner,
+    cm_entry_singleowner_heat,
     cm_entry_communitysolar,
     cm_entry_merchantplant,
 	cm_entry_host_developer,
@@ -153,6 +155,7 @@ extern module_entry_info
 	cm_entry_pv_get_shade_loss_mpp,
 	cm_entry_inv_cec_cg,
 	cm_entry_thermalrate,
+    cm_entry_thermalrate_iph,
 	cm_entry_mhk_tidal,
 	cm_entry_mhk_wave,
 	cm_entry_mhk_costs,
@@ -187,14 +190,16 @@ static module_entry_info *module_table[] = {
 	&cm_entry_utilityrate4,
 	&cm_entry_utilityrate5,
     &cm_entry_utilityrateforecast,
-	&cm_entry_cashloan,
-	&cm_entry_thirdpartyownership,
+    &cm_entry_cashloan,
+    &cm_entry_cashloan_heat,
+    &cm_entry_thirdpartyownership,
 	&cm_entry_ippppa,
 	&cm_entry_timeseq,
 	&cm_entry_levpartflip,
 	&cm_entry_equpartflip,
 	&cm_entry_saleleaseback,
     &cm_entry_singleowner,
+    &cm_entry_singleowner_heat,
     &cm_entry_communitysolar,
     &cm_entry_merchantplant,
 	&cm_entry_host_developer,
@@ -253,6 +258,7 @@ static module_entry_info *module_table[] = {
 	&cm_entry_pv_get_shade_loss_mpp,
 	&cm_entry_inv_cec_cg,
 	&cm_entry_thermalrate,
+    &cm_entry_thermalrate_iph,
 	&cm_entry_mhk_tidal,
 	&cm_entry_mhk_wave,
 	&cm_entry_mhk_costs,
