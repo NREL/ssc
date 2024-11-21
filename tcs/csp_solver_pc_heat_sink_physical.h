@@ -58,13 +58,15 @@ public:
 
 private:
 
-    C_HX_water_to_htf m_hx;
+    C_HX_htf_to_steam m_hx;
 
 	double m_max_frac;		//[-]
 	double m_m_dot_htf_des;	//[kg/s]
     double m_m_dot_ext_des; //[kg/s] External fluid design mdot
     double m_m_dot_ext_min; //[kg/s] Min ext fluid mdot
     double m_m_dot_ext_max; //[kg/s] Max ext fluid mdot
+    double m_h_ext_cold_des;    // [kJ/kg] Steam inlet enthalpy
+    double m_h_ext_hot_des;     // [kJ/kg] Steam target outlet enthalpy
 
 	HTFProperties mc_pc_htfProps;
 
@@ -86,7 +88,8 @@ public:
 		util::matrix_t<double> m_pc_fl_props;
 
         double m_T_ext_cold_des;    //[C] External fluid inlet temperature (constant)
-        double m_T_ext_hot_des;     //[C] External fluid outlet temperature (hot target)
+        double m_Q_ext_hot_des;     //[] External fluid target outlet quality
+        //double m_T_ext_hot_des;     //[C] External fluid outlet temperature (hot target)
         double m_P_ext_cold_des;    //[kPa] External fluid inlet pressure (constant)
         double m_P_ext_hot_des;     //[kPa] External fluid outlet pressure
         double m_f_m_dot_ext_min;   //[kg/s] Minimum fraction external fluid mass flow rate of design
@@ -99,7 +102,7 @@ public:
 		{
 			m_T_htf_cold_des = m_T_htf_hot_des = 
 				m_q_dot_des = m_htf_pump_coef =
-                m_max_frac = m_T_ext_cold_des = m_T_ext_hot_des =
+                m_max_frac = m_T_ext_cold_des = m_Q_ext_hot_des =
                 m_P_ext_cold_des = m_P_ext_hot_des =
                 m_f_m_dot_ext_min = m_f_m_dot_ext_max = m_od_tol =
                 std::numeric_limits<double>::quiet_NaN();

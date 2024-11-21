@@ -1147,7 +1147,7 @@ public:
         }
         
         // Heat Sink
-        int heat_sink_type = 1;
+        int heat_sink_type = 0;
         C_csp_power_cycle* c_heat_sink_pointer;
         C_pc_heat_sink c_heat_sink_simple;
         C_pc_heat_sink_physical c_heat_sink_phys;
@@ -1200,14 +1200,14 @@ public:
             c_heat_sink_phys.ms_params.m_pc_fl_props = as_matrix("field_fl_props");
 
             
-            c_heat_sink_phys.ms_params.m_T_ext_cold_des = 60;   //[C] External fluid inlet temp
-            c_heat_sink_phys.ms_params.m_T_ext_hot_des = 95;    //[C] External fluid hot temp target
-            c_heat_sink_phys.ms_params.m_P_ext_cold_des = 100;  //[kPa] Ext fluid inlet pressure
-            c_heat_sink_phys.ms_params.m_P_ext_hot_des = 100;   //[kPa] Ext fluid outlet pressure
-            c_heat_sink_phys.ms_params.m_f_m_dot_ext_min = 0.2; //[] Min fraction ext fluid mass flow rate
-            c_heat_sink_phys.ms_params.m_f_m_dot_ext_max = 1.5; //[] Max fraction ext fluid mass flow rate
-            c_heat_sink_phys.ms_params.m_N_sub_hx = 20000;        //[] Number HX nodes
-            c_heat_sink_phys.ms_params.m_od_tol = 1e-3;         //[] HX off design tolerance
+            c_heat_sink_phys.ms_params.m_T_ext_cold_des = 120;   //[C] Steam fluid inlet temp
+            c_heat_sink_phys.ms_params.m_Q_ext_hot_des = 0.75;  //[C] Steam quality target
+            c_heat_sink_phys.ms_params.m_P_ext_cold_des = 476.1645;  //[kPa] Steam inlet pressure
+            c_heat_sink_phys.ms_params.m_P_ext_hot_des = 476.1645;   //[kPa] Steam outlet pressure
+            c_heat_sink_phys.ms_params.m_f_m_dot_ext_min = 0.2; //[] Min fraction Steam mass flow rate
+            c_heat_sink_phys.ms_params.m_f_m_dot_ext_max = 1.5; //[] Max fraction Steam mass flow rate
+            c_heat_sink_phys.ms_params.m_N_sub_hx = 50000;      //[] Number HX nodes
+            c_heat_sink_phys.ms_params.m_od_tol = 1e-1;         //[] HX off design tolerance
 
             // Allocate heat sink outputs
             c_heat_sink_phys.mc_reported_outputs.assign(C_pc_heat_sink::E_Q_DOT_HEAT_SINK, allocate("q_dot_to_heat_sink", n_steps_fixed), n_steps_fixed);

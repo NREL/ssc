@@ -519,6 +519,9 @@ public:
         double m_P_c_out;			//[kPa] Cold fluid outlet temperature
         double m_m_dot_cold_des;	//[kg/s] cold fluid design mass flow rate
 
+        double m_h_h_in;            //[kJ/kg] Design-point hot inlet enthalpy
+        double m_h_c_in;            //[kJ/kg] Design-point cold inlet enthalpy
+
         double m_eff_max;			//[-] Max allowable effectiveness
 
         S_des_calc_UA_par()
@@ -543,6 +546,8 @@ public:
         double m_NTU_design;		//[-] NTU at design
         double m_T_h_out;			//[K] Design-point hot outlet temperature
         double m_T_c_out;			//[K] Design-point cold outlet temperature
+        double m_h_h_out;           //[kJ/kg] Design-point hot outlet enthalpy
+        double m_h_c_out;           //[kJ/kg] Design-point cold outlet enthalpy
         double m_DP_cold_des;		//[kPa] cold fluid design pressure drop
         double m_DP_hot_des;		//[kPa] hot fluid design pressure drop
 
@@ -618,6 +623,11 @@ public:
     void design_calc_UA(C_HX_counterflow_CRM::S_des_calc_UA_par des_par,
         double q_dot_design /*kWt*/, C_HX_counterflow_CRM::S_des_solved &des_solved);
 
+    void design_calc_UA_TP_to_PH(C_HX_counterflow_CRM::S_des_calc_UA_par des_par,
+        double h_h_in /*kJ/kg*/,
+        double h_c_in /*kJ/kg*/, double h_c_out /*kJ/kg*/,
+        double q_dot_design /*kWt*/, C_HX_counterflow_CRM::S_des_solved& des_solved);
+
     double calc_max_q_dot_enth(double h_h_in /*kJ/kg*/, double P_h_in /*kPa*/, double P_h_out /*kPa*/, double m_dot_h /*kg/s*/,
         double h_c_in /*kJ/kg*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/, double m_dot_c /*kg/s*/);
 
@@ -648,6 +658,11 @@ public:
         double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/,
         double od_tol /*-*/,
         double & q_dot /*kWt*/, double & T_c_out /*K*/, double & P_c_out /*kPa*/, double & T_h_out /*K*/, double & P_h_out /*kPa*/);
+
+    void off_design_solution_fixed_dP_enth(double h_c_in /*K*/, double P_c_in /*kPa*/, double m_dot_c /*kg/s*/, double P_c_out /*kPa*/,
+        double h_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
+        double od_tol /*-*/,
+        double& q_dot /*kWt*/, double& h_c_out /*K*/, double& h_h_out /*K*/);
 
     double od_delta_p_cold_frac(double m_dot_c /*kg/s*/);
 
@@ -724,70 +739,71 @@ public:
 
 };
 
-class C_HX_water_to_htf : public C_HX_counterflow_CRM
+class C_HX_htf_to_steam : public C_HX_counterflow_CRM
 {
-private:
-
-
-
 public:
 
-    C_HX_water_to_htf()
+    C_HX_htf_to_steam()
     {
         m_cost_model = C_HX_counterflow_CRM::E_CARLSON_17_PHX;
-        //m_od_solution_type = C_HX_counterflow_CRM::C_od_thermal_solution_type::E_CRM_UA_PER_NODE;
-
         m_od_solution_type = C_HX_counterflow_CRM::C_od_thermal_solution_type::E_DEFAULT;
-
-
     }
 
-    // This method calculates the flow rates and UA given all 4 temperatures and heat exchange
-    void design_w_temps(C_HX_counterflow_CRM::S_des_calc_UA_par& des_par,
-        double q_dot_design /*kWt*/, double T_h_out /*K*/, double T_c_out /*K*/, C_HX_counterflow_CRM::S_des_solved& des_solved);
+    // This method calculates the flow rates and UA given hot TP and cold PH at all points
+    void design_w_TP_PH(double T_h_in /*K*/, double P_h_in /*kPa*/, double T_h_out /*K*/, double P_h_out /*kPa*/,
+                        double P_c_in /*kPa*/, double h_c_in /*kJ/kg*/, double P_c_out /*kPa*/, double h_c_out /*kJ/kg*/, double q_dot_design /*kWt*/,
+                        C_HX_counterflow_CRM::S_des_solved& des_solved);
+
 
     virtual void initialize(int hot_fl, util::matrix_t<double> hot_fl_props, int N_sub_hx, NS_HX_counterflow_eqs::E_UA_target_type od_UA_target_type);
 
     virtual void initialize(int hot_fl, int N_sub_hx, NS_HX_counterflow_eqs::E_UA_target_type od_UA_target_type);
 
-    void off_design_target_T_cold_out(double T_c_out_target /*K*/,
+    int off_design_target_cold_PH_out(double h_c_out_target /*kJ/kg*/,
         double m_dot_c_min /*kg/s*/, double m_dot_c_max /*kg/s*/,
-        double T_c_in /*K*/, double P_c_in /*kPa*/, double P_c_out /*kPa*/,
-        double T_h_in /*K*/, double P_h_in /*kPa*/, double m_dot_h /*kg/s*/, double P_h_out /*kPa*/,
+        double P_c_in /*kPa*/, double h_c_in /*kJ/kg*/, double P_c_out /*kPa*/,
+        double P_h_in /*kPa*/, double h_h_in /*kJ/kg*/, double P_h_out /*kPa*/, double m_dot_h /*kg/s*/,
         double od_tol /*-*/,
-        double& q_dot /*kWt*/, double& T_c_out /*K*/, double& T_h_out /*K*/, double& m_dot_c /*kg/s*/);
+        double& q_dot /*kWt*/, double& h_c_out /*kJ/kg*/, double& h_h_out /*kJ/kg*/, double& m_dot_c /*kg/s*/);
 
-    class C_MEQ__target_T_c_out : public C_monotonic_equation
+    class C_MEQ__target_cold_PH_out : public C_monotonic_equation
     {
     private:
         C_HX_counterflow_CRM* mpc_hx;
 
-        double m_T_c_out_target;    //[K]
-        double m_T_c_in;    //[K]
+        double m_h_c_out_target;    //[K]
+        double m_h_c_in;    //[K]
         double m_P_c_in;    //[kPa]
-        double m_T_h_in;    //[K]
+        double m_P_c_out;   //[kPa]
+        double m_h_h_in;    //[K]
         double m_P_h_in;    //[kPa]
+        double m_P_h_out;   //[kPa]
         double m_m_dot_h;   //[kg/s]
 
         double m_tol;       //[-]
         
     public:
 
-        C_MEQ__target_T_c_out(C_HX_counterflow_CRM* pc_hx,
-            double T_c_out_target,
-            double T_c_in, double P_c_in,
-            double T_h_in, double P_h_in,
+        C_MEQ__target_cold_PH_out(C_HX_counterflow_CRM* pc_hx,
+            double h_c_out_target,
+            double h_c_in, double P_c_in, double P_c_out,
+            double h_h_in, double P_h_in, double P_h_out,
             double m_dot_h,
             double tol)
-            : m_T_c_out_target(T_c_out_target),
-            m_T_c_in(T_c_in), m_P_c_in(P_c_in),
-            m_T_h_in(T_h_in), m_P_h_in(P_h_in),
+            : m_h_c_out_target(h_c_out_target),
+            m_h_c_in(h_c_in), m_P_c_in(P_c_in), m_P_c_out(P_c_out),
+            m_h_h_in(h_h_in), m_P_h_in(P_h_in), m_P_h_out(P_h_out),
             m_m_dot_h(m_dot_h), m_tol(tol)
         {
             mpc_hx = pc_hx;
         }
 
-        virtual int operator()(double m_dot_c /*kg/s*/, double* diff_T_c_out /*C/K*/);
+        double m_h_h_out;
+        double m_h_c_out;
+        double m_m_dot_c;
+        double m_q_dot;
+
+        virtual int operator()(double m_dot_c /*kg/s*/, double* diff_h_c_out /*C/K*/);
     
     };
 

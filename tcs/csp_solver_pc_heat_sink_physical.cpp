@@ -111,43 +111,42 @@ void C_pc_heat_sink_physical::init(C_csp_power_cycle::S_solved_params &solved_pa
 		throw(C_csp_exception("Power cycle HTF code is not recognized", "Heat Sink Initialization"));
 	}
 
-    // USER INPUTS
-    //int m_N_sub_hx = 2000;                        // This should be user input
-    //double T_steam_cold = 60;                   //[C] User defined steam inlet temperature design
-    //double T_steam_hot = 95;                   //[C] User defined steam outlet temperature design
-    //double P_steam_cold = 100;                  //[kPa] User defined steam inlet pressure
-    //double P_steam_hot = 100;                   //[kPa] User defined steam outlet pressure
-    //double mdot_steam_min = 0.1;                //[kg/s]
-    //double mdot_steam_max = 10;                 //[kg/s]
-
     // Define Heat Exchanger 
-    NS_HX_counterflow_eqs::E_UA_target_type target_type = NS_HX_counterflow_eqs::E_UA_target_type::E_calc_UA;
+    NS_HX_counterflow_eqs::E_UA_target_type target_type = NS_HX_counterflow_eqs::E_UA_target_type::E_constant_UA; // Required for two phase steam outlet
     this->m_hx.initialize(ms_params.m_pc_fl, ms_params.m_pc_fl_props, ms_params.m_N_sub_hx, target_type);
 
-    // Define design point parameters
-    C_HX_counterflow_CRM::S_des_calc_UA_par des_par;
-    des_par.m_T_h_in = ms_params.m_T_htf_hot_des + 273.15;  // [K] HTF Hot Inlet Design
-    des_par.m_P_h_in = 1.0;                                 // Assuming HTF is incompressible...
-    des_par.m_P_h_out = 1.0;                                // Assuming HTF is incompressible...
-    des_par.m_T_c_in = ms_params.m_T_ext_cold_des + 273.15; // [K] Cold Steam inlet temperature
-    des_par.m_P_c_in = ms_params.m_P_ext_cold_des;          // [kPa] Cold Steam inlet pressure
-    des_par.m_P_c_out = ms_params.m_P_ext_hot_des;          // [kPa] Cold Steam outlet pressure
-    des_par.m_m_dot_cold_des = std::numeric_limits<double>::quiet_NaN();
-    des_par.m_m_dot_hot_des = std::numeric_limits<double>::quiet_NaN();
-    des_par.m_eff_max = 1.0;
+    // Get Steam Inlet Enthalpy (inputs are required to be subcooled)
+    water_state water_props;
+    int prop_error_code = water_TP(ms_params.m_T_ext_cold_des + 273.15, ms_params.m_P_ext_cold_des, &water_props);
+    if (prop_error_code != 0)
+    {
+        throw(C_csp_exception("Inlet water properties failed",
+            "Get Subcooled Enthalpy"));
+    }
+    m_h_ext_cold_des = water_props.enth;   //[kJ/kg] Inlet steam enthalpy
+
+    // Get Steam Target Enthalpy (inputs are required to be in two phase)
+    prop_error_code = water_PQ(ms_params.m_P_ext_cold_des, ms_params.m_Q_ext_hot_des, &water_props);
+    if (prop_error_code != 0)
+    {
+        throw(C_csp_exception("Water properties in two phase region failed",
+            "Get Target Enthalpy"));
+    }
+    m_h_ext_hot_des = water_props.enth;    //[kJ/kg] Target enthalpy
 
     // Design HX
     C_HX_counterflow_CRM::S_des_solved des_solved;
-    this->m_hx.design_w_temps(des_par, ms_params.m_q_dot_des * 1e3, ms_params.m_T_htf_cold_des + 273.15,
-                        ms_params.m_T_ext_hot_des + 273.15, des_solved);
+    this->m_hx.design_w_TP_PH(ms_params.m_T_htf_hot_des + 273.15, 1.0, ms_params.m_T_htf_cold_des + 273.15, 1.0,
+        ms_params.m_P_ext_cold_des, m_h_ext_cold_des, ms_params.m_P_ext_hot_des, m_h_ext_hot_des,
+        ms_params.m_q_dot_des * 1e3, des_solved);
 
     // Assign Design External mdot
-    this->m_m_dot_ext_des = des_par.m_m_dot_cold_des;                               //[kg/s]
-    this->m_m_dot_ext_min = this->m_m_dot_ext_des * ms_params.m_f_m_dot_ext_min;    //[kg/s]
-    this->m_m_dot_ext_max = this->m_m_dot_ext_des * ms_params.m_f_m_dot_ext_max;    //[kg/s]
+    m_m_dot_ext_des = this->m_hx.ms_des_calc_UA_par.m_m_dot_cold_des;         //[kg/s]
+    m_m_dot_ext_min = m_m_dot_ext_des * ms_params.m_f_m_dot_ext_min;    //[kg/s]
+    m_m_dot_ext_max = m_m_dot_ext_des * ms_params.m_f_m_dot_ext_max;    //[kg/s]
 
 	// Assign Design HTF mdot
-    this->m_m_dot_htf_des = des_par.m_m_dot_hot_des;	//[kg/s]
+    m_m_dot_htf_des = m_hx.ms_des_calc_UA_par.m_m_dot_hot_des;	//[kg/s]
 
 	// Set 'solved_params' structure
 	solved_params.m_W_dot_des = 0.0;		//[MWe] Assuming heat sink is not generating electricity FOR THIS MODEL
@@ -253,30 +252,91 @@ void C_pc_heat_sink_physical::call(const C_csp_weatherreader::S_outputs &weather
 	C_csp_power_cycle::S_csp_pc_out_solver &out_solver,
 	const C_csp_solver_sim_info &sim_info)
 {
-    // User Inputs
-    //int m_N_sub_hx = 100;                      // This should be user input
-    //double T_steam_cold = 60;                   //[C] User defined steam inlet temperature design
-    //double T_steam_hot = 90;                    //[C] User defined steam outlet temperature design
-    //double P_steam_cold = 100;                  //[kPa] User defined steam inlet pressure
-    //double P_steam_hot = 100;                   //[kPa] User defined steam outlet pressure
-    //double mdot_steam_min = 0.1;                //[kg/s]
-    //double mdot_steam_max = 10;                 //[kg/s]
-    //double od_tol = 1e-3;
+    // Test SIMPLE heat sink
+    if (false)
+    {
+        double T_htf_hot = htf_state_in.m_temp;		//[C]
+        double m_dot_htf = inputs.m_m_dot / 3600.0;	//[kg/s]
+
+        double cp_htf = mc_pc_htfProps.Cp_ave(ms_params.m_T_htf_cold_des + 273.15, T_htf_hot + 273.15);	//[kJ/kg-K]
+
+        // For now, let's assume the Heat Sink can always return the HTF at the design cold temperature
+        double q_dot_htf = m_dot_htf * cp_htf * (T_htf_hot - ms_params.m_T_htf_cold_des) / 1.E3;		//[MWt]
+
+        out_solver.m_P_cycle = 0.0;		//[MWe] No electricity generation
+        out_solver.m_T_htf_cold = ms_params.m_T_htf_cold_des;		//[C]
+        out_solver.m_m_dot_htf = m_dot_htf * 3600.0;	//[kg/hr] Return inlet mass flow rate
+
+        double W_dot_cooling_parasitic = 0.0;   //[MWe] No cooling load
+
+        out_solver.m_time_required_su = 0.0;	//[s] No startup requirements, for now
+        out_solver.m_q_dot_htf = q_dot_htf;		//[MWt] Thermal power form HTF
+
+        double W_dot_htf_pump = ms_params.m_htf_pump_coef * m_dot_htf / 1.E3;   //[MWe]
+        out_solver.m_W_dot_elec_parasitics_tot = W_dot_cooling_parasitic + W_dot_htf_pump;  //[MWe]
+
+        out_solver.m_was_method_successful = true;
+
+        mc_reported_outputs.value(E_Q_DOT_HEAT_SINK, q_dot_htf);	//[MWt]
+        mc_reported_outputs.value(E_W_DOT_PUMPING, W_dot_htf_pump);	//[MWe]
+        mc_reported_outputs.value(E_M_DOT_HTF, m_dot_htf);			//[kg/s]
+        mc_reported_outputs.value(E_T_HTF_IN, T_htf_hot);			//[C]
+        mc_reported_outputs.value(E_T_HTF_OUT, out_solver.m_T_htf_cold);	//[C]
+        return;
+    }
+
+
+
+
 
     // Process inputs
     double m_dot_htf = inputs.m_m_dot / 3600.0;	//[kg/s]
     int standby_control = inputs.m_standby_control;	//[-] 1: On, 2: Standby, 3: Off
 
-    double q_dot, T_c_out, T_h_out, m_dot_c;
+    double q_dot, T_c_out, T_h_out_C, m_dot_c;
 
+    // Handle no mass flow coming in
     if (inputs.m_m_dot < 1e-5 && standby_control == ON)
     {
-        out_solver.m_P_cycle = 0;		//[MWe] No electricity generation
+        // Test SIMPLE heat sink
+        if (true)
+        {
+            double T_htf_hot = htf_state_in.m_temp;		//[C]
+            double m_dot_htf = inputs.m_m_dot / 3600.0;	//[kg/s]
+
+            double cp_htf = mc_pc_htfProps.Cp_ave(ms_params.m_T_htf_cold_des + 273.15, T_htf_hot + 273.15);	//[kJ/kg-K]
+
+            // For now, let's assume the Heat Sink can always return the HTF at the design cold temperature
+            double q_dot_htf = m_dot_htf * cp_htf * (T_htf_hot - ms_params.m_T_htf_cold_des) / 1.E3;		//[MWt]
+
+            out_solver.m_P_cycle = 0.0;		//[MWe] No electricity generation
+            out_solver.m_T_htf_cold = ms_params.m_T_htf_cold_des;		//[C]
+            out_solver.m_m_dot_htf = m_dot_htf * 3600.0;	//[kg/hr] Return inlet mass flow rate
+
+            double W_dot_cooling_parasitic = 0.0;   //[MWe] No cooling load
+
+            out_solver.m_time_required_su = 0.0;	//[s] No startup requirements, for now
+            out_solver.m_q_dot_htf = q_dot_htf;		//[MWt] Thermal power form HTF
+
+            double W_dot_htf_pump = ms_params.m_htf_pump_coef * m_dot_htf / 1.E3;   //[MWe]
+            out_solver.m_W_dot_elec_parasitics_tot = W_dot_cooling_parasitic + W_dot_htf_pump;  //[MWe]
+
+            out_solver.m_was_method_successful = true;
+
+            mc_reported_outputs.value(E_Q_DOT_HEAT_SINK, q_dot_htf);	//[MWt]
+            mc_reported_outputs.value(E_W_DOT_PUMPING, W_dot_htf_pump);	//[MWe]
+            mc_reported_outputs.value(E_M_DOT_HTF, m_dot_htf);			//[kg/s]
+            mc_reported_outputs.value(E_T_HTF_IN, T_htf_hot);			//[C]
+            mc_reported_outputs.value(E_T_HTF_OUT, out_solver.m_T_htf_cold);	//[C]
+            return;
+        }
+
+        out_solver.m_P_cycle = 0;		                    //[MWt] No steam generation
         out_solver.m_T_htf_cold = htf_state_in.m_temp;		//[C]
-        out_solver.m_m_dot_htf = inputs.m_m_dot;	//[kg/hr] Return inlet mass flow rate
-        out_solver.m_time_required_su = 0;	//[s] No startup requirements, for now
-        out_solver.m_q_dot_htf = 0;		//[MWt] Thermal power form HTF
-        out_solver.m_W_dot_elec_parasitics_tot = 0;  //[MWe]
+        out_solver.m_m_dot_htf = inputs.m_m_dot;	        //[kg/hr] Return inlet mass flow rate
+        out_solver.m_time_required_su = 0;	                //[s] No startup requirements, for now
+        out_solver.m_q_dot_htf = 0;		                    //[MWt] Thermal power from HTF
+        out_solver.m_W_dot_elec_parasitics_tot = 0;         //[MWe]
 
         out_solver.m_was_method_successful = true;
         return;
@@ -290,19 +350,48 @@ void C_pc_heat_sink_physical::call(const C_csp_weatherreader::S_outputs &weather
         {
             try
             {
-                m_hx.off_design_target_T_cold_out(ms_params.m_T_ext_hot_des + 273.15,
-                    m_m_dot_ext_min, m_m_dot_ext_max,
-                    ms_params.m_T_ext_cold_des + 273.15,
-                    ms_params.m_P_ext_cold_des, ms_params.m_P_ext_hot_des,
-                    htf_state_in.m_temp + 273.15, 1.0, m_dot_htf, 1.0, ms_params.m_od_tol, q_dot, T_c_out, T_h_out, m_dot_c);
+                // Get HTF inlet enthalpy
+                double h_htf_cold = mc_pc_htfProps.enth(htf_state_in.m_temp + 273.15) * 1e-3;   //[kJ/kg]
 
-                out_solver.m_P_cycle = 0.0;		//[MWe] No electricity generation
-                out_solver.m_T_htf_cold = T_h_out - 273.15;		//[C]
-                out_solver.m_m_dot_htf = m_dot_htf * 3600.0;	//[kg/hr] Return inlet mass flow rate
-                out_solver.m_time_required_su = 0.0;	//[s] No startup requirements, for now
-                out_solver.m_q_dot_htf = q_dot * 1e-3;		//[MWt] Thermal power form HTF
+                // Run Off design to find steam mdot to hit enthalpy target
+                double h_ext_out_calc, h_htf_out_calc;
+                int solve_code =  m_hx.off_design_target_cold_PH_out(m_h_ext_hot_des, m_m_dot_ext_min, m_m_dot_ext_max,
+                    ms_params.m_P_ext_cold_des, m_h_ext_cold_des, ms_params.m_P_ext_hot_des,
+                    1.0, h_htf_cold, 1.0, m_dot_htf, ms_params.m_od_tol,
+                    q_dot, h_ext_out_calc, h_htf_out_calc, m_dot_c);
 
-                out_solver.m_was_method_successful = true;
+                if (solve_code == C_monotonic_eq_solver::CONVERGED)
+                {
+                    // Solved succesfully
+                    
+                    // Get HTF temperature from enthalpy
+                    T_h_out_C = mc_pc_htfProps.temp(h_htf_out_calc*1e3); //[C]
+                    
+                    out_solver.m_P_cycle = 0.0;		            //[MWe] No electricity generation
+                    out_solver.m_T_htf_cold = T_h_out_C;		//[C]
+                    out_solver.m_m_dot_htf = m_dot_htf * 3600.0;//[kg/hr] Return inlet mass flow rate
+                    out_solver.m_time_required_su = 0.0;	    //[s] No startup requirements, for now
+                    out_solver.m_q_dot_htf = q_dot * 1e-3;		//[MWt] Thermal power form HTF
+
+                    out_solver.m_was_method_successful = true;
+                    break;
+                }
+                else
+                {
+                    // Could not solve
+                    q_dot = 0;
+                    T_h_out_C = htf_state_in.m_temp;
+
+                    out_solver.m_P_cycle = 0;		//[MWe] No electricity generation
+                    out_solver.m_T_htf_cold = htf_state_in.m_temp;		//[C]
+                    out_solver.m_m_dot_htf = inputs.m_m_dot;	//[kg/hr] Return inlet mass flow rate
+                    out_solver.m_time_required_su = 0;	//[s] No startup requirements, for now
+                    out_solver.m_q_dot_htf = 0;		//[MWt] Thermal power form HTF
+                    out_solver.m_W_dot_elec_parasitics_tot = 0;  //[MWe]
+
+                    out_solver.m_was_method_successful = true;
+                    break;
+                }   
             }
             catch (C_csp_exception exc)
             {
@@ -321,8 +410,41 @@ void C_pc_heat_sink_physical::call(const C_csp_weatherreader::S_outputs &weather
         }
         case OFF:
         {
+            // Test SIMPLE heat sink
+            if (true)
+            {
+                double T_htf_hot = htf_state_in.m_temp;		//[C]
+                double m_dot_htf = inputs.m_m_dot / 3600.0;	//[kg/s]
+
+                double cp_htf = mc_pc_htfProps.Cp_ave(ms_params.m_T_htf_cold_des + 273.15, T_htf_hot + 273.15);	//[kJ/kg-K]
+
+                // For now, let's assume the Heat Sink can always return the HTF at the design cold temperature
+                double q_dot_htf = m_dot_htf * cp_htf * (T_htf_hot - ms_params.m_T_htf_cold_des) / 1.E3;		//[MWt]
+
+                out_solver.m_P_cycle = 0.0;		//[MWe] No electricity generation
+                out_solver.m_T_htf_cold = ms_params.m_T_htf_cold_des;		//[C]
+                out_solver.m_m_dot_htf = m_dot_htf * 3600.0;	//[kg/hr] Return inlet mass flow rate
+
+                double W_dot_cooling_parasitic = 0.0;   //[MWe] No cooling load
+
+                out_solver.m_time_required_su = 0.0;	//[s] No startup requirements, for now
+                out_solver.m_q_dot_htf = q_dot_htf;		//[MWt] Thermal power form HTF
+
+                double W_dot_htf_pump = ms_params.m_htf_pump_coef * m_dot_htf / 1.E3;   //[MWe]
+                out_solver.m_W_dot_elec_parasitics_tot = W_dot_cooling_parasitic + W_dot_htf_pump;  //[MWe]
+
+                out_solver.m_was_method_successful = true;
+
+                mc_reported_outputs.value(E_Q_DOT_HEAT_SINK, q_dot_htf);	//[MWt]
+                mc_reported_outputs.value(E_W_DOT_PUMPING, W_dot_htf_pump);	//[MWe]
+                mc_reported_outputs.value(E_M_DOT_HTF, m_dot_htf);			//[kg/s]
+                mc_reported_outputs.value(E_T_HTF_IN, T_htf_hot);			//[C]
+                mc_reported_outputs.value(E_T_HTF_OUT, out_solver.m_T_htf_cold);	//[C]
+                return;
+            }
+
             q_dot = 0;
-            T_h_out = htf_state_in.m_temp + 273.15;
+            T_h_out_C = htf_state_in.m_temp;
 
             out_solver.m_P_cycle = 0;		//[MWe] No electricity generation
             out_solver.m_T_htf_cold = htf_state_in.m_temp;		//[C]
@@ -334,10 +456,8 @@ void C_pc_heat_sink_physical::call(const C_csp_weatherreader::S_outputs &weather
             out_solver.m_was_method_successful = true;
             break;
         }
-            
         default:
             int x = 0;
-
     }
 
     double W_dot_cooling_parasitic = 0.0;   //[MWe] No cooling load
@@ -348,7 +468,7 @@ void C_pc_heat_sink_physical::call(const C_csp_weatherreader::S_outputs &weather
 	mc_reported_outputs.value(E_W_DOT_PUMPING, W_dot_htf_pump);	//[MWe]
 	mc_reported_outputs.value(E_M_DOT_HTF, m_dot_htf);			//[kg/s]
 	mc_reported_outputs.value(E_T_HTF_IN, htf_state_in.m_temp);	//[C]
-	mc_reported_outputs.value(E_T_HTF_OUT, T_h_out - 273.15);	//[C]
+	mc_reported_outputs.value(E_T_HTF_OUT, T_h_out_C);	        //[C]
 
 	return;
 }
