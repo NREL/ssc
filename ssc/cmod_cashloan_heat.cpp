@@ -29,13 +29,17 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+#include <sstream>
+#include <vector>
 
 #include "core.h"
 #include "lib_financial.h"
 #include "lib_util.h"
 #include "common_financial.h"
+using namespace libfin;
+#include <sstream>
 
-static var_info vtab_cashloan[] = {
+static var_info vtab_cashloan_heat[] = {
 /*   VARTYPE           DATATYPE          NAME                        LABEL                                  UNITS         META                      GROUP            REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 
 	{ SSC_INPUT,        SSC_NUMBER,     "market",                    "Residential or Commercial Market",   "0/1",          "0=residential,1=comm.",     "Financial Parameters",      "?=1",                     "INTEGER,MIN=0,MAX=1",            "" },
@@ -83,7 +87,6 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "discounted_payback", "Discounted payback period", "years", "", "Cash Flow", "*", "", "" },
     
     { SSC_OUTPUT, SSC_NUMBER, "npv", "NPV Net present value", "$", "", "Cash Flow", "*", "", "" },
-    { SSC_OUTPUT, SSC_NUMBER, "irr", "IRR Internal rate of return", "$", "", "Cash Flow", "*", "", "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm",                      "Present value of O&M expenses",				   "$",            "",                      "Financial Metrics",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm_nonfuel",              "Present value of non-fuel O&M expenses",				   "$",            "",                      "Financial Metrics",      "*",                       "",                                         "" },
@@ -98,7 +101,8 @@ static var_info vtab_cashloan[] = {
     { SSC_OUTPUT, SSC_NUMBER, "total_cost", "Total installed cost", "$", "", "Financial Metrics", "*", "", "" },
 		
 
-    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_net",            "Electricity net generation",                               "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_net",                          "Thermal energy",               "kWht", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_net_heat_btu",                 "Thermal energy",               "MMBtu", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_sales",          "Electricity generation",                                   "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_purchases",      "Electricity from grid to system",                          "kWh", "", "Cash Flow Electricity", "*", "LENGTH_EQUAL=cf_length", "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "cf_energy_without_battery","Electricity generated without the battery or curtailment", "kWh", "", "Cash Flow Electricity", "",  "LENGTH_EQUAL=cf_length", "" },
@@ -121,6 +125,8 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_fuel_expense",        "Fuel expense",                   "$",            "",                          "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_opt_fuel_1_expense",  "Feedstock biomass expense",                   "$",            "",             "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_om_opt_fuel_2_expense",  "Feedstock coal expense",                   "$",            "",                "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
+
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_om_elec_price_for_heat_techs",        "Electricity expense in heat models", "$",            "",                      "Cash Flow Expenses",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 
 
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_property_tax_assessed_value","Property tax net assessed value", "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
@@ -177,7 +183,6 @@ static var_info vtab_cashloan[] = {
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "wacc",                "WACC Weighted average cost of capital",                          "",    "",                      "Financial Metrics",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "effective_tax_rate",                 "Effective tax rate",                       "%",    "",                      "Financial Metrics",      "*",                       "",                                         "" },
-    { SSC_OUTPUT,       SSC_NUMBER,     "nominal_discount_rate",                  "Nominal discount rate",            "%",     "",					  "Financial Metrics",			 "*",                         "",                             "" },
 
 // NTE additions 8/10/17
 	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_with_system",             "Energy value",                       "$",            "",                      "ThirdPartyOwnership",      "*",                       "",                                         "" },
@@ -193,12 +198,14 @@ var_info_invalid };
 extern var_info
     vtab_standard_financial[],
     vtab_standard_loan[],
-    vtab_oandm[],
+    vtab_oandm_heat[],
     vtab_depreciation[],
     vtab_battery_replacement_cost[],
     vtab_fuelcell_replacement_cost[],
     vtab_tax_credits[],
     vtab_payment_incentives[],
+    vtab_tax_credits_heat[],
+    vtab_payment_incentives_heat[],
     vtab_lcos_inputs[],
     vtab_update_tech_outputs[],
     vtab_utility_rate_common[];
@@ -297,6 +304,9 @@ enum {
     CF_om_production2_expense,
     CF_om_capacity2_expense,
     CF_om_fuel_expense,
+    CF_om_elec_price_for_heat_techs,
+
+
     CF_energy_charged_grid,
     CF_energy_charged_pv,
     CF_energy_discharged,
@@ -328,7 +338,7 @@ enum {
 
 
 
-class cm_cashloan : public compute_module
+class cm_cashloan_heat : public compute_module
 {
 private:
 	util::matrix_t<double> cf;
@@ -350,17 +360,19 @@ private:
 
 
 public:
-	cm_cashloan()
+	cm_cashloan_heat()
 	{
 		add_var_info( vtab_standard_financial );
 		add_var_info( vtab_standard_loan );
-		add_var_info( vtab_oandm );
+		add_var_info( vtab_oandm_heat );
 		add_var_info( vtab_depreciation );
 		add_var_info( vtab_tax_credits );
 		add_var_info( vtab_payment_incentives );
+        add_var_info(vtab_tax_credits_heat);
+        add_var_info(vtab_payment_incentives_heat);
 		add_var_info(vtab_battery_replacement_cost);
 		add_var_info(vtab_fuelcell_replacement_cost);
-		add_var_info(vtab_cashloan);
+		add_var_info(vtab_cashloan_heat);
         add_var_info(vtab_lcos_inputs);
         add_var_info(vtab_update_tech_outputs);
 	}
@@ -372,7 +384,7 @@ public:
 		bool is_commercial = (as_integer("market")==1);
 		bool is_mortgage = (as_integer("mortgage")==1);
 
-//		throw exec_error("cmod_cashloan", "mortgage = " + util::to_string(as_integer("mortgage")));
+//		throw exec_error("cmod_cashloan_heat", "mortgage = " + util::to_string(as_integer("mortgage")));
 //		if (is_commercial) log("commercial market"); else log("residential market");
 //		if (is_mortgage) log("mortgage loan"); else log("standard loan");
 		
@@ -418,7 +430,7 @@ public:
 
         
 
-        hourly_energy_calcs.calculate(this);
+        hourly_energy_calcs.calculate(this, true);
 
         // dispatch
         if (as_integer("system_use_lifetime_output") == 1)
@@ -504,7 +516,7 @@ public:
 		if ((as_integer("system_use_lifetime_output") == 1) && is_assigned("annual_fuel_usage_lifetime")) {
 			fuel_use = as_vector_double("annual_fuel_usage_lifetime");
 			if (fuel_use.size() != (size_t)(nyears)) {
-				throw exec_error("cashloan", util::format("fuel usage years (%d) not equal to analysis period years (%d).", (int)fuel_use.size(), nyears));
+				throw exec_error("cashloan_heat", util::format("fuel usage years (%d) not equal to analysis period years (%d).", (int)fuel_use.size(), nyears));
 			}
 		}
 		else {
@@ -575,9 +587,15 @@ public:
 				
 		// precompute expenses from annual schedules or value+escalation
 		escal_or_annual( CF_om_fixed_expense, nyears, "om_fixed", inflation_rate, 1.0, false, as_double("om_fixed_escal")*0.01 );
-		escal_or_annual( CF_om_production_expense, nyears, "om_production", inflation_rate, 0.001, false, as_double("om_production_escal")*0.01 );  
-		escal_or_annual( CF_om_capacity_expense, nyears, "om_capacity", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01 );  
+		escal_or_annual( CF_om_production_expense, nyears, "om_production_heat", inflation_rate, 0.001, false, as_double("om_production_escal")*0.01 );  
+		escal_or_annual( CF_om_capacity_expense, nyears, "om_capacity_heat", inflation_rate, 1.0, false, as_double("om_capacity_escal")*0.01 );  
 		escal_or_annual( CF_om_fuel_expense, nyears, "om_fuel_cost", inflation_rate, as_double("system_heat_rate")*0.001, false, as_double("om_fuel_cost_escal")*0.01 );
+
+        arrp = as_array("utility_bill_wo_sys", &count);
+        for (i = 0; i < count && i <= nyears; i++)
+            cf.at(CF_om_elec_price_for_heat_techs, i) = arrp[i];
+
+
 
         // additional o and m sub types (e.g. batteries and fuel cells)
         int add_om_num_types = as_integer("add_om_num_types");
@@ -600,7 +618,7 @@ public:
             battery_discharged.resize(nyears, first_val);
         }
         if (battery_discharged.size() != nyears)
-            throw exec_error("cashloan", util::format("battery_discharged size (%d) incorrect",(int)battery_discharged.size()));
+            throw exec_error("cashloan_heat", util::format("battery_discharged size (%d) incorrect",(int)battery_discharged.size()));
 
 		if (add_om_num_types > 1)
 		{
@@ -615,7 +633,7 @@ public:
             fuelcell_discharged.resize(nyears, first_val);
          }
         if (fuelcell_discharged.size() != nyears)
-            throw exec_error("cashloan", util::format("fuelcell_discharged size (%d) incorrect",(int)fuelcell_discharged.size()));
+            throw exec_error("cashloan_heat", util::format("fuelcell_discharged size (%d) incorrect",(int)fuelcell_discharged.size()));
 
         
         // battery cost - replacement from lifetime analysis
@@ -685,6 +703,35 @@ public:
 		if (ibi_uti_per > as_double("ibi_uti_percent_maxvalue")) ibi_uti_per = as_double("ibi_uti_percent_maxvalue"); 
 		ibi_oth_per = as_double("ibi_oth_percent")*0.01*total_cost;
 		if (ibi_oth_per > as_double("ibi_oth_percent_maxvalue")) ibi_oth_per = as_double("ibi_oth_percent_maxvalue"); 
+
+        // for heat models, convert input incentives to kW (capacity) and kWh (production)
+        const double BTUh_TO_W = 293.07107e-3; // 1
+
+        assign("cbi_fed_amount", var_data(as_double("cbi_fed_amount_heat_btu") / BTUh_TO_W));
+        assign("cbi_sta_amount", var_data(as_double("cbi_sta_amount_heat_btu") / BTUh_TO_W));
+        assign("cbi_uti_amount", var_data(as_double("cbi_uti_amount_heat_btu") / BTUh_TO_W));
+        assign("cbi_oth_amount", var_data(as_double("cbi_oth_amount_heat_btu") / BTUh_TO_W));
+        /*
+        auto vd = as_vector_double("pbi_fed_amount_heat_btu");
+        for (auto& d : vd)
+            d = d / MMBTU_TO_KWh;
+*/
+        auto funcVecMMBTUtokWh = [](compute_module* cm, const char* name) {
+            const double MMBTU_TO_KWh = 293.07107; // 1
+            auto vd = cm->as_vector_double(name);// only working for multiple value inputs - not single value
+            for (auto& d : vd)
+                d = d / MMBTU_TO_KWh;
+            return vd;
+            };
+
+        assign("pbi_fed_amount", var_data(funcVecMMBTUtokWh(this, "pbi_fed_amount_heat_btu")));
+        assign("pbi_sta_amount", var_data(funcVecMMBTUtokWh(this, "pbi_sta_amount_heat_btu")));
+        assign("pbi_uti_amount", var_data(funcVecMMBTUtokWh(this, "pbi_uti_amount_heat_btu")));
+        assign("pbi_oth_amount", var_data(funcVecMMBTUtokWh(this, "pbi_oth_amount_heat_btu")));
+
+        assign("ptc_fed_amount", var_data(funcVecMMBTUtokWh(this, "ptc_fed_amount_heat_btu")));
+        assign("ptc_sta_amount", var_data(funcVecMMBTUtokWh(this, "ptc_sta_amount_heat_btu")));
+
 
 		// cbi
 		cbi_fed_amount = 1000.0*nameplate*as_double("cbi_fed_amount");
@@ -788,14 +835,14 @@ public:
         // SAM 1038
         itc_sta_per = 0.0;
         for (size_t k = 0; k <= nyears; k++) {
-            cf.at(CF_itc_sta_percent_amount, k) = libfin::min(cf.at(CF_itc_sta_percent_maxvalue, k), cf.at(CF_itc_sta_percent_amount, k) * state_itc_basis);
+            cf.at(CF_itc_sta_percent_amount, k) = min(cf.at(CF_itc_sta_percent_maxvalue, k), cf.at(CF_itc_sta_percent_amount, k) * state_itc_basis);
             itc_sta_per += cf.at(CF_itc_sta_percent_amount, k);
         }
 
         // SAM 1038
         itc_fed_per = 0.0;
         for (size_t k = 0; k <= nyears; k++) {
-            cf.at(CF_itc_fed_percent_amount, k) = libfin::min(cf.at(CF_itc_fed_percent_maxvalue, k), cf.at(CF_itc_fed_percent_amount, k) * federal_itc_basis);
+            cf.at(CF_itc_fed_percent_amount, k) = min(cf.at(CF_itc_fed_percent_maxvalue, k), cf.at(CF_itc_fed_percent_amount, k) * federal_itc_basis);
             itc_fed_per += cf.at(CF_itc_fed_percent_amount, k);
         }
 
@@ -936,6 +983,7 @@ public:
 				+ cf.at(CF_om_production2_expense, i)
 				+ cf.at(CF_om_capacity2_expense, i)
 				+ cf.at(CF_om_fuel_expense,i)
+                + cf.at(CF_om_elec_price_for_heat_techs, i)
 				+ cf.at(CF_om_opt_fuel_1_expense,i)
 				+ cf.at(CF_om_opt_fuel_2_expense,i)
 				+ cf.at(CF_property_tax_expense,i)
@@ -954,7 +1002,7 @@ public:
 			{
 				cf.at(CF_debt_balance, i-1) = loan_amount;
 				cf.at(CF_debt_payment_interest, i) = loan_amount * loan_rate;
-				cf.at(CF_debt_payment_principal,i) = -libfin::ppmt( loan_rate,       // Rate
+				cf.at(CF_debt_payment_principal,i) = -ppmt( loan_rate,       // Rate
 																i,           // Period
 																loan_term,   // Number periods
 																loan_amount, // Present Value
@@ -1200,10 +1248,10 @@ public:
 
         save_cf(CF_parasitic_cost, nyears, "cf_parasitic_cost");
 
-        double npv_energy_real = libfin::npv(cf.row(CF_energy_sales).to_vector(), nyears, real_discount_rate);
+        double npv_energy_real = npv(CF_energy_sales, nyears, real_discount_rate);
 //		if (npv_energy_real == 0.0) throw general_error("lcoe real failed because energy npv is zero");
-//		double lcoe_real = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + libfin::npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) ) * 100 / npv_energy_real;
-		double lcoe_real = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + libfin::npv(cf.row(CF_after_tax_net_equity_cost_flow).to_vector(), nyears, nom_discount_rate) - libfin::npv(cf.row(CF_parasitic_cost).to_vector(), nyears, nom_discount_rate)) * 100;
+//		double lcoe_real = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) ) * 100 / npv_energy_real;
+		double lcoe_real = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) - npv(CF_parasitic_cost, nyears, nom_discount_rate) ) * 100;
 		if (npv_energy_real == 0.0) 
 		{
 			lcoe_real = std::numeric_limits<double>::quiet_NaN();
@@ -1213,10 +1261,10 @@ public:
 			lcoe_real /= npv_energy_real;
 		}
 
-		double npv_energy_nom = libfin::npv(cf.row(CF_energy_sales).to_vector(), nyears, nom_discount_rate );
+		double npv_energy_nom = npv( CF_energy_sales, nyears, nom_discount_rate );
 //		if (npv_energy_nom == 0.0) throw general_error("lcoe nom failed because energy npv is zero");
-//		double lcoe_nom = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + libfin::npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) ) * 100 / npv_energy_nom;
-		double lcoe_nom = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + libfin::npv(cf.row(CF_after_tax_net_equity_cost_flow).to_vector(), nyears, nom_discount_rate) - libfin::npv(cf.row(CF_parasitic_cost).to_vector(), nyears, nom_discount_rate)) * 100;
+//		double lcoe_nom = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) ) * 100 / npv_energy_nom;
+		double lcoe_nom = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) - npv(CF_parasitic_cost, nyears, nom_discount_rate)) * 100;
 		if (npv_energy_nom == 0.0) 
 		{
 			lcoe_nom = std::numeric_limits<double>::quiet_NaN();
@@ -1226,19 +1274,18 @@ public:
 			lcoe_nom /= npv_energy_nom;
 		}
 
-		double net_present_value = cf.at(CF_after_tax_cash_flow, 0) + libfin::npv(cf.row(CF_after_tax_cash_flow).to_vector(), nyears, nom_discount_rate);
-        double irr = libfin::irr(cf.row(CF_after_tax_cash_flow).to_vector(),nyears)*100;
+		double net_present_value = cf.at(CF_after_tax_cash_flow, 0) + npv(CF_after_tax_cash_flow, nyears, nom_discount_rate );
 
-		double payback = libfin::payback(cf.row(CF_cumulative_payback_with_expenses).to_vector(), cf.row(CF_payback_with_expenses).to_vector(), nyears);
+		double payback = compute_payback(CF_cumulative_payback_with_expenses, CF_payback_with_expenses, nyears);
 		// Added for Owen Zinaman for Mexico Rates and analyses 9/26/16
 		//- see C:\Projects\SAM\Documentation\Payback\DiscountedPayback_2016.9.26
-		double discounted_payback = libfin::payback(cf.row(CF_discounted_cumulative_payback).to_vector(), cf.row(CF_discounted_payback).to_vector(), nyears);
+		double discounted_payback = compute_payback(CF_discounted_cumulative_payback, CF_discounted_payback, nyears);
 
 		// save outputs
 
 
-	double npv_fed_ptc = libfin::npv(cf.row(CF_ptc_fed).to_vector(), nyears, nom_discount_rate);
-	double npv_sta_ptc = libfin::npv(cf.row(CF_ptc_sta).to_vector(), nyears, nom_discount_rate);
+	double npv_fed_ptc = npv(CF_ptc_fed,nyears,nom_discount_rate);
+	double npv_sta_ptc = npv(CF_ptc_sta,nyears,nom_discount_rate);
 
 	// TODO check this
 //	npv_fed_ptc /= (1.0 - effective_tax_rate);
@@ -1297,15 +1344,15 @@ public:
 		ssc_number_t *ub_w_sys = 0;
 		ub_w_sys = as_array("elec_cost_with_system", &count);
 		if (count != (size_t)(nyears+1))
-			throw exec_error("cashloan", util::format("utility bill with system input wrong length (%d) should be (%d)",count, nyears+1));
+			throw exec_error("cashloan_heat", util::format("utility bill with system input wrong length (%d) should be (%d)",count, nyears+1));
 		ssc_number_t *ub_wo_sys = 0;
 		ub_wo_sys = as_array("elec_cost_without_system", &count);
 		if (count != (size_t)(nyears+1))
-			throw exec_error("cashloan", util::format("utility bill without system input wrong length (%d) should be (%d)",count, nyears+1));
+			throw exec_error("cashloan_heat", util::format("utility bill without system input wrong length (%d) should be (%d)",count, nyears+1));
 
 		for (i = 0; i < (int)count; i++)
 			cf.at(CF_nte, i) = (double) (ub_wo_sys[i] - ub_w_sys[i]) *100.0;// $ to cents
-		double lnte_real = libfin::npv(cf.row(CF_nte).to_vector(), nyears, nom_discount_rate);
+		double lnte_real = npv(  CF_nte, nyears, nom_discount_rate ); 
 
 		for (i = 0; i < (int)count; i++)
 			if (cf.at(CF_energy_net,i) > 0) cf.at(CF_nte,i) /= cf.at(CF_energy_net,i);
@@ -1332,13 +1379,12 @@ public:
 		assign("lcoe_real", var_data((ssc_number_t)lcoe_real));
 		assign( "lcoe_nom", var_data((ssc_number_t)lcoe_nom) );
 		assign( "npv",  var_data((ssc_number_t)net_present_value) );
-        assign("irr", var_data((ssc_number_t)irr));
 
 //		assign("first_year_energy_net", var_data((ssc_number_t) cf.at(CF_energy_net,1)));
 
 		assign( "depr_basis_fed", var_data((ssc_number_t)federal_depr_basis ));
 		assign( "depr_basis_sta", var_data((ssc_number_t)state_depr_basis ));
-		assign( "nominal_discount_rate", var_data((ssc_number_t)(nom_discount_rate*100.0) ));		
+		assign( "discount_nominal", var_data((ssc_number_t)(nom_discount_rate*100.0) ));		
 //		assign( "sales_tax_deduction", var_data((ssc_number_t)total_sales_tax ));		
 		assign( "adjusted_installed_cost", var_data((ssc_number_t)adjusted_installed_cost ));		
 		assign( "first_cost", var_data((ssc_number_t)first_cost ));		
@@ -1389,6 +1435,9 @@ public:
             save_cf(CF_om_production2_expense, nyears, "cf_om_production2_expense");
             save_cf(CF_om_capacity2_expense, nyears, "cf_om_capacity2_expense");
         }
+
+        save_cf(CF_om_elec_price_for_heat_techs, nyears, "cf_om_elec_price_for_heat_techs");
+
 		save_cf( CF_om_fuel_expense, nyears, "cf_om_fuel_expense" );
 		save_cf( CF_om_opt_fuel_1_expense, nyears, "cf_om_opt_fuel_1_expense" );
 		save_cf( CF_om_opt_fuel_2_expense, nyears, "cf_om_opt_fuel_2_expense" );
@@ -1482,24 +1531,26 @@ public:
 		save_cf( CF_cumulative_payback_without_expenses, nyears, "cf_cumulative_payback_without_expenses" );
 
 	// for cost stacked bars
-		//libfin::npv(CF_energy_value, nyears, nom_discount_rate)
+		//npv(CF_energy_value, nyears, nom_discount_rate)
 		// present value of o and m value - note - present value is distributive - sum of pv = pv of sum
-		double pvAnnualOandM = libfin::npv(cf.row(CF_om_fixed_expense).to_vector(), nyears, nom_discount_rate);
-		double pvFixedOandM = libfin::npv(cf.row(CF_om_capacity_expense).to_vector(), nyears, nom_discount_rate);
-		double pvVariableOandM = libfin::npv(cf.row(CF_om_production_expense).to_vector(), nyears, nom_discount_rate);
-		double pvFuelOandM = libfin::npv(cf.row(CF_om_fuel_expense).to_vector(), nyears, nom_discount_rate);
-		double pvOptFuel1OandM = libfin::npv(cf.row(CF_om_opt_fuel_1_expense).to_vector(), nyears, nom_discount_rate);
-		double pvOptFuel2OandM = libfin::npv(cf.row(CF_om_opt_fuel_2_expense).to_vector(), nyears, nom_discount_rate);
+		double pvAnnualOandM = npv(CF_om_fixed_expense, nyears, nom_discount_rate);
+		double pvFixedOandM = npv(CF_om_capacity_expense, nyears, nom_discount_rate);
+		double pvVariableOandM = npv(CF_om_production_expense, nyears, nom_discount_rate);
+		double pvFuelOandM = npv(CF_om_fuel_expense, nyears, nom_discount_rate);
+        double pvElec_price_for_heat_techs = npv(CF_om_elec_price_for_heat_techs, nyears, nom_discount_rate);
+
+		double pvOptFuel1OandM = npv(CF_om_opt_fuel_1_expense, nyears, nom_discount_rate);
+		double pvOptFuel2OandM = npv(CF_om_opt_fuel_2_expense, nyears, nom_discount_rate);
 	//	double pvWaterOandM = NetPresentValue(sv[svNominalDiscountRate], cf[cfAnnualWaterCost], analysis_period);
 
-		assign( "present_value_oandm",  var_data((ssc_number_t)(pvAnnualOandM + pvFixedOandM + pvVariableOandM + pvFuelOandM))); // + pvWaterOandM);
+		assign( "present_value_oandm",  var_data((ssc_number_t)(pvAnnualOandM + pvFixedOandM + pvVariableOandM + pvFuelOandM + pvElec_price_for_heat_techs))); // + pvWaterOandM);
 
-		assign( "present_value_oandm_nonfuel", var_data((ssc_number_t)(pvAnnualOandM + pvFixedOandM + pvVariableOandM)));
+		assign( "present_value_oandm_nonfuel", var_data((ssc_number_t)(pvAnnualOandM + pvFixedOandM + pvVariableOandM + pvElec_price_for_heat_techs)));
 		assign( "present_value_fuel", var_data((ssc_number_t)(pvFuelOandM + pvOptFuel1OandM + pvOptFuel2OandM)));
 
 		// present value of insurance and property tax
-		double pvInsurance = libfin::npv(cf.row(CF_insurance_expense).to_vector(), nyears, nom_discount_rate);
-		double pvPropertyTax = libfin::npv(cf.row(CF_property_tax_expense).to_vector(), nyears, nom_discount_rate);
+		double pvInsurance = npv(CF_insurance_expense, nyears, nom_discount_rate);
+		double pvPropertyTax = npv(CF_property_tax_expense, nyears, nom_discount_rate);
 
 		assign( "present_value_insandproptax", var_data((ssc_number_t)(pvInsurance + pvPropertyTax)));
 
@@ -1513,7 +1564,13 @@ public:
         save_cf(CF_itc_sta, nyears, "cf_itc_sta");
         save_cf(CF_itc_total, nyears, "cf_itc_total");
 
-
+        // Save cf_energy_net_heat_btu (converted from cf_energy_net)
+        const double MMBTU_TO_KWh = 293.07107; // 1 MMBtu = 293.07107 kWh
+        std::vector<double> cf_energy_net_vec = as_vector_double("cf_energy_net");  //[kWht]
+        int cf_energy_net_size = cf_energy_net_vec.size();
+        ssc_number_t* cf_energy_net_heat_btu_arr = allocate("cf_energy_net_heat_btu", cf_energy_net_size);
+        for (int i = 0; i < cf_energy_net_size; i++)
+            cf_energy_net_heat_btu_arr[i] = (ssc_number_t)(cf_energy_net_vec[i] / MMBTU_TO_KWh); //[MMBtu]
 	}
 
 /* These functions can be placed in common financial library with matrix and constants passed? */
@@ -1524,7 +1581,7 @@ public:
 		for (int i=0;i<=nyears;i++)
 			arrp[i] = (ssc_number_t)cf.at(cf_line, i);
 	}
-    /*
+
 	double compute_payback( int cf_cpb, int cf_pb, int nyears )
 	{	
 		// may need to determine last negative to positive transition for high replacement costs - see C:\Projects\SAM\Documentation\FinancialIssues\Payback_2015.9.8
@@ -1551,7 +1608,20 @@ public:
 
 		return dPayback;
 	}
-    */
+
+
+	double npv(int cf_line, int nyears, double rate)
+	{		
+		if (rate <= -1.0) throw general_error("cannot calculate NPV with discount rate less or equal to -1.0");
+
+		double rr = 1/(1+rate);
+		double result = 0;
+		for (int i=nyears;i>0;i--)
+			result = rr * result + cf.at(cf_line,i);
+
+		return result*rr;
+	}
+
 	void compute_production_incentive( int cf_line, int nyears, const std::string &s_val, const std::string &s_term, const std::string &s_escal )
 	{
 		size_t len = 0;
@@ -1582,7 +1652,7 @@ public:
 		if (len == 1)
 		{
 			for (int i=1;i<=nyears;i++)
-				cf.at(cf_line, i) = (i <= term) ? cf.at(CF_energy_sales,i) / 1000.0 * libfin::round_irs(1000.0 * parr[0] * pow(1 + escal, i-1)) : 0.0;
+				cf.at(cf_line, i) = (i <= term) ? cf.at(CF_energy_sales,i) / 1000.0 * round_irs(1000.0 * parr[0] * pow(1 + escal, i-1)) : 0.0;
 		}
 		else
 		{
@@ -1606,7 +1676,7 @@ public:
 		size_t len = 0;
 		ssc_number_t *p = as_array(name, &len);
 		for (int i=1;i<=(int)len && i <= nyears;i++)
-			cf.at(cf_line, i) = libfin::min( scale*p[i-1], max );
+			cf.at(cf_line, i) = min( scale*p[i-1], max );
 	}
 
 	double taxable_incentive_income(int year, const std::string &fed_or_sta)
@@ -1713,6 +1783,22 @@ public:
 		}
 	}
 
+	double min(double a, double b)
+	{ // handle NaN
+		if ((a != a) || (b != b))
+			return 0;
+		else
+			return (a < b) ? a : b;
+	}
+
+	double max(double a, double b)
+	{ // handle NaN
+		if ((a != a) || (b != b))
+			return 0;
+		else
+			return (a > b) ? a : b;
+	}
+
 };
 
-DEFINE_MODULE_ENTRY( cashloan, "Residential/Commerical Finance model.", 1 );
+DEFINE_MODULE_ENTRY( cashloan_heat, "Residential/Commerical Finance model for heat.", 1 );

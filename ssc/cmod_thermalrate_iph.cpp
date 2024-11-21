@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
   
-static var_info vtab_thermal_rate[] = {
+static var_info vtab_thermal_rate_iph[] = {
 
 /*   VARTYPE           DATATYPE         NAME                         LABEL                                           UNITS     META                      GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
 	{ SSC_INPUT,        SSC_NUMBER,     "en_thermal_rates",           "Optionally enable/disable thermal_rate",                   "years",  "",                      "Thermal Rate",             "",                         "INTEGER,MIN=0,MAX=1",              "" },
@@ -44,43 +44,44 @@ static var_info vtab_thermal_rate[] = {
 
 	{ SSC_INPUT, SSC_NUMBER, "system_use_lifetime_output", "Lifetime hourly system outputs", "0/1", "0=hourly first year,1=hourly lifetime", "Lifetime", "*", "INTEGER,MIN=0,MAX=1", "" },
 
-	
 	// First year or lifetime hourly or subhourly
 	// load and gen expected to be > 0
-	// specific for fuel_cells - can be more generic
-	{ SSC_INPUT, SSC_ARRAY, "fuelcell_power_thermal", "Fuel cell power generated", "kW-t", "", "Thermal Rate", "*", "", "" },
+	{ SSC_INPUT, SSC_ARRAY, "gen_heat", "Thermal power generated", "kWt", "", "Thermal Rate", "*", "", "" },
 	 
-	// input from user as kW-t and output as kW-t
-	{ SSC_INOUT, SSC_ARRAY, "thermal_load", "Thermal load (year 1)", "kW-t", "", "Thermal Rate", "", "", "" },
+	// input from user as MMBtu/hr and output as MMBtu/hr
+	{ SSC_INOUT, SSC_ARRAY, "thermal_load_heat_btu", "Thermal load (year 1)", "MMBtu/hr", "", "Thermal Rate", "", "", "" },
 
 	{ SSC_INPUT, SSC_NUMBER, "inflation_rate", "Inflation rate", "%", "", "Lifetime", "*", "MIN=-99", "" },
 
 	{ SSC_INPUT, SSC_ARRAY, "thermal_degradation", "Annual energy degradation", "%", "", "Thermal Rate", "?=0", "", "" },
 	{ SSC_INPUT, SSC_ARRAY, "thermal_load_escalation", "Annual load escalation", "%/year", "", "Thermal Rate", "?=0", "", "" },
-	{ SSC_INPUT,        SSC_ARRAY,      "thermal_rate_escalation",          "Annual thermal rate escalation",  "%/year", "",                      "Thermal Rate",             "?=0",                       "",                              "" },
+	{ SSC_INPUT, SSC_ARRAY, "thermal_rate_escalation",          "Annual thermal rate escalation",  "%/year", "",                      "Thermal Rate",             "?=0",                       "",                              "" },
 
-	{ SSC_INPUT, SSC_NUMBER, "thermal_buy_rate_option", "Thermal buy rate option", "0/1", "0=flat,1=timestep", "Thermal Rate", "?=0", "INTEGER,MIN=0,MAX=1", "" },
-	{ SSC_INPUT, SSC_ARRAY,  "thermal_buy_rate",          "Thermal buy rate",  "$/kW-t", "",                      "Thermal Rate",             "?=0",                       "",                              "" },
-	{ SSC_INPUT, SSC_NUMBER, "thermal_buy_rate_flat",     "Thermal buy rate flat",  "$/kW-t", "",                      "Thermal Rate",             "?=0",                       "",                              "" },
+    { SSC_INPUT, SSC_NUMBER, "thermal_conversion_efficiency",       "Heat conversion efficiency (buy)", "%",     "",                      "Thermal Rate",             "?=100",                     "",                              "" },
 
-	{ SSC_INPUT, SSC_NUMBER, "thermal_sell_rate_option", "Thermal sell rate option", "0/1", "0=flat,1=timestep", "Thermal Rate", "?=0", "INTEGER,MIN=0,MAX=1", "" },
-	{ SSC_INPUT, SSC_ARRAY,  "thermal_sell_rate",          "Thermal sell rate",  "$/kW-t", "",                      "Thermal Rate",             "?=0",                       "",                              "" },
-	{ SSC_INPUT, SSC_NUMBER, "thermal_sell_rate_flat",     "Thermal sell rate flat",  "$/kW-t", "",                      "Thermal Rate",             "?=0",                       "",                              "" },
 
-	//  output as kWh - same as load (kW) for hourly simulations
-//	{ SSC_OUTPUT, SSC_ARRAY, "thermal_bill_load", "Thermal bill load (year 1)", "kWh-t", "", "Time Series", "*", "", "" },
+	{ SSC_INPUT, SSC_NUMBER, "thermal_buy_rate_option",             "Thermal buy rate option",   "0-2",          "0=flat,1=timestep,2=monthly", "Thermal Rate",       "?=0",                       "INTEGER,MIN=0,MAX=2",           "" },
+    { SSC_INPUT, SSC_NUMBER, "thermal_buy_rate_flat_heat_btu",      "Thermal buy rate flat",     "$/MMBtu",      "",                      "Thermal Rate",             "?=0",                       "",                              "" },
+    { SSC_INPUT, SSC_ARRAY,  "thermal_timestep_buy_rate_heat_btu",  "Thermal buy rate",          "$/MMBtu",      "",                      "Thermal Rate",             "?=0",                       "",                              "" },
+    { SSC_INPUT, SSC_ARRAY,  "thermal_monthly_buy_rate_heat_btu",   "Monthly thermal buy rate",  "$/MMBtu",      "",                      "Thermal Rate",             "?=0",                       "",                              "" },
+
+    { SSC_INPUT, SSC_NUMBER, "thermal_sell_rate_option",            "Thermal sell rate option",  "0-2", "0=flat,1=timestep,2=monthly",    "Thermal Rate",             "?=0",                       "INTEGER,MIN=0,MAX=2",           "" },
+	{ SSC_INPUT, SSC_NUMBER, "thermal_sell_rate_flat_heat_btu",     "Thermal sell rate flat",    "$/MMBtu",      "",                      "Thermal Rate",             "?=0",                       "",                              "" },
+    { SSC_INPUT, SSC_ARRAY,  "thermal_timestep_sell_rate_heat_btu", "Thermal sell rate timestep","$/MMBtu",      "",                      "Thermal Rate",             "?=0",                       "",                              "" },
+    { SSC_INPUT, SSC_ARRAY,  "thermal_monthly_sell_rate_heat_btu",  "Thermal sell rate monthly", "$/MMBtu",      "",                      "Thermal Rate",             "?=0",                       "",                              "" },
+
+
 	{ SSC_OUTPUT, SSC_ARRAY, "annual_thermal_value", "Thermal value", "$", "", "Annual", "*", "", "" },
-//	{ SSC_OUTPUT, SSC_ARRAY, "annual_thermal_revenue_with_system", "Thermal value with system", "$", "", "Annual", "*", "", "" },
-//	{ SSC_OUTPUT, SSC_ARRAY, "annual_thermal_revenue_without_system", "Thermal value without system", "$", "", "Annual", "*", "", "" },
     { SSC_OUTPUT, SSC_ARRAY, "thermal_revenue_with_system", "Thermal revenue with system", "$", "", "Time Series", "*", "", "" },
     { SSC_OUTPUT, SSC_ARRAY, "thermal_revenue_without_system", "Thermal revenue without system", "$", "", "Time Series", "*", "", "" },
     { SSC_OUTPUT, SSC_ARRAY, "thermal_cost_with_system", "Thermal cost with system", "$", "", "Time Series", "*", "", "" },
     { SSC_OUTPUT, SSC_ARRAY, "thermal_cost_without_system", "Thermal cost without system", "$", "", "Time Series", "*", "", "" },
-    { SSC_OUTPUT, SSC_NUMBER, "thermal_load_year1", "Thermal load (year 1)", "$", "", "", "*", "", "" },
+    { SSC_OUTPUT, SSC_NUMBER, "thermal_load_year1", "Thermal load total", "MMBtu/hr", "", "", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "thermal_savings_year1", "Thermal savings (year 1)", "$", "", "", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "thermal_cost_with_system_year1", "Thermal cost with sytem (year 1)", "$", "", "", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "thermal_cost_without_system_year1", "Thermal cost without system (year 1)", "$", "", "", "*", "", "" },
 
+    { SSC_OUTPUT, SSC_ARRAY, "year1_monthly_load_heat", "Thermal load", "kWht/mo", "", "Monthly", "*", "LENGTH=12", "" },
 
 
 
@@ -102,7 +103,7 @@ public:
 	ssc_number_t thermal_sell;
 };
 
-class cm_thermalrate : public compute_module
+class cm_thermalrate_iph : public compute_module
 {
 private:
 	size_t m_num_rec_yearly;
@@ -110,9 +111,9 @@ private:
 
 
 public:
-	cm_thermalrate()
+	cm_thermalrate_iph()
 	{
-		add_var_info( vtab_thermal_rate );
+		add_var_info( vtab_thermal_rate_iph );
 	}
 
 	void exec( )
@@ -120,10 +121,20 @@ public:
 		// if not assigned, we assume thermal rates are enabled
 		if (is_assigned("en_thermal_rates")) {
 			if (!as_boolean("en_thermal_rates")) {
-				remove_var_info(vtab_thermal_rate);
+				remove_var_info(vtab_thermal_rate_iph);
 				return;
 			}
 		}
+
+        // Convert Generation to MMBtu
+        const double MMBTU_TO_KWh = 293.07107; // 1 MMBtu = 293.07107 kWh (also 1 MMBtu/hr == 293.07107 kW)
+        std::vector<double> gen_heat_kW = as_vector_double("gen_heat"); // [kW]
+        std::vector<double> gen_heat_MMBtu_per_hr;
+        for (double gen_kW : gen_heat_kW)
+        {
+            gen_heat_MMBtu_per_hr.push_back(gen_kW / MMBTU_TO_KWh);
+        }
+
 
 		ssc_number_t *parr = 0;
 		size_t count, i, j; 
@@ -195,62 +206,79 @@ public:
 		ssc_number_t *pbuyrate = NULL, *psellrate = NULL;
 		size_t nrec_load = 0, nrec_gen = 0, step_per_hour_gen=1, step_per_hour_load=1;
 		bool bload=false;
-		pgen = as_array("fuelcell_power_thermal", &nrec_gen);
+		//pgen = as_array("fuelcell_power_thermal", &nrec_gen);
+        pgen = &gen_heat_MMBtu_per_hr[0];
+        nrec_gen = gen_heat_MMBtu_per_hr.size();
+
 		// for lifetime analysis
 		size_t nrec_gen_per_year = nrec_gen;
 		if (as_integer("system_use_lifetime_output") == 1)
 			nrec_gen_per_year = nrec_gen / nyears;
 		step_per_hour_gen = nrec_gen_per_year / 8760;
 		if (step_per_hour_gen < 1 || step_per_hour_gen > 60 || step_per_hour_gen * 8760 != nrec_gen_per_year)
-			throw exec_error("thermalrate", util::format("invalid number of thermal records (%d): must be an integer multiple of 8760", (int)nrec_gen_per_year));
+			throw exec_error("thermalrate_iph", util::format("invalid number of thermal records (%d): must be an integer multiple of 8760", (int)nrec_gen_per_year));
 		ssc_number_t ts_hour_gen = 1.0f / step_per_hour_gen;
 		m_num_rec_yearly = nrec_gen_per_year;
 
-		if (is_assigned("thermal_load"))
+
+        // prepare timestep arrays for load and grid values
+        std::vector<ssc_number_t>
+            e_sys_cy(m_num_rec_yearly), p_sys_cy(m_num_rec_yearly),
+            p_load(m_num_rec_yearly), // to handle no load, or num load != num gen resets above assignment
+            p_buyrate(m_num_rec_yearly),
+            p_sellrate(m_num_rec_yearly),
+            e_grid_cy(m_num_rec_yearly), p_grid_cy(m_num_rec_yearly),
+            e_load_cy(m_num_rec_yearly), p_load_cy(m_num_rec_yearly); // current year load (accounts for escal)
+
+
+
+		if (is_assigned("thermal_load_heat_btu"))
 		{ // hourly or sub hourly loads for single year
+
+            // Convert thermal load units
 			bload = true;
-			pload = as_array("thermal_load", &nrec_load);
+            pload = as_array("thermal_load_heat_btu", &nrec_load);//[MMBtu/hr]
+
 			step_per_hour_load = nrec_load / 8760;
 			if (step_per_hour_load < 1 || step_per_hour_load > 60 || step_per_hour_load * 8760 != nrec_load)
-				throw exec_error("thermalrate", util::format("invalid number of load records (%d): must be an integer multiple of 8760", (int)nrec_load));
+				throw exec_error("thermalrate_iph", util::format("invalid number of load records (%d): must be an integer multiple of 8760", (int)nrec_load));
 			if ((nrec_load != m_num_rec_yearly) && (nrec_load != 8760))
-				throw exec_error("thermalrate", util::format("number of load records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)nrec_load, (int)m_num_rec_yearly));
+				throw exec_error("thermalrate_iph", util::format("number of load records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)nrec_load, (int)m_num_rec_yearly));
 		}
 //		ssc_number_t ts_hour_load = 1.0f / step_per_hour_load;
 
 
-
-	// prepare timestep arrays for load and grid values
-		std::vector<ssc_number_t>
-			e_sys_cy(m_num_rec_yearly), p_sys_cy(m_num_rec_yearly),
-			p_load(m_num_rec_yearly), // to handle no load, or num load != num gen
-			p_buyrate(m_num_rec_yearly),
-			p_sellrate(m_num_rec_yearly),
-			e_grid_cy(m_num_rec_yearly), p_grid_cy(m_num_rec_yearly),
-			e_load_cy(m_num_rec_yearly), p_load_cy(m_num_rec_yearly); // current year load (accounts for escal)
 
 
 
 
 		size_t idx = 0;
 
+        // Get conversion efficiency
+        double eff_buy_frac = as_double("thermal_conversion_efficiency") / 100.0;   // Bought heat conversion efficiency (converted to fraction)
+        if (eff_buy_frac <= 0)
+        {
+            throw exec_error("thermalrate_iph", "Conversion efficiency must be greater than 0");
+        }
+
+        // Timestep Buy Rate
 		if (as_integer("thermal_buy_rate_option") == 1)
 		{
 			size_t nbuyrate,step_per_hour_br;
 			ssc_number_t br;
-			pbuyrate = as_array("thermal_buy_rate", &nbuyrate);
+			pbuyrate = as_array("thermal_timestep_buy_rate_heat_btu", &nbuyrate);
 			step_per_hour_br = nbuyrate / 8760;
 			if (step_per_hour_br < 1 || step_per_hour_br > 60 || step_per_hour_br * 8760 != nbuyrate)
-				throw exec_error("thermalrate", util::format("invalid number of buy rate records (%d): must be an integer multiple of 8760", (int)nbuyrate));
+				throw exec_error("thermalrate_iph", util::format("invalid number of buy rate records (%d): must be an integer multiple of 8760", (int)nbuyrate));
 			if ((nbuyrate != m_num_rec_yearly) && (nbuyrate != 8760))
-				throw exec_error("thermalrate", util::format("number of buy rate  records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)nbuyrate, (int)m_num_rec_yearly));
+				throw exec_error("thermalrate_iph", util::format("number of buy rate  records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)nbuyrate, (int)m_num_rec_yearly));
 			for (i = 0; i < 8760; i++)
 			{
 				for (size_t ii = 0; ii < step_per_hour_gen; ii++)
 				{
 					size_t ndx = i * step_per_hour_gen + ii;
 					br = ((idx < nbuyrate) ? pbuyrate[idx] : 0);
-					p_buyrate[ndx] = br;
+					p_buyrate[ndx] = br / eff_buy_frac; // account for heat conversion efficiency
 					if (step_per_hour_gen == step_per_hour_br)
 						idx++;
 					else if (ii == (step_per_hour_gen - 1))
@@ -258,23 +286,44 @@ public:
 				}
 			}
 		}
+        // Monthly Buy Rate
+        else if (as_integer("thermal_buy_rate_option") == 2)
+        {
+            std::vector<double> br_monthly = as_vector_double("thermal_monthly_buy_rate_heat_btu");
+            if (br_monthly.size() != 12)
+            {
+                throw exec_error("thermalrate_iph", util::format("invalid number of monthly buy rate records (%d): must be equal to 12", (int)br_monthly.size()));
+            }
+            // Assign buy rate for every hour in each month
+            int hr_count = 0;
+            for (int month = 1; month <= 12; month++)
+            {
+                int hr_in_current_month = util::hours_in_month(month);
+                for (int hr_in_mnth = 0; hr_in_mnth < hr_in_current_month; hr_in_mnth++)
+                {
+                    p_buyrate[hr_count] = br_monthly[month - 1] / eff_buy_frac; // account for heat conversion efficiency
+                    hr_count++;
+                }
+            }
+        }
 		else // flat rate
 		{
-			ssc_number_t br = as_number("thermal_buy_rate_flat");
+			ssc_number_t br = as_number("thermal_buy_rate_flat_heat_btu");
 			for (i = 0; i < m_num_rec_yearly; i++)
-				p_buyrate[i] = br;
+				p_buyrate[i] = br / eff_buy_frac;   // account for heat conversion efficiency
 		}
 
+        // Time step input
 		if (as_integer("thermal_sell_rate_option") == 1)
 		{
 			size_t nsellrate, step_per_hour_br;
 			ssc_number_t br;
-			psellrate = as_array("thermal_sell_rate", &nsellrate);
+			psellrate = as_array("thermal_timestep_sell_rate_heat_btu", &nsellrate);
 			step_per_hour_br = nsellrate / 8760;
 			if (step_per_hour_br < 1 || step_per_hour_br > 60 || step_per_hour_br * 8760 != nsellrate)
-				throw exec_error("thermalrate", util::format("invalid number of sell rate records (%d): must be an integer multiple of 8760", (int)nsellrate));
+				throw exec_error("thermalrate_iph", util::format("invalid number of sell rate records (%d): must be an integer multiple of 8760", (int)nsellrate));
 			if ((nsellrate != m_num_rec_yearly) && (nsellrate != 8760))
-				throw exec_error("thermalrate", util::format("number of sell rate  records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)nsellrate, (int)m_num_rec_yearly));
+				throw exec_error("thermalrate_iph", util::format("number of sell rate  records (%d) must be equal to number of gen records (%d) or 8760 for each year", (int)nsellrate, (int)m_num_rec_yearly));
 			for (i = 0; i < 8760; i++)
 			{
 				for (size_t ii = 0; ii < step_per_hour_gen; ii++)
@@ -289,9 +338,29 @@ public:
 				}
 			}
 		}
+        // Monthly input
+        else if (as_integer("thermal_sell_rate_option") == 2)
+        {
+            std::vector<double> sr_monthly = as_vector_double("thermal_monthly_sell_rate_heat_btu");
+            if (sr_monthly.size() != 12)
+            {
+                throw exec_error("thermalrate_iph", util::format("invalid number of monthly sell rate records (%d): must be equal to 12", (int)sr_monthly.size()));
+            }
+            // Assign sell rate for every hour in each month
+            int hr_count = 0;
+            for (int month = 1; month <= 12; month++)
+            {
+                int hr_in_current_month = util::hours_in_month(month);
+                for (int hr_in_mnth = 0; hr_in_mnth < hr_in_current_month; hr_in_mnth++)
+                {
+                    p_sellrate[hr_count] = sr_monthly[month - 1];
+                    hr_count++;
+                }
+            }
+        }
 		else // flat rate
 		{
-			ssc_number_t br = as_number("thermal_sell_rate_flat");
+			ssc_number_t br = as_number("thermal_sell_rate_flat_heat_btu");
 			for (i = 0; i < m_num_rec_yearly; i++)
 				p_sellrate[i] = br;
 		}
@@ -326,17 +395,15 @@ public:
 
 		assign("thermal_load_year1", year1_thermal_load* ts_hour_gen);
 
-		
 		/* allocate intermediate data arrays */
 		std::vector<ssc_number_t> revenue_w_sys(m_num_rec_yearly), revenue_wo_sys(m_num_rec_yearly),
 			payment(m_num_rec_yearly), income(m_num_rec_yearly), 
 			thermal_charge_w_sys(m_num_rec_yearly), thermal_charge_wo_sys(m_num_rec_yearly),
 			load(m_num_rec_yearly), salespurchases(m_num_rec_yearly);
-		std::vector<ssc_number_t> monthly_revenue_w_sys(12), monthly_revenue_wo_sys(12),
-			monthly_thermal_charges(12),
-			monthly_ec_rates(12),
-			monthly_salespurchases(12),
-			monthly_load(12), monthly_system_generation(12), monthly_bill(12), monthly_peak(12), monthly_test(12);
+        std::vector<ssc_number_t>
+            monthly_salespurchases(12),
+            monthly_load_heat_btu(12),
+            monthly_load_heat(12);
 
 		/* allocate outputs */		
 		ssc_number_t *annual_net_revenue = allocate("annual_thermal_value", nyears+1);
@@ -347,48 +414,36 @@ public:
 		ssc_number_t *annual_thermal_cost_w_sys = allocate("thermal_cost_with_system", nyears+1);
 		ssc_number_t *annual_thermal_cost_wo_sys = allocate("thermal_cost_without_system", nyears+1);
 
-
-		// matrices
-		//ssc_number_t *thermal_bill_w_sys_ym = allocate("thermal_bill_w_sys_ym", nyears + 1, 12);
-		//ssc_number_t *thermal_bill_wo_sys_ym = allocate("thermal_bill_wo_sys_ym", nyears + 1, 12);
-
-
-		// annual sums
-		//ssc_number_t *thermal_bill_w_sys = allocate("thermal_bill_w_sys", nyears + 1);
-		//ssc_number_t *utility_bill_wo_sys = allocate("thermal_bill_wo_sys", nyears + 1);
-
+        size_t steps_per_hour = m_num_rec_yearly / 8760;
+        int c = 0;
+        for (int m = 0; m < 12; m++)
+        {
+            monthly_load_heat_btu[m] = 0;
+            monthly_load_heat[m] = 0;
+            for (int d = 0; d < (int)util::nday[m]; d++)
+            {
+                for (int h = 0; h < 24; h++)
+                {
+                    for (int s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
+                    {
+                        monthly_load_heat_btu[m] -= p_load[c];  //[MMBtu]
+                        monthly_load_heat[m] -= p_load[c] * MMBTU_TO_KWh;  //[kWht]
+                        c++;
+                    }
+                }
+            }
+        }
+        // Assign monthly load
+        assign("year1_monthly_load_heat", var_data(&monthly_load_heat[0], 12));
 
 		// lifetime hourly load
 		ssc_number_t *lifetime_load = allocate("lifetime_thermal_load", nrec_gen);
-
 
 		idx = 0;
 		for (i=0;i<nyears;i++)
 		{
 			for (j = 0; j<m_num_rec_yearly; j++)
 			{
-				/* for future implementation for lifetime loads
-				// update e_load and p_load per year if lifetime output
-				// lifetime load values? sell values
-				if ((as_integer("system_use_lifetime_output") == 1) && (idx < nrec_load))
-				{
-					e_load[j] = p_load[j] = 0.0;
-					for (size_t ii = 0; (ii < step_per_hour_load) && (idx < nrec_load); ii++)
-					{
-						ts_load = (bload ? pload[idx] : 0);
-						e_load[i] += ts_load * ts_hour_load;
-						p_load[i] = ((ts_load > p_load[i]) ? ts_load : p_load[i]);
-						idx++;
-					}
-					lifetime_hourly_load[i*8760 + j] = e_load[i];
-					// sign correction for utility rate calculations
-					e_load[i] = -e_load[i];
-					p_load[i] = -p_load[i];
-				}
-				*/
-				// apply load escalation appropriate for current year
-//				e_load_cy[j] = e_load[j] * load_scale[i];
-//				p_load_cy[j] = p_load[j] * load_scale[i];
 				e_load_cy[j] = p_load[j] * load_scale[i] * ts_hour_gen;
 				p_load_cy[j] = p_load[j] * load_scale[i];
 
@@ -396,10 +451,6 @@ public:
 				// update e_sys per year if lifetime output
 				if ((as_integer("system_use_lifetime_output") == 1) && ( idx < nrec_gen ))
 				{
-//					e_sys[j] = p_sys[j] = 0.0;
-//					ts_power = (idx < nrec_gen) ? pgen[idx] : 0;
-//					e_sys[j] = ts_power * ts_hour_gen;
-//					p_sys[j] = ((ts_power > p_sys[j]) ? ts_power : p_sys[j]);
 					e_sys_cy[j] = pgen[idx] * ts_hour_gen;
 					p_sys_cy[j] = pgen[idx];
 					// until lifetime load fully implemented
@@ -464,11 +515,7 @@ public:
 			if (i == 0)
 			{
 				assign("year1_hourly_charge_with_system", var_data(&thermal_charge_w_sys[0], (int)m_num_rec_yearly));
-
 				assign("thermal_revenue_with_system", var_data(&revenue_w_sys[0], (int)m_num_rec_yearly));
-				assign("year1_monthly_load", var_data(&monthly_load[0], 12));
-				assign("year1_monthly_system_generation", var_data(&monthly_system_generation[0], 12));
-				assign("year1_monthly_thermal_bill_w_sys", var_data(&monthly_bill[0], 12));
 
 				// output and demand per Paul's email 9/10/10
 				// positive demand indicates system does not produce enough thermal to meet load
@@ -527,49 +574,6 @@ public:
 		assign("thermal_cost_without_system_year1", annual_thermal_cost_wo_sys[1]);
 		assign("thermal_savings_year1", annual_thermal_cost_wo_sys[1] - annual_thermal_cost_w_sys[1]);
 	}
-
-	void monthly_outputs(ssc_number_t *e_load, ssc_number_t *e_sys, ssc_number_t *e_grid, ssc_number_t *salespurchases, ssc_number_t monthly_load[12], ssc_number_t monthly_generation[12], ssc_number_t monthly_thermal_to_grid[12], ssc_number_t monthly_thermal_needed_from_grid[12], ssc_number_t monthly_salespurchases[12])
-	{
-		// calculate the monthly net energy and monthly hours
-		int m,d,h,s;
-		ssc_number_t energy_use[12]; // 12 months
-		int c=0;
-
-		size_t steps_per_hour = m_num_rec_yearly / 8760;
-		for (m=0;m<12;m++)
-		{
-			energy_use[m] = 0;
-			monthly_load[m] = 0;
-			monthly_generation[m] = 0;
-			monthly_thermal_to_grid[m] = 0;
-			monthly_salespurchases[m] = 0;
-			for (d=0;d<(int)util::nday[m];d++)
-			{
-				for(h=0;h<24;h++)
-				{
-					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
-					{
-						energy_use[m] += e_grid[c];
-						monthly_load[m] -= e_load[c];
-						monthly_generation[m] += e_sys[c]; // does not include first year sys_scale
-						monthly_thermal_to_grid[m] += e_grid[c];
-						monthly_salespurchases[m] += salespurchases[c];
-						c++;
-					}
-				}
-			}
-		}
-		//
-		
-		for (m=0;m<12;m++)
-		{
-			if (monthly_thermal_to_grid[m] > 0)
-				monthly_thermal_needed_from_grid[m] = monthly_thermal_to_grid[m];
-			else
-				monthly_thermal_needed_from_grid[m]=0;
-		}
-	}
-
 
 	void tr_calc_timestep(ssc_number_t *e_in, ssc_number_t *p_in, ssc_number_t *br_in, ssc_number_t *sr_in,
 		ssc_number_t *revenue, ssc_number_t *payment, ssc_number_t *income,
@@ -669,6 +673,6 @@ public:
 
 };
 
-DEFINE_MODULE_ENTRY( thermalrate, "Thermal flat rate structure net revenue calculator", 1 );
+DEFINE_MODULE_ENTRY( thermalrate_iph, "Thermal flat rate structure net revenue calculator", 1 );
 
 

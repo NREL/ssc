@@ -99,6 +99,62 @@ var_info vtab_standard_loan[] = {
 { SSC_INPUT,SSC_NUMBER  , "debt_fraction"                        , "Debt percentage"                                                , "%"                                      , ""                                      , "Financial Parameters" , "?=0"            , "MIN=0,MAX=100"         , ""},
 var_info_invalid };
 
+
+var_info vtab_oandm_heat[] = {
+    /*   VARTYPE           DATATYPE         NAME                             LABEL                                UNITS      META                 GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+
+    { SSC_INPUT,        SSC_ARRAY,       "om_fixed",                     "Fixed O&M annual amount",           "$/year",  "",                  "System Costs",            "?=0.0",                 "",                                         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "om_fixed_escal",               "Fixed O&M escalation",              "%/year",  "",                  "System Costs",            "?=0.0",                 "",                                         "" },
+    { SSC_INPUT,        SSC_ARRAY,       "om_production_heat",                "Production-based O&M amount",       "$/MWht",   "",                  "System Costs",            "?=0.0",                 "",                                         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "om_production_escal",          "Production-based O&M escalation",   "%/year",  "",                  "System Costs",            "?=0.0",                 "",                                         "" },
+    { SSC_INPUT,        SSC_ARRAY,       "om_capacity_heat",                  "Capacity-based O&M amount",         "$/kWt-yr", "",                  "System Costs",            "?=0.0",                 "",                                         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "om_capacity_escal",            "Capacity-based O&M escalation",     "%/year",  "",                  "System Costs",            "?=0.0",                 "",                                         "" },
+    { SSC_INPUT,        SSC_ARRAY,		 "om_fuel_cost",                 "Fuel cost",                         "$/MMBtu", "generic_system,fuelcell,tcslinearfresnel,tcstroughempirical,tcsgenericsolar,fresnelphysical",                  "System Costs",            "?=0.0",                 "",                                         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "om_fuel_cost_escal",           "Fuel cost escalation",              "%/year",  "generic_system,fuelcell,tcslinearfresnel,tcstroughempirical,tcsgenericsolar,fresnelphysical",                  "System Costs",            "?=0.0",                 "",                                         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "annual_fuel_usage",            "Fuel usage (yr 1)",                 "kWht",    "generic_system,fuelcell,tcslinearfresnel,tcstroughempirical,tcsgenericsolar,fresnelphysical",                  "System Costs",            "?=0",                     "MIN=0",                                         "" },
+    { SSC_INPUT,        SSC_ARRAY,       "annual_fuel_usage_lifetime",   "Fuel usage (lifetime)",             "kWht",    "generic_system,fuelcell,tcslinearfresnel,tcstroughempirical,tcsgenericsolar,fresnelphysical",                  "System Costs",            "",                     "",                                         "" },
+
+    { SSC_INPUT,        SSC_ARRAY,		 "om_elec_price_for_heat_techs",       "Electricity price for purchases in heat model",                "$/kWh",   "", "System Costs",  "?=0.0",           "",                                         "" },
+    { SSC_INPUT,        SSC_NUMBER,      "om_elec_price_for_heat_techs_escal", "Escalation for electricity price for purchases in heat model", "%/year",  "", "System Costs",  "?=0.0",           "",                                         "" },
+
+
+    // replacements
+    { SSC_INPUT,SSC_ARRAY   , "om_batt_replacement_cost"                 , "Replacement cost 1"               , "$/kWh"   , "battery"                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_ARRAY   , "om_fuelcell_replacement_cost"                 , "Replacement cost 2"            , "$/kW", "fuelcell"                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_NUMBER  , "om_replacement_cost_escal"            , "Replacement cost escalation"           , "%/year", "battery,fuelcell"                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+
+    // optional fuel o and m for Biopower - usage can be in any unit and cost is in $ per usage unit
+    { SSC_INPUT,SSC_NUMBER  , "om_opt_fuel_1_usage"                  , "Biomass feedstock usage"            , "unit"    , "biomass"                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_ARRAY   , "om_opt_fuel_1_cost"                   , "Biomass feedstock cost"           , "$/unit"    , "biomass"                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_NUMBER  , "om_opt_fuel_1_cost_escal"             , "Biomass feedstock cost escalation" , "%/year"   , "biomass"                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_NUMBER  , "om_opt_fuel_2_usage"                  , "Coal feedstock usage"               , "unit"    , "biomass"                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_ARRAY   , "om_opt_fuel_2_cost"                   , "Coal feedstock cost"                , "$/unit"  , "biomass"                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_NUMBER  , "om_opt_fuel_2_cost_escal"             , "Coal feedstock cost escalation"     , "%/year"  , "biomass"                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
+
+    // optional additional base o and m types
+    { SSC_INPUT,SSC_NUMBER  , "add_om_num_types"                     , "Number of O and M types" , "" , "battery,fuelcell"                                      , "System Costs"         , "?=0"            , "INTEGER,MIN=0,MAX=2"   , ""},
+    { SSC_INPUT,SSC_NUMBER  , "om_batt_nameplate"               , "Battery capacity for System Costs values"                       , "kW", "battery"                                      , "System Costs"         , "?=0"            , ""                      , ""},
+    { SSC_INPUT,SSC_ARRAY   , "om_production1_values"                , "Battery production for System Costs values"                     , "kWh", "battery"                                      , "System Costs"         , "?=0"            , ""                      , ""},
+
+    { SSC_INPUT,SSC_ARRAY   , "om_batt_fixed_cost"                            , "Battery fixed System Costs annual amount"                       , "$/year",    "battery",   "System Costs"         , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_ARRAY   , "om_batt_variable_cost"                       , "Battery production-based System Costs amount"                   , "$/MWh", "battery"    , "System Costs"         , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_ARRAY   , "om_batt_capacity_cost"                         , "Battery capacity-based System Costs amount"                     , "$/kWcap", "battery"    , "System Costs"         , "?=0.0"          , ""                      , ""},
+
+    { SSC_INPUT,SSC_NUMBER  , "om_fuelcell_nameplate"               , "Fuel cell capacity for System Costs values"                     , "kW", "fuelcell"                                      , "System Costs"         , "?=0"            , ""                      , ""},
+    { SSC_INPUT,SSC_ARRAY   , "om_production2_values"                , "Fuel cell production for System Costs values"                   , "kWh", "fuelcell"                                      , "System Costs"         , "?=0"            , ""                      , ""},
+
+    { SSC_INPUT,SSC_ARRAY   , "om_fuelcell_fixed_cost"                            , "Fuel cell fixed System Costs annual amount"                     , "$/year", "fuelcell" , "System Costs"         , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_ARRAY   , "om_fuelcell_variable_cost"                       , "Fuel cell production-based System Costs amount"                 , "$/MWh", "fuelcell"    , "System Costs"         , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_ARRAY   , "om_fuelcell_capacity_cost"                         , "Fuel cell capacity-based System Costs amount"                   , "$/kWcap", "fuelcell"    , "System Costs"         , "?=0.0"          , ""                      , ""},
+
+    // optional land lease
+    { SSC_INPUT,        SSC_NUMBER,     "land_area",                      "Total land area",	                                                "acres",                "",                        "Land Lease",            "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_ARRAY,      "om_land_lease",	                    "Land lease cost",	                                                "$/acre",               "",                        "Land Lease",            "?=0",					   "",                              "" },
+    { SSC_INPUT,        SSC_NUMBER,     "om_land_lease_escal",                  "Land lease cost escalation",	                                    "%/yr",                 "",                        "Land Lease",            "?=0",					   "",                              "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "cf_land_lease_expense",                "Land lease expense",                                       "$",                    "",                         "Land Lease",            "", "LENGTH_EQUAL=cf_length", "" },
+
+var_info_invalid };
+
 // meta should be either a blocklist (!gen,!gen) or an allowlist. Cannot do both blocked and allowed gens
 var_info vtab_oandm[] = {
 /*   VARTYPE           DATATYPE         NAME                             LABEL                                UNITS      META                 GROUP          REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
@@ -109,14 +165,10 @@ var_info vtab_oandm[] = {
 { SSC_INPUT,        SSC_NUMBER,      "om_production_escal",          "Production-based O&M escalation",   "%/year",  "",                  "System Costs",            "?=0.0",                 "",                                         "" },
 { SSC_INPUT,        SSC_ARRAY,       "om_capacity",                  "Capacity-based O&M amount",         "$/kWcap", "!battery,!fuelcell",                  "System Costs",            "?=0.0",                 "",                                         "" },
 { SSC_INPUT,        SSC_NUMBER,      "om_capacity_escal",            "Capacity-based O&M escalation",     "%/year",  "",                  "System Costs",            "?=0.0",                 "",                                         "" },
-{ SSC_INPUT,        SSC_ARRAY,		 "om_fuel_cost",                 "Fuel cost",                         "$/MMBtu", "generic_system,fuelcell,tcslinearfresnel,tcstroughempirical,tcsgenericsolar,fresnelphysical",                  "System Costs",            "?=0.0",                 "",                                         "" },
-{ SSC_INPUT,        SSC_NUMBER,      "om_fuel_cost_escal",           "Fuel cost escalation",              "%/year",  "generic_system,fuelcell,tcslinearfresnel,tcstroughempirical,tcsgenericsolar,fresnelphysical",                  "System Costs",            "?=0.0",                 "",                                         "" },
-{ SSC_INPUT,        SSC_NUMBER,      "annual_fuel_usage",            "Fuel usage (yr 1)",                 "kWht",    "generic_system,fuelcell,tcslinearfresnel,tcstroughempirical,tcsgenericsolar,fresnelphysical",                  "System Costs",            "?=0",                     "MIN=0",                                         "" },
-{ SSC_INPUT,        SSC_ARRAY,       "annual_fuel_usage_lifetime",   "Fuel usage (lifetime)",             "kWht",    "generic_system,fuelcell,tcslinearfresnel,tcstroughempirical,tcsgenericsolar,fresnelphysical",                  "System Costs",            "",                     "",                                         "" },
-
-{ SSC_INPUT,        SSC_ARRAY,		 "om_elec_price_for_heat_techs",       "Electricity price for purchases in heat model",                "$/kWh",   "", "System Costs",  "?=0.0",           "",                                         "" },
-{ SSC_INPUT,        SSC_NUMBER,      "om_elec_price_for_heat_techs_escal", "Escalation for electricity price for purchases in heat model", "%/year",  "", "System Costs",  "?=0.0",           "",                                         "" },
-
+{ SSC_INPUT,        SSC_ARRAY,		 "om_fuel_cost",                 "Fuel cost",                         "$/MMBtu", "custom_generation,fuelcell,tcslinearfresnel,tcstroughempirical,tcsgenericsolar,fresnelphysical",                  "System Costs",            "?=0.0",                 "",                                         "" },
+{ SSC_INPUT,        SSC_NUMBER,      "om_fuel_cost_escal",           "Fuel cost escalation",              "%/year",  "custom_generation,fuelcell,tcslinearfresnel,tcstroughempirical,tcsgenericsolar,fresnelphysical",                  "System Costs",            "?=0.0",                 "",                                         "" },
+{ SSC_INPUT,        SSC_NUMBER,      "annual_fuel_usage",            "Fuel usage (yr 1)",                 "kWht",    "custom_generation,fuelcell,tcslinearfresnel,tcstroughempirical,tcsgenericsolar,fresnelphysical",                  "System Costs",            "?=0",                     "MIN=0",                                         "" },
+{ SSC_INPUT,        SSC_ARRAY,       "annual_fuel_usage_lifetime",   "Fuel usage (lifetime)",             "kWht",    "custom_generation,fuelcell,tcslinearfresnel,tcstroughempirical,tcsgenericsolar,fresnelphysical",                  "System Costs",            "",                     "",                                         "" },
 
 // replacements
 { SSC_INPUT,SSC_ARRAY   , "om_batt_replacement_cost"                 , "Replacement cost 1"               , "$/kWh"   , "battery"                                      , "System Costs"         , "?=0.0"          , ""                      , ""},
@@ -267,6 +319,13 @@ var_info vtab_depreciation_outputs[] = {
 var_info_invalid
 };
 
+var_info vtab_tax_credits_heat[] = {
+{ SSC_INPUT,SSC_ARRAY   , "ptc_fed_amount_heat_btu"                       , "Federal PTC amount"                                             , "$/MMBtu"                                  , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
+{ SSC_INPUT,SSC_ARRAY   , "ptc_sta_amount_heat_btu"                       , "State PTC amount"                                             , "$/MMBtu"                                  , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
+var_info_invalid
+};
+
+
 var_info vtab_tax_credits[] = {
 { SSC_INPUT,SSC_ARRAY  , "itc_fed_amount"                       , "Federal amount-based ITC amount"                                , "$"                                      , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
 { SSC_INPUT,SSC_NUMBER  , "itc_fed_amount_deprbas_fed"           , "Federal amount-based ITC reduces federal depreciation basis"    , "0/1"                                    , ""                                      , "Tax Credit Incentives", "?=1"            , "BOOLEAN"               , ""},
@@ -294,6 +353,19 @@ var_info vtab_tax_credits[] = {
 { SSC_INPUT,SSC_NUMBER  , "ptc_sta_term"                         , "State PTC term"                                                 , "years"                                  , ""                                      , "Tax Credit Incentives", "?=10"           , ""                      , ""},
 { SSC_INPUT,SSC_NUMBER  , "ptc_sta_escal"                        , "State PTC escalation"                                           , "%/year"                                 , ""                                      , "Tax Credit Incentives", "?=0"            , ""                      , ""},
 var_info_invalid };
+
+var_info vtab_payment_incentives_heat[] = {
+    { SSC_INPUT,SSC_NUMBER  , "cbi_fed_amount_heat_btu"                       , "Federal CBI amount"                                             , "$/(Btu/hr))"                                 , ""                                      , "Payment Incentives"   , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_NUMBER  , "cbi_sta_amount_heat_btu"                       , "State CBI amount"                                             , "$/(Btu/hr))"                                 , ""                                      , "Payment Incentives"   , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_NUMBER  , "cbi_uti_amount_heat_btu"                       , "Utility CBI amount"                                             , "$/(Btu/hr))"                                 , ""                                      , "Payment Incentives"   , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_NUMBER  , "cbi_oth_amount_heat_btu"                       , "Other CBI amount"                                             , "$/(Btu/hr))"                                 , ""                                      , "Payment Incentives"   , "?=0.0"          , ""                      , ""},
+    { SSC_INPUT,SSC_ARRAY   , "pbi_fed_amount_heat_btu"                       , "Federal PBI amount"                                             , "$/MMBtu"                                  , ""                                      , "Payment Incentives"   , "?=0"            , ""                      , ""},
+    { SSC_INPUT,SSC_ARRAY   , "pbi_sta_amount_heat_btu"                       , "State PBI amount"                                             , "$/MMBtu"                                  , ""                                      , "Payment Incentives"   , "?=0"            , ""                      , ""},
+    { SSC_INPUT,SSC_ARRAY   , "pbi_uti_amount_heat_btu"                       , "Utility PBI amount"                                             , "$/MMBtu"                                  , ""                                      , "Payment Incentives"   , "?=0"            , ""                      , ""},
+    { SSC_INPUT,SSC_ARRAY   , "pbi_oth_amount_heat_btu"                       , "Other PBI amount"                                             , "$/MMBtu"                                  , ""                                      , "Payment Incentives"   , "?=0"            , ""                      , ""},
+
+var_info_invalid };
+
 
 var_info vtab_payment_incentives[] = {
 { SSC_INPUT,SSC_NUMBER  , "ibi_fed_amount"                       , "Federal amount-based IBI amount"                                , "$"                                      , ""                                      , "Payment Incentives"   , "?=0"            , ""                      , ""},
@@ -461,6 +533,27 @@ var_info vtab_ppa_inout[] = {
 
 var_info_invalid };
 
+
+var_info vtab_ppa_inout_heat[] = {
+{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_mode",                          "PPA solution mode",                              "0/1",   "0=solve ppa,1=specify ppa", "Revenue",         "?=0",                     "INTEGER,MIN=0,MAX=1",            "" },
+{ SSC_INPUT,        SSC_NUMBER,     "ppa_soln_tolerance",                     "PPA solution tolerance",                         "",                 "", "Revenue", "?=1e-5", "", "" },
+{ SSC_INPUT,        SSC_NUMBER,     "ppa_soln_min",                           "PPA solution minimum ppa",                       "cents/kWht",        "", "Revenue", "?=0", "", "" },
+{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max",                           "PPA solution maximum ppa",                       "cents/kWht",        "", "Revenue",         "?=100",                     "",            "" },
+{ SSC_INPUT,        SSC_NUMBER,		"ppa_soln_max_iterations",                "PPA solution maximum number of iterations",      "",                 "", "Revenue",         "?=100",                     "INTEGER,MIN=1",            "" },
+
+{ SSC_INPUT,        SSC_ARRAY,      "ppa_price_input",			              "PPA price in first year input",			            "$/kWht",	        "",	"Revenue",			 "*",         "",      			"" },
+{ SSC_INPUT,        SSC_NUMBER,     "ppa_escalation",                         "PPA escalation rate",                            "%/year",           "", "Revenue", "?=0", "", "" },
+
+{ SSC_OUTPUT,       SSC_NUMBER,     "lppa_real",                              "LPPA Levelized PPA price real",                         "cents/kWht",               "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "lppa_nom",                               "LPPA Levelized PPA price nominal",                      "cents/kWht",               "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "ppa",                                    "PPA price in Year 1",                        "cents/kWht",               "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "ppa_escalation",                         "PPA price escalation",                      "%/year",              "", "Metrics", "*", "", "" },
+{ SSC_OUTPUT,       SSC_NUMBER,     "npv_ppa_revenue",                        "Present value of PPA revenue",              "$",                   "", "Metrics", "*", "", "" },
+
+var_info_invalid };
+
+
+
 var_info vtab_financial_metrics[] = {
 //	{ SSC_OUTPUT,       SSC_NUMBER,     "first_year_energy_net",                  "Annual energy",                             "kWh",                 "", "Metrics", "*", "", "" },
 { SSC_OUTPUT,       SSC_NUMBER,     "debt_fraction",                          "Debt percent",                             "%", "", "Metrics", "*", "", "" },
@@ -488,6 +581,38 @@ var_info vtab_financial_metrics[] = {
 { SSC_OUTPUT,       SSC_NUMBER,     "analysis_period_irr",                    "IRR at end of analysis period",             "%",                   "", "Metrics", "*", "", "" },
 var_info_invalid
 };
+
+
+
+var_info vtab_financial_metrics_heat[] = {
+    //	{ SSC_OUTPUT,       SSC_NUMBER,     "first_year_energy_net",                  "Annual energy",                             "kWh",                 "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "debt_fraction",                          "Debt percent",                             "%", "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "flip_target_year",                       "Target year to meet IRR",                   "",                    "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "flip_target_irr",                        "IRR target",                                "%",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "flip_actual_year",                       "Year target IRR was achieved",              "year",                    "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "flip_actual_irr",                        "IRR in target year",                        "%",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "lcoe_real",                              "LCOH Levelized cost of heat real",                               "cents/kWht",               "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "lcoe_nom",                               "LCOH Levelized cost of heat nominal",                            "cents/kWht",               "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "lcos_real",                              "LCOS Levelized cost of storage real",                               "cents/kWht",               "", "Metrics", "?", "", "" },
+    //{ SSC_OUTPUT,       SSC_NUMBER,     "lcos_nom",                               "LCOS Levelized cost of storage nominal",                            "cents/kWh",               "", "Metrics", "?", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "npv_energy_nom",                         "Present value of annual energy nominal",     "kWht",                 "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "npv_energy_real",                        "Present value of annual energy real",     "kWht",                 "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "present_value_oandm",                    "Present value of O&M",				       "$",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "present_value_oandm_nonfuel",            "Present value of non-fuel O&M",         "$",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "present_value_fuel",                     "Present value of fuel O&M",             "$",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "present_value_insandproptax",            "Present value of insurance and prop tax",   "$",                   "", "Metrics", "*", "", "" },
+
+    { SSC_OUTPUT,       SSC_NUMBER,     "lcoptc_fed_real",                        "Levelized federal PTC real",              "cents/kWht",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "lcoptc_fed_nom",                         "Levelized federal PTC nominal",           "cents/kWht",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "lcoptc_sta_real",                        "Levelized state PTC real",                "cents/kWht",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "lcoptc_sta_nom",                         "Levelized state PTC nominal",             "cents/kWht",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "wacc",                                   "WACC Weighted average cost of capital",   "$",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "effective_tax_rate",                     "Effective tax rate",                        "%",                   "", "Metrics", "*", "", "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "analysis_period_irr",                    "IRR at end of analysis period",             "%",                   "", "Metrics", "*", "", "" },
+    var_info_invalid
+};
+
+
 
 var_info vtab_debt[] = {
 /* term financing */
@@ -567,6 +692,16 @@ var_info vtab_sf_adjustment_factors[] = {
 { SSC_INPUT,SSC_MATRIX  , "sf_adjust_periods"                    , "SF Period-based Adjustment Factors"                             , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "sf_adjust_en_periods=1"              , "COLS=3"                , ""},
 var_info_invalid };
 
+var_info vtab_batt_adjustment_factors[] = {
+{ SSC_INPUT,SSC_NUMBER  , "batt_adjust_constant"                   , "Battery Constant loss adjustment",        "%", "",                "Adjustment Factors", "?=0"               , "MAX=100"               , ""},
+{ SSC_INPUT, SSC_NUMBER,     "batt_adjust_en_timeindex"        , "Enable battery lifetime adjustment factors",     "0/1",      "",                      "Adjustment Factors",      "?=0",                       "BOOLEAN",                                         "" },
+{ SSC_INPUT, SSC_NUMBER,     "batt_adjust_en_periods"        , "Enable battery period-based adjustment factors",     "0/1",      "",                      "Adjustment Factors",      "?=0",                       "BOOLEAN",                                         "" },
+{ SSC_INPUT,SSC_ARRAY   , "batt_adjust_timeindex"                        , "Battery Lifetime Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "batt_adjust_en_timeindex=1"              , ""           , ""},
+{ SSC_INPUT,SSC_MATRIX  , "batt_adjust_periods"                    , "Battery Period-based Adjustment Factors"                             , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "batt_adjust_en_periods=1"               , "COLS=3"                , ""},
+{ SSC_OUTPUT, SSC_ARRAY,  "batt_availability_loss",                  "Battery availability loss",                             "%", "",    "Time Series",                 "",                     "",                   "" },
+
+var_info_invalid };
+
 var_info vtab_financial_capacity_payments[] = {
 
 	/*   VARTYPE           DATATYPE         NAME                                    LABEL                                             UNITS        META                               GROUP                    REQUIRED_IF           CONSTRAINTS               UI_HINTS	*/
@@ -597,7 +732,7 @@ var_info vtab_technology_outputs[] = {
 
     var_info_invalid };
 
-ssc_number_t* gen_heatmap(compute_module* cm, double step_per_hour) {
+ssc_number_t* gen_heatmap(compute_module* cm, double step_per_hour, bool heat) {
     if (!cm)
         return 0;
     size_t count = (size_t)(8760 * step_per_hour);
@@ -605,7 +740,12 @@ ssc_number_t* gen_heatmap(compute_module* cm, double step_per_hour) {
     size_t iday = 0;
     size_t hour;
     size_t count_gen;
-    ssc_number_t* p_gen = cm->as_array("gen", &count_gen);
+    ssc_number_t* p_gen = NULL;
+    if (heat)
+        p_gen = cm->as_array("gen_heat", &count_gen);
+    else
+        p_gen = cm->as_array("gen", &count_gen);
+
     ssc_number_t* p_annual_energy_dist_time = cm->allocate("annual_energy_distribution_time", 25, 366);
     for (size_t i = 0; i < count; i++) {
         hour = (size_t)fmod(floor(double(i) / step_per_hour), 24);
@@ -685,6 +825,11 @@ var_info vtab_forecast_price_signal[] = {
     { SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv2_percent_gen",		      "Enable percent demand cleared capacity option for ancillary service 2",   "0/1",   "",    "Revenue",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
     { SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv3_percent_gen",		      "Enable percent demand cleared capacity option for ancillary service 3",   "0/1",   "",    "Revenue",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
     { SSC_INPUT,        SSC_NUMBER,     "mp_enable_ancserv4_percent_gen",		      "Enable percent demand cleared capacity option for ancillary service 4",   "0/1",   "",    "Revenue",  "forecast_price_signal_model=1",	"INTEGER,MIN=0,MAX=1",      "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_market_percent_gen",                 "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "forecast_price_signal_model=1&mp_enable_market_percent_gen=1", "MIN=0,MAX=100", "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_ancserv1_percent_gen",               "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "forecast_price_signal_model=1&mp_enable_ancserv1_percent_gen=1", "MIN=0,MAX=100", "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_ancserv2_percent_gen",               "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "forecast_price_signal_model=1&mp_enable_ancserv2_percent_gen=1", "MIN=0,MAX=100", "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_ancserv3_percent_gen",               "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "forecast_price_signal_model=1&mp_enable_ancserv3_percent_gen=1", "MIN=0,MAX=100", "" },
+    { SSC_INPUT,        SSC_NUMBER,     "mp_ancserv4_percent_gen",               "Percent of demand to copy to cleared capacity array",       "%","", "Revenue", "forecast_price_signal_model=1&mp_enable_ancserv4_percent_gen=1", "MIN=0,MAX=100", "" },
 
 var_info_invalid };
 
@@ -715,6 +860,22 @@ bool forecast_price_signal::setup(size_t step_per_hour)
         int mp_enable_ancserv2_percent_gen = vartab->as_integer("mp_enable_ancserv2_percent_gen");
         int mp_enable_ancserv3_percent_gen = vartab->as_integer("mp_enable_ancserv3_percent_gen");
         int mp_enable_ancserv4_percent_gen = vartab->as_integer("mp_enable_ancserv4_percent_gen");
+
+        double mp_market_percent_gen = 0;
+        if (vartab->is_assigned("mp_market_percent_gen") && mp_enable_market_percent_gen)
+            mp_market_percent_gen = vartab->as_number("mp_market_percent_gen") / 100.0;
+        double ancserv1_percent_gen = 0;
+        if (vartab->is_assigned("mp_ancserv1_percent_gen") && mp_enable_ancserv1_percent_gen)
+            ancserv1_percent_gen = vartab->as_number("mp_ancserv1_percent_gen") / 100.0;
+        double ancserv2_percent_gen = 0;
+        if (vartab->is_assigned("mp_ancserv2_percent_gen") && mp_enable_ancserv2_percent_gen)
+            ancserv2_percent_gen = vartab->as_number("mp_ancserv2_percent_gen") / 100.0;
+        double ancserv3_percent_gen = 0;
+        if (vartab->is_assigned("mp_ancserv3_percent_gen") && mp_enable_ancserv3_percent_gen)
+            ancserv3_percent_gen = vartab->as_number("mp_ancserv3_percent_gen") / 100.0;
+        double ancserv4_percent_gen = 0;
+        if (vartab->is_assigned("mp_ancserv4_percent_gen") && mp_enable_ancserv4_percent_gen)
+            ancserv4_percent_gen = vartab->as_number("mp_ancserv4_percent_gen") / 100.0;
 
 		// cleared capacity and price columns
 		// assume cleared capacities valid and use as generation for forecasting - will verify after generation in the financial models.
@@ -819,56 +980,223 @@ bool forecast_price_signal::setup(size_t step_per_hour)
             return false;
         }
         m_forecast_price.reserve(nsteps * nyears);
-        for (size_t i = 0; i < nsteps * nyears; i++)
+        m_cleared_capacity.reserve(nsteps * nyears);
+        for (size_t i = 0; i < nsteps * nyears; i++) {
             m_forecast_price.push_back(0.0);
+            m_cleared_capacity.push_back(0.0);
+        }
 
 		// calculate revenue and consolidate to m_forecast_price
 		std::vector<double> as_revenue;
-		std::vector<double> as_revenue_extrapolated(nsteps,0.0);
+		std::vector<double> as_revenue_extrapolated_em(nsteps,0.0);
+		std::vector<double> as_revenue_extrapolated_ancserv_1(nsteps,0.0);
+		std::vector<double> as_revenue_extrapolated_ancserv_2(nsteps,0.0);
+		std::vector<double> as_revenue_extrapolated_ancserv_3(nsteps,0.0);
+		std::vector<double> as_revenue_extrapolated_ancserv_4(nsteps,0.0);
+        std::vector<double> as_capacity;
+        std::vector<double> as_capacity_extrapolated_em(nsteps, 0.0);
+        std::vector<double> as_capacity_extrapolated_ancserv_1(nsteps, 0.0);
+        std::vector<double> as_capacity_extrapolated_ancserv_2(nsteps, 0.0);
+        std::vector<double> as_capacity_extrapolated_ancserv_3(nsteps, 0.0);
+        std::vector<double> as_capacity_extrapolated_ancserv_4(nsteps, 0.0);
+
+        // Users can mix and match percent of generation and cleared capacity. Determine what percent is available for cleared capacity calcs
+        cleared_capacity_percent = 1 - (mp_market_percent_gen + ancserv1_percent_gen + ancserv2_percent_gen
+            + ancserv3_percent_gen + ancserv4_percent_gen);
 
         for (size_t y = 0; y < nyears; y++) {
             size_t forecast_start = y * nsteps;
             size_t forecast_end = (y + 1) * nsteps;
+            // First: adapt all merchant plant timeseries to the simulation timestep
             size_t n_marketrevenue_per_year = mp_energy_market_revenue_mat.nrows() / (size_t)nyears;
             as_revenue.clear();
             as_revenue.reserve(n_marketrevenue_per_year);
-            for (size_t j = y * n_marketrevenue_per_year; j < (y + 1) * n_marketrevenue_per_year; j++)
-                as_revenue.push_back(mp_energy_market_revenue_mat.at(j, 1 - mp_enable_market_percent_gen) / 1000.0);
-            as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
-            std::transform(m_forecast_price.begin() + forecast_start, m_forecast_price.begin() + forecast_end, as_revenue_extrapolated.begin(), m_forecast_price.begin() + forecast_start, std::plus<double>());
+            as_capacity.clear();
+            as_capacity.reserve(n_marketrevenue_per_year);
+            if (n_marketrevenue_per_year == 0) {
+                if (mp_energy_market_revenue_mat.nrows() == 1) {
+                    if (mp_enable_market_percent_gen) {
+                        as_revenue.push_back(mp_energy_market_revenue_mat.at(0, 0) / 1000.0);
+                    }
+                    else {
+                        as_capacity.push_back(mp_energy_market_revenue_mat.at(0, 0) * 1000.0);
+                        as_revenue.push_back(mp_energy_market_revenue_mat.at(0, 1) / 1000.0);
+                    }
+                }
+            }
+            else {
+                for (size_t j = y * n_marketrevenue_per_year; j < (y + 1) * n_marketrevenue_per_year; j++) {
+                    as_revenue.push_back(mp_energy_market_revenue_mat.at(j, 1 - mp_enable_market_percent_gen) / 1000.0);
+                    if (!mp_enable_market_percent_gen) {
+                        as_capacity.push_back(mp_energy_market_revenue_mat.at(j, 0) * 1000.0);
+                    }
+                }
+            }
 
+            as_revenue_extrapolated_em = extrapolate_timeseries(as_revenue, step_per_hour);
+            as_capacity_extrapolated_em = extrapolate_timeseries(as_capacity, step_per_hour);
+            
             size_t n_ancserv_1_revenue_per_year = mp_ancserv_1_revenue_mat.nrows() / (size_t)nyears;
             as_revenue.clear();
             as_revenue.reserve(n_ancserv_1_revenue_per_year);
-            for (size_t j = y * n_ancserv_1_revenue_per_year; j < (y + 1) * n_ancserv_1_revenue_per_year; j++)
-                as_revenue.push_back(mp_ancserv_1_revenue_mat.at(j, 1 - mp_enable_ancserv1_percent_gen) / 1000.0);
-            as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
-            std::transform(m_forecast_price.begin() + forecast_start, m_forecast_price.begin() + forecast_end, as_revenue_extrapolated.begin(), m_forecast_price.begin() + forecast_start, std::plus<double>());
-
+            as_capacity.clear();
+            as_capacity.reserve(n_ancserv_1_revenue_per_year);
+            if (n_ancserv_1_revenue_per_year == 0) {
+                if (mp_ancserv_1_revenue_mat.nrows() == 1) {
+                    if (mp_enable_ancserv1_percent_gen) {
+                        as_revenue.push_back(mp_ancserv_1_revenue_mat.at(0, 0) / 1000.0);
+                    }
+                    else {
+                        as_capacity.push_back(mp_ancserv_1_revenue_mat.at(0, 0) * 1000.0);
+                        as_revenue.push_back(mp_ancserv_1_revenue_mat.at(0, 1) / 1000.0);
+                    }
+                }
+            }
+            else {
+                for (size_t j = y * n_ancserv_1_revenue_per_year; j < (y + 1) * n_ancserv_1_revenue_per_year; j++) {
+                    as_revenue.push_back(mp_ancserv_1_revenue_mat.at(j, 1 - mp_enable_ancserv1_percent_gen) / 1000.0);
+                    if (!mp_enable_ancserv1_percent_gen) {
+                        as_capacity.push_back(mp_ancserv_1_revenue_mat.at(j, 0) * 1000.0);
+                    }
+                }
+            }
+            as_revenue_extrapolated_ancserv_1 = extrapolate_timeseries(as_revenue, step_per_hour);
+            as_capacity_extrapolated_ancserv_1 = extrapolate_timeseries(as_capacity, step_per_hour);
+            
             size_t n_ancserv_2_revenue_per_year = mp_ancserv_2_revenue_mat.nrows() / (size_t)nyears;
             as_revenue.clear();
             as_revenue.reserve(n_ancserv_2_revenue_per_year);
-            for (size_t j = y * n_ancserv_2_revenue_per_year; j < (y + 1) * n_ancserv_2_revenue_per_year; j++)
-                as_revenue.push_back(mp_ancserv_2_revenue_mat.at(j, 1 - mp_enable_ancserv2_percent_gen) / 1000.0);
-            as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
-            std::transform(m_forecast_price.begin() + forecast_start, m_forecast_price.begin() + forecast_end, as_revenue_extrapolated.begin(), m_forecast_price.begin() + forecast_start, std::plus<double>());
-
+            as_capacity.clear();
+            as_capacity.reserve(n_ancserv_2_revenue_per_year);
+            if (n_ancserv_2_revenue_per_year == 0) {
+                if (mp_ancserv_2_revenue_mat.nrows() == 1) {
+                    if (mp_enable_ancserv2_percent_gen) {
+                        as_revenue.push_back(mp_ancserv_2_revenue_mat.at(0, 0) / 1000.0);
+                    }
+                    else {
+                        as_capacity.push_back(mp_ancserv_2_revenue_mat.at(0, 0) * 1000.0);
+                        as_revenue.push_back(mp_ancserv_2_revenue_mat.at(0, 1) / 1000.0);
+                    }
+                }
+            }
+            else {
+                for (size_t j = y * n_ancserv_2_revenue_per_year; j < (y + 1) * n_ancserv_2_revenue_per_year; j++) {
+                    as_revenue.push_back(mp_ancserv_2_revenue_mat.at(j, 1 - mp_enable_ancserv2_percent_gen) / 1000.0);
+                    if (!mp_enable_ancserv2_percent_gen) {
+                        as_capacity.push_back(mp_ancserv_2_revenue_mat.at(j, 0) * 1000.0);
+                    }
+                }
+            }
+            as_revenue_extrapolated_ancserv_2 = extrapolate_timeseries(as_revenue, step_per_hour);
+            as_capacity_extrapolated_ancserv_2 = extrapolate_timeseries(as_capacity, step_per_hour);
+            
             size_t n_ancserv_3_revenue_per_year = mp_ancserv_3_revenue_mat.nrows() / (size_t)nyears;
             as_revenue.clear();
             as_revenue.reserve(n_ancserv_3_revenue_per_year);
-            for (size_t j = y * n_ancserv_3_revenue_per_year; j < (y + 1) * n_ancserv_3_revenue_per_year; j++)
-                as_revenue.push_back(mp_ancserv_3_revenue_mat.at(j, 1 - mp_enable_ancserv3_percent_gen) / 1000.0);
-            as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
-            std::transform(m_forecast_price.begin() + forecast_start, m_forecast_price.begin() + forecast_end, as_revenue_extrapolated.begin(), m_forecast_price.begin() + forecast_start, std::plus<double>());
-
+            as_capacity.clear();
+            as_capacity.reserve(n_ancserv_3_revenue_per_year);
+            if (n_ancserv_3_revenue_per_year == 0) {
+                if (mp_ancserv_3_revenue_mat.nrows() == 1) {
+                    if (mp_enable_ancserv3_percent_gen) {
+                        as_revenue.push_back(mp_ancserv_3_revenue_mat.at(0, 0) / 1000.0);
+                    }
+                    else {
+                        as_capacity.push_back(mp_ancserv_3_revenue_mat.at(0, 0) * 1000.0);
+                        as_revenue.push_back(mp_ancserv_3_revenue_mat.at(0, 1) / 1000.0);
+                    }
+                }
+            }
+            else {
+                for (size_t j = y * n_ancserv_3_revenue_per_year; j < (y + 1) * n_ancserv_3_revenue_per_year; j++) {
+                    as_revenue.push_back(mp_ancserv_3_revenue_mat.at(j, 1 - mp_enable_ancserv3_percent_gen) / 1000.0);
+                    if (!mp_enable_ancserv3_percent_gen) {
+                        as_capacity.push_back(mp_ancserv_3_revenue_mat.at(j, 0) * 1000.0);
+                    }
+                }
+            }
+            as_revenue_extrapolated_ancserv_3 = extrapolate_timeseries(as_revenue, step_per_hour);
+            as_capacity_extrapolated_ancserv_3 = extrapolate_timeseries(as_capacity, step_per_hour);
+            
             size_t n_ancserv_4_revenue_per_year = mp_ancserv_4_revenue_mat.nrows() / (size_t)nyears;
             as_revenue.clear();
             as_revenue.reserve(n_ancserv_4_revenue_per_year);
-            for (size_t j = y * n_ancserv_4_revenue_per_year; j < (y + 1) * n_ancserv_4_revenue_per_year; j++)
-                as_revenue.push_back(mp_ancserv_4_revenue_mat.at(j, 1 - mp_enable_ancserv4_percent_gen) / 1000.0);
-            as_revenue_extrapolated = extrapolate_timeseries(as_revenue, step_per_hour);
-            std::transform(m_forecast_price.begin() + forecast_start, m_forecast_price.begin() + forecast_end, as_revenue_extrapolated.begin(), m_forecast_price.begin() + forecast_start, std::plus<double>());
+            as_capacity.clear();
+            as_capacity.reserve(n_ancserv_4_revenue_per_year);
+            if (n_ancserv_4_revenue_per_year == 0) {
+                if (mp_ancserv_4_revenue_mat.nrows() == 1) {
+                    if (mp_enable_ancserv4_percent_gen) {
+                        as_revenue.push_back(mp_ancserv_4_revenue_mat.at(0, 0) / 1000.0);
+                    }
+                    else {
+                        as_capacity.push_back(mp_ancserv_4_revenue_mat.at(0, 0) * 1000.0);
+                        as_revenue.push_back(mp_ancserv_4_revenue_mat.at(0, 1) / 1000.0);
+                    }
+                }
+            }
+            else {
+                for (size_t j = y * n_ancserv_4_revenue_per_year; j < (y + 1) * n_ancserv_4_revenue_per_year; j++) {
+                    as_revenue.push_back(mp_ancserv_4_revenue_mat.at(j, 1 - mp_enable_ancserv4_percent_gen) / 1000.0);
+                    if (!mp_enable_ancserv4_percent_gen) {
+                        as_capacity.push_back(mp_ancserv_4_revenue_mat.at(j, 0) * 1000.0);
+                    }
+                }
+            }
+            as_revenue_extrapolated_ancserv_4 = extrapolate_timeseries(as_revenue, step_per_hour);
+            as_capacity_extrapolated_ancserv_4 = extrapolate_timeseries(as_capacity, step_per_hour);
+
+            // Then: sum weighted average prices for timeseries use
+            for (size_t j = 0; j < nsteps; j++) {
+                m_cleared_capacity[j + forecast_start] = as_capacity_extrapolated_em[j] + as_capacity_extrapolated_ancserv_1[j]
+                    + as_capacity_extrapolated_ancserv_2[j] + as_capacity_extrapolated_ancserv_3[j] + as_capacity_extrapolated_ancserv_4[j];
+
+                if (mp_enable_market_percent_gen) {
+                    m_forecast_price[j + forecast_start] += as_revenue_extrapolated_em[j] * mp_market_percent_gen;
+                }
+                else if (m_cleared_capacity[j + forecast_start] > 0) {
+                    m_forecast_price[j + forecast_start] += as_capacity_extrapolated_em[j] / m_cleared_capacity[j + forecast_start] * cleared_capacity_percent;
+                }
+
+                if (mp_enable_ancserv1_percent_gen) {
+                    m_forecast_price[j + forecast_start] += as_revenue_extrapolated_ancserv_1[j] * ancserv1_percent_gen;
+                }
+                else if (m_cleared_capacity[j + forecast_start] > 0) {
+                    m_forecast_price[j + forecast_start] += as_capacity_extrapolated_ancserv_1[j] / m_cleared_capacity[j + forecast_start] * cleared_capacity_percent;
+                }
+
+                if (mp_enable_ancserv2_percent_gen) {
+                    m_forecast_price[j + forecast_start] += as_revenue_extrapolated_ancserv_2[j] * ancserv2_percent_gen;
+                }
+                else if (m_cleared_capacity[j + forecast_start] > 0) {
+                    m_forecast_price[j + forecast_start] += as_capacity_extrapolated_ancserv_2[j] / m_cleared_capacity[j + forecast_start] * cleared_capacity_percent;
+                }
+
+                if (mp_enable_ancserv3_percent_gen) {
+                    m_forecast_price[j + forecast_start] += as_revenue_extrapolated_ancserv_3[j] * ancserv3_percent_gen;
+                }
+                else if (m_cleared_capacity[j + forecast_start] > 0) {
+                    m_forecast_price[j + forecast_start] += as_capacity_extrapolated_ancserv_3[j] / m_cleared_capacity[j + forecast_start] * cleared_capacity_percent;
+                }
+
+                if (mp_enable_ancserv4_percent_gen) {
+                    m_forecast_price[j + forecast_start] += as_revenue_extrapolated_ancserv_4[j] * ancserv4_percent_gen;
+                }
+                else if (m_cleared_capacity[j + forecast_start] > 0) {
+                    m_forecast_price[j + forecast_start] += as_capacity_extrapolated_ancserv_4[j] / m_cleared_capacity[j + forecast_start] * cleared_capacity_percent;
+                }
+
+            }
         }
+
+        if (cleared_capacity_percent < 1e-7) {
+            forecast_type = dispatch_t::PRICE_ONLY;
+        }
+        else if (cleared_capacity_percent > (1 - 1e-7)) {
+            forecast_type = dispatch_t::CAPACITY_ONLY;
+        }
+        else {
+            forecast_type = dispatch_t::PRICE_AND_CAPACITY;
+        }
+
 	}
 	else
 	{
@@ -887,6 +1215,10 @@ bool forecast_price_signal::setup(size_t step_per_hour)
         m_forecast_price.reserve(nsteps* nyears);
         for (size_t i = 0; i < nsteps * nyears; i++)
             m_forecast_price.push_back(0.0);
+        forecast_type = dispatch_t::PRICE_ONLY;
+        cleared_capacity_percent = 0.0;
+        m_cleared_capacity.clear();
+
         std::vector<double> as_revenue;
 
         for (size_t y = 0; y < nyears; y++) {
@@ -994,7 +1326,7 @@ var_info vtab_hybrid_fin_om[] = {
     /*   VARTYPE           DATATYPE         NAME                           LABEL                UNITS     META                      GROUP           REQUIRED_IF      CONSTRAINTS     UI_HINTS*/
     { SSC_INPUT,          SSC_NUMBER,     "is_hybrid",              "hybrid configuration",      "0/1", "0=singletech,1=hybrid",    "HybridFin",       "?=0",      "",             "" },
     { SSC_INPUT,          SSC_ARRAY,      "cf_hybrid_om_sum",       "Hybrid O&M costs",          "$",   "",                         "HybridFin",       "",         "",             "" },
-    { SSC_INOUT,          SSC_ARRAY,      "monthly_energy",         "Monthly energy",            "kWh", "",                         "Monthly",         "",         "LENGTH = 12",  "" },
+    { SSC_INOUT,          SSC_ARRAY,      "monthly_energy",         "Monthly AC energy in Year 1",            "kWh", "",                         "Monthly",         "",         "LENGTH = 12",  "" },
 
 var_info_invalid };
 
@@ -1076,22 +1408,22 @@ var_info vtab_utility_rate_common[] = {
     var_info_invalid
 };
 
-adjustment_factors::adjustment_factors( compute_module *cm, const std::string &prefix )
-: m_cm(cm), m_prefix(prefix)
+adjustment_factors::adjustment_factors(var_table* vt, const std::string &prefix )
+: m_vt(vt), m_prefix(prefix)
 {
 }
 
 //adjustment factors changed from derates to percentages jmf 1/9/15
 bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set to 8760 in this declaration function in common.h
 {
-    ssc_number_t f = m_cm->as_number(m_prefix + "_constant");
+    ssc_number_t f = m_vt->as_number(m_prefix + "_constant");
     f = 1.0 - f / 100.0; //convert from percentage to factor
 	m_factors.resize( nsteps * analysis_period, f);
 
-    if (m_cm->is_assigned(m_prefix + "_en_hourly")) {
-        if (m_cm->as_boolean(m_prefix + "_en_hourly")) {
+    if (m_vt->is_assigned(m_prefix + "_en_hourly")) {
+        if (m_vt->as_boolean(m_prefix + "_en_hourly")) {
             size_t n;
-            ssc_number_t* p = m_cm->as_array(m_prefix + "_hourly", &n);
+            ssc_number_t* p = m_vt->as_array(m_prefix + "_hourly", &n);
             if (p != 0 && n == 8760)
             {
                 for (int i = 0; i < 8760; i++)
@@ -1102,14 +1434,14 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
             }
         }
     }
-    if (m_cm->as_boolean(m_prefix +  "_en_timeindex"))
+    if (m_vt->as_boolean(m_prefix +  "_en_timeindex"))
     {
         size_t n;
-        int steps_per_hour = nsteps / 8760;
+        double steps_per_hour = nsteps / 8760.0;
         int month = 0;
         int day = 0;
         int week = 0;
-        ssc_number_t* p = m_cm->as_array(m_prefix + "_timeindex", &n);
+        ssc_number_t* p = m_vt->as_array(m_prefix + "_timeindex", &n);
         if (p != 0) {
             if (n == 1) {
                 for (int a = 0; a < analysis_period; a++) {
@@ -1123,9 +1455,9 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
                         m_factors[nsteps * a + i] *= (1.0 - p[a*nsteps + i]/100.0); //convert from percentages to factors
                 }
             }
-            else if ((n % 8760 == 0) && n != (size_t)(nsteps * analysis_period)) // give a helpful error for timestep mismatch
+            else if ((n % 8760 == 0 || n % 2920 == 0) && n != (size_t)(nsteps * analysis_period)) // give a helpful error for timestep mismatch
             {
-                m_error = util::format("Availability losses must be the same timestep as the weather file, if they are not daily/weekly/monthly.");
+                m_error = util::format("Time series availability losses must have the same time step as the simulation time step unless losses are daily, weekly, monthly, annual, or single value.");
             }
             else if (n == (size_t)( 12 * analysis_period)) { //Monthly 
                 for (int a = 0; a < analysis_period; a++) {
@@ -1165,10 +1497,10 @@ bool adjustment_factors::setup(int nsteps, int analysis_period) //nsteps is set 
             }
         }
     }
-    if (m_cm->as_boolean(m_prefix + "_en_periods"))
+    if (m_vt->as_boolean(m_prefix + "_en_periods"))
     {
 		size_t nr, nc;
-        ssc_number_t* mat = m_cm->as_matrix(m_prefix + "_periods", &nr, &nc);
+        ssc_number_t* mat = m_vt->as_matrix(m_prefix + "_periods", &nr, &nc);
         double ts_mult = nsteps / 8760.0;
 		if ( mat != 0 && nc == 3 )
 		{
@@ -1545,12 +1877,25 @@ weatherdata::weatherdata( var_data *data_table )
 		return;
 	}
 
-
 	m_hdr.lat = get_number( data_table, "lat" );
+    if (std::isnan(m_hdr.lat)) {
+        m_message = "missing latitude: could not find lat";
+        m_ok = false;
+    }
 	m_hdr.lon = get_number( data_table, "lon" );
+    if (std::isnan(m_hdr.lon)) {
+        m_message = "missing longitude: could not find lon";
+        m_ok = false;
+    }
 	m_hdr.tz = get_number( data_table, "tz" );
+    if (std::isnan(m_hdr.tz)) {
+        m_message = "missing time zone: could not find tz";
+        m_ok = false;
+    }
+    
 	m_hdr.elev = get_number( data_table, "elev" );
-
+    //Handle missing elevation in performance model, not weather file handling
+    
 	// make sure two types of irradiance are provided
 	size_t nrec = 0;
 	int n_irr = 0;

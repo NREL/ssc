@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // for adjustment factors
 #include "common.h"
 
-static var_info _cm_vtab_generic_system[] = {
+static var_info _cm_vtab_custom_generation[] = {
 //	  VARTYPE           DATATYPE         NAME                           LABEL                                 UNITS           META     GROUP                REQUIRED_IF        CONSTRAINTS           UI_HINTS
 	{ SSC_INPUT,        SSC_NUMBER,      "spec_mode",                  "Spec mode: 0=constant CF,1=profile",  "",             "",      "Plant",      "*",               "",                    "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "derate",                     "Derate",                              "%",            "",      "Plant",      "*",               "",                    "" },
@@ -48,7 +48,7 @@ static var_info _cm_vtab_generic_system[] = {
 	{ SSC_INPUT,        SSC_ARRAY,       "energy_output_array",        "Array of Energy Output Profile",      "kW",           "",      "Plant",      "spec_mode=1",     "",                    "" },
 
 	// optional for lifetime analysis
-	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",                  "Generic lifetime simulation",                               "0/1",      "",                              "Lifetime",             "?=0",                        "INTEGER,MIN=0,MAX=1",          "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",                  "Custom generation profile lifetime simulation",                               "0/1",      "",                              "Lifetime",             "?=0",                        "INTEGER,MIN=0,MAX=1",          "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                             "Lifetime analysis period",                             "years",    "",                              "Lifetime",             "system_use_lifetime_output=1",   "",                             "" },
 	{ SSC_INPUT,        SSC_ARRAY,       "generic_degradation",                              "Annual AC degradation",                            "%/year",   "",                              "Lifetime",             "system_use_lifetime_output=1",   "",                             "" },
 
@@ -56,12 +56,12 @@ static var_info _cm_vtab_generic_system[] = {
 //    OUTPUTS ----------------------------------------------------------------------------								      														   
 //	  VARTYPE           DATATYPE         NAME                          LABEL                                   UNITS           META     GROUP                 REQUIRED_IF        CONSTRAINTS           UI_HINTS
 //	{ SSC_OUTPUT,       SSC_ARRAY,       "hourly_energy",              "Hourly Energy",                        "kWh",           "",      "Time Series",      "*",               "LENGTH=8760",         "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",             "Monthly AC energy in Year 1",                       "kWh",          "",      "Monthly",      "*",               "LENGTH=12",           "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",              "Annual AC energy in Year 1",                        "kWh",          "",      "Annual",      "*",               "",                    "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,       "monthly_energy",             "Monthly Energy Gross",                       "kWh",          "",      "Monthly",      "*",               "LENGTH=12",           "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",              "Annual Energy",                        "kWh",          "",      "Annual",      "*",               "",                    "" },
 
-	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_fuel_usage",           "Annual fuel usage",                    "kWht",         "",      "Annual",      "*",               "",                    "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "water_usage",                "Annual water usage",                   "",             "",      "Annual",      "*",               "",                    "" },
-	{ SSC_OUTPUT,       SSC_NUMBER,      "system_heat_rate",           "Heat rate conversion factor",          "MMBTUs/MWhe",  "",      "Annual",      "*",               "",                    "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "annual_fuel_usage",           "Annual Fuel Usage",                    "kWht",         "",      "Annual",      "*",               "",                    "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "water_usage",                "Annual Water Usage",                   "",             "",      "Annual",      "*",               "",                    "" },
+	{ SSC_OUTPUT,       SSC_NUMBER,      "system_heat_rate",           "Heat Rate Conversion Factor",          "MMBTUs/MWhe",  "",      "Annual",      "*",               "",                    "" },
 
 	{ SSC_OUTPUT, SSC_NUMBER, "capacity_factor", "Capacity factor", "%", "", "Annual", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "kwh_per_kw", "First year kWh/kW", "kWh/kW", "", "Annual", "*", "", "" },
@@ -69,14 +69,14 @@ static var_info _cm_vtab_generic_system[] = {
 
 var_info_invalid };
 
-class cm_generic_system : public compute_module
+class cm_custom_generation : public compute_module
 {
 private:
 public:
 	
-	cm_generic_system()
+	cm_custom_generation()
 	{
-		add_var_info( _cm_vtab_generic_system );
+		add_var_info( _cm_vtab_custom_generation );
 
 		// performance adjustment factors
 		add_var_info(vtab_adjustment_factors);
@@ -92,7 +92,7 @@ public:
 		// Warning workaround
 		static bool is32BitLifetime = (__ARCHBITS__ == 32 &&	system_use_lifetime_output);
 		if (is32BitLifetime)
-		throw exec_error( "generic", "Lifetime simulation of generic systems is only available in the 64 bit version of SAM.");
+		throw exec_error( "custom_generation", "Lifetime simulation of custom generation profile systems is only available in the 64 bit version of SAM.");
 
 		// Lifetime setup
 		ssc_number_t *enet = nullptr;
@@ -120,7 +120,7 @@ public:
 
 		adjustment_factors haf(this->get_var_table(), "adjust");
 		if (!haf.setup(nrec_load, nyears))
-			throw exec_error("generic system", "failed to setup adjustment factors: " + haf.error());
+			throw exec_error("custom_generation", "failed to setup adjustment factors: " + haf.error());
 
 		if (system_use_lifetime_output)
 		{
@@ -175,11 +175,11 @@ public:
 			size_t steps_per_hour_gen = nrec_gen / 8760;
 
 			if (!enet_in) {
-				throw exec_error("generic", util::format("energy_output_array variable had no values."));
+				throw exec_error("custom_generation", util::format("energy_output_array variable had no values."));
 			}
 
 			if (nrec_gen < nrec_load) {
-				throw exec_error("generic", util::format("energy_output_array %d must be greater than or equal to load array %d", nrec_gen, nrec_load));
+				throw exec_error("custom_generation", util::format("energy_output_array %d must be greater than or equal to load array %d", nrec_gen, nrec_load));
 			}
 			else {
 				nlifetime = nrec_gen * nyears;
@@ -256,5 +256,5 @@ public:
 	} // exec
 };
 
-DEFINE_MODULE_ENTRY( generic_system, "Generic System", 1 );
+DEFINE_MODULE_ENTRY( custom_generation, "Custom Generation Profile (formerly Generic System)", 1 );
 

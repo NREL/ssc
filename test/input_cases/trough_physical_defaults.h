@@ -336,6 +336,7 @@ ssc_data_t trough_physical_defaults()
     ssc_number_t p_trough_loop_control[25] = { 8, 1, 1, 8, 1, 1, 7, 1, 1, 6, 1, 1, 5, 1, 1, 4, 1, 1, 3, 1, 1, 2, 1, 1, 1 };
     ssc_data_set_array(data, "trough_loop_control", p_trough_loop_control, 25);
     ssc_data_set_number(data, "ppa_soln_mode", 0);
+    ssc_data_set_number(data, "csp_financial_model", 8);    // No financial
     return data;
 }
 
