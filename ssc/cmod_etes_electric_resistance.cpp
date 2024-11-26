@@ -609,7 +609,9 @@ public:
             W_dot_cycle_des / eta_cycle,  //[MWt]
             heater_mult,                  //[-]
             W_dot_cycle_des / eta_cycle * tshours,  //[MWht]
+            true,
             as_double("h_tank"),
+            0.0,
             as_double("u_tank"),
             as_integer("tank_pairs"),
             as_double("hot_tank_Thtr"),
@@ -709,10 +711,6 @@ public:
         bool is_offtaker_frac_also_max = true;
 
         C_csp_tou tou(offtaker_schedule, elec_pricing_schedule, dispatch_model_type, is_offtaker_frac_also_max);
-
-        //tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = true;
-        //tou.mc_dispatch_params.m_is_block_dispatch = false;
-        //tou.mc_dispatch_params.m_is_arbitrage_policy = !as_boolean("is_dispatch");
         
         // *****************************************************
         // *****************************************************
@@ -737,15 +735,11 @@ public:
         etes_dispatch_opt dispatch;
 
         if (as_boolean("is_dispatch")) {
-            dispatch.solver_params.set_user_inputs(as_boolean("is_dispatch"), as_integer("disp_steps_per_hour"), as_integer("disp_frequency"), as_integer("disp_horizon"),
+            dispatch.solver_params.set_user_inputs(as_integer("disp_steps_per_hour"), as_integer("disp_frequency"), as_integer("disp_horizon"),
                 as_integer("disp_max_iter"), as_double("disp_mip_gap"), as_double("disp_timeout"),
-                as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_spec_scaling"), as_integer("disp_reporting"),
-                false, false, "", "");
+                as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_spec_scaling"), as_integer("disp_reporting"));
             dispatch.params.set_user_params(as_double("disp_time_weighting"), as_double("disp_csu_cost")*W_dot_cycle_des, as_double("disp_pen_delta_w"),
                 as_double("disp_hsu_cost") * q_dot_heater_des, as_double("disp_down_time_min"), as_double("disp_up_time_min")); // , ppa_price_year1);
-        }
-        else {
-            dispatch.solver_params.dispatch_optimize = false;
         }
 
         // *****************************************************
@@ -883,8 +877,8 @@ public:
         c_electric_resistance.get_design_parameters(E_heater_su_des, W_dot_heater_des_calc);
 
             // TES
-        double V_tes_htf_avail /*m3*/, V_tes_htf_total /*m3*/, d_tank /*m*/, q_dot_loss_tes_des /*MWt*/, dens_store_htf_at_T_ave /*kg/m3*/, Q_tes_des_tes_class;
-        storage.get_design_parameters(V_tes_htf_avail, V_tes_htf_total, d_tank,
+        double V_tes_htf_avail /*m3*/, V_tes_htf_total /*m3*/, h_tank /*m*/, d_tank /*m*/, q_dot_loss_tes_des /*MWt*/, dens_store_htf_at_T_ave /*kg/m3*/, Q_tes_des_tes_class;
+        storage.get_design_parameters(V_tes_htf_avail, V_tes_htf_total, h_tank, d_tank,
             q_dot_loss_tes_des, dens_store_htf_at_T_ave, Q_tes_des_tes_class);        
 
             // System
@@ -1162,18 +1156,8 @@ public:
         accumulate_annual_for_year("disp_solve_state", "disp_solve_state_ann", sim_setup.m_report_step / 3600. / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed / steps_per_hour);
 
         // Reporting dispatch solution counts
-        size_t n_flag, n_gap = 0;
-        ssc_number_t* subopt_flag = as_array("disp_subopt_flag", &n_flag);
-        ssc_number_t* rel_mip_gap = as_array("disp_rel_mip_gap", &n_gap);
-
-        std::vector<int> flag;
-        std::vector<double> gap;
-        flag.resize(n_flag);
-        gap.resize(n_flag);
-        for (size_t i = 0; i < n_flag; i++) {
-            flag[i] = (int)subopt_flag[i];
-            gap[i] = (double)rel_mip_gap[i];
-        }
+        std::vector<int> flag = as_vector_integer("disp_subopt_flag");
+        std::vector<double> gap = as_vector_double("disp_rel_mip_gap");
 
         double avg_gap = 0;
         if (as_boolean("is_dispatch")) {

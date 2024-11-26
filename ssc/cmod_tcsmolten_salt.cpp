@@ -91,16 +91,6 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_NUMBER, "is_calc_sm",                         "False (default): use input solarm, True: calc solar multiple to achieve q_dot_rec_des_target",                                            "",             "",                                  "Tower and Receiver",                       "?=0",                                                              "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_NUMBER, "q_dot_rec_des_target",               "Target design receiver thermal power",                                                                                                    "MWe",          "",                                  "Tower and Receiver",                       "is_calc_sm=1",                                                     "",              "SIMULATION_PARAMETER" },
 
-    // System Design
-    { SSC_INPUT,     SSC_NUMBER, "is_parallel_htr",                    "Does plant include a HTF heater parallel to solar field?",                                                                                "",             "",                                  "System Control",                           "?=0",                                                              "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "T_htf_cold_des",                     "Cold HTF inlet temperature at design conditions",                                                                                         "C",            "",                                  "System Design",                            "*",                                                                "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "T_htf_hot_des",                      "Hot HTF outlet temperature at design conditions",                                                                                         "C",            "",                                  "System Design",                            "*",                                                                "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "P_ref",                              "Reference output electric power at design condition",                                                                                     "MW",           "",                                  "System Design",                            "*",                                                                "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "design_eff",                         "Power cycle efficiency at design",                                                                                                        "none",         "",                                  "System Design",                            "*",                                                                "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "tshours",                            "Equivalent full-load thermal storage hours",                                                                                              "hr",           "",                                  "System Design",                            "*",                                                                "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "solarm",                             "Solar multiple",                                                                                                                          "-",            "",                                  "System Design",                            "*",                                                                "",              ""},
-    { SSC_INPUT,     SSC_NUMBER, "dni_des",                            "Design-point DNI",                                                                                                                        "W/m2",         "",                                  "System Design",                            "*",                                                                "",              ""},
-
     // Solar field
     { SSC_INPUT,     SSC_NUMBER, "field_model_type",                   "0=design field and tower/receiver geometry, 1=design field, 2=user specified field, 3=user flux and eta map, pass heliostat_positions to SolarPILOT for layout, 4=user flux and eta maps, no SolarPILOT, input A_sf_in, total_land_area_before_rad_cooling_in, and N_hel", "", "", "Heliostat Field", "*",     "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "helio_width",                        "Heliostat width",                                                                                                                         "m",            "",                                  "Heliostat Field",                          "field_model_type<4",                                               "",              ""},
@@ -115,7 +105,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_NUMBER, "land_min",                           "Land min boundary",                                                                                                                       "-ORm",         "",                                  "Heliostat Field",                          "?=0.75",                                                           "",              ""},
     { SSC_INPUT,     SSC_MATRIX, "land_bound_table",                   "Land boundary table",                                                                                                                     "m",            "",                                  "Heliostat Field",                          "?",                                                                "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_ARRAY,  "land_bound_list",                    "Land boundary table listing",                                                                                                             "",             "",                                  "Heliostat Field",                          "?",                                                                "",              "SIMULATION_PARAMETER"},
-    { SSC_INPUT,     SSC_NUMBER, "p_start",                            "Heliostat startup energy",                                                                                                                "kWe-hr",       "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
+    { SSC_INPUT,     SSC_NUMBER, "p_start",                            "Heliostat startup energy",                                                                                                                "kWhe",         "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "p_track",                            "Heliostat tracking energy",                                                                                                               "kWe",          "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "hel_stow_deploy",                    "Stow/deploy elevation angle",                                                                                                             "deg",          "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "v_wind_max",                         "Heliostat max wind velocity",                                                                                                             "m/s",          "",                                  "Heliostat Field",                          "*",                                                                "",              ""},
@@ -326,7 +316,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_NUMBER, "bop_par_2",                          "Balance of plant parasitic power fraction - quadratic coeff",                                                                             "",             "",                                  "System Control",                           "*",                                                                "",              "" },
 
     // System Control
-    { SSC_INPUT,     SSC_ARRAY,  "timestep_load_fractions",            "Turbine load fraction for each timestep, alternative to block dispatch",                                                                  "",             "",                                  "System Control",                           "?",                                                                "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,     SSC_ARRAY,  "timestep_load_fractions",            "Turbine load fraction for each timestep, alternative to block dispatch",                                                                  "",             "",                                  "System Control",                           "",                                                                 "",              ""},
     { SSC_INPUT,     SSC_ARRAY,  "f_turb_tou_periods",                 "Dispatch logic for turbine load fraction",                                                                                                "",             "",                                  "System Control",                           "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_MATRIX, "weekday_schedule",                   "12x24 CSP operation Time-of-Use Weekday schedule",                                                                                        "",             "",                                  "System Control",                           "*",                                                                "",              ""},
     { SSC_INPUT,     SSC_MATRIX, "weekend_schedule",                   "12x24 CSP operation Time-of-Use Weekend schedule",                                                                                        "",             "",                                  "System Control",                           "*",                                                                "",              ""},
@@ -352,7 +342,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_NUMBER, "disp_pen_ramping",                   "Dispatch cycle production change penalty",                                                                                                "$/MWe-change", "",                                  "System Control",                           "",                                                                 "",              ""},
     { SSC_INPUT,     SSC_NUMBER, "disp_inventory_incentive",           "Dispatch storage terminal inventory incentive multiplier",                                                                                "",             "",                                  "System Control",                           "?=0.0",                                                            "",              "SIMULATION_PARAMETER"},
     { SSC_INPUT,     SSC_NUMBER, "q_rec_standby",                      "Receiver standby energy consumption",                                                                                                     "kWt",          "",                                  "System Control",                           "?=9e99",                                                           "",              "SIMULATION_PARAMETER"},
-    { SSC_INPUT,     SSC_NUMBER, "q_rec_heattrace",                    "Receiver heat trace energy consumption during startup",                                                                                   "kWe-hr",       "",                                  "System Control",                           "?=0.0",                                                            "",              "SIMULATION_PARAMETER"},
+    { SSC_INPUT,     SSC_NUMBER, "q_rec_heattrace",                    "Receiver heat trace energy consumption during startup",                                                                                   "kWhe",         "",                                  "System Control",                           "?=0.0",                                                            "",              "SIMULATION_PARAMETER"},
 
     // Pricing schedules and multipliers
         // Ideally this would work with sim_type = 2, but UI inputs availability depends on financial mode
@@ -373,7 +363,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_INPUT,     SSC_NUMBER, "is_field_tracking_init",             "Is heliostat field tracking? (1 = true)",                                                                                                 "-",            "",                                  "System Control",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
     { SSC_INPUT,     SSC_NUMBER, "rec_op_mode_initial",                "Initial receiver operating mode 0: off, 1: startup, 2: on",                                                                               "-",            "",                                  "System Control",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
     { SSC_INPUT,     SSC_NUMBER, "rec_startup_time_remain_init",       "Initial receiver startup time remaining",                                                                                                 "hr",           "",                                  "System Control",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
-    { SSC_INPUT,     SSC_NUMBER, "rec_startup_energy_remain_init",     "Initial receiver startup energy remaining",                                                                                               "W-hr",         "",                                  "System Control",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,     SSC_NUMBER, "rec_startup_energy_remain_init",     "Initial receiver startup energy remaining",                                                                                               "Wh",           "",                                  "System Control",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
         // Power cycle
     { SSC_INPUT,     SSC_NUMBER, "pc_op_mode_initial",                 "Initial cycle operation mode 0:startup, 1:on, 2:standby, 3:off, 4:startup_controlled",                                                    "-",            "",                                  "System Control",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
     { SSC_INPUT,     SSC_NUMBER, "pc_startup_time_remain_init",        "Initial cycle startup time remaining",                                                                                                    "hr",           "",                                  "System Control",                           "",                                                                 "",              "SIMULATION_PARAMETER" },
@@ -505,7 +495,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
         // Heater
     { SSC_OUTPUT,    SSC_NUMBER, "q_dot_heater_des",                   "Heater design thermal power",                                                                                                             "MWt",         "",                                  "Heater",                                   "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "W_dot_heater_des",                   "Heater electricity consumption at design",                                                                                                "MWe",         "",                                  "Heater",                                   "*",                                                                "",              "" },
-    { SSC_OUTPUT,    SSC_NUMBER, "E_heater_su_des",                    "Heater startup energy",                                                                                                                   "MWt-hr",      "",                                  "Heater",                                   "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "E_heater_su_des",                    "Heater startup energy",                                                                                                                   "MWht",        "",                                  "Heater",                                   "*",                                                                "",              "" },
 
         // Power Cycle
     { SSC_OUTPUT,    SSC_NUMBER, "m_dot_htf_cycle_des",                "PC HTF mass flow rate at design",                                                                                                         "kg/s",        "",                                  "Power Cycle",                              "*",                                                                "",              "" },
@@ -531,7 +521,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_NUMBER, "m_dot_water_ND_des_calc",            "UDPC calculated water use at design",                                                                                                      "",            "",                                  "UDPC Design Calc",                        "*",                                                                "",              "" },
 
         // TES
-    { SSC_OUTPUT,    SSC_NUMBER, "Q_tes_des",                          "TES design capacity",                                                                                                                     "MWt-hr",       "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "Q_tes_des",                          "TES design capacity",                                                                                                                     "MWht",       "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "V_tes_htf_avail_des",                "TES volume of HTF available for heat transfer",                                                                                           "m3",           "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "V_tes_htf_total_des",                "TES total HTF volume",                                                                                                                    "m3",           "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
     { SSC_OUTPUT,    SSC_NUMBER, "d_tank_tes",                         "TES tank diameter",                                                                                                                       "m",            "",                                 "TES Design Calc",                          "*",                                                                "",              "" },
@@ -696,7 +686,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_ARRAY,  "P_rec_heattrace",                    "Receiver heat trace parasitic load",                                                                                                      "MWe",          "",                                  "System",                                   "sim_type=1&is_rec_model_trans=1",                                  "",              ""},
 
         // System outputs
-    { SSC_OUTPUT,    SSC_ARRAY,  "P_out_net",                          "Total electric power to grid",                                                                                                            "MWe",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
+    { SSC_OUTPUT,    SSC_ARRAY,  "P_out_net",                          "System net electrical power",                                                                                                             "MWe",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
 
         // Controller outputs
     { SSC_OUTPUT,    SSC_ARRAY,  "tou_value",                          "CSP operating time-of-use value",                                                                                                         "",             "",                                  "",                                         "sim_type=1",                                                       "",              ""},
@@ -717,7 +707,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_ARRAY,  "disp_obj_relax",                     "Dispatch objective function - relaxed max",                                                                                               "",             "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "disp_qsf_expected",                  "Dispatch expected solar field available energy",                                                                                          "MWt",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "disp_qsfprod_expected",              "Dispatch expected solar field generation",                                                                                                "MWt",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
-    { SSC_OUTPUT,    SSC_ARRAY,  "disp_qsfsu_expected",                "Dispatch expected solar field startup energy",                                                                                             "MWt",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
+    { SSC_OUTPUT,    SSC_ARRAY,  "disp_qsfsu_expected",                "Dispatch expected solar field startup energy",                                                                                            "MWt",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "disp_tes_expected",                  "Dispatch expected TES charge level",                                                                                                      "MWht",         "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "disp_pceff_expected",                "Dispatch expected power cycle efficiency adj.",                                                                                           "",             "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "disp_thermeff_expected",             "Dispatch expected SF thermal efficiency adj.",                                                                                            "",             "",                                  "",                                         "sim_type=1",                                                       "",              ""},
@@ -750,21 +740,21 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_ARRAY,  "operating_modes_b",                  "Next 3 operating modes tried",                                                                                                            "",             "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_ARRAY,  "operating_modes_c",                  "Final 3 operating modes tried",                                                                                                           "",             "",                                  "",                                         "sim_type=1",                                                       "",              ""},
 
-    { SSC_OUTPUT,    SSC_ARRAY,  "gen",                                "Total electric power to grid with available derate",                                                                                      "kWe",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
+    { SSC_OUTPUT,    SSC_ARRAY,  "gen",                                "System net electrical power w/ avail. derate",                                                                                            "kWe",          "",                                  "",                                         "sim_type=1",                                                       "",              ""},
 
     // Annual single-value outputs
-    { SSC_OUTPUT,    SSC_NUMBER, "annual_energy",                      "Annual total electric power to grid",                                                                                                     "kWhe",         "",                                  "",                                         "sim_type=1",                                                       "",              ""},
+    { SSC_OUTPUT,    SSC_NUMBER, "annual_energy",                      "Annual net electrical energy w/ avail. derate",                                                                                           "kWhe",         "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "annual_W_cycle_gross",               "Electrical source - power cycle gross output",                                                                                            "kWhe",         "",                                  "",                                         "sim_type=1",                                                       "",              ""},
-    { SSC_OUTPUT,    SSC_NUMBER, "annual_W_cooling_tower",             "Total of condenser operation parasitic",                                                                                                 "kWhe",         "",                                  "PC",                                       "sim_type=1",                                                       "",              ""},
-    { SSC_OUTPUT,    SSC_NUMBER, "annual_q_rec_htf",                   "Annual receiver power delivered to HTF",                                                                                                  "MWt-hr",       "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              "" },
-    { SSC_OUTPUT,    SSC_NUMBER, "annual_q_rec_inc",                   "Annual receiver incident thermal power after reflective and defocus losses",                                                              "MWt-hr",       "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              ""},
-    { SSC_OUTPUT,    SSC_NUMBER, "annual_q_rec_loss",                  "Annual receiver convective and radiative losses",                                                                                         "MWt-hr",       "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              "" },
-    { SSC_OUTPUT,    SSC_NUMBER, "annual_q_piping_loss",               "Annual tower piping losses",                                                                                                              "MWt-hr",       "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              "" },
-    { SSC_OUTPUT,    SSC_NUMBER, "annual_q_rec_startup",               "Annual receiver startup energy",                                                                                                          "MWt-hr",       "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              "" },
-    { SSC_OUTPUT,    SSC_NUMBER, "annual_E_tower_pump",                "Annual tower pumping power",                                                                                                              "MWe-hr",       "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              ""},
+    { SSC_OUTPUT,    SSC_NUMBER, "annual_W_cooling_tower",             "Total of condenser operation parasitic",                                                                                                  "kWhe",         "",                                  "PC",                                       "sim_type=1",                                                       "",              ""},
+    { SSC_OUTPUT,    SSC_NUMBER, "annual_q_rec_htf",                   "Annual receiver power delivered to HTF",                                                                                                  "MWht",         "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "annual_q_rec_inc",                   "Annual receiver incident thermal power after reflective and defocus losses",                                                              "MWht",         "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              ""},
+    { SSC_OUTPUT,    SSC_NUMBER, "annual_q_rec_loss",                  "Annual receiver convective and radiative losses",                                                                                         "MWht",         "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "annual_q_piping_loss",               "Annual tower piping losses",                                                                                                              "MWht",         "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "annual_q_rec_startup",               "Annual receiver startup energy",                                                                                                          "MWht",         "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "annual_E_tower_pump",                "Annual tower pumping power",                                                                                                              "MWhe",         "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "annual_eta_rec_th",                  "Annual receiver thermal efficiency ignoring rec reflective loss",                                                                         "",             "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "annual_eta_rec_th_incl_refl",        "Annual receiver thermal efficiency including reflective loss",                                                                            "",             "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              ""},
-    { SSC_OUTPUT,    SSC_NUMBER, "annual_q_defocus_est",               "Annual defocus loss estimate",                                                                                                            "MWt-hr",       "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              "" },
+    { SSC_OUTPUT,    SSC_NUMBER, "annual_q_defocus_est",               "Annual defocus loss estimate",                                                                                                            "MWht",         "",                                  "Tower and Receiver",                       "sim_type=1",                                                       "",              "" },
 
     { SSC_OUTPUT,    SSC_NUMBER, "conversion_factor",                  "Gross to net conversion factor",                                                                                                          "%",            "",                                  "",                                         "sim_type=1",                                                       "",              ""},
     { SSC_OUTPUT,    SSC_NUMBER, "capacity_factor",                    "Capacity factor",                                                                                                                         "%",            "",                                  "",                                         "sim_type=1",                                                       "",              ""},
@@ -794,7 +784,7 @@ static var_info _cm_vtab_tcsmolten_salt[] = {
     { SSC_OUTPUT,    SSC_ARRAY,  "is_field_tracking_final",            "Final heliostat field operation is tracking? (1 = true)",                                                                                 "-",            "",                                  "System Control",                           "",                                                                 "",              "" },          
     { SSC_OUTPUT,    SSC_ARRAY,  "rec_op_mode_final",                  "Final receiver operating mode 0: off, 1: startup, 2: on",                                                                                 "-",            "",                                  "System Control",                           "",                                                                 "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "rec_startup_time_remain_final",      "Final receiver startup time remaining",                                                                                                   "hr",           "",                                  "System Control",                           "",                                                                 "",              "" },
-    { SSC_OUTPUT,    SSC_ARRAY,  "rec_startup_energy_remain_final",    "Final receiver startup energy remaining",                                                                                                 "W-hr",         "",                                  "System Control",                           "",                                                                 "",              "" },
+    { SSC_OUTPUT,    SSC_ARRAY,  "rec_startup_energy_remain_final",    "Final receiver startup energy remaining",                                                                                                 "Wh",           "",                                  "System Control",                           "",                                                                 "",              "" },
         // Power cycle
     { SSC_OUTPUT,    SSC_ARRAY,  "pc_op_mode_final",                   "Final cycle operation mode 0:startup, 1:on, 2:standby, 3:off, 4:startup_controlled",                                                      "-",            "",                                  "System Control",                           "",                                                                 "",              "" },
     { SSC_OUTPUT,    SSC_ARRAY,  "pc_startup_time_remain_final",       "Final cycle startup time remaining",                                                                                                      "hr",           "",                                  "System Control",                           "",                                                                 "",              "" },
@@ -929,7 +919,7 @@ public:
 
         // System Design Calcs
         double q_dot_pc_des = W_dot_cycle_des / eta_cycle;      //[MWt]
-        double Q_tes = q_dot_pc_des * tshours;                  //[MWt-hr]
+        double Q_tes = q_dot_pc_des * tshours;                  //[MWht]
         double solar_mult = as_number("solarm");                //[-]
         double q_dot_rec_des = q_dot_pc_des * solar_mult;       //[MWt]
 
@@ -1849,7 +1839,7 @@ public:
         //    so it can use the active receiver area
         C_pt_sf_perf_interp heliostatfield(A_rec);
 
-        heliostatfield.ms_params.m_p_start = as_double("p_start");      //[kWe-hr] Heliostat startup energy
+        heliostatfield.ms_params.m_p_start = as_double("p_start");      //[kWhe] Heliostat startup energy
         heliostatfield.ms_params.m_p_track = as_double("p_track");      //[kWe] Heliostat tracking power
         heliostatfield.ms_params.m_hel_stow_deploy = as_double("hel_stow_deploy");  // N/A
         heliostatfield.ms_params.m_v_wind_max = as_double("v_wind_max");            // N/A
@@ -2009,7 +1999,9 @@ public:
             as_double("P_ref") / as_double("design_eff"),   //[MWt]
             as_double("solarm"),                            //[-]
             as_double("P_ref") / as_double("design_eff") * as_double("tshours"),
+            true,                                              // Fixed height
             as_double("h_tank"),
+            0.0,                                            //[m] No input diameter (use height instead)
             as_double("u_tank"),
             as_integer("tank_pairs"),
             as_double("hot_tank_Thtr"),
@@ -2198,16 +2190,6 @@ public:
 
         C_csp_tou tou(offtaker_schedule, elec_pricing_schedule, dispatch_model_type, is_offtaker_frac_also_max);
 
-        //tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = as_boolean("is_tod_pc_target_also_pc_max");
-        //tou.mc_dispatch_params.m_is_block_dispatch = !(as_boolean("is_dispatch") || as_boolean("is_dispatch_targets"));
-        //tou.mc_dispatch_params.m_use_rule_1 = true;
-        //tou.mc_dispatch_params.m_standby_off_buffer = 2.0;
-        //tou.mc_dispatch_params.m_use_rule_2 = false;
-        //tou.mc_dispatch_params.m_q_dot_rec_des_mult = -1.23;
-        //tou.mc_dispatch_params.m_f_q_dot_pc_overwrite = -1.23;
-
-        
-        //tou.mc_dispatch_params.m_is_dispatch_targets = is_dispatch_targets;
         if (is_dispatch_targets) {
             int n_expect = (int)ceil((sim_setup.m_sim_time_end - sim_setup.m_sim_time_start) / 3600. * steps_per_hour);
 
@@ -2281,8 +2263,6 @@ public:
         // System dispatch
         csp_dispatch_opt dispatch;
 
-        dispatch.solver_params.dispatch_optimize = is_dispatch;
-
         if (is_dispatch && sim_type == 1){
 
             double heater_startup_cost = 0.0;
@@ -2292,10 +2272,10 @@ public:
                 heater_startup_cost = as_double("disp_hsu_cost_rel") * q_dot_heater_des;    //[$/start]
             }
 
-            dispatch.solver_params.set_user_inputs(is_dispatch, as_integer("disp_steps_per_hour"), as_integer("disp_frequency"), as_integer("disp_horizon"),
+            dispatch.solver_params.set_user_inputs(as_integer("disp_steps_per_hour"), as_integer("disp_frequency"), as_integer("disp_horizon"),
                 as_integer("disp_max_iter"), as_double("disp_mip_gap"), as_double("disp_timeout"),
-                as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_spec_scaling"), as_integer("disp_reporting"),
-                as_boolean("is_write_ampl_dat"), as_boolean("is_ampl_engine"), as_string("ampl_data_dir"), as_string("ampl_exec_call"));
+                as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_spec_scaling"), as_integer("disp_reporting"));
+            dispatch.solver_params.set_ampl_inputs(as_boolean("is_write_ampl_dat"), as_boolean("is_ampl_engine"), as_string("ampl_data_dir"), as_string("ampl_exec_call"));
 
             double disp_csu_cost_calc = as_double("disp_csu_cost_rel")*W_dot_cycle_des; //[$/start]
             double disp_rsu_cost_calc = as_double("disp_rsu_cost_rel")*q_dot_rec_des;   //[$/start]
@@ -2499,23 +2479,23 @@ public:
             // Heater
         assign("q_dot_heater_des", q_dot_heater_des);       //[MWt]
         double W_dot_heater_des_calc = 0.0;                 //[MWe]
-        double E_heater_su_des = 0.0;                       //[MWt-hr]
+        double E_heater_su_des = 0.0;                       //[MWht]
         if (is_parallel_heater) {
             p_electric_resistance->get_design_parameters(E_heater_su_des, W_dot_heater_des_calc);
         }
         assign("W_dot_heater_des", (ssc_number_t)W_dot_heater_des_calc);    //[MWe]
-        assign("E_heater_su_des", (ssc_number_t)E_heater_su_des);           //[MWt-hr]
+        assign("E_heater_su_des", (ssc_number_t)E_heater_su_des);           //[MWht]
 
             // *************************
             // Thermal Energy Storage
         double V_tes_htf_avail_calc /*m3*/, V_tes_htf_total_calc /*m3*/,
-            d_tank_calc /*m*/, q_dot_loss_tes_des_calc /*MWt*/, dens_store_htf_at_T_ave_calc /*kg/m3*/,
-            Q_tes_des_calc /*MWt-hr*/;
+            h_tank_calc /*m*/, d_tank_calc /*m*/, q_dot_loss_tes_des_calc /*MWt*/, dens_store_htf_at_T_ave_calc /*kg/m3*/,
+            Q_tes_des_calc /*MWht*/;
 
         storage.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
-            d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
+            h_tank_calc, d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
 
-        assign("Q_tes_des", Q_tes_des_calc);                //[MWt-hr]
+        assign("Q_tes_des", Q_tes_des_calc);                //[MWht]
         assign("V_tes_htf_avail_des", V_tes_htf_avail_calc);    //[m3]
         assign("V_tes_htf_total_des", V_tes_htf_total_calc);    //[m3]
         assign("d_tank_tes", d_tank_calc);                      //[m]
@@ -2998,11 +2978,11 @@ public:
         accumulate_annual_for_year("gen", "annual_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed/steps_per_hour);
         accumulate_annual_for_year("gensales_after_avail", "annual_sales_energy", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
         
-        accumulate_annual_for_year("P_cycle", "annual_W_cycle_gross", 1000.0*sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed/steps_per_hour);        //[kWe-hr]
-        accumulate_annual_for_year("P_cooling_tower_tot", "annual_W_cooling_tower", 1000.0*sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);        //[kWe-hr]
+        accumulate_annual_for_year("P_cycle", "annual_W_cycle_gross", 1000.0*sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed/steps_per_hour);        //[kWhe]
+        accumulate_annual_for_year("P_cooling_tower_tot", "annual_W_cooling_tower", 1000.0*sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);        //[kWhe]
 
-        accumulate_annual_for_year("Q_thermal", "annual_q_rec_htf", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);           //[MWt-hr]
-        accumulate_annual_for_year("q_dot_rec_inc", "annual_q_rec_inc", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);           //[MWt-hr]
+        accumulate_annual_for_year("Q_thermal", "annual_q_rec_htf", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);           //[MWht]
+        accumulate_annual_for_year("q_dot_rec_inc", "annual_q_rec_inc", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);           //[MWht]
         accumulate_annual_for_year("q_thermal_loss", "annual_q_rec_loss", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
         accumulate_annual_for_year("q_piping_losses", "annual_q_piping_loss", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
         accumulate_annual_for_year("q_startup", "annual_q_rec_startup", sim_setup.m_report_step / 3600.0, steps_per_hour, 1, n_steps_fixed / steps_per_hour);
@@ -3022,8 +3002,8 @@ public:
             i_defocus = min(1.0, max(0.0, p_defocus[i]));
             q_defocus_sum += p_q_rec_in[i]*(1.0 - i_defocus);   //[MWt]
         }
-        q_defocus_sum *= sim_setup.m_report_step/3600.0;    //[MWt-hr]
-        assign("annual_q_defocus_est", q_defocus_sum);      //[MWt-hr]
+        q_defocus_sum *= sim_setup.m_report_step/3600.0;    //[MWht]
+        assign("annual_q_defocus_est", q_defocus_sum);      //[MWht]
 
         accumulate_annual_for_year("disp_objective", "disp_objective_ann", sim_setup.m_report_step / 3600.0 / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed/steps_per_hour);
         accumulate_annual_for_year("disp_solve_iter", "disp_iter_ann", sim_setup.m_report_step / 3600.0 / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed/steps_per_hour);
@@ -3033,19 +3013,9 @@ public:
         accumulate_annual_for_year("disp_solve_state", "disp_solve_state_ann", sim_setup.m_report_step / 3600.0 / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed / steps_per_hour);
 
         // Reporting dispatch solution counts
-        size_t n_flag, n_gap = 0;
-        ssc_number_t* subopt_flag = as_array("disp_subopt_flag", &n_flag);
-        ssc_number_t* rel_mip_gap = as_array("disp_rel_mip_gap", &n_gap);
-
-        std::vector<int> flag;
-        std::vector<double> gap;
-        flag.resize(n_flag);
-        gap.resize(n_flag);
-        for (size_t i = 0; i < n_flag; i++) {
-            flag[i] = (int)subopt_flag[i];
-            gap[i] = (double)rel_mip_gap[i];
-        }
-
+        std::vector<int> flag = as_vector_integer("disp_subopt_flag");
+        std::vector<double> gap = as_vector_double("disp_rel_mip_gap");
+        
         double avg_gap = 0;
         if (as_boolean("is_dispatch")) {
             std::string disp_sum_msg;
@@ -3063,9 +3033,9 @@ public:
         double V_water_mirrors = as_double("water_usage_per_wash") / 1000.0*A_sf*as_double("washing_frequency");
         assign("annual_total_water_use", (ssc_number_t)(V_water_cycle + V_water_mirrors));
 
-        ssc_number_t ae = as_number("annual_energy");           //[kWe-hr]
-        ssc_number_t pg = as_number("annual_W_cycle_gross");    //[kWe-hr]
-        ssc_number_t annual_sales_energy = as_number("annual_sales_energy");        //[kWe-hr]
+        ssc_number_t ae = as_number("annual_energy");           //[kWhe]
+        ssc_number_t pg = as_number("annual_W_cycle_gross");    //[kWhe]
+        ssc_number_t annual_sales_energy = as_number("annual_sales_energy");        //[kWhe]
         ssc_number_t convfactor = (pg != 0) ? 100 * ae / pg : (ssc_number_t)0.0;
         assign("conversion_factor", convfactor);
 
@@ -3136,10 +3106,10 @@ public:
             double total_energy_in_sub_period = 0.0;
             for (size_t i = 0; i < n_ppa_steps; i++) {
                 size_t j = ppa_pairs[i].first;
-                total_energy_in_sub_period += p_gen[j] * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
+                total_energy_in_sub_period += p_gen[j] * sim_setup.m_report_step / 3600.0;     //[kWhe]
             }
 
-            double total_energy_nameplate = nameplate * n_ppa_steps * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
+            double total_energy_nameplate = nameplate * n_ppa_steps * sim_setup.m_report_step / 3600.0;     //[kWhe]
 
             double cap_fac_highest_1000_ppas = 0.0;
             if (nameplate > 0.0) {
@@ -3153,10 +3123,10 @@ public:
             total_energy_in_sub_period = 0.0;
             for (size_t i = 0; i < n_ppa_steps; i++) {
                 size_t j = ppa_pairs[i].first;
-                total_energy_in_sub_period += p_gen[j] * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
+                total_energy_in_sub_period += p_gen[j] * sim_setup.m_report_step / 3600.0;     //[kWhe]
             }
 
-            total_energy_nameplate = nameplate * n_ppa_steps * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
+            total_energy_nameplate = nameplate * n_ppa_steps * sim_setup.m_report_step / 3600.0;     //[kWhe]
 
             double cap_fac_highest_2000_ppas = 0.0;
             if (nameplate > 0.0) {
@@ -3184,10 +3154,10 @@ public:
             double total_energy_in_sub_period_tdry = 0.0;
             for (size_t i = 0; i < n_tdry_steps; i++) {
                 size_t j = tdry_pairs[i].first;
-                total_energy_in_sub_period_tdry += p_gen[j] * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
+                total_energy_in_sub_period_tdry += p_gen[j] * sim_setup.m_report_step / 3600.0;     //[kWhe]
             }
 
-            double total_energy_nameplate_tdry = nameplate * n_tdry_steps * sim_setup.m_report_step / 3600.0;     //[kWe-hr]
+            double total_energy_nameplate_tdry = nameplate * n_tdry_steps * sim_setup.m_report_step / 3600.0;     //[kWhe]
 
             double cap_fac_warmest_100_tdrys = 0.0;
             if (nameplate > 0.0) {
