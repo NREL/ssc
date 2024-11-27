@@ -420,9 +420,9 @@ public:
     // Get the adjust loss at the current timestep
     double getAvailabilityLoss(size_t lifetimeIndex);
 
-    battery_state get_state();
+    battery_state& get_state();
 
-    battery_params get_params();
+    battery_params& get_params();
 
     // The simulation time tracked by last_idx is dependent on the timestep. 
     // If the previous state was using a different timestep, such as via ChangeTimestep, set the dt_hr (which is in battery_params)
