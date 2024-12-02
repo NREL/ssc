@@ -3496,7 +3496,7 @@ public:
 //		save_cf(CF_energy_curtailed, nyears, "cf_energy_curtailed");
 //        const double MMBTU_TO_KWh = 293.07107; // 1
         save_cf(CF_ppa_price, nyears, "cf_ppa_price");
-        for (size_t i = 0; i < nyears; i++)
+        for (size_t i = 0; i <= nyears; i++)
             cf.at(CF_ppa_price_heat_btu, i) = cf.at(CF_ppa_price, i) * MMBTU_TO_KWh;
     	save_cf( CF_ppa_price_heat_btu, nyears, "cf_ppa_price_heat_btu" );
 		save_cf( CF_om_fixed_expense, nyears, "cf_om_fixed_expense" );
