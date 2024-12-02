@@ -49,6 +49,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_mspt_receiver.h"
 #include "csp_solver_mspt_collector_receiver.h"
 #include "csp_solver_pc_heat_sink.h"
+#include "csp_solver_pc_heat_sink_physical.h"
 #include "csp_solver_two_tank_tes.h"
 
 #include "csp_dispatch.h"
@@ -1221,6 +1222,7 @@ public:
         int hs_type = as_integer("hs_type");
         C_csp_power_cycle* c_heat_sink_pointer;
         C_pc_heat_sink c_heat_sink;
+        C_pc_heat_sink_physical c_heat_sink_phys;
 
         size_t n_f_turbine1 = 0;
         ssc_number_t* p_f_turbine1 = as_array("f_turb_tou_periods", &n_f_turbine1);   // heat sink, not turbine
@@ -1252,9 +1254,47 @@ public:
 
             c_heat_sink_pointer = &c_heat_sink;
         }
+        else if (hs_type == 1)
+        {
+            size_t n_f_turbine1 = 0;
+            ssc_number_t* p_f_turbine1 = as_array("f_turb_tou_periods", &n_f_turbine1);   // heat sink, not turbine
+            double f_turbine_max1 = 1.0;
+            for (size_t i = 0; i < n_f_turbine1; i++) {
+                f_turbine_max1 = max(f_turbine_max1, p_f_turbine1[i]);
+            }
+
+            c_heat_sink_phys.ms_params.m_T_htf_hot_des = T_htf_hot_des;		//[C] FIELD design outlet temperature
+            c_heat_sink_phys.ms_params.m_T_htf_cold_des = T_htf_cold_des;	//[C] FIELD design inlet temperature
+            c_heat_sink_phys.ms_params.m_q_dot_des = q_dot_pc_des;			//[MWt] HEAT SINK design thermal power (could have field solar multiple...)
+            // 9.18.2016 twn: assume for now there's no pressure drop though heat sink
+            c_heat_sink_phys.ms_params.m_htf_pump_coef = as_double("pb_pump_coef");		//[kWe/kg/s]
+            c_heat_sink_phys.ms_params.m_max_frac = f_turbine_max1;
+
+            c_heat_sink_phys.ms_params.m_pc_fl = as_integer("rec_htf");
+            c_heat_sink_phys.ms_params.m_pc_fl_props = as_matrix("field_fl_props");
+
+
+            c_heat_sink_phys.ms_params.m_T_ext_cold_des = as_double("hs_phys_T_steam_cold_des");   //[C] Steam fluid inlet temp
+            c_heat_sink_phys.ms_params.m_Q_ext_hot_des = as_double("hs_phys_Q_steam_hot_des");  //[C] Steam quality target
+            c_heat_sink_phys.ms_params.m_P_ext_cold_des = as_double("hs_phys_P_steam_hot_des") * 100.0;  //[kPa] Steam inlet pressure
+            c_heat_sink_phys.ms_params.m_P_ext_hot_des = as_double("hs_phys_P_steam_hot_des") * 100.0;   //[kPa] Steam outlet pressure
+            c_heat_sink_phys.ms_params.m_f_m_dot_ext_min = as_double("hs_phys_f_mdot_steam_min"); //[] Min fraction Steam mass flow rate
+            c_heat_sink_phys.ms_params.m_f_m_dot_ext_max = as_double("hs_phys_f_mdot_steam_max"); //[] Max fraction Steam mass flow rate
+            c_heat_sink_phys.ms_params.m_N_sub_hx = as_double("hs_phys_N_sub");      //[] Number HX nodes
+            c_heat_sink_phys.ms_params.m_od_tol = as_double("hs_phys_tol");         //[] HX off design tolerance
+
+            // Allocate heat sink outputs
+            c_heat_sink_phys.mc_reported_outputs.assign(C_pc_heat_sink::E_Q_DOT_HEAT_SINK, allocate("q_dot_to_heat_sink", n_steps_fixed), n_steps_fixed);
+            c_heat_sink_phys.mc_reported_outputs.assign(C_pc_heat_sink::E_W_DOT_PUMPING, allocate("W_dot_pc_pump", n_steps_fixed), n_steps_fixed);
+            c_heat_sink_phys.mc_reported_outputs.assign(C_pc_heat_sink::E_M_DOT_HTF, allocate("m_dot_htf_heat_sink", n_steps_fixed), n_steps_fixed);
+            c_heat_sink_phys.mc_reported_outputs.assign(C_pc_heat_sink::E_T_HTF_IN, allocate("T_heat_sink_in", n_steps_fixed), n_steps_fixed);
+            c_heat_sink_phys.mc_reported_outputs.assign(C_pc_heat_sink::E_T_HTF_OUT, allocate("T_heat_sink_out", n_steps_fixed), n_steps_fixed);
+
+            c_heat_sink_pointer = &c_heat_sink_phys;
+        }
         else
         {
-            throw exec_error("mspt_iph", "hs_type != 0; other heat sink models are not currently supported");
+            throw exec_error("mspt_iph", "hs_type must be 0-1");
         }
         
 
