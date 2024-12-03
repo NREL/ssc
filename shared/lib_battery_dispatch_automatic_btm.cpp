@@ -906,7 +906,7 @@ void dispatch_automatic_behind_the_meter_t::costToCycle()
     {
         if (curr_year < m_battReplacementCostPerKWH.size()) {
             double capacityPercentDamagePerCycle = _Battery->estimateCycleDamage();
-            m_cycleCost = 0.01 * capacityPercentDamagePerCycle * m_battReplacementCostPerKWH[curr_year] * _Battery->get_params().nominal_energy;
+            m_cycleCost = 0.01 * capacityPercentDamagePerCycle * m_battReplacementCostPerKWH[curr_year] * _Battery->nominal_energy();
         }
         else {
             // Should only apply to BattWatts. BattWatts doesn't have retal rate dispatch, so this is fine.
@@ -915,13 +915,13 @@ void dispatch_automatic_behind_the_meter_t::costToCycle()
     }
     else if (m_battCycleCostChoice == dispatch_t::INPUT_CYCLE_COST)
     {
-        m_cycleCost = cycle_costs_by_year[curr_year] * _Battery->get_params().nominal_energy;
+        m_cycleCost = cycle_costs_by_year[curr_year] * _Battery->nominal_energy();
     }
 }
 
 double dispatch_automatic_behind_the_meter_t::cost_to_cycle_per_kwh()
 {
-    return m_cycleCost / _Battery->get_params().nominal_energy;
+    return m_cycleCost / _Battery->nominal_energy();
 }
 
 double dispatch_automatic_behind_the_meter_t::omCost()
