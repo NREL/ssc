@@ -1389,8 +1389,7 @@ public:
             // Assign
             {
                 assign("nameplate", nameplate); // [MWt]
-                assign("W_dot_bop_design", W_dot_bop_design);
-                assign("W_dot_fixed", W_dot_fixed_parasitic_design);
+               
 
                 assign("solar_mult", c_fresnel.m_solar_mult);
                 assign("nLoops", c_fresnel.m_nLoops);
@@ -1402,10 +1401,16 @@ public:
             }
 
             // System Control
+            vector<double> bop_vec = as_vector_double("bop_array");
+            double bop_design = bop_vec[0] * bop_vec[1] * (bop_vec[2] + bop_vec[3] + bop_vec[4]) * q_dot_pc_des;
+            assign("W_dot_bop_design", bop_design);
+
             vector<double> aux_vec = as_vector_double("aux_array");
-            double W_dot_cycle_des = 0;
-            double aux_design = aux_vec[0] * aux_vec[1] * (aux_vec[2] + aux_vec[3] + aux_vec[4]) * W_dot_cycle_des;
+            double aux_design = aux_vec[0] * aux_vec[1] * (aux_vec[2] + aux_vec[3] + aux_vec[4]) * q_dot_pc_des;
             assign("aux_design", aux_design);
+
+            double W_dot_fixed = as_double("pb_fixed_par") * q_dot_pc_des;
+            assign("W_dot_fixed", W_dot_fixed);
 
             std::vector<double> timestep_load_fractions_calc;
             std::vector<double> timestep_load_abs_calc;
