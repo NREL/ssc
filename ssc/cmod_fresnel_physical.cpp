@@ -180,8 +180,9 @@ static var_info _cm_vtab_fresnel_physical[] = {
                                                                                                 
                                                                                                 
     // User Defined cycle                                                                       
-    { SSC_INPUT,    SSC_NUMBER,         "ud_f_W_dot_cool_des",         "Percent of user-defined power cycle design gross output consumed by cooling",           "%",	                "",                             "user_defined_PC",      "pc_config=1",      "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "ud_f_W_dot_cool_des",         "Percent of user-defined power cycle design gross output consumed by cooling",           "%",	               "",                             "user_defined_PC",      "pc_config=1",      "",                 "" },
     { SSC_INPUT,    SSC_NUMBER,         "ud_m_dot_water_cool_des",     "Mass flow rate of water required at user-defined power cycle design point",             "kg/s",                "",                             "user_defined_PC",      "pc_config=1",      "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "ud_is_sco2_regr",             "0: (default) simple max htf mass flow correction; 1: sco2 heuristic regression; 2: no correction","",          "",                             "user_defined_PC",      "?=0",              "",                 "" },
     { SSC_INPUT,    SSC_MATRIX,         "ud_ind_od",                   "Off design user-defined power cycle performance as function of T_htf, m_dot_htf [ND], and T_amb", "",          "",                             "user_defined_PC",      "pc_config=1",      "",                 "" },
                                                                                                 
     // TES                                                                                      
@@ -902,6 +903,7 @@ public:
                     // User-Defined Cycle Parameters
                     pc->m_W_dot_cooling_des = as_double("ud_f_W_dot_cool_des") / 100.0 * as_double("P_ref");  //[MWe]
                     pc->m_m_dot_water_des = as_double("ud_m_dot_water_cool_des");       //[kg/s]
+                    pc->m_is_udpc_sco2_regr = as_integer("ud_is_sco2_regr");
 
                     // User-Defined Cycle Off-Design Tables 
                     pc->mc_combined_ind = as_matrix("ud_ind_od");

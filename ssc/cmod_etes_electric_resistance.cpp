@@ -547,7 +547,7 @@ public:
                 // User-Defined Cycle Parameters
                 pc->m_W_dot_cooling_des = as_double("ud_f_W_dot_cool_des") / 100.0 * as_double("P_ref");  //[MWe]
                 pc->m_m_dot_water_des = as_double("ud_m_dot_water_cool_des");       //[kg/s]
-                pc->m_is_udpc_sco2_regr = as_boolean("ud_is_sco2_regr");            //[-]
+                pc->m_is_udpc_sco2_regr = as_integer("ud_is_sco2_regr");            //[-]
 
                 // User-Defined Cycle Off-Design Tables 
                 pc->mc_combined_ind = as_matrix("ud_ind_od");
