@@ -96,22 +96,51 @@ public:
             P_ext_cold, h_ext_cold, P_ext_hot, h_ext_hot, q_design * 1e3, des_solved);
 
         // Off Design
-        double T_htf_hot_od = 250;
-        double T_htf_cold_od = 200;
+        double T_htf_hot_od = T_htf_hot;
+        double T_htf_cold_od = T_htf_cold;
+        double od_tol = 1e-3;
+        double mdot_htf_od = 0.5 * m_hx.ms_des_calc_UA_par.m_m_dot_hot_des;
         double h_htf_hot_od = m_hx.mc_hot_fl.enth(T_htf_hot_od + 273.15) * 1e-3;   //[kJ/kg]
         double h_htf_cold_od = m_hx.mc_hot_fl.enth(T_htf_cold_od + 273.15) * 1e-3;   //[kJ/kg]
 
         double q_dot_calc, h_ext_out_calc, h_htf_out_calc;
 
-        m_hx.off_design_solution_fixed_dP_enth(h_ext_cold, P_ext_cold, m_hx.ms_des_calc_UA_par.m_m_dot_cold_des, P_ext_hot,
-            h_htf_hot_od, 1.0, m_hx.ms_des_calc_UA_par.m_m_dot_hot_des, 1.0, 1e-12,
-            q_dot_calc, h_ext_out_calc, h_htf_out_calc);
+        std::vector<double> mdot_vec;
+        std::vector<double> h_vec;
+        //double mdot_min = 0.1;
+        //double mdot_max = 2 * m_hx.ms_des_calc_UA_par.m_m_dot_cold_des;
+        double mdot_min = 2.605;
+        double mdot_max = 2.8;
+        int total_runs = 20;
+        for (int i = 0; i < total_runs; i++)
+        {
+            double frac = (double)i / (double)total_runs;
+            double mdot = mdot_min + (frac * (mdot_max - mdot_min));
+            try
+            {
+                m_hx.off_design_solution_fixed_dP_enth(h_ext_cold, P_ext_cold, mdot, P_ext_hot,
+                    h_htf_hot_od, 1.0, mdot_htf_od, 1.0, od_tol,
+                    q_dot_calc, h_ext_out_calc, h_htf_out_calc);
+            }
+            catch (C_csp_exception exc)
+            {
+                h_ext_out_calc = 0;
+            }
+
+            h_vec.push_back(h_ext_out_calc);
+            mdot_vec.push_back(mdot);
+        }
+
+
+        
 
         double mdot_ext_calc;
 
         m_hx.off_design_target_cold_PH_out(h_ext_hot, 0.1, 2* m_hx.ms_des_calc_UA_par.m_m_dot_cold_des, P_ext_cold, h_ext_cold,
-            P_ext_hot, 1.0, h_htf_hot_od, 1.0, m_hx.ms_des_calc_UA_par.m_m_dot_hot_des, 1e-3,
+            P_ext_hot, 1.0, h_htf_hot_od, 1.0, mdot_htf_od, od_tol,
             q_dot_calc, h_ext_out_calc, h_htf_out_calc, mdot_ext_calc);
+
+
 
 
         int x = 0;
