@@ -3195,7 +3195,7 @@ int C_HX_htf_to_steam::off_design_target_cold_PH_out(double h_c_out_target /*kJ/
     C_MEQ__target_cold_PH_out h_out_eq(this, h_c_out_target, h_c_in, P_c_in, P_c_out,
         h_h_in, P_h_in, P_h_out, m_dot_h, od_tol);
     C_monotonic_eq_solver h_out_solver(h_out_eq);
-    h_out_solver.settings(1e-1, max_iter, m_dot_c_min, m_dot_c_max, false);
+    h_out_solver.settings(od_tol, max_iter, m_dot_c_min, m_dot_c_max, false);
 
     double m_dot_c_solved, tol_solved;
     int iter_solved = -1;
