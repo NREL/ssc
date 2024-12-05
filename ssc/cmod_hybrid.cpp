@@ -564,6 +564,10 @@ public:
             if (batteries.size() > 0) {
                 use_batt_output = true;
                 pBattGen = ((var_table*)outputs)->lookup(batteries[0])->table.as_array("gen", &battGenLen);
+                for (size_t g = 0; g < genLength; g++) {
+                    // Batt's gen is an inout that includes other system components
+                    pGen[g] = pBattGen[g];
+                }
             }
 
             ssc_number_t* pHybridOMSum = ((var_table*)outputs)->allocate("cf_hybrid_om_sum", analysisPeriod + 1); // add to top level "output" - assumes analysis period the same for all generators
