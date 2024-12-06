@@ -229,6 +229,7 @@ static var_info _cm_vtab_pvwattsv8[] = {
 
         { SSC_OUTPUT,       SSC_NUMBER,      "ts_shift_hours",                 "Time offset for interpreting time series outputs", "hours","",                                             "Miscellaneous", "*",                       "",                          "" },
         { SSC_OUTPUT,       SSC_NUMBER,      "percent_complete",               "Estimated percent of total completed simulation", "%",     "",                                             "Miscellaneous", "",                        "",                          "" },
+        { SSC_OUTPUT,       SSC_NUMBER,      "system_capacity_ac",             "System nameplate AC rating", "kWac",     "",                                             "Miscellaneous", "",                        "",                          "" },
 
         var_info_invalid };
 
@@ -1442,6 +1443,7 @@ public:
 
         // for battery model, specify a number of inverters
         assign("inverter_efficiency", var_data((ssc_number_t)(as_double("inv_eff"))));
+        assign("system_capacity_ac", var_data((ssc_number_t)pv.ac_nameplate / 1000.0));
 
         if (en_snowloss && snowmodel.badValues > 0)
             log(util::format("The snow model has detected %d bad snow depth values (less than 0 or greater than 610 cm). These values have been set to zero.", snowmodel.badValues), SSC_WARNING);

@@ -155,10 +155,6 @@ public:
 
                 ssc_module_exec_with_error(module, input, compute_module);
 
-                ssc_number_t system_capacity = compute_module_inputs->table.lookup("system_capacity")->num;
-                hybridSystemCapacity += system_capacity;
-                hybridTotalInstalledCost += compute_module_inputs->table.lookup("total_installed_cost")->num;
-
                 ssc_data_t compute_module_outputs = ssc_data_create();
 
                 int pidx = 0;
@@ -173,6 +169,13 @@ public:
                 bool system_use_lifetime_output = false;
                 if (compute_module_inputs->table.lookup("system_use_lifetime_output"))
                     system_use_lifetime_output = compute_module_inputs->table.lookup("system_use_lifetime_output")->num;
+
+                ssc_number_t system_capacity = compute_module_inputs->table.lookup("system_capacity")->num;
+                if ((compute_module == "pvsamv1") || (compute_module == "pvwattsv8")) {
+                    ssc_data_get_number(compute_module_outputs, "system_capacity_ac", &system_capacity);
+                }
+                hybridSystemCapacity += system_capacity;
+                hybridTotalInstalledCost += compute_module_inputs->table.lookup("total_installed_cost")->num;
 
                 // get minimum timestep from gen vector
                 ssc_number_t* curGen = ssc_data_get_array(compute_module_outputs, "gen", &len);
