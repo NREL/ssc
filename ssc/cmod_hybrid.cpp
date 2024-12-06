@@ -287,26 +287,6 @@ public:
                 }
             }
 
-            // monthly energy generated
-            size_t step_per_hour = maximumTimeStepsPerHour;
-            ssc_number_t* pGenMonthly = ((var_table*)outputs)->allocate("monthly_energy", 12);
-            size_t c = 0;
-            for (int m = 0; m < 12; m++) // each month
-            {
-                pGenMonthly[m] = 0;
-                for (size_t d = 0; d < util::nday[m]; d++) // for each day in each month
-                    for (int h = 0; h < 24; h++) // for each hour in each day
-                        for (size_t j = 0; j < step_per_hour; j++)
-                            pGenMonthly[m] += pGen[c++];
-            }
-
-            ssc_number_t pGenAnnual = 0;
-            for (size_t i = 0; i < genLength; i++)
-                pGenAnnual += pGen[i];
-            ((var_table*)outputs)->assign("annual_energy", var_data(pGenAnnual));
-
-
-
             if (fuelcells.size() > 0) { // run single fuel cell if present 
 
                 percent = 100.0f * ((float)(generators.size() + fuelcells.size()) / (float)(generators.size() + fuelcells.size() + batteries.size() + financials.size()));
@@ -564,11 +544,34 @@ public:
             if (batteries.size() > 0) {
                 use_batt_output = true;
                 pBattGen = ((var_table*)outputs)->lookup(batteries[0])->table.as_array("gen", &battGenLen);
-                for (size_t g = 0; g < genLength; g++) {
-                    // Batt's gen is an inout that includes other system components
-                    pGen[g] = pBattGen[g];
+                if (battGenLen == genLength) {
+                    for (size_t g = 0; g < genLength; g++) {
+                        // Batt's gen is an inout that includes other system components
+                        pGen[g] = pBattGen[g];
+                    }
+                }
+                else {
+                    throw exec_error("hybrid", util::format("Battery gen length incorrect, battery timeseries contains %d entries, generators contain %d", battGenLen, genLength));
                 }
             }
+
+            // monthly energy generated
+            size_t step_per_hour = maximumTimeStepsPerHour;
+            ssc_number_t* pGenMonthly = ((var_table*)outputs)->allocate("monthly_energy", 12);
+            size_t c = 0;
+            for (int m = 0; m < 12; m++) // each month
+            {
+                pGenMonthly[m] = 0;
+                for (size_t d = 0; d < util::nday[m]; d++) // for each day in each month
+                    for (int h = 0; h < 24; h++) // for each hour in each day
+                        for (size_t j = 0; j < step_per_hour; j++)
+                            pGenMonthly[m] += pGen[c++];
+            }
+
+            ssc_number_t pGenAnnual = 0;
+            for (size_t i = 0; i < genLength; i++)
+                pGenAnnual += pGen[i];
+            ((var_table*)outputs)->assign("annual_energy", var_data(pGenAnnual));
 
             ssc_number_t* pHybridOMSum = ((var_table*)outputs)->allocate("cf_hybrid_om_sum", analysisPeriod + 1); // add to top level "output" - assumes analysis period the same for all generators
 
@@ -640,10 +643,7 @@ public:
                 var_data* compute_module_inputs = input_table->table.lookup(hybridVarTable);
                 var_table& input = compute_module_inputs->table;
 
- //               if (use_batt_output)
- //                   ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pBattGen, (int)battGenLen);
- //               else
-                    ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);
+                ssc_data_set_array(static_cast<ssc_data_t>(&input), "gen", pGen, (int)genLength);
 
                 if (batteries.size() > 0)
                     ssc_data_set_number(static_cast<ssc_data_t>(&input), "is_hybrid", 1); // for updating battery outputs to annual length in update_battery_outputs in common_financial.cpp
