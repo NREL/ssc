@@ -293,7 +293,7 @@ void C_pc_heat_sink_physical::call(const C_csp_weatherreader::S_outputs &weather
     double m_dot_htf = inputs.m_m_dot / 3600.0;	//[kg/s]
     int standby_control = inputs.m_standby_control;	//[-] 1: On, 2: Standby, 3: Off
 
-    double q_dot, T_c_out, T_h_out_C, m_dot_c;
+    double q_dot, T_c_out, T_h_out_C, m_dot_c, tol_solved;
 
     // Handle no mass flow coming in
     if (inputs.m_m_dot < 1e-5 && standby_control == ON)
@@ -351,14 +351,14 @@ void C_pc_heat_sink_physical::call(const C_csp_weatherreader::S_outputs &weather
             try
             {
                 // Get HTF inlet enthalpy
-                double h_htf_cold = mc_pc_htfProps.enth(htf_state_in.m_temp + 273.15) * 1e-3;   //[kJ/kg]
+                double h_htf_hot = mc_pc_htfProps.enth(htf_state_in.m_temp + 273.15) * 1e-3;   //[kJ/kg]
 
                 // Run Off design to find steam mdot to hit enthalpy target
                 double h_ext_out_calc, h_htf_out_calc;
                 int solve_code =  m_hx.off_design_target_cold_PH_out(m_h_ext_hot_des, m_m_dot_ext_min, m_m_dot_ext_max,
                     ms_params.m_P_ext_cold_des, m_h_ext_cold_des, ms_params.m_P_ext_hot_des,
-                    1.0, h_htf_cold, 1.0, m_dot_htf, ms_params.m_od_tol,
-                    q_dot, h_ext_out_calc, h_htf_out_calc, m_dot_c);
+                    1.0, h_htf_hot, 1.0, m_dot_htf, ms_params.m_od_tol,
+                    q_dot, h_ext_out_calc, h_htf_out_calc, m_dot_c, tol_solved);
 
                 if (solve_code == C_monotonic_eq_solver::CONVERGED)
                 {
@@ -378,6 +378,37 @@ void C_pc_heat_sink_physical::call(const C_csp_weatherreader::S_outputs &weather
                 }
                 else
                 {
+                    // test why it failed
+                    if (true)
+                    {
+                        std::vector<double> mdot_vec;
+                        std::vector<double> h_vec;
+                        int total_runs = 200;
+                        for (int i = 0; i < total_runs; i++)
+                        {
+                            double frac = (double)i / (double)total_runs;
+                            double mdot = m_m_dot_ext_min + (frac * (m_m_dot_ext_max - m_m_dot_ext_min));
+                            try
+                            {
+                                m_hx.off_design_solution_fixed_dP_enth(m_h_ext_cold_des, ms_params.m_P_ext_cold_des, mdot, ms_params.m_P_ext_hot_des,
+                                    h_htf_hot, 1.0, m_dot_htf, 1.0, ms_params.m_od_tol,
+                                    q_dot, h_ext_out_calc, h_htf_out_calc);
+                            }
+                            catch (C_csp_exception exc)
+                            {
+                                h_ext_out_calc = 0;
+                            }
+
+                            h_vec.push_back(h_ext_out_calc);
+                            mdot_vec.push_back(mdot);
+                        }
+
+
+                        int x = 0;
+                    }
+
+
+
                     // Could not solve
                     q_dot = 0;
                     T_h_out_C = htf_state_in.m_temp;

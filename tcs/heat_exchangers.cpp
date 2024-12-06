@@ -3181,7 +3181,8 @@ int C_HX_htf_to_steam::off_design_target_cold_PH_out(double h_c_out_target /*kJ/
     double P_c_in /*kPa*/, double h_c_in /*kJ/kg*/, double P_c_out /*kPa*/,
     double P_h_in /*kPa*/, double h_h_in /*kJ/kg*/, double P_h_out /*kPa*/, double m_dot_h /*kg/s*/,
     double od_tol /*-*/,
-    double& q_dot /*kWt*/, double& h_c_out /*kJ/kg*/, double& h_h_out /*kJ/kg*/, double& m_dot_c /*kg/s*/)
+    double& q_dot /*kWt*/, double& h_c_out /*kJ/kg*/, double& h_h_out /*kJ/kg*/, double& m_dot_c /*kg/s*/,
+    double& tol_solved)
 {
     // ADD inputs
     double max_iter = 1000;
@@ -3197,7 +3198,7 @@ int C_HX_htf_to_steam::off_design_target_cold_PH_out(double h_c_out_target /*kJ/
     C_monotonic_eq_solver h_out_solver(h_out_eq);
     h_out_solver.settings(od_tol, max_iter, m_dot_c_min, m_dot_c_max, false);
 
-    double m_dot_c_solved, tol_solved;
+    double m_dot_c_solved;
     int iter_solved = -1;
 
     if (false)
@@ -3234,14 +3235,15 @@ int C_HX_htf_to_steam::off_design_target_cold_PH_out(double h_c_out_target /*kJ/
         h_c_out = h_out_eq.m_h_c_out;   //[kJ/kg]
         h_h_out = h_out_eq.m_h_h_out;   //[kJ/kg]
         m_dot_c = h_out_eq.m_m_dot_c;   //[kg/s]
+
     }
     else
     {
         // Could not converge
-        q_dot = 0.0;       //[kJ]        
-        h_c_out = h_c_in;   //[kJ/kg]
-        h_h_out = h_h_in;   //[kJ/kg]
-        m_dot_c = 0.0;   //[kg/s]
+        q_dot = h_out_eq.m_q_dot;       //[kJ]        
+        h_c_out = h_out_eq.m_h_c_out;   //[kJ/kg]
+        h_h_out = h_out_eq.m_h_h_out;   //[kJ/kg]
+        m_dot_c = h_out_eq.m_m_dot_c;   //[kg/s]
     }
 
     return m_dot_code;

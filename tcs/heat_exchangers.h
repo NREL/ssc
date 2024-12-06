@@ -764,7 +764,8 @@ public:
         double P_c_in /*kPa*/, double h_c_in /*kJ/kg*/, double P_c_out /*kPa*/,
         double P_h_in /*kPa*/, double h_h_in /*kJ/kg*/, double P_h_out /*kPa*/, double m_dot_h /*kg/s*/,
         double od_tol /*-*/,
-        double& q_dot /*kWt*/, double& h_c_out /*kJ/kg*/, double& h_h_out /*kJ/kg*/, double& m_dot_c /*kg/s*/);
+        double& q_dot /*kWt*/, double& h_c_out /*kJ/kg*/, double& h_h_out /*kJ/kg*/, double& m_dot_c /*kg/s*/,
+        double& tol_solved);
 
     class C_MEQ__target_cold_PH_out : public C_monotonic_equation
     {

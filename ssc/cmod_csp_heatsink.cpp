@@ -53,95 +53,90 @@ public:
     void exec()
     {
 
-        double dT_subcool = 30;         //[dC] Steam temp diff below outlet
+        // Define Steam Inlet Conditions
+        double T_ext_cold = 120;            //[C] Steam inlet temp
+        double P_ext_cold = 4.762 * 100.0;  //[kPa] Inlet steam pressure
 
-        // Define Outlet Steam Conditions
+            // Get inlet steam properties
         water_state ms_water_props;
-        double Q_ext_hot = 0.75;    // Outlet Steam Quality
-        double T_ext_hot = 150;     // [C] Outlet Steam Temp
-
-        int prop_error_code = water_TQ(T_ext_hot + 273.15, Q_ext_hot, &ms_water_props);
-
-        double P_ext_hot = ms_water_props.pres; // [kPa] Outlet Steam Pressure
-        double h_ext_hot = ms_water_props.enth; // [kJ/kg] Outlet Steam Enthalpy
-        double dens_ext_hot = ms_water_props.dens;  //[kg/m3] Outlet steam density
-        double k_ext_hot = water_cond(dens_ext_hot, T_ext_hot + 273.15);    // [W/m-K]
-        double mu_ext_hot = water_visc(dens_ext_hot, T_ext_hot + 273.15);   // [uPa-s]
-
-        // Define Inlet Steam Conditions
-        double T_ext_cold = T_ext_hot - dT_subcool; // [C] Inlet water temp
-        double P_ext_cold = P_ext_hot;              // [kPa] Inlet Steam Pressure
-
-        prop_error_code = water_TP(T_ext_cold + 273.15, P_ext_cold, &ms_water_props);
-
+        int prop_error_code = water_TP(T_ext_cold + 273.15, P_ext_cold, &ms_water_props);
         double h_ext_cold = ms_water_props.enth;    // [kJ/kg] Inlet water enthalpy
         double Q_ext_cold = ms_water_props.qual;    // [] Inlet water quality (should be 0, n/a)
         double dens_ext_cold = ms_water_props.dens; // [kg/m3] Inlet water density
-        double k_ext_cold = water_cond(dens_ext_cold, T_ext_cold + 273.15);    // [W/m-K]
-        double mu_ext_cold = water_visc(dens_ext_cold, T_ext_cold + 273.15);   // [uPa-s]
+
+        // Define Outlet Steam Conditions
+        double Q_ext_hot = 0.75;            // Outlet Steam Quality
+        double P_ext_hot = P_ext_cold;      //[kPa] Outlet Steam Pressure
+
+            // Outlet steam properties
+        prop_error_code = water_PQ(P_ext_hot, Q_ext_hot, &ms_water_props);
+        double h_ext_hot = ms_water_props.enth;             // [kJ/kg] Outlet Steam Enthalpy
+        double dens_ext_hot = ms_water_props.dens;          //[kg/m3] Outlet steam density
+        double T_ext_hot = ms_water_props.temp - 273.15;    // [C] Outlet Steam Temp
 
         // Initialize
         C_HX_htf_to_steam m_hx;
         int hot_fl = 21;    // HTF fl id
-        int N_sub_hx = 5000;
+        int N_sub_hx = 500;
         NS_HX_counterflow_eqs::E_UA_target_type od_target_type = NS_HX_counterflow_eqs::E_UA_target_type::E_constant_UA;
         m_hx.initialize(hot_fl, N_sub_hx, od_target_type);
 
         // Design
-        double T_htf_hot = 250;     //[C]
+        double T_htf_hot = 300;     //[C]
         double T_htf_cold = 200;    //[C]
-        double q_design = 5.19;     //[MW]
+        double q_design = 5;        //[MW]
         C_HX_counterflow_CRM::S_des_solved des_solved;
         m_hx.design_w_TP_PH(T_htf_hot + 273.15, 1.0, T_htf_cold + 273.15, 1.0,
             P_ext_cold, h_ext_cold, P_ext_hot, h_ext_hot, q_design * 1e3, des_solved);
 
         // Off Design
-        double T_htf_hot_od = T_htf_hot;
-        double T_htf_cold_od = T_htf_cold;
-        double od_tol = 1e-3;
-        double mdot_htf_od = 0.5 * m_hx.ms_des_calc_UA_par.m_m_dot_hot_des;
+        double T_htf_hot_od = 295.9725; //[C]
+        double od_tol = 1e-5;
+        double mdot_htf_od = 22.90448;  //[kg/s]
         double h_htf_hot_od = m_hx.mc_hot_fl.enth(T_htf_hot_od + 273.15) * 1e-3;   //[kJ/kg]
-        double h_htf_cold_od = m_hx.mc_hot_fl.enth(T_htf_cold_od + 273.15) * 1e-3;   //[kJ/kg]
 
         double q_dot_calc, h_ext_out_calc, h_htf_out_calc;
 
         std::vector<double> mdot_vec;
         std::vector<double> h_vec;
-        //double mdot_min = 0.1;
-        //double mdot_max = 2 * m_hx.ms_des_calc_UA_par.m_m_dot_cold_des;
-        double mdot_min = 2.605;
-        double mdot_max = 2.8;
-        int total_runs = 20;
-        for (int i = 0; i < total_runs; i++)
-        {
-            double frac = (double)i / (double)total_runs;
-            double mdot = mdot_min + (frac * (mdot_max - mdot_min));
-            try
-            {
-                m_hx.off_design_solution_fixed_dP_enth(h_ext_cold, P_ext_cold, mdot, P_ext_hot,
-                    h_htf_hot_od, 1.0, mdot_htf_od, 1.0, od_tol,
-                    q_dot_calc, h_ext_out_calc, h_htf_out_calc);
-            }
-            catch (C_csp_exception exc)
-            {
-                h_ext_out_calc = 0;
-            }
+        double mdot_min = 0.75 * m_hx.ms_des_calc_UA_par.m_m_dot_cold_des;
+        double mdot_max = 1.5 * m_hx.ms_des_calc_UA_par.m_m_dot_cold_des;
 
-            h_vec.push_back(h_ext_out_calc);
-            mdot_vec.push_back(mdot);
+        // Manually run range of steam mass flow rates
+        if (true)
+        {
+            int total_runs = 200;
+            for (int i = 0; i < total_runs; i++)
+            {
+                double frac = (double)i / (double)total_runs;
+                double mdot = mdot_min + (frac * (mdot_max - mdot_min));
+                try
+                {
+                    m_hx.off_design_solution_fixed_dP_enth(h_ext_cold, P_ext_cold, mdot, P_ext_hot,
+                        h_htf_hot_od, 1.0, mdot_htf_od, 1.0, od_tol,
+                        q_dot_calc, h_ext_out_calc, h_htf_out_calc);
+                }
+                catch (C_csp_exception exc)
+                {
+                    h_ext_out_calc = 0;
+                }
+
+                h_vec.push_back(h_ext_out_calc);
+                mdot_vec.push_back(mdot);
+            }
         }
 
 
-        
-
-        double mdot_ext_calc;
-
-        m_hx.off_design_target_cold_PH_out(h_ext_hot, 0.1, 2* m_hx.ms_des_calc_UA_par.m_m_dot_cold_des, P_ext_cold, h_ext_cold,
+        // Optimize to find steam mdot
+        double mdot_ext_calc, tol_solved;
+        int solve_code = m_hx.off_design_target_cold_PH_out(h_ext_hot, mdot_min, mdot_max, P_ext_cold, h_ext_cold,
             P_ext_hot, 1.0, h_htf_hot_od, 1.0, mdot_htf_od, od_tol,
-            q_dot_calc, h_ext_out_calc, h_htf_out_calc, mdot_ext_calc);
+            q_dot_calc, h_ext_out_calc, h_htf_out_calc, mdot_ext_calc, tol_solved);
 
-
-
+        // Off design Outlet steam properties
+        prop_error_code = water_PH(P_ext_hot, h_ext_out_calc, &ms_water_props);
+        double Q_ext_hot_od = ms_water_props.qual;             // [] Outlet Steam Quality
+        double T_ext_hot_od = ms_water_props.temp - 273.15;    // [C] Outlet Steam Temp
 
         int x = 0;
     }
