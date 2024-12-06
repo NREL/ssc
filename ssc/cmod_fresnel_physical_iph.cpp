@@ -153,7 +153,17 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
 
     // Heat Sink
 
-    {SSC_INPUT,     SSC_NUMBER,         "pb_pump_coef",                "Pumping power to move 1kg of HTF through PB loop",                                      "kW/kg",               "",                              "Heat Sink",           "*",                "",                 ""},
+    { SSC_INPUT,    SSC_NUMBER,         "pb_pump_coef",                "Pumping power to move 1kg of HTF through PB loop",                                      "kW/kg",               "",                             "Heat Sink",            "*",                "",                 "" },
+
+    { SSC_INPUT,    SSC_NUMBER,         "hs_type",                     "0: ideal model, 1: physical steam model",                                               "",                    "",                             "Heat Sink",            "?=0",              "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "hs_phys_N_sub",               "Number physical heat sink HX nodes",                                                    "",                    "",                             "Heat Sink",            "hs_type=1",        "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "hs_phys_tol",                 "Physical heat sink solve tolerance",                                                    "",                    "",                             "Heat Sink",            "hs_type=1",        "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "hs_phys_f_mdot_steam_min",    "Min steam mdot fraction for physical heat sink",                                        "",                    "",                             "Heat Sink",            "hs_type=1",        "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "hs_phys_f_mdot_steam_max",    "Max steam mdot fraction for physical heat sink",                                        "",                    "",                             "Heat Sink",            "hs_type=1",        "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "hs_phys_T_steam_cold_des",    "Steam inlet temperature for physical heat sink",                                        "C",                   "",                             "Heat Sink",            "hs_type=1",        "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "hs_phys_P_steam_hot_des",     "Steam outlet (and inlet) pressure for physical heat sink",                              "bar",                 "",                             "Heat Sink",            "hs_type=1",        "",                 "" },
+    { SSC_INPUT,    SSC_NUMBER,         "hs_phys_Q_steam_hot_des",     "Steam outlet quality for physical heat sink",                                           "",                    "",                             "Heat Sink",            "hs_type=1",        "",                 "" },
+
 
     // TES   
 
@@ -911,7 +921,12 @@ public:
         }
 
         // Heat Sink
+        int hs_type = as_integer("hs_type");
+        C_csp_power_cycle* c_heat_sink_pointer = nullptr;
         C_pc_heat_sink c_heat_sink;
+        
+        // Ideal heat sink
+        if (hs_type == 0)
         {
             //size_t n_f_turbine1 = 0;
             //ssc_number_t* p_f_turbine1 = as_array("f_turb_tou_periods", &n_f_turbine1);   // heat sink, not turbine
@@ -940,6 +955,17 @@ public:
             c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_M_DOT_HTF, allocate("m_dot_htf_heat_sink", n_steps_fixed), n_steps_fixed);
             c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_T_HTF_IN, allocate("T_heat_sink_in", n_steps_fixed), n_steps_fixed);
             c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_T_HTF_OUT, allocate("T_heat_sink_out", n_steps_fixed), n_steps_fixed);
+
+            c_heat_sink_pointer = &c_heat_sink;
+        }
+        else
+        {
+            throw exec_error("fresnel_physical_iph", "hs_type != 0; other heat sink models are not currently supported");
+        }
+
+        if (c_heat_sink_pointer == nullptr)
+        {
+            throw exec_error("fresnel_physical_iph", "Heat sink pointer not assigned");
         }
 
         // Electricity pricing schedule
@@ -1087,7 +1113,7 @@ public:
         // Instantiate Solver
         C_csp_solver csp_solver(weather_reader,
             c_fresnel,
-            c_heat_sink,
+            *c_heat_sink_pointer,
             storage,
             tou,
             dispatch,
@@ -1389,8 +1415,7 @@ public:
             // Assign
             {
                 assign("nameplate", nameplate); // [MWt]
-                assign("W_dot_bop_design", W_dot_bop_design);
-                assign("W_dot_fixed", W_dot_fixed_parasitic_design);
+               
 
                 assign("solar_mult", c_fresnel.m_solar_mult);
                 assign("nLoops", c_fresnel.m_nLoops);
@@ -1402,10 +1427,16 @@ public:
             }
 
             // System Control
+            vector<double> bop_vec = as_vector_double("bop_array");
+            double bop_design = bop_vec[0] * bop_vec[1] * (bop_vec[2] + bop_vec[3] + bop_vec[4]) * q_dot_pc_des;
+            assign("W_dot_bop_design", bop_design);
+
             vector<double> aux_vec = as_vector_double("aux_array");
-            double W_dot_cycle_des = 0;
-            double aux_design = aux_vec[0] * aux_vec[1] * (aux_vec[2] + aux_vec[3] + aux_vec[4]) * W_dot_cycle_des;
+            double aux_design = aux_vec[0] * aux_vec[1] * (aux_vec[2] + aux_vec[3] + aux_vec[4]) * q_dot_pc_des;
             assign("aux_design", aux_design);
+
+            double W_dot_fixed = as_double("pb_fixed_par") * q_dot_pc_des;
+            assign("W_dot_fixed", W_dot_fixed);
 
             std::vector<double> timestep_load_fractions_calc;
             std::vector<double> timestep_load_abs_calc;
