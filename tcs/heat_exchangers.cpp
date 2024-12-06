@@ -1475,7 +1475,7 @@ void NS_HX_counterflow_eqs::solve_q_dot_for_fixed_UA_enth(int hot_fl_code /*-*/,
 	double q_dot_mult = max(0.99, min(0.95, eff_limit) / eff_limit);
 	if ( std::isfinite(eff_guess) )
 	{
-		q_dot_mult = max(0.99, min(0.1, eff_guess));
+		q_dot_mult = min(0.99, max(0.1, eff_guess));
 	}
 
 	double q_dot_guess_upper = q_dot_mult*q_dot_upper;
