@@ -167,58 +167,58 @@ public:
 		//Most CapEx costs depend on technology
 		if (technology == TIDAL)
 		{ // device = RM1
-			structural_assembly = 284245.0 * system_capacity_MW + 785137.0;
-			power_takeoff = 1527017.0 * system_capacity_MW +  505548.0;
-			mooring_found_substruc = 437091.0 * system_capacity_MW + 433518.0;
+			structural_assembly = 417185.0 * system_capacity_MW + 1068446.0;
+			power_takeoff = 1821066.0 * system_capacity_MW +  602898.0;
+			mooring_found_substruc = 443055.0 * system_capacity_MW + 384877.0;
 			//BOS costs SAM Cost Model v8.xlsx
-			development = 3197591.76 * pow(system_capacity_MW, 0.49);
-			eng_and_mgmt = 850744.0 * pow(system_capacity_MW, 0.565);
+			development = 189783 * system_capacity_MW + 8935599;
+			eng_and_mgmt = 78127 * system_capacity_MW + 2325517;
 		}
 		else // wave
 		{
 			if (device_type == RM3)
 			{
-				structural_assembly = 6854912.0 * system_capacity_MW + 2629191.0;
-				power_takeoff = 2081129.0 * pow(system_capacity_MW, 0.91);
-				mooring_found_substruc = 1836365.0 * system_capacity_MW + 29672.0;
+				structural_assembly = 8174919.0 * system_capacity_MW + 3135478.0;
+				power_takeoff = 2481879.0 * pow(system_capacity_MW, 0.91);
+				mooring_found_substruc = 2189982.0 * system_capacity_MW + 35386.0;
 				//BOS costs SAM Cost Model v8.xlsx
-				development = 3197591.76 * pow(system_capacity_MW, 0.49);
-				eng_and_mgmt = 850744.0 * pow(system_capacity_MW, 0.5649);
+                development = 189783 * system_capacity_MW + 8935599;
+                eng_and_mgmt = 78127 * system_capacity_MW + 2325517;
 			}
 
 			else if (device_type == RM5)
 			{
-				structural_assembly = 6848402.0 * system_capacity_MW + 3315338.0;
-				power_takeoff = 1600927.0 * pow(system_capacity_MW, 0.91);
-				mooring_found_substruc = 2158462.0 * system_capacity_MW + 1048932.0;
+				structural_assembly = 8167155.0 * system_capacity_MW + 3953752.0;
+				power_takeoff = 1909207.0 * pow(system_capacity_MW, 0.91);
+				mooring_found_substruc = 2574104.0 * system_capacity_MW + 1250918.0;
 				//BOS costs SAM Cost Model v8.xlsx
-				development = 3197591.76 * pow(system_capacity_MW, 0.49);
-				eng_and_mgmt = 850744.0 * pow(system_capacity_MW, 0.5649);
+                development = 189783 * system_capacity_MW + 8935599;
+                eng_and_mgmt = 78127 * system_capacity_MW + 2325517;
 			}
 
 			else if (device_type == RM6)
 			{
-				structural_assembly = 13320092.0 * system_capacity_MW + 6681164.0;
-				power_takeoff = 3796551.0 * pow(system_capacity_MW, 0.78);
-				mooring_found_substruc = 2030816.0 * system_capacity_MW + 478400.0;
+				structural_assembly = 15885057.0 * system_capacity_MW + 7967714.0;
+				power_takeoff = 4527629.0 * pow(system_capacity_MW, 0.78);
+				mooring_found_substruc = 2421878.0 * system_capacity_MW + 570523.0;
 				//BOS costs SAM Cost Model v8.xlsx
-				development = 3197591.76 * pow(system_capacity_MW, 0.49);
-				eng_and_mgmt = 850744.0 * pow(system_capacity_MW, 0.565);
+                development = 189783 * system_capacity_MW + 8935599;
+                eng_and_mgmt = 78127 * system_capacity_MW + 2325517;
 			}
 
 			else //generic model applies to everything else
 			{
-				structural_assembly = 6854912.0 * system_capacity_MW + 2629191.0;
-				power_takeoff = 1179579.0 * system_capacity_MW + 2495107.0;
-				mooring_found_substruc = 1178598.0 * system_capacity_MW + 1602348.0;
+				structural_assembly = 7708042.0 * system_capacity_MW + 7092078;
+				power_takeoff = 1550104.0 * system_capacity_MW + 5331628.0;
+				mooring_found_substruc = 1619167.0 * system_capacity_MW;
 				//BOS costs SAM Cost Model v8.xlsx
-				development = 3197591.0 * pow(system_capacity_MW, 0.49);
-				eng_and_mgmt = 850744.0 * pow(system_capacity_MW, 0.565);
+                development = 189783 * system_capacity_MW + 8935599;
+                eng_and_mgmt = 78127 * system_capacity_MW + 2325517;
 			}
 		}
 
 		// REmaining BOS costs that are not CapEx dependent and not technology dependent
-		assembly_and_install = 2805302.0 * pow(system_capacity_MW, 0.66);
+		assembly_and_install = 2564748 * pow(system_capacity_MW, 0.67);
 		other_infrastructure = 0;
 
 		//electrical infrastructure costs
@@ -338,11 +338,11 @@ public:
 			+ array_cable_system + export_cable_system + onshore_substation + offshore_substation + other_elec_infra;
 
 		// Calculate the CapEx dependent BOS costs
-		plant_commissioning = 0.016 * capex;
-		site_access_port_staging = 0.011 * capex;
+        plant_commissioning = 56103 * system_capacity_MW;
+        site_access_port_staging = 75462 * system_capacity_MW;
 
 		// Calculate the CapEx-dependent financial costs
-		project_contingency = 0.05 * capex;
+		project_contingency = 0.08 * capex;
 		insurance_during_construction = 0.01 * capex;
 		reserve_accounts = 0.03 * capex;
 

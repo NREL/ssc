@@ -107,9 +107,9 @@ public:
 	//Read and store tidal resource and power curve:
 		util::matrix_t<double>  tidal_resource_matrix = as_matrix("tidal_resource");
 		util::matrix_t<double>  tidal_power_curve = as_matrix("tidal_power_curve");
-		
+        int tidal_resource_model_choice = as_integer("tidal_resource_model_choice");
 		//Check to ensure size of _power_vect == _speed_vect : 
-		if ( tidal_power_curve.nrows() != tidal_resource_matrix.nrows() )
+		if ( tidal_resource_model_choice == 0 && tidal_power_curve.nrows() != tidal_resource_matrix.nrows() )
 			throw exec_error("mhk_tidal", "Size of Power Curve is not equal to Tidal Resource");
 
 		//Store the number of rows- this will have to change if resource and power curve can have different stream speeds
@@ -155,7 +155,6 @@ public:
 			+ as_double("loss_downtime")
 			+ as_double("loss_additional");
 
-        int tidal_resource_model_choice = as_integer("tidal_resource_model_choice");
         double tidal_resource_start_velocity = 0;
         double tidal_power_start_velocity = 0;
         double tidal_resource_end_velocity = 0;
