@@ -66,7 +66,8 @@ public:
 		double m_eta_thermal;			//[-] Cycle thermal efficiency
 		double m_UA_recup_tot_des;		//[kW/K] Total recuperator conductance
 		int m_cycle_config;				//[-] 2 = partial cooling, [else] = recompression
-	
+        double m_eta_thermal_cutoff;    //[] Minimum eta to fully design cycle (returns failure below value)
+
 		// Cycle design parameters
 		std::vector<double> m_DP_LT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)
 		std::vector<double> m_DP_HT;		//(cold, hot) positive values are absolute [kPa], negative values are relative (-)

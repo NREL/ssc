@@ -487,6 +487,7 @@ int C_sco2_tsf_core::finalize_design(C_sco2_cycle_core::S_design_solved& design_
             }
             catch (...)
             {
+                design_solved.m_eta_thermal = m_outputs.m_eta_thermal;
                 m_outputs.m_error_code = C_sco2_cycle_core::E_cycle_error_msg::E_AIR_COOLER_CONVERGENCE;
                 return m_outputs.m_error_code;
             }
@@ -683,6 +684,14 @@ void C_TurbineSplitFlow_Cycle::auto_opt_design_core(int& error_code)
 
     if (error_code != 0)
         return;
+
+    // Check if cycle is below eta cutoff value
+    if (m_optimal_tsf_core.m_outputs.m_eta_thermal < ms_auto_opt_des_par.m_eta_thermal_cutoff)
+    {
+        ms_des_solved.m_eta_thermal = m_optimal_tsf_core.m_outputs.m_eta_thermal;
+        error_code = C_sco2_cycle_core::E_cycle_error_msg::E_ETA_THRESHOLD;
+        return;
+    }
 
     // Finalize Design (pass in reference to solved parameters)
     error_code = m_optimal_tsf_core.finalize_design(ms_des_solved);

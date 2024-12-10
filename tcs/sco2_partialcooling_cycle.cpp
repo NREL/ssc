@@ -617,7 +617,15 @@ int C_PartialCooling_Cycle::finalize_design()
 	if (ms_des_par.m_is_des_air_cooler && std::isfinite(m_deltaP_cooler_frac) && std::isfinite(m_frac_fan_power)
 		&& std::isfinite(m_T_amb_des) && std::isfinite(m_elevation) && std::isfinite(m_eta_fan) && m_N_nodes_pass > 0)
 	{
-		mc_pc_air_cooler.design_hx(s_LP_air_cooler_des_par_ind, s_LP_air_cooler_des_par_dep, ms_des_par.m_des_tol);
+        try
+        {
+            mc_pc_air_cooler.design_hx(s_LP_air_cooler_des_par_ind, s_LP_air_cooler_des_par_dep, ms_des_par.m_des_tol);
+        }
+        catch (...)
+        {
+            ms_des_solved.m_eta_thermal = m_eta_thermal_calc_last;
+            return C_sco2_cycle_core::E_cycle_error_msg::E_AIR_COOLER_CONVERGENCE;
+        }
 	}
 
 	// High Pressure
@@ -647,7 +655,15 @@ int C_PartialCooling_Cycle::finalize_design()
 	if (ms_des_par.m_is_des_air_cooler && std::isfinite(m_deltaP_cooler_frac) && std::isfinite(m_frac_fan_power)
 		&& std::isfinite(m_T_amb_des) && std::isfinite(m_elevation) && std::isfinite(m_eta_fan) && m_N_nodes_pass > 0)
 	{
-		mc_mc_air_cooler.design_hx(s_IP_air_cooler_des_par_ind, s_IP_air_cooler_des_par_dep, ms_des_par.m_des_tol);
+        try
+        {
+            mc_mc_air_cooler.design_hx(s_IP_air_cooler_des_par_ind, s_IP_air_cooler_des_par_dep, ms_des_par.m_des_tol);
+        }
+        catch (...)
+        {
+            ms_des_solved.m_eta_thermal = m_eta_thermal_calc_last;
+            return C_sco2_cycle_core::E_cycle_error_msg::E_AIR_COOLER_CONVERGENCE;
+        }
 	}
 
 
@@ -948,6 +964,13 @@ int C_PartialCooling_Cycle::opt_design(S_opt_des_params & opt_des_par_in)
 	if (opt_des_err_code != 0)
 		return opt_des_err_code;
 
+    // Check if cycle is below eta cutoff value
+    if (m_eta_thermal_calc_last < ms_auto_opt_des_par.m_eta_thermal_cutoff)
+    {
+        ms_des_solved.m_eta_thermal = m_eta_thermal_calc_last;
+        return C_sco2_cycle_core::E_cycle_error_msg::E_ETA_THRESHOLD;
+    }
+
 	return finalize_design();
 }
 
@@ -1081,7 +1104,15 @@ int C_PartialCooling_Cycle::auto_opt_design_core()
 		return pc_opt_des_error_code;
 	}
 
-	pc_opt_des_error_code = finalize_design();
+
+    // Check if cycle is below eta cutoff value
+    if (m_eta_thermal_calc_last < ms_auto_opt_des_par.m_eta_thermal_cutoff)
+    {
+        ms_des_solved.m_eta_thermal = m_eta_thermal_calc_last;
+        return C_sco2_cycle_core::E_cycle_error_msg::E_ETA_THRESHOLD;
+    }
+
+    pc_opt_des_error_code = finalize_design();
 
 	return pc_opt_des_error_code;
 }

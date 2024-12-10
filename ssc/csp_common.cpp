@@ -753,8 +753,10 @@ var_info vtab_sco2_design[] = {
 	{ SSC_INPUT,  SSC_NUMBER,  "site_elevation",       "Site elevation",                                         "m",          "",    "System Design",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "W_dot_net_des",        "Design cycle power output (no cooling parasitics)",      "MWe",        "",    "System Design",      "*",     "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "design_method",        "1 = Specify efficiency, 2 = Specify total recup UA, 3 = Specify each recup design","","","System Design","*","",       "" },
-	{ SSC_INPUT,  SSC_NUMBER,  "eta_thermal_des",      "Power cycle thermal efficiency",                         "",           "",    "System Design",      "design_method=1","",  "" },
-	    
+	{ SSC_INPUT,  SSC_NUMBER,  "eta_thermal_des",      "Power cycle thermal efficiency",                         "",           "",    "System Design",      "design_method=1", "",  "" },
+    { SSC_INPUT,  SSC_NUMBER,  "eta_thermal_cutoff",   "Minimum eta allowable to solve and return cmod success", "",           "",    "System Design",      "?=0",   "",       "" },
+
+
         // Heat exchanger design
             // Combined recuperator design parameter (design_method == 2)
     { SSC_INPUT,  SSC_NUMBER,  "UA_recup_tot_des",     "Total recuperator conductance",                          "kW/K",       "Combined recuperator design",    "Heat Exchanger Design",      "design_method=2","",  "" },
@@ -809,8 +811,6 @@ var_info vtab_sco2_design[] = {
 	{ SSC_INPUT,  SSC_NUMBER,  "deltaP_cooler_frac",   "Fraction of CO2 inlet pressure that is design point cooler CO2 pressure drop", "", "", "Air Cooler Design", "*", "",       "" },
     { SSC_INPUT,  SSC_NUMBER,  "eta_air_cooler_fan",   "Air cooler fan isentropic efficiency",                   "",           "",    "Air Cooler Design",      "?=0.5", "",       "" },
     { SSC_INPUT,  SSC_NUMBER,  "N_nodes_air_cooler_pass", "Number of nodes in single air cooler pass",           "",           "",    "Air Cooler Design",      "?=10",  "",       "" },
-
-
 
     // HTR Bypass Design
     { SSC_INPUT,  SSC_NUMBER,  "is_bypass_ok",         "1 = Yes, 0 = No Bypass, < 0 = fix bp_frac to abs(input)","",  "High temperature recuperator",    "Heat Exchanger Design",      "?=1",   "",       "" },
@@ -1120,6 +1120,8 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
 		cm->log(err_msg, SSC_ERROR, -1.0);
 	}
 
+    s_sco2_des_par.m_eta_thermal_cutoff = cm->as_double("eta_thermal_cutoff");
+
     s_sco2_des_par.m_is_recomp_ok = cm->as_double("is_recomp_ok");
     s_sco2_des_par.m_is_bypass_ok = cm->as_double("is_bypass_ok");
     s_sco2_des_par.m_is_turbine_split_ok = cm->as_double("is_turbine_split_ok");
@@ -1341,6 +1343,7 @@ int sco2_design_cmod_common(compute_module *cm, C_sco2_phx_air_cooler & c_sco2_c
         std::string error_text = C_sco2_cycle_core::E_cycle_error_msg::get_error_string(cycle_error_enum);
         cm->assign("error_msg", error_text);
         cm->assign("cycle_success", 0);
+        cm->assign("eta_thermal_calc", (ssc_number_t)c_sco2_cycle.get_design_solved()->ms_rc_cycle_solved.m_eta_thermal);	//[-]
         return 0;
     }
 

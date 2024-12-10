@@ -577,7 +577,16 @@ int C_sco2_htrbp_core::finalize_design(C_sco2_cycle_core::S_design_solved& desig
         if (m_inputs.m_is_des_air_cooler && std::isfinite(m_inputs.m_deltaP_cooler_frac) && std::isfinite(m_inputs.m_frac_fan_power)
             && std::isfinite(m_inputs.m_T_amb_des) && std::isfinite(m_inputs.m_elevation) && std::isfinite(m_inputs.m_eta_fan) && m_inputs.m_N_nodes_pass > 0)
         {
-            m_outputs.mc_air_cooler.design_hx(s_air_cooler_des_par_ind, s_air_cooler_des_par_dep, m_inputs.m_des_tol);
+            try
+            {
+                m_outputs.mc_air_cooler.design_hx(s_air_cooler_des_par_ind, s_air_cooler_des_par_dep, m_inputs.m_des_tol);
+            }
+            catch (...)
+            {
+                design_solved.m_eta_thermal = m_outputs.m_eta_thermal;
+                m_outputs.m_error_code = C_sco2_cycle_core::E_cycle_error_msg::E_AIR_COOLER_CONVERGENCE;
+                return m_outputs.m_error_code;
+            }
         }
     }
 
@@ -939,6 +948,14 @@ void C_HTRBypass_Cycle::auto_opt_design_core(int& error_code)
     //    error_code = (int)C_sco2_cycle_core::E_cycle_error_msg::E_ETA_THRESHOLD;
     //    return;
     //}
+
+    // Check if cycle is below eta cutoff value
+    if (m_optimal_htrbp_core.m_outputs.m_eta_thermal < ms_auto_opt_des_par.m_eta_thermal_cutoff)
+    {
+        ms_des_solved.m_eta_thermal = m_optimal_htrbp_core.m_outputs.m_eta_thermal;
+        error_code = C_sco2_cycle_core::E_cycle_error_msg::E_ETA_THRESHOLD;
+        return;
+    }
 
     // Finalize Design (pass in reference to solved parameters)
     error_code = m_optimal_htrbp_core.finalize_design(ms_des_solved);

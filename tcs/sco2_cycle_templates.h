@@ -173,7 +173,9 @@ public:
 		double m_eta_pc;					//[-] design-point efficiency of the pre-compressor; 
 		double m_des_tol;					//[-] Convergence tolerance
 		double m_des_opt_tol;				//[-] Optimization tolerance
-		
+
+        double m_eta_thermal_cutoff;        //[] Minimum eta to fully design cycle (returns failure below value)
+
 		// Air cooler parameters
 		bool m_is_des_air_cooler;		//[-] False will skip physical air cooler design. UA will not be available for cost models.
 
@@ -254,7 +256,9 @@ public:
 
 		double m_des_tol;					//[-] Convergence tolerance
 		double m_des_opt_tol;				//[-] Optimization tolerance
-		
+
+        double m_eta_thermal_cutoff;        //[] Minimum eta to fully design cycle (returns failure below value)
+
 		// Air cooler parameters
 		bool m_is_des_air_cooler;		//[-] False will skip physical air cooler design. UA will not be available for cost models.
 

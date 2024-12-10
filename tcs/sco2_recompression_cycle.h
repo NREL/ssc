@@ -467,7 +467,7 @@ private:
 
 	void auto_opt_design_core(int & error_code);
 
-	void finalize_design(int & error_code);	
+	int finalize_design(int & error_code);	
 
 	//void off_design_core(int & error_code);
 
@@ -554,7 +554,7 @@ public:
 
 	void design(S_design_parameters & des_par_in, int & error_code);
 
-	void opt_design(S_opt_design_parameters & opt_des_par_in, int & error_code);
+	int opt_design(S_opt_design_parameters & opt_des_par_in, int & error_code);
 
 	//void od_turbo_bal_csp(const S_od_turbo_bal_csp_par & par_in);
 

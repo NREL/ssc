@@ -292,6 +292,8 @@ int C_sco2_phx_air_cooler::design_core()
 		ms_cycle_des_par.m_des_objective_type = ms_des_par.m_des_objective_type;		//[-]
 		ms_cycle_des_par.m_min_phx_deltaT = ms_des_par.m_min_phx_deltaT;				//[C]
 
+        ms_cycle_des_par.m_eta_thermal_cutoff = ms_des_par.m_eta_thermal_cutoff; //[]
+
 		ms_cycle_des_par.m_fixed_P_mc_out = ms_des_par.m_fixed_P_mc_out;	//[-]
 
 		ms_cycle_des_par.m_PR_HP_to_LP_guess = ms_des_par.m_PR_HP_to_LP_guess;      //[-]
@@ -364,6 +366,8 @@ int C_sco2_phx_air_cooler::design_core()
         des_params.m_is_bypass_ok = ms_des_par.m_is_bypass_ok;
         des_params.m_is_turbinesplit_ok = ms_des_par.m_is_turbine_split_ok;
 
+        des_params.m_eta_thermal_cutoff = ms_des_par.m_eta_thermal_cutoff;
+
 		auto_err_code = mpc_sco2_cycle->auto_opt_design(des_params);
 	}
 	else
@@ -379,6 +383,7 @@ int C_sco2_phx_air_cooler::design_core()
         if (auto_err_code >= (int)C_sco2_cycle_core::E_cycle_error_msg::E_CANNOT_PRODUCE_POWER
             && auto_err_code < (int)C_sco2_cycle_core::E_cycle_error_msg::E_NO_ERROR)
         {
+            ms_des_solved.ms_rc_cycle_solved = *mpc_sco2_cycle->get_design_solved();
             return auto_err_code;
         }
 
