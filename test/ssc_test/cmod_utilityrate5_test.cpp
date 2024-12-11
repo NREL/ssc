@@ -2273,3 +2273,61 @@ TEST(cmod_utilityrate5_eqns, Test_Commercial_Demand_Charges_exception) {
     int status = run_module(data, "utilityrate5");
     EXPECT_TRUE(status);
 }
+
+TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_buyall_sellall_ts_buy_rate) {
+    ssc_data_t data = new var_table;
+
+    setup_residential_rates(data);
+    ssc_data_set_number(data, "ur_metering_option", 4);
+    // Need to specify sell rates for this configuration. These are higher than real life
+    ssc_number_t p_ur_ec_tou_mat[24] = { 1, 1, 9.9999999999999998e+37, 0, 0.10000000000000001, 0.10000000000000001,
+                                         2, 1, 9.9999999999999998e+37, 0, 0.050000000000000003, 0.050000000000000003,
+                                         3, 1, 9.9999999999999998e+37, 0, 0.20000000000000001, 0.20000000000000001,
+                                         4, 1, 9.9999999999999998e+37, 0, 0.25, 0.25 };
+    ssc_data_set_matrix(data, "ur_ec_tou_mat", p_ur_ec_tou_mat, 4, 6);
+
+    ssc_data_set_number(data, "ur_en_ts_buy_rate", 1);
+    ssc_number_t p_ur_ts_buy_rate[8760];
+    for (size_t i = 0; i < 8760; i++) {
+        p_ur_ts_buy_rate[i] = 0.0;
+    }
+    ssc_data_set_array(data, "ur_ts_buy_rate", p_ur_ts_buy_rate, 8760);
+
+    ssc_data_set_number(data, "ur_en_ts_sell_rate", 1);
+    ssc_number_t p_ur_ts_sell_rate[8760];
+    for (size_t i = 0; i < 8760; i++) {
+        p_ur_ts_sell_rate[i] = 0.0;
+    }
+    ssc_data_set_array(data, "ur_ts_sell_rate", p_ur_ts_sell_rate, 8760);
+
+    int analysis_period = 1;
+    ssc_data_set_number(data, "system_use_lifetime_output", 1);
+    ssc_data_set_number(data, "analysis_period", analysis_period);
+    set_array(data, "load", load_profile_path, 8760);
+    set_array(data, "gen", gen_path, 8760); // 15 min data
+
+    int status = run_module(data, "utilityrate5");
+    EXPECT_FALSE(status);
+
+    ensure_outputs_line_up(data);
+
+    ssc_number_t cost_without_system;
+    ssc_data_get_number(data, "elec_cost_without_system_year1", &cost_without_system);
+    EXPECT_NEAR(0.0, cost_without_system, 0.01);
+
+    ssc_number_t cost_with_system;
+    ssc_data_get_number(data, "elec_cost_with_system_year1", &cost_with_system);
+    EXPECT_NEAR(0.0, cost_with_system, 0.0);
+
+    int nrows;
+    int ncols;
+    ssc_number_t* net_billing_credits = ssc_data_get_matrix(data, "two_meter_sales_ym", &nrows, &ncols);
+    util::matrix_t<double> credits_matrix(nrows, ncols);
+    credits_matrix.assign(net_billing_credits, nrows, ncols);
+
+    double dec_year_1_credits = credits_matrix.at((size_t)1, (size_t)11);
+    EXPECT_NEAR(0.0, dec_year_1_credits, 0.1);
+
+    ssc_data_free(data);
+
+}

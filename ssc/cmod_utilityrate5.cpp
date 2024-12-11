@@ -2377,17 +2377,19 @@ public:
 
                                 ssc_number_t tier_credit = 0.0, sr = 0.0, tier_energy = 0.0;
                                 // time step sell rates
+                                bool use_ec_table_sell_rates = true;
                                 if (as_boolean("ur_en_ts_sell_rate")) {
                                     if (c < rate.m_ec_ts_sell_rate.size()) {
                                         tier_energy = energy_surplus;
                                         sr = rate.m_ec_ts_sell_rate[c];
                                         tier_credit = tier_energy * sr * rate_esc;
                                         curr_month.ec_energy_surplus.at(row, surplus_tier) += (ssc_number_t)tier_energy;
+                                        use_ec_table_sell_rates = false;
                                     }
                                 }
 
                                 // Fall back to TOU rates if m_ec_ts_sell_rate.size() is too small
-                                if (tier_credit == 0) {         // So AFAICT this is to make sure we don't compute both time step and TOU. Maybe better as an else?
+                                if (use_ec_table_sell_rates) {         // So AFAICT this is to make sure we don't compute both time step and TOU. Maybe better as an else?
                                     if (cumulative_energy <= e_upper) { // If we are within the max usage for the tier, then it's a simple multiply
                                         tier_energy = energy_surplus;   // of our usage with that rate  and the escalator
                                         sr = curr_month.ec_tou_sr.at(row, surplus_tier);
@@ -2468,6 +2470,7 @@ public:
 									cumulative_deficit = daily_deficit_energy;
 
                                 ssc_number_t tier_charge = 0.0, br = 0.0, tier_energy = 0.0;
+                                bool use_ec_table_buy_rates = true;
                                 // time step sell rates
                                 if (as_boolean("ur_en_ts_buy_rate")) {
                                     if (c < rate.m_ec_ts_buy_rate.size()) {
@@ -2477,11 +2480,12 @@ public:
                                         charge_amt = tier_energy * br * rate_esc;
                                         curr_month.ec_energy_use.at(row, deficit_tier) += (ssc_number_t)tier_energy;
                                         curr_month.ec_charge.at(row, deficit_tier) += (ssc_number_t)charge_amt;
+                                        use_ec_table_buy_rates = false;
                                     }
                                 }
 
                                 // Fall back to TOU rates if m_ec_ts_buy_rate.size() is too small
-                                if (tier_charge == 0) {
+                                if (use_ec_table_buy_rates) {
                                     if (cumulative_deficit <= e_upper) {
                                         tier_energy = energy_deficit;
                                         br = curr_month.ec_tou_br.at(row, deficit_tier);
