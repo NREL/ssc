@@ -2387,7 +2387,7 @@ void C_RecompCycle::design(S_design_parameters & des_par_in, int & error_code)
 		return;
 	}
 
-	design_error_code = finalize_design(design_error_code);
+	finalize_design(design_error_code);
 
 	error_code = design_error_code;
 }
@@ -2412,7 +2412,9 @@ int C_RecompCycle::opt_design(S_opt_design_parameters & opt_des_par_in, int & er
         return C_sco2_cycle_core::E_cycle_error_msg::E_ETA_THRESHOLD;
     }
 
-	return finalize_design(error_code);
+    finalize_design(error_code);
+
+	return error_code;
 }
 
 void C_RecompCycle::opt_design_core(int & error_code)
@@ -2835,7 +2837,7 @@ void C_RecompCycle::auto_opt_design_core(int & error_code)
         return;
     }
 
-    optimal_design_error_code = finalize_design(optimal_design_error_code);
+    finalize_design(optimal_design_error_code);
 
 	error_code = optimal_design_error_code;
 }
@@ -3339,7 +3341,7 @@ void C_RecompCycle::check_od_solution(double & diff_m_dot, double & diff_E_cycle
     diff_Q_HTR = (Q_dot_HTR_HP - Q_dot_HTR_LP) / Q_dot_HTR_LP;
 }
 
-int C_RecompCycle::finalize_design(int & error_code)
+void C_RecompCycle::finalize_design(int & error_code)
 {
 	int cpp_offset = 1;
 
@@ -3353,7 +3355,7 @@ int C_RecompCycle::finalize_design(int & error_code)
 	if (mc_design_err != 0)
 	{
 		error_code = mc_design_err;
-		return error_code;
+		return;
 	}
 
 	if( ms_des_par.m_recomp_frac > 0.01 )
@@ -3367,7 +3369,7 @@ int C_RecompCycle::finalize_design(int & error_code)
 		if (rc_des_err != 0)
 		{
 			error_code = rc_des_err;
-			return error_code;
+			return;
 		}
 
 		ms_des_solved.m_is_rc = true;
@@ -3397,7 +3399,7 @@ int C_RecompCycle::finalize_design(int & error_code)
 	if(turb_size_error_code != 0)
 	{
 		error_code = turb_size_error_code;
-		return error_code;
+		return;
 	}
 
 	// Design air cooler
@@ -3435,7 +3437,8 @@ int C_RecompCycle::finalize_design(int & error_code)
         catch (...)
         {
             ms_des_solved.m_eta_thermal = m_eta_thermal_calc_last;
-            return C_sco2_cycle_core::E_cycle_error_msg::E_AIR_COOLER_CONVERGENCE;
+            error_code = C_sco2_cycle_core::E_cycle_error_msg::E_AIR_COOLER_CONVERGENCE;
+            return;
         }
 	}
 

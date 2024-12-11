@@ -467,7 +467,7 @@ private:
 
 	void auto_opt_design_core(int & error_code);
 
-	int finalize_design(int & error_code);	
+	void finalize_design(int & error_code);	
 
 	//void off_design_core(int & error_code);
 
