@@ -2026,26 +2026,49 @@ bool C_csp_fresnel_collector_receiver::init_fieldgeom()
 
     double thermal_field = m_Ap_tot * m_I_bn_des * m_opteff_des - loss_tot * float(m_nLoops);
 
+    // Calculate min and max mass flow
+    m_m_dot_loop_des = m_m_dot_design / (double)m_nLoops;	//[kg/s]
 
+    double m_dot_field_min = 0.0;
+    double m_dot_field_max = 0.0;
 
-    double m_dot_max = m_m_dot_htfmax * m_nLoops;
-    double m_dot_min = m_m_dot_htfmin * m_nLoops;
-    if (m_m_dot_design > m_dot_max) {
+    // Use absolute mdot limit
+    if (m_use_abs_or_rel_mdot_limit == 0)
+    {
+        m_dot_field_min = m_m_dot_htfmin_in * (double)m_nLoops; //[kg/s]
+        m_dot_field_max = m_m_dot_htfmax_in * (double)m_nLoops; //[kg/s]
+        m_m_dot_htfmin = m_m_dot_htfmin_in;
+        m_m_dot_htfmax = m_m_dot_htfmax_in;
+        m_f_htfmin = m_m_dot_htfmin_in / m_m_dot_loop_des;
+        m_f_htfmax = m_m_dot_htfmax_in / m_m_dot_loop_des;
+    }
+    // Use relative mdot limit
+    else
+    {
+        m_dot_field_min = m_f_htfmin_in * m_m_dot_design;   //[kg/s]
+        m_dot_field_max = m_f_htfmax_in * m_m_dot_design;   //[kg/s]
+        m_m_dot_htfmin = m_dot_field_min / (double)m_nLoops;
+        m_m_dot_htfmax = m_dot_field_max / (double)m_nLoops;
+        m_f_htfmin = m_f_htfmin_in;
+        m_f_htfmax = m_f_htfmax_in;
+    }
+
+    if (m_m_dot_design > m_dot_field_max) {
         const char* msg = "The calculated field design mass flow rate of %.2f kg/s is greater than the maximum defined by the max single loop flow rate and number of loops (%.2f kg/s). "
             "The design mass flow rate is reset to the latter.";
-        m_error_msg = util::format(msg, m_m_dot_design, m_dot_max);
+        m_error_msg = util::format(msg, m_m_dot_design, m_dot_field_max);
         mc_csp_messages.add_message(C_csp_messages::NOTICE, m_error_msg);
-        m_m_dot_design = m_dot_max;
+        m_m_dot_design = m_dot_field_max;
     }
-    else if (m_m_dot_design < m_dot_min) {
+    else if (m_m_dot_design < m_dot_field_min) {
         const char* msg = "The calculated field design mass flow rate of %.2f kg/s is less than the minimum defined by the min single loop flow rate and number of loops (%.2f kg/s). "
             "The design mass flow rate is reset to the latter.";
-        m_error_msg = util::format(msg, m_m_dot_design, m_dot_min);
+        m_error_msg = util::format(msg, m_m_dot_design, m_dot_field_min);
         mc_csp_messages.add_message(C_csp_messages::NOTICE, m_error_msg);
-        m_m_dot_design = m_dot_min;
+        m_m_dot_design = m_dot_field_min;
     }
 
-
+    // Recalculate design loop mass flow with bounded field mass flow
     m_m_dot_loop_des = m_m_dot_design / (double)m_nLoops; // [kg/s]
 
     // Already defined in design_solar_mult (TB)

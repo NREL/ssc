@@ -44,7 +44,7 @@ static const double KB = 8.618e-5; // Boltzmann constant [eV/K] note units
 static const double k_air=0.02676, mu_air=1.927E-5, Pr_air=0.724;  // !Viscosity in units of N-s/m^2
 static const double EmisC = 0.84, EmisB = 0.7;  // Emissivities of glass cover, backside material
 static const double sigma = 5.66961E-8, cp_air = 1005.5;
-static double amavec[5] = { 0.918093, 0.086257, -0.024459, 0.002816, -0.000126 };	// !Air mass modifier coefficients as indicated in DeSoto paper
+static double amavec[5] = { 0.918093, 0.086257, -0.024459, 0.002816, -0.000126 };	// !Air mass modifier coefficients as indicated for polycrystalline modules in Table A1 of DeSoto paper published in Solar Energy  Vol 80 Issue 1 January 2006
 
 static const double Tc_ref = (25+273.15); // 25 'C
 static const double I_ref = 1000; // 1000 W/m2
@@ -265,11 +265,10 @@ bool noct_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 		tau_al = std::abs(TauAlpha);  // Sev: What's the point of recalculating this??
 
 		W_spd = input.Wspd * ffv_wind; //added 1/11/12 to account for FFV_wind correction factor internally
-		if (W_spd < 0.001) W_spd = 0.001;		
-		if (G_total > 0) tau_al *= Geff_total/G_total;		
+		if (W_spd < 0.001) W_spd = 0.001;				
 
 		double Tnoct_adj = Tnoct + standoff_tnoct_adj; // added 1/11/12 for adjustment to NOCT as in the CECPV calculator based on standoff height, used in eqn below.
-		Tcell = (input.Tdry+273.15) + (G_total/I_noct * (Tnoct_adj - Tamb_noct) * (1.0-eff_ref/tau_al))*9.5/(5.7 + 3.8*W_spd);
+		Tcell = (input.Tdry+273.15) + (Geff_total/I_noct * (Tnoct_adj - Tamb_noct) * (1.0-eff_ref/tau_al))*9.5/(5.7 + 3.8*W_spd);
 		Tcell = Tcell-273.15;
 	}
 

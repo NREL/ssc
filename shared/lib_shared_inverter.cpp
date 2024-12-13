@@ -230,7 +230,7 @@ void SharedInverter::calculateTempDerate(double V, double tempC, double& p_dc_ra
 
 double SharedInverter::getInverterDCMaxPower(double p_dc_rated)
 {
-    double inv_dc_max_power;
+    double inv_dc_max_power = p_dc_rated * util::kilowatt_to_watt; //if the inverter type isn't one of the following, assume that max power is equal to rated power"
     if (m_inverterType == SANDIA_INVERTER || m_inverterType == DATASHEET_INVERTER || m_inverterType == COEFFICIENT_GENERATOR)
         //m_sandiaInverter->acpower(std::fabs(powerDC_Watts) / m_numInverters, DCStringVoltage, &powerAC_Watts, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW);
         inv_dc_max_power = m_sandiaInverter->Pdco;
@@ -240,9 +240,6 @@ double SharedInverter::getInverterDCMaxPower(double p_dc_rated)
     else if (m_inverterType == OND_INVERTER)
         //m_ondInverter->acpower(std::fabs(powerDC_Watts) / m_numInverters, DCStringVoltage, tempC, &powerAC_Watts, &P_par, &P_lr, &efficiencyAC, &powerClipLoss_kW, &powerConsumptionLoss_kW, &powerNightLoss_kW, &dcWiringLoss_ond_kW, &acWiringLoss_ond_kW);
         inv_dc_max_power = m_ondInverter->PMaxDC;
-    else if (m_inverterType == NONE) {
-        inv_dc_max_power = p_dc_rated * util::kilowatt_to_watt;
-    }
 
     return inv_dc_max_power;
 }

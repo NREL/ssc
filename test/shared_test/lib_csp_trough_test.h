@@ -110,8 +110,8 @@ namespace csp_trough
         double T_loop_in_des;                                     //[C] Design loop inlet temperature, converted to K in init
         double T_loop_out_des;                                    //[C] Target loop outlet temperature, converted to K in init
         double T_startup;                                         //[C] The required temperature (converted to K in init) of the system before the power block can be switched on
-        double m_dot_htfmin;                                      //[kg/s] Minimum loop HTF flow rate
-        double m_dot_htfmax;                                      //[kg/s] Maximum loop HTF flow rate
+        double m_dot_htfmin_in;                                   //[kg/s] Minimum loop HTF flow rate
+        double m_dot_htfmax_in;                                   //[kg/s] Maximum loop HTF flow rate
         util::matrix_t<double> field_fl_props;                    //[-] User-defined field HTF properties
         double T_fp;                                              //[C] Freeze protection temperature (heat trace activation temperature), convert to K in init
         double I_bn_des;                                          //[W/m^2] Solar irradiation at design
@@ -210,7 +210,7 @@ namespace csp_trough
         util::matrix_t<double> sf_hdr_lengths;                    //[m] Imported header lengths, used if custom_sf_pipe_sizes is true
 
         // TMB 11-28-2023 Added parameters for updated Trough
-        util::matrix_t<double> trough_loop_control;
+        std::vector<double> trough_loop_control;
         bool use_solar_mult_or_aperture_area;
         double specified_solar_mult;
         double P_ref;

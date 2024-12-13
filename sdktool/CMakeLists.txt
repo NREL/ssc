@@ -84,7 +84,7 @@ target_link_libraries(SDKtool ssc)
 if (${CMAKE_PROJECT_NAME} STREQUAL system_advisor_model)
 	target_link_libraries(SDKtool wex lk)
 else()
-    if (CMAKE_BUILD_TYPE STREQUAL "Release" OR MSVC)
+    if (CMAKE_BUILD_TYPE STREQUAL "Release" OR "Release" IN_LIST CMAKE_CONFIGURATION_TYPES)
         unset(WEX_LIB CACHE)
         unset(LK_LIB CACHE)
         find_library( WEX_LIB
@@ -96,7 +96,7 @@ else()
 	    target_link_libraries(SDKtool optimized ${WEX_LIB} optimized ${LK_LIB})
     endif()
 
-	if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR MSVC)
+	if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR "Debug" IN_LIST CMAKE_CONFIGURATION_TYPES)
 		unset(LKD_LIB CACHE)
 		unset(WEXD_LIB CACHE)
 		find_library( WEXD_LIB
@@ -112,11 +112,15 @@ endif()
 target_link_libraries(SDKtool ${wxWidgets_LIBRARIES})
 
 if (UNIX AND NOT APPLE)
-	target_link_libraries(SDKtool -ldl -lfontconfig)
+	target_link_libraries(SDKtool ${CMAKE_DL_LIBS} -lfontconfig)
 endif()
 
 if (UNIX)
-	target_link_libraries(SDKtool -lm -lcurl)
+	find_library(MATH_LIBRARY m)
+	if(MATH_LIBRARY)
+		target_link_libraries(SDKtool ${MATH_LIBRARY})
+	endif()
+	target_link_libraries(SDKtool -lcurl)
 elseif (MSVC)
 	find_library( CURL_LIB
 			NAMES libcurl.lib

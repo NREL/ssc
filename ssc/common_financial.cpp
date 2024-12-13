@@ -3165,7 +3165,7 @@ bool advanced_financing_cost::compute_cost(double cost_installed, double equity,
 }
 */
 
-bool hourly_energy_calculation::calculate(compute_module *cm)
+bool hourly_energy_calculation::calculate(compute_module *cm, bool heat)
 {
 	if (!cm) return false;
 
@@ -3177,7 +3177,10 @@ bool hourly_energy_calculation::calculate(compute_module *cm)
 	ssc_number_t *pgen;
     size_t nrec_gen = 0;
     m_step_per_hour_gen = 1;
-	pgen = m_cm->as_array("gen", &nrec_gen);
+    if (heat)
+        pgen = m_cm->as_array("gen_heat", &nrec_gen); // kWht
+    else
+        pgen = m_cm->as_array("gen", &nrec_gen);
 
 	// in front of meter - account for charging and
 	size_t i;
@@ -3297,6 +3300,8 @@ void check_financial_metrics::check_debt_percentage(compute_module* cm, ssc_numb
 {
     if (debt_percentage > 100.0)
         cm->log(util::format("Debt percent is %lg. A debt percent greater than 100%% may indicate that revenues are higher than necessary to cover project costs.", debt_percentage), SSC_WARNING);
+    if (debt_percentage < 0.0)
+        cm->log(util::format("Debt percent is %lg. A debt percent less than 0%% may indicate the mininum EBITDA cannot support any debt in at least one year.", debt_percentage), SSC_WARNING);
 }
 
 
@@ -3338,7 +3343,7 @@ var_info vtab_lcos_inputs[] = {
     { SSC_INPUT, SSC_MATRIX, "net_billing_credits_ym", "Net billing credit", "$", "", "Charges by Month", "", "", "COL_LABEL=MONTHS,FORMAT_SPEC=CURRENCY,GROUP=UR_AM" },
 
     // fix for running financial compute modules tests
-    { SSC_INOUT,       SSC_ARRAY,       "gen_purchases",                              "Electricity from grid",                                    "kW",      "",                       "System Output",       "",                           "",                              "" },
+    { SSC_INOUT,       SSC_ARRAY,       "gen_purchases",                              "Electricity from grid to system",                         "kW",      "",                       "System Output",       "",                           "",                              "" },
     { SSC_INPUT,        SSC_ARRAY,      "rate_escalation",          "Annual electricity rate escalation",   "%/year",   "",                      "Electricity Rates",       "",              "",                             "" },
 
     

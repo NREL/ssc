@@ -185,7 +185,8 @@ static C_csp_reported_outputs::S_output_info S_solver_output_info[] =
 	{C_csp_solver::C_solver_outputs::OP_MODE_2, C_csp_reported_outputs::TS_1ST},		          //[-] Operating mode in second subtimestep
 	{C_csp_solver::C_solver_outputs::OP_MODE_3, C_csp_reported_outputs::TS_1ST},		          //[-] Operating mode in third subtimestep
 	{C_csp_solver::C_solver_outputs::TOU_PERIOD, C_csp_reported_outputs::TS_1ST},                 //[-] CSP operating TOU period
-	{C_csp_solver::C_solver_outputs::PRICING_MULT, C_csp_reported_outputs::TS_1ST},				  //[-] PPA price multiplier
+    {C_csp_solver::C_solver_outputs::PRICING_MULT, C_csp_reported_outputs::TS_1ST},				  //[-] PPA price multiplier
+    {C_csp_solver::C_solver_outputs::ELEC_PRICE, C_csp_reported_outputs::TS_1ST},				  //[-] Electricity price in absolute units
 	{C_csp_solver::C_solver_outputs::PC_Q_DOT_SB, C_csp_reported_outputs::TS_1ST},				  //[MWt] PC required standby thermal power
 	{C_csp_solver::C_solver_outputs::PC_Q_DOT_MIN, C_csp_reported_outputs::TS_1ST},				  //[MWt] PC required min thermal power
 	{C_csp_solver::C_solver_outputs::PC_Q_DOT_TARGET, C_csp_reported_outputs::TS_WEIGHTED_AVE},	  //[MWt] PC target thermal power
@@ -443,9 +444,7 @@ void C_csp_solver::init()
         m_is_CT_tes = false;
     }
 		// TOU
-    mc_tou.mc_dispatch_params.m_isleapyear = mc_weather.ms_solved_params.m_leapyear;
-	mc_tou.init();
-	mc_tou.init_parent(mc_dispatch.solver_params.dispatch_optimize);
+	mc_tou.init(mc_weather.ms_solved_params.m_leapyear);
 		// Thermal Storage
 	m_is_tes = mc_tes.does_tes_exist();
     bool m_does_tes_enable_cr_to_cold_tank = mc_tes.is_cr_to_cold_allowed();
@@ -466,12 +465,10 @@ void C_csp_solver::init()
 
     m_is_cr_config_recirc = true;
 
-    if (!mc_tou.mc_dispatch_params.m_is_block_dispatch && !mc_dispatch.solver_params.dispatch_optimize && !mc_tou.mc_dispatch_params.m_is_arbitrage_policy) {
-        throw(C_csp_exception("Either block dispatch or dispatch optimization must be specified", "CSP Solver"));
+    if (mc_tou.m_dispatch_model_type == C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::UNDEFINED) {
+        throw(C_csp_exception("Either heuristic, imported dispatch targets, or dispatch optimization must be specified", "CSP Solver"));
     }
-
-    if (mc_dispatch.solver_params.dispatch_optimize)
-    {
+    else if (mc_tou.m_dispatch_model_type == C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::DISPATCH_OPTIMIZATION) {
         mc_dispatch.pointers.set_pointers(mc_weather, &mc_collector_receiver, &mc_power_cycle, &mc_tes, &mc_csp_messages, &mc_kernel.mc_sim_info, mp_heater);
         mc_dispatch.init(m_cycle_q_dot_des, m_cycle_eta_des);
     }
@@ -616,10 +613,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
         mc_kernel.mc_sim_info.m_tou = f_turb_tou_period;	    //[base 1] used ONLY by power cycle model for hybrid cooling - may also want to move this to controller
         double f_turbine_tou = mc_tou_outputs.m_f_turbine;	//[-]
 		double pricing_mult = mc_tou_outputs.m_price_mult;	//[-]
+        double elec_price = mc_tou_outputs.m_elec_price;    //[$/kWh-e]
         double purchase_mult = pricing_mult;
-        if (!mc_tou.mc_dispatch_params.m_is_purchase_mult_same_as_price) {
-            throw(C_csp_exception("CSP Solver not yet setup to handle purchase schedule separate from price schedule"));
-        }
+        //if (!mc_tou.mc_dispatch_params.m_is_purchase_mult_same_as_price) {
+        //    throw(C_csp_exception("CSP Solver not yet setup to handle purchase schedule separate from price schedule"));
+        //}
 
 		// Get collector/receiver & power cycle operating states at start of time step (end of last time step)
             // collector/receiver
@@ -1077,7 +1075,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 		mc_reported_outputs.value(C_solver_outputs::TOU_PERIOD, (double)f_turb_tou_period);             //[-]       
 		mc_reported_outputs.value(C_solver_outputs::PRICING_MULT, pricing_mult);	                    //[-] 
-		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_SB, q_pc_sb);                              //[MW]     
+        mc_reported_outputs.value(C_solver_outputs::ELEC_PRICE, elec_price);	                        //[$/kWh-e] 
+        mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_SB, q_pc_sb);                              //[MW]     
 		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_MIN, q_pc_min);                            //[MW]    
 		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_TARGET, q_pc_target);                      //[MW]
 		mc_reported_outputs.value(C_solver_outputs::PC_Q_DOT_MAX, m_q_dot_pc_max);                      //[MW]
@@ -1329,7 +1328,7 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
     double& q_dot_elec_to_PAR_HTR /*MWt*/, bool& is_PAR_HTR_allowed)
 {
     // Optional rules for TOD Block Plant Control
-    if (mc_tou.mc_dispatch_params.m_is_block_dispatch)
+    if (mc_tou.m_dispatch_model_type == C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::HEURISTIC)
     {
         is_rec_su_allowed = true;
         is_pc_su_allowed = true;
@@ -1337,7 +1336,7 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
 
         // Set PC target and max thermal power
         q_dot_pc_target = f_turbine_tou * m_cycle_q_dot_des;	//[MW]
-        if (mc_tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max) {
+        if (mc_tou.m_is_tod_pc_target_also_pc_max) {
             q_dot_pc_max = q_dot_pc_target;     //[MW]
         }
         else {
@@ -1346,16 +1345,16 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
 
         // Rule 1: if the sun sets (or does not rise) in __ [hours], then do not allow power cycle standby
             //double standby_time_buffer = 2.0;
-        if (mc_tou.mc_dispatch_params.m_use_rule_1 &&
-            (mc_weather.ms_outputs.m_hour + mc_tou.mc_dispatch_params.m_standby_off_buffer <= mc_weather.ms_outputs.m_time_rise ||
-                mc_weather.ms_outputs.m_hour + mc_tou.mc_dispatch_params.m_standby_off_buffer >= mc_weather.ms_outputs.m_time_set))
+        if (mc_tou.m_use_rule_1 &&
+            (mc_weather.ms_outputs.m_hour + mc_tou.m_standby_off_buffer <= mc_weather.ms_outputs.m_time_rise ||
+                mc_weather.ms_outputs.m_hour + mc_tou.m_standby_off_buffer >= mc_weather.ms_outputs.m_time_set))
         {
             is_pc_sb_allowed = false;
         }
 
         // Rule 2:
-        if (mc_tou.mc_dispatch_params.m_use_rule_2 &&
-            ((q_dot_pc_target < q_dot_pc_min && q_dot_tes_ch < m_q_dot_rec_des * mc_tou.mc_dispatch_params.m_q_dot_rec_des_mult) ||
+        if (mc_tou.m_use_rule_2 &&
+            ((q_dot_pc_target < q_dot_pc_min && q_dot_tes_ch < m_q_dot_rec_des * mc_tou.m_q_dot_rec_des_mult) ||
                 is_q_dot_pc_target_overwrite))
         {
             // If overwrite was previously true, but now power cycle is off, set to false
@@ -1371,7 +1370,7 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
 
             if (is_q_dot_pc_target_overwrite)
             {
-                q_dot_pc_target = mc_tou.mc_dispatch_params.m_f_q_dot_pc_overwrite * m_cycle_q_dot_des;
+                q_dot_pc_target = mc_tou.m_f_q_dot_pc_overwrite * m_cycle_q_dot_des;
             }
         }
 
@@ -1392,8 +1391,8 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
             q_dot_elec_to_PAR_HTR = m_PAR_HTR_q_dot_rec_des;    //[MWt]
         }
     }
-    // use simply policy to govern arbitrage operation
-    else if (mc_tou.mc_dispatch_params.m_is_arbitrage_policy) {
+    // Use simply policy to govern arbitrage operation
+    else if (mc_tou.m_dispatch_model_type == C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::ARBITRAGE_CUTOFF) {
 
         // Check purchase multiplier
         // If less than 1, then allow charging
@@ -1419,7 +1418,7 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
             is_pc_sb_allowed = false;
 
             q_dot_pc_target = m_cycle_q_dot_des;	//[MWt]
-            if (mc_tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max) {
+            if (mc_tou.m_is_tod_pc_target_also_pc_max) {
                 q_dot_pc_max = q_dot_pc_target;     //[MWt]
             }
             else {
@@ -1434,9 +1433,29 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
             q_dot_pc_max = 0.0;
         }
     }
+    // Use external dispatch targets
+    else if (mc_tou.m_dispatch_model_type == C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::IMPORT_DISPATCH_TARGETS) {
+        int p = (int)ceil((mc_kernel.mc_sim_info.ms_ts.m_time - mc_kernel.get_sim_setup()->m_sim_time_start) / baseline_step) - 1;
+
+        if (pc_operating_state == C_csp_power_cycle::OFF || pc_operating_state == C_csp_power_cycle::STARTUP) {
+            q_dot_pc_target = mc_tou.mc_dispatch_params.m_q_pc_target_su_in.at(p);
+        }
+        else {
+            q_dot_pc_target = mc_tou.mc_dispatch_params.m_q_pc_target_on_in.at(p) + mc_tou.mc_dispatch_params.m_q_pc_target_su_in.at(p);  // Dispatch can miss startup timing -> Use total target to avoid attempted solutions with q_pc_target = 0
+        }
+
+        q_dot_pc_max = mc_tou.mc_dispatch_params.m_q_pc_max_in.at(p);
+        is_rec_su_allowed = mc_tou.mc_dispatch_params.m_is_rec_su_allowed_in.at(p);
+        is_pc_su_allowed = mc_tou.mc_dispatch_params.m_is_pc_su_allowed_in.at(p);
+        is_pc_sb_allowed = mc_tou.mc_dispatch_params.m_is_pc_sb_allowed_in.at(p);
+
+        is_PAR_HTR_allowed = mc_tou.mc_dispatch_params.m_is_PAR_HTR_allowed_in.at(p);
+        q_dot_elec_to_PAR_HTR = mc_tou.mc_dispatch_params.m_q_dot_elec_to_PAR_HTR_in.at(p);
+        q_dot_elec_to_CR_heat = 0.0;
+
+    }
     // Run dispatch optimization?
-    else if (mc_dispatch.solver_params.dispatch_optimize)
-    {
+    else if (mc_tou.m_dispatch_model_type == C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::DISPATCH_OPTIMIZATION) {
         q_dot_elec_to_PAR_HTR = 0.0;
         is_PAR_HTR_allowed = false;
 
@@ -1463,7 +1482,7 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
             send_callback((float)calc_frac_current * 100.f);
             ss.flush();
 
-            // Update horizon parameter values and inital conition parameters
+            // Update horizon parameter values and inital condition parameters
             if (!mc_dispatch.update_horizon_parameters(mc_tou)) {
                 throw(C_csp_exception("Dispatch failed to update horizon parameter values"));
             }
@@ -1511,44 +1530,6 @@ void C_csp_solver::calc_timestep_plant_control_and_targets(
         is_PAR_HTR_allowed = mc_dispatch.disp_outputs.is_eh_su_allowed;
         q_dot_elec_to_PAR_HTR = mc_dispatch.disp_outputs.q_eh_target;
     }
-}
-
-void C_csp_tou::init_parent(bool dispatch_optimize)
-{
-	// Check that dispatch logic is reasonable
-	if( !(dispatch_optimize || mc_dispatch_params.m_is_block_dispatch || mc_dispatch_params.m_is_arbitrage_policy) )
-	{
-		throw(C_csp_exception("Must select a plant control strategy", "TOU initialization"));
-	}
-
-	if( (dispatch_optimize && mc_dispatch_params.m_is_block_dispatch) ||
-        (dispatch_optimize && mc_dispatch_params.m_is_arbitrage_policy) ||
-        (mc_dispatch_params.m_is_block_dispatch && mc_dispatch_params.m_is_arbitrage_policy) )
-	{
-		throw(C_csp_exception("Multiple plant control strategies were selected. Please select one.", "TOU initialization"));
-	}
-
-	if( mc_dispatch_params.m_is_block_dispatch )
-	{
-		if( mc_dispatch_params.m_use_rule_1 )
-		{
-			if( mc_dispatch_params.m_standby_off_buffer < 0.0 )
-			{
-				throw(C_csp_exception("Block Dispatch Rule 1 was selected, but the time entered was invalid."
-					" Please select a time >= 0", "TOU initialization"));
-			}
-		}
-
-		if( mc_dispatch_params.m_use_rule_2 )
-		{
-			if( mc_dispatch_params.m_f_q_dot_pc_overwrite <= 0.0 || 
-				mc_dispatch_params.m_q_dot_rec_des_mult <= 0.0 )
-			{
-				throw(C_csp_exception("Block Dispatch Rule 2 was selected, but the parameters entered were invalid."
-					" Both values must be greater than 0", "TOU initialization"));
-			}
-		}
-	}
 }
 
 void C_csp_solver::C_operating_mode_core::turn_off_mode_availability()
@@ -2401,6 +2382,12 @@ void C_csp_solver::C_CR_OFF__PC_SB__TES_DC__AUX_OFF::check_system_limits(C_csp_s
 }
 
 void C_csp_solver::C_CR_DF__PC_MAX__TES_FULL__AUX_OFF::handle_solve_error(double time /*hr*/, bool& is_turn_off_rec_su)
+{
+    m_is_mode_available = false;
+    is_turn_off_rec_su = true;
+}
+
+void C_csp_solver::C_CR_DF__PC_MAX__TES_OFF__AUX_OFF::handle_solve_error(double time /*hr*/, bool& is_turn_off_rec_su)
 {
     m_is_mode_available = false;
     is_turn_off_rec_su = true;

@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <functional>
 
 #include "lib_battery.h"
+#include "lib_battery_powerflow.h"
 
 /*
 Define Thermal Model
@@ -178,7 +179,7 @@ Define Losses
 */
 void losses_t::initialize() {
     state = std::make_shared<losses_state>();
-    state->loss_kw = 0;
+    state->ancillary_loss_kw = 0;
     if (params->loss_choice == losses_params::MONTHLY) {
         if (params->monthly_charge_loss.size() == 1) {
             params->monthly_charge_loss = std::vector<double>(12, params->monthly_charge_loss[0]);
@@ -209,19 +210,21 @@ void losses_t::initialize() {
     }
 }
 
-losses_t::losses_t(const std::vector<double>& monthly_charge, const std::vector<double>& monthly_discharge, const std::vector<double>& monthly_idle) {
+losses_t::losses_t(const std::vector<double>& monthly_charge, const std::vector<double>& monthly_discharge, const std::vector<double>& monthly_idle, const std::vector<double>& adjust_losses) {
     params = std::make_shared<losses_params>();
     params->loss_choice = losses_params::MONTHLY;
     params->monthly_charge_loss = monthly_charge;
     params->monthly_discharge_loss = monthly_discharge;
     params->monthly_idle_loss = monthly_idle;
+    params->adjust_loss = adjust_losses;
     initialize();
 }
 
-losses_t::losses_t(const std::vector<double>& schedule_loss) {
+losses_t::losses_t(const std::vector<double>& schedule_loss, const std::vector<double>& adjust_losses) {
     params = std::make_shared<losses_params>();
     params->loss_choice = losses_params::SCHEDULE;
     params->schedule_loss = schedule_loss;
+    params->adjust_loss = adjust_losses;
     initialize();
 }
 
@@ -251,18 +254,24 @@ void losses_t::run_losses(size_t lifetimeIndex, double dtHour, double charge_ope
     // update system losses depending on user input
     if (params->loss_choice == losses_params::MONTHLY) {
         if (charge_operation == capacity_state::CHARGE)
-            state->loss_kw = params->monthly_charge_loss[monthIndex];
+            state->ancillary_loss_kw = params->monthly_charge_loss[monthIndex];
         if (charge_operation == capacity_state::DISCHARGE)
-            state->loss_kw = params->monthly_discharge_loss[monthIndex];
+            state->ancillary_loss_kw = params->monthly_discharge_loss[monthIndex];
         if (charge_operation == capacity_state::NO_CHARGE)
-            state->loss_kw = params->monthly_idle_loss[monthIndex];
+            state->ancillary_loss_kw = params->monthly_idle_loss[monthIndex];
     }
     else if (params->loss_choice == losses_params::SCHEDULE)  {
-        state->loss_kw = params->schedule_loss[lifetimeIndex % params->schedule_loss.size()];
+        state->ancillary_loss_kw = params->schedule_loss[lifetimeIndex % params->schedule_loss.size()];
     }
+
+    state->adjust_loss_percent = getAvailabilityLoss(lifetimeIndex);
 }
 
-double losses_t::getLoss() { return state->loss_kw; }
+double losses_t::getAncillaryLoss() { return state->ancillary_loss_kw; }
+
+double losses_t::getAvailabilityLoss(size_t lifetimeIndex) {
+    return params->adjust_loss[lifetimeIndex % params->adjust_loss.size()];
+}
 
 losses_state losses_t::get_state() { return *state; }
 
@@ -522,7 +531,7 @@ double battery_t::calculate_max_charge_kw(double *max_current_A) {
     double power_W = 0;
     double current = 0;
     size_t its = 0;
-    while (std::abs(power_W - voltage->calculate_max_charge_w(q, qmax, thermal->T_battery(), &current)) > tolerance
+    while (std::abs(power_W - voltage->calculate_max_charge_w(q, qmax, thermal->T_battery(), &current)) > powerflow_tolerance
            && its++ < 10) {
         power_W = voltage->calculate_max_charge_w(q, qmax, thermal->T_battery(), &current);
         thermal->updateTemperature(current, state->last_idx + 1);
@@ -541,7 +550,7 @@ double battery_t::calculate_max_discharge_kw(double *max_current_A) {
     double power_W = 0;
     double current = 0;
     size_t its = 0;
-    while (std::abs(power_W - voltage->calculate_max_discharge_w(q, qmax, thermal->T_battery(), &current)) > tolerance
+    while (std::abs(power_W - voltage->calculate_max_discharge_w(q, qmax, thermal->T_battery(), &current)) > powerflow_tolerance
            && its++ < 5) {
         power_W = voltage->calculate_max_discharge_w(q, qmax, thermal->T_battery(), &current);
         thermal->updateTemperature(current, state->last_idx + 1);
@@ -583,7 +592,7 @@ double battery_t::run(size_t lifetimeIndex, double &I) {
 
     while (iterate_count < 5) {
         runThermalModel(I, lifetimeIndex);
-        runCapacityModel(I);
+        runCapacityModel(I, lifetimeIndex);
 
         double numerator = std::abs(I - I_initial);
         if ((numerator > 0.0) && (numerator / std::abs(I_initial) > tolerance)) {
@@ -621,12 +630,14 @@ double battery_t::estimateCycleDamage() {
     return lifetime->estimateCycleDamage();
 }
 
-void battery_t::runCapacityModel(double &I) {
+void battery_t::runCapacityModel(double &I, size_t lifetimeIndex) {
     // Don't update max capacity if the battery is idle
     if (std::abs(I) > tolerance) {
         // Need to first update capacity model to ensure temperature accounted for
         capacity->updateCapacityForThermal(thermal->capacity_percent());
     }
+    double availability_loss = losses->getAvailabilityLoss(lifetimeIndex);
+    capacity->updateCapacityForAvailability(availability_loss);
     capacity->updateCapacity(I, params->dt_hr);
 }
 
@@ -747,6 +758,12 @@ double battery_t::V_nominal() { return voltage->battery_voltage_nominal(); }
 
 double battery_t::SOC() { return capacity->SOC(); }
 
+double battery_t::SOC_max() { return capacity->SOC_max(); }
+
+double battery_t::SOC_min() { return capacity->SOC_min(); }
+
+double battery_t::nominal_energy() { return params->nominal_energy; }
+
 double battery_t::I() { return capacity->I(); }
 
 double battery_t::calculate_loss(double power, size_t lifetimeIndex) {
@@ -771,16 +788,22 @@ double battery_t::calculate_loss(double power, size_t lifetimeIndex) {
     }
 }
 
-double battery_t::getLoss() {
-    return losses->getLoss();
+double battery_t::getAncillaryLoss() {
+    return losses->getAncillaryLoss();
+}
+
+double battery_t::getAvailabilityLoss(size_t lifetimeIndex) {
+    return losses->getAvailabilityLoss(lifetimeIndex);
 }
 
 battery_state battery_t::get_state() { return *state; }
 
 battery_params battery_t::get_params() { return *params; }
 
-void battery_t::set_state(const battery_state& tmp_state) {
+void battery_t::set_state(const battery_state& tmp_state, double dt_hr) {
     *state = tmp_state;
+    if (dt_hr > 0 && dt_hr <= 1)
+        params->dt_hr = dt_hr;
 }
 
 void battery_t::update_state(double I) {

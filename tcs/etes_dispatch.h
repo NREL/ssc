@@ -86,7 +86,7 @@ public:
         double up_time_min;         //[hr] Minimum required power cycle up-time
 
 
-        double ppa_price_y1;        //[$/MWh] Assumed ppa price for year 1 dispatch
+        //double ppa_price_y1;        //[$/MWh] Assumed ppa price for year 1 dispatch
 
         s_efftable eff_table_load, eff_table_Tdb, wcondcoef_table_Tdb; //Efficiency of the power cycle, condenser power coefs
 
@@ -123,7 +123,7 @@ public:
             q_eh_min = std::numeric_limits<double>::quiet_NaN();
             down_time_min = std::numeric_limits<double>::quiet_NaN();
             up_time_min = std::numeric_limits<double>::quiet_NaN();
-            ppa_price_y1 = std::numeric_limits<double>::quiet_NaN();
+            //ppa_price_y1 = std::numeric_limits<double>::quiet_NaN();
         }
 
         void clear()
@@ -136,7 +136,7 @@ public:
         }
 
         void set_user_params(double disp_time_weighting, double disp_csu_cost, double disp_pen_delta_w,
-            double disp_hsu_cost, double disp_down_time_min, double disp_up_time_min, double ppa_price_year1/*$/kWh*/)
+            double disp_hsu_cost, double disp_down_time_min, double disp_up_time_min) //, double ppa_price_year1/*$/kWh*/)
         {
             time_weighting = disp_time_weighting;
             csu_cost = disp_csu_cost;
@@ -144,7 +144,7 @@ public:
             hsu_cost = disp_hsu_cost;
             down_time_min = disp_down_time_min;
             up_time_min = disp_up_time_min;
-            ppa_price_y1 = ppa_price_year1 * 1000.0;    // $/kWh -> $/MWh
+            //ppa_price_y1 = ppa_price_year1 * 1000.0;    // $/kWh -> $/MWh
         }
 
     } params;
@@ -213,10 +213,6 @@ public:
 
     //declare dispatch function in etes_dispatch.cpp
     bool optimize();
-
-    //Functions to write AMPL data files and solve AMPL model
-    std::string write_ampl();
-    bool optimize_ampl();
 
     // Set outputs struct based on LP solution -> could move to outputs struct
     void set_outputs_from_lp_solution(lprec* lp, unordered_map<std::string, double>& params);

@@ -136,6 +136,7 @@ Irradiance_IO::Irradiance_IO(compute_module* cm, std::string cmName)
     }
     else if (cm->is_assigned("solar_resource_data")) {
         weatherDataProvider = std::unique_ptr<weather_data_provider>(new weatherdata(cm->lookup("solar_resource_data")));
+        if (!weatherDataProvider->ok()) throw exec_error(cmName, weatherDataProvider->message());
         if (weatherDataProvider->has_message()) cm->log(weatherDataProvider->message(), SSC_WARNING);
     }
     else {
@@ -505,7 +506,7 @@ Subarray_IO::Subarray_IO(compute_module* cm, const std::string& cmName, size_t s
             if (trackMode == irrad::SEASONAL_TILT)
                 throw exec_error(cmName, "Time-series tilt input may not be used with the snow model at this time: subarray " + util::to_string((int)(subarrayNumber)));
             // if tracking mode is 1-axis tracking, don't need to limit tilt angles
-            if (snowModel.setup(selfShadingInputs.nmody, (float)tiltDegrees, (trackMode != irrad::SINGLE_AXIS))) {
+            if (snowModel.setup(selfShadingInputs.nmody, (float)tiltDegrees, cm->as_double("snow_slide_coefficient"), (trackMode != irrad::SINGLE_AXIS))) {
                 if (!snowModel.good) {
                     cm->log(snowModel.msg, SSC_ERROR);
                 }
@@ -973,10 +974,15 @@ void PVSystem_IO::AllocateOutputs(compute_module* cm)
     p_dcLifetimeLoss = cm->allocate("dc_lifetime_loss", numberOfWeatherFileRecords);
     p_systemDCPower = cm->allocate("dc_net", numberOfLifetimeRecords);
     p_systemACPower = cm->allocate("gen", numberOfLifetimeRecords);
+    p_systemACPowerMax = cm->allocate("ac_csky_max", numberOfLifetimeRecords);
 
     p_systemDCPowerCS = cm->allocate("dc_net_clearsky", numberOfLifetimeRecords);
-    p_subhourlyClippingLoss = cm->allocate("subhourly_clipping_loss", numberOfLifetimeRecords);
-    p_subhourlyClippingLossFactor = cm->allocate("subhourly_clipping_loss_factor", numberOfLifetimeRecords);
+    if (cm->as_boolean("enable_subhourly_clipping")) {
+        p_subhourlyClippingLoss = cm->allocate("subhourly_clipping_loss", numberOfLifetimeRecords);
+    }
+    if (cm->as_boolean("enable_subinterval_distribution")) {
+        p_DistributionClippingLoss = cm->allocate("distribution_clipping_loss", numberOfLifetimeRecords);
+    }
 
     if (Simulation->useLifetimeOutput)
     {
@@ -1349,6 +1355,8 @@ Module_IO::Module_IO(compute_module* cm, std::string cmName, double dcLoss)
         referenceArea = elevenParamSingleDiodeModel.Area;
         selfShadingFillFactor = elevenParamSingleDiodeModel.Vmp0 * elevenParamSingleDiodeModel.Imp0 / elevenParamSingleDiodeModel.Voc0 / elevenParamSingleDiodeModel.Isc0;
         voltageMaxPower = elevenParamSingleDiodeModel.Vmp0;
+
+        groundClearanceHeight = 1.0; //No input as there is no bifacial option for IEC 61853 model
     }
     else if (modulePowerModel == MODULE_PVYIELD)
     {

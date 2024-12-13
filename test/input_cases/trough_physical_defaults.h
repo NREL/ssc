@@ -75,8 +75,11 @@ ssc_data_t trough_physical_defaults()
     ssc_data_set_number(data, "Row_Distance", 15);
     ssc_data_set_number(data, "T_loop_in_des", 293);
     ssc_data_set_number(data, "T_loop_out", 391);
+    ssc_data_set_number(data, "use_abs_or_rel_mdot_limit", 0);
     ssc_data_set_number(data, "m_dot_htfmin", 1);
     ssc_data_set_number(data, "m_dot_htfmax", 12);
+    ssc_data_set_number(data, "f_htfmin", 0);
+    ssc_data_set_number(data, "f_htfmax", 0);
     ssc_number_t p_field_fl_props[1] = { 0 };
     ssc_data_set_matrix(data, "field_fl_props", p_field_fl_props, 1, 1);
     ssc_data_set_number(data, "T_fp", 150);
@@ -233,7 +236,7 @@ ssc_data_t trough_physical_defaults()
     ssc_data_set_matrix(data, "store_fl_props", p_store_fl_props, 1, 1);
     ssc_data_set_number(data, "is_hx", 1);
     ssc_data_set_number(data, "tshours", 6);
-    ssc_data_set_number(data, "h_tank", 12);
+    ssc_data_set_number(data, "h_tank_in", 12);
     ssc_data_set_number(data, "u_tank", 0.40000000000000002);
     ssc_data_set_number(data, "tank_pairs", 1);
     ssc_data_set_number(data, "hot_tank_Thtr", 365);
@@ -333,6 +336,7 @@ ssc_data_t trough_physical_defaults()
     ssc_number_t p_trough_loop_control[25] = { 8, 1, 1, 8, 1, 1, 7, 1, 1, 6, 1, 1, 5, 1, 1, 4, 1, 1, 3, 1, 1, 2, 1, 1, 1 };
     ssc_data_set_array(data, "trough_loop_control", p_trough_loop_control, 25);
     ssc_data_set_number(data, "ppa_soln_mode", 0);
+    ssc_data_set_number(data, "csp_financial_model", 8);    // No financial
     return data;
 }
 

@@ -52,12 +52,17 @@ extern var_info vtab_depreciation_inputs[];
 extern var_info vtab_depreciation_outputs[];
 extern var_info vtab_tax_credits[];
 extern var_info vtab_payment_incentives[];
+extern var_info vtab_tax_credits_heat[];
+extern var_info vtab_payment_incentives_heat[];
 extern var_info vtab_debt[];
 extern var_info vtab_ppa_inout[];
 extern var_info vtab_financial_metrics[];
+extern var_info vtab_ppa_inout_heat[];
+extern var_info vtab_financial_metrics_heat[];
 
 extern var_info vtab_adjustment_factors[];
 extern var_info vtab_dc_adjustment_factors[];
+extern var_info vtab_batt_adjustment_factors[];
 extern var_info vtab_sf_adjustment_factors[];
 extern var_info vtab_technology_outputs[];
 extern var_info vtab_grid_curtailment[];
@@ -67,25 +72,26 @@ extern var_info vtab_resilience_outputs[];
 extern var_info vtab_utility_rate_common[];
 
 // hybrids
-extern var_info vtab_hybrid_tech_om[];
+extern var_info vtab_hybrid_tech_inputs[];
+extern var_info vtab_hybrid_tech_om_outputs[];
 extern var_info vtab_hybrid_fin_om[];
 
 bool calculate_p50p90(compute_module *cm);
 
 void calculate_resilience_outputs(compute_module *cm, std::unique_ptr<resilience_runner> &resilience);
 
-ssc_number_t* gen_heatmap(compute_module* cm, double step_per_hour);
+ssc_number_t* gen_heatmap(compute_module* cm, double step_per_hour, bool heat=false);
 
 void prepend_to_output(compute_module* cm, std::string var_name, size_t count, ssc_number_t value);
 
 class adjustment_factors
 {
-	compute_module *m_cm;
+	var_table *m_vt;
 	std::vector<ssc_number_t> m_factors;
 	std::string m_error;
 	std::string m_prefix;
 public:
-	adjustment_factors(compute_module *cm, const std::string &prefix);
+	adjustment_factors(var_table *vt, const std::string &prefix);
 	bool setup(int nsteps=8760, int analysis_period=1);
 	ssc_number_t operator()(size_t time);
     size_t size();
@@ -95,14 +101,20 @@ public:
 class forecast_price_signal
 {
 	var_table *vartab;
-	std::vector<ssc_number_t> m_forecast_price;
+	std::vector<ssc_number_t> m_forecast_price; // units: $/kWh
+    std::vector<ssc_number_t> m_cleared_capacity; // units: kW
 	std::string m_error;
+
 public:
 	forecast_price_signal(var_table *vt);
 	bool setup(size_t step_per_hour);
 	std::vector<ssc_number_t> forecast_price() { return m_forecast_price; }
+    std::vector<ssc_number_t> cleared_capacity() { return m_cleared_capacity;  }
 	ssc_number_t operator()(size_t time);
 	std::string error() { return m_error; }
+    double cleared_capacity_percent; // 0 - 1, 0: all markets are set by percent of generation, 1: all markets are set by cleared capacity
+
+    dispatch_t::CAPACITY_FORECAST_TYPE forecast_type;
 };
 
 class shading_factor_calculator

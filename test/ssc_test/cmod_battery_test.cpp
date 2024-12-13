@@ -99,11 +99,11 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoad){
 
     EXPECT_EQ(resilience_hours[0], 0); // Max current restrictions prevent this battery from meeting the outage until day 2 (hr 46)
     EXPECT_EQ(resilience_hours[46], 5);
-    EXPECT_NEAR(avg_critical_load, 701.8, 0.1);
-    EXPECT_NEAR(resilience_hrs_avg, 1.17, 0.01);
+    EXPECT_NEAR(avg_critical_load, 683.90, 0.1);
+    EXPECT_NEAR(resilience_hrs_avg, 1.11, 0.01);
     EXPECT_EQ(resilience_hrs_min, 0);
     EXPECT_EQ(outage_durations[0], 0);
-    EXPECT_EQ(resilience_hrs_max, 24);
+    EXPECT_EQ(resilience_hrs_max, 17);
     EXPECT_EQ(outage_durations[17], 17);
     EXPECT_NEAR(pdf_of_surviving[0], 0.756, 1e-3);
     EXPECT_NEAR(pdf_of_surviving[1], 0.0314, 1e-3);
@@ -117,7 +117,7 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoad){
         if (power_max - batt_power[i] < 0.1)
             max_indices.push_back(i);
     }
-    EXPECT_EQ(max_indices.size(), 26);
+    EXPECT_EQ(max_indices.size(), 25);
     EXPECT_EQ(max_indices[0], 2743);
 
     auto batt_q0 = data_vtab->as_vector_ssc_number_t("batt_q0");
@@ -155,11 +155,11 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoadLifetime){
 
     EXPECT_EQ(resilience_hours[0], 0); // Max current restrictions prevent this battery from meeting the outage until day 2 (hr 46)
     EXPECT_EQ(resilience_hours[46], 5);
-    EXPECT_NEAR(avg_critical_load, 698.3, 0.1);
-    EXPECT_NEAR(resilience_hrs_avg, 1.16, 0.01);
+    EXPECT_NEAR(avg_critical_load, 674.536, 0.1);
+    EXPECT_NEAR(resilience_hrs_avg, 1.076, 0.01);
     EXPECT_EQ(resilience_hrs_min, 0);
     EXPECT_EQ(outage_durations[0], 0);
-    EXPECT_EQ(resilience_hrs_max, 24);
+    EXPECT_EQ(resilience_hrs_max, 17);
     EXPECT_EQ(outage_durations[17], 17);
     EXPECT_NEAR(pdf_of_surviving[0], 0.754, 1e-3);
     EXPECT_NEAR(pdf_of_surviving[1], 0.0314, 1e-3);

@@ -199,6 +199,11 @@ public:
         E_W_DOT_COOLER,     //[MWe] Cooling parasitic
         E_P_COND_ITER_ERR,  //[-] Relative iteration error on condenser pressure
 
+        // State
+        E_PC_OP_MODE_FINAL, //[-] Final receiver operating mode (see E_csp_power_cycle_modes)
+        E_PC_STARTUP_TIME_REMAIN_FINAL,     //[hr] Final receiver startup time remaining
+        E_PC_STARTUP_ENERGY_REMAIN_FINAL,   //[W-hr] Final reeiver startup energy remaining
+
 		// Variables added for backwards compatability with TCS
         E_ETA_THERMAL_STEP_AVERAGED,    //[-]
 		E_M_DOT_HTF_REF,		//[kg/hr] HTF mass flow rate at design
@@ -245,6 +250,12 @@ public:
 		double m_startup_time;		//[hr] time needed for power block startup
 		double m_startup_frac;		//[-] fraction of design thermal power needed for startup
 		double m_htf_pump_coef;		//[kW/kg/s] Pumping power to move 1 kg/s of HTF through power cycle
+
+        // Initial state parameters
+        C_csp_power_cycle::E_csp_power_cycle_modes m_operating_mode_initial;			//Operating mode at start of simulation
+        double m_startup_time_remain_init;		//[hr]
+        double m_startup_energy_remain_init;	//[kW-hr]
+
 		int m_pc_fl;				//[-] integer flag identifying Heat Transfer Fluid (HTF) in power block {1-27}
 		util::matrix_t<double> m_pc_fl_props;
         double DP_SGS;              //[bar] pressure drop within the steam generator system
@@ -254,7 +265,7 @@ public:
 
 		// Steam Rankine or User-Defined
 		bool m_is_user_defined_pc;				//[-] True: user-defined power cycle, False: Built-in Rankine Cycle model
-        bool m_is_udpc_sco2_regr;               //[-] False: default, base udpc interpolation, True: use sco2 heuristic regression
+        int m_is_udpc_sco2_regr;               //[-] False: default, base udpc interpolation, True: use sco2 heuristic regression
 
 			// Parameters that have different SSCINPUT names for Rankine Cycle and User Defined Cycle
 		double m_dT_cw_ref;			//[C] design temp difference between cooling water inlet/outlet
@@ -291,9 +302,13 @@ public:
 
 			// Initialize parameters for user-defined power cycle
 			m_is_user_defined_pc = false;
-            m_is_udpc_sco2_regr = false;
+            m_is_udpc_sco2_regr = C_ud_power_cycle::SIMPLE_HEURISTIC;
 				
 			m_W_dot_cooling_des = m_m_dot_water_des = std::numeric_limits<double>::quiet_NaN();
+
+            m_operating_mode_initial = C_csp_power_cycle::E_csp_power_cycle_modes::OFF;
+            m_startup_time_remain_init = std::numeric_limits<double>::quiet_NaN();		//[hr]
+            m_startup_energy_remain_init = std::numeric_limits<double>::quiet_NaN();	//[kW-hr]
 		}
 	};
 

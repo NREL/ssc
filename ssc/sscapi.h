@@ -284,6 +284,8 @@ SSCEXPORT ssc_var_t ssc_data_get_data_array(ssc_data_t p_data, const char *name,
 /** Returns the reference of a @a SSC_DATAMAT variable with the given name. */
 SSCEXPORT ssc_var_t ssc_data_get_data_matrix(ssc_data_t p_data, const char *name, int* nrows, int* ncols );
 
+SSCEXPORT ssc_bool_t ssc_data_deep_copy(ssc_data_t source, ssc_data_t dest);
+
 /**@}*/
 
 
@@ -295,6 +297,7 @@ SSCEXPORT ssc_var_t ssc_data_get_data_matrix(ssc_data_t p_data, const char *name
  * Json objects map to SSC_TABLE type
  */
 SSCEXPORT ssc_data_t json_to_ssc_data(const char* json_str);
+SSCEXPORT ssc_data_t json_file_to_ssc_data(const char* json_fn);
 
 SSCEXPORT const char* ssc_data_to_json(ssc_data_t p_data);
 
@@ -437,6 +440,9 @@ SSCEXPORT ssc_bool_t ssc_module_exec_with_handler(
 
 /** Add a var info vartable to a compute module. */
 SSCEXPORT ssc_bool_t ssc_module_add_var_info(ssc_module_t, ssc_info_t);
+
+/** Adds the input variables required for a technology module to be used in a cmod_hybrid simulation. */
+SSCEXPORT ssc_bool_t ssc_module_hybridize(ssc_module_t p_mod);
 
 /** Retrive notices, warnings, and error messages from the simulation. Returns a NULL-terminated ASCII C string with the message text, or NULL if the index passed in was invalid. */
 SSCEXPORT const char *ssc_module_log( ssc_module_t p_mod, int index, int *item_type, float *time );

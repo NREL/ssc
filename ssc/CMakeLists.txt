@@ -23,6 +23,7 @@ set(SSC_SRC
 		cmod_belpe.cpp
 		cmod_biomass.cpp
 		cmod_cashloan.cpp
+		cmod_cashloan_heat.cpp
 		cmod_cb_construction_financing.cpp
 		cmod_cb_empirical_hce_heat_loss.cpp
 		cmod_cb_mspt_system_costs.cpp
@@ -32,6 +33,7 @@ set(SSC_SRC
 		cmod_csp_subcomponent.cpp
         cmod_csp_trough_eqns.cpp
 		cmod_csp_trough_eqns.h
+        cmod_custom_generation.cpp
 		cmod_etes_electric_resistance.cpp
 		cmod_etes_ptes.cpp
 		cmod_equpartflip.cpp
@@ -44,9 +46,10 @@ set(SSC_SRC
 		cmod_fuelcell.h
 		cmod_generic_system-builder.cpp
 		cmod_generic_system-builder.h
-		cmod_generic_system.cpp
 		cmod_geothermal.cpp
 		cmod_geothermal_costs.cpp
+        cmod_geothermal_eqns.cpp
+        cmod_geothermal_eqns.h
 		cmod_grid.cpp
 		cmod_grid.h
 		cmod_hcpv.cpp
@@ -89,6 +92,7 @@ set(SSC_SRC
 		cmod_sco2_csp_ud_pc_tables.cpp
 		cmod_singlediode.cpp
 		cmod_singleowner.cpp
+		cmod_singleowner_heat.cpp
 		cmod_communitysolar.cpp
 		cmod_snowmodel.cpp
 		cmod_solarpilot.cpp
@@ -100,14 +104,13 @@ set(SSC_SRC
 		cmod_tcsmslf.cpp
 		cmod_tcstrough_empirical.cpp
 		cmod_tcstrough_physical.cpp
-		cmod_tcstrough_physical_csp_solver.cpp
 		cmod_test_ud_power_cycle.cpp
 		cmod_thermalrate.cpp
+        cmod_thermalrate_iph.cpp
 		cmod_thirdpartyownership.cpp
 		cmod_timeseq.cpp
 		cmod_trough_physical.cpp
 		cmod_trough_physical_iph.cpp
-        	cmod_trough_physical_iph_old.cpp
 		cmod_ui_tes_calcs.cpp
 		cmod_ui_udpc_checks.cpp
 		cmod_user_htf_comparison.cpp
@@ -118,11 +121,11 @@ set(SSC_SRC
 		cmod_utilityrate5.cpp
 		cmod_utilityrate5.h
 		cmod_wavefile.cpp
-        cmod_tidalfile.cpp
+        	cmod_tidalfile.cpp
 		cmod_utilityrate5_eqns.cpp
 		cmod_utilityrate5_eqns.h
-        cmod_utilityrateforecast.cpp
-        cmod_utilityrateforecast.h
+        	cmod_utilityrateforecast.cpp
+        	cmod_utilityrateforecast.h
 		cmod_wfcheck.cpp
 		cmod_wfcsv.cpp
 		cmod_wfreader.cpp
@@ -134,8 +137,8 @@ set(SSC_SRC
 		cmod_windpower.h
 		cmod_windpower_eqns.cpp
 		cmod_windpower_eqns.h
-        cmod_wind_landbosse.cpp
-        cmod_wind_landbosse.h
+        	cmod_wind_landbosse.cpp
+        	cmod_wind_landbosse.h
 		common.cpp
 		common.h
 		common_financial.cpp
@@ -191,7 +194,8 @@ else()
             cmod_csp_common_eqns.cpp
             cmod_financial_eqns.cpp
             cmod_windpower_eqns.cpp
-            cmod_utilityrate5_eqns.cpp)
+            cmod_utilityrate5_eqns.cpp
+            cmod_geothermal_eqns.cpp)
     set_source_files_properties(${SRC_UNUSED_VARS} PROPERTIES COMPILE_FLAGS -Wno-unused-variable)
 endif()
 
@@ -220,7 +224,7 @@ if(UNIX)
 		set_property(TARGET ssc PROPERTY PREFIX "lib")
 		set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
 		if (APPLE)
-            SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.15")
+            SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=12")
             add_custom_command(
 				TARGET ssc
 				POST_BUILD
@@ -246,11 +250,16 @@ set( DEPENDENCIES
 	splinter
 	)
 foreach( name ${DEPENDENCIES} )
-	target_link_libraries(ssc ${name})
+	target_link_libraries(ssc PUBLIC ${name})
 endforeach()
 
 if (UNIX)
-	target_link_libraries(ssc -lpthread -lm -ldl -lstdc++)
+	find_package(Threads REQUIRED)
+	target_link_libraries(ssc PUBLIC Threads::Threads ${CMAKE_DL_LIBS}) 
+	find_library(MATH_LIBRARY m)
+	if(MATH_LIBRARY)
+		target_link_libraries(ssc PUBLIC ${MATH_LIBRARY})
+	endif()
 endif()
 
 

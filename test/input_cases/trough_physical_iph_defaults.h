@@ -72,8 +72,11 @@ ssc_data_t trough_physical_iph_defaults()
     ssc_data_set_number(data, "FieldConfig", 1);
     ssc_data_set_number(data, "is_model_heat_sink_piping", 0);
     ssc_data_set_number(data, "L_heat_sink_piping", 50);
+    ssc_data_set_number(data, "use_abs_or_rel_mdot_limit", 0);
     ssc_data_set_number(data, "m_dot_htfmin", 1);
     ssc_data_set_number(data, "m_dot_htfmax", 12);
+    ssc_data_set_number(data, "f_htfmin", 0);
+    ssc_data_set_number(data, "f_htfmax", 0);
     ssc_data_set_number(data, "Fluid", 31);
     ssc_data_set_number(data, "wind_stow_speed", 25);
     ssc_number_t p_field_fl_props[77] = { 20, 4.1799999999999997, 999, 0.001, 9.9999999999999995e-07, 0.58699999999999997, 85.299999999999997, 40, 4.1799999999999997, 993, 0.00065300000000000004, 6.5799999999999999e-07, 0.61799999999999999, 169, 60, 4.1799999999999997, 984, 0.00046700000000000002, 4.75e-07, 0.64200000000000002, 252, 80, 4.1900000000000004, 972, 0.00035500000000000001, 3.65e-07, 0.65700000000000003, 336, 100, 4.21, 959, 0.00028200000000000002, 2.9400000000000001e-07, 0.66600000000000004, 420, 120, 4.25, 944, 0.000233, 2.4600000000000001e-07, 0.67000000000000004, 505, 140, 4.2800000000000002, 927, 0.00019699999999999999, 2.1199999999999999e-07, 0.67000000000000004, 590, 160, 4.3399999999999999, 908, 0.00017100000000000001, 1.8799999999999999e-07, 0.66700000000000004, 676, 180, 4.4000000000000004, 887, 0.00014999999999999999, 1.6899999999999999e-07, 0.66100000000000003, 764, 200, 4.4900000000000002, 865, 0.000134, 1.55e-07, 0.65100000000000002, 852, 220, 4.5800000000000001, 842, 0.000118, 1.4100000000000001e-07, 0.64100000000000001, 941 };
@@ -193,7 +196,7 @@ ssc_data_t trough_physical_iph_defaults()
     ssc_data_set_array(data, "SCADefocusArray", p_SCADefocusArray, 4);
     ssc_data_set_number(data, "pb_pump_coef", 0.55000000000000004);
     ssc_data_set_number(data, "init_hot_htf_percent", 30);
-    ssc_data_set_number(data, "h_tank", 15);
+    ssc_data_set_number(data, "h_tank_in", 15);
     ssc_data_set_number(data, "cold_tank_max_heat", 0.5);
     ssc_data_set_number(data, "u_tank", 0.29999999999999999);
     ssc_data_set_number(data, "tank_pairs", 1);

@@ -61,7 +61,7 @@ static var_info _cm_vtab_mhk_tidal[] = {
 //	{ SSC_OUTPUT,			SSC_NUMBER,			"device_rated_capacity",				"Rated capacity of device",													"kW",			"",				"MHKTidal",			"calculate_capacity=0",		"",						"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"device_rated_capacity",				"Rated capacity of device",													"kW",			"",				"MHKTidal",			"",		"",						"" },
 	{ SSC_OUTPUT,			SSC_NUMBER,			"device_average_power",					"Average power production of a single device",								"kW",			"",				"MHKTidal",			"*",						"",						"" },
-	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production of array",										"kWh",			"",				"MHKTidal",			"*",						"",						"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual AC energy in Year 1",										"kWh",			"",				"MHKTidal",			"*",						"",						"" },
     { SSC_OUTPUT,			SSC_ARRAY,			"gen",			                        "System power generated",					"kW",			"",				"MHKTidal",			"",						"",						"" },
 
     { SSC_OUTPUT,			SSC_NUMBER,			"capacity_factor",						"Capacity factor",													"%",			"",				"MHKTidal",			"*",						"",						"" },
@@ -98,6 +98,8 @@ private:
 public: 
 	cm_mhk_tidal() {
 		add_var_info(_cm_vtab_mhk_tidal);
+        add_var_info(vtab_adjustment_factors);
+
 	}
 	
 	void exec() {
@@ -105,9 +107,9 @@ public:
 	//Read and store tidal resource and power curve:
 		util::matrix_t<double>  tidal_resource_matrix = as_matrix("tidal_resource");
 		util::matrix_t<double>  tidal_power_curve = as_matrix("tidal_power_curve");
-		
+        int tidal_resource_model_choice = as_integer("tidal_resource_model_choice");
 		//Check to ensure size of _power_vect == _speed_vect : 
-		if ( tidal_power_curve.nrows() != tidal_resource_matrix.nrows() )
+		if ( tidal_resource_model_choice == 0 && tidal_power_curve.nrows() != tidal_resource_matrix.nrows() )
 			throw exec_error("mhk_tidal", "Size of Power Curve is not equal to Tidal Resource");
 
 		//Store the number of rows- this will have to change if resource and power curve can have different stream speeds
@@ -153,7 +155,6 @@ public:
 			+ as_double("loss_downtime")
 			+ as_double("loss_additional");
 
-        int tidal_resource_model_choice = as_integer("tidal_resource_model_choice");
         double tidal_resource_start_velocity = 0;
         double tidal_power_start_velocity = 0;
         double tidal_resource_end_velocity = 0;
@@ -237,6 +238,11 @@ public:
             ssc_number_t* tidal_velocity = as_array("tidal_velocity", &number_records);
             ssc_number_t* p_gen = allocate("gen", number_records);
             int power_bin = 0;
+
+            adjustment_factors haf(this->get_var_table(), "adjust");
+            if (!haf.setup(number_records, 1))
+                throw exec_error("mhk_tidal", "Failed to set up adjustment factors: " + haf.error());
+
             //Find velocity bin of power array
             for (int i = 0; i < number_records; i++) {
                 if (tidal_velocity[i] >= tidal_power_curve.at(tidal_power_curve.nrows() - 1, 0)) {
@@ -255,7 +261,7 @@ public:
         
                     }
                 }
-                p_gen[i] = tidal_power_curve.at(power_bin, 1) * (1 - total_loss/100.0) * number_devices; //kW
+                p_gen[i] = tidal_power_curve.at(power_bin, 1) * (1 - total_loss/100.0) * number_devices * haf(i); //kW
                 //p_annual_energy_dist[i] = p_gen[i] * 8760.0 / number_records;
                 annual_energy += p_gen[i] * 8760.0 / number_records;
                 p_annual_energy_dist[power_bin] += p_gen[i] * 8760.0 / number_records;

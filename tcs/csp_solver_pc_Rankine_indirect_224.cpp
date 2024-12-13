@@ -65,7 +65,9 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
     {C_pc_Rankine_indirect_224::E_W_DOT_HTF_PUMP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_pc_Rankine_indirect_224::E_W_DOT_COOLER, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_pc_Rankine_indirect_224::E_P_COND_ITER_ERR, C_csp_reported_outputs::TS_WEIGHTED_AVE},
-
+    {C_pc_Rankine_indirect_224::E_PC_OP_MODE_FINAL, C_csp_reported_outputs::TS_LAST},
+    {C_pc_Rankine_indirect_224::E_PC_STARTUP_TIME_REMAIN_FINAL, C_csp_reported_outputs::TS_LAST},
+    {C_pc_Rankine_indirect_224::E_PC_STARTUP_ENERGY_REMAIN_FINAL, C_csp_reported_outputs::TS_LAST},
     {C_pc_Rankine_indirect_224::E_ETA_THERMAL_STEP_AVERAGED, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_pc_Rankine_indirect_224::E_M_DOT_HTF_REF, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
@@ -174,12 +176,27 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
     m_startup_energy_required = ms_params.m_startup_frac * ms_params.m_P_ref / ms_params.m_eta_ref; // [kWt-hr]
 
     // Finally, set member model-timestep-tracking variables
-    m_operating_mode_prev = OFF;			// Assume power cycle is off when simulation begins
-    m_startup_energy_remain_prev = m_startup_energy_required;	//[kW-hr]
-    m_startup_time_remain_prev = ms_params.m_startup_time;		//[hr]
+    m_operating_mode_prev = ms_params.m_operating_mode_initial;		// Set initial power cycle state
+    m_startup_energy_remain_prev = m_startup_energy_required;	    //[kW-hr]
+    m_startup_time_remain_prev = ms_params.m_startup_time;		    //[hr]
+
+    if (m_operating_mode_prev == C_csp_power_cycle::STARTUP_CONTROLLED || m_operating_mode_prev == C_csp_power_cycle::STARTUP) {
+        if (std::isfinite(ms_params.m_startup_energy_remain_init)) {
+            m_startup_energy_remain_prev = std::fmin(m_startup_energy_required, std::fmax(0.0, ms_params.m_startup_energy_remain_init));    //[kW-hr]
+        }
+        if (std::isfinite(ms_params.m_startup_time_remain_init)) {
+            m_startup_time_remain_prev = std::fmin(ms_params.m_startup_time, std::fmax(0.0, ms_params.m_startup_time_remain_init)); //[hr]
+        }
+    }
+    else if (m_operating_mode_prev != C_csp_power_cycle::OFF) {
+        m_startup_energy_remain_prev = 0.0;
+        m_startup_time_remain_prev = 0.0;
+    }
+
     if (ms_params.m_startup_frac == 0.0 && ms_params.m_startup_time == 0.0 && m_operating_mode_prev == OFF) {
         m_operating_mode_prev = OFF_NO_SU_REQ;
     }
+
     // ***********************************************************************
 
 
@@ -612,7 +629,10 @@ void C_pc_Rankine_indirect_224::init(C_csp_power_cycle::S_solved_params &solved_
         }
         
         std::vector<double> Y_at_T_htf_ref, Y_at_T_amb_ref, Y_at_m_dot_htf_ND_ref, Y_avg_at_refs;
-        mc_user_defined_pc.init(ms_params.m_is_udpc_sco2_regr, ms_params.mc_combined_ind,
+
+        C_ud_power_cycle::E_udpc_max_output_correction_mode udpc_mode = static_cast<C_ud_power_cycle::E_udpc_max_output_correction_mode>(ms_params.m_is_udpc_sco2_regr);
+
+        mc_user_defined_pc.init(udpc_mode, ms_params.mc_combined_ind,
             m_n_T_htf_pars, m_n_T_amb_pars, m_n_m_dot_pars,
             m_T_htf_ref_udpc_calc, m_T_htf_low_udpc_calc, m_T_htf_high_udpc_calc,
             m_T_amb_ref_udpc_calc, m_T_amb_low_udpc_calc, m_T_amb_high_udpc_calc,
@@ -1811,6 +1831,11 @@ void C_pc_Rankine_indirect_224::converged()
     }
 
 	m_ncall = -1;
+
+    // Set reported cycle converged values
+    mc_reported_outputs.value(E_PC_OP_MODE_FINAL, m_operating_mode_prev);
+    mc_reported_outputs.value(E_PC_STARTUP_TIME_REMAIN_FINAL, m_startup_time_remain_prev);
+    mc_reported_outputs.value(E_PC_STARTUP_ENERGY_REMAIN_FINAL, m_startup_energy_remain_prev);
 
 	mc_reported_outputs.set_timestep_outputs();
 }

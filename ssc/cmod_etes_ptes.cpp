@@ -39,7 +39,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_pc_ptes.h"
 #include "csp_solver_cr_heat_pump.h"
 #include "csp_solver_two_tank_tes.h"
-#include "csp_solver_tou_block_schedules.h"
 #include "etes_dispatch.h"
 
 #include "csp_system_costs.h"
@@ -651,7 +650,9 @@ public:
             q_dot_hot_in_gen,                   //[MWt]
             heater_mult,                        //[-]
             q_dot_hot_in_gen* tshours,          //[MWht]
+            true,
             as_double("h_tank"),
+            0.0,
             as_double("u_tank"),
             as_integer("tank_pairs"),
             as_double("hot_tank_Thtr"),
@@ -707,7 +708,9 @@ public:
             q_dot_CT_des__discharge_basis,                   //[MWt]
             heater_mult,                                     //[-]
             q_dot_CT_des__discharge_basis * tshours,         //[MWt-hr]
+            true,
             as_double("CT_h_tank"),
+            0.0,
             as_double("CT_u_tank"),
             as_integer("CT_tank_pairs"),
             hot_tank_Thtr,                                   //[C]
@@ -739,31 +742,19 @@ public:
         // **********************************************************
         // **********************************************************
 
-        // **********************************************************
-        // Pricing and operation schedules
-        C_csp_tou_block_schedules tou;
-        C_csp_tou_block_schedules::S_params* tou_params = &tou.ms_params;
+        // Off-taker schedule
+        C_timeseries_schedule_inputs offtaker_schedule = C_timeseries_schedule_inputs(1.0, std::numeric_limits<double>::quiet_NaN());
 
-        // Still need to define mc_csp_ops blocks and fractions although we're not using them
-        tou_params->mc_csp_ops.mc_weekdays.resize_fill(12, 24, 1.0);
-        tou_params->mc_csp_ops.mc_weekends.resize_fill(12, 24, 1.0);
-        tou_params->mc_csp_ops.mvv_tou_arrays[C_block_schedule_csp_ops::TURB_FRAC].resize(2, std::numeric_limits<double>::quiet_NaN());
-
-        tou.mc_dispatch_params.m_is_tod_pc_target_also_pc_max = true;
-        tou.mc_dispatch_params.m_is_block_dispatch = false;
-        tou.mc_dispatch_params.m_is_arbitrage_policy = !as_boolean("is_dispatch");
-        tou.mc_dispatch_params.m_use_rule_1 = false;
-        tou.mc_dispatch_params.m_standby_off_buffer = 2.0;          //[hr] Applies if m_use_rule_1 is true
-        tou.mc_dispatch_params.m_use_rule_2 = false;
-        tou.mc_dispatch_params.m_q_dot_rec_des_mult = -1.23;        //[-] Applies if m_use_rule_2 is true
-        tou.mc_dispatch_params.m_f_q_dot_pc_overwrite = -1.23;      //[-] Applies if m_use_rule_2 is true
+        // Electricity pricing schedule
+        C_timeseries_schedule_inputs elec_pricing_schedule;
 
         int etes_financial_model = as_integer("etes_financial_model");
         bool is_dispatch = as_boolean("is_dispatch");
 
-        double ppa_price_year1 = std::numeric_limits<double>::quiet_NaN();
         if (sim_type == 1) {    // if sim_type = 2, skip this until ui call back is ironed out
             if (etes_financial_model > 0 && etes_financial_model < 5) { // Single Owner financial models
+
+                double ppa_price_year1 = std::numeric_limits<double>::quiet_NaN();
 
                 // Get first year base ppa price
                 size_t count_ppa_price_input;
@@ -774,22 +765,15 @@ public:
                 int ppa_mult_model = as_integer("ppa_multiplier_model");
                 if (ppa_mult_model == 1) {   // use dispatch_ts input
 
-                    tou_params->mc_pricing.mv_is_diurnal = false;
-
                     if (is_assigned("dispatch_factors_ts") || is_dispatch) {
-                        size_t nmultipliers;
-                        ssc_number_t* multipliers = as_array("dispatch_factors_ts", &nmultipliers);
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(nmultipliers, 0.0);
-                        for (size_t ii = 0; ii < nmultipliers; ii++)
-                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][ii] = multipliers[ii];
+                        auto vec = as_vector_double("dispatch_factors_ts");
+                        elec_pricing_schedule = C_timeseries_schedule_inputs(vec, ppa_price_year1);
                     }
                     else { // if no dispatch optimization, don't need an input pricing schedule
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
+                        elec_pricing_schedule = C_timeseries_schedule_inputs(1.0, std::numeric_limits<double>::quiet_NaN());
                     }
                 }
                 else if (ppa_mult_model == 0) { // standard diuranal input
-
-                    tou_params->mc_pricing.mv_is_diurnal = true;
 
                     // Most likely use case is to use schedules and TOD. So assume if at least one is provided, then user intended to use this approach
                     // the 'else' option applies non-feasible electricity prices, so we want to guard against selecting that it appears users
@@ -797,24 +781,13 @@ public:
                     bool is_one_assigned = is_assigned("dispatch_sched_weekday") || is_assigned("dispatch_sched_weekend") || is_assigned("dispatch_tod_factors");
 
                     if (is_one_assigned || is_dispatch) {
-                        tou_params->mc_pricing.mc_weekdays = as_matrix("dispatch_sched_weekday");
-                        if (tou_params->mc_pricing.mc_weekdays.ncells() == 1) { tou_params->mc_pricing.mc_weekdays.resize_fill(12, 24, 1.); };
-                        tou_params->mc_pricing.mc_weekends = as_matrix("dispatch_sched_weekend");
-                        if (tou_params->mc_pricing.mc_weekends.ncells() == 1) { tou_params->mc_pricing.mc_weekends.resize_fill(12, 24, 1.); };
 
-                        auto dispatch_tod_factors = as_vector_double("dispatch_tod_factors");
-                        if (dispatch_tod_factors.size() != 9)
-                            throw exec_error("etes_electric_resistance", util::format("\n\nDispatch TOD factors has %d periods instead of the expected 9.\n", (int)dispatch_tod_factors.size()));
-
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, 0.0);
-                        for (size_t i = 0; i < 9; i++)
-                            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE][i] = dispatch_tod_factors[i];
-
+                        elec_pricing_schedule = C_timeseries_schedule_inputs(as_matrix("dispatch_sched_weekday"), as_matrix("dispatch_sched_weekend"),
+                            as_vector_double("dispatch_tod_factors"), ppa_price_year1);
                     }
                     else {
-                        tou_params->mc_pricing.mc_weekdays.resize_fill(12, 24, 1.);
-                        tou_params->mc_pricing.mc_weekends.resize_fill(12, 24, 1.);
-                        tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(9, -1.0);
+                        // If electricity pricing data is not available, then dispatch to a uniform schedule
+                        elec_pricing_schedule = C_timeseries_schedule_inputs(1.0, std::numeric_limits<double>::quiet_NaN());
                     }
                 }
             }
@@ -823,10 +796,22 @@ public:
             }
         }
         else if (sim_type == 2) { // if sim_type = 2, skip this until ui call back is ironed out
-            tou_params->mc_pricing.mv_is_diurnal = false;
-
-            tou_params->mc_pricing.mvv_tou_arrays[C_block_schedule_pricing::MULT_PRICE].resize(n_steps_fixed, -1.0);
+            elec_pricing_schedule = C_timeseries_schedule_inputs(1.0, std::numeric_limits<double>::quiet_NaN());
         }
+
+        // Set dispatch model type
+        C_csp_tou::C_dispatch_model_type::E_dispatch_model_type dispatch_model_type = C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::UNDEFINED;
+        if (is_dispatch) {
+            dispatch_model_type = C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::DISPATCH_OPTIMIZATION;
+        }
+        else {
+            dispatch_model_type = C_csp_tou::C_dispatch_model_type::E_dispatch_model_type::ARBITRAGE_CUTOFF;
+        }
+
+        bool is_offtaker_frac_also_max = true;
+
+        C_csp_tou tou(offtaker_schedule, elec_pricing_schedule, dispatch_model_type, is_offtaker_frac_also_max);
+        
         // *****************************************************
         // *****************************************************
 
@@ -850,15 +835,11 @@ public:
         etes_dispatch_opt dispatch;
 
         if (as_boolean("is_dispatch")) {
-            dispatch.solver_params.set_user_inputs(as_boolean("is_dispatch"), as_integer("disp_steps_per_hour"), as_integer("disp_frequency"), as_integer("disp_horizon"),
+            dispatch.solver_params.set_user_inputs(as_integer("disp_steps_per_hour"), as_integer("disp_frequency"), as_integer("disp_horizon"),
                 as_integer("disp_max_iter"), as_double("disp_mip_gap"), as_double("disp_timeout"),
-                as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_spec_scaling"), as_integer("disp_reporting"),
-                false, false, "", "");
+                as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_spec_scaling"), as_integer("disp_reporting"));
             dispatch.params.set_user_params(as_double("disp_time_weighting"), as_double("disp_csu_cost")*W_dot_gen_thermo, as_double("disp_pen_delta_w"),
-                as_double("disp_hsu_cost")*q_dot_hot_out_charge, as_double("disp_down_time_min"), as_double("disp_up_time_min"), ppa_price_year1);
-        }
-        else {
-            dispatch.solver_params.dispatch_optimize = false;
+                as_double("disp_hsu_cost") * q_dot_hot_out_charge, as_double("disp_down_time_min"), as_double("disp_up_time_min")); // , ppa_price_year1);
         }
 
         // *****************************************************
@@ -1025,19 +1006,19 @@ public:
 
             // HT TES
         double V_tes_htf_avail_calc /*m3*/, V_tes_htf_total_calc /*m3*/,
-            d_tank_calc /*m*/, q_dot_loss_tes_des_calc /*MWt*/, dens_store_htf_at_T_ave_calc /*kg/m3*/,
+            h_tank_calc /*m*/, d_tank_calc /*m*/, q_dot_loss_tes_des_calc /*MWt*/, dens_store_htf_at_T_ave_calc /*kg/m3*/,
             Q_tes_des_calc /*MWt-hr*/;
 
         c_HT_TES.get_design_parameters(V_tes_htf_avail_calc, V_tes_htf_total_calc,
-            d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
+            h_tank_calc, d_tank_calc, q_dot_loss_tes_des_calc, dens_store_htf_at_T_ave_calc, Q_tes_des_calc);
 
             // CT TES
         double CT_V_tes_htf_avail_calc /*m3*/, CT_V_tes_htf_total_calc /*m3*/,
-            CT_d_tank_calc /*m*/, CT_q_dot_loss_tes_des_calc /*MWt*/, CT_dens_store_htf_at_T_ave_calc /*kg/m3*/,
+            CT_h_tank_calc /*m*/, CT_d_tank_calc /*m*/, CT_q_dot_loss_tes_des_calc /*MWt*/, CT_dens_store_htf_at_T_ave_calc /*kg/m3*/,
             CT_Q_tes_des_calc /*MWt-hr*/;
 
         c_CT_TES->get_design_parameters(CT_V_tes_htf_avail_calc, CT_V_tes_htf_total_calc,
-            CT_d_tank_calc, CT_q_dot_loss_tes_des_calc, CT_dens_store_htf_at_T_ave_calc,
+            CT_h_tank_calc, CT_d_tank_calc, CT_q_dot_loss_tes_des_calc, CT_dens_store_htf_at_T_ave_calc,
             CT_Q_tes_des_calc);
 
             // System
@@ -1264,7 +1245,7 @@ public:
         ssc_number_t* p_time_final_hr = as_array("time_hr", &count);
 
         // 'adjustment_factors' class stores factors in hourly array, so need to index as such
-        adjustment_factors haf(this, "adjust");
+        adjustment_factors haf(this->get_var_table(), "adjust");
         if (!haf.setup(count))
             throw exec_error("etes_electric_resistance", "failed to setup adjustment factors: " + haf.error());
 
@@ -1291,18 +1272,8 @@ public:
         accumulate_annual_for_year("disp_solve_state", "disp_solve_state_ann", sim_setup.m_report_step / 3600. / as_double("disp_frequency"), steps_per_hour, 1, n_steps_fixed / steps_per_hour);
 
         // Reporting dispatch solution counts
-        size_t n_flag, n_gap = 0;
-        ssc_number_t* subopt_flag = as_array("disp_subopt_flag", &n_flag);
-        ssc_number_t* rel_mip_gap = as_array("disp_rel_mip_gap", &n_gap);
-
-        std::vector<int> flag;
-        std::vector<double> gap;
-        flag.resize(n_flag);
-        gap.resize(n_flag);
-        for (size_t i = 0; i < n_flag; i++) {
-            flag[i] = (int)subopt_flag[i];
-            gap[i] = (double)rel_mip_gap[i];
-        }
+        std::vector<int> flag = as_vector_integer("disp_subopt_flag");
+        std::vector<double> gap = as_vector_double("disp_rel_mip_gap");
 
         double avg_gap = 0;
         if (as_boolean("is_dispatch")) {

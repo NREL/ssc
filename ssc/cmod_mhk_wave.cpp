@@ -51,11 +51,6 @@ static var_info _cm_vtab_mhk_wave[] = {
     { SSC_INPUT,           SSC_NUMBER,           "number_hours",                "Number of hours in wave time series",                                        "",     "",                       "MHKWave",      "?",                        "",                            "" },
     { SSC_INPUT,           SSC_NUMBER,           "number_records",                "Number of records in wave time series",                                        "",     "",                       "MHKWave",      "?",                        "",                            "" },
 
-    { SSC_INPUT,SSC_NUMBER  , "me_adjust:constant"                      , "Constant loss adjustment"                                       , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "MAX=100"               , ""},
-    { SSC_INPUT,SSC_ARRAY   , "me_adjust:hourly"                        , "Hourly Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
-    { SSC_INPUT,SSC_ARRAY   , "me_adjust:timeindex"                        , "Lifetime Adjustment Factors"                                      , "%"                                      , ""                                      , "Adjustment Factors"   , "?"              , "LENGTH=8760"           , ""},
-    { SSC_INPUT,SSC_MATRIX  , "me_adjust:periods"                       , "Period-based Adjustment Factors"                                , "%"                                      , "n x 3 matrix [ start, end, loss ]"     , "Adjustment Factors"   , "?"              , "COLS=3"                , ""},
-
     { SSC_INPUT,			SSC_NUMBER,			"device_rated_power",				"Rated capacity of device",													"kW",			"",				"MHKWave",			"*",		"",						"" },
     { SSC_INPUT,			SSC_NUMBER,			"fixed_charge_rate",						"FCR from LCOE Cost page",									"",				"",             "MHKWave",         "?=1",                      "",				"" },
     { SSC_INPUT,			SSC_NUMBER,			"device_costs_total",						"Device costs",									"$",				"",             "MHKWave",         "?=1",                      "",				"" },
@@ -83,7 +78,7 @@ static var_info _cm_vtab_mhk_wave[] = {
 
 
 	{ SSC_OUTPUT,			SSC_NUMBER,			"device_average_power",					"Average power production of a single device",											"kW",			"",				"MHKWave",			"*",						"",							"" },
-	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual energy production of array",											"kWh",			"",				"MHKWave",			"*",						"",							"" },
+	{ SSC_OUTPUT,			SSC_NUMBER,			"annual_energy",						"Annual AC energy in Year 1",											"kWh",			"",				"MHKWave",			"",						"",							"" },
     { SSC_OUTPUT,           SSC_ARRAY,          "energy_hourly_kWh",                        "Energy production of array",                                            "kWh",          "", "Time Series",          "wave_resource_model_choice=1",                        "",          "" },
     { SSC_OUTPUT,           SSC_ARRAY,          "energy_hourly_kW",                        "Power output of array",                                            "kW",          "", "Time Series",          "wave_resource_model_choice=1",                        "",          "" },
 
@@ -386,6 +381,7 @@ private:
 public:
 	cm_mhk_wave() {
 		add_var_info(_cm_vtab_mhk_wave);
+        add_var_info(vtab_adjustment_factors);
 	}
 
 	void exec() {
@@ -470,10 +466,10 @@ public:
 
 
         }
-
+        bool is_annual = true;
         if (wave_resource_model_choice==1) { //Time series wave resource option
-            size_t number_records = 2920;//Initialize number of records to 2920 (3 hour annual dataset)
-            size_t number_hours = 8760; //Initialize number of hours to 8760 (hours in annual dataset)
+            double number_records = 2920;//Initialize number of records to 2920 (3 hour annual dataset)
+            double number_hours = 8760; //Initialize number of hours to 8760 (hours in annual dataset)
             std::vector<double> wave_height_input;
             std::vector<double> wave_period_input;
             std::vector<int> year;
@@ -481,6 +477,7 @@ public:
             std::vector<int> day;
             std::vector<int> hour;
             std::vector<int> minute;
+            
 
             if (is_assigned("significant_wave_height") && is_assigned("energy_period")) { //Check if wave height and period variables are assigned
                 //number_records = as_integer("number_records");
@@ -488,7 +485,8 @@ public:
                 wave_height_input = as_vector_double("significant_wave_height");
                 wave_period_input = as_vector_double("energy_period");
                 number_records = wave_height_input.size();
-                number_hours = number_records * 3;
+                number_hours = 8760; //always a full year of data for UI calls
+                if (fmod(number_records, 2920) != 0) is_annual = false;
                 year = as_vector_integer("year");
                 month = as_vector_integer("month");
                 day = as_vector_integer("day");
@@ -498,7 +496,8 @@ public:
             }
             else if (!is_assigned("significant_wave_height") && !is_assigned("energy_period") && is_assigned("wave_resource_data")) { //Check if height and period variables are assigned in wave resource table data
                 number_records = wave_dp->num_records();
-                number_hours = number_records * 3; //always 3 hour data from wave api calls
+                number_hours = 8760; //always 3 hour data from wave api calls
+                if (fmod(number_records, 2920) != 0) is_annual = false;
                 wave_height_input = wave_dp->wave_heights();
                 if (wave_height_input.empty()) {
                     throw exec_error("mhk_wave", wave_dp->error());
@@ -548,13 +547,11 @@ public:
             size_t nyears = 1;
             std::vector<ssc_number_t> sys_degradation;
             size_t number_records_gen = number_records;
+            if (number_records == 2920) number_records_gen *= 3.0;
 
             
-            /*
-            adjustment_factors haf(this, "me_adjust");
-            if (!haf.setup(number_records))
-                throw exec_error("mewave", "failed to setup adjustment factors: " + haf.error());
-            double haf_input[2920];*/
+            
+            
             
 
             if (system_use_lifetime_output)
@@ -580,10 +577,15 @@ public:
             else {
                 sys_degradation.push_back(1); // single year mode - degradation handled in financial models.
             }
-            ssc_number_t* energy_hourly_kWh = allocate("energy_hourly_kWh", number_records_gen);
-            ssc_number_t* energy_hourly_kW = allocate("energy_hourly_kW", number_records_gen * 3); //8760 of kW values
-            ssc_number_t* energy_hourly_gen = allocate("gen", number_records_gen);
-            ssc_number_t* sig_wave_height_index_mat = allocate("sig_wave_height_index_mat", number_records);
+
+            adjustment_factors haf(this->get_var_table(), "adjust");
+            if (!haf.setup(number_records, nyears))
+                throw exec_error("mhk_wave", "Failed to set up adjustment factors: " + haf.error());
+
+            ssc_number_t* energy_hourly_kWh = allocate("energy_hourly_kWh", number_records * nyears);
+            ssc_number_t* energy_hourly_kW = allocate("energy_hourly_kW", number_records_gen); //8760 of kW values
+            ssc_number_t* energy_hourly_gen = allocate("gen", number_records * nyears );
+            ssc_number_t* sig_wave_height_index_mat = allocate("sig_wave_height_index_mat", number_records );
             ssc_number_t* sig_wave_height_data = allocate("sig_wave_height_data", number_records);
             ssc_number_t* energy_period_index_mat = allocate("energy_period_index_mat", number_records);
             ssc_number_t* energy_period_data = allocate("energy_period_data", number_records);
@@ -601,11 +603,15 @@ public:
                 days_in_month = { 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366 };
                 days_in_year = 367;
             }
-            size_t hour_step = number_hours / number_records;
+            double hour_step = 1.0;
+            if (is_annual) {
+                hour_step = number_hours / number_records;
+            }
+            
             ssc_number_t sig_wave_height_index = 0;
             ssc_number_t energy_period_index = 0;
             
-            ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 9, days_in_year); //Annual energy distribution 24 hr (3 hour time step) x 365 days for Summary page heatmap
+            ssc_number_t* p_annual_energy_dist_time = allocate("annual_energy_distribution_time", 24 / std::ceil(hour_step) + 1.0, days_in_year); //Annual energy distribution 24 hr (3 hour time step) x 365 days for Summary page heatmap
             for (size_t j = 0; j < (size_t)wave_power_matrix.nrows(); j++) { //Build row and column labels of height x period energy distribution matrix
                 p_annual_energy_dist[size_t(j) * 22] = (ssc_number_t)wave_power_matrix.at(j, 0);
             }
@@ -613,8 +619,9 @@ public:
                 p_annual_energy_dist[size_t(m)] = (ssc_number_t)wave_power_matrix.at(0, m);
             }
             for (size_t m = 0; m < days_in_year; m++) { //Build row and column lables for time energy distribution matrix
-                for (size_t h = 0; h < 9; h++) {
-                    p_annual_energy_dist_time[h * days_in_year] = (ssc_number_t)3 * (h - 1);
+                for (size_t h = 0; h < 24 / std::ceil(hour_step) + 1.0; h++) {
+                    size_t h_index = h * std::ceil(hour_step); 
+                    p_annual_energy_dist_time[h * days_in_year] = h_index - std::ceil(hour_step);
                     p_annual_energy_dist_time[m] = (ssc_number_t)m;
                 }
             }
@@ -672,15 +679,20 @@ public:
                             throw exec_error("mhk_wave", "The device power calculated from the wave height and wave period exceeds the maximum power matrix value at index" + to_string(i) + ". Please check the wave conditions.");
                     }
                 
-                    energy_hourly_kWh[y * number_records + i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index), size_t(energy_period_index))) * hour_step * (1 - total_loss / 100) * sys_degradation[y] * number_devices;
+                    energy_hourly_kWh[y * size_t(number_records) + i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index_mat[i]), size_t(energy_period_index_mat[i]))) * hour_step * (1 - total_loss / 100) * sys_degradation[y] * number_devices * haf(y * number_records + i);
                     if (y == 0)
                         p_annual_energy_dist[size_t(sig_wave_height_index_mat[i]) * 22 + size_t(energy_period_index_mat[i])] += energy_hourly_kWh[i]; //Add energy for given time step to height x period distribution matrix at specified grid point
-                    energy_hourly_gen[y * number_records + i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index_mat[i]), size_t(energy_period_index_mat[i]))) * (1 - total_loss / 100) * sys_degradation[y] * number_devices; //Store in gen to use in heatmap output (probably don't need two variables)
+                    energy_hourly_gen[y * size_t(number_records) + i] = (ssc_number_t)(wave_power_matrix.at(size_t(sig_wave_height_index_mat[i]), size_t(energy_period_index_mat[i]))) * (1 - total_loss / 100) * sys_degradation[y] * number_devices * haf(y * number_records + i); //Store in gen to use in heatmap output (probably don't need two variables)
                     //energy_hourly_gen[i*3+1] = energy_hourly[i]; //Store in gen to use in heatmap output (probably don't need two variables)
                     //energy_hourly_gen[i*3+2] = energy_hourly[i]; //Store in gen to use in heatmap output (probably don't need two variables)
-                    energy_hourly_kW[y * (number_records * 3) + (i * 3)] = energy_hourly_gen[y * number_records + i];
-                    energy_hourly_kW[y * (number_records * 3) + (i * 3) + 1] = energy_hourly_gen[y * number_records + i];
-                    energy_hourly_kW[y * (number_records * 3) + (i * 3) + 2] = energy_hourly_gen[y * number_records + i];
+                    if (number_records == 2920) {
+                        energy_hourly_kW[y * size_t(number_records * 3) + (i * 3)] = energy_hourly_gen[y * size_t(number_records) + i];
+                        energy_hourly_kW[y * size_t(number_records * 3) + (i * 3) + 1] = energy_hourly_gen[y * size_t(number_records) + i];
+                        energy_hourly_kW[y * size_t(number_records * 3) + (i * 3) + 2] = energy_hourly_gen[y * size_t(number_records) + i];
+                    }
+                    else {
+                        energy_hourly_kW[y * size_t(number_records)+i] = energy_hourly_gen[y * size_t(number_records) + i];
+                    }
                     //iday = floor(double(i * 3) / 24); //Calculate day of year
                     if (y == 0) {
                         if (month[i] == 1)
@@ -690,9 +702,9 @@ public:
                         //ihour = fmod(i * 3, 24); //Calculate hour of day
                         ihour = hour[i];
                         for (size_t d = 0; d < days_in_year; d++) {
-                            for (size_t h = 0; h < 9; h++) {
-                                if (iday == d && ihour == size_t(3 * (h - 1))) {
-                                    p_annual_energy_dist_time[h * days_in_year + d] += energy_hourly_kWh[i]; //Add energy for time step to time distribution matrix at day and hour of current timestep
+                            for (size_t h = 0; h < 24 / std::ceil(hour_step) + 1.0; h++) {
+                                if (iday == d && ihour == std::ceil(hour_step) * h) {
+                                    p_annual_energy_dist_time[(h+1) * days_in_year + d] += energy_hourly_kWh[i]; //Add energy for time step to time distribution matrix at day and hour of current timestep
                                     break; //Get out of loop once day and hour match is found
                                 }
                             }
@@ -889,7 +901,9 @@ public:
         //capacity_factor = annual_energy / (device_rated_capacity * number_devices * number_hours);
 		
 		//Assigning values to outputs:
-		assign("annual_energy", var_data((ssc_number_t)annual_energy));
+        if (is_annual) {
+            assign("annual_energy", var_data((ssc_number_t)annual_energy));
+        }
 		assign("average_power", var_data((ssc_number_t)device_average_power));
 		assign("capacity_factor", var_data((ssc_number_t)capacity_factor * 100));
 		assign("device_average_power", var_data((ssc_number_t)device_average_power));
