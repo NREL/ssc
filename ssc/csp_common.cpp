@@ -781,7 +781,7 @@ var_info vtab_sco2_design[] = {
     { SSC_INPUT,  SSC_NUMBER,  "HTR_n_sub_hx",         "HTR number of model subsections",                        "-",          "High temperature recuperator",    "Heat Exchanger Design",      "?=10",  "",       "" },
     { SSC_INPUT,  SSC_NUMBER,  "HTR_od_model",         "0: mass flow scale, 1: conductance ratio model",         "-",          "High temperature recuperator",    "Heat Exchanger Design",      "?=1",   "",       "" },
 
-    { SSC_INPUT,  SSC_NUMBER,  "cycle_config",         "1 = recompression, 2 = partial cooling, 3 = recomp with htr bypass", "", "High temperature recuperator",  "Heat Exchanger Design",      "?=1",   "",       "" },
+    { SSC_INPUT,  SSC_NUMBER,  "cycle_config",         "1 = recompression, 2 = partial cooling, 3 = recomp with htr bypass, 4 = turbine split flow", "", "High temperature recuperator",  "Heat Exchanger Design",      "?=1",   "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "is_recomp_ok",         "1 = Yes, 0 = simple cycle only, < 0 = fix f_recomp to abs(input)","",  "High temperature recuperator",    "Heat Exchanger Design",      "?=1",   "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "is_P_high_fixed",      "1 = Yes (=P_high_limit), 0 = No, optimized (default)",                   "",           "High temperature recuperator",    "Heat Exchanger Design",      "?=0",   "",       "" },
 	{ SSC_INPUT,  SSC_NUMBER,  "is_PR_fixed",          "0 = No, >0 = fixed pressure ratio at input <0 = fixed LP at abs(input)",                      "High temperature recuperator",           "",    "Heat Exchanger Design",      "?=0",   "",       "" },
