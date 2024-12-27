@@ -91,7 +91,7 @@ static var_info _cm_vtab_geothermal_costs[] = {
         { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.pump_geotherm.cost.pump_depth",                      "Pump depth",                      "ft",             "",             "GeoHourly",        "",                        "",                "" },
         { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.prod_req",                      "Number of production wells required",                      "",             "",             "GeoHourly",        "",                        "",                "" },
         { SSC_INPUT,        SSC_NUMBER,      "pump_size_hp",                      "Production pump power",                      "hp",             "",             "GeoHourly",        "",                        "",                "" },
-        { SSC_INPUT,        SSC_NUMBER,      "inj_size_hp",                      "Injection pump power",                      "hp",             "",             "GeoHourly",        "",                        "",                "" },
+        { SSC_INPUT,        SSC_NUMBER,      "inj_pump_hp",                      "Injection pump power",                      "hp",             "",             "GeoHourly",        "",                        "",                "" },
 
 
         // Outputs	
@@ -805,7 +805,7 @@ public:
         if (pipe_diam == 0) pipe_diam = 12.5;
         else pipe_diam = 8.75;
         double pipe_outer_diam = pipe_diam + 2 * 0.375; //inches
-        double pipe_cost_per_foot = 0.4249 * pow(pipe_outer_diam, 2); -0.0472 * pipe_outer_diam + 40.683;
+        double pipe_cost_per_foot = 0.4249 * pow(pipe_outer_diam, 2) - 0.0472 * pipe_outer_diam + 40.683;
         double pipe_cost_per_foot_adj = pipe_cost_per_foot * steel_ppi[ppi_base_year];
         double distance_plant_to_well = 1640.4;
         int resource_type = as_integer("resource_type");
@@ -813,6 +813,9 @@ public:
         double piping_cost_per_well = pipe_cost_per_foot_adj * distance_plant_to_well; //average distance from well to plant (ft)?
         double gathering_cost_total = piping_cost_per_well * (num_prod_wells + num_inj_wells);
         assign("total_gathering_cost", var_data(static_cast<ssc_number_t>(gathering_cost_total)));
+
+        double indirect_pump_gathering_cost = (total_pump_cost + gathering_cost_total) * (1.0 / (1 - 0.12) - 1);
+        assign("indirect_pump_gathering_cost", var_data(static_cast<ssc_number_t>(indirect_pump_gathering_cost);
 
         //OM Cost calculations
         /*

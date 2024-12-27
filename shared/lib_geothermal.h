@@ -107,6 +107,7 @@ struct SGeothermal_Inputs
     double md_ProdWellFriction;
 	double md_NumberOfWells;								// entered or calculated, depending on 'cb'
     double md_NumberofWellsInj;
+    int md_WellsStimulated;                                 // 0 - Injection only, 1 - Production only, 2 - both, 3 - neither
 	double md_PlantEfficiency;								// not in GETEM - essentially the ratio of plant brine effectiveness to max possible brine effectiveness
 	double md_TemperatureDeclineRate;						// '% per year, 3% is default
 	double md_MaxTempDeclineC;								// degrees C, default = 30
@@ -181,6 +182,8 @@ struct SGeothermal_Outputs
 	//Following list of variables used as inputs in cmod_geothermal_costs.cpp for calculating direct geothermal plant cost:
 	double md_NumberOfWells;
     double md_NumberOfWellsProdExp;
+    double ProdWellsExploration;
+    double InjWellsExploration;
     double md_NumberOfWellsProdDrilled;
     double md_NumberOfWellsInjDrilled;
     double md_FailedWells;
@@ -368,6 +371,7 @@ private:
 	double flowRatePerWell(void);		// take Kg/second input and translate to lbs/hour
 	double flowRateTotal(void);			// flow rate per well * number of wells
 	double GetNumberOfWells(void);
+    void WellCountDecisionTable(void);
 	double GetPlantBrineEffectiveness(void);
 
 	// turbine output
