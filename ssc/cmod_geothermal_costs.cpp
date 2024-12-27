@@ -86,6 +86,12 @@ static var_info _cm_vtab_geothermal_costs[] = {
         { SSC_INPUT,        SSC_NUMBER,      "resource_depth",                     "Resource Depth",                               "m",              "",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
         { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.prod_wells_drilled",                      "Number of drilled production wells",                      "0/1",             "0=LargerDiameter,1=SmallerDiameter",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
         { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.inj_wells_drilled",                      "Number of drilled injection wells",                      "0/1",             "0=LargerDiameter,1=SmallerDiameter",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
+        { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.pump_fixed",                      "Fixed pump workover and casing cost",                      "$",             "",             "GeoHourly",        "",                        "",                "" },
+        { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.pump_per_foot",                      "Pump cost per foot",                      "$/ft",             "",             "GeoHourly",        "",                        "",                "" },
+        { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.pump_geotherm.cost.pump_depth",                      "Pump depth",                      "ft",             "",             "GeoHourly",        "",                        "",                "" },
+        { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.prod_req",                      "Number of production wells required",                      "",             "",             "GeoHourly",        "",                        "",                "" },
+        { SSC_INPUT,        SSC_NUMBER,      "pump_size_hp",                      "Production pump power",                      "hp",             "",             "GeoHourly",        "",                        "",                "" },
+        { SSC_INPUT,        SSC_NUMBER,      "inj_size_hp",                      "Injection pump power",                      "hp",             "",             "GeoHourly",        "",                        "",                "" },
 
 
         // Outputs	
@@ -93,6 +99,8 @@ static var_info _cm_vtab_geothermal_costs[] = {
 		{ SSC_OUTPUT,       SSC_NUMBER,     "baseline_cost",					"Baseline Cost",											"$/kW",		"",                     "GeoHourly",				"?",                         "",                            "" },
         { SSC_OUTPUT,       SSC_NUMBER,     "inj_total_cost",					"Total Injection well cost",											"$/kW",		"",                     "GeoHourly",				"?",                         "",                            "" },
         { SSC_OUTPUT,       SSC_NUMBER,     "prod_total_cost",					"Total Production well cost",											"$/kW",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "total_pump_cost",					"Total pumping cost",											"$/kW",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "total_gathering_cost",					"Total gathering well cost",											"$/kW",		"",                     "GeoHourly",				"?",                         "",                            "" },
 
 
         var_info_invalid };
@@ -769,11 +777,42 @@ public:
 
 		}
 
-       
+       //Pump costs
+        double workover_casing_cost = as_double("geotherm.cost.pump_fixed");
+        //double casing_cost = as_double("casing_cost");
+        double installation_cost_per_foot = as_double("geotherm.cost.pump_per_foot");
+        double pump_set_depth = as_double("geotherm.cost.pump_depth");
+        double num_prod_wells = as_double("geotherm.cost.prod_req");
+        double num_inj_wells = as_double("inj_num_pumps");
+        double prod_pump_power = as_double("pump_size_hp");
+        double other_pump_install_cost = 5750 * pow(prod_pump_power, 0.2) * pump_ppi[ppi_base_year];
+        double prod_pump_cost_per_well = workover_casing_cost + installation_cost_per_foot * pump_set_depth * pump_ppi[ppi_base_year] + other_pump_install_cost;
+        double production_pump_cost = prod_pump_cost_per_well * num_prod_wells;
+        if (conversion_type == FLASH) production_pump_cost = 0;
+        //Calculated injection pump cost
+        double inj_pump_power = as_double("inj_pump_hp");
+        double num_injection_pumps = std::ceil(inj_pump_power / 2000.0);
+        double inj_pump_cost_per_pump = 1750 * pow(inj_pump_power, 0.7) * 3.0 * pow(inj_pump_power, -0.11);
+        double injection_pump_cost = num_injection_pumps * inj_pump_cost_per_pump * pump_ppi[ppi_base_year];
 
+        double indirect_pump_cost = (production_pump_cost + injection_pump_cost) * (1.0 / (1.0 - 0.12) - 1.0);
 
+        double total_pump_cost = production_pump_cost + injection_pump_cost + indirect_pump_cost;
+        assign("total_pump_cost", var_data(static_cast<ssc_number_t>(total_pump_cost)));
 
-
+        //Field Gathering cost
+        double pipe_diam = as_double("geotherm.cost.prod_cost_curve_welldiam"); //inches
+        if (pipe_diam == 0) pipe_diam = 12.5;
+        else pipe_diam = 8.75;
+        double pipe_outer_diam = pipe_diam + 2 * 0.375; //inches
+        double pipe_cost_per_foot = 0.4249 * pow(pipe_outer_diam, 2); -0.0472 * pipe_outer_diam + 40.683;
+        double pipe_cost_per_foot_adj = pipe_cost_per_foot * steel_ppi[ppi_base_year];
+        double distance_plant_to_well = 1640.4;
+        int resource_type = as_integer("resource_type");
+        if (resource_type == 0) distance_plant_to_well = 2460.63;
+        double piping_cost_per_well = pipe_cost_per_foot_adj * distance_plant_to_well; //average distance from well to plant (ft)?
+        double gathering_cost_total = piping_cost_per_well * (num_prod_wells + num_inj_wells);
+        assign("total_gathering_cost", var_data(static_cast<ssc_number_t>(gathering_cost_total)));
 
         //OM Cost calculations
         /*
