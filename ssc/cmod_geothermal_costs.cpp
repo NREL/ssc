@@ -86,13 +86,15 @@ static var_info _cm_vtab_geothermal_costs[] = {
         { SSC_INPUT,        SSC_NUMBER,      "resource_depth",                     "Resource Depth",                               "m",              "",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
         { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.prod_wells_drilled",                      "Number of drilled production wells",                      "0/1",             "0=LargerDiameter,1=SmallerDiameter",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
         { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.inj_wells_drilled",                      "Number of drilled injection wells",                      "0/1",             "0=LargerDiameter,1=SmallerDiameter",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
+        { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.stim_non_drill",                      "Stimulation non drilling costs",                      "$",             "?=0",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
 
 
         // Outputs	
 
-		{ SSC_OUTPUT,       SSC_NUMBER,     "baseline_cost",					"Baseline Cost",											"$/kW",		"",                     "GeoHourly",				"?",                         "",                            "" },
-        { SSC_OUTPUT,       SSC_NUMBER,     "inj_total_cost",					"Total Injection well cost",											"$/kW",		"",                     "GeoHourly",				"?",                         "",                            "" },
-        { SSC_OUTPUT,       SSC_NUMBER,     "prod_total_cost",					"Total Production well cost",											"$/kW",		"",                     "GeoHourly",				"?",                         "",                            "" },
+		{ SSC_OUTPUT,       SSC_NUMBER,     "baseline_cost",					"Baseline cost",											"$/kW",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "inj_total_cost",					"Total injection well cost",											"$/kW",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "prod_total_cost",					"Total production well cost",											"$/kW",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "stim_total_cost",					"Total stimulation well cost",											"$/kW",		"",                     "GeoHourly",				"?",                         "",                            "" },
 
 
         var_info_invalid };
@@ -484,6 +486,27 @@ public:
             else {
                 //keep going
             }
+            // Stimulation costs
+            /*
+
+    equations{ 'geotherm.cost.stim_total' } = define() {
+        return  ${geotherm.cost.stim_per_well} * ${geotherm.cost.stim_num_wells} + ${geotherm.cost.stim_non_drill}; };
+
+    equations{'geotherm.cost.stim_per_well'} = define() {
+        return 1250000 * ${drilling_ppi}; //Fixed $1,250,000 scaled by drilling PPI
+};
+
+    equations{ 'geotherm.cost.stim_num_wells' } = define() {
+        return ${geotherm.cost.inj_num_wells}; };
+
+    */
+            int ppi_base_year = as_integer("ppi_base_year");
+            double stim_non_drill = as_double("geotherm.cost.stim_non_drill");
+            double stim_per_well = 1250000 * drilling_ppi[ppi_base_year];
+            double stim_num_wells = inj_wells_drilled; 
+            double stim_total_cost = stim_per_well * stim_num_wells + stim_non_drill;
+            assign("stim_total_cost", stim_total_cost);
+
         }
 		int conversion_type = as_integer("conversion_type");
 
@@ -491,7 +514,7 @@ public:
 
         //int resource_type = as_integer("resource_type");
 
-        
+
 
         //Exploration costs
         /*
@@ -821,4 +844,4 @@ public:
 
 };
 
-DEFINE_MODULE_ENTRY(geothermal_costs, "Geothermal monthly and hourly models using general power block code from TRNSYS Type 224 code by M.Wagner, and some GETEM model code.", 3);
+DEFINE_MODULE_ENTRY(geothermal_costs, "Geothermal cost equations.", 3);
