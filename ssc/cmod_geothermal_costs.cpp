@@ -87,14 +87,23 @@ static var_info _cm_vtab_geothermal_costs[] = {
         { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.prod_wells_drilled",                      "Number of drilled production wells",                      "0/1",             "0=LargerDiameter,1=SmallerDiameter",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
         { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.inj_wells_drilled",                      "Number of drilled injection wells",                      "0/1",             "0=LargerDiameter,1=SmallerDiameter",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
         { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.stim_non_drill",                      "Stimulation non drilling costs",                      "$",             "?=0",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
+        { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.expl_non_drill",                      "Exploration non drilling costs",                      "$",             "?=750000",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
+        { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.conf_non_drill",                      "Confirmation non drilling costs",                      "$",             "?=250000",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
+        { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.expl_multiplier",                      "Exploration cost multiplier",                      "",             "?=0.5",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
+        { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.conf_multiplier",                      "Confirmation cost multiplier",                      "",             "?=1.2",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
+        { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.expl_num_wells",                      "Number of exploration wells",                      "",             "?=2",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
+        { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.conf_num_wells",                      "Number of confirmation wells",                      "",             "?=2",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
 
 
         // Outputs	
 
 		{ SSC_OUTPUT,       SSC_NUMBER,     "baseline_cost",					"Baseline cost",											"$/kW",		"",                     "GeoHourly",				"?",                         "",                            "" },
-        { SSC_OUTPUT,       SSC_NUMBER,     "inj_total_cost",					"Total injection well cost",											"$/kW",		"",                     "GeoHourly",				"?",                         "",                            "" },
-        { SSC_OUTPUT,       SSC_NUMBER,     "prod_total_cost",					"Total production well cost",											"$/kW",		"",                     "GeoHourly",				"?",                         "",                            "" },
-        { SSC_OUTPUT,       SSC_NUMBER,     "stim_total_cost",					"Total stimulation well cost",											"$/kW",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "inj_total_cost",					"Total injection well cost",											"$",		"",                     "GeoHourly",				"calc_drill_costs=1",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "prod_total_cost",					"Total production well cost",											"$",		"",                     "GeoHourly",				"calc_drill_costs=1",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "stim_total_cost",					"Total stimulation well cost",											"$",		"",                     "GeoHourly",				"calc_drill_costs=1",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "expl_total_cost",					"Total exploration well cost",											"$",		"",                     "GeoHourly",				"calc_drill_costs=1",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "conf_total_cost",					"Total confirmation well cost",											"$",		"",                     "GeoHourly",				"calc_drill_costs=1",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "drilling_total_cost",					"Total drilling cost",											"$",		"",                     "GeoHourly",				"calc_drill_costs=1",                         "",                            "" },
 
 
         var_info_invalid };
@@ -479,13 +488,6 @@ public:
             double prod_wells_drilled = as_double("geotherm.cost.prod_wells_drilled");
             double prod_total_cost = prod_wells_drilled * prod_well_cost;
             assign("prod_total_cost", prod_total_cost);
-
-            if (!is_assigned("conversion_type")) {
-                return;
-            }
-            else {
-                //keep going
-            }
             // Stimulation costs
             /*
 
@@ -506,6 +508,38 @@ public:
             double stim_num_wells = inj_wells_drilled; 
             double stim_total_cost = stim_per_well * stim_num_wells + stim_non_drill;
             assign("stim_total_cost", stim_total_cost);
+
+
+            // Exploraion and confirmation costs
+            /*
+            equations{ 'geotherm.cost.expl_total' } = define() {
+    return  ${geotherm.cost.expl_drill} + ${geotherm.cost.expl_non_drill}; };
+
+
+            equations{ 'geotherm.cost.expl_drill' } = define() {
+    return  ${geotherm.cost.expl_per_well} * ${geotherm.cost.expl_num_wells}; };
+
+        equations{ 'geotherm.cost.expl_per_well' } = define() {
+    return  ${geotherm.cost.expl_multiplier} * ${geotherm.cost.prod_per_well}; };
+
+
+            */
+            double expl_non_drill = as_double("geotherm.cost.expl_non_drill");
+            double expl_multiplier = as_double("geotherm.cost.expl_multiplier");
+            double expl_num_wells = as_double("geotherm.cost.expl_num_wells");
+            double expl_per_well = expl_multiplier * prod_well_cost;
+            double expl_total_cost = expl_per_well * expl_num_wells + expl_non_drill;
+            assign("expl_total_cost", expl_total_cost);
+
+            double conf_non_drill = as_double("geotherm.cost.conf_non_drill");
+            double conf_multiplier = as_double("geotherm.cost.conf_multiplier");
+            double conf_num_wells = as_double("geotherm.cost.conf_num_wells");
+            double conf_per_well = conf_multiplier * prod_well_cost;
+            double conf_total_cost = conf_per_well * conf_num_wells + conf_non_drill;
+            assign("conf_total_cost", conf_total_cost);
+
+            double drilling_total_cost = expl_total_cost + conf_total_cost + inj_total_cost + prod_total_cost + stim_total_cost;
+            assign("drilling_total_cost", drilling_total_cost);
 
         }
 		int conversion_type = as_integer("conversion_type");
