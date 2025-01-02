@@ -815,7 +815,7 @@ public:
         assign("total_gathering_cost", var_data(static_cast<ssc_number_t>(gathering_cost_total)));
 
         double indirect_pump_gathering_cost = (total_pump_cost + gathering_cost_total) * (1.0 / (1 - 0.12) - 1);
-        assign("indirect_pump_gathering_cost", var_data(static_cast<ssc_number_t>(indirect_pump_gathering_cost);
+        assign("indirect_pump_gathering_cost", var_data(static_cast<ssc_number_t>(indirect_pump_gathering_cost)));
 
         //OM Cost calculations
         /*

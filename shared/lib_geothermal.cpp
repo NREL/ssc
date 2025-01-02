@@ -1616,7 +1616,7 @@ double CGeothermalAnalyzer::GetNumberOfWells(void)
             mo_geo_in.md_ProdWellFriction * pow(mo_geo_in.md_FailedProdFlowRatio, 2) - pressureHydrostaticPSI());
         double inj_failed_inj_rate = (mo_geo_in.md_FailedProdFlowRatio > 0) ? (mo_geo_in.md_FailedProdFlowRatio * mo_geo_in.md_ReservoirDeltaPressure) *
             (mo_geo_in.md_InjWellPressurePSI + geothermal::MetersToFeet(GetResourceDepthM()) * InjectionDensity() / 144.0 + (pressure_well_head) -
-            mo_geo_in.md_InjWellFriction * pow(mo_geo_in.md_FailedProdFlowRatio, 2) - pressureHydrostaticPSI()) * mo_geo_in.md_FailedProdFlowRatio * mo_geo_in.md_ReservoirDeltaPressure : 0.0;
+            mo_geo_in.md_InjWellFriction * pow(mo_geo_in.md_FailedProdFlowRatio, 2) - pressureHydrostaticPSI()) : 0.0;
         double inj_rate_failed_prod_wells = MIN(prod_failed_inj_rate, flowRatePerWell()); //Injectivity of failed production well?
         double inj_rate_failed_inj_wells = MIN(inj_failed_inj_rate, flowRatePerWell());
         double inj_rate_successful_inj_wells = flowRatePerWell() / mo_geo_in.md_RatioInjectionToProduction;
@@ -1654,6 +1654,7 @@ double CGeothermalAnalyzer::GetNumberOfWells(void)
             else {
                 inj_wells_drilled = mp_geo_out->md_NumberOfWellsInj / (mo_geo_in.md_DrillSuccessRate);
             }
+            mp_geo_out->md_NumberOfWellsInj = inj_flow / inj_rate_successful_inj_wells - successful_inj_wells_exploration;
             mp_geo_out->md_NumberOfWellsInjDrilled = inj_wells_drilled;
             //mp_geo_out->md_NumberOfWellsProdDrilled = mp_geo_out->md_NumberOfWellsProdExp / mo_geo_in.md_DrillSuccessRate;
             /*

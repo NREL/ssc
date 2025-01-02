@@ -400,7 +400,7 @@ public:
 
 			// assign values for UI results
 			assign("num_wells_getem_output", var_data((ssc_number_t)geo_outputs.md_NumberOfWells));
-            assign("num_wells_getem_inj", var_data((ssc_number_t)geo_outputs.md_NumberOfWellsInj));
+            assign("num_wells_getem_inj", var_data((ssc_number_t)geo_outputs.md_NumberOfWellsInjDrilled));
 			assign("plant_brine_eff", var_data((ssc_number_t)geo_outputs.md_PlantBrineEffectiveness));
             assign("pump_watthr_per_lb", var_data((ssc_number_t)geo_outputs.md_PumpWorkWattHrPerLb));
             assign("pumpwork_prod", var_data((ssc_number_t)geo_outputs.md_pumpwork_prod));
