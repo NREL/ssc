@@ -3222,31 +3222,34 @@ int C_HX_htf_to_steam::off_design_target_cold_PH_out(double h_c_out_target /*kJ/
 
         int xasdf = 0;
     }
-    
-
-
+   
     // Solve
-    int m_dot_code = h_out_solver.solve(m_dot_c_min, m_dot_c_max, 0.0, m_dot_c_solved, tol_solved, iter_solved);
-
-    if (m_dot_code == C_monotonic_eq_solver::CONVERGED)
+    int m_dot_code = -1;
+    try
     {
-        // Converge Succesfully
-        q_dot = h_out_eq.m_q_dot;       //[kJ]        
-        h_c_out = h_out_eq.m_h_c_out;   //[kJ/kg]
-        h_h_out = h_out_eq.m_h_h_out;   //[kJ/kg]
-        m_dot_c = h_out_eq.m_m_dot_c;   //[kg/s]
-
+        m_dot_code = h_out_solver.solve(m_dot_c_min, m_dot_c_max, 0.0, m_dot_c_solved, tol_solved, iter_solved);
     }
-    else
+    catch (C_csp_exception)
     {
-        // Could not converge
-        q_dot = h_out_eq.m_q_dot;       //[kJ]        
-        h_c_out = h_out_eq.m_h_c_out;   //[kJ/kg]
-        h_h_out = h_out_eq.m_h_h_out;   //[kJ/kg]
-        m_dot_c = h_out_eq.m_m_dot_c;   //[kg/s]
+        return -1;
     }
 
-    return m_dot_code;
+    if (m_dot_code != C_monotonic_eq_solver::CONVERGED)
+    {
+        if (!(m_dot_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) <= 0.01))
+        {
+            return -2;
+        }
+    }
+
+    // Converge Succesfully
+    q_dot = h_out_eq.m_q_dot;       //[kJ]        
+    h_c_out = h_out_eq.m_h_c_out;   //[kJ/kg]
+    h_h_out = h_out_eq.m_h_h_out;   //[kJ/kg]
+    m_dot_c = h_out_eq.m_m_dot_c;   //[kg/s]
+
+
+    return 0;
 }
 
 int C_HX_htf_to_steam::C_MEQ__target_cold_PH_out::operator()(double m_dot_c /*kg/s*/, double* diff_h_c_out /*kJ/kg*/)

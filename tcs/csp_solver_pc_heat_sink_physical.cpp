@@ -285,15 +285,13 @@ void C_pc_heat_sink_physical::call(const C_csp_weatherreader::S_outputs &weather
         return;
     }
 
-
-
-
-
     // Process inputs
     double m_dot_htf = inputs.m_m_dot / 3600.0;	//[kg/s]
     int standby_control = inputs.m_standby_control;	//[-] 1: On, 2: Standby, 3: Off
 
+    double NaN = std::numeric_limits<double>::quiet_NaN();
     double q_dot, T_c_out, T_h_out_C, m_dot_c, tol_solved;
+    q_dot = T_c_out = T_h_out_C = m_dot_c = tol_solved = NaN;
 
     // Handle no mass flow coming in
     if (inputs.m_m_dot < 1e-5 && standby_control == ON)
@@ -360,7 +358,7 @@ void C_pc_heat_sink_physical::call(const C_csp_weatherreader::S_outputs &weather
                     1.0, h_htf_hot, 1.0, m_dot_htf, ms_params.m_od_tol,
                     q_dot, h_ext_out_calc, h_htf_out_calc, m_dot_c, tol_solved);
 
-                if (solve_code == C_monotonic_eq_solver::CONVERGED)
+                if (solve_code == 0)
                 {
                     // Solved succesfully
                     
@@ -407,8 +405,6 @@ void C_pc_heat_sink_physical::call(const C_csp_weatherreader::S_outputs &weather
                         int x = 0;
                     }
 
-
-
                     // Could not solve
                     q_dot = 0;
                     T_h_out_C = htf_state_in.m_temp;
@@ -420,13 +416,12 @@ void C_pc_heat_sink_physical::call(const C_csp_weatherreader::S_outputs &weather
                     out_solver.m_q_dot_htf = 0;		//[MWt] Thermal power form HTF
                     out_solver.m_W_dot_elec_parasitics_tot = 0;  //[MWe]
 
-                    out_solver.m_was_method_successful = true;
+                    out_solver.m_was_method_successful = false;
                     break;
                 }   
             }
             catch (C_csp_exception exc)
             {
-                double NaN = std::numeric_limits<double>::quiet_NaN();
                 out_solver.m_P_cycle = NaN;		//[MWe] No electricity generation
                 out_solver.m_T_htf_cold = NaN;		//[C]
                 out_solver.m_m_dot_htf = NaN;	//[kg/hr] Return inlet mass flow rate
