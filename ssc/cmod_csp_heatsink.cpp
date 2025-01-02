@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static var_info _cm_vtab_csp_heatsink[] = {
     /* VARTYPE          DATATYPE         NAME                         LABEL                                                                               UNITS           META              GROUP             REQUIRED_IF                CONSTRAINTS         UI_HINTS*/
     // Inputs
-    { SSC_INPUT,        SSC_NUMBER,      "t_step",                    "Timestep duration",                                                                "s",            "",               "system",         "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "t_step",                    "Timestep duration",                                                                "s",            "",               "system",         "",                       "",                      "" },
     
     var_info_invalid };
 
@@ -77,7 +77,7 @@ public:
         // Initialize
         C_HX_htf_to_steam m_hx;
         int hot_fl = 21;    // HTF fl id
-        int N_sub_hx = 500;
+        int N_sub_hx = 50;
         NS_HX_counterflow_eqs::E_UA_target_type od_target_type = NS_HX_counterflow_eqs::E_UA_target_type::E_constant_UA;
         m_hx.initialize(hot_fl, N_sub_hx, od_target_type);
 

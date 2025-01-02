@@ -3258,7 +3258,7 @@ int C_HX_htf_to_steam::C_MEQ__target_cold_PH_out::operator()(double m_dot_c /*kg
         m_tol,
         m_q_dot, m_h_c_out, m_h_h_out);
 
-    *diff_h_c_out = (m_h_c_out - m_h_c_out_target) / 200;   //[kJ/kg]
+    *diff_h_c_out = (m_h_c_out - m_h_c_out_target) / m_h_c_out_target;   //[kJ/kg]
 
     return 0;
 }
