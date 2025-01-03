@@ -52,6 +52,56 @@ public:
 
     void exec()
     {
+        // Test HTF-CO2 HX design
+        if (false) {
+            C_HX_co2_to_htf mc_phx;
+
+            int hot_fl = 17;
+
+            NS_HX_counterflow_eqs::E_UA_target_type ua_type = NS_HX_counterflow_eqs::E_UA_target_type::E_constant_UA;
+
+            mc_phx.initialize(hot_fl, 10, ua_type);
+
+            double q_dot = 1000.0;      //[kWt]
+            double T_co2_hot = 700.0;   //[C]
+            double P_co2 = 25000.0;     //[kPa]
+            double T_co2_cold = 500.0;  //[C]
+
+            CO2_state co2_props;
+            CO2_TP(T_co2_hot + 273.17, P_co2, &co2_props);
+
+            double h_co2_hot = co2_props.enth;
+
+            CO2_TP(T_co2_cold + 273.15, P_co2, &co2_props);
+
+            double h_co2_cold = co2_props.enth;
+
+            double m_dot_co2 = q_dot / (h_co2_hot - h_co2_cold);
+
+            C_HX_counterflow_CRM::S_des_calc_UA_par des_par;
+            des_par.m_T_h_in = 720.0;
+            des_par.m_P_h_in = 100.0;   //[kPa]
+            des_par.m_P_h_out = 100.0;  //[kPa]
+            des_par.m_m_dot_cold_des = m_dot_co2;	//[kg/s] cold fluid design mass flow rate
+
+            des_par.m_T_c_in = T_co2_cold;      //[K] Design-point cold inlet temperature
+            des_par.m_P_c_in = P_co2;			//[kPa] Cold fluid inlet temperature
+            des_par.m_P_c_out = P_co2;			//[kPa] Cold fluid outlet temperature
+
+            /*
+            double m_m_dot_hot_des;		//[kg/s] hot fluid design mass flow rate
+            double m_eff_max;			//[-] Max allowable effectiveness
+            */
+            C_HX_counterflow_CRM::S_des_solved ms_phx_des_solved;
+            mc_phx.design_and_calc_m_dot_htf(des_par, q_dot, 20, ms_phx_des_solved);
+
+            double UA_calc = ms_phx_des_solved.m_UA_design;
+            double T_htf_out = ms_phx_des_solved.m_T_h_out;
+            double m_dot_htf = des_par.m_m_dot_hot_des;
+
+            double blahhh = 1.23;
+
+        }
 
         // Define Steam Inlet Conditions
         double T_ext_cold = 120;            //[C] Steam inlet temp
