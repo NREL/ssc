@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "vartab.h"
 
-#include "cmod_geothermal_eqns.h"
+#include "cmod_geothermal_costs_eqns.h"
 #pragma warning(disable: 4297)  // ignore warning: 'function assumed not to throw an exception but does'
 
 bool getem_om_cost_calc(ssc_data_t data)
