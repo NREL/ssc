@@ -49,6 +49,7 @@ static var_info _cm_vtab_geothermal[] = {
         { SSC_INPUT,        SSC_NUMBER,      "drilling_success_rate",          "Drilling success rate",              "%",     "",     "GeoHourly",             "",           "",                        "" },
     { SSC_INPUT,        SSC_NUMBER,      "stim_success_rate",          "Stimulation success rate",              "%",     "",     "GeoHourly",             "",           "",                        "" },
     { SSC_INPUT,        SSC_NUMBER,      "failed_prod_flow_ratio",          "Failed production well flow ratio",              "",     "",     "GeoHourly",             "",           "",                        "" },
+    { SSC_INPUT,        SSC_NUMBER,      "stimulation_type",          "Which wells are stimulated",              "0/1/2/3",     "0=Injection,1=Production,2=Both,3=Neither",     "GeoHourly",             "?=3",           "",                        "" },
 
     //{ SSC_INOUT,        SSC_NUMBER,      "baseline_cost",          "Baseline cost",              "$/kW",     "",     "GeoHourly",             "?=0",           "",                        "" },
 
@@ -278,6 +279,7 @@ public:
         geo_inputs.md_FailedProdFlowRatio = as_double("failed_prod_flow_ratio");
         geo_inputs.md_DesiredSalesCapacityKW = as_double("nameplate");
 		geo_inputs.md_NumberOfWells = as_double("num_wells");
+        geo_inputs.md_WellsStimulated = as_integer("stimulation_type");
 		if ( as_integer("analysis_type") == 0)
 			geo_inputs.me_cb = POWER_SALES;
 		else

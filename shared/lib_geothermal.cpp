@@ -1538,6 +1538,7 @@ void CGeothermalAnalyzer::WellCountDecisionTable(void)
             production_stim_well = 0;
             injection_stim_well = 0;
         }
+        break;
     case 1:
         if (mo_geo_in.me_rt == HYDROTHERMAL) {
             production_stim_well = SWDDE;
@@ -1555,6 +1556,7 @@ void CGeothermalAnalyzer::WellCountDecisionTable(void)
             production_stim_well = 0;
             injection_stim_well = 0;
         }
+        break;
     case 2:
         if (mo_geo_in.me_rt == HYDROTHERMAL) {
             production_stim_well = SWDDE;
@@ -1568,6 +1570,11 @@ void CGeothermalAnalyzer::WellCountDecisionTable(void)
             production_stim_well = 0;
             injection_stim_well = 0;
         }
+        break;
+    case 3:
+        production_stim_well = 0;
+        injection_stim_well = 0;
+        break;
     }
     mp_geo_out->ProdWellsExploration = production_stim_well;
     mp_geo_out->InjWellsExploration = injection_stim_well;
@@ -1597,8 +1604,9 @@ double CGeothermalAnalyzer::GetNumberOfWells(void)
         mp_geo_out->md_PumpWorkWattHrPerLb = GetPumpWorkWattHrPerLb();
 		mp_geo_out->md_NumberOfWells = mo_geo_in.md_DesiredSalesCapacityKW / netCapacityPerWell;
         if (mp_geo_out->md_NumberOfWells < 0) mp_geo_out->md_NumberOfWells = 0;
-        mp_geo_out->md_NumberOfWellsProdExp = (mp_geo_out->md_NumberOfWells > mp_geo_out->ProdWellsExploration) ? mp_geo_out->md_NumberOfWells - mo_geo_in.md_ExplorationWellsProd : 0.0;
-        mp_geo_out->md_NumberOfWellsProdDrilled = mp_geo_out->md_NumberOfWellsProdExp / (1 - (1 - mo_geo_in.md_StimSuccessRate) * (1 - mo_geo_in.md_DrillSuccessRate));
+        mp_geo_out->md_NumberOfWellsProdExp = (mp_geo_out->md_NumberOfWells > mp_geo_out->ProdWellsExploration) ? mp_geo_out->md_NumberOfWells - mp_geo_out->ProdWellsExploration : 0.0;
+        double prod_well_stim_success_rate = (prod_wells_stimulated) ? mo_geo_in.md_StimSuccessRate : 0.0;
+        mp_geo_out->md_NumberOfWellsProdDrilled = mp_geo_out->md_NumberOfWellsProdExp / (1 - (1 - prod_well_stim_success_rate) * (1 - mo_geo_in.md_DrillSuccessRate));
         double num_prod_wells_successful = mp_geo_out->md_NumberOfWellsProdDrilled * mo_geo_in.md_DrillSuccessRate;
         double num_prod_wells_failed = mp_geo_out->md_NumberOfWellsProdDrilled * (1 - mo_geo_in.md_DrillSuccessRate);
         //2.	# of Injection Wells Required = # successful injection wells required in drilling phase + # successful injection wells drilled in exploration phase
