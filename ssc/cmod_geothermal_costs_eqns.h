@@ -40,16 +40,26 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 extern "C" {
 #endif
 
-static const char* getem_om_cost_calc_doc =
-    "Calculates the cable length in an ME array\\n"
+static const char* getem_om_cost_calc_doc =    
+    "Add documentation here \\n\\n"
     "Input: var_table with key-value pairs\\n"
-    "     'devices_per_row' - double [-]\\n"
-    "     'device_spacing_in_row' - double [m]\\n"
-	"     'number_rows' - double [-]\\n"
-	"     'row_spacing' - double [m]\\n"
-	"     'cable_system_overbuild' - double [%]\\n"
+    // "     'gross_output': double [units]\\n"
+    // "     'conversion_type': double [units]\\n"
+    "     'baseline_cost': double [$] \\n"
+    // "     'ppi_base_year': double [year] \\n"
+    // "     'cwflow': double [units] \\n"
+    "     'drilling_cost': double [$] \\n"
+    "     'field_gathering_system_cost': double [units] \\n"
+    // "     'GF_flowrate': double [units] \\n"
+    "     'num_wells': double [units] \\n"
+    "     'water_loss': double [units] \\n"
+    "     'total_installed_cost': double [$] \\n"
+    "     'pump_cost_install': double [units] \\n"
+    "     'pump_only_cost': double [units] \\n"
+    "     'pump_type': double [units] \\n"
+    "     'pump_depth': double \\n"
     "Output: key-value pairs added to var_table\\n"
-    "     'inter_array_cable_length' - double [m]\\n";
+    "     'total_getem_om_cost': double [$]";
 
 SSCEXPORT bool getem_om_cost_calc(ssc_data_t data);
 
