@@ -44,7 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cmod_financial_eqns.h"
 #include "cmod_utilityrate5_eqns.h"
 #include "cmod_analysisperiodchange_eqns.h"
-#include "cmod_geothermal_eqns.h"
+#include "cmod_geothermal_costs_eqns.h"
 
 /**
  *  Returns true if completed successfully. For failures, query the "error" string that has been assigned to the `data`.
@@ -139,7 +139,7 @@ static ssc_equation_entry ssc_equation_table [] = {
 
         // Geothermal
         {"getem_om_cost_calc", getem_om_cost_calc,
-            "geothermal", getem_om_cost_calc_doc,
+            "GeothermalCosts", getem_om_cost_calc_doc,
             false, true},
 
         // CSP
