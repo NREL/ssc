@@ -1506,7 +1506,7 @@ public:
 
         // Heat Sink
         int hs_type = as_integer("hs_type");
-        C_csp_power_cycle* c_heat_sink_pointer;
+        C_csp_power_cycle* c_heat_sink_pointer = nullptr;
         C_pc_heat_sink c_heat_sink;
         C_pc_heat_sink_physical c_heat_sink_phys;
 
@@ -1585,6 +1585,11 @@ public:
         else
         {
             throw exec_error("trough_physical_iph", "hs_type must be 0-1");
+        }
+
+        if (c_heat_sink_pointer == nullptr)
+        {
+            throw exec_error("trough_physical_iph", "Heat sink pointer not assigned");
         }
 
         // Electricity pricing schedule

@@ -1031,6 +1031,8 @@ static var_info _cm_vtab_pvsamv1[] = {
                 //miscellaneous outputs
                 { SSC_OUTPUT,        SSC_NUMBER,     "ts_shift_hours",                            "Sun position time offset",   "hours",  "",  "Miscellaneous", "",                       "",                          "" },
                 { SSC_OUTPUT,        SSC_NUMBER,     "nameplate_dc_rating",                        "System nameplate DC rating", "kW",     "",  "Miscellaneous",       "*",                    "",                              "" },
+                { SSC_OUTPUT,       SSC_NUMBER,      "system_capacity_ac",             "System nameplate AC rating", "kWac",     "",                                             "Miscellaneous", "",                        "",                          "" },
+
 
 
                 // test outputs
@@ -3594,6 +3596,7 @@ void cm_pvsamv1::exec()
             kWhACperkWAC = annual_energy / nameplate_ac_kW;
         }
         assign("capacity_factor_ac", var_data((ssc_number_t)(kWhACperkWAC / 87.6)));
+        assign("system_capacity_ac", var_data((ssc_number_t)nameplate_ac_kW));
 
         if (is_assigned("load"))
         {
