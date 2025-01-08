@@ -3188,19 +3188,94 @@ int C_HX_htf_to_steam::off_design_target_cold_PH_out(double h_c_out_target /*kJ/
     double max_iter = 1000;
     double slvr_tol = od_tol;
 
-    double mdot_guess = this->ms_des_calc_UA_par.m_m_dot_cold_des;
-
-    double q_dot_local, T_c_out_local, T_h_out_local, m_dot_c_local;
-    double P_c_out_local, P_h_out_local;
 
     C_MEQ__target_cold_PH_out h_out_eq(this, h_c_out_target, h_c_in, P_c_in, P_c_out,
         h_h_in, P_h_in, P_h_out, m_dot_h, od_tol);
     C_monotonic_eq_solver h_out_solver(h_out_eq);
     h_out_solver.settings(od_tol, max_iter, m_dot_c_min, m_dot_c_max, false);
 
-    double m_dot_c_solved;
-    int iter_solved = -1;
+    double mdot_guess = ms_des_calc_UA_par.m_m_dot_cold_des * (m_dot_h / ms_des_calc_UA_par.m_m_dot_hot_des);
 
+    double delta_h_target_rel = std::numeric_limits<double>::quiet_NaN();
+
+    double m_dot_guess_i = std::min(mdot_guess, m_dot_c_max);
+
+    C_monotonic_eq_solver::S_xy_pair xy_1;
+    xy_1.x = m_dot_guess_i;    //[kg/s]
+
+    C_monotonic_eq_solver::S_xy_pair xy_2;
+
+    int solver_code = h_out_solver.test_member_function(xy_1.x, &delta_h_target_rel);
+
+    double adj = 0.1;
+
+    if (solver_code != 0) {
+
+        while (solver_code != 0)
+        {
+            if (m_dot_guess_i > m_dot_c_max) {
+                return -3;
+            }
+
+            m_dot_guess_i *= 1.0 + adj;   // increase guess if solver code != 0
+
+            xy_1.x = std::min(m_dot_guess_i, m_dot_c_max);
+            solver_code = h_out_solver.test_member_function(xy_1.x, &delta_h_target_rel);
+        }
+        xy_1.y = delta_h_target_rel;
+
+        // if first successful x is the max, then we're going to have trouble finding a second value
+        if (xy_1.x == m_dot_c_max) {
+            xy_2.x = xy_1.x * 0.995;
+
+            solver_code = h_out_solver.test_member_function(xy_2.x, &delta_h_target_rel);
+
+            if (solver_code != 0) {
+                return -4;
+            }
+
+            xy_2.y = delta_h_target_rel;
+        }
+    }
+    else {
+        xy_1.y = delta_h_target_rel;
+
+        // if error is negative, then outlet enthalpy is too low and mass flow rate is too high
+        if (delta_h_target_rel < 0.0) {
+
+            // So decrease mass flow rate to get new guess
+            // Decreasing mass flow rate can lead to pinch fails, so cut down 'adj' a bit
+            xy_2.x = xy_1.x * (1.0 - 0.5 * adj);
+
+            solver_code = h_out_solver.test_member_function(xy_2.x, &delta_h_target_rel);
+
+            // If new guess failed, just try larger than xy1 guess. This approach isn't optimal but should work...
+            if (solver_code != 0) {
+                xy_2.x = std::min(xy_1.x * 1.1, m_dot_c_max);
+                
+            }
+        }
+        if (delta_h_target_rel > 0.0 || solver_code != 0) {
+
+            // Increase mass flow rate to get new guess
+            xy_2.x = std::min(xy_1.x * (1.0 + adj), m_dot_c_max);
+
+            solver_code = h_out_solver.test_member_function(xy_2.x, &delta_h_target_rel);
+
+            // If higher mass flow rate fails, try a guess close to xy1 guess
+            // If that fails, give up
+            if (solver_code != 0) {
+                xy_2.x = std::min(xy_1.x * 1.01, m_dot_c_max);
+                solver_code = h_out_solver.test_member_function(xy_2.x, &delta_h_target_rel);
+
+                if (solver_code != 0) {
+                    return -5;
+                }
+            }
+        }
+    }
+
+    /*
     if (false)
     {
         double frac = (m_dot_c_max - m_dot_c_min) / 1000;
@@ -3221,13 +3296,16 @@ int C_HX_htf_to_steam::off_design_target_cold_PH_out(double h_c_out_target /*kJ/
         }
 
         int xasdf = 0;
-    }
+    } */
    
     // Solve
+    double m_dot_c_solved;
+    int iter_solved = -1;
     int m_dot_code = -1;
     try
     {
-        m_dot_code = h_out_solver.solve(m_dot_c_min, m_dot_c_max, 0.0, m_dot_c_solved, tol_solved, iter_solved);
+        //m_dot_code = h_out_solver.solve(m_dot_c_min, m_dot_c_max, 0.0, m_dot_c_solved, tol_solved, iter_solved);
+        m_dot_code = h_out_solver.solve(xy_1, xy_2, 0.0, m_dot_c_solved, tol_solved, iter_solved);
     }
     catch (C_csp_exception)
     {
