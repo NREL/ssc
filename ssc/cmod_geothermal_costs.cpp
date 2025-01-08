@@ -549,8 +549,8 @@ public:
             double conf_total_cost = conf_per_well * conf_num_wells + conf_non_drill;
             assign("conf_total_cost", conf_total_cost);
 
-            double drilling_total_cost = expl_total_cost + conf_total_cost + inj_total_cost + prod_total_cost + stim_total_cost;
-            assign("drilling_total_cost", drilling_total_cost);
+            double total_drilling_cost = expl_total_cost + conf_total_cost + inj_total_cost + prod_total_cost + stim_total_cost;
+            assign("total_drilling_cost", total_drilling_cost);
 
         }
 		int conversion_type = as_integer("conversion_type");
@@ -856,7 +856,7 @@ public:
         double injection_pump_cost = num_injection_pumps * inj_pump_cost_per_pump * pump_ppi[ppi_base_year];
 
         double indirect_pump_cost = (production_pump_cost + injection_pump_cost) * (1.0 / (1.0 - 0.12) - 1.0);
-
+        assign("pump_only_cost", production_pump_cost);
         double total_pump_cost = production_pump_cost + injection_pump_cost + indirect_pump_cost;
         assign("total_pump_cost", var_data(static_cast<ssc_number_t>(total_pump_cost)));
 
