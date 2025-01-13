@@ -50,8 +50,8 @@ public:
 		TS_1ST,
 		TS_LAST,
         TS_MAX,
-        DEPENDENT,
-        SUMMED
+        SUMMED,
+        DEPENDENT        
 	};
 
     enum E_AB_relationship
