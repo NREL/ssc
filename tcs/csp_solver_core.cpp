@@ -174,6 +174,7 @@ static C_csp_reported_outputs::S_output_info S_solver_output_info[] =
 	// Ouputs that are NOT reported as weighted averages
 		// Simulation
 	{C_csp_solver::C_solver_outputs::TIME_FINAL, C_csp_reported_outputs::TS_LAST},	//[hr]
+    {C_csp_solver::C_solver_outputs::SIM_DURATION, C_csp_reported_outputs::SUMMED}, //[s]
 		// Weather Reader
 	{ C_csp_solver::C_solver_outputs::MONTH, C_csp_reported_outputs::TS_1ST},		//[-] Month of year
 	{ C_csp_solver::C_solver_outputs::HOUR_DAY, C_csp_reported_outputs::TS_1ST},    //[hr] hour of day
@@ -597,6 +598,8 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 
 	while( mc_kernel.mc_sim_info.ms_ts.m_time <= mc_kernel.get_sim_setup()->m_sim_time_end )
 	{
+        std::clock_t clock_start = std::clock();
+
 		// Report simulation progress
 		double calc_frac_current = (mc_kernel.mc_sim_info.ms_ts.m_time - mc_kernel.get_sim_setup()->m_sim_time_start) / (mc_kernel.get_sim_setup()->m_sim_time_end - mc_kernel.get_sim_setup()->m_sim_time_start);
 		if( calc_frac_current > progress_msg_frac_current )
@@ -1125,6 +1128,11 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 							mc_tes_outputs.m_q_dot_dc_to_htf -
 							mc_pc_out_solver.m_q_dot_htf -
 							mc_tes_outputs.m_q_dot_ch_from_htf) / m_cycle_q_dot_des;	//[-]
+
+        std::clock_t clock_end = std::clock();
+        double timestep_cpu_run_time = (clock_end - clock_start) / (double)CLOCKS_PER_SEC;		//[s]
+
+        mc_reported_outputs.value(C_solver_outputs::SIM_DURATION, timestep_cpu_run_time);
 
 		mc_reported_outputs.value(C_solver_outputs::ERR_M_DOT, m_dot_bal_max);
 		mc_reported_outputs.value(C_solver_outputs::ERR_Q_DOT, q_dot_bal);

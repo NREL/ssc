@@ -515,7 +515,8 @@ static var_info _cm_vtab_trough_physical_iph[] = {
 
     // Simulation Kernel
     { SSC_OUTPUT,       SSC_ARRAY,       "time_hr",                   "Time at end of timestep",                                                          "hr",           "",               "solver",         "sim_type=1",                       "",                      "" },
-        
+    { SSC_OUTPUT,       SSC_ARRAY,       "timestep_sim_duration",     "Simulation duration of timestep",                                                  "s",            "",               "solver",         "sim_type=1",                       "",                      "" },
+       
     // Weather Reader
     { SSC_OUTPUT,       SSC_ARRAY,       "month",                     "Resource Month",                                                                   "",             "",               "weather",        "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "hour_day",                  "Resource Hour of Day",                                                             "",             "",               "weather",        "sim_type=1",                       "",                      "" },
@@ -1747,6 +1748,7 @@ public:
         {
             // Simulation Kernel
             csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::TIME_FINAL, allocate("time_hr", n_steps_fixed), n_steps_fixed);
+            csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::SIM_DURATION, allocate("timestep_sim_duration", n_steps_fixed), n_steps_fixed);
             // Weather reader
             csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::MONTH, allocate("month", n_steps_fixed), n_steps_fixed);
             csp_solver.mc_reported_outputs.assign(C_csp_solver::C_solver_outputs::HOUR_DAY, allocate("hour_day", n_steps_fixed), n_steps_fixed);
