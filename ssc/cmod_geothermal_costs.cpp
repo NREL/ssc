@@ -114,7 +114,7 @@ static var_info _cm_vtab_geothermal_costs[] = {
         { SSC_OUTPUT,       SSC_NUMBER,     "stim_total_cost",					"Total stimulation well cost",											"$",		"",                     "GeoHourly",				"calc_drill_costs=1",                         "",                            "" },
         { SSC_OUTPUT,       SSC_NUMBER,     "expl_total_cost",					"Total exploration well cost",											"$",		"",                     "GeoHourly",				"calc_drill_costs=1",                         "",                            "" },
         { SSC_OUTPUT,       SSC_NUMBER,     "conf_total_cost",					"Total confirmation well cost",											"$",		"",                     "GeoHourly",				"calc_drill_costs=1",                         "",                            "" },
-        { SSC_OUTPUT,       SSC_NUMBER,     "drilling_total_cost",					"Total drilling cost",											"$",		"",                     "GeoHourly",				"calc_drill_costs=1",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "total_drilling_cost",					"Total drilling cost",											"$",		"",                     "GeoHourly",				"calc_drill_costs=1",                         "",                            "" },
         { SSC_OUTPUT,       SSC_NUMBER,     "total_pump_cost",					"Total pumping cost",											"$/kW",		"",                     "GeoHourly",				"?",                         "",                            "" },
         { SSC_OUTPUT,       SSC_NUMBER,     "total_gathering_cost",					"Total gathering well cost",											"$/kW",		"",                     "GeoHourly",				"?",                         "",                            "" },
 
