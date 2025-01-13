@@ -175,9 +175,9 @@ void C_csp_reported_outputs::C_output::send_to_reporting_ts_array(double report_
             // *************************************************************
             double sum_val = 0;
             for (size_t i = 0; i < n_report; i++) {
-                sum_val += (float)mv_temp_outputs[i];
+                sum_val += mv_temp_outputs[i];
             }
-            mp_reporting_ts_array[m_counter_reporting_ts_array] = sum_val;
+            mp_reporting_ts_array[m_counter_reporting_ts_array] = (float)sum_val;
         }
 		else
 		{
