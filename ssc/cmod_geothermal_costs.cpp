@@ -422,7 +422,7 @@ public:
 
                 }
             }
-            double inj_wells_drilled = as_double("geotherm.cost.inj_wells_drilled");
+            double inj_wells_drilled = as_double("num_wells_getem_inj_drilled");
             double inj_total_cost = inj_wells_drilled * inj_well_cost;
             assign("inj_total_cost", inj_total_cost);
 
@@ -499,7 +499,7 @@ public:
                 }
             }
 
-            double prod_wells_drilled = as_double("geotherm.cost.prod_wells_drilled");
+            double prod_wells_drilled = as_double("num_wells_getem_prod_drilled");
             double prod_total_cost = prod_wells_drilled * prod_well_cost;
             assign("prod_total_cost", prod_total_cost);
             // Stimulation costs
