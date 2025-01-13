@@ -173,7 +173,7 @@ struct SGeothermal_Outputs
 		maf_timestep_power = maf_timestep_test_values = maf_timestep_pressure = maf_timestep_dry_bulb = maf_timestep_wet_bulb = NULL;
 		mb_BrineEffectivenessCalculated = mb_FlashPressuresCalculated = false;
 		maf_hourly_power = NULL;
-        md_NumberOfWellsProdExp = md_NumberOfWellsProdDrilled = md_NumberOfWellsInjDrilled = md_FailedWells = md_StimSuccessRate = md_DrillSuccessRate = 0;
+        md_NumberOfWellsProdExp = md_NumberOfWellsProdDrilled = md_NumberOfWellsProdFailed = md_NumberOfWellsInjDrilled = md_FailedWells = md_StimSuccessRate = md_DrillSuccessRate = 0;
         md_FailedInjFlowRatio = md_FailedProdFlowRatio = 0;
         ElapsedHours = ElapsedMonths = 0;
 
@@ -185,6 +185,7 @@ struct SGeothermal_Outputs
     double ProdWellsExploration;
     double InjWellsExploration;
     double md_NumberOfWellsProdDrilled;
+    double md_NumberOfWellsProdFailed;
     double md_NumberOfWellsInjDrilled;
     double md_FailedWells;
     double md_FailedInjFlowRatio;

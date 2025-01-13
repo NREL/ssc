@@ -84,8 +84,10 @@ static var_info _cm_vtab_geothermal_costs[] = {
         { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.inj_cost_curve",                      "Injection well diameter type",                      "0/1",             "0=LargerDiameter,1=SmallerDiameter",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
         { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.prod_cost_curve",                      "Production well diameter type",                      "0/1",             "0=LargerDiameter,1=SmallerDiameter",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
         { SSC_INPUT,        SSC_NUMBER,      "resource_depth",                     "Resource Depth",                               "m",              "",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
-        { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.prod_wells_drilled",                      "Number of drilled production wells",                      "0/1",             "0=LargerDiameter,1=SmallerDiameter",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
-        { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.inj_wells_drilled",                      "Number of drilled injection wells",                      "0/1",             "0=LargerDiameter,1=SmallerDiameter",             "GeoHourly",        "calc_drill_costs=1",                        "",                "" },
+        { SSC_INPUT,        SSC_NUMBER,      "num_wells_getem_prod_drilled",                      "Number of drilled production wells",                      "0/1",             "0=LargerDiameter,1=SmallerDiameter",             "GeoHourly",        "",                        "",                "" },
+        { SSC_INPUT,        SSC_NUMBER,      "num_wells_getem_prod_failed",                      "Number of failed production wells",                      "0/1",             "0=LargerDiameter,1=SmallerDiameter",             "GeoHourly",        "",                        "",                "" },
+
+    { SSC_INPUT,        SSC_NUMBER,      "num_wells_getem_inj_drilled",                      "Number of drilled injection wells",                      "0/1",             "0=LargerDiameter,1=SmallerDiameter",             "GeoHourly",        "",                        "",                "" },
         { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.stim_non_drill",                      "Stimulation non drilling costs",                      "$",             "",             "GeoHourly",        "calc_drill_costs=1",                        "",                "?=0" },
         { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.expl_non_drill",                      "Exploration non drilling costs",                      "$",             "",             "GeoHourly",        "calc_drill_costs=1",                        "",                "?=750000" },
         { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.conf_non_drill",                      "Confirmation non drilling costs",                      "$",             "",             "GeoHourly",        "calc_drill_costs=1",                        "",                "?=250000" },
@@ -128,7 +130,8 @@ private:
 	//Inputs for Binary Type Plant (Note: Some variables might be common to both plant types - Binary and Flash)
 	std::vector<double> hx_ppi{ 0.89055794,0.919504053,0.938721984,0.956747735,0.963614688,0.972293753,0.983166428,1,0.998426323,1.066285169,1.226514068,1.332856462,1.377682403,1.438149738,1.414735336,1.423366714,1.463996185,1.512970911,1.534763948,1.554792561,1.604464797,1.643961076,1.657698912,1.742987979,1.797,1.831855031,1.997587983,2.272575844};		//HX Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
 	std::vector<double> steel_ppi{ 1.129319793,1.103090524,1.1087163,1.074084898,0.999853876,1.022283919,0.961569372,1,1.06517133,1.423905896,1.500474903,1.63534741,1.76276759,2.160444217,1.613209615,1.959815884,2.220208957,2.110396727,1.984949222,2.03492365,1.714285714,1.638913234,1.858019281,2.084136722,1.947,1.825966245,3.12752612,3.334864154};	//Steel Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
-	std::vector<double> process_equip_ppi{ 0.884018929,0.907470403,0.926181264,0.942518082,0.956851458,0.967823396,0.985395348,1,1.014829443,1.077774928,1.155295495,1.222766901,1.304818202,1.382893406,1.40355926,1.411450935,1.455548144,1.509649784,1.533757048,1.639031617,1.656479161,1.65317208,1.679672296,1.740780754,1.794,1.832151402,1.899909387,2.184450409}; //Process Equipment Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
+    std::vector<double> pipe_ppi{ 0.939,0.964,0.986,0.978,0.952,0.985,0.995,1.000,1.015,1.220,1.341,1.414,1.395,1.500,1.578,1.748,1.862,1.934,1.955,1.986,1.988,1.969,1.985,2.064,2.092,2.087,2.456 };
+    std::vector<double> process_equip_ppi{ 0.884018929,0.907470403,0.926181264,0.942518082,0.956851458,0.967823396,0.985395348,1,1.014829443,1.077774928,1.155295495,1.222766901,1.304818202,1.382893406,1.40355926,1.411450935,1.455548144,1.509649784,1.533757048,1.639031617,1.656479161,1.65317208,1.679672296,1.740780754,1.794,1.832151402,1.899909387,2.184450409}; //Process Equipment Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
 	std::vector<double> engineering_ppi{ 0.77985529,0.810695609,0.859015689,0.888566516,0.913317573,0.954043986,0.975857869,1,1.048105165,1.081631922,1.102335411,1.135826349,1.209434773,1.274983881,1.329751415,1.39193352,1.362346873,1.364746758,1.388351601,1.433483774,1.486242476,1.503869304,1.558039553,1.602,1.611,1.646034816,1.700479977,1.780739467}; // Engineering Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
 	std::vector<double> pump_ppi{ 0.853374525,0.872338403,0.899382129,0.92404943,0.936264259,0.9503327,0.975903042,1,1.010646388,1.039876426,1.093203422,1.14168251,1.212975285,1.277851711,1.31411597,1.324192015,1.324572243,1.34871673,1.339163498,1.366539924,1.391899601,1.411294923,1.438106104,1.489446663,1.553,1.553,1.553,1.553}; //Pump Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
 	std::vector<double> turbine_ppi{ 0.882749597,0.895883655,0.917874396,0.93458132,0.960396538,0.969303543,0.980072464,1,1.013285024,1.018820451,1.017562399,1.050221417,1.10668277,1.24511876,1.350392512,1.3403281,1.359752415,1.349889291,1.376811594,1.411835749,1.399154589,1.403046162,1.346947738,1.332125604,1.408,1.452294686,1.49086252,1.540966184}; //Turbine-Generator Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
@@ -843,15 +846,16 @@ public:
         double installation_cost_per_foot = as_double("geotherm.cost.pump_per_foot");
         double pump_set_depth = as_double("geotherm.cost.pump_depth");
         double num_prod_wells = as_double("geotherm.cost.prod_req");
-        double num_inj_wells = as_double("inj_num_pumps");
+        double num_inj_pumps = as_double("inj_num_pumps");
         double prod_pump_power = as_double("pump_size_hp");
         double other_pump_install_cost = 5750 * pow(prod_pump_power, 0.2) * pump_ppi[ppi_base_year];
         double prod_pump_cost_per_well = workover_casing_cost + installation_cost_per_foot * pump_set_depth * pump_ppi[ppi_base_year] + other_pump_install_cost;
         double production_pump_cost = prod_pump_cost_per_well * num_prod_wells;
-        if (conversion_type == FLASH) production_pump_cost = 0;
+        if ((conversion_type + 1) == FLASH) production_pump_cost = 0;
         //Calculated injection pump cost
         double inj_pump_power = as_double("inj_pump_hp");
         double num_injection_pumps = std::ceil(inj_pump_power / 2000.0);
+        inj_pump_power /= num_injection_pumps;
         double inj_pump_cost_per_pump = 1750 * pow(inj_pump_power, 0.7) * 3.0 * pow(inj_pump_power, -0.11);
         double injection_pump_cost = num_injection_pumps * inj_pump_cost_per_pump * pump_ppi[ppi_base_year];
 
@@ -864,14 +868,18 @@ public:
         double pipe_diam = as_double("geotherm.cost.prod_cost_curve_welldiam"); //inches
         if (pipe_diam == 0) pipe_diam = 12.5;
         else pipe_diam = 8.75;
+        pipe_diam = 12;
         double pipe_outer_diam = pipe_diam + 2 * 0.375; //inches
         double pipe_cost_per_foot = 0.4249 * pow(pipe_outer_diam, 2) - 0.0472 * pipe_outer_diam + 40.683;
-        double pipe_cost_per_foot_adj = pipe_cost_per_foot * steel_ppi[ppi_base_year];
+        double pipe_cost_per_foot_adj = pipe_cost_per_foot * pipe_ppi[ppi_base_year];
         double distance_plant_to_well = 1640.4;
         int resource_type = as_integer("resource_type");
         if (resource_type == 0) distance_plant_to_well = 2460.63;
         double piping_cost_per_well = pipe_cost_per_foot_adj * distance_plant_to_well; //average distance from well to plant (ft)?
-        double gathering_cost_total = piping_cost_per_well * (num_prod_wells + num_inj_wells);
+        double prod_wells_drilled = as_double("num_wells_getem_prod_drilled");
+        double inj_wells_drilled = as_double("num_wells_getem_inj_drilled");
+        double prod_wells_failed = as_double("num_wells_getem_prod_failed");
+        double gathering_cost_total = piping_cost_per_well * (prod_wells_drilled + inj_wells_drilled + prod_wells_failed);
         assign("total_gathering_cost", var_data(static_cast<ssc_number_t>(gathering_cost_total)));
 
         double indirect_pump_gathering_cost = (total_pump_cost + gathering_cost_total) * (1.0 / (1 - 0.12) - 1);

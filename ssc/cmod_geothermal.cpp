@@ -166,8 +166,11 @@ static var_info _cm_vtab_geothermal[] = {
 	// VARTYPE           DATATYPE         NAME                                   LABEL                                               UNITS      META            GROUP             REQUIRED_IF                    CONSTRAINTS      UI_HINTS
 																																																	             
 	// This first batch of outputs is for calculating UI values																																		             
-    { SSC_OUTPUT,       SSC_NUMBER,      "num_wells_getem_output",             "Number of wells calculated by GETEM",                 "",        "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "num_wells_getem_inj",             "Number of wells calculated by GETEM",                 "",        "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "num_wells_getem_output",             "Number of production wells required",                 "",        "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "num_wells_getem_inj",             "Number of required injection wells calculated by GETEM",                 "",        "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "num_wells_getem_prod_drilled",             "Number of production wells drilled",                 "",        "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "num_wells_getem_prod_failed",             "Number of production wells failed during drilling",                 "",        "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "num_wells_getem_inj_drilled",             "Number of injection wells drilled",                 "",        "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
 
     { SSC_OUTPUT,       SSC_NUMBER,      "plant_brine_eff",                    "Plant Brine Efficiency",                              "",        "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "pump_watthr_per_lb",                    "Pump work Efficiency",                              "",        "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
@@ -396,13 +399,18 @@ public:
 		if (FillOutputsForUI(err_msg, geo_inputs, geo_outputs) != 0)
 			throw general_error("input error: " + err_msg + ".");
 
+        assign("num_wells_getem_output", var_data((ssc_number_t)geo_outputs.md_NumberOfWells));
+        assign("num_wells_getem_prod_drilled", var_data((ssc_number_t)geo_outputs.md_NumberOfWellsProdDrilled));
+        assign("num_wells_getem_prod_failed", var_data((ssc_number_t)geo_outputs.md_NumberOfWellsProdFailed));
+        assign("num_wells_getem_inj", var_data((ssc_number_t)geo_outputs.md_NumberOfWellsInj));
+        assign("num_wells_getem_inj_drilled", var_data((ssc_number_t)geo_outputs.md_NumberOfWellsInjDrilled));
+
 		if (iControl == 1) {
 			
 		// just doing calculations for the UI, not running the model
 
 			// assign values for UI results
-			assign("num_wells_getem_output", var_data((ssc_number_t)geo_outputs.md_NumberOfWells));
-            assign("num_wells_getem_inj", var_data((ssc_number_t)geo_outputs.md_NumberOfWellsInjDrilled));
+			
 			assign("plant_brine_eff", var_data((ssc_number_t)geo_outputs.md_PlantBrineEffectiveness));
             assign("pump_watthr_per_lb", var_data((ssc_number_t)geo_outputs.md_PumpWorkWattHrPerLb));
             assign("pumpwork_prod", var_data((ssc_number_t)geo_outputs.md_pumpwork_prod));
