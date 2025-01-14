@@ -44,7 +44,7 @@ static var_info _cm_vtab_geothermal_costs[] = {
         { SSC_INPUT,        SSC_NUMBER,     "ppi_base_year",					"PPI Base Year",									"",		"",						"GeoHourly",				"?=19",						"",								"" },
 
         // Binary Plant Type Inputs:		
-		{ SSC_INPUT,		SSC_NUMBER,     "gross_output",						"Gross output from GETEM",									"kW",		"",						"GeoHourly",				"*",						"",								"" },
+		{ SSC_INPUT,		SSC_NUMBER,     "gross_output",						"Gross output from GETEM",									"MW",		"",						"GeoHourly",				"*",						"",								"" },
         { SSC_INPUT,		SSC_NUMBER,     "gross_cost_output",						"Gross output from GETEM for cost calculations",									"MW",		"",						"GeoHourly",				"*",						"",								"" },
 
         { SSC_INPUT,		SSC_NUMBER,		"design_temp",						"Power block design temperature",							"C",        "",						"GeoHourly",				"*",						"",								"" },
@@ -105,6 +105,7 @@ static var_info _cm_vtab_geothermal_costs[] = {
         { SSC_INPUT,        SSC_NUMBER,      "pump_size_hp",                      "Production pump power",                      "hp",             "",             "GeoHourly",        "",                        "",                "?733.646" },
         { SSC_INPUT,        SSC_NUMBER,      "inj_pump_hp",                      "Injection pump power",                      "hp",             "",             "GeoHourly",        "",                        "",                "" },
         { SSC_INPUT,        SSC_NUMBER,      "inj_num_pumps",                      "Number of injection pumps",                      "p",             "",             "GeoHourly",        "",                        "",                "?=1" },
+        { SSC_INPUT,        SSC_NUMBER,      "stimulation_type",                      "Which wells are stimulated",                      "0/1/2/3",             "",             "GeoHourly",        "",                        "",                "?=0" },
 
 
         // Outputs	
@@ -115,8 +116,12 @@ static var_info _cm_vtab_geothermal_costs[] = {
         { SSC_OUTPUT,       SSC_NUMBER,     "expl_total_cost",					"Total exploration well cost",											"$",		"",                     "GeoHourly",				"calc_drill_costs=1",                         "",                            "" },
         { SSC_OUTPUT,       SSC_NUMBER,     "conf_total_cost",					"Total confirmation well cost",											"$",		"",                     "GeoHourly",				"calc_drill_costs=1",                         "",                            "" },
         { SSC_OUTPUT,       SSC_NUMBER,     "total_drilling_cost",					"Total drilling cost",											"$",		"",                     "GeoHourly",				"calc_drill_costs=1",                         "",                            "" },
-        { SSC_OUTPUT,       SSC_NUMBER,     "total_pump_cost",					"Total pumping cost",											"$/kW",		"",                     "GeoHourly",				"?",                         "",                            "" },
-        { SSC_OUTPUT,       SSC_NUMBER,     "total_gathering_cost",					"Total gathering well cost",											"$/kW",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "total_pump_cost",					"Total pumping cost",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "total_gathering_cost",					"Total gathering well cost",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "indirect_pump_gathering_cost",					"Indirect pump and field gathering cost",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "total_pump_gathering_cost",					"Total pump and field gathering system cost",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "pump_only_cost",					"Production pump cost per well",											"$/well",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "pump_cost_install",					"Production pump installation cost",											"$/well",		"",                     "GeoHourly",				"?",                         "",                            "" },
 
 
         var_info_invalid };
@@ -519,7 +524,12 @@ public:
             int ppi_base_year = as_integer("ppi_base_year");
             double stim_non_drill = as_double("geotherm.cost.stim_non_drill");
             double stim_per_well = 1250000 * drilling_ppi[ppi_base_year];
-            double stim_num_wells = inj_wells_drilled; 
+            int stim_type = as_integer("stimulation_type");
+            double stim_num_wells = inj_wells_drilled;
+            if (stim_type == 0) stim_num_wells = inj_wells_drilled;
+            else if (stim_type == 1) stim_num_wells = prod_wells_drilled;
+            else if (stim_type == 2) stim_num_wells = inj_wells_drilled + prod_wells_drilled;
+            else stim_num_wells = 0;
             double stim_total_cost = stim_per_well * stim_num_wells + stim_non_drill;
             assign("stim_total_cost", stim_total_cost);
 
@@ -599,6 +609,7 @@ public:
 			double design_temp = as_double("design_temp") - as_double("dt_prod_well");
 			double eff = as_double("eff_secondlaw");	// w-h/lb
 			double unit_plant = as_double("gross_output");
+            unit_plant *= 1000.0; //convert to kW, brought from cmod_geothermal as MW
 
 			//Geofluid Heat Exchangers Equipment Cost Calculations:				
 			size_ratio = unit_plant / ref_plant_size;
@@ -691,6 +702,7 @@ public:
 		else if (conversion_type == 1) {
 			//geo_inputs.me_ct = FLASH;
 			double unit_plant = as_double("gross_output");
+            unit_plant *= 1000.0; //kW, comes from cmod_geothermal as MW
             double gross_cost = as_double("gross_cost_output");
             double GF_flowrate = as_double("GF_flowrate");
 			double qRejectTotal = (as_double("qRejectTotal")*GF_flowrate / 1000) / 1000000;		// Converting from btu/h to MMBTU/h
@@ -851,7 +863,11 @@ public:
         double other_pump_install_cost = 5750 * pow(prod_pump_power, 0.2) * pump_ppi[ppi_base_year];
         double prod_pump_cost_per_well = workover_casing_cost + installation_cost_per_foot * pump_set_depth * pump_ppi[ppi_base_year] + other_pump_install_cost;
         double production_pump_cost = prod_pump_cost_per_well * num_prod_wells;
-        if ((conversion_type + 1) == FLASH) production_pump_cost = 0;
+        if ((conversion_type + 1) == FLASH) {
+            production_pump_cost = 0;
+            prod_pump_cost_per_well = 0;
+            workover_casing_cost = 0;
+        }
         //Calculated injection pump cost
         double inj_pump_power = as_double("inj_pump_hp");
         double num_injection_pumps = std::ceil(inj_pump_power / 2000.0);
@@ -860,7 +876,8 @@ public:
         double injection_pump_cost = num_injection_pumps * inj_pump_cost_per_pump * pump_ppi[ppi_base_year];
 
         double indirect_pump_cost = (production_pump_cost + injection_pump_cost) * (1.0 / (1.0 - 0.12) - 1.0);
-        assign("pump_only_cost", production_pump_cost);
+        assign("pump_only_cost", prod_pump_cost_per_well);
+        assign("pump_cost_install", prod_pump_cost_per_well - workover_casing_cost);
         double total_pump_cost = production_pump_cost + injection_pump_cost + indirect_pump_cost;
         assign("total_pump_cost", var_data(static_cast<ssc_number_t>(total_pump_cost)));
 
@@ -884,6 +901,9 @@ public:
 
         double indirect_pump_gathering_cost = (total_pump_cost + gathering_cost_total) * (1.0 / (1 - 0.12) - 1);
         assign("indirect_pump_gathering_cost", var_data(static_cast<ssc_number_t>(indirect_pump_gathering_cost)));
+
+        double total_pump_gathering_cost = total_pump_cost + gathering_cost_total + indirect_pump_gathering_cost;
+        assign("total_pump_gathering_cost", var_data(static_cast<ssc_number_t>(total_pump_gathering_cost)));
 
         //OM Cost calculations
         /*
