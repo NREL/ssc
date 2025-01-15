@@ -98,6 +98,8 @@ static var_info _cm_vtab_geothermal_costs[] = {
         // need defaults?
         { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.pump_fixed",                      "Fixed pump workover and casing cost",                      "$",             "",             "GeoHourly",        "",                        "",                "" },
         { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.pump_per_foot",                      "Pump cost per foot",                      "$/ft",             "",             "GeoHourly",        "",                        "",                "" },
+        { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.pump_casing_cost",                      "Pump casing cost per foot",                      "$/ft",             "",             "GeoHourly",        "",                        "",                "" },
+
         // name change to match assign statement
  //       { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.pump_geotherm.cost.pump_depth",                      "Pump depth",                      "ft",             "",             "GeoHourly",        "",                        "",                "" },
         { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.pump_depth",                      "Pump depth",                      "ft",             "",             "GeoHourly",        "",                        "",                "?=1123120" },
@@ -853,15 +855,22 @@ public:
 		}
 
        //Pump costs
-        double workover_casing_cost = as_double("geotherm.cost.pump_fixed");
+        double workover_casing_cost = as_double("geotherm.cost.pump_casing_cost");
         //double casing_cost = as_double("casing_cost");
         double installation_cost_per_foot = as_double("geotherm.cost.pump_per_foot");
         double pump_set_depth = as_double("geotherm.cost.pump_depth");
         double num_prod_wells = as_double("geotherm.cost.prod_req");
         double num_inj_pumps = as_double("inj_num_pumps");
         double prod_pump_power = as_double("pump_size_hp");
+        double prod_pump_cost = 1750 * pow(prod_pump_power, 0.7) * pump_ppi[ppi_base_year];
         double other_pump_install_cost = 5750 * pow(prod_pump_power, 0.2) * pump_ppi[ppi_base_year];
-        double prod_pump_cost_per_well = workover_casing_cost + installation_cost_per_foot * pump_set_depth * pump_ppi[ppi_base_year] + other_pump_install_cost;
+        double prod_casing_cost = pump_set_depth * workover_casing_cost * pipe_ppi[ppi_base_year];
+        //double installation_cost_per_foot = 5.0 * drilling_ppi[ppi_base_year];
+        //double workover_casing_cost = 44.74 * pipe_ppi[ppi_base_year];
+        double pump_installation_cost = prod_casing_cost + (10000.0 * drilling_ppi[ppi_base_year]) + installation_cost_per_foot * drilling_ppi[ppi_base_year] * pump_set_depth;
+        double install_cost_only = pump_installation_cost - prod_casing_cost;
+        double prod_pump_cost_per_well = prod_pump_cost + pump_installation_cost + other_pump_install_cost;
+        //double prod_pump_cost_per_well = prod_pump_cost + workover_casing_cost + installation_cost_per_foot * pump_set_depth * pump_ppi[ppi_base_year] + other_pump_install_cost;
         double production_pump_cost = prod_pump_cost_per_well * num_prod_wells;
         if ((conversion_type + 1) == FLASH) {
             production_pump_cost = 0;
@@ -876,8 +885,8 @@ public:
         double injection_pump_cost = num_injection_pumps * inj_pump_cost_per_pump * pump_ppi[ppi_base_year];
 
         double indirect_pump_cost = (production_pump_cost + injection_pump_cost) * (1.0 / (1.0 - 0.12) - 1.0);
-        assign("pump_only_cost", prod_pump_cost_per_well);
-        assign("pump_cost_install", prod_pump_cost_per_well - workover_casing_cost);
+        assign("pump_only_cost", prod_pump_cost);
+        assign("pump_cost_install", install_cost_only);
         double total_pump_cost = production_pump_cost + injection_pump_cost + indirect_pump_cost;
         assign("total_pump_cost", var_data(static_cast<ssc_number_t>(total_pump_cost)));
 
@@ -896,7 +905,7 @@ public:
         double prod_wells_drilled = as_double("num_wells_getem_prod_drilled");
         double inj_wells_drilled = as_double("num_wells_getem_inj_drilled");
         double prod_wells_failed = as_double("num_wells_getem_prod_failed");
-        double gathering_cost_total = piping_cost_per_well * (prod_wells_drilled + inj_wells_drilled + prod_wells_failed);
+        double gathering_cost_total = piping_cost_per_well * (num_prod_wells + inj_wells_drilled + prod_wells_failed);
         assign("total_gathering_cost", var_data(static_cast<ssc_number_t>(gathering_cost_total)));
 
         double indirect_pump_gathering_cost = (total_pump_cost + gathering_cost_total) * (1.0 / (1 - 0.12) - 1);
