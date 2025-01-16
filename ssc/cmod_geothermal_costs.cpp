@@ -124,6 +124,7 @@ static var_info _cm_vtab_geothermal_costs[] = {
         { SSC_OUTPUT,       SSC_NUMBER,     "total_pump_gathering_cost",					"Total pump and field gathering system cost",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
         { SSC_OUTPUT,       SSC_NUMBER,     "pump_only_cost",					"Production pump cost per well",											"$/well",		"",                     "GeoHourly",				"?",                         "",                            "" },
         { SSC_OUTPUT,       SSC_NUMBER,     "pump_cost_install",					"Production pump installation cost",											"$/well",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "total_surface_equipment_cost",					"Total surface equipment cost",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
 
 
         var_info_invalid };
@@ -907,7 +908,7 @@ public:
         double prod_wells_failed = as_double("num_wells_getem_prod_failed");
         double gathering_cost_total = piping_cost_per_well * (num_prod_wells + inj_wells_drilled + prod_wells_failed);
         assign("total_gathering_cost", var_data(static_cast<ssc_number_t>(gathering_cost_total)));
-
+        assign("total_surface_equipment_cost", var_data(static_cast<ssc_number_t>(gathering_cost_total + injection_pump_cost)));
         double indirect_pump_gathering_cost = (total_pump_cost + gathering_cost_total) * (1.0 / (1 - 0.12) - 1);
         assign("indirect_pump_gathering_cost", var_data(static_cast<ssc_number_t>(indirect_pump_gathering_cost)));
 

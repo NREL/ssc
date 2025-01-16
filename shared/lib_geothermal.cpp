@@ -824,6 +824,7 @@ double CGeothermalAnalyzer::GetInjectionPumpWorkft(void)
     double injection_pump_head_psi = -excess_pressure + reservoir_buildup + mo_geo_in.md_AdditionalPressure;
     mo_geo_in.md_InjWellPressurePSI = injection_pump_head_psi; 
     double injection_pump_head_ft = injection_pump_head_psi * 144 / InjectionDensity();
+    if (injection_pump_head_ft < 0) injection_pump_head_ft = 0;
     double P_inject_bottomhole_used = injection_pump_head_psi + bottom_hole_pressure;
     //double pump_inj_hp = (injection_pump_head_ft * (flowRateTotal() / mo_geo_in.md_RatioInjectionToProduction / 2500) / (60 * 33000)) / mo_geo_in.md_GFPumpEfficiency;
     //mp_geo_out->md_InjPump_hp = pump_inj_hp;
