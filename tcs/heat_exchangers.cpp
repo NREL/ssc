@@ -792,7 +792,7 @@ void NS_HX_counterflow_eqs::calc_req_UA_enth(int hot_fl_code /*-*/, HTFPropertie
                 C_dot_min = m_dot_c * cp_c_avg;			// [kW/K] cold stream capacitance rate
                 C_R = 0.0;
             }
-            else if (!is_c_2phase && is_h_2phase)
+            else if (!is_h_2phase && is_c_2phase)
             {
                 C_dot_min = m_dot_h * cp_h_avg;			// [kW/K] hot stream capacitance rate
                 C_R = 0.0;
