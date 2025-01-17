@@ -600,6 +600,8 @@ void NS_HX_counterflow_eqs::calc_req_UA_enth(int hot_fl_code /*-*/, HTFPropertie
         double P_h = P_h_in - i * (P_h_in - P_h_out) / (double)(N_nodes - 1);
 
         // Calculate the entahlpy at the node
+        // Starting from HX hot side
+        // i = 0 is global cold stream outlet and hot stream inlet
         double h_c = h_c_out + i * (h_c_in - h_c_out) / (double)(N_nodes - 1);
         double h_h = h_h_in - i * (h_h_in - h_h_out) / (double)(N_nodes - 1);
 
@@ -768,7 +770,7 @@ void NS_HX_counterflow_eqs::calc_req_UA_enth(int hot_fl_code /*-*/, HTFPropertie
             else
             {
                 double T_c_avg = cold_htf_class.temp_lookup(h_c_avg);	//[K]
-                cp_c_avg = cold_htf_class.Cp(T_c_avg);  //[K]
+                cp_c_avg = cold_htf_class.Cp(T_c_avg);  //[kJ/kg-K]
 
                 v_s_node_info[i - 1].s_fl_cold.cp = cp_c_avg; //[kJ/kg-K]
                 v_s_node_info[i - 1].s_fl_cold.rho = hot_htf_class.dens(T_c_avg, P_c_avg); //[kg/m3]
@@ -3182,7 +3184,7 @@ int C_HX_htf_to_steam::off_design_target_cold_PH_out(double h_c_out_target /*kJ/
     double P_h_in /*kPa*/, double h_h_in /*kJ/kg*/, double P_h_out /*kPa*/, double m_dot_h /*kg/s*/,
     double od_tol /*-*/,
     double& q_dot /*kWt*/, double& h_c_out /*kJ/kg*/, double& h_h_out /*kJ/kg*/, double& m_dot_c /*kg/s*/,
-    double& tol_solved)
+    double& tol_solved, double& T_c_out /*C*/, double& x_c_out /**/, double& hx_min_dT /*C*/)
 {
     // ADD inputs
     double max_iter = 1000;
@@ -3252,7 +3254,11 @@ int C_HX_htf_to_steam::off_design_target_cold_PH_out(double h_c_out_target /*kJ/
             // If new guess failed, just try larger than xy1 guess. This approach isn't optimal but should work...
             if (solver_code != 0) {
                 xy_2.x = std::min(xy_1.x * 1.1, m_dot_c_max);
-                
+
+                solver_code = h_out_solver.test_member_function(xy_2.x, &delta_h_target_rel);
+                if (solver_code != 0) {
+                    return -6;
+                }
             }
         }
         if (delta_h_target_rel > 0.0 || solver_code != 0) {
@@ -3273,6 +3279,8 @@ int C_HX_htf_to_steam::off_design_target_cold_PH_out(double h_c_out_target /*kJ/
                 }
             }
         }
+
+        xy_2.y = delta_h_target_rel;
     }
 
     /*
@@ -3326,6 +3334,13 @@ int C_HX_htf_to_steam::off_design_target_cold_PH_out(double h_c_out_target /*kJ/
     h_h_out = h_out_eq.m_h_h_out;   //[kJ/kg]
     m_dot_c = h_out_eq.m_m_dot_c;   //[kg/s]
 
+    T_c_out = h_out_eq.m_T_c_out;     //[C]
+    hx_min_dT = h_out_eq.m_hx_min_dT;   //[C]
+
+    water_state ms_water_props;
+    int prop_error_code = water_PH(P_c_out, h_c_out, &ms_water_props);
+
+    x_c_out = ms_water_props.qual;
 
     return 0;
 }
@@ -3338,6 +3353,10 @@ int C_HX_htf_to_steam::C_MEQ__target_cold_PH_out::operator()(double m_dot_c /*kg
         m_h_h_in, m_P_h_in, m_m_dot_h, m_P_h_out,
         m_tol,
         m_q_dot, m_h_c_out, m_h_h_out);
+
+    m_T_c_out = mpc_hx->ms_od_solved.m_T_c_out - 273.15;//[C]
+    m_P_c_out = mpc_hx->ms_od_solved.m_P_c_out;         //[kPa]
+    m_hx_min_dT = mpc_hx->ms_od_solved.m_min_DT;        //[C]
 
     *diff_h_c_out = (m_h_c_out - m_h_c_out_target) / m_h_c_out_target;   //[kJ/kg]
 

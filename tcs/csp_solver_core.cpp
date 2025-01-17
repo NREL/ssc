@@ -1787,7 +1787,7 @@ void C_csp_solver::C_CR_OFF__PC_TARGET__TES_DC__AUX_OFF::check_system_limits(C_c
     }
     else if ((q_dot_pc_solved - q_dot_pc_on_dispatch_target) / q_dot_pc_on_dispatch_target < -limit_comp_tol)
     {
-        if (m_dot_pc_solved < m_dot_pc_max)
+        if (m_dot_pc_solved / m_dot_pc_max < 1.0 - limit_comp_tol)
         {	// TES cannot provide enough thermal power - step down to next operating mode
 
             m_is_mode_available = false;

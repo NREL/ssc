@@ -178,10 +178,10 @@ public:
 
 
         // Optimize to find steam mdot
-        double mdot_ext_calc, tol_solved;
+        double mdot_ext_calc, tol_solved, T_c_out, x_c_out, hx_min_dT;
         int solve_code = m_hx.off_design_target_cold_PH_out(h_ext_hot, mdot_min, mdot_max, P_ext_cold, h_ext_cold,
             P_ext_hot, 1.0, h_htf_hot_od, 1.0, mdot_htf_od, od_tol,
-            q_dot_calc, h_ext_out_calc, h_htf_out_calc, mdot_ext_calc, tol_solved);
+            q_dot_calc, h_ext_out_calc, h_htf_out_calc, mdot_ext_calc, tol_solved, T_c_out, x_c_out, hx_min_dT);
 
         // Off design Outlet steam properties
         prop_error_code = water_PH(P_ext_hot, h_ext_out_calc, &ms_water_props);

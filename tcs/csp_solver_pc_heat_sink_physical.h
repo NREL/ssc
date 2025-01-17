@@ -51,10 +51,15 @@ public:
 		E_W_DOT_PUMPING,		//[MWe]
 		E_M_DOT_HTF,			//[kg/s]
 		E_T_HTF_IN,				//[C]
-		E_T_HTF_OUT				//[C]
+		E_T_HTF_OUT,			//[C]
+
+        E_M_DOT_EXT,            //[kg/s]
+        E_X_OUT_EXT,            //[-]
+        E_T_OUT_EXT,            //[C]
+        E_HX_MIN_DT             //[C]
 	};
 	
-	C_csp_reported_outputs mc_reported_outputs;
+	C_csp_reported_outputs mc_reported_outputs;    
 
 private:
 
@@ -67,12 +72,21 @@ private:
     double m_m_dot_ext_max; //[kg/s] Max ext fluid mdot
     double m_h_ext_cold_des;    // [kJ/kg] Steam inlet enthalpy
     double m_h_ext_hot_des;     // [kJ/kg] Steam target outlet enthalpy
+    double m_T_ext_hot_des; //[C]
+
+    bool m_did_init_pass;   //[-]
 
 	HTFProperties mc_pc_htfProps;
+
+    C_HX_counterflow_CRM::S_des_solved mc_hx_des_solved;
 
 	void check_double_params_are_set();
 
 public:
+
+    double get_m_dot_ext_des() { return m_m_dot_ext_des; }
+    double get_T_ext_out_des() { return m_T_ext_hot_des; }
+    double get_hx_min_dT_des() { return mc_hx_des_solved.m_min_DT_design; }
 
 	struct S_params
 	{
