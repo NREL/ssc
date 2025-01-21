@@ -45,7 +45,7 @@ static var_info _cm_vtab_geothermal_costs[] = {
 
         // Binary Plant Type Inputs:		
 		{ SSC_INPUT,		SSC_NUMBER,     "gross_output",						"Gross output from GETEM",									"MW",		"",						"GeoHourly",				"*",						"",								"" },
-        { SSC_INPUT,		SSC_NUMBER,     "gross_cost_output",						"Gross output from GETEM for cost calculations",									"MW",		"",						"GeoHourly",				"*",						"",								"" },
+        { SSC_INPUT,		SSC_NUMBER,     "gross_cost_output",						"Gross output from GETEM for cost calculations",									"kW",		"",						"GeoHourly",				"*",						"",								"" },
 
         { SSC_INPUT,		SSC_NUMBER,		"design_temp",						"Power block design temperature",							"C",        "",						"GeoHourly",				"*",						"",								"" },
         { SSC_INPUT,        SSC_NUMBER,      "dt_prod_well",                   "Temperature loss in production well",                  "C",              "",             "GeoHourly",        "*",                        "",                "" },
@@ -138,7 +138,7 @@ private:
 	//Inputs for Binary Type Plant (Note: Some variables might be common to both plant types - Binary and Flash)
 	std::vector<double> hx_ppi{ 0.89055794,0.919504053,0.938721984,0.956747735,0.963614688,0.972293753,0.983166428,1,0.998426323,1.066285169,1.226514068,1.332856462,1.377682403,1.438149738,1.414735336,1.423366714,1.463996185,1.512970911,1.534763948,1.554792561,1.604464797,1.643961076,1.657698912,1.742987979,1.797,1.831855031,1.997587983,2.272575844};		//HX Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
 	std::vector<double> steel_ppi{ 1.129319793,1.103090524,1.1087163,1.074084898,0.999853876,1.022283919,0.961569372,1,1.06517133,1.423905896,1.500474903,1.63534741,1.76276759,2.160444217,1.613209615,1.959815884,2.220208957,2.110396727,1.984949222,2.03492365,1.714285714,1.638913234,1.858019281,2.084136722,1.947,1.825966245,3.12752612,3.334864154};	//Steel Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
-    std::vector<double> pipe_ppi{ 0.939,0.964,0.986,0.978,0.952,0.985,0.995,1.000,1.015,1.220,1.341,1.414,1.395,1.500,1.578,1.748,1.862,1.934,1.955,1.986,1.988,1.969,1.985,2.064,2.092,2.087,2.456,2.456 }; // only 26 values - all assumed to have 27 (add 26th value twice)
+    std::vector<double> pipe_ppi{ 0.939,0.964,0.986,0.978,0.952,0.985,0.995,1.000,1.015,1.220,1.341,1.414,1.395,1.500,1.578,1.748,1.862,1.934,1.955,1.986,1.988,1.969,1.985,2.064,2.092,2.087,2.456,2.917 }; // only 26 values - all assumed to have 27 (add 26th value twice)
     std::vector<double> process_equip_ppi{ 0.884018929,0.907470403,0.926181264,0.942518082,0.956851458,0.967823396,0.985395348,1,1.014829443,1.077774928,1.155295495,1.222766901,1.304818202,1.382893406,1.40355926,1.411450935,1.455548144,1.509649784,1.533757048,1.639031617,1.656479161,1.65317208,1.679672296,1.740780754,1.794,1.832151402,1.899909387,2.184450409}; //Process Equipment Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
 	std::vector<double> engineering_ppi{ 0.77985529,0.810695609,0.859015689,0.888566516,0.913317573,0.954043986,0.975857869,1,1.048105165,1.081631922,1.102335411,1.135826349,1.209434773,1.274983881,1.329751415,1.39193352,1.362346873,1.364746758,1.388351601,1.433483774,1.486242476,1.503869304,1.558039553,1.602,1.611,1.646034816,1.700479977,1.780739467}; // Engineering Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
 	std::vector<double> pump_ppi{ 0.853374525,0.872338403,0.899382129,0.92404943,0.936264259,0.9503327,0.975903042,1,1.010646388,1.039876426,1.093203422,1.14168251,1.212975285,1.277851711,1.31411597,1.324192015,1.324572243,1.34871673,1.339163498,1.366539924,1.391899601,1.411294923,1.438106104,1.489446663,1.553,1.553,1.553,1.553}; //Pump Cost Index Normalized to 2001, 2002, 2007, 2010 and 2012; Beginning Year = 1995; Final Year = 2016;
@@ -726,7 +726,7 @@ public:
 			//geo_inputs.me_ct = FLASH;
 			double unit_plant = as_double("gross_output");
             unit_plant *= 1000.0; //kW, comes from cmod_geothermal as MW
-            double gross_cost = as_double("gross_cost_output");
+            double gross_cost = as_double("gross_cost_output"); //kW
             double GF_flowrate = as_double("GF_flowrate");
 			double qRejectTotal = (as_double("qRejectTotal")*GF_flowrate / 1000) / 1000000;		// Converting from btu/h to MMBTU/h
 			double q_Condenser = as_double("qCondenser") / 1000000;			// Converting from btu/h to MMBTU/h

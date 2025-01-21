@@ -2574,7 +2574,7 @@ bool CGeothermalAnalyzer::InterfaceOutputsFilled(void)
 	mp_geo_out->md_PlantBrineEffectiveness = GetPlantBrineEffectiveness();
 	ReplaceReservoir(0.0); // set the working temp so the further calculations are correct
 	mp_geo_out->md_GrossPlantOutputMW = PlantGrossPowerkW() / 1000;
-    mp_geo_out->md_GrossPowerMW = GrossPowerMW();
+    mp_geo_out->md_GrossPowerkW = GrossPowerMW();
 	mp_geo_out->md_PumpWorkKW = GetPumpWorkKW();
     mp_geo_out->md_PumpDepthFt = GetProductionPumpWorkft();
 	// mp_geo_out->md_BottomHolePressure  is calculated in GetCalculatedPumpDepthInFeet()

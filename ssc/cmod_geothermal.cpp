@@ -666,7 +666,7 @@ public:
 			if (geo_inputs.mi_ProjectLifeYears > 0) kWhperkW = kWhperkW / geo_inputs.mi_ProjectLifeYears;
 
 			assign("gross_output", var_data((ssc_number_t)geo_outputs.md_GrossPlantOutputMW));
-            assign("gross_cost_output", var_data((ssc_number_t)geo_outputs.md_GrossPowerMW));
+            assign("gross_cost_output", var_data((ssc_number_t)geo_outputs.md_GrossPowerkW));
 			assign("capacity_factor", var_data((ssc_number_t)(capacity_fac / 87.6)));		//Divided by 8760 and then multiplied by 100 (or divide by 87.6) to return CF as a %
 			assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
 			// 5/28/15 average provided for FCR market
