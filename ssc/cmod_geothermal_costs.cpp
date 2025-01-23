@@ -900,11 +900,13 @@ public:
         }
         //Calculated injection pump cost
         double inj_pump_power = as_double("inj_pump_hp");
-        double num_injection_pumps = std::ceil(inj_pump_power / 2000.0);
-        inj_pump_power /= num_injection_pumps;
-        double inj_pump_cost_per_pump = 1750 * pow(inj_pump_power, 0.7) * 3.0 * pow(inj_pump_power, -0.11);
-        double injection_pump_cost = num_injection_pumps * inj_pump_cost_per_pump * pump_ppi[ppi_base_year];
-
+        double injection_pump_cost = 0.0;
+        if (inj_pump_power > 0) {
+            double num_injection_pumps = std::ceil(inj_pump_power / 2000.0);
+            if (num_injection_pumps > 0) inj_pump_power /= num_injection_pumps;
+            double inj_pump_cost_per_pump = 1750 * pow(inj_pump_power, 0.7) * 3.0 * pow(inj_pump_power, -0.11);
+            injection_pump_cost = num_injection_pumps * inj_pump_cost_per_pump * pump_ppi[ppi_base_year];
+        }
         double indirect_pump_cost = (production_pump_cost + injection_pump_cost) * (1.0 / (1.0 - 0.12) - 1.0);
         assign("pump_only_cost", prod_pump_cost);
         assign("pump_cost_install", install_cost_only);
