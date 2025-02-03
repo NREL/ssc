@@ -91,7 +91,7 @@ void C_pc_heat_sink_physical::init(C_csp_power_cycle::S_solved_params &solved_pa
 	// Declare instance of fluid class for FIELD fluid
 	if( ms_params.m_pc_fl != HTFProperties::User_defined && ms_params.m_pc_fl < HTFProperties::End_Library_Fluids )
 	{
-		if( !mc_pc_htfProps.SetFluid(ms_params.m_pc_fl) )
+		if( !mc_pc_htfProps.SetFluid(ms_params.m_pc_fl, true) )
 		{
 			throw(C_csp_exception("Power cycle HTF code is not recognized", "Rankine Indirect Power Cycle Initialization"));
 		}
@@ -297,7 +297,7 @@ void C_pc_heat_sink_physical::call(const C_csp_weatherreader::S_outputs &weather
         case STANDBY:
         {
             // Get HTF inlet enthalpy
-            double h_htf_hot = mc_pc_htfProps.enth(htf_state_in.m_temp + 273.15) * 1e-3;   //[kJ/kg]
+            double h_htf_hot = mc_pc_htfProps.enth_lookup(htf_state_in.m_temp + 273.15);   //[kJ/kg]
 
             // Run Off design to find steam mdot to hit enthalpy target
             double h_ext_out_calc, h_htf_out_calc;
@@ -322,7 +322,7 @@ void C_pc_heat_sink_physical::call(const C_csp_weatherreader::S_outputs &weather
                 // Solved succesfully
                     
                 // Get HTF temperature from enthalpy
-                T_h_out_C = mc_pc_htfProps.temp(h_htf_out_calc*1e3); //[C]
+                T_h_out_C = mc_pc_htfProps.temp_lookup(h_htf_out_calc) - 273.15; //[C]
                     
                 out_solver.m_P_cycle = 0.0;		            //[MWe] No electricity generation
                 out_solver.m_T_htf_cold = T_h_out_C;		//[C]
