@@ -59,7 +59,7 @@ C_pc_heat_sink_physical::C_pc_heat_sink_physical()
 
 	m_m_dot_htf_des = m_m_dot_ext_des = m_m_dot_ext_min =
         m_m_dot_ext_max = m_h_ext_cold_des = m_h_ext_hot_des =
-        m_T_ext_hot_des = std::numeric_limits<double>::quiet_NaN();
+        m_T_ext_hot_des = m_hx_UA_des = std::numeric_limits<double>::quiet_NaN();
 
     m_did_init_pass = false;
 }
@@ -161,6 +161,7 @@ void C_pc_heat_sink_physical::init(C_csp_power_cycle::S_solved_params &solved_pa
     m_m_dot_ext_des = this->m_hx.ms_des_calc_UA_par.m_m_dot_cold_des;         //[kg/s]
     m_m_dot_ext_min = m_m_dot_ext_des * ms_params.m_f_m_dot_ext_min;    //[kg/s]
     m_m_dot_ext_max = m_m_dot_ext_des * ms_params.m_f_m_dot_ext_max;    //[kg/s]    
+    m_hx_UA_des = mc_hx_des_solved.m_UA_design;                         //[kW/K]
 
 	// Assign Design HTF mdot
     m_m_dot_htf_des = m_hx.ms_des_calc_UA_par.m_m_dot_hot_des;	//[kg/s]

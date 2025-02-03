@@ -74,6 +74,8 @@ private:
     double m_h_ext_hot_des;     // [kJ/kg] Steam target outlet enthalpy
     double m_T_ext_hot_des; //[C]
 
+    double m_hx_UA_des;     //[kW/K]
+
     bool m_did_init_pass;   //[-]
 
 	HTFProperties mc_pc_htfProps;
@@ -87,6 +89,7 @@ public:
     double get_m_dot_ext_des() { return m_m_dot_ext_des; }
     double get_T_ext_out_des() { return m_T_ext_hot_des; }
     double get_hx_min_dT_des() { return mc_hx_des_solved.m_min_DT_design; }
+    double get_hx_UA_des() { return m_hx_UA_des; }
 
 	struct S_params
 	{

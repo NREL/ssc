@@ -173,10 +173,10 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_INPUT,     SSC_NUMBER,         "pb_pump_coef",              "Pumping power to move 1kg of HTF through PB loop",                                 "kW/kg",        "",               "Heat Sink",      "*",                       "",                      "" },
 
     { SSC_INPUT,     SSC_NUMBER,         "hs_type",                   "0: ideal model, 1: physical steam model",                                          "",             "",               "Heat Sink",      "?=0",                     "",                      "" },
-    { SSC_INPUT,     SSC_NUMBER,         "hs_phys_N_sub",             "Number physical heat sink HX nodes",                                               "",             "",               "Heat Sink",      "hs_type=1",               "",                      "" },
-    { SSC_INPUT,     SSC_NUMBER,         "hs_phys_tol",               "Physical heat sink solve tolerance",                                               "",             "",               "Heat Sink",      "hs_type=1",               "",                      "" },
-    { SSC_INPUT,     SSC_NUMBER,         "hs_phys_f_mdot_steam_min",  "Min steam mdot fraction for physical heat sink",                                   "",             "",               "Heat Sink",      "hs_type=1",               "",                      "" },
-    { SSC_INPUT,     SSC_NUMBER,         "hs_phys_f_mdot_steam_max",  "Max steam mdot fraction for physical heat sink",                                   "",             "",               "Heat Sink",      "hs_type=1",               "",                      "" },
+    //{ SSC_INPUT,     SSC_NUMBER,         "hs_phys_N_sub",             "Number physical heat sink HX nodes",                                               "",             "",               "Heat Sink",      "hs_type=1",               "",                      "" },
+    //{ SSC_INPUT,     SSC_NUMBER,         "hs_phys_tol",               "Physical heat sink solve tolerance",                                               "",             "",               "Heat Sink",      "hs_type=1",               "",                      "" },
+    //{ SSC_INPUT,     SSC_NUMBER,         "hs_phys_f_mdot_steam_min",  "Min steam mdot fraction for physical heat sink",                                   "",             "",               "Heat Sink",      "hs_type=1",               "",                      "" },
+    //{ SSC_INPUT,     SSC_NUMBER,         "hs_phys_f_mdot_steam_max",  "Max steam mdot fraction for physical heat sink",                                   "",             "",               "Heat Sink",      "hs_type=1",               "",                      "" },
     { SSC_INPUT,     SSC_NUMBER,         "hs_phys_T_steam_cold_des",  "Steam inlet temperature for physical heat sink",                                   "C",            "",               "Heat Sink",      "hs_type=1",               "",                      "" },
     { SSC_INPUT,     SSC_NUMBER,         "hs_phys_P_steam_hot_des",   "Steam outlet (and inlet) pressure for physical heat sink",                         "bar",          "",               "Heat Sink",      "hs_type=1",               "",                      "" },
     { SSC_INPUT,     SSC_NUMBER,         "hs_phys_Q_steam_hot_des",   "Steam outlet quality for physical heat sink",                                      "",             "",               "Heat Sink",      "hs_type=1",               "",                      "" },
@@ -457,6 +457,7 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_OUTPUT,       SSC_NUMBER,      "m_dot_hs_ext_des",                 "Heat sink fluid mass flow rate",                                           "kg/s",          "",               "System Control",  "*",                               "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "T_hs_ext_out_des",                 "Heat sink fluid outlet temperature",                                       "C",             "",               "System Control",  "*",                               "",                      "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "hx_min_dT_des",                    "Heat sink hx min temp difference",                                         "C",             "",               "System Control",  "*",                               "",                      "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "hx_UA_des",                        "Heat sink hx conductance",                                                 "MW/K",          "",               "System Control",  "*",                               "",                      "" },
 
 
     // System Control
@@ -1579,10 +1580,12 @@ public:
             c_heat_sink_phys.ms_params.m_Q_ext_hot_des = as_double("hs_phys_Q_steam_hot_des");  //[C] Steam quality target
             c_heat_sink_phys.ms_params.m_P_ext_cold_des = as_double("hs_phys_P_steam_hot_des") * 100.0;  //[kPa] Steam inlet pressure
             c_heat_sink_phys.ms_params.m_P_ext_hot_des = as_double("hs_phys_P_steam_hot_des") * 100.0;   //[kPa] Steam outlet pressure
-            c_heat_sink_phys.ms_params.m_f_m_dot_ext_min = as_double("hs_phys_f_mdot_steam_min"); //[] Min fraction Steam mass flow rate
-            c_heat_sink_phys.ms_params.m_f_m_dot_ext_max = as_double("hs_phys_f_mdot_steam_max"); //[] Max fraction Steam mass flow rate
-            c_heat_sink_phys.ms_params.m_N_sub_hx = as_double("hs_phys_N_sub");      //[] Number HX nodes
-            c_heat_sink_phys.ms_params.m_od_tol = as_double("hs_phys_tol");         //[] HX off design tolerance
+
+            // 25.01.30 twn: hardcode these for now so users don't have to set them
+            c_heat_sink_phys.ms_params.m_f_m_dot_ext_min = 0.01;    // as_double("hs_phys_f_mdot_steam_min"); //[] Min fraction Steam mass flow rate
+            c_heat_sink_phys.ms_params.m_f_m_dot_ext_max = 1.5;     // as_double("hs_phys_f_mdot_steam_max"); //[] Max fraction Steam mass flow rate
+            c_heat_sink_phys.ms_params.m_N_sub_hx = 15;             // as_double("hs_phys_N_sub");      //[] Number HX nodes
+            c_heat_sink_phys.ms_params.m_od_tol = 0.001;            // as_double("hs_phys_tol");         //[] HX off design tolerance
 
             // Allocate heat sink outputs
             c_heat_sink_phys.mc_reported_outputs.assign(C_pc_heat_sink_physical::E_Q_DOT_HEAT_SINK, allocate("q_dot_to_heat_sink", n_steps_fixed), n_steps_fixed);
@@ -2156,17 +2159,19 @@ public:
             }
 
             // Heat sink
-            double m_dot_hs_ext_des, T_hs_ext_out_des, hx_min_dT_des;
-            m_dot_hs_ext_des = T_hs_ext_out_des = hx_min_dT_des = std::numeric_limits<double>::quiet_NaN();
+            double m_dot_hs_ext_des, T_hs_ext_out_des, hx_min_dT_des, hx_UA_des;
+            m_dot_hs_ext_des = T_hs_ext_out_des = hx_min_dT_des = hx_UA_des = std::numeric_limits<double>::quiet_NaN();
             if (hs_type == 1) {
                 m_dot_hs_ext_des = c_heat_sink_phys.get_m_dot_ext_des(); //[kg/s]
                 T_hs_ext_out_des = c_heat_sink_phys.get_T_ext_out_des(); //[C]
                 hx_min_dT_des = c_heat_sink_phys.get_hx_min_dT_des();    //[C]
+                hx_UA_des = c_heat_sink_phys.get_hx_UA_des();        //[kW/K]
             }
 
             assign("m_dot_hs_ext_des", m_dot_hs_ext_des);
             assign("T_hs_ext_out_des", T_hs_ext_out_des);
             assign("hx_min_dT_des", hx_min_dT_des);
+            assign("hx_UA_des", hx_UA_des);
         }
 
         // Calculate Costs and assign outputs
