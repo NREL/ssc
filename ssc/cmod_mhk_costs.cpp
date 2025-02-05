@@ -171,7 +171,7 @@ public:
 			power_takeoff = 1821066.0 * system_capacity_MW +  602898.0;
 			mooring_found_substruc = 443055.0 * system_capacity_MW + 384877.0;
 			//BOS costs SAM Cost Model v8.xlsx
-			development = 189783 * system_capacity_MW + 8935599;
+            development = 2957847 * pow(system_capacity_MW, 0.51);
 			eng_and_mgmt = 78127 * system_capacity_MW + 2325517;
 		}
 		else // wave
@@ -182,7 +182,7 @@ public:
 				power_takeoff = 2481879.0 * pow(system_capacity_MW, 0.91);
 				mooring_found_substruc = 2189982.0 * system_capacity_MW + 35386.0;
 				//BOS costs SAM Cost Model v8.xlsx
-                development = 189783 * system_capacity_MW + 8935599;
+                development = 2957847.0 * pow(system_capacity_MW, 0.51);
                 eng_and_mgmt = 78127 * system_capacity_MW + 2325517;
 			}
 
@@ -192,7 +192,7 @@ public:
 				power_takeoff = 1909207.0 * pow(system_capacity_MW, 0.91);
 				mooring_found_substruc = 2574104.0 * system_capacity_MW + 1250918.0;
 				//BOS costs SAM Cost Model v8.xlsx
-                development = 189783 * system_capacity_MW + 8935599;
+                development = 2957847.0 * pow(system_capacity_MW, 0.51);
                 eng_and_mgmt = 78127 * system_capacity_MW + 2325517;
 			}
 
@@ -202,7 +202,7 @@ public:
 				power_takeoff = 4527629.0 * pow(system_capacity_MW, 0.78);
 				mooring_found_substruc = 2421878.0 * system_capacity_MW + 570523.0;
 				//BOS costs SAM Cost Model v8.xlsx
-                development = 189783 * system_capacity_MW + 8935599;
+                development = 2957847.0 * pow(system_capacity_MW, 0.51);
                 eng_and_mgmt = 78127 * system_capacity_MW + 2325517;
 			}
 
@@ -212,7 +212,7 @@ public:
 				power_takeoff = 1550104.0 * system_capacity_MW + 5331628.0;
 				mooring_found_substruc = 1619167.0 * system_capacity_MW;
 				//BOS costs SAM Cost Model v8.xlsx
-                development = 189783 * system_capacity_MW + 8935599;
+                development = 2957847 * pow(system_capacity_MW, 0.51);
                 eng_and_mgmt = 78127 * system_capacity_MW + 2325517;
 			}
 		}
