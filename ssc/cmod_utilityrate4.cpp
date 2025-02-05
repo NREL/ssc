@@ -122,12 +122,12 @@ static var_info vtab_utility_rate4[] = {
 		// outputs from Paul, Nate and Sean 9/9/13
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "revenue_with_system",      "Total revenue with system",         "$",    "",                      "",             "*",                         "",   "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "revenue_without_system",   "Total revenue without system",      "$",    "",                      "",             "*",                         "",   "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "elec_cost_with_system",    "Electricity bill with system",    "$/yr", "", "Annual", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "elec_cost_without_system", "Electricity bill without system", "$/yr", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_w_sys",    "Electricity bill with system",    "$/yr", "", "Annual", "*", "", "" },
+	{ SSC_OUTPUT, SSC_ARRAY, "utility_bill_wo_sys", "Electricity bill without system", "$/yr", "", "Annual", "*", "", "" },
 
 	// year 1 values for metrics
-	{ SSC_OUTPUT, SSC_NUMBER, "elec_cost_with_system_year1",    "Electricity bill with system (year 1)",    "$/yr", "",    "Financial Metrics", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "elec_cost_without_system_year1", "Electricity bill without system (year 1)", "$/yr", "",    "Financial Metrics", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "utility_bill_w_sys_year1",    "Electricity bill with system (year 1)",    "$/yr", "",    "Financial Metrics", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "utility_bill_wo_sys_year1", "Electricity bill without system (year 1)", "$/yr", "",    "Financial Metrics", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "savings_year1",                  "Electricity net savings with system (year 1)",             "$/yr",    "", "Financial Metrics", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "year1_electric_load",            "Electricity load total (year 1)",                "kWh/yr",  "", "Financial Metrics", "*", "", "" },
 
@@ -528,8 +528,8 @@ public:
 		ssc_number_t *energy_net = allocate("scaled_annual_energy", nyears+1);
 		ssc_number_t *annual_revenue_w_sys = allocate("revenue_with_system", nyears+1);
 		ssc_number_t *annual_revenue_wo_sys = allocate("revenue_without_system", nyears+1);
-		ssc_number_t *annual_elec_cost_w_sys = allocate("elec_cost_with_system", nyears+1);
-		ssc_number_t *annual_elec_cost_wo_sys = allocate("elec_cost_without_system", nyears+1);
+		ssc_number_t *annual_elec_cost_w_sys = allocate("utility_bill_w_sys", nyears+1);
+		ssc_number_t *annual_elec_cost_wo_sys = allocate("utility_bill_wo_sys", nyears+1);
 
 		// matrices
 		ssc_number_t *utility_bill_w_sys_ym = allocate("utility_bill_w_sys_ym", nyears + 1, 12);
@@ -1139,8 +1139,8 @@ public:
 
 		}
 
-		assign("elec_cost_with_system_year1", annual_elec_cost_w_sys[1]);
-		assign("elec_cost_without_system_year1", annual_elec_cost_wo_sys[1]);
+		assign("utility_bill_w_sys_year1", annual_elec_cost_w_sys[1]);
+		assign("utility_bill_wo_sys_year1", annual_elec_cost_wo_sys[1]);
 		assign("savings_year1", annual_elec_cost_wo_sys[1] - annual_elec_cost_w_sys[1]);
 	}
 
