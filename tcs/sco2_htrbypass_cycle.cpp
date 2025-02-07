@@ -1988,7 +1988,8 @@ double C_HTRBypass_Cycle::optimize_bp_return_objective_metric(const std::vector<
 
     if (opt_par.m_fixed_bypass_frac == true)
     {
-        throw std::exception("Optimizing bypass fraction even though it is fixed");
+        //throw std::exception("Optimizing bypass fraction even though it is fixed");
+        throw(C_csp_exception("Optimizing bypass fraction even though it is fixed"));
     }
 
     // Set Bypass Fraction
