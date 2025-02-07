@@ -330,16 +330,20 @@ public:
 			other_elec_infra = as_double("other_elec_infra_cost_input");
 
 
+        // Calculate the CapEx dependent BOS costs
+        plant_commissioning = 56103 * system_capacity_MW;
+        site_access_port_staging = 75462 * system_capacity_MW;
+
+
 		// Now, we calculated the CapEx using whatever combination of modeled values and user-entered values
 		// that we have at this point.
 		// CapEx is defined to include all device costs and BOS costs that are not CapEx dependent
 		double capex = structural_assembly + power_takeoff + mooring_found_substruc
 			+ development + eng_and_mgmt + assembly_and_install + other_infrastructure
-			+ array_cable_system + export_cable_system + onshore_substation + offshore_substation + other_elec_infra;
+			+ array_cable_system + export_cable_system + onshore_substation + offshore_substation + other_elec_infra
+            + plant_commissioning + site_access_port_staging;
 
-		// Calculate the CapEx dependent BOS costs
-        plant_commissioning = 56103 * system_capacity_MW;
-        site_access_port_staging = 75462 * system_capacity_MW;
+		
 
 		// Calculate the CapEx-dependent financial costs
 		project_contingency = 0.08 * capex;
