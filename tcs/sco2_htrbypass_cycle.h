@@ -445,9 +445,9 @@ public:
     int auto_opt_design_hit_eta(S_auto_opt_design_hit_eta_parameters& auto_opt_des_hit_eta_in, std::string& error_msg);
 
     // Objective Functions (internal use only)
-    double C_HTRBypass_Cycle::optimize_totalUA_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par);
-    double C_HTRBypass_Cycle::optimize_bp_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, C_sco2_htrbp_core& htrbp_core);
-    double C_HTRBypass_Cycle::optimize_nonbp_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, C_sco2_htrbp_core& htrbp_core);
+    double optimize_totalUA_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par);
+    double optimize_bp_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, C_sco2_htrbp_core& htrbp_core);
+    double optimize_nonbp_return_objective_metric(const std::vector<double>& x, const S_auto_opt_design_parameters& auto_par, const S_opt_design_parameters& opt_par, C_sco2_htrbp_core& htrbp_core);
 
     // Off Design
 
