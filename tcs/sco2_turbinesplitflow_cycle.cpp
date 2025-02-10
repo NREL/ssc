@@ -866,7 +866,7 @@ int C_TurbineSplitFlow_Cycle::optimize_par(const S_auto_opt_design_parameters& a
         opt_des_cycle.set_upper_bounds(ub);
         opt_des_cycle.set_initial_step(scale);
         opt_des_cycle.set_xtol_rel(auto_par.m_des_opt_tol);
-        opt_des_cycle.set_maxeval(50);
+        //opt_des_cycle.set_maxeval(50);
 
         // Set up core model that will be passed to objective function
         C_sco2_tsf_core tsf_core;
