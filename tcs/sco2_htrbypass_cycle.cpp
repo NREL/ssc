@@ -1098,7 +1098,7 @@ int C_HTRBypass_Cycle::optimize_totalUA(const S_auto_opt_design_parameters& auto
     opt_des_cycle.set_initial_step(1000);
     //opt_des_cycle.set_xtol_rel(ms_auto_opt_des_par.m_des_opt_tol);
     opt_des_cycle.set_xtol_rel(1);
-    opt_des_cycle.set_maxeval(50);
+    //opt_des_cycle.set_maxeval(50);
 
     // Make Tuple to pass in parameters
     std::tuple<C_HTRBypass_Cycle*, const S_auto_opt_design_parameters*, const S_opt_design_parameters*> par_tuple = { this, &auto_par, &opt_par };
@@ -1264,7 +1264,7 @@ int C_HTRBypass_Cycle::optimize_bp(const S_auto_opt_design_parameters& auto_par,
         opt_des_cycle.set_initial_step(0.1);
         //opt_des_cycle.set_xtol_rel(auto_par.m_des_opt_tol);
         opt_des_cycle.set_xtol_rel(0.1);
-        opt_des_cycle.set_maxeval(50);
+        //opt_des_cycle.set_maxeval(50);
 
         // Set up Core Model that will be passed to objective function
         C_sco2_htrbp_core htrbp_core;
@@ -1385,7 +1385,7 @@ int C_HTRBypass_Cycle::optimize_nonbp(const S_auto_opt_design_parameters& auto_p
         opt_des_cycle.set_upper_bounds(ub);
         opt_des_cycle.set_initial_step(scale);
         opt_des_cycle.set_xtol_rel(auto_par.m_des_opt_tol);
-        opt_des_cycle.set_maxeval(50);
+        //opt_des_cycle.set_maxeval(50);
 
         // Set up Core Model that will be passed to objective function
         C_sco2_htrbp_core htrbp_core;

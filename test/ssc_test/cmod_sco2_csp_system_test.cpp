@@ -119,7 +119,7 @@ NAMESPACE_TEST(sco2_tests, SCO2Cycle, Parametrics)
         EXPECT_NEAR_FRAC(sco2.GetOutput("m_dot_htf_des"), 513.344, kErrorToleranceLo);
         EXPECT_NEAR_FRAC(sco2.GetOutput("m_dot_co2_full"), 410.528, kErrorToleranceLo);
         EXPECT_NEAR_FRAC(sco2.GetOutput("P_comp_in"), 7.67490, kErrorToleranceLo);
-        EXPECT_NEAR_FRAC(sco2.GetOutput("cycle_cost"), 53.2909, kErrorToleranceLo);
+        EXPECT_NEAR_FRAC(sco2.GetOutput("cycle_cost"), 61.122, kErrorToleranceLo);
 
         std::vector<ssc_number_t> eta_thermal_od_exp{ 0.50689, 0.507197 };
         EXPECT_FLOATS_NEARLY_EQ(sco2.GetOutputVector("eta_thermal_od"), eta_thermal_od_exp, kErrorToleranceLo*eta_thermal_od_exp[0]);
