@@ -514,24 +514,14 @@ bool windfile::open( const std::string &file )
             }
 
         }
-        // elevation needed for hub height comparison
+        // elevation required for hub-height power curve adjustment
         if (isnan(elev)) {
             m_errorMsg = "Elevation must be specified in header. Please check resource data.";
             return false;
         }
-        // are lat and lon required?
-        if (isnan(lon)) {
-            m_errorMsg = "Longitude must be specified in header. Please check resource data.";
-            return false;
-        }
-        if (isnan(lat)) {
-            m_errorMsg = "Latitude must be specified in header. Please check resource data.";
-            return false;
-        }
-
-        // time stamps expected to be in local time
-        // wind data files provide both site timezone and data timezone in header
-        // if the values are different, we can't determine the time zone of the time stamps
+ 
+        // time stamps expected to be in local time. wind data files provide both site timezone and data timezone in header
+        // if the values are different, we can't determine the time zone of the time stamps for financial model time-dependent features (TOU, TOD, etc.)
         if (tz_data != tz_site) {
             m_errorMsg = util::format("data must be in local time: data time zone %s and site time zone %s are not the same", tz_data.c_str(), tz_site.c_str());
             return false;
