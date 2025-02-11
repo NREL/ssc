@@ -30,57 +30,34 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef _CMOD_GETEM_BUILDER_H_
+#define _CMOD_GETEM_BUILDER_H_
 
 
-#ifndef _CMOD_GENERIC_TEST_H_
-#define _CMOD_GENERIC_TEST_H_
-
-#include <gtest/gtest.h>
-#include <memory>
-
-#include "core.h"
 #include "sscapi.h"
 
-#include "vartab.h"
-#include "../ssc/common.h"
-#include "../input_cases/code_generator_utilities.h"
-#include "../input_cases/generic_common_data.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-/**
- * CMFuelCell tests the cmod_fuelcell using the SAM code generator to generate data
- * Eventually a method can be written to write this data to a vartable so that lower-level methods of pvsamv1 can be tested
- * For now, this uses the SSCAPI interfaces to run the compute module and compare results
- */
-class CMGeneric : public ::testing::Test {
+static const char* getem_om_cost_calc_doc =
+    "Calculates the cable length in an ME array\\n"
+    "Input: var_table with key-value pairs\\n"
+    "     'devices_per_row' - double [-]\\n"
+    "     'device_spacing_in_row' - double [m]\\n"
+	"     'number_rows' - double [-]\\n"
+	"     'row_spacing' - double [m]\\n"
+	"     'cable_system_overbuild' - double [%]\\n"
+    "Output: key-value pairs added to var_table\\n"
+    "     'inter_array_cable_length' - double [m]\\n";
 
-public:
+SSCEXPORT bool getem_om_cost_calc(ssc_data_t data);
 
-	ssc_data_t data;
-	ssc_number_t calculated_value;
-	ssc_number_t * calculated_array;
-	double m_error_tolerance_hi = 1.0;
-	double m_error_tolerance_lo = 0.1;
 
-	void SetUp()
-	{
-		data = ssc_data_create();
-	}
-	void TearDown() {
-		if (data) {
-			ssc_data_free(data);
-			data = nullptr;
-		}
-	}
-	void SetCalculated(std::string name)
-	{
-		ssc_data_get_number(data, const_cast<char *>(name.c_str()), &calculated_value);
-	}
-	// apparently memory of the array is managed internally to the sscapi.
-	void SetCalculatedArray(std::string name)
-	{
-		int n;
-		calculated_array = ssc_data_get_array(data, const_cast<char *>(name.c_str()), &n);
-	}
-};
 
-#endif 
+#ifdef __cplusplus
+}
+#endif
+#endif
+
+

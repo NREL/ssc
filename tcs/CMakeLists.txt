@@ -24,20 +24,25 @@ set(TCS_SRC
 		csp_solver_mspt_collector_receiver.cpp
 		csp_solver_mspt_receiver.cpp
 		csp_solver_mspt_receiver_222.cpp
+        csp_solver_piston_cylinder_tes.cpp
+        csp_solver_packedbed_tes.cpp
 		csp_solver_pc_gen.cpp
 		csp_solver_pc_heat_sink.cpp
+        csp_solver_pc_heat_sink_physical.cpp
 		csp_solver_pc_ptes.cpp
 		csp_solver_pc_Rankine_indirect_224.cpp
 		csp_solver_pc_steam_heat_sink.cpp
 		csp_solver_pt_receiver.cpp
 		csp_solver_pt_sf_perf_interp.cpp
 		csp_solver_stratified_tes.cpp
+        csp_solver_tes_core.cpp
 		csp_solver_tou_block_schedules.cpp
 		csp_solver_trough_collector_receiver.cpp
 		csp_solver_two_tank_tes.cpp
 		csp_solver_util.cpp
 		csp_solver_weatherreader.cpp
 		csp_system_costs.cpp
+		cst_iph_dispatch.cpp
 		direct_steam_receivers.cpp
 		dispatch_builder.cpp
 		etes_dispatch.cpp
@@ -118,18 +123,23 @@ set(TCS_SRC
 		csp_solver_mspt_collector_receiver.h
 		csp_solver_mspt_receiver.h
 		csp_solver_mspt_receiver_222.h
+        csp_solver_piston_cylinder_tes.h
+        csp_solver_packedbed_tes.h
 		csp_solver_pc_gen.h
 		csp_solver_pc_heat_sink.h
+        csp_solver_pc_heat_sink_physical.h
 		csp_solver_pc_ptes.h
 		csp_solver_pc_Rankine_indirect_224.h
 		csp_solver_pc_steam_heat_sink.h
 		csp_solver_pt_receiver.h
 		csp_solver_pt_sf_perf_interp.h
 		csp_solver_stratified_tes.h
+        csp_solver_tes_core.h
 		csp_solver_trough_collector_receiver.h
 		csp_solver_two_tank_tes.h
 		csp_solver_util.h
 		csp_system_costs.h
+		cst_iph_dispatch.h
 		direct_steam_receivers.h
 		dispatch_builder.h
 		etes_dispatch.h

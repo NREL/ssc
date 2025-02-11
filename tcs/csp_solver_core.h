@@ -309,13 +309,18 @@ public:
         double m_price_mult;    //[-]
         double m_elec_price;    //[$/kWhe]
 
+        int m_heat_tou;
+        double m_heat_mult;     //[-]
+        double m_heat_price;    //[$/kWh-t]
+
         double m_wlim_dispatch; //[-]
 
 		S_csp_tou_outputs()
 		{
-            m_csp_op_tou = m_pricing_tou = -1;
+            m_csp_op_tou = m_pricing_tou = m_heat_tou = -1;
 
-			m_f_turbine = m_price_mult = m_elec_price = m_wlim_dispatch = std::numeric_limits<double>::quiet_NaN();
+			m_f_turbine = m_price_mult = m_elec_price =
+                m_heat_mult = m_heat_price = m_wlim_dispatch = std::numeric_limits<double>::quiet_NaN();
 		}
 	};
 
@@ -337,6 +342,8 @@ public:
     C_timeseries_schedule_inputs mc_offtaker_schedule;
     C_timeseries_schedule_inputs mc_elec_pricing_schedule;
 
+    C_timeseries_schedule_inputs mc_heat_pricing_schedule;
+
     C_csp_tou(C_timeseries_schedule_inputs c_offtaker_schedule,
         C_timeseries_schedule_inputs c_elec_pricing_schedule,
         C_csp_tou::C_dispatch_model_type::E_dispatch_model_type dispatch_model_type,
@@ -346,6 +353,9 @@ public:
         mc_elec_pricing_schedule = c_elec_pricing_schedule;
         m_dispatch_model_type = dispatch_model_type;
         m_is_tod_pc_target_also_pc_max = is_offtaker_frac_also_max;
+
+        mc_heat_pricing_schedule = C_timeseries_schedule_inputs(std::numeric_limits<double>::quiet_NaN(),
+            std::numeric_limits<double>::quiet_NaN());
 
         // Set defaults on heuristic rule values. No one at the cmod level knows what to do with these
         m_use_rule_1 = true;
@@ -718,6 +728,13 @@ class C_csp_tes
 
 public:
 
+    enum csp_tes_types
+    {
+        E_TES_TWO_TANK = 1,
+        E_TES_PACKED_BED,
+        E_TES_CYL
+    };
+
     // Class to save messages for up stream classes
     C_csp_messages mc_csp_messages;
 
@@ -827,6 +844,7 @@ public:
 			// Ouputs that are NOT reported as weighted averages
 				// Simulation
 			TIME_FINAL,       //[hr] Simulation timestep
+            SIM_DURATION,     //[s] Timestep simulation duration
 				// Weather Reader
 			MONTH,            //[-] Month of year
 			HOUR_DAY,         //[hr] hour of day
@@ -844,6 +862,7 @@ public:
 			// **************************************************************
 			TOU_PERIOD,                 //[-] CSP operating TOU period
 			PRICING_MULT,               //[-] PPA price multiplier
+            ELEC_PRICE,                 //[$/kWh-e] Electricity price in absolute units
 			PC_Q_DOT_SB,                //[MWt] PC required standby thermal power
 			PC_Q_DOT_MIN,               //[MWt] PC required min thermal power
 			PC_Q_DOT_TARGET,            //[MWt] PC target thermal power
@@ -1853,6 +1872,8 @@ public:
         C_CR_DF__PC_MAX__TES_OFF__AUX_OFF() : C_operating_mode_core(C_csp_collector_receiver::ON,
             C_csp_power_cycle::ON, C_MEQ__m_dot_tes::E__TO_PC__PC_MAX, C_MEQ__timestep::E_STEP_FIXED,
             true, "CR_DF__PC_MAX__TES_OFF__AUX_OFF", QUIETNAN, false) {}
+
+        void handle_solve_error(double time /*hr*/, bool& is_rec_su_unchanged);
     };
 
     class C_CR_ON__PC_RM_HI__TES_OFF__AUX_OFF : public C_operating_mode_core
