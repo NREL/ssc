@@ -114,6 +114,9 @@ public:
 
 		//Store the number of rows- this will have to change if resource and power curve can have different stream speeds
 		int number_rows = (int)tidal_resource_matrix.nrows();
+        // malloc issue for calculated power curve
+        if (tidal_power_curve.nrows() > tidal_resource_matrix.nrows())
+            number_rows = (int)tidal_power_curve.nrows();
 
 		//Check that the power matrix only has two columns
 		if (tidal_power_curve.ncols() != (size_t)2)
@@ -261,6 +264,7 @@ public:
         
                     }
                 }
+
                 p_gen[i] = tidal_power_curve.at(power_bin, 1) * (1 - total_loss/100.0) * number_devices * haf(i); //kW
                 //p_annual_energy_dist[i] = p_gen[i] * 8760.0 / number_records;
                 annual_energy += p_gen[i] * 8760.0 / number_records;
