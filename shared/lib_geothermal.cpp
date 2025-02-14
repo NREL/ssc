@@ -988,7 +988,7 @@ double CGeothermalAnalyzer::GetProductionPumpWorkft(void)
     double ideal_pumping_power_hp = ideal_pumping_power_permin / 33000; //hp
     double pumping_power_hp = ideal_pumping_power_hp / mo_geo_in.md_GFPumpEfficiency;
     double pumping_power_ft = pumping_power_hp * (60 * 33000); //ft
-    
+    if (pump_lift < 0.0) pump_lift = 0;
     return pump_lift;
 }
 
