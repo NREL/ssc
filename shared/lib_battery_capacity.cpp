@@ -172,8 +172,8 @@ void capacity_t::check_SOC() {
 
             // do not switch to charging
             state->cell_current = fmax(0, state->cell_current);
+            state->q0 = q_lower;
         }
-        state->q0 = q_lower;
     }
 }
 
