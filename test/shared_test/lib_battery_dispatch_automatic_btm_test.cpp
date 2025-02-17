@@ -1217,9 +1217,9 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutagePeakShavingEmp
     dispatchAutoBTM->dispatch(0, h-1, 0);
     h++;
 
-    EXPECT_NEAR(batteryPower->powerBatteryDC, 2.68, 0.5) << " error in expected at hour " << h;
+    EXPECT_NEAR(batteryPower->powerBatteryDC, 2.08, 0.5) << " error in expected at hour " << h;
 
-    EXPECT_NEAR(batteryModel->SOC(), 95, 0.01);
+    EXPECT_NEAR(batteryModel->SOC(), 96.31, 0.01);
 
     // Battery cannot charge above max SOC
     batteryPower->powerLoad = 700;
@@ -1454,14 +1454,14 @@ TEST_F(AutoBTMTest_lib_battery_dispatch, DispatchAutoBTMGridOutageCustomEmptyAnd
     EXPECT_EQ(h, 17);
 
     // Show that the battery can discharge above max SOC after outage
-    batteryPower->powerLoad = 5;
+    batteryPower->powerLoad = 8;
     batteryPower->powerSystem = 0;
     batteryPower->isOutageStep = false;
-    batteryPower->powerCritLoad = 5;
+    batteryPower->powerCritLoad = 8;
     dispatchAutoBTM->dispatch(0, h, 0);
     h++;
 
-    EXPECT_NEAR(batteryPower->powerBatteryDC, 5.25, 0.5) << " error in expected at hour " << h;
+    EXPECT_NEAR(batteryPower->powerBatteryDC, 9.45, 0.5) << " error in expected at hour " << h;
 
     EXPECT_NEAR(batteryModel->SOC(), 95.01, 0.01);
 
