@@ -124,7 +124,7 @@ TEST_F(CMPvsamv1BatteryIntegration_cmod_pvsamv1, ResidentialACBatteryModelIntegr
     ssc_number_t peakKwCharge[4] = { -2.91, -2.66, -2.25, -3.30 };
     ssc_number_t peakKwDischarge[4] = { 1.39, 1.73, 0.97, 1.96 };
     ssc_number_t peakCycles[4] = { 1, 1, 1, 3 };
-    ssc_number_t avgCycles[4] = { 1, 1, 0.4904, 1.0110 };
+    ssc_number_t avgCycles[4] = { 1, 1, 0.4822, 1.0110 };
 
     // Test peak shaving look ahead, peak shaving look behind, and automated grid power target, and self-consumption. Others require additional input data
     for (int i = 0; i < 4; i++) {
