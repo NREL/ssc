@@ -79,7 +79,6 @@ OBJECTS = \
 		cmod_iec61853par.o \
 		cmod_inv_cec_cg.o \
 		cmod_iph_to_lcoefcr.o \
-		cmod_ippppa.o \
 		cmod_irradproc.o \
 		cmod_iscc_design_point.o \
 		cmod_layoutarea.o \
