@@ -99,6 +99,33 @@ function(set_default_compile_options target)
     if (SAMAPI_EXPORT AND APPLE)
         SET(MAIN_CFLAGS "${MAIN_CFLAGS} -mmacosx-version-min=12" )
     endif()
+
+	# setup for code coverage testing
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug"
+	   AND ENABLE_COVERAGE
+	   AND NOT WIN32)
+	  enable_testing()
+
+	  # set compiler flags
+	  set(CMAKE_CXX_FLAGS "-g -O0 --coverage")
+
+	  # find required tools
+	  find_program(LCOV lcov REQUIRED)
+	  find_program(GENHTML genhtml REQUIRED)
+
+	  # add coverage target
+	  add_custom_target(
+	    coverage
+	    # gather data
+	    COMMAND
+	      ${LCOV} --directory . --capture --exclude '*/external/*' --exclude
+	      '*/tests/*' --exclude '/usr/*' --exclude '/Applications/*' --exclude
+	      'v1/*' --output-file coverage.info --ignore-errors unused
+	    # generate report
+	    COMMAND ${GENHTML} --demangle-cpp -o coverage coverage.info
+	    WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+	endif()
+	
     set_target_properties(${target} PROPERTIES COMPILE_FLAGS ${MAIN_CFLAGS})
 endfunction()
 
