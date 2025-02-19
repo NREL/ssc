@@ -69,7 +69,7 @@ jobs:
       run: |
         mkdir ${SSCDIR}/build
         cd ${SSCDIR}/build
-        cmake .. -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=1 -DSAM_SKIP_TOOLS=1
+        cmake .. -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=1 -DSAM_SKIP_TOOLS=1 -DALLOW_DUPLICATE_CUSTOM_TARGETS=True
 
 #    - name: Build
 #      # Build your program with the given configuration
