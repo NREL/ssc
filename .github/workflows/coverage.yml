@@ -28,6 +28,14 @@ jobs:
         SSCDIR=$GITHUB_WORKSPACE/ssc
         echo "SSCDIR=$SSCDIR" >> $GITHUB_ENV
     
+    - name: Install OS dependencies
+      run: |
+        sudo apt-get update --fix-missing
+        sudo apt-get install -y \
+          gcov \
+          lcov
+
+
     - name: Get cached GTest
       uses: actions/cache@v4
       id: cachedgtest
