@@ -21,7 +21,7 @@ option(SAMAPI_EXPORT "Export of ssc binaries to the SAM_api directory; for Unix,
 #   environment vars LK_LIB and LKD_LIB can be used to specify where to find those libraries
 #
 
-set(ALLOW_DUPLICATE_CUSTOM_TARGETS TRUE)
+set_property(GLOBAL PROPERTY ALLOW_DUPLICATE_CUSTOM_TARGETS 1)
 
 if(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "12" CACHE STRING "Minimum OS X deployment version")
