@@ -32,7 +32,6 @@ jobs:
       run: |
         sudo apt-get update --fix-missing
         sudo apt-get install -y \
-          gcov \
           lcov
 
 
