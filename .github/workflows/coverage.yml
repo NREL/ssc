@@ -78,9 +78,11 @@ jobs:
 #        make -j4
 
     - name: Coverage
-      working-directory: ${SSCDIR}/build
+#      working-directory: ${SSCDIR}/build
       shell: bash
-      run: make coverage
+      run: |
+        cd ${SSCDIR}/build
+        make coverage -j4
 
 
     - name: Test
