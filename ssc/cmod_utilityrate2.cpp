@@ -629,8 +629,8 @@ static var_info vtab_utility_rate2[] = {
 		// outputs from Paul, Nate and Sean 9/9/13
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "revenue_with_system",      "Total revenue with system",         "$",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "revenue_without_system",   "Total revenue without system",      "$",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "elec_cost_with_system",      "Electricity cost with system",         "$/yr",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
-	{ SSC_OUTPUT,       SSC_ARRAY,      "elec_cost_without_system",   "Electricity cost without system",      "$/yr",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "utility_bill_w_sys",      "Electricity cost with system",         "$/yr",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
+	{ SSC_OUTPUT,       SSC_ARRAY,      "utility_bill_wo_sys",   "Electricity cost without system",      "$/yr",    "",                      "",             "*",                         "LENGTH_EQUAL=analysis_period",   "" },
 
 
 //	{ SSC_OUTPUT,       SSC_ARRAY,      "year1_hourly_e_grid",         "Year 1 electricity to/from grid",       "kWh", "",                      "",             "*",                         "LENGTH=8760",                   "" },
@@ -870,8 +870,8 @@ public:
 		ssc_number_t *energy_net = allocate("scaled_annual_energy", nyears);
 		ssc_number_t *annual_revenue_w_sys = allocate("revenue_with_system", nyears);
 		ssc_number_t *annual_revenue_wo_sys = allocate("revenue_without_system", nyears);
-		ssc_number_t *annual_elec_cost_w_sys = allocate("elec_cost_with_system", nyears);
-		ssc_number_t *annual_elec_cost_wo_sys = allocate("elec_cost_without_system", nyears);
+		ssc_number_t *annual_elec_cost_w_sys = allocate("utility_bill_w_sys", nyears);
+		ssc_number_t *annual_elec_cost_wo_sys = allocate("utility_bill_wo_sys", nyears);
 
 		ssc_number_t *ch_dc_fixed_jan = allocate("charge_dc_fixed_jan", nyears );
 		ssc_number_t *ch_dc_fixed_feb = allocate("charge_dc_fixed_feb", nyears );
