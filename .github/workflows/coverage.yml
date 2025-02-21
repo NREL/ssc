@@ -71,18 +71,11 @@ jobs:
         cd ${SSCDIR}/build
         cmake .. -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=1 -DSAM_SKIP_TOOLS=1 
 
-#    - name: Build
-#      # Build your program with the given configuration
-#      run: |
-#        cd ${SSCDIR}/build
-#        make -j4
-
-    - name: Coverage
-#      working-directory: ${SSCDIR}/build
-      shell: bash
+    - name: Build
+      # Build your program with the given configuration
       run: |
         cd ${SSCDIR}/build
-        make coverage -j4
+        make -j4
 
 
     - name: Test
@@ -92,6 +85,13 @@ jobs:
         set -e
         ${SSCDIR}/build/test/Test
     
+    - name: Coverage
+      shell: bash
+      run: |
+        cd ${SSCDIR}/build
+        make coverage -j4
+
+
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
