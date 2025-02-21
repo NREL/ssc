@@ -21,7 +21,8 @@ option(SAMAPI_EXPORT "Export of ssc binaries to the SAM_api directory; for Unix,
 #   environment vars LK_LIB and LKD_LIB can be used to specify where to find those libraries
 #
 
-set_property(GLOBAL PROPERTY ALLOW_DUPLICATE_CUSTOM_TARGETS 1)
+# if using same custome command for several subfolders - will not work for VS or XCode generation
+#set_property(GLOBAL PROPERTY ALLOW_DUPLICATE_CUSTOM_TARGETS 1)
 
 if(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "12" CACHE STRING "Minimum OS X deployment version")
@@ -94,6 +95,12 @@ function(set_default_compile_options target)
         endif()
         if(CMAKE_BUILD_TYPE STREQUAL "Debug")
             set(MAIN_CFLAGS "${MAIN_CFLAGS} -D_DEBUG")
+# code coverage generation using gcov and lcov - linux only
+            if (NOT APPLE AND ENABLE_COVERAGE)
+#                enable_testing()
+                # set compiler flags
+                set(MAIN_CFLAGS "${MAIN_CFLAGS} "-g -O0 --coverage")
+           endif()            
         else()
             set(MAIN_CFLAGS "${MAIN_CFLAGS} -O3 -DNDEBUG")
         endif()
@@ -101,30 +108,6 @@ function(set_default_compile_options target)
     if (SAMAPI_EXPORT AND APPLE)
         SET(MAIN_CFLAGS "${MAIN_CFLAGS} -mmacosx-version-min=12" )
     endif()
-
-	# setup for code coverage testing
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug"
-	   AND ENABLE_COVERAGE
-	   AND NOT WIN32)
-	  enable_testing()
-
-	  # set compiler flags
-	  set(CMAKE_CXX_FLAGS "-g -O0 --coverage")
-
-	  # find required tools
-	  find_program(LCOV lcov REQUIRED)
-	  find_program(GENHTML genhtml REQUIRED)
-
-	  # add coverage target
-	  add_custom_target(
-	    coverage
-	    # gather data
-	    COMMAND
-	      ${LCOV} --directory . --capture --exclude '*/rapidjson/*' --exclude '*/splinter/*' --exclude '*/nlopt/*' --exclude '*/lpsolve/*' --exclude '*/code_attic/*' --exclude '*/samples/*'  --exclude '*/test/*' --exclude '/usr/*' --exclude '/Applications/*' --exclude 'v1/*' --output-file coverage.info --ignore-errors unused --ignore-errors empty 
-	    # generate report
-	    COMMAND ${GENHTML} --demangle-cpp -o coverage coverage.info --ignore-errors empty
-	    WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-	endif()
 	
     set_target_properties(${target} PROPERTIES COMPILE_FLAGS ${MAIN_CFLAGS})
 endfunction()
@@ -178,3 +161,24 @@ endif()
 if (NOT SAM_SKIP_TESTS)
 	add_subdirectory(test)
 endif()
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug"
+       AND ENABLE_COVERAGE
+       AND NOT APPLE
+       AND NOT WIN32)
+#    enable_testing()
+
+    # find required tools
+    find_program(LCOV lcov REQUIRED)
+    find_program(GENHTML genhtml REQUIRED)
+
+    # add coverage target
+    add_custom_target(
+        coverage
+        # gather data
+        COMMAND
+        ${LCOV} --directory . --capture --exclude '*/rapidjson/*' --exclude '*/splinter/*' --exclude '*/nlopt/*' --exclude '*/lpsolve/*' --exclude '*/code_attic/*' --exclude '*/samples/*'  --exclude '*/test/*' --exclude '/usr/*' --exclude '/Applications/*' --exclude 'v1/*' --output-file coverage.info --ignore-errors unused --ignore-errors empty 
+        # generate report
+        COMMAND ${GENHTML} --demangle-cpp -o coverage coverage.info --ignore-errors empty
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+endif()            

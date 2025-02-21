@@ -83,7 +83,7 @@ jobs:
       shell: bash
       run: |
         set -e
-        ${SSCDIR}/build/test/Test
+        ${SSCDIR}/build/test/Testd
     
     - name: Coverage
       shell: bash
