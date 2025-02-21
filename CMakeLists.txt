@@ -120,9 +120,7 @@ function(set_default_compile_options target)
 	    coverage
 	    # gather data
 	    COMMAND
-	      ${LCOV} --directory . --capture --exclude '*/external/*' --exclude
-	      '*/tests/*' --exclude '/usr/*' --exclude '/Applications/*' --exclude
-	      'v1/*' --output-file coverage.info --ignore-errors unused --ignore-errors empty 
+	      ${LCOV} --directory . --capture --exclude '*/rapidjson/*' --exclude '*/splinter/*' --exclude '*/nlopt/*' --exclude '*/lpsolve/*' --exclude '*/code_attic/*' --exclude '*/samples/*'  --exclude '*/test/*' --exclude '/usr/*' --exclude '/Applications/*' --exclude 'v1/*' --output-file coverage.info --ignore-errors unused --ignore-errors empty 
 	    # generate report
 	    COMMAND ${GENHTML} --demangle-cpp -o coverage coverage.info --ignore-errors empty
 	    WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
