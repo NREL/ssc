@@ -99,7 +99,7 @@ function(set_default_compile_options target)
             if (NOT APPLE AND ENABLE_COVERAGE)
 #                enable_testing()
                 # set compiler flags
-                set(MAIN_CFLAGS "${MAIN_CFLAGS} "-g -O0 --coverage")
+                set(MAIN_CFLAGS "${MAIN_CFLAGS} -g -O0 --coverage")
            endif()            
         else()
             set(MAIN_CFLAGS "${MAIN_CFLAGS} -O3 -DNDEBUG")
