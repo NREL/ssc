@@ -92,6 +92,10 @@ target_link_libraries(Test ssc splinter)
 if (UNIX)
     find_package(Threads REQUIRED)
     target_link_libraries(Test Threads::Threads ${CMAKE_DL_LIBS}) 
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug"
+       AND ENABLE_COVERAGE)
+       target_link_libraries(Test PRIVATE gcov)
+    endif()
 endif()
 
 
