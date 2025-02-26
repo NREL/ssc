@@ -483,7 +483,7 @@ void cm_windpower::exec()
 
         // set up adjustment factors for constant wake loss option
         if (!haf.setup())
-            throw exec_error("windpower", "failed to set up adjustment factors for constant loss wake model: " + haf.error());
+            throw exec_error("windpower", "failed to set up adjustment factors for wind resource probability table: " + haf.error());
 
         int nstep = 8760;
         ssc_number_t farm_kw = farmPower / (ssc_number_t)nstep;
@@ -574,7 +574,7 @@ void cm_windpower::exec()
 
     // set up adjustment factors for time series simulation
     if (!haf.setup(nstep))
-        throw exec_error("windpower", "failed to set up adjustment factors for simulation: " + haf.error());
+        throw exec_error("windpower", "failed to set up adjustment factors for time series wind resource data: " + haf.error());
 
 	// allocate output data
 	ssc_number_t *farmpwr = allocate("gen", nstep);
