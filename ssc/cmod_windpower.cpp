@@ -692,7 +692,7 @@ void cm_windpower::exec()
 
 			farmp *= lossMultiplier;
 			// apply and track cutoff losses
-            withoutCutOffLosses += farmp * haf(hr) / (ssc_number_t)steps_per_hour;
+            withoutCutOffLosses += farmp * haf(i) / (ssc_number_t)steps_per_hour;
 
             if (lowTempCutoff){
 				if (temp < lowTempCutoffValue) farmp = 0.0;
@@ -710,7 +710,7 @@ void cm_windpower::exec()
                 }
 			}
 
-            farmpwr[i] = (ssc_number_t)farmp * haf(hr); //adjustment factors are constrained to be hourly, not sub-hourly, so it's correct for this to be indexed on the hour
+            farmpwr[i] = (ssc_number_t)farmp * haf(i);
             wspd[i] = (ssc_number_t)wind;
 			wdir[i] = (ssc_number_t)dir;
 			air_temp[i] = (ssc_number_t)temp;
