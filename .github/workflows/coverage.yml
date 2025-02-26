@@ -75,7 +75,7 @@ jobs:
       # Build your program with the given configuration
       run: |
         cd ${SSCDIR}/build
-        make -j4
+        make
 
 
     - name: Test
