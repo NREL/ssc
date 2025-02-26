@@ -80,7 +80,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR "Debug" IN_LIST CMAKE_CONFIGURATION_TYP
             NAMES libgtest.a gtest.lib libgtest.so
             PATHS $ENV{GTEST_DIR} ${GTDIR}/build/lib ${GTDIR}/build/lib/Debug)
     if(UNIX AND ENABLE_COVERAGE)
-        target_link_options(Test debug "-fprofile-arcs -ftest-coverage")
+        target_link_options(Test "-fprofile-arcs -ftest-coverage")
         target_link_libraries(Test debug ${GTESTD_LIB})
     else()
         target_link_libraries(Test debug ${GTESTD_LIB})
