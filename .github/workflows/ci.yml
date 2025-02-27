@@ -75,7 +75,9 @@ jobs:
       shell: bash
       run: |
         set -e
-        ${SSCDIR}/build/test/Test
+        ${SSCDIR}/build/test/Test > ${SSCDIR}/build/test/gtest.log
+        pip install pandas
+        python ${SSCDIR}/test/compare_elapsed_time.py gtest_log ${SSCDIR}/build/test/gtest.log
     
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
@@ -84,6 +86,7 @@ jobs:
           path: |
             ${{env.SSCDIR}}/build/ssc/libssc.so
             ${{env.SSCDIR}}/build/ssc/ssc.so
+            ${{env.SSCDIR}}/build/test/gtest_elapsed_times.csv
       
   build-on-mac:
     runs-on: ${{ matrix.os }}
@@ -151,7 +154,9 @@ jobs:
       # Turn off fast fail for when the landbosse tests write to cerr
       run: |
         set -e
-        ${SSCDIR}/build/test/Test
+        ${SSCDIR}/build/test/Test > ${SSCDIR}/build/test/gtest.log
+        pip install pandas
+        python ${SSCDIR}/test/compare_elapsed_time.py gtest_log ${SSCDIR}/build/test/gtest.log
       shell: bash      
     
     - name: Upload Artifacts
@@ -162,6 +167,7 @@ jobs:
           path: |
             ${{env.SSCDIR}}/build/ssc/libssc.dylib
             ${{env.SSCDIR}}/build/ssc/ssc.dylib 
+            ${{env.SSCDIR}}/build/test/gtest_elapsed_times.csv 
 
     - name: Upload Artifacts
       if: ${{ matrix.os != 'macos-latest' }}
@@ -171,6 +177,7 @@ jobs:
           path: |
             ${{env.SSCDIR}}/build/ssc/libssc.dylib
             ${{env.SSCDIR}}/build/ssc/ssc.dylib 
+            ${{env.SSCDIR}}/build/test/gtest_elapsed_times.csv 
 
   build-on-windows:
     runs-on: windows-2019
@@ -236,7 +243,9 @@ jobs:
       # Turn off fast fail for when the landbosse tests write to cerr
       run: |
         cd ${SSCDIR}/build/test/Release
-        ./Test.exe
+        ./Test.exe > ${SSCDIR}/build/test/gtest.log
+        pip install pandas
+        python ${SSCDIR}/test/compare_elapsed_time.py gtest_log ${SSCDIR}/build/test/gtest.log
   
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
@@ -244,3 +253,4 @@ jobs:
           name: SSC Windows Shared Libraries
           path: |
             ${{env.SSCDIR}}\build\ssc\Release\ssc.dll
+            ${{env.SSCDIR}}\build\ssc\test\gtest_elapsed_times.csv
