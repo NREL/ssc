@@ -105,6 +105,7 @@ def get_workflow_artifact_branch(base_branch):
     
 def compare_time_elapsed(new_test_df, base_test_df):
     new_test_df.compare(base_test_df)
+    print(new_test_df.describe())
 
 
 if __name__ == "__main__":

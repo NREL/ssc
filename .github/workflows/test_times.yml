@@ -41,3 +41,22 @@ jobs:
             fs.mkdirSync(temp);
           }
           fs.writeFileSync(path.join(temp, 'test_times.zip'), Buffer.from(download.data));
+
+    - name: Check
+      shell: bash
+      run: ls ${{ runner.temp }}/artifacts
+
+    - name: Unzip Test Times
+      if: ${{ matrix.os == 'windows-2019' }}
+      run: 7z x ${{ runner.temp }}/artifacts/test_times.zip
+
+    - name: Unzip Test Times
+      if: ${{ matrix.os != 'windows-2019' }}
+      run: unzip ${{ runner.temp }}/artifacts/test_times.zip
+
+    - name: Compare Test Times
+      shell: bash
+      run: |
+        ls ${{ runner.temp }}/artifacts/test
+        pip install pandas
+        python ${SSCDIR}/test/compare_elapsed_time.py compare ${{ runner.temp }}/artifacts/gtest_elapsed_times.csv ${{ github.ref_name }}
