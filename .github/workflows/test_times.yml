@@ -20,5 +20,6 @@ jobs:
     steps:
     - name: Get Artifact
       run: |
-        echo ${{payload.workflow_run.head_branch}}
+        echo ${{github.event.workflow_run.id}}
+        echo ${{github.event.workflow_run.head_branch}}
       shell: bash      
