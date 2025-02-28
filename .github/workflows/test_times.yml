@@ -20,5 +20,5 @@ jobs:
     steps:
     - name: Get Artifact
       run: |
-        echo ${{context.payload.workflow_run.head_branch}}
+        echo ${{payload.workflow_run.head_branch}}
       shell: bash      
