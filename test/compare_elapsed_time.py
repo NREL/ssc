@@ -2,6 +2,7 @@ import pandas as pd
 from pathlib import Path
 import requests
 import sys
+import os
 import platform
 
 help_info = """
@@ -47,17 +48,18 @@ def convert_log_to_csv(gtest_log_path):
             test_times.append(test_time)
 
     test_df = pd.DataFrame({"Test Group": test_groups, "Test Name": test_names, "Test Times [ms]": test_times})
-    out_path = gtest_log_path.parent / "elapsed_times.csv"
+    out_path = gtest_log_path.parent / "gtest_elapsed_times.csv"
     test_df.to_csv(out_path)
     print(f"Output csv: {out_path}")
     return test_df
 
 def get_workflow_artifact_branch(base_branch):
     base_branch = 'patch'
+    access_token = os.getenv("GITHUB_TOKEN")
 
     headers = {
         'Accept': 'application/vnd.github+json',
-        'Authorization': 'Bearer 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',
+        'Authorization': f'Bearer {access_token}',
         'X-GitHub-Api-Version': '2022-11-28',
     }
 
@@ -80,9 +82,6 @@ def get_workflow_artifact_branch(base_branch):
     
 
 if __name__ == "__main__":
-
-    gtest_log_path = Path("/Users/dguittet/Projects/SAM/ssc/test/gtest.log")
-    convert_log_to_csv(gtest_log_path)
 
     if len(sys.argv) == 1:
         raise RuntimeError("Options are 'gtest_log' or 'compare'. Use 'help' to see details")
