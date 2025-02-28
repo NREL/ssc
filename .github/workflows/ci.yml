@@ -82,7 +82,7 @@ jobs:
     - name: Upload Test Times CSV
       uses: actions/upload-artifact@v4
       with:
-          name: SSC Linux Test Time Elapsed
+          name: Test Time Elapsed
           path: |
             ${{env.SSCDIR}}/build/test/gtest_elapsed_times.csv
 
@@ -169,7 +169,7 @@ jobs:
       if: ${{ matrix.os == 'macos-latest' }}
       uses: actions/upload-artifact@v4
       with:
-          name: SSC Mac Arm Test Time Elapsed
+          name: Test Time Elapsed
           path: |
             ${{env.SSCDIR}}/build/test/gtest_elapsed_times.csv 
 
@@ -177,7 +177,7 @@ jobs:
       if: ${{ matrix.os != 'macos-latest' }}
       uses: actions/upload-artifact@v4
       with:
-          name: SSC Mac Intel Test Time Elapsed
+          name: Test Time Elapsed
           path: |
             ${{env.SSCDIR}}/build/test/gtest_elapsed_times.csv 
 
@@ -270,7 +270,7 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-          name: SSC Windows Test Times CSV
+          name: Test Time Elapsed
           path: |
             ${{env.SSCDIR}}\build\ssc\test\gtest_elapsed_times.csv
 
