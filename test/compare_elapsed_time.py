@@ -3,7 +3,9 @@ from pathlib import Path
 import requests
 import sys
 import os
-import platform
+import zipfile
+import io
+from platform import processor
 
 help_info = """
 Command Line Options to run this script in order to generate CSVs of time elapsed for tests and to compare them
@@ -49,12 +51,11 @@ def convert_log_to_csv(gtest_log_path):
 
     test_df = pd.DataFrame({"Test Group": test_groups, "Test Name": test_names, "Test Times [ms]": test_times})
     out_path = gtest_log_path.parent / "gtest_elapsed_times.csv"
-    test_df.to_csv(out_path)
+    test_df.to_csv(out_path, index=False)
     print(f"Output csv: {out_path}")
     return test_df
 
 def get_workflow_artifact_branch(base_branch):
-    base_branch = 'patch'
     access_token = os.getenv("GITHUB_TOKEN")
 
     headers = {
@@ -71,15 +72,40 @@ def get_workflow_artifact_branch(base_branch):
 
     artifacts = [a for a in artifacts if a['workflow_run']['head_branch'] == base_branch]
 
+    platform = None
     if sys.platform == 'linux':
         platform = "Linux"
     elif sys.platform == 'win32':
         platform = "Windows"
     elif sys.platform == 'darwin':
-        platform = "Mac"
+        proc = processor()
+        if "x86_64" in proc:
+            platform = "Mac Intel"
+        elif "arm" in proc:
+            platform = "Mac Arm"
     else:
         raise RuntimeError(f"Unrecognized platform {sys.platform}")
     
+    artifacts = [a for a in artifacts if (platform in a['name']) and ("Test Time Elapsed" in a['name'])]
+
+    headers = {
+    'Accept': 'application/vnd.github+json',
+    'Authorization': f'Bearer {access_token}',
+    'X-GitHub-Api-Version': '2022-11-28',
+    }
+
+    response = requests.get(artifacts[0]['archive_download_url'], headers=headers)
+
+    z = zipfile.ZipFile(io.BytesIO(response.content)) 
+    file_dir = Path(__file__).parent
+    z.extractall(file_dir)
+    test_df_base = pd.read_csv(file_dir / "gtest_elapsed_times.csv")
+    os.remove(file_dir / "gtest_elapsed_times.csv")
+    return test_df_base
+    
+def compare_time_elapsed(new_test_df, base_test_df):
+    new_test_df.compare(base_test_df)
+
 
 if __name__ == "__main__":
 
@@ -102,7 +128,7 @@ if __name__ == "__main__":
         if Path(filename).suffix != ".csv":
             test_df = convert_log_to_csv(filename)
             base_test_df = get_workflow_artifact_branch(base_branch)
-            #compare
+            compare_time_elapsed(test_df, base_test_df)
     else:
         raise RuntimeError("Options are 'gtest_log' or 'compare'. Use 'help' to see details")
  
