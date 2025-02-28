@@ -16,6 +16,23 @@ jobs:
         os: [windows-2019, ubuntu-latest, macos-14-large, macos-latest]
 
     steps:
+    - name: Get Filename
+      if: ${{ matrix.os == 'windows-2019' }}
+      shell: bash
+      run: echo "CI_WF=SSC Windows Test Time Elapsed" >> $GITHUB_ENV
+
+    - name: Get Filename
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      run: echo "CI_WF=SSC Linux Test Time Elapsed" >> $GITHUB_ENV
+
+    - name: Get Filename
+      if: ${{ matrix.os == 'macos-14-large' }}
+      run: echo "CI_WF=SSC Mac Intel Shared Libraries" >> $GITHUB_ENV
+
+    - name: Get Filename
+      if: ${{ matrix.os == 'macos-latest' }}
+      run: echo "CI_WF=SSC Mac Arm Shared Libraries" >> $GITHUB_ENV
+
     - name: Get Artifact
       uses: actions/github-script@v7
       with:
@@ -26,7 +43,7 @@ jobs:
               run_id: context.payload.workflow_run.id,
           });
           let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
-            return artifact.name == "Test Time Elapsed"
+            return artifact.name == "${{env.CI_WF}}"
           })[0];
           let download = await github.rest.actions.downloadArtifact({
               owner: context.repo.owner,
