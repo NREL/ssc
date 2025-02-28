@@ -1,0 +1,24 @@
+name: Compare Test Time Elapsed
+
+on:
+  push:
+  pull_request:
+  workflow_run:
+      workflows: ["CI"]
+      types: 
+        - completed
+env:
+  DIFF_THRESHOLD: 0.10
+
+jobs:
+  build-on-mac:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-2019, ubuntu-latest, macos-14-large, macos-latest]
+
+    steps:
+    - name: Get Artifact
+      run: |
+        echo ${{context.payload.workflow_run.head_branch}}
+      shell: bash      
