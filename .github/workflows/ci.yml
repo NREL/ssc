@@ -75,7 +75,7 @@ jobs:
       shell: bash
       run: |
         set -e
-        ${SSCDIR}/build/test/Test --gtest_filter="*WakeModel*" > ${SSCDIR}/build/test/gtest.log
+        ${SSCDIR}/build/test/Test > ${SSCDIR}/build/test/gtest.log
         pip install pandas requests
         python ${SSCDIR}/test/compare_elapsed_time.py gtest_log ${SSCDIR}/build/test/gtest.log
     
@@ -160,7 +160,7 @@ jobs:
       # Turn off fast fail for when the landbosse tests write to cerr
       run: |
         set -e
-        ${SSCDIR}/build/test/Test --gtest_filter="*WakeModel*" > ${SSCDIR}/build/test/gtest.log
+        ${SSCDIR}/build/test/Test > ${SSCDIR}/build/test/gtest.log
         pip install pandas requests
         python ${SSCDIR}/test/compare_elapsed_time.py gtest_log ${SSCDIR}/build/test/gtest.log
       shell: bash      
@@ -262,15 +262,14 @@ jobs:
       shell: bash
       # Turn off fast fail for when the landbosse tests write to cerr
       run: |
-        cd ${SSCDIR}/build/test/Release
-        ./Test.exe --gtest_filter="*WakeModel*" > ${SSCDIR}/build/test/gtest.log
+        ./Test.exe > ${SSCDIR}/build/test/gtest.log
         pip install pandas requests
         python ${SSCDIR}/test/compare_elapsed_time.py gtest_log ${SSCDIR}/build/test/gtest.log
   
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-          name: SSC Windows Test Times CSV
+          name: SSC Windows Test Time Elapsed
           path: |
             ${{env.SSCDIR}}\build\ssc\test\gtest_elapsed_times.csv
 
