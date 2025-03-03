@@ -124,10 +124,33 @@ def get_feature_branch():
 
 
 def compare_time_elapsed(new_test_df, base_test_df, default_branch):
+    diff_rel = os.getenv("DIFF_THRESHOLD_REL")
+    diff_threshold = os.getenv("DIFF_THRESHOLD_MS")
     feature_branch = get_feature_branch()
     compare_df = new_test_df.merge(base_test_df, how='outer', suffixes=[f" {feature_branch}", f" {default_branch}"], on=['Test Group', 'Test Name'])
-    print(compare_df)
+    
+    feat_col = f"Test Times [ms] {feature_branch}"
+    def_col = f"Test Times [ms] {default_branch}"
+    compare_df = compare_df[(compare_df[feat_col] > diff_threshold) & (compare_df[def_col] > diff_threshold)] 
+
+    compare_df.loc[:, "Diff [ms]"] = compare_df[feat_col] - compare_df[def_col]
+    compare_df = compare_df[compare_df["Diff [ms]"] != 0]
+
+    if len(compare_df) == 0:
+        return True
+
+    compare_df.loc[compare_df[def_col] == 0, "Diff Norm"] = 0
+    compare_df.loc[compare_df[def_col] != 0, "Diff Norm"] = (compare_df[feat_col] - compare_df[def_col]) / compare_df[def_col]
+
+    compare_df = compare_df[compare_df["Diff Norm"] >= diff_rel]
+    
+    print(compare_df.describe())
     compare_df.to_csv(Path(__file__).parent / "compare_times.csv", index=False)
+
+    if len(compare_df) > 0:
+        return False
+    else:
+        return True
 
 
 if __name__ == "__main__":
