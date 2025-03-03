@@ -108,6 +108,7 @@ jobs:
         python ${{ github.workspace }}/ssc/test/compare_elapsed_time.py compare ${{ github.workspace }}/gtest_elapsed_times.csv ${{ github.ref_name }}
 
     - name: Upload Artifacts
+      if: always()
       uses: actions/upload-artifact@v4
       with:
           name: Test Time Elapsed ${{ matrix.os }}
