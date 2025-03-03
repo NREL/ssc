@@ -2,6 +2,7 @@ name: Compare Test Time Elapsed
 
 on:
   workflow_run:
+    # This runs on the default branch when a CI workflow on any branch is complete
       workflows: ["CI"]
       types: 
         - completed
@@ -27,14 +28,33 @@ jobs:
 
     - name: Get Filename
       if: ${{ matrix.os == 'macos-14-large' }}
-      run: echo "CI_WF=SSC Mac Intel Shared Libraries" >> $GITHUB_ENV
+      run: echo "CI_WF=SSC Mac Intel Test Time Elapsed" >> $GITHUB_ENV
 
     - name: Get Filename
       if: ${{ matrix.os == 'macos-latest' }}
-      run: echo "CI_WF=SSC Mac Arm Shared Libraries" >> $GITHUB_ENV
+      run: echo "CI_WF=SSC Mac Arm Test Time Elapsed" >> $GITHUB_ENV
 
-    - name: Get Artifact
+    - name: Check filename
+      shell: bash
+      run: | 
+        echo "Downloading" ${{env.CI_WF}} "from" ${{github.workflow_ref}} $GITHUB_REF
+
+    - name: Get Calling Workflow
       uses: actions/github-script@v7
+      id: workflow_id
+      with:
+        script: |
+          return context.payload.workflow_run.id
+        result-encoding: string
+
+    - name: Export Context Vars to ENV
+      shell: bash
+      run: |
+        echo "WORKFLOW_ID=${{ steps.workflow_id.outputs.result }}" >> $GITHUB_ENV
+
+    - name: Get Artifact from Completed CI (on Feature Branch)
+      uses: actions/github-script@v7
+      id: get-artifact
       with:
         script: |
           let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
@@ -42,6 +62,8 @@ jobs:
               repo: context.repo.repo,
               run_id: context.payload.workflow_run.id,
           });
+          console.log("Downloaded Elapsed Test Times from Workflow ID:");
+          console.log(context.payload.workflow_run.id);
           let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
             return artifact.name == "${{env.CI_WF}}"
           })[0];
@@ -53,27 +75,40 @@ jobs:
           });
           const fs = require('fs');
           const path = require('path');
-          const temp = '${{ runner.temp }}/artifacts';
+          const temp = '${{ github.workspace }}';
           if (!fs.existsSync(temp)){
             fs.mkdirSync(temp);
           }
           fs.writeFileSync(path.join(temp, 'test_times.zip'), Buffer.from(download.data));
-
-    - name: Check
-      shell: bash
-      run: ls ${{ runner.temp }}/artifacts
+          return path.join(temp, 'test_times.zip')
+        result-encoding: string
 
     - name: Unzip Test Times
       if: ${{ matrix.os == 'windows-2019' }}
-      run: 7z x ${{ runner.temp }}/artifacts/test_times.zip
+      run: |
+        7z x ${{steps.get-artifact.outputs.result}}
 
     - name: Unzip Test Times
       if: ${{ matrix.os != 'windows-2019' }}
-      run: unzip ${{ runner.temp }}/artifacts/test_times.zip
+      run: unzip ${{steps.get-artifact.outputs.result}}
+
+    - name: Checkout SSC
+      uses: actions/checkout@v4
+      with:
+          path: ssc    
 
     - name: Compare Test Times
-      shell: bash
+      env:
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
       run: |
-        ls ${{ runner.temp }}/artifacts/test
-        pip install pandas
-        python ${SSCDIR}/test/compare_elapsed_time.py compare ${{ runner.temp }}/artifacts/gtest_elapsed_times.csv ${{ github.ref_name }}
+        # compare the downloaded times from the feature branch to that of the default branch
+        echo ${{ github.ref_name }}
+        pip install pandas requests
+        python ${{ github.workspace }}/ssc/test/compare_elapsed_time.py compare ${{ github.workspace }}/gtest_elapsed_times.csv ${{ github.ref_name }}
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+          name: Test Time Elapsed ${{ matrix.os }}
+          path: |
+            ${{ github.workspace }}/ssc/test/compare_times.csv
