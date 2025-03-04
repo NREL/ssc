@@ -101,16 +101,27 @@ jobs:
     - name: Compare Test Times
       env:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      shell: bash
       run: |
         # compare the downloaded times from the feature branch to that of the default branch
         echo ${{ github.ref_name }}
         pip install pandas requests
-        python ${{ github.workspace }}/ssc/test/compare_elapsed_time.py compare ${{ github.workspace }}/gtest_elapsed_times.csv ${{ github.ref_name }}
+        outputString=$(python '${{ github.workspace }}/ssc/test/compare_elapsed_time.py' compare '${{ github.workspace }}/gtest_elapsed_times.csv' ${{ github.ref_name }})
+        echo $outputString
+        echo "RESULT=$outputString" >> $GITHUB_ENV
 
     - name: Upload Artifacts
-      if: always()
       uses: actions/upload-artifact@v4
+      if: ${{ env.RESULT != 'Pass' }}
       with:
           name: Test Time Elapsed ${{ matrix.os }}
           path: |
             ${{ github.workspace }}/ssc/test/compare_times.csv
+
+    - name: Enforce Test Times Limits
+      shell: bash
+      run: |
+        if [ "$RESULT" != "Pass" ]
+        then
+          exit 1
+        fi

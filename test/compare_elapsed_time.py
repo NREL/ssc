@@ -147,7 +147,6 @@ def compare_time_elapsed(new_test_df, base_test_df, default_branch):
 
     compare_df = compare_df[compare_df["Diff Norm"] >= diff_rel]
     
-    print(compare_df.describe())
     compare_df.to_csv(Path(__file__).parent / "compare_times.csv", index=False)
 
     if len(compare_df) > 0:
@@ -180,9 +179,9 @@ if __name__ == "__main__":
         else:
             test_df = pd.read_csv(filename)
         if compare_time_elapsed(test_df, base_test_df, default_branch=base_branch):
-            sys.exit(0)
+            print('Pass')
         else:
-            sys.exit(1)
+            print('Fail')
     else:
         raise RuntimeError("Options are 'gtest_log' or 'compare'. Use 'help' to see details")
  
