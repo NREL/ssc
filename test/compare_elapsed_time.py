@@ -147,7 +147,7 @@ def compare_time_elapsed(new_test_df, base_test_df, default_branch):
 
     compare_df = compare_df[compare_df["Diff Norm"] >= diff_rel]
     
-    compare_df.to_csv(Path(__file__).parent / "compare_times.csv", index=False)
+    compare_df.to_csv(Path(__file__).parent / "failing_test_times.csv", index=False)
 
     if len(compare_df) > 0:
         return False
