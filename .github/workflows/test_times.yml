@@ -11,11 +11,12 @@ env:
   DIFF_THRESHOLD_MS: 3      # Only check tests which take more than this time
 
 jobs:
-  build-on-mac:
+  check-elapsed-test-times:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [windows-2019, ubuntu-latest, macos-14-large, macos-latest]
+      fail-fast: false
 
     steps:
     - name: Get Filename
@@ -116,7 +117,7 @@ jobs:
       with:
           name: Test Time Elapsed ${{ matrix.os }}
           path: |
-            ${{ github.workspace }}/ssc/test/compare_times.csv
+            ${{ github.workspace }}/ssc/test/failing_test_times.csv
 
     - name: Enforce Test Times Limits
       shell: bash
