@@ -60,7 +60,6 @@ set(SSC_SRC
 		cmod_iec61853par.cpp
 		cmod_inv_cec_cg.cpp
 		cmod_iph_to_lcoefcr.cpp
-		cmod_ippppa.cpp
 		cmod_irradproc.cpp
 		cmod_layoutarea.cpp
 		cmod_lcoefcr.cpp
