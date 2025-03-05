@@ -622,7 +622,10 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
                 }
                 else {
                     forecast_price_signal fps(&vt);
-                    fps.setup(step_per_hour);
+                    bool success = fps.setup(step_per_hour);
+                    if (!success) {
+                        throw exec_error("battery", fps.error());
+                    }
                     batt_vars->forecast_price_series_dollar_per_kwh = fps.forecast_price();
                     batt_vars->forecast_cleared_capacities_kw = fps.cleared_capacity();
                     batt_vars->capacity_forecast_type = fps.forecast_type;
