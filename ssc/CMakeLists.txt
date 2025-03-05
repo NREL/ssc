@@ -261,6 +261,10 @@ if (UNIX)
 	if(MATH_LIBRARY)
 		target_link_libraries(ssc PUBLIC ${MATH_LIBRARY})
 	endif()
+    if(ENABLE_COVERAGE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+        target_link_options(ssc PRIVATE --coverage)
+        target_link_libraries(ssc PUBLIC gcov)
+    endif()    
 endif()
 
 
