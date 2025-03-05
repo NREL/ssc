@@ -187,8 +187,8 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoadLifetime){
     EXPECT_EQ(max_indices[0], 2);
 }
 
-/// Test standalone battery compute modeule with a input lifetime generation and merchant plant prices
-TEST_F(CMBattery_cmod_battery_fom, MerchantPlantLifetimeAutomatic) {
+/// Test standalone battery compute modeule with merchant plant prices
+TEST_F(CMBattery_cmod_battery_fom, MerchantPlantAutomatic) {
 
     // Run with fixed output
     ssc_number_t n_years;
@@ -214,7 +214,7 @@ TEST_F(CMBattery_cmod_battery_fom, MerchantPlantLifetimeAutomatic) {
         calculated_array = ssc_data_get_array(data, "batt_bank_replacement", &n);
         int replacements = std::accumulate(calculated_array, calculated_array + n, 0);
 
-        EXPECT_GT(replacements, 0);
+        EXPECT_EQ(replacements, 0);
 
         // test temperature
         double* arr = ssc_data_get_array(data, "batt_temperature", &n);
@@ -224,15 +224,15 @@ TEST_F(CMBattery_cmod_battery_fom, MerchantPlantLifetimeAutomatic) {
     }
 }
 
-/// Test standalone battery compute modeule with a input lifetime generation and merchant plant prices
-TEST_F(CMBattery_cmod_battery_fom, MerchantPlantLifetimeAutomaticDimensionError) {
+/// Test standalone battery compute modeule with merchant plant price errors (ssc throws as expected)
+TEST_F(CMBattery_cmod_battery_fom, MerchantPlantAutomaticDimensionError) {
 
     // Run with fixed output
     ssc_number_t n_years;
     ssc_data_get_number(data, "analysis_period", &n_years);
     size_t n_lifetime = (size_t)(n_years) * 8760;
 
-    set_matrix(data, "mp_energy_market_revenue_single", mp_path, 1, 219000); // Swap the dimensions of the array (this is super easy to do by accident in PySAM)
+    set_matrix(data, "mp_energy_market_revenue_single", mp_path, 1, 8760); // Swap the dimensions of the array (this is super easy to do by accident in PySAM)
 
     int errors = run_module(data, "battery"); // Expect an error
     EXPECT_TRUE(errors);

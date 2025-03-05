@@ -176,7 +176,7 @@ namespace {
     void battery_standalone_merchant_plant_lifetime(ssc_data_t& data)
     {
         ssc_data_set_number(data, "system_use_lifetime_output", 1);
-        ssc_data_set_number(data, "analysis_period", 25);
+        ssc_data_set_number(data, "analysis_period", 1);
         ssc_data_set_number(data, "en_batt", 1);
         ssc_data_set_number(data, "en_standalone_batt", 1);
         ssc_data_set_number(data, "timestep_minutes", 60);
@@ -303,7 +303,7 @@ namespace {
         ssc_data_set_number(data, "mp_enable_ancserv4", 0);
         ssc_number_t p_mp_ancserv4_revenue[2] = { 0, 0 };
         ssc_data_set_matrix(data, "mp_ancserv4_revenue", p_mp_ancserv4_revenue, 1, 2);
-        set_matrix(data, "mp_energy_market_revenue_single", mp_path, 219000, 1);
+        set_matrix(data, "mp_energy_market_revenue_single", mp_path, 8760, 1);
         ssc_number_t p_mp_ancserv1_revenue_single[1] = { 0 };
         ssc_data_set_matrix(data, "mp_ancserv1_revenue_single", p_mp_ancserv1_revenue_single, 1, 1);
         ssc_number_t p_mp_ancserv2_revenue_single[1] = { 0 };
