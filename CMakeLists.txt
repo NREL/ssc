@@ -21,9 +21,6 @@ option(SAMAPI_EXPORT "Export of ssc binaries to the SAM_api directory; for Unix,
 #   environment vars LK_LIB and LKD_LIB can be used to specify where to find those libraries
 #
 
-# if using same custome command for several subfolders - will not work for VS or XCode generation
-#set_property(GLOBAL PROPERTY ALLOW_DUPLICATE_CUSTOM_TARGETS 1)
-
 if(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "12" CACHE STRING "Minimum OS X deployment version")
 endif()
@@ -97,9 +94,7 @@ function(set_default_compile_options target)
             set(MAIN_CFLAGS "${MAIN_CFLAGS} -D_DEBUG")
 # code coverage generation using gcov and lcov - linux only
             if (NOT APPLE AND ENABLE_COVERAGE)
-#                enable_testing()
                 # set compiler flags
-#                set(MAIN_CFLAGS "${MAIN_CFLAGS}-g -O0 -fprofile-arcs -ftest-coverage")
                 set(MAIN_CFLAGS " -D__UNIX__ -D__64BIT__ -g -O0 --coverage")
            endif()            
         else()
