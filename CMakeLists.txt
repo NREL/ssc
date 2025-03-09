@@ -173,7 +173,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug"
         coverage
         # gather data
         COMMAND
-        ${LCOV} --directory . --capture --exclude '*/rapidjson/*' --exclude '*/splinter/*' --exclude '*/nlopt/*' --exclude '*/lpsolve/*'  --exclude '*/googletest/*'   --exclude '*/test/*' --exclude '/usr/*'  --output-file coverage.info
+        ${LCOV} --directory . --capture --exclude '*/rapidjson/*' --exclude '*/splinter/*' --exclude '*/nlopt/*' --exclude '*/lpsolve/*'  --exclude '*/googletest/*' --exclude '*/tcs/water_properties.cpp' --exclude '*/tcs/CO2_properties.cpp'  --exclude '*/test/*' --exclude '/usr/*'  --output-file coverage.info
         # generate report
         COMMAND ${GENHTML} --demangle-cpp -o coverage coverage.info
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR})

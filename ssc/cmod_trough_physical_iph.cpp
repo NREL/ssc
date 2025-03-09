@@ -44,11 +44,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_pc_heat_sink.h"
 #include "csp_solver_pc_heat_sink_physical.h"
 #include "csp_solver_two_tank_tes.h"
-#include "cst_iph_dispatch.h"
+
 #include "csp_solver_piston_cylinder_tes.h"
 #include "csp_solver_packedbed_tes.h"
 #include "csp_system_costs.h"
 //#include "cmod_csp_common_eqns.h"
+
+//#include "cst_iph_dispatch.h"
+#include "csp_dispatch.h"
 
 #include "csp_solver_cr_electric_resistance.h"
 
@@ -245,19 +248,21 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_INPUT,        SSC_NUMBER,      "disp_reporting",            "Dispatch optimization reporting level",                                                 "-",                   "",                             "tou",                                      "?=-1",                    "",                      "SIMULATION_PARAMETER" },
     { SSC_INPUT,        SSC_NUMBER,      "disp_spec_scaling",         "Dispatch optimization scaling heuristic",                                               "-",                   "",                             "tou",                                      "?=-1",                    "",                      "SIMULATION_PARAMETER" },
 
+    { SSC_INPUT,        SSC_NUMBER,      "disp_inventory_incentive",  "Dispatch storage terminal inventory incentive multiplier",                         "",             "",               "System Control", "?=0.0",                   "",                      "SIMULATION_PARAMETER" },
+
     { SSC_INPUT,        SSC_NUMBER,      "csp_financial_model",       "",                                                                                 "1-8",          "",               "Financial Model",        "?=1",                                                      "INTEGER,MIN=0",  "" },
 
     // Prices for *electricity* purchases
-    { SSC_INPUT,        SSC_NUMBER,      "ppa_multiplier_model",      "PPA multiplier model 0: dispatch factors dispatch_factorX, 1: hourly multipliers dispatch_factors_ts", "0/1", "0=diurnal,1=timestep", "tou",    "?=0",  /*need a default so this var works in required_if*/  "INTEGER,MIN=0", "SIMULATION_PARAMETER" },
-    { SSC_INPUT,        SSC_NUMBER,      "ppa_soln_mode",             "PPA solution mode (0=Specify IRR target, 1=Specify PPA price)",                    "",             "",               "Financial Solution Mode", "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1","",              "SIMULATION_PARAMETER" },
-    { SSC_INPUT,        SSC_ARRAY,       "ppa_price_input_heat_btu",  "PPA prices - yearly",			                                                  "$/MMBtu",	  "",	            "Revenue",			       "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1","",      	     "SIMULATION_PARAMETER" },
+    { SSC_INPUT,        SSC_NUMBER,      "ppa_multiplier_model",      "PPA multiplier model 0: dispatch factors dispatch_factorX, 1: hourly multipliers dispatch_factors_ts", "0/1", "0=diurnal,1=timestep", "tou",    "?=0",  /*need a default so this var works in required_if*/  "INTEGER,MIN=0", "" },
+    { SSC_INPUT,        SSC_NUMBER,      "ppa_soln_mode",             "PPA solution mode (0=Specify IRR target, 1=Specify PPA price)",                    "",             "",               "Financial Solution Mode", "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1","",              "" },
+    { SSC_INPUT,        SSC_ARRAY,       "ppa_price_input_heat_btu",  "PPA prices - yearly",			                                                  "$/MMBtu",	  "",	            "Revenue",			       "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1","",      	     "" },
         // *Electricity* hourly price multipliers from Block Schedule                                                                                                                                                                                                                                
-    { SSC_INPUT,        SSC_MATRIX,      "dispatch_sched_weekday",    "12x24 PPA pricing Weekday schedule",                                               "",             "",               "tou",                     "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1","",              "SIMULATION_PARAMETER" },
-    { SSC_INPUT,        SSC_MATRIX,      "dispatch_sched_weekend",    "12x24 PPA pricing Weekend schedule",                                               "",             "",               "tou",                     "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1","",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,        SSC_MATRIX,      "dispatch_sched_weekday",    "12x24 PPA pricing Weekday schedule",                                               "",             "",               "tou",                     "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1","",              "" },
+    { SSC_INPUT,        SSC_MATRIX,      "dispatch_sched_weekend",    "12x24 PPA pricing Weekend schedule",                                               "",             "",               "tou",                     "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1","",              "" },
     { SSC_INPUT,        SSC_ARRAY,       "dispatch_tod_factors",      "TOD factors for periods 1 through 9",                                              "",                                                                                                                                        
-        "We added this array input after SAM 2022.12.21 to replace the functionality of former single value inputs dispatch_factor1 through dispatch_factor9",                              "Time of Delivery Factors","ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1","",              "SIMULATION_PARAMETER" },
+        "We added this array input after SAM 2022.12.21 to replace the functionality of former single value inputs dispatch_factor1 through dispatch_factor9",                              "Time of Delivery Factors","ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1","",              "" },
         // *Electricity* hourly price multipliers from time series input
-    { SSC_INPUT,        SSC_ARRAY,       "dispatch_factors_ts",       "Time series electricity price multipliers",                                        "",             "",               "tou",                     "ppa_multiplier_model=1&csp_financial_model<5&is_dispatch=1","",              "SIMULATION_PARAMETER" },
+    { SSC_INPUT,        SSC_ARRAY,       "dispatch_factors_ts",       "Time series electricity price multipliers",                                        "",             "",               "tou",                     "ppa_multiplier_model=1&csp_financial_model<5&is_dispatch=1","",              "" },
                                                                                                                                                                                                                        
     // Control for *heat* output                                                                                                                                                                                       
     { SSC_INPUT,        SSC_NUMBER,      "is_timestep_load_fractions","0: block dispatch, 1: hourly load fraction, 2: absolute load",                     "",             "",               "tou",                     "?=0",                                                       "",              "" },
@@ -864,6 +869,7 @@ public:
         // Solar field, trough
         // ********************************
         // ********************************
+        double q_dot_rec_des_ideal_pre_init = std::numeric_limits<double>::quiet_NaN();
         C_csp_trough_collector_receiver c_trough;
         {
             // Collect Inputs
@@ -1124,6 +1130,7 @@ public:
             if (success == false)
                 throw exec_error("trough_physical_iph", "Negative solar mult or total aperture.");
 
+            q_dot_rec_des_ideal_pre_init = c_trough.m_q_design_ideal / 1e6; // [MWt]
 
 
             // Allocate trough outputs
@@ -1739,15 +1746,29 @@ public:
 
         // *****************************************************
         // System dispatch
-        cst_iph_dispatch_opt dispatch;
+        //cst_iph_dispatch_opt dispatch;
+        csp_dispatch_opt dispatch;
 
         if (is_dispatch && sim_type == 1) {
+
+            double heater_startup_cost = 0.0;
 
             dispatch.solver_params.set_user_inputs(as_integer("disp_steps_per_hour"), as_integer("disp_frequency"), as_integer("disp_horizon"),
                 as_integer("disp_max_iter"), as_double("disp_mip_gap"), as_double("disp_timeout"),
                 as_integer("disp_spec_presolve"), as_integer("disp_spec_bb"), as_integer("disp_spec_scaling"), as_integer("disp_reporting"));
 
-            dispatch.params.set_user_params(as_double("disp_time_weighting"), 0.0);
+            bool can_cycle_use_standby = false;
+            double disp_csu_cost_calc = 0.0;
+            double disp_pen_ramping = 0.0;
+            double q_rec_standby = 0.0;
+            double q_rec_heattrace = 0.0;
+
+            double disp_rsu_cost_calc = 0.0;
+
+            dispatch.params.set_user_params(can_cycle_use_standby, as_double("disp_time_weighting"),
+                disp_rsu_cost_calc, heater_startup_cost, disp_csu_cost_calc, disp_pen_ramping,
+                as_double("disp_inventory_incentive"), q_rec_standby, q_rec_heattrace);
+
         }
 
         // Instantiate Solver
