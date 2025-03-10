@@ -7,8 +7,8 @@ on:
       types: 
         - completed
 env:
-  HEAD_DIFF_TOL: 0.10   # Fail if test time increases by more than this ratio
-  REL_DIFF_TOL: 0.05    # Fail if test time increases by more than this ratio
+  HEAD_DIFF_TOL: 0.05   # Fail if test time increases by more than this ratio, against default branch head
+  REL_DIFF_TOL: 0.10    # For comparison against latest release
   DIFF_THRESHOLD_MS: 3  # Only check tests which take more than this time
 
 jobs:
