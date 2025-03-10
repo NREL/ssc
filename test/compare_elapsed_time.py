@@ -18,6 +18,20 @@ Command Line Options to run this script in order to generate CSVs of time elapse
 """
 access_token = os.getenv("GH_TOKEN")
 
+platform = None
+if sys.platform == 'linux':
+    platform = "Linux"
+elif sys.platform == 'win32':
+    platform = "Windows"
+elif sys.platform == 'darwin':
+    proc = processor()
+    if "x86_64" in proc:
+        platform = "Mac Intel"
+    elif "arm" in proc:
+        platform = "Mac Arm"
+else:
+    raise RuntimeError(f"Unrecognized platform {sys.platform}")
+
 def convert_log_to_csv(gtest_log_path):
     test_groups = []
     test_names = []
@@ -56,6 +70,7 @@ def convert_log_to_csv(gtest_log_path):
     print(f"Output csv: {out_path}")
     return test_df
 
+
 def get_workflow_artifact_branch(base_branch):
     headers = {
         'Accept': 'application/vnd.github+json',
@@ -72,20 +87,6 @@ def get_workflow_artifact_branch(base_branch):
     artifacts = response.json()['artifacts']
 
     artifacts = [a for a in artifacts if a['workflow_run']['head_branch'] == base_branch]
-
-    platform = None
-    if sys.platform == 'linux':
-        platform = "Linux"
-    elif sys.platform == 'win32':
-        platform = "Windows"
-    elif sys.platform == 'darwin':
-        proc = processor()
-        if "x86_64" in proc:
-            platform = "Mac Intel"
-        elif "arm" in proc:
-            platform = "Mac Arm"
-    else:
-        raise RuntimeError(f"Unrecognized platform {sys.platform}")
     
     artifacts = [a for a in artifacts if (platform in a['name']) and ("Test Time Elapsed" in a['name'])]
 
@@ -104,6 +105,7 @@ def get_workflow_artifact_branch(base_branch):
     os.remove(file_dir / "gtest_elapsed_times.csv")
     return test_df_base
     
+
 def get_feature_branch():
     workflow_id = os.getenv("WORKFLOW_ID")
     if workflow_id is None:
@@ -123,33 +125,49 @@ def get_feature_branch():
     return response.json()['head_branch']
 
 
-def compare_time_elapsed(new_test_df, base_test_df, default_branch):
-    diff_rel = float(os.getenv("DIFF_THRESHOLD_REL"))
-    diff_threshold = float(os.getenv("DIFF_THRESHOLD_MS"))
-    feature_branch = get_feature_branch()
-    if feature_branch == default_branch:
-        return True
+def compare_df(new_test_df, base_test_df, new_name, base_name, diff_threshold, diff_rel):
+    compare_df = new_test_df.merge(base_test_df, how='outer', suffixes=[f" {new_name}", f" {base_name}"], on=['Test Group', 'Test Name'])
     
-    compare_df = new_test_df.merge(base_test_df, how='outer', suffixes=[f" {feature_branch}", f" {default_branch}"], on=['Test Group', 'Test Name'])
-    
-    feat_col = f"Test Times [ms] {feature_branch}"
-    def_col = f"Test Times [ms] {default_branch}"
+    feat_col = f"Test Times [ms] {new_name}"
+    def_col = f"Test Times [ms] {base_name}"
     compare_df = compare_df[(compare_df[feat_col] > diff_threshold) & (compare_df[def_col] > diff_threshold)] 
 
-    compare_df.loc[:, "Diff [ms]"] = compare_df[feat_col] - compare_df[def_col]
-    compare_df = compare_df[compare_df["Diff [ms]"] != 0]
+    compare_df.loc[:, f"Diff {base_name} [ms]"] = compare_df[feat_col] - compare_df[def_col]
+    compare_df = compare_df[compare_df[f"Diff {base_name} [ms]"] != 0]
 
     if len(compare_df) == 0:
+        return True, compare_df
+
+    compare_df.loc[compare_df[def_col] == 0, f"Diff {base_name} [%]"] = 0
+    compare_df.loc[compare_df[def_col] != 0, f"Diff {base_name} [%]"] = round((compare_df[feat_col] - compare_df[def_col]) / compare_df[def_col] * 100, 2)
+
+    compare_df = compare_df[compare_df[f"Diff {base_name} [%]"] >= diff_rel * 100]
+    if len(compare_df) == 0:
+        return True, compare_df
+    else:
+        return False, compare_df
+
+
+def compare_time_elapsed(new_test_df, head_test_df, head_branch):
+    diff_tol_rel = float(os.getenv("REL_DIFF_TOL"))
+    diff_tol_head = float(os.getenv("HEAD_DIFF_TOL"))
+    diff_threshold = float(os.getenv("DIFF_THRESHOLD_MS"))
+    feature_branch = get_feature_branch()
+    if feature_branch == head_branch:
         return True
-
-    compare_df.loc[compare_df[def_col] == 0, "Diff Norm"] = 0
-    compare_df.loc[compare_df[def_col] != 0, "Diff Norm"] = (compare_df[feat_col] - compare_df[def_col]) / compare_df[def_col]
-
-    compare_df = compare_df[compare_df["Diff Norm"] >= diff_rel]
     
-    compare_df.to_csv(Path(__file__).parent / "failing_test_times.csv", index=False)
+    pass_head, compare_head_df = compare_df(new_test_df, head_test_df, feature_branch, head_branch, diff_threshold, diff_tol_head)
 
-    if len(compare_df) > 0:
+    rel_test_df = pd.read_csv(Path(__file__).parent / "elapsed_time_release" / f"gtest_elapsed_times_{platform}.csv")
+    pass_rel, compare_rel_df = compare_df(new_test_df, rel_test_df, feature_branch, "Release", diff_threshold, diff_tol_rel)
+
+    if pass_head and pass_rel:
+        return True
+    
+    comare_df = pd.merge(compare_head_df, compare_rel_df, how='outer')
+    comare_df.to_csv(Path(__file__).parent / "failing_test_times.csv", index=False)
+
+    if len(comare_df) > 0:
         return False
     else:
         return True
@@ -171,14 +189,15 @@ if __name__ == "__main__":
     elif sys.argv[1] == "compare":
         if len(sys.argv) < 4:
             raise RuntimeError("Provide path to csv or gtest log file, and the name of the branch for comparison")
+        
         filename = Path(sys.argv[2])
         base_branch = sys.argv[3]
-        base_test_df = get_workflow_artifact_branch(base_branch)
+        head_test_df = get_workflow_artifact_branch(base_branch)
         if Path(filename).suffix != ".csv":
             test_df = convert_log_to_csv(filename)
         else:
             test_df = pd.read_csv(filename)
-        if compare_time_elapsed(test_df, base_test_df, default_branch=base_branch):
+        if compare_time_elapsed(test_df, head_test_df, head_branch=base_branch):
             print('Pass')
         else:
             print('Fail')
