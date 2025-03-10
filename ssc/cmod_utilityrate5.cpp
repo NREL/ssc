@@ -441,7 +441,13 @@ void rate_setup::setup(var_table* vt, int num_recs_yearly, size_t nyears, rate_d
             throw exec_error(cm_name, ss.str());
         }
 
-        rate.setup_ratcheting_demand(ratchet_matrix, bd_tou_matrix);
+        bool error = rate.setup_ratcheting_demand(ratchet_matrix, bd_tou_matrix);
+
+        if (error) {
+            std::ostringstream ss;
+            ss << "ur_dc_billing_demand_periods should have at least one period where billing demand calculations are enabled.";
+            throw exec_error(cm_name, ss.str());
+        }
     }
 
 
