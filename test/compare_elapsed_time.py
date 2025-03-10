@@ -15,6 +15,9 @@ Command Line Options to run this script in order to generate CSVs of time elapse
 
 'python compare_elapsed_time.py compare <path to csv or gtest log> <branch to compare>' 
     Compares the results from a previous run of Github actions by downloading the artifact csv of the given branch
+
+'python compare_elapsed_time.py download_csv <github sha> <output_dir>'
+    Downloads the results from workflow for the given SHA and saves it to output dir
 """
 access_token = os.getenv("GH_TOKEN")
 
@@ -105,6 +108,43 @@ def get_workflow_artifact_branch(base_branch):
     os.remove(file_dir / "gtest_elapsed_times.csv")
     return test_df_base
     
+def get_artifact_from_sha(sha, output_dir=None):
+    headers = {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': f'Bearer {access_token}',
+        'X-GitHub-Api-Version': '2022-11-28',
+    }
+
+    response = requests.get('https://api.github.com/repos/NREL/ssc/actions/artifacts', headers=headers)
+
+    if response.status_code != 200:
+        print(response.json())
+        raise Exception("Failed to Get Workflow Artifacts List")
+
+    artifacts = response.json()['artifacts']
+
+    artifacts_sha = [a for a in artifacts if a['workflow_run']['head_sha'] == sha]
+    
+    for platform in ["Windows", "Mac Arm", "Mac Intel", "Linux"]:
+        artifacts = [a for a in artifacts_sha if (platform in a['name']) and ("Test Time Elapsed" in a['name'])]
+
+        headers = {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': f'Bearer {access_token}',
+        'X-GitHub-Api-Version': '2022-11-28',
+        }
+
+        response = requests.get(artifacts[0]['archive_download_url'], headers=headers)
+
+        z = zipfile.ZipFile(io.BytesIO(response.content)) 
+        file_dir = Path(__file__).parent
+        z.extractall(file_dir)
+        test_df_base = pd.read_csv(file_dir / "gtest_elapsed_times.csv")
+        os.remove(file_dir / "gtest_elapsed_times.csv")
+        if output_dir is not None:
+            test_df_base.to_csv(output_dir / f"gtest_elapsed_times_{platform}.csv")
+            print(f"Saved to {str(output_dir / f'gtest_elapsed_times_{platform}.csv')}")
+    return
 
 def get_feature_branch():
     workflow_id = os.getenv("WORKFLOW_ID")
@@ -201,8 +241,14 @@ if __name__ == "__main__":
             print('Pass')
         else:
             print('Fail')
+    elif sys.argv[1] == "download_csv":
+        if len(sys.argv) < 3:
+            raise RuntimeError("Provide the GitHub SHA to download the artifact")
+        sha = sys.argv[2]
+        output_dir = None
+        if len(sys.argv) == 4:
+            output_dir = Path(sys.argv[3])
+        get_artifact_from_sha(sha, output_dir)
     else:
         raise RuntimeError("Options are 'gtest_log' or 'compare'. Use 'help' to see details")
  
-        
-
