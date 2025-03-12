@@ -824,7 +824,7 @@ double CGeothermalAnalyzer::GetInjectionPumpWorkft(void)
     double injection_pump_head_psi = -excess_pressure + reservoir_buildup + mo_geo_in.md_AdditionalPressure;
     mo_geo_in.md_InjWellPressurePSI = injection_pump_head_psi; 
     double injection_pump_head_ft = injection_pump_head_psi * 144 / InjectionDensity();
-    if (injection_pump_head_ft < 0) injection_pump_head_ft = 0;
+    if (injection_pump_head_ft < 0.0) injection_pump_head_ft = 0;
     double P_inject_bottomhole_used = injection_pump_head_psi + bottom_hole_pressure;
     //double pump_inj_hp = (injection_pump_head_ft * (flowRateTotal() / mo_geo_in.md_RatioInjectionToProduction / 2500) / (60 * 33000)) / mo_geo_in.md_GFPumpEfficiency;
     //mp_geo_out->md_InjPump_hp = pump_inj_hp;
@@ -983,12 +983,12 @@ double CGeothermalAnalyzer::GetProductionPumpWorkft(void)
     }*/
     mo_geo_in.md_ProdWellFriction = friction_head_psid1 + friction_head_psid2 + friction_head_psid3;
     double pump_lift = pump_setting + friction_head_loss_ft;
+    if (pump_lift < 0.0) pump_lift = 0.0;
     double ideal_pumping_power = flow * pump_lift * 1 / physics::FT_PER_METER; //ft-lb/h
     double ideal_pumping_power_permin = ideal_pumping_power / 60; //ft-lb/min
     double ideal_pumping_power_hp = ideal_pumping_power_permin / 33000; //hp
     double pumping_power_hp = ideal_pumping_power_hp / mo_geo_in.md_GFPumpEfficiency;
     double pumping_power_ft = pumping_power_hp * (60 * 33000); //ft
-    if (pump_lift < 0.0) pump_lift = 0;
     return pump_lift;
 }
 
