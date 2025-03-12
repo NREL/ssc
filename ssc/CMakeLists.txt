@@ -101,9 +101,7 @@ set(SSC_SRC
 		cmod_tcsgeneric_solar.cpp
 		cmod_tcslinear_fresnel.cpp
 		cmod_tcsmolten_salt.cpp
-		cmod_tcsmslf.cpp
 		cmod_tcstrough_empirical.cpp
-		cmod_tcstrough_physical.cpp
 		cmod_test_ud_power_cycle.cpp
 		cmod_thermalrate.cpp
         cmod_thermalrate_iph.cpp
