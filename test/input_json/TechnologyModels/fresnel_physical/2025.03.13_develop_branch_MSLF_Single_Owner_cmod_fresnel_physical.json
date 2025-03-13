@@ -1,5 +1,5 @@
 {
-	"file_name" : "C:/Users/tneises/Documents/Projects/GitHub/sam/deploy/solar_resource/tucson_az_32.116521_-110.933042_psmv3_60_tmy.csv",
+	"file_name" : "../../../ssc/test/input_cases/general_data/tucson_az_32.116521_-110.933042_psmv3_60_tmy.csv",
     "solar_mult_in" : 2.2999999999999998,
     "total_Ap_in" : 877000,
     "solar_mult_or_Ap" : 0,
