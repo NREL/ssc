@@ -40,7 +40,6 @@ set(SSC_SRC
 		cmod_equpartflip.cpp
 		cmod_financial_eqns.cpp
 		cmod_financial_eqns.h
-		cmod_fossilgen.cpp
         cmod_fresnel_physical.cpp
         cmod_fresnel_physical_iph.cpp
 		cmod_fuelcell.cpp
@@ -114,10 +113,6 @@ set(SSC_SRC
 		cmod_ui_tes_calcs.cpp
 		cmod_ui_udpc_checks.cpp
 		cmod_user_htf_comparison.cpp
-		cmod_utilityrate.cpp
-		cmod_utilityrate2.cpp
-		cmod_utilityrate3.cpp
-		cmod_utilityrate4.cpp
 		cmod_utilityrate5.cpp
 		cmod_utilityrate5.h
 		cmod_wavefile.cpp
