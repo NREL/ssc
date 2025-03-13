@@ -1752,7 +1752,17 @@ TEST(cmod_utilityrate5_eqns, Test_seasonal_per_kw_charge_w_no_demand_charge) {
                                          2, 1, 200, 0, 0.028812999999999998, 0,
                                          2, 2, 9.9999999999999998e+37, 0, 0.132655, 0 };
     ssc_data_set_matrix(data, "ur_ec_tou_mat", p_ur_ec_tou_mat, 10, 6);
-    ssc_data_set_number(data, "ur_dc_enable", 0);
+    ssc_data_set_number(data, "ur_dc_enable", 1);
+
+    // Demand charge data required as of https://github.com/NREL/ssc/pull/1293 
+    ssc_number_t p_ur_dc_sched_weekday[288] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
+    ssc_data_set_matrix(data, "ur_dc_sched_weekday", p_ur_dc_sched_weekday, 12, 24);
+    ssc_number_t p_ur_dc_sched_weekend[288] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
+    ssc_data_set_matrix(data, "ur_dc_sched_weekend", p_ur_dc_sched_weekend, 12, 24);
+    ssc_number_t p_ur_dc_tou_mat[8] = { 1, 1, 9.9999999999999998e+37, 0, 2, 1, 9.9999999999999998e+37, 0 };
+    ssc_data_set_matrix(data, "ur_dc_tou_mat", p_ur_dc_tou_mat, 2, 4);
+    ssc_number_t p_ur_dc_flat_mat[48] = { 0, 1, 9.9999999999999998e+37, 0, 1, 1, 9.9999999999999998e+37, 0, 2, 1, 9.9999999999999998e+37, 0, 3, 1, 9.9999999999999998e+37, 0, 4, 1, 9.9999999999999998e+37, 0, 5, 1, 9.9999999999999998e+37, 0, 6, 1, 9.9999999999999998e+37, 0, 7, 1, 9.9999999999999998e+37, 0, 8, 1, 9.9999999999999998e+37, 0, 9, 1, 9.9999999999999998e+37, 0, 10, 1, 9.9999999999999998e+37, 0, 11, 1, 9.9999999999999998e+37, 0 };
+    ssc_data_set_matrix(data, "ur_dc_flat_mat", p_ur_dc_flat_mat, 12, 4);
 
 
     ssc_data_set_number(data, "ur_enable_billing_demand", 1);
@@ -1773,8 +1783,8 @@ TEST(cmod_utilityrate5_eqns, Test_seasonal_per_kw_charge_w_no_demand_charge) {
                                       60, 0 };
     ssc_data_set_matrix(data, "ur_billing_demand_lookback_percentages", p_ur_billing_demand_lookback_percentages, 12, 2);
 
-    ssc_number_t p_ur_billing_demand_tou_matrix[2] = { 1, 1 };
-    ssc_data_set_matrix(data, "ur_dc_billing_demand_periods", p_ur_billing_demand_tou_matrix, 1, 2);
+    ssc_number_t p_ur_billing_demand_tou_matrix[4] = { 1, 1, 2, 1 };
+    ssc_data_set_matrix(data, "ur_dc_billing_demand_periods", p_ur_billing_demand_tou_matrix, 2, 2);
 
     ssc_number_t year_zero_power[12] = { -1200,
                                         -1100,
