@@ -499,7 +499,7 @@ void BatteryPowerFlow::calculateACConnected()
             }
             else {
                 P_fuelcell_to_load_ac = std::fmin(P_fuelcell_ac, calc_load_ac - P_pv_to_load_ac);
-                P_batt_to_load_ac = std::fmin(P_battery_ac - P_system_loss_ac, calc_load_ac - P_pv_to_load_ac - P_fuelcell_to_load_ac);
+                P_batt_to_load_ac = std::fmax(0, std::fmin(P_battery_ac - P_system_loss_ac, calc_load_ac - P_pv_to_load_ac - P_fuelcell_to_load_ac));
             }
         }
         else {
