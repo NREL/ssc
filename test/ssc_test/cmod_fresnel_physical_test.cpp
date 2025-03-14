@@ -44,5 +44,5 @@ TEST_F(CmodFresnelPhysicalTest, MSLFDefault) {
     std::vector<std::string> compare_number_variables = { "annual_energy", "q_dot_loss_tes_des" };
     std::vector<std::string> compare_array_variables = { "monthly_energy" };
 
-    Test("fresnel_physical", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
+    Test("fresnel_physical", file_inputs, file_outputs, compare_number_variables, compare_array_variables, 0.001, "tucson_az_32.116521_-110.933042_psmv3_60_tmy.csv");
 }
