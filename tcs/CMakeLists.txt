@@ -86,10 +86,6 @@ set(TCS_SRC
 		sam_mw_pt_type228.cpp
 		sam_mw_trough_type250.cpp
 		sam_mw_type234.cpp
-		sam_pf_dish_collector_type295.cpp
-		sam_pf_dish_engine_type297.cpp
-		sam_pf_dish_parasitic_type298.cpp
-		sam_pf_dish_receiver_type296.cpp
 		sam_trough_model_type805.cpp
 		sam_trough_plant_type807.cpp
 		sam_trough_storage_type806.cpp
