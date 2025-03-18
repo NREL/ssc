@@ -80,15 +80,11 @@ set(TCS_SRC
 		sam_csp_util.cpp
 		sam_dsg_controller_type265.cpp
 		sam_lf_st_pt_type232.cpp
-		sam_mw_csp_SumCalcs.cpp
 		sam_mw_gen_Type260_csp_solver.cpp
 		sam_mw_lf_type261_steam.cpp
 		sam_mw_lf_type261_Wnet.cpp
-		sam_mw_lf_type262_salt.cpp
-		sam_mw_pt_type224_csp_solver.cpp
 		sam_mw_pt_type228.cpp
 		sam_mw_trough_type250.cpp
-		sam_mw_trough_type251.cpp
 		sam_mw_type234.cpp
 		sam_pf_dish_collector_type295.cpp
 		sam_pf_dish_engine_type297.cpp
