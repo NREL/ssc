@@ -61,7 +61,6 @@ set(TCS_SRC
 		sco2_power_cycle.cpp
 		sco2_rec_util.cpp
 		sco2_recompression_cycle.cpp
-		sco2_test_type401.cpp
 		tc_test_type402.cpp
 		tcskernel.cpp
 		trnsys_weatherreader.cpp
@@ -75,16 +74,13 @@ set(TCS_SRC
 		direct_steam_receivers.cpp
 		htf_props.cpp
 		interpolation_routines.cpp
-		ngcc_powerblock.cpp
 		pump.cpp
 		sam_csp_util.cpp
-		sam_dsg_controller_type265.cpp
 		sam_lf_st_pt_type232.cpp
 		sam_mw_gen_Type260_csp_solver.cpp
 		sam_mw_lf_type261_steam.cpp
 		sam_mw_lf_type261_Wnet.cpp
 		sam_mw_pt_type228.cpp
-		sam_mw_trough_type250.cpp
 		sam_mw_type234.cpp
 		sam_trough_model_type805.cpp
 		sam_trough_plant_type807.cpp
@@ -140,7 +136,6 @@ set(TCS_SRC
 		htf_props.h
 		interconnect.h
 		interpolation_routines.h
-		ngcc_powerblock.h
 		nlopt_callbacks.h
 		numeric_solvers.h
         ptes_solver_design_point.h
