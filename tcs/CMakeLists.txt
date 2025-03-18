@@ -7,7 +7,6 @@
 include_directories(. ../nlopt ../shared ../splinter ../lpsolve ../solarpilot)
 
 set(TCS_SRC
-		atmospheric_aod.cpp
 		base_dispatch.cpp
 		co2_compressor_library.cpp
 		CO2_properties.cpp
@@ -43,25 +42,20 @@ set(TCS_SRC
 		csp_solver_weatherreader.cpp
 		csp_system_costs.cpp
 		cst_iph_dispatch.cpp
-		direct_steam_receivers.cpp
 		dispatch_builder.cpp
 		etes_dispatch.cpp
 		fmin.cpp
 		fmin_callbacks.cpp
 		heat_exchangers.cpp
-		Heliostat_AzElAod.cpp
 		interconnect.cpp
 		nlopt_callbacks.cpp
 		numeric_solvers.cpp
         ptes_solver_design_point.cpp
-		sam_type250_input_generator.cpp
 		sco2_cycle_components.cpp
 		sco2_partialcooling_cycle.cpp
 		sco2_pc_csp_int.cpp
 		sco2_power_cycle.cpp
-		sco2_rec_util.cpp
 		sco2_recompression_cycle.cpp
-		tc_test_type402.cpp
 		tcskernel.cpp
 		trnsys_weatherreader.cpp
 		typelib.cpp
@@ -71,7 +65,6 @@ set(TCS_SRC
 		weatherreader_csp_solver.cpp
 		cavity_calcs.cpp
 		datatest.cpp
-		direct_steam_receivers.cpp
 		htf_props.cpp
 		interpolation_routines.cpp
 		pump.cpp
@@ -85,13 +78,10 @@ set(TCS_SRC
 		sam_trough_model_type805.cpp
 		sam_trough_plant_type807.cpp
 		sam_trough_storage_type806.cpp
-		solarcollector.cpp
 		storage_hx.cpp
 		sumprod.cpp
-		thermocline_tes.cpp
 		tou_translator.cpp
 		flat_plate_solar_collector.cpp
-		atmospheric_aod.h
 		base_dispatch.h
 		cavity_calcs.h
 		co2_compressor_library.h
@@ -126,7 +116,6 @@ set(TCS_SRC
 		csp_solver_util.h
 		csp_system_costs.h
 		cst_iph_dispatch.h
-		direct_steam_receivers.h
 		dispatch_builder.h
 		etes_dispatch.h
 		flat_plate_solar_collector.h
@@ -146,12 +135,10 @@ set(TCS_SRC
 		sco2_pc_csp_int.h
 		sco2_power_cycle.h
 		sco2_recompression_cycle.h
-		sco2_rec_util.h
 		storage_hx.h
 		tcskernel.h
 		tcstype.h
 		tcs_debug.h
-		thermocline_tes.h
 		ud_power_cycle.h
 		user_defined_power_cycle.h
 		waterprop.h
