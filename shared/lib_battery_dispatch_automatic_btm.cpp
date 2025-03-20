@@ -637,40 +637,10 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
             costDuringDispatchHours += sorted_grid[i].Cost();
         }               
     }
-
-    double grid_dispatch_steps = 0;
-    if (m_batteryPower->canDischargeToGrid) {
-        std::stable_sort(sorted_grid.begin(), sorted_grid.end(), byExportPrice());
-        for (i = 0; i < sorted_grid.size() && grid_dispatch_steps < plan.dispatch_hours * _steps_per_hour; i++)
-        {
-            if (sorted_grid[i].ExportPrice() > max_cost && sorted_grid[i].ExportPerKWh() > sorted_grid[i].MarginalCost()) {
-                double desiredPower = m_batteryPower->getMaxACDischargePower();
-
-                // Account for discharging constraints assuming voltage is constant over forecast period
-                check_power_restrictions(desiredPower);
-
-                // Re-apportion based on actual energy used
-                remainingEnergy -= desiredPower * _dt_hour;
-                costDuringDispatchHours -= costAtStep;
-                // Add to dispatch plan
-                index = sorted_grid[i].Hour() * _steps_per_hour + sorted_grid[i].Step(); // Assumes we're always running this function on the hour
-                plan.plannedDispatch[index] = desiredPower;
-
-                grid_dispatch_steps++;
-            }
-            if (remainingEnergy < 0) {
-                remainingEnergy = 0;
-                break;
-            }
-
-        }
-        std::stable_sort(sorted_grid.begin(), sorted_grid.end(), byCost());
-    }
-
     
     double powerAtMaxCost = 0;
     plan.lowestMarginalCost = sorted_grid[0].MarginalCost();
-    for (i = 0; i < (plan.dispatch_hours * _steps_per_hour - grid_dispatch_steps) && (i < sorted_grid.size()); i++)
+    for (i = 0; i < (plan.dispatch_hours * _steps_per_hour) && (i < sorted_grid.size()); i++)
     {
         costAtStep = sorted_grid[i].Cost();
         if (costAtStep > 1e-7)
@@ -705,11 +675,36 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
                 powerAtMaxCost = desiredPower;
             }
         }
-        if (remainingEnergy < 0) {
-            // Don't reset to zero here - sign that we need to charge a lot
+        if (remainingEnergy <= 0) {
             break;
         }
     }
+
+    if (m_batteryPower->canDischargeToGrid) {
+        std::stable_sort(sorted_grid.begin(), sorted_grid.end(), byExportPrice());
+        for (i = 0; i < sorted_grid.size(); i++)
+        {
+            if (remainingEnergy <= 0) {
+                break;
+            }
+            if (sorted_grid[i].ExportPrice() > max_cost && sorted_grid[i].ExportPerKWh() > sorted_grid[i].MarginalCost()) {
+                double desiredPower = m_batteryPower->getMaxACDischargePower();
+
+                // Account for discharging constraints assuming voltage is constant over forecast period
+                check_power_restrictions(desiredPower);
+
+                index = sorted_grid[i].Hour() * _steps_per_hour + sorted_grid[i].Step(); // Assumes we're always running this function on the hour
+                double addtl_power = desiredPower - plan.plannedDispatch[index];
+
+                // Re-apportion based on actual energy used
+                remainingEnergy -= addtl_power * _dt_hour;
+
+                // Add to dispatch plan
+                plan.plannedDispatch[index] = desiredPower;
+            }
+        }
+    }
+
 
     double chargeEnergy = E_max - remainingEnergy;
 
