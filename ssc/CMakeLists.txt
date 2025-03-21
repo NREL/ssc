@@ -26,8 +26,6 @@ set(SSC_SRC
 		cmod_cashloan_heat.cpp
 		cmod_cb_construction_financing.cpp
 		cmod_cb_empirical_hce_heat_loss.cpp
-		cmod_csp_common_eqns.cpp
-		cmod_csp_common_eqns.h
 		cmod_csp_dsg_lf_ui.cpp
         cmod_csp_heatsink.cpp
 		cmod_csp_subcomponent.cpp
@@ -178,7 +176,6 @@ else()
             cmod_merchantplant.cpp
             cmod_merchantplant_eqns.cpp
             cmod_pvsamv1_eqns.cpp
-            cmod_csp_common_eqns.cpp
             cmod_financial_eqns.cpp
             cmod_windpower_eqns.cpp
             cmod_utilityrate5_eqns.cpp
