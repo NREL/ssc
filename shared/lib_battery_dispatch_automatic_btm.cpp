@@ -623,14 +623,11 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
     double costDuringDispatchHours = 0.0;
     double costAtStep = 0.0;
     double remainingEnergy = E_max;
-    double max_cost = 0.0;
+    double max_cost = sorted_grid[0].Cost();
     // Sum no-dispatch cost of top n grid points (dispatch hours * steps per hour). Units: % of cost -> don't need to record this, can re-compute after iteration
     for (i = 0; (i < plan.dispatch_hours * _steps_per_hour) && (i < sorted_grid.size()); i++)
     {
         costAtStep = sorted_grid[i].Cost();
-        if (i == 0) {
-            max_cost = costAtStep;
-        }
         // In case forecast is testing hours that include negative cost, don't dispatch during those
         if (costAtStep > 1e-7)
         {
@@ -645,8 +642,9 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
         costAtStep = sorted_grid[i].Cost();
         if (costAtStep > 1e-7)
         {
+            // These are both reduced below, so remaining energy and remaining cost are distributed proportionally
             double costPercent = costAtStep / costDuringDispatchHours;
-            double desiredPower = E_max * costPercent / _dt_hour; // Used to be remaining energy - but this has wierd diminishing returns on load
+            double desiredPower = remainingEnergy * costPercent / _dt_hour; 
 
             // Prevent the wierd signals from demand charges from reducing dispatch (maybe fix this upstream in the future)
             if (desiredPower < powerAtMaxCost && sorted_grid[i].Grid() >= powerAtMaxCost) {
@@ -681,7 +679,7 @@ void dispatch_automatic_behind_the_meter_t::plan_dispatch_for_cost(dispatch_plan
     }
 
     if (m_batteryPower->canDischargeToGrid) {
-        std::stable_sort(sorted_grid.begin(), sorted_grid.end(), byExportPrice());
+        std::stable_sort(sorted_grid.begin(), sorted_grid.end(), byExportPerKWh());
         for (i = 0; i < sorted_grid.size(); i++)
         {
             if (remainingEnergy <= 0) {

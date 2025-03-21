@@ -289,7 +289,7 @@ struct byLowestMarginalCost
     bool operator() (grid_point const& a, grid_point const& b);
 };
 
-struct byExportPrice
+struct byExportPerKWh
 {
     bool operator() (grid_point const& a, grid_point const& b);
 };

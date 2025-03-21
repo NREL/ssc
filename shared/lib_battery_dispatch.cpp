@@ -1154,7 +1154,7 @@ bool byLowestMarginalCost::operator() (grid_point const& a, grid_point const& b)
 
 }
 
-bool byExportPrice::operator() (grid_point const& a, grid_point const& b)
+bool byExportPerKWh::operator() (grid_point const& a, grid_point const& b)
 {
     if (a.ExportPerKWh() == b.ExportPerKWh())
     {
