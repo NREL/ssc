@@ -48,7 +48,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "csp_solver_piston_cylinder_tes.h"
 #include "csp_solver_packedbed_tes.h"
 #include "csp_system_costs.h"
-//#include "cmod_csp_common_eqns.h"
 
 //#include "cst_iph_dispatch.h"
 #include "csp_dispatch.h"

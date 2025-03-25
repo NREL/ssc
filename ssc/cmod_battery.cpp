@@ -273,6 +273,8 @@ var_info vtab_battery_outputs[] = {
     { SSC_OUTPUT,        SSC_ARRAY,      "crit_load_unmet",                            "Critical load unmet in this timestep",                  "kW","",                      "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "crit_load",                                  "Critical load in this timestep",                        "kW","",                      "Battery",       "",                           "",                              "" },
     { SSC_OUTPUT,        SSC_ARRAY,      "outage_losses_unmet",                        "Battery and system losses unmet in this timestep",     "kW","",                      "Battery",       "",                           "",                              "" },
+    { SSC_OUTPUT,        SSC_ARRAY,      "batt_dispatch_period",                       "Battery manual dispatch period in this timestep",              "","",                      "Battery",       "",                           "",                              "" },
+
 
     // PV Smoothing
     { SSC_OUTPUT,        SSC_ARRAY,      "batt_pvs_PV_ramp_interval",                  "PV smoothing PV power sampled", "kW", "", "Battery", "", "", "" },
@@ -1019,6 +1021,9 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             outGridPowerTarget = vt.allocate("grid_power_target", nrec * nyears);
             outBattPowerTarget = vt.allocate("batt_power_target", nrec * nyears);
         }
+        else {
+            outDispatchPeriod = vt.allocate("batt_dispatch_period", nrec * nyears);
+        }
     }
     else if (batt_vars->batt_meter_position == dispatch_t::FRONT)
     {
@@ -1038,6 +1043,9 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
             outBenefitGridcharge = vt.allocate("batt_revenue_gridcharge", nrec * nyears);
             outBenefitClipcharge = vt.allocate("batt_revenue_clipcharge", nrec * nyears);
             outBenefitDischarge = vt.allocate("batt_revenue_discharge", nrec * nyears);
+        }
+        else {
+            outDispatchPeriod = vt.allocate("batt_dispatch_period", nrec * nyears);
         }
     }
     outSystemToBattAC = vt.allocate("system_to_batt", nrec * nyears);
@@ -1179,7 +1187,7 @@ battstor::battstor(var_table& vt, bool setup_model, size_t nrec, double dt_hr, c
     }
 
     std::vector<double> adj_losses(1, 0.0);
-    if (vt.is_assigned("batt_adjust_costant") || vt.is_assigned("batt_adjust_periods") || vt.is_assigned("batt_adjust_timeindex")) {
+    if (vt.is_assigned("batt_adjust_constant") || vt.is_assigned("batt_adjust_periods") || vt.is_assigned("batt_adjust_timeindex")) {
         adj_losses.clear();
         adjustment_factors haf(&vt, "batt_adjust");
         if (!haf.setup(nrec, nyears)) {
@@ -1764,6 +1772,8 @@ battstor::battstor(const battstor& orig) {
 
     outAdjustLosses = orig.outAdjustLosses;
 
+    outDispatchPeriod = orig.outDispatchPeriod;
+
     // copy models
     if (orig.batt_vars) batt_vars = orig.batt_vars;
     battery_metrics = new battery_metrics_t(orig._dt_hour);
@@ -1955,6 +1965,9 @@ void battstor::outputs_topology_dependent()
             outGridPowerTarget[index] = (ssc_number_t)(dispatch_model->power_grid_target());
             outBattPowerTarget[index] = (ssc_number_t)(dispatch_model->power_batt_target());
         }
+        else {
+            outDispatchPeriod[index] = (ssc_number_t)(dispatch_model->get_dispatch_period());
+        }
 
         if (analyze_outage) {
             outCritLoadUnmet[index] = (ssc_number_t)(dispatch_model->power_crit_load_unmet());
@@ -1984,6 +1997,9 @@ void battstor::outputs_topology_dependent()
             outBenefitDischarge[index] = (ssc_number_t)(dispatch_fom->benefit_discharge());
             outBenefitClipcharge[index] = (ssc_number_t)(dispatch_fom->benefit_clipcharge());
             outBenefitGridcharge[index] = (ssc_number_t)(dispatch_fom->benefit_gridcharge());
+        }
+        else {
+            outDispatchPeriod[index] = (ssc_number_t)(dispatch_model->get_dispatch_period());
         }
     }
 
