@@ -87,7 +87,7 @@ static var_info _cm_vtab_geothermal_costs[] = {
         { SSC_INPUT,        SSC_NUMBER,      "num_wells_getem_prod_drilled",                      "Number of drilled production wells",                      "0/1",             "0=LargerDiameter,1=SmallerDiameter",             "GeoHourly",        "",                        "",                "" },
         { SSC_INPUT,        SSC_NUMBER,      "num_wells_getem_prod_failed",                      "Number of failed production wells",                      "0/1",             "0=LargerDiameter,1=SmallerDiameter",             "GeoHourly",        "",                        "",                "" },
 
-    { SSC_INPUT,        SSC_NUMBER,      "num_wells_getem_inj_drilled",                      "Number of drilled injection wells",                      "0/1",             "0=LargerDiameter,1=SmallerDiameter",             "GeoHourly",        "",                        "",                "" },
+        { SSC_INPUT,        SSC_NUMBER,      "num_wells_getem_inj_drilled",                      "Number of drilled injection wells",                      "0/1",             "0=LargerDiameter,1=SmallerDiameter",             "GeoHourly",        "",                        "",                "" },
         { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.stim_non_drill",                      "Stimulation non drilling costs",                      "$",             "",             "GeoHourly",        "calc_drill_costs=1",                        "",                "?=0" },
         { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.expl_non_drill",                      "Exploration non drilling costs",                      "$",             "",             "GeoHourly",        "calc_drill_costs=1",                        "",                "?=750000" },
         { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.conf_non_drill",                      "Confirmation non drilling costs",                      "$",             "",             "GeoHourly",        "calc_drill_costs=1",                        "",                "?=250000" },
@@ -102,7 +102,7 @@ static var_info _cm_vtab_geothermal_costs[] = {
 
         // name change to match assign statement
  //       { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.pump_geotherm.cost.pump_depth",                      "Pump depth",                      "ft",             "",             "GeoHourly",        "",                        "",                "" },
-        { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.pump_depth",                      "Pump depth",                      "ft",             "",             "GeoHourly",        "",                        "",                "?=1123120" },
+        { SSC_INPUT,        SSC_NUMBER,      "pump_depth_ft",                      "Pump depth",                      "ft",             "",             "GeoHourly",        "",                        "",                "?=1123120" },
         { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.prod_req",                      "Number of production wells required",                      "",             "",             "GeoHourly",        "",                        "",                "?=3.667" },
         { SSC_INPUT,        SSC_NUMBER,      "pump_size_hp",                      "Production pump power",                      "hp",             "",             "GeoHourly",        "",                        "",                "?733.646" },
         { SSC_INPUT,        SSC_NUMBER,      "inj_pump_hp",                      "Injection pump power",                      "hp",             "",             "GeoHourly",        "",                        "",                "" },
@@ -111,11 +111,6 @@ static var_info _cm_vtab_geothermal_costs[] = {
 
         // Outputs	
 		{ SSC_OUTPUT,       SSC_NUMBER,     "baseline_cost",					"Baseline cost",											"$/kW",		"",                     "GeoHourly",				"?",                         "",                            "" },
-        { SSC_OUTPUT,       SSC_NUMBER,     "inj_total_cost",					"Total injection well cost",											"$",		"",                     "GeoHourly",				"calc_drill_costs=1",                         "",                            "" },
-        { SSC_OUTPUT,       SSC_NUMBER,     "prod_total_cost",					"Total production well cost",											"$",		"",                     "GeoHourly",				"calc_drill_costs=1",                         "",                            "" },
-        { SSC_OUTPUT,       SSC_NUMBER,     "stim_total_cost",					"Total stimulation well cost",											"$",		"",                     "GeoHourly",				"calc_drill_costs=1",                         "",                            "" },
-        { SSC_OUTPUT,       SSC_NUMBER,     "expl_total_cost",					"Total exploration well cost",											"$",		"",                     "GeoHourly",				"calc_drill_costs=1",                         "",                            "" },
-        { SSC_OUTPUT,       SSC_NUMBER,     "conf_total_cost",					"Total confirmation well cost",											"$",		"",                     "GeoHourly",				"calc_drill_costs=1",                         "",                            "" },
         { SSC_OUTPUT,       SSC_NUMBER,     "total_drilling_cost",					"Total drilling cost",											"$",		"",                     "GeoHourly",				"calc_drill_costs=1",                         "",                            "" },
         { SSC_OUTPUT,       SSC_NUMBER,     "total_pump_cost",					"Total pumping cost",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
         { SSC_OUTPUT,       SSC_NUMBER,     "total_gathering_cost",					"Total gathering well cost",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
@@ -126,11 +121,26 @@ static var_info _cm_vtab_geothermal_costs[] = {
         { SSC_OUTPUT,       SSC_NUMBER,     "total_surface_equipment_cost",					"Total surface equipment cost",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
         { SSC_OUTPUT,       SSC_NUMBER,     "prod_pump_cost_per_well",					"Production pump cost per well",											"$/well",		"",                     "GeoHourly",				"?",                         "",                            "" },
         { SSC_OUTPUT,       SSC_NUMBER,     "inj_pump_cost_per_pump",					"Injection pump cost per pump",											"$/pump",		"",                     "GeoHourly",				"?",                         "",                            "" },
-        { SSC_OUTPUT,       SSC_NUMBER,     "num_inj_pumps",					"Number of injection pumps",											"",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "inj_num_pumps",					"Number of injection pumps",											"",		"",                     "GeoHourly",				"?",                         "",                            "" },
         { SSC_OUTPUT,       SSC_NUMBER,     "indirect_pump_cost",					"Number of injection pumps",											"",		"",                     "GeoHourly",				"?",                         "",                            "" },
         { SSC_OUTPUT,       SSC_NUMBER,     "prod_pump_cost",					"Production pump system cost",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
-        { SSC_OUTPUT,       SSC_NUMBER,     "inj_pump_cost",					"Injection pump_system_cost",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "inj_pump_cost",					"Injection pump system cost",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "piping_cost_per_well",					"Surface piping cost per well",											"$/well",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "field_gathering_num_wells",					"Field gathering system number of wells",											"wells",		"",                     "GeoHourly",				"?",                         "",                            "" },
 
+        //Stimulation costs
+        { SSC_OUTPUT,       SSC_NUMBER,     "stim_cost_per_well",					"Stimulation cost per well",											"$/well",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "stim_cost_non_drill",					"Non-drilling stimulation costs",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        //Expl and Confirmation drilling costs
+        { SSC_OUTPUT,       SSC_NUMBER,     "expl_total_cost",					"Exploration total costs",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "expl_drilling_cost",					"Exploration drilling costs",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "conf_total_cost",					"Confirmation total costs",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "conf_drilling_cost",					"Confirmation drilling costs",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        //Drilling costs
+        { SSC_OUTPUT,       SSC_NUMBER,     "prod_well_cost",					"Production cost per well",											"$/well",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "prod_total_cost",					"Total production well system cost",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "inj_well_cost",					"Injection cost per well",											"$/well",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "inj_total_cost",					"Total injection well system cost",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
 
         var_info_invalid };
 
@@ -891,7 +901,7 @@ public:
         double workover_casing_cost = as_double("geotherm.cost.pump_casing_cost");
         //double casing_cost = as_double("casing_cost");
         double installation_cost_per_foot = as_double("geotherm.cost.pump_per_foot");
-        double pump_set_depth = as_double("geotherm.cost.pump_depth");
+        double pump_set_depth = as_double("pump_depth_ft");
         double num_prod_wells = as_double("geotherm.cost.prod_req");
         double prod_pump_power = as_double("pump_size_hp");
         double pump_fixed_cost = as_double("geotherm.cost.pump_fixed");
@@ -926,7 +936,7 @@ public:
         assign("prod_pump_cost_per_well", prod_pump_cost_per_well);
         assign("prod_pump_cost", production_pump_cost);
         assign("inj_pump_cost_per_pump", inj_pump_cost_per_pump);
-        assign("num_inj_pumps", num_injection_pumps);
+        assign("inj_num_pumps", num_injection_pumps);
         assign("inj_pump_cost", injection_pump_cost);
         double total_pump_cost = production_pump_cost + injection_pump_cost;
         assign("total_pump_cost", var_data(static_cast<ssc_number_t>(total_pump_cost)));

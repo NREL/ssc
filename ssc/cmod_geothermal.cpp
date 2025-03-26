@@ -405,6 +405,9 @@ public:
         assign("num_wells_getem_inj", var_data((ssc_number_t)geo_outputs.md_NumberOfWellsInj));
         assign("num_wells_getem_inj_drilled", var_data((ssc_number_t)geo_outputs.md_NumberOfWellsInjDrilled));
 
+        assign("gross_output", var_data((ssc_number_t)geo_outputs.md_GrossPlantOutputMW));
+        assign("gross_cost_output", var_data((ssc_number_t)geo_outputs.md_GrossPowerkW));
+
 		if (iControl == 1) {
 			
 		// just doing calculations for the UI, not running the model
