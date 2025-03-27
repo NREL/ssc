@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "core.h"
 #include "common.h"
 
-enum MHK_DEVICE_TYPES { GENERIC, RM3, RM5, RM6, RM1 };
+enum MHK_DEVICE_TYPES { GENERIC, RM3, RM5, RM6, RM1, RM2, GENERIC_TIDAL };
 enum MHK_TECHNOLOGY_TYPE { WAVE, TIDAL };
 
 
@@ -48,7 +48,9 @@ static var_info _cm_vtab_mhk_costs[] = {
 	{ SSC_INPUT,			SSC_NUMBER,			"marine_energy_tech",						"Marine energy technology",								"0/1",			"0=Wave,1=Tidal",				"MHKCosts",			"*",					"MIN=0,MAX=1",				"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"library_or_input_wec",						"Wave library or user input",								"",			"0=Library,1=User",				"MHKCosts",			"marine_energy_tech=0",					"",				"" },
 	{ SSC_INPUT,			SSC_STRING,			"lib_wave_device",							"Wave library name",								"",			"",				"MHKCosts",			"marine_energy_tech=0",					"",				"" },
-	{ SSC_INPUT,			SSC_NUMBER,			"inter_array_cable_length",					"Inter-array cable length",								"m",			"",								"MHKCosts",			"*",					"MIN=0",					"" },
+    { SSC_INPUT,			SSC_STRING,			"lib_tidal_device",							"Tidal library name",								"",			"",				"MHKCosts",			"marine_energy_tech=1",					"",				"" },
+
+    { SSC_INPUT,			SSC_NUMBER,			"inter_array_cable_length",					"Inter-array cable length",								"m",			"",								"MHKCosts",			"*",					"MIN=0",					"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"riser_cable_length",						"Riser cable length",									"m",			"",								"MHKCosts",			"*",					"MIN=0",					"" },
 	{ SSC_INPUT,			SSC_NUMBER,			"export_cable_length",						"Export cable length",									"m",			"",								"MHKCosts",			"*",					"MIN=0",					"" },
 
@@ -156,6 +158,17 @@ public:
 					device_type = 0;
 			}
 		}
+        
+        else
+        {
+            std::string tidal_device = as_string("lib_tidal_device");
+            if (tidal_device == "RM1")
+                device_type = RM1; //RM1
+            else if (tidal_device == "RM2")
+                device_type = RM2;
+            else
+                device_type = GENERIC_TIDAL;
+        }
 
 		//define intermediate variables to store calculated outputs
 		double structural_assembly, power_takeoff, mooring_found_substruc;
@@ -167,12 +180,31 @@ public:
 		//Most CapEx costs depend on technology
 		if (technology == TIDAL)
 		{ // device = RM1
-			structural_assembly = 417185.0 * system_capacity_MW + 1068446.0;
-			power_takeoff = 1821066.0 * system_capacity_MW +  602898.0;
-			mooring_found_substruc = 443055.0 * system_capacity_MW + 384877.0;
-			//BOS costs SAM Cost Model v8.xlsx
-            development = 2957847 * pow(system_capacity_MW, 0.51);
-			eng_and_mgmt = 78127 * system_capacity_MW + 2325517;
+            if (device_type == RM1) {
+                structural_assembly = 338981 * system_capacity_MW + 936326;
+                power_takeoff = 1821066.0 * system_capacity_MW + 602898.0;
+                mooring_found_substruc = 443055.0 * system_capacity_MW + 384877.0;
+                //BOS costs SAM Cost Model v8.xlsx
+                development = 2957847 * pow(system_capacity_MW, 0.51);
+                eng_and_mgmt = 78127 * system_capacity_MW + 2325517;
+            }
+            else if (device_type == RM2) {
+                //REPLACE WITH ACTUAL RM2 COST CURVES
+                structural_assembly = 1573876 * system_capacity_MW + 161960;
+                power_takeoff = 3397389 * system_capacity_MW;
+                mooring_found_substruc = 551697 * system_capacity_MW;
+                //BOS costs SAM Cost Model v8.xlsx
+                development = 2957847 * pow(system_capacity_MW, 0.51);
+                eng_and_mgmt = 78127 * system_capacity_MW + 2325517;
+            }
+            else { //Generic Tidal
+                structural_assembly = 1573876 * system_capacity_MW + 161960;
+                power_takeoff = 3397389 * system_capacity_MW;
+                mooring_found_substruc = 551697 * system_capacity_MW;
+                //BOS costs SAM Cost Model v8.xlsx
+                development = 2957847 * pow(system_capacity_MW, 0.51);
+                eng_and_mgmt = 78127 * system_capacity_MW + 2325517;
+            }
 		}
 		else // wave
 		{
