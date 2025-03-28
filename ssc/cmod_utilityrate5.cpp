@@ -2366,6 +2366,16 @@ public:
 
 
 								// cumulative energy used to determine tier for credit of entire surplus amount
+
+                                // check for vlid tier structure per https://github.com/NREL/SAM/issues/1834
+                                size_t max_tier = curr_month.ec_tou_ub.ncols() - 1;
+                                if (cumulative_energy > curr_month.ec_tou_ub.at(row, max_tier)) {
+                                    std::ostringstream ss;
+                                    ss << "cumulative energy  " << cumulative_energy << "kWh exceeds maximum usage specified for all tiers for period " << row;
+                                    throw exec_error("utilityrate5", ss.str());
+                                }
+
+
 								ssc_number_t credit_amt = 0;
 
                                 ssc_number_t tier_credit = 0.0, sr = 0.0, tier_energy = 0.0;
@@ -2682,8 +2692,7 @@ public:
 	void ur_update_ec_monthly(int month, util::matrix_t<double>& charge, util::matrix_t<double>& energy, util::matrix_t<double>& surplus)
 
 	{
-		if (month < 0 || month > (int)rate.m_month.size())
-		{
+		if (month < 0 || month > (int)rate.m_month.size()) {
 			std::ostringstream ss;
 			ss << "ur_update_ec_monthly month not found for Month " << month;
 			throw exec_error("utilityrate5", ss.str());
