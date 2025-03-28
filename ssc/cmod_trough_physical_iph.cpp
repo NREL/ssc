@@ -1576,7 +1576,10 @@ public:
             c_heat_sink_phys.ms_params.m_q_dot_des = q_dot_hs_des;			//[MWt] HEAT SINK design thermal power (could have field solar multiple...)
             // 9.18.2016 twn: assume for now there's no pressure drop though heat sink
             c_heat_sink_phys.ms_params.m_htf_pump_coef = as_double("pb_pump_coef");		//[kWe/kg/s]
+
+
             c_heat_sink_phys.ms_params.m_max_frac = f_turbine_max1;
+
 
             c_heat_sink_phys.ms_params.m_pc_fl = as_integer("Fluid");
             c_heat_sink_phys.ms_params.m_pc_fl_props = as_matrix("field_fl_props");

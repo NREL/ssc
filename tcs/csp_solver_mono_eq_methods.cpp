@@ -1255,8 +1255,15 @@ int C_csp_solver::C_MEQ__T_field_cold::operator()(double T_field_cold /*C*/, dou
 
             if (f_m_dot_code != C_monotonic_eq_solver::CONVERGED)
             {
-                if (f_m_dot_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) < 0.1)
+                // One scenario is that E__CR_OUT__ITER_Q_DOT_TARGET_CH_ONLY can't reduce mass flow enough to hit low target
+                if (m_solver_mode == C_MEQ__m_dot_tes::E__CR_OUT__ITER_Q_DOT_TARGET_CH_ONLY && c_solver.is_no_negative_error(f_m_dot_code))
                 {
+                    return -5;
+                }
+                else if (f_m_dot_code > C_monotonic_eq_solver::CONVERGED && std::abs(tol_solved) < 0.1)
+                {
+                    
+
                     std::string msg = util::format("At time = %lg power cycle mass flow for startup "
                         "iteration to find a defocus resulting in the maximum power cycle mass flow rate only reached a convergence "
                         "= %lg. Check that results at this timestep are not unreasonably biasing total simulation results",
