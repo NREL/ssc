@@ -169,12 +169,15 @@ static var_info _cm_vtab_trough_physical_iph[] = {
     { SSC_INPUT,        SSC_MATRIX,      "Design_loss",               "Receiver heat loss at design",                                                     "W/m",          "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "rec_su_delay",              "Fixed startup delay time for the receiver",                                        "hr",           "",               "solar_field",    "*",                       "",                      "" },
     { SSC_INPUT,        SSC_NUMBER,      "rec_qf_delay",              "Energy-based receiver startup delay (fraction of rated thermal power)",            "-",            "",               "solar_field",    "*",                       "",                      "" },
-    { SSC_INPUT,        SSC_NUMBER,      "p_start",                   "Collector startup energy, per SCA",                                                "kWhe",       "",               "solar_field",    "*",                       "",                      "" },
+    { SSC_INPUT,        SSC_NUMBER,      "p_start",                   "Collector startup energy, per SCA",                                                "kWhe",       "",                 "solar_field",    "*",                       "",                      "" },
 
     // Heat Sink
     { SSC_INPUT,     SSC_NUMBER,         "pb_pump_coef",              "Pumping power to move 1kg of HTF through PB loop",                                 "kW/kg",        "",               "Heat Sink",      "*",                       "",                      "" },
 
     { SSC_INPUT,     SSC_NUMBER,         "hs_type",                   "0: ideal model, 1: physical steam model",                                          "",             "",               "Heat Sink",      "?=0",                     "",                      "" },
+    { SSC_INPUT,     SSC_NUMBER,         "hs_htf_mdot_max_frac",      "Maximum HTF mass flow to heat sink relative to design point",                      "",             "",               "Heat Sink",      "*",                       "",                      "" },
+
+        
     //{ SSC_INPUT,     SSC_NUMBER,         "hs_phys_N_sub",             "Number physical heat sink HX nodes",                                               "",             "",               "Heat Sink",      "hs_type=1",               "",                      "" },
     //{ SSC_INPUT,     SSC_NUMBER,         "hs_phys_tol",               "Physical heat sink solve tolerance",                                               "",             "",               "Heat Sink",      "hs_type=1",               "",                      "" },
     //{ SSC_INPUT,     SSC_NUMBER,         "hs_phys_f_mdot_steam_min",  "Min steam mdot fraction for physical heat sink",                                   "",             "",               "Heat Sink",      "hs_type=1",               "",                      "" },
@@ -1537,9 +1540,9 @@ public:
             //for (size_t i = 0; i < n_f_turbine1; i++) {
             //    f_turbine_max1 = max(f_turbine_max1, p_f_turbine1[i]);
             //}
-            double f_turbine_max1 = 1.0;
-            for (S_timeseries_schedule_data data : offtaker_schedule.mv_timeseries_schedule_data)
-                f_turbine_max1 = max(f_turbine_max1, data.nondim_value);
+            //double f_turbine_max1 = 1.0;
+            //for (S_timeseries_schedule_data data : offtaker_schedule.mv_timeseries_schedule_data)
+            //    f_turbine_max1 = max(f_turbine_max1, data.nondim_value);
 
 
             c_heat_sink.ms_params.m_T_htf_hot_des = T_htf_hot_des;		//[C] FIELD design outlet temperature
@@ -1547,7 +1550,7 @@ public:
             c_heat_sink.ms_params.m_q_dot_des = q_dot_hs_des;			//[MWt] HEAT SINK design thermal power (could have field solar multiple...)
             // 9.18.2016 twn: assume for now there's no pressure drop though heat sink
             c_heat_sink.ms_params.m_htf_pump_coef = as_double("pb_pump_coef");		//[kWe/kg/s]
-            c_heat_sink.ms_params.m_max_frac = f_turbine_max1;
+            c_heat_sink.ms_params.m_max_frac = as_double("hs_htf_mdot_max_frac");  // f_turbine_max1;
 
             c_heat_sink.ms_params.m_pc_fl = as_integer("Fluid");
             c_heat_sink.ms_params.m_pc_fl_props = as_matrix("field_fl_props");
@@ -1564,12 +1567,12 @@ public:
         }
         else if (hs_type == 1)
         {
-            size_t n_f_turbine1 = 0;
-            ssc_number_t* p_f_turbine1 = as_array("f_turb_tou_periods", &n_f_turbine1);   // heat sink, not turbine
-            double f_turbine_max1 = 1.0;
-            for (size_t i = 0; i < n_f_turbine1; i++) {
-                f_turbine_max1 = max(f_turbine_max1, p_f_turbine1[i]);
-            }
+            //size_t n_f_turbine1 = 0;
+            //ssc_number_t* p_f_turbine1 = as_array("f_turb_tou_periods", &n_f_turbine1);   // heat sink, not turbine
+            //double f_turbine_max1 = 1.0;
+            //for (size_t i = 0; i < n_f_turbine1; i++) {
+            //    f_turbine_max1 = max(f_turbine_max1, p_f_turbine1[i]);
+            //}
 
             c_heat_sink_phys.ms_params.m_T_htf_hot_des = T_htf_hot_des;		//[C] FIELD design outlet temperature
             c_heat_sink_phys.ms_params.m_T_htf_cold_des = T_htf_cold_des;	//[C] FIELD design inlet temperature
@@ -1578,7 +1581,7 @@ public:
             c_heat_sink_phys.ms_params.m_htf_pump_coef = as_double("pb_pump_coef");		//[kWe/kg/s]
 
 
-            c_heat_sink_phys.ms_params.m_max_frac = f_turbine_max1;
+            c_heat_sink_phys.ms_params.m_max_frac = as_double("hs_htf_mdot_max_frac");  // f_turbine_max1;
 
 
             c_heat_sink_phys.ms_params.m_pc_fl = as_integer("Fluid");
