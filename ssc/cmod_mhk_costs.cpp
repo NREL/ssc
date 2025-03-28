@@ -362,7 +362,6 @@ public:
 			other_elec_infra = as_double("other_elec_infra_cost_input");
 
 
-        // Calculate the CapEx dependent BOS costs
         plant_commissioning = 56103 * system_capacity_MW;
         site_access_port_staging = 75462 * system_capacity_MW;
 
