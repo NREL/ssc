@@ -274,9 +274,5 @@ TEST_F(CM_MHKWave, ComputeModuleTest_cmod_mhk_wave_time_series_file) {
     ssc_data_clear(data);
 }
 
-TEST_F(CM_MHKWave, CostModelCurveTest) {
-    ssc_
-
-}
 
 
