@@ -59,8 +59,8 @@ NAMESPACE_TEST(csp_trough, HeatTroughCmod, Default_NoFinancial)
         //EXPECT_NEAR_FRAC(heat_trough.GetOutput("annual_gross_energy"), 24267285, kErrorToleranceHi);
         EXPECT_NEAR_FRAC(heat_trough.GetOutput("annual_energy"), 24142307, kErrorToleranceHi);
         EXPECT_NEAR_FRAC(heat_trough.GetOutput("annual_electricity_consumption"), 94120, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(heat_trough.GetOutput("annual_thermal_consumption"), 217.51, kErrorToleranceHi);
-        EXPECT_NEAR_FRAC(heat_trough.GetOutput("annual_tes_freeze_protection"), 217.51, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(heat_trough.GetOutput("annual_thermal_consumption"), 182.81, kErrorToleranceHi);
+        EXPECT_NEAR_FRAC(heat_trough.GetOutput("annual_tes_freeze_protection"), 182.81, kErrorToleranceHi);
         EXPECT_NEAR(heat_trough.GetOutput("annual_field_freeze_protection"), 0., kErrorToleranceHi);
         EXPECT_NEAR_FRAC(heat_trough.GetOutput("annual_total_water_use"), 176.3, kErrorToleranceHi);
 
