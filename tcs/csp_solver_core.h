@@ -844,6 +844,7 @@ public:
 			// Ouputs that are NOT reported as weighted averages
 				// Simulation
 			TIME_FINAL,       //[hr] Simulation timestep
+            SIM_DURATION,     //[s] Timestep simulation duration
 				// Weather Reader
 			MONTH,            //[-] Month of year
 			HOUR_DAY,         //[hr] hour of day

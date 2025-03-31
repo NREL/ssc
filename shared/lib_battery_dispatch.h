@@ -139,6 +139,8 @@ public:
 	virtual double cost_to_cycle() { return 0.;}
     virtual double cost_to_cycle_per_kwh() { return 0.; }
 
+    virtual size_t get_dispatch_period() { return 0; }
+
 	// control settings
 	double battery_power_to_fill();
 
