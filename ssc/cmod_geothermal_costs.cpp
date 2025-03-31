@@ -103,7 +103,7 @@ static var_info _cm_vtab_geothermal_costs[] = {
         // name change to match assign statement
  //       { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.pump_geotherm.cost.pump_depth",                      "Pump depth",                      "ft",             "",             "GeoHourly",        "",                        "",                "" },
         { SSC_INPUT,        SSC_NUMBER,      "pump_depth_ft",                      "Pump depth",                      "ft",             "",             "GeoHourly",        "",                        "",                "?=1123120" },
-        { SSC_INPUT,        SSC_NUMBER,      "geotherm.cost.prod_req",                      "Number of production wells required",                      "",             "",             "GeoHourly",        "",                        "",                "?=3.667" },
+        { SSC_INPUT,        SSC_NUMBER,      "num_wells_getem",                      "Number of production wells required",                      "",             "",             "GeoHourly",        "",                        "",                "?=3.667" },
         { SSC_INPUT,        SSC_NUMBER,      "pump_size_hp",                      "Production pump power",                      "hp",             "",             "GeoHourly",        "",                        "",                "?733.646" },
         { SSC_INPUT,        SSC_NUMBER,      "inj_pump_hp",                      "Injection pump power",                      "hp",             "",             "GeoHourly",        "",                        "",                "" },
         { SSC_INPUT,        SSC_NUMBER,      "stimulation_type",                      "Which wells are stimulated",                      "0/1/2/3",             "",             "GeoHourly",        "",                        "",                "?=0" },
@@ -902,7 +902,7 @@ public:
         //double casing_cost = as_double("casing_cost");
         double installation_cost_per_foot = as_double("geotherm.cost.pump_per_foot");
         double pump_set_depth = as_double("pump_depth_ft");
-        double num_prod_wells = as_double("geotherm.cost.prod_req");
+        double num_prod_wells = as_double("num_wells_getem");
         double prod_pump_power = as_double("pump_size_hp");
         double pump_fixed_cost = as_double("geotherm.cost.pump_fixed");
         double prod_pump_cost = 1750 * pow(prod_pump_power, 0.7) * pump_ppi[ppi_base_year];
