@@ -164,6 +164,8 @@ jobs:
         echo "ls ${SSCDIR}/build/test"
         ls ${SSCDIR}/build/test
         echo "Run test"
+        ${SSCDIR}/build/test/Test
+        echo "Run test to log"
         ${SSCDIR}/build/test/Test > ${SSCDIR}/build/test/gtest.log
         echo "Print log of test"
         cat ${SSCDIR}/build/test/gtest.log
