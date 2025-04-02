@@ -674,6 +674,13 @@ void rate_data::setup_energy_rates(ssc_number_t* ec_weekday, ssc_number_t* ec_we
 							sell = ec_tou_mat.at(r, 4);
 						m_month[m].ec_tou_sr.at(i, j) = sell;
 
+                        // handle nan values and negative max usage SAM issue 1856
+                        if (std::isnan(m_month[m].ec_tou_ub.at(i, j)) || m_month[m].ec_tou_ub.at(i, j) < 0) {
+                            std::ostringstream ss;
+                            ss << "Energy rate table has a NaN or negative value for Max Usage in Period " << period << " and Tier " << tier << ".";
+                            throw exec_error("lib_utility_rate_equations", ss.str());
+                        }
+
                         if (tier_check.size() < tier) {
                             tier_check.push_back(m_month[m].ec_tou_ub.at(i, j));
                             tier_units.push_back(m_month[m].ec_tou_units.at(i, j));
