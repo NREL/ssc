@@ -76,6 +76,7 @@ jobs:
       run: |
         set -e
         ${SSCDIR}/build/test/Test > ${SSCDIR}/build/test/gtest.log
+        cat ${SSCDIR}/build/test/gtest.log
         pip install pandas requests
         python ${SSCDIR}/test/compare_elapsed_time.py gtest_log ${SSCDIR}/build/test/gtest.log
     
@@ -160,7 +161,14 @@ jobs:
       # Turn off fast fail for when the landbosse tests write to cerr
       run: |
         set -e
+        echo "ls ${SSCDIR}/build/test"
+        ls ${SSCDIR}/build/test
+        echo "Run test"
+        ${SSCDIR}/build/test/Test
+        echo "Run test to log"
         ${SSCDIR}/build/test/Test > ${SSCDIR}/build/test/gtest.log
+        echo "Print log of test"
+        cat ${SSCDIR}/build/test/gtest.log
         pip install pandas requests
         python ${SSCDIR}/test/compare_elapsed_time.py gtest_log ${SSCDIR}/build/test/gtest.log
       shell: bash      
@@ -264,6 +272,7 @@ jobs:
       run: |
         cd ${SSCDIR}/build/test/Release
         ./Test.exe > ${SSCDIR}/build/test/gtest.log
+        cat ${SSCDIR}/build/test/gtest.log
         pip install pandas requests
         python ${SSCDIR}/test/compare_elapsed_time.py gtest_log ${SSCDIR}/build/test/gtest.log
   
