@@ -76,6 +76,7 @@ jobs:
       run: |
         set -e
         ${SSCDIR}/build/test/Test > ${SSCDIR}/build/test/gtest.log
+        cat ${SSCDIR}/build/test/gtest.log
         pip install pandas requests
         python ${SSCDIR}/test/compare_elapsed_time.py gtest_log ${SSCDIR}/build/test/gtest.log
     
@@ -161,6 +162,7 @@ jobs:
       run: |
         set -e
         ${SSCDIR}/build/test/Test > ${SSCDIR}/build/test/gtest.log
+        cat ${SSCDIR}/build/test/gtest.log
         pip install pandas requests
         python ${SSCDIR}/test/compare_elapsed_time.py gtest_log ${SSCDIR}/build/test/gtest.log
       shell: bash      
@@ -264,6 +266,7 @@ jobs:
       run: |
         cd ${SSCDIR}/build/test/Release
         ./Test.exe > ${SSCDIR}/build/test/gtest.log
+        cat ${SSCDIR}/build/test/gtest.log
         pip install pandas requests
         python ${SSCDIR}/test/compare_elapsed_time.py gtest_log ${SSCDIR}/build/test/gtest.log
   
