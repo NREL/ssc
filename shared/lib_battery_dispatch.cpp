@@ -1158,7 +1158,7 @@ bool byExportPerKWh::operator() (grid_point const& a, grid_point const& b)
 {
     if (a.ExportPerKWh() == b.ExportPerKWh())
     {
-        return a.ExportPerKWh() > b.ExportPerKWh();
+        return a.ExportPrice() > b.ExportPrice();
     }
     return a.ExportPerKWh() > b.ExportPerKWh();
 }
