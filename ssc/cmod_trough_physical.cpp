@@ -48,7 +48,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include "csp_solver_tou_block_schedules.h"
 #include "csp_dispatch.h"
 #include "csp_system_costs.h"
-//#include "cmod_csp_common_eqns.h"
 
 #include <ctime>
 #include <algorithm>

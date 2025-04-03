@@ -151,13 +151,13 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, DefaultResidentialModel)
         ssc_data_get_number(data, "lcoe_real", &lcoe_real);
         EXPECT_NEAR(lcoe_real, 5.65, m_error_tolerance_lo) << "Levelized COE (real)";
 
-        ssc_number_t elec_cost_without_system_year1;
-        ssc_data_get_number(data, "elec_cost_without_system_year1", &elec_cost_without_system_year1);
-        EXPECT_NEAR(elec_cost_without_system_year1, 973, m_error_tolerance_hi) << "Electricity bill without system (year 1)";
+        ssc_number_t utility_bill_wo_sys_year1;
+        ssc_data_get_number(data, "utility_bill_wo_sys_year1", &utility_bill_wo_sys_year1);
+        EXPECT_NEAR(utility_bill_wo_sys_year1, 973, m_error_tolerance_hi) << "Electricity bill without system (year 1)";
 
-        ssc_number_t elec_cost_with_system_year1;
-        ssc_data_get_number(data, "elec_cost_with_system_year1", &elec_cost_with_system_year1);
-        EXPECT_NEAR(elec_cost_with_system_year1, 122, m_error_tolerance_hi) << "Electricity bill with system (year 1)";
+        ssc_number_t utility_bill_w_sys_year1;
+        ssc_data_get_number(data, "utility_bill_w_sys_year1", &utility_bill_w_sys_year1);
+        EXPECT_NEAR(utility_bill_w_sys_year1, 122, m_error_tolerance_hi) << "Electricity bill with system (year 1)";
 
         ssc_number_t savings_year1;
         ssc_data_get_number(data, "savings_year1", &savings_year1);

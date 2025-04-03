@@ -40,7 +40,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cmod_mhk_eqns.h"
 #include "cmod_merchantplant_eqns.h"
 #include "cmod_pvsamv1_eqns.h"
-#include "cmod_csp_trough_eqns.h"
 #include "cmod_financial_eqns.h"
 #include "cmod_utilityrate5_eqns.h"
 #include "cmod_analysisperiodchange_eqns.h"

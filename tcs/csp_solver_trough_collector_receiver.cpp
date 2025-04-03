@@ -4622,6 +4622,8 @@ bool C_csp_trough_collector_receiver::design_solar_mult(std::vector<double> trou
         m_m_dot_design = (m_Ap_tot * m_I_bn_des * m_opteff_des - loss_tot * float(m_nLoops)) / (m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des));
     }
 
+    m_q_design_ideal = m_m_dot_design * m_c_htf_ave * (m_T_loop_out_des - m_T_loop_in_des); //[Wt]
+
     // Interconnect component minor loss coefficients
     m_K_cpnt = util::matrix_t<double>(m_nSCA + 3, 11, std::numeric_limits<double>::quiet_NaN());
     {
