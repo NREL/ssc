@@ -1239,14 +1239,14 @@ std::vector<double> rate_data::get_composite_tou_sell_rate(int month, size_t yea
 
     size_t num_per = curr_month.ec_tou_sr.nrows();
 
-    if (expected_gen > 0)
+    if (expected_gen > 0) // Net billing should get the sell rate even if expected gen is 0 (e.g. standalone battery)
     {
         for (size_t ir = 0; ir < num_per; ir++)
         {
             bool done = false;
             double periodSellRate = 0;
             // Including the NM credits in the cost function can skew the price signals, causing periods to appear to have higher cost than they actually do. Assume $0 sell rate for NM
-            if (nm_credits_w_rollover)
+            if (nm_credits_w_rollover || !enable_nm) // Not net metering means net billing
             {
                 for (size_t ic = 0; ic < curr_month.ec_tou_ub.ncols() && !done; ic++)
                 {
@@ -1277,7 +1277,7 @@ std::vector<double> rate_data::get_composite_tou_sell_rate(int month, size_t yea
         {
             double periodSellRate = 0;
             // Including the NM credits in the cost function can skew the price signals, causing periods to appear to have higher cost than they actually do. Assume $0 sell rate for NM
-            if (nm_credits_w_rollover)
+            if (nm_credits_w_rollover || !enable_nm)
             {
                 periodSellRate = curr_month.ec_tou_sr.at(ir, 0) * rate_esc;
             }

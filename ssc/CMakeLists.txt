@@ -43,8 +43,8 @@ set(SSC_SRC
 		cmod_generic_system-builder.h
 		cmod_geothermal.cpp
 		cmod_geothermal_costs.cpp
-        cmod_geothermal_eqns.cpp
-        cmod_geothermal_eqns.h
+        cmod_geothermal_costs_eqns.cpp
+        cmod_geothermal_costs_eqns.h
 		cmod_grid.cpp
 		cmod_grid.h
 		cmod_hcpv.cpp
@@ -179,7 +179,7 @@ else()
             cmod_financial_eqns.cpp
             cmod_windpower_eqns.cpp
             cmod_utilityrate5_eqns.cpp
-            cmod_geothermal_eqns.cpp)
+            cmod_geothermal_costs_eqns.cpp)
     set_source_files_properties(${SRC_UNUSED_VARS} PROPERTIES COMPILE_FLAGS -Wno-unused-variable)
 endif()
 
