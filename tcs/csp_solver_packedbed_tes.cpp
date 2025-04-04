@@ -832,16 +832,21 @@ bool C_csp_packedbed_tes::charge(double timestep /*s*/, double T_amb /*K*/, doub
             // Charge INLET
             if (i == 0)
             {
+                double T_in_prev = T_prev_vec_subtime[i];   // Replace T_htf_in with current node previous timestep
+                /*if (m_dot_htf_in > 0)
+                    T_in_dummy = T_htf_hot_in;*/
                 T_calc_vec[i] = (T_prev_vec_subtime[0] + (alpha * T_htf_hot_in)
-                    + (beta * (T_prev_vec_subtime[i + 1] - (2.0 * T_prev_vec_subtime[i]) + T_htf_hot_in)))
+                    + (beta * (T_prev_vec_subtime[i + 1] - (2.0 * T_prev_vec_subtime[i]) + T_in_prev)))
                     / (1.0 + alpha);
             }
 
             // Charge OUTLET
             else if (i == m_n_xstep)
             {
+
+                double T_out_prev = T_prev_vec_subtime[i - 1];  // Replace T_prev_vec_subtime[i - 2] with current node previous timestep
                 T_calc_vec[i] = (T_prev_vec_subtime[i] + (alpha * T_calc_vec[i - 1])
-                    + (beta * (T_prev_vec_subtime[i] - 2.0 * T_prev_vec_subtime[i - 1] + T_prev_vec_subtime[i - 2])))
+                    + (beta * (T_prev_vec_subtime[i - 1] - T_prev_vec_subtime[i])))
                     / (1.0 + alpha);
             }
             else
@@ -952,15 +957,16 @@ bool C_csp_packedbed_tes::discharge(double timestep /*s*/, double T_amb /*K*/, d
             if (i == 0)
             {
                 T_calc_vec[i] = (T_prev_vec_subtime[i] + (alpha * T_calc_vec[i + 1])
-                    + (beta * (T_prev_vec_subtime[i] - 2.0 * T_prev_vec_subtime[i + 1] + T_prev_vec_subtime[i + 2])))
+                    + (beta * (T_prev_vec_subtime[i + 1] - T_prev_vec_subtime[i])))
                     / (1.0 + alpha);
             }
 
             // Discharge INLET
             else if (i == m_n_xstep)
             {
+                double T_in_prev = T_prev_vec_subtime[i];   // Replace T_htf_in with current node previous timestep
                 T_calc_vec[i] = (T_prev_vec_subtime[i] + (alpha * T_htf_cold_in)
-                    + (beta * (T_prev_vec_subtime[i - 1] - (2.0 * T_prev_vec_subtime[i]) + T_htf_cold_in)))
+                    + (beta * (T_prev_vec_subtime[i - 1] - (2.0 * T_prev_vec_subtime[i]) + T_in_prev)))
                     / (1.0 + alpha);
             }
 
