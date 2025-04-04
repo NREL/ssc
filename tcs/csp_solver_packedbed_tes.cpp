@@ -910,7 +910,7 @@ bool C_csp_packedbed_tes::charge(double timestep /*s*/, double T_amb /*K*/, doub
     double cp_fluid_avg = mc_external_htfProps.Cp_ave(m_T_cold_des, m_T_hot_des) * 1.E3; //[J/kg-K]
     for (double T_out : T_out_vec)
     {
-        q_dot_ch_from_htf += m_dot_htf_in * cp_fluid_avg * (T_htf_hot_in - T_out) * 1.E-3 * (dt / timestep);  // [MWt]
+        q_dot_ch_from_htf += m_dot_htf_in * cp_fluid_avg * (T_htf_hot_in - T_out) * 1.E-6 * (dt / timestep);  // [MWt]
     }
 
     return true;
@@ -1017,7 +1017,7 @@ bool C_csp_packedbed_tes::discharge(double timestep /*s*/, double T_amb /*K*/, d
     double cp_fluid_avg = mc_external_htfProps.Cp_ave(m_T_cold_des, m_T_hot_des) * 1.E3; //[J/kg-K]
     for (double T_out : T_out_vec)
     {
-        q_dot_dc_to_htf += m_dot_htf_in * cp_fluid_avg * (T_out - T_htf_cold_in) * 1.E-3 * (dt / timestep);  // [MWt]
+        q_dot_dc_to_htf += m_dot_htf_in * cp_fluid_avg * (T_out - T_htf_cold_in) * 1.E-6 * (dt / timestep);  // [MWt]
     }
 
     // Average Hot Temperature in Tank
