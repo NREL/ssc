@@ -5,6 +5,7 @@ import sys
 import os
 import zipfile
 import io
+import time
 from platform import processor
 
 help_info = """
@@ -20,6 +21,8 @@ Command Line Options to run this script in order to generate CSVs of time elapse
     Downloads the results from workflow for the given SHA and saves it to output dir
 """
 access_token = os.getenv("GH_TOKEN")
+
+tested_platforms = ["Windows", "Mac Arm", "Mac Intel", "Linux"]
 
 platform = None
 if sys.platform == 'linux':
@@ -107,25 +110,48 @@ def get_workflow_artifact_branch(base_branch):
     test_df_base = pd.read_csv(file_dir / "gtest_elapsed_times.csv")
     os.remove(file_dir / "gtest_elapsed_times.csv")
     return test_df_base
-    
+
+def retry_request_with_timeout(url, timeout, headers, sha, retry_delay=20 * 60):
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        response = requests.get(url, headers=headers)
+
+        if response.status_code == 200:
+            artifacts = response.json()['artifacts']
+            artifacts_sha = [a for a in artifacts if a['workflow_run']['head_sha'] == sha]
+            if len(artifacts_sha) > 0:
+                artifacts_count = 0
+                for platform in tested_platforms:
+                    artifacts = [a for a in artifacts_sha if (platform in a['name']) and ("Test Time Elapsed" in a['name'])]
+                    if len(artifacts):
+                        artifacts_count += 1
+                if artifacts_count == len(tested_platforms):
+                    return artifacts_sha
+        else:
+            print(response.json())
+            raise requests.exceptions.RequestException
+        print(f"Request failed: retrying in {retry_delay} seconds...")
+        time.sleep(retry_delay)
+    raise TimeoutError(f"Request to {url} timed out after {timeout} seconds")
+
 def get_artifact_from_sha(sha, output_dir=None):
+    """
+    Give 3 hours for the tests for finish
+    """
+
     headers = {
         'Accept': 'application/vnd.github+json',
         'Authorization': f'Bearer {access_token}',
         'X-GitHub-Api-Version': '2022-11-28',
     }
-
-    response = requests.get('https://api.github.com/repos/NREL/ssc/actions/artifacts', headers=headers)
-
-    if response.status_code != 200:
-        print(response.json())
-        raise Exception("Failed to Get Workflow Artifacts List")
-
-    artifacts = response.json()['artifacts']
-
-    artifacts_sha = [a for a in artifacts if a['workflow_run']['head_sha'] == sha]
+    try:
+        artifacts_sha = retry_request_with_timeout('https://api.github.com/repos/NREL/ssc/actions/artifacts', 60 * 60 * 3, headers, sha)
+    except TimeoutError as e:
+        print(e)
+    except requests.exceptions.RequestException as e:
+        print(f"Request failed after multiple retries: {e}")
     
-    for platform in ["Windows", "Mac Arm", "Mac Intel", "Linux"]:
+    for platform in tested_platforms:
         artifacts = [a for a in artifacts_sha if (platform in a['name']) and ("Test Time Elapsed" in a['name'])]
 
         headers = {
@@ -142,7 +168,7 @@ def get_artifact_from_sha(sha, output_dir=None):
         test_df_base = pd.read_csv(file_dir / "gtest_elapsed_times.csv")
         os.remove(file_dir / "gtest_elapsed_times.csv")
         if output_dir is not None:
-            test_df_base.to_csv(output_dir / f"gtest_elapsed_times_{platform}.csv")
+            test_df_base.to_csv(output_dir / f"gtest_elapsed_times_{platform}.csv", index=False)
             print(f"Saved to {str(output_dir / f'gtest_elapsed_times_{platform}.csv')}")
     return
 

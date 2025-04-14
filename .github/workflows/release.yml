@@ -27,13 +27,13 @@ jobs:
       run: | 
         cd ${{ github.workspace }}/ssc
         git checkout -b update_test_times
+        pip install pandas requests
 
     - name: Download Release Test Times
       env:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
       shell: bash
       run: |
-        pip install pandas requests
         python '${{ github.workspace }}/ssc/test/compare_elapsed_time.py' download_csv $GITHUB_SHA '${{ github.workspace }}/ssc/test/elapsed_time_release'
 
     - name: create pull request
