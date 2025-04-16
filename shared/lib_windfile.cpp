@@ -514,10 +514,10 @@ bool windfile::open( const std::string &file )
             }
 
         }
-        // elevation required for hub-height power curve adjustment
+        // if elevation not in weather file, set to zero
+        // TO DO check to see where and whether elevation is used (check SSC and SAM and UI callbacks)
         if (isnan(elev)) {
-            m_errorMsg = "Elevation must be specified in header. Please check resource data.";
-            return false;
+            elev = 0;
         }
  
         // time stamps expected to be in local time. wind data files provide both site timezone and data timezone in header
