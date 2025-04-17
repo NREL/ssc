@@ -83,7 +83,7 @@ static var_info vtab_cashloan[] = {
 	{ SSC_OUTPUT, SSC_NUMBER, "discounted_payback", "Discounted payback period", "years", "", "Cash Flow", "*", "", "" },
     
     { SSC_OUTPUT, SSC_NUMBER, "npv", "NPV Net present value", "$", "", "Cash Flow", "*", "", "" },
-    { SSC_OUTPUT, SSC_NUMBER, "irr", "IRR Internal rate of return", "$", "", "Cash Flow", "*", "", "" },
+    { SSC_OUTPUT, SSC_NUMBER, "irr", "IRR Internal rate of return", "%", "", "Cash Flow", "*", "", "" },
 
 	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm",                      "Present value of O&M expenses",				   "$",            "",                      "Financial Metrics",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "present_value_oandm_nonfuel",              "Present value of non-fuel O&M expenses",				   "$",            "",                      "Financial Metrics",      "*",                       "",                                         "" },
