@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "csp_solver_fresnel_collector_receiver.h"
 #include "csp_solver_pc_heat_sink.h"
+#include "csp_solver_pc_heat_sink_physical.h"
 #include "csp_dispatch.h"
 #include "csp_system_costs.h"
 #include "csp_solver_two_tank_tes.h"
@@ -156,10 +157,13 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
     { SSC_INPUT,    SSC_NUMBER,         "pb_pump_coef",                "Pumping power to move 1kg of HTF through PB loop",                                      "kW/kg",               "",                             "Heat Sink",            "*",                "",                 "" },
 
     { SSC_INPUT,    SSC_NUMBER,         "hs_type",                     "0: ideal model, 1: physical steam model",                                               "",                    "",                             "Heat Sink",            "?=0",              "",                 "" },
-    { SSC_INPUT,    SSC_NUMBER,         "hs_phys_N_sub",               "Number physical heat sink HX nodes",                                                    "",                    "",                             "Heat Sink",            "hs_type=1",        "",                 "" },
-    { SSC_INPUT,    SSC_NUMBER,         "hs_phys_tol",                 "Physical heat sink solve tolerance",                                                    "",                    "",                             "Heat Sink",            "hs_type=1",        "",                 "" },
-    { SSC_INPUT,    SSC_NUMBER,         "hs_phys_f_mdot_steam_min",    "Min steam mdot fraction for physical heat sink",                                        "",                    "",                             "Heat Sink",            "hs_type=1",        "",                 "" },
-    { SSC_INPUT,    SSC_NUMBER,         "hs_phys_f_mdot_steam_max",    "Max steam mdot fraction for physical heat sink",                                        "",                    "",                             "Heat Sink",            "hs_type=1",        "",                 "" },
+    { SSC_INPUT,     SSC_NUMBER,        "hs_htf_mdot_max_frac",        "Maximum HTF mass flow to heat sink relative to design point",                           "",                    "",                             "Heat Sink",            "*",                "",                 "" },
+
+
+    //{ SSC_INPUT,    SSC_NUMBER,         "hs_phys_N_sub",               "Number physical heat sink HX nodes",                                                    "",                    "",                             "Heat Sink",            "hs_type=1",        "",                 "" },
+    //{ SSC_INPUT,    SSC_NUMBER,         "hs_phys_tol",                 "Physical heat sink solve tolerance",                                                    "",                    "",                             "Heat Sink",            "hs_type=1",        "",                 "" },
+    //{ SSC_INPUT,    SSC_NUMBER,         "hs_phys_f_mdot_steam_min",    "Min steam mdot fraction for physical heat sink",                                        "",                    "",                             "Heat Sink",            "hs_type=1",        "",                 "" },
+    //{ SSC_INPUT,    SSC_NUMBER,         "hs_phys_f_mdot_steam_max",    "Max steam mdot fraction for physical heat sink",                                        "",                    "",                             "Heat Sink",            "hs_type=1",        "",                 "" },
     { SSC_INPUT,    SSC_NUMBER,         "hs_phys_T_steam_cold_des",    "Steam inlet temperature for physical heat sink",                                        "C",                   "",                             "Heat Sink",            "hs_type=1",        "",                 "" },
     { SSC_INPUT,    SSC_NUMBER,         "hs_phys_P_steam_hot_des",     "Steam outlet (and inlet) pressure for physical heat sink",                              "bar",                 "",                             "Heat Sink",            "hs_type=1",        "",                 "" },
     { SSC_INPUT,    SSC_NUMBER,         "hs_phys_Q_steam_hot_des",     "Steam outlet quality for physical heat sink",                                           "",                    "",                             "Heat Sink",            "hs_type=1",        "",                 "" },
@@ -206,7 +210,6 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
 
     { SSC_INPUT,    SSC_NUMBER,         "is_dispatch",                 "Allow dispatch optimization?",  /*TRUE=1*/                                              "-",                   "",                             "Sys_Control",          "?=0",              "",                 "" },
 
-    { SSC_INPUT,    SSC_NUMBER,         "disp_rsu_cost_rel",           "Receiver startup cost",                                                                 "$/MWt/start",         "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
     { SSC_INPUT,    SSC_NUMBER,         "disp_horizon",                "Time horizon for dispatch optimization",                                                "hour",                "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
     { SSC_INPUT,    SSC_NUMBER,         "disp_frequency",              "Frequency for dispatch optimization calculations",                                      "hour",                "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
     { SSC_INPUT,    SSC_NUMBER,         "disp_max_iter",               "Max. no. dispatch optimization iterations",                                             "-",                   "",                             "Sys_Control",          "is_dispatch=1",    "",                 "" },
@@ -221,22 +224,17 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
     /*LK Only*/{ SSC_INPUT,    SSC_NUMBER,         "disp_spec_scaling",           "Dispatch optimization scaling heuristic",                                               "-",                   "",                             "tou",                                      "?=-1",                    "",                      "SIMULATION_PARAMETER" },
     /*LK Only*/{ SSC_INPUT,    SSC_NUMBER,         "disp_inventory_incentive",    "Dispatch storage terminal inventory incentive multiplier",                              "",                    "",                             "System Control",                           "?=0.0",                   "",                      "SIMULATION_PARAMETER" },
 
-    // Receiver control
-    /*LK Only*/{ SSC_INPUT,    SSC_NUMBER,         "q_rec_heattrace",             "Receiver heat trace energy consumption during startup",                                 "kWhe",              "",                             "tou",                                      "?=0.0",                   "",                      "SIMULATION_PARAMETER" },
-    /*LK Only*/{ SSC_INPUT,    SSC_NUMBER,         "q_rec_standby",               "Receiver standby energy consumption",                                                   "kWt",                 "",                             "tou",                                      "?=9e99",                  "",                      "SIMULATION_PARAMETER" },
-
-
 
     // Financials  and Pricing schedules (copied from electricity - eventually need to resolve electricity vs. heat)
     {SSC_INPUT,    SSC_NUMBER,          "csp_financial_model",         "",                                                                                      "1-8",                 "",                             "Financial Model",      "*",              "INTEGER,MIN=0",    ""},
 
     { SSC_INPUT,    SSC_NUMBER,         "ppa_multiplier_model",        "PPA multiplier model 0: dispatch factors dispatch_factorX, 1: hourly multipliers dispatch_factors_ts", "0/1",  "",                             "tou",                  "?=0",  /*need a default so this var works in required_if*/ "INTEGER,MIN=0",  "SIMULATION_PARAMETER" },
-    { SSC_INPUT,    SSC_NUMBER,         "ppa_soln_mode",               "PPA solution mode (0=Specify IRR target, 1=Specify PPA price)",                         "",                    "",                             "Financial Solution Mode",                  "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
-    { SSC_INPUT,    SSC_ARRAY,          "dispatch_factors_ts",         "Dispatch payment factor array",                                                         "",                    "",                             "tou",                                      "ppa_multiplier_model=1&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
-    { SSC_INPUT,    SSC_MATRIX,         "dispatch_sched_weekday",      "PPA pricing weekday schedule, 12x24",                                                   "",                    "",                             "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
-    { SSC_INPUT,    SSC_MATRIX,         "dispatch_sched_weekend",      "PPA pricing weekend schedule, 12x24",                                                   "",                    "",                             "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
-    { SSC_INPUT,    SSC_ARRAY,          "dispatch_tod_factors",        "TOD factors for periods 1 through 9",                                                   "",                    "",                             "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1&sim_type=1",       "",              "SIMULATION_PARAMETER" },
-    { SSC_INPUT,    SSC_ARRAY,          "ppa_price_input_heat_btu",    "PPA prices - yearly",			                                                        "$/MMBtu",	           "",	                           "Revenue",			                       "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1",                  "",      	       "SIMULATION_PARAMETER" },
+    { SSC_INPUT,    SSC_NUMBER,         "ppa_soln_mode",               "PPA solution mode (0=Specify IRR target, 1=Specify PPA price)",                         "",                    "",                             "Financial Solution Mode",                  "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1",       "",              "" },
+    { SSC_INPUT,    SSC_ARRAY,          "dispatch_factors_ts",         "Dispatch payment factor array",                                                         "",                    "",                             "tou",                                      "ppa_multiplier_model=1&csp_financial_model<5&is_dispatch=1",       "",              "" },
+    { SSC_INPUT,    SSC_MATRIX,         "dispatch_sched_weekday",      "PPA pricing weekday schedule, 12x24",                                                   "",                    "",                             "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1",       "",              "" },
+    { SSC_INPUT,    SSC_MATRIX,         "dispatch_sched_weekend",      "PPA pricing weekend schedule, 12x24",                                                   "",                    "",                             "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1",       "",              "" },
+    { SSC_INPUT,    SSC_ARRAY,          "dispatch_tod_factors",        "TOD factors for periods 1 through 9",                                                   "",                    "",                             "Time of Delivery Factors",                 "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1",       "",              "" },
+    { SSC_INPUT,    SSC_ARRAY,          "ppa_price_input_heat_btu",    "PPA prices - yearly",			                                                        "$/MMBtu",	           "",	                           "Revenue",			                       "ppa_multiplier_model=0&csp_financial_model<5&is_dispatch=1",       "",      	    "" },
 
     // Capital Costs
                 // Direct Capital Costs
@@ -352,10 +350,12 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
     { SSC_OUTPUT,       SSC_NUMBER,     "opt_derate",                       "Receiver optical derate",                                              "",             "",         "Receiver",                       "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "opt_normal",                       "Collector optical loss at normal incidence",                           "",             "",         "Receiver",                       "*",                                                                "",              "" },
     
-    // Power Cycle
-    //{ SSC_OUTPUT,       SSC_NUMBER,     "q_dot_cycle_des",                  "PC thermal input at design",                                           "MWt",          "",         "Power Cycle",                              "*",                                                                "",              "" },
-    //{ SSC_OUTPUT,       SSC_NUMBER,     "mdot_cycle_des",                   "PC thermal input at design",                                           "MWt",          "",         "Power Cycle",                              "*",                                                                "",              "" },
-    
+        // Heat sink
+    { SSC_OUTPUT,       SSC_NUMBER,     "m_dot_hs_ext_des",                 "Heat sink fluid mass flow rate",                                       "kg/s",         "",         "System Control",                 "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "T_hs_ext_out_des",                 "Heat sink fluid outlet temperature",                                   "C",            "",         "System Control",                 "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "hx_min_dT_des",                    "Heat sink hx min temp difference",                                     "C",            "",         "System Control",                 "*",                                                                "",              "" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "hx_UA_des",                        "Heat sink hx conductance",                                             "MW/K",         "",         "System Control",                 "*",                                                                "",              "" },
+
     // Thermal Storage
     { SSC_OUTPUT,       SSC_NUMBER,     "vol_tank",                         "Total tank volume",                                                    "m3",           "",         "Power Cycle",                              "*",                                                                "",              "" },
     { SSC_OUTPUT,       SSC_NUMBER,     "Q_tes_des",                        "TES design capacity",                                                  "MWht",       "",           "Power Cycle",                              "*",                                                                "",              "" },
@@ -474,19 +474,6 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
     { SSC_OUTPUT,       SSC_ARRAY,      "W_dot_sca_track",                  "Field collector tracking power",                                       "MWe",          "",         "Solar_Field",    "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "W_dot_field_pump",                 "Field htf pumping power",                                              "MWe",          "",         "Solar_Field",    "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "recirculating",                    "Field recirculating (bypass valve open)",                              "-",            "",         "Solar_Field",    "sim_type=1",                       "",                      "" },
-    
-    // power block
-    //{ SSC_OUTPUT,       SSC_ARRAY,      "eta",                              "PC efficiency: gross",                                                 "",             "",         "powerblock",     "sim_type=1",                       "",                      "" },
-    //{ SSC_OUTPUT,       SSC_ARRAY,      "q_pb",                             "PC input energy",                                                      "MWt",          "",         "powerblock",     "sim_type=1",                       "",                      "" },
-    //{ SSC_OUTPUT,       SSC_ARRAY,      "m_dot_pc",                         "PC HTF mass flow rate",                                                "kg/s",         "",         "powerblock",     "sim_type=1",                       "",                      "" },
-    //{ SSC_OUTPUT,       SSC_ARRAY,      "q_dot_pc_startup",                 "PC startup thermal power",                                             "MWt",          "",         "powerblock",     "sim_type=1",                       "",                      "" },
-    //{ SSC_OUTPUT,       SSC_ARRAY,      "P_cycle",                          "PC electrical power output: gross",                                    "MWe",          "",         "powerblock",     "sim_type=1",                       "",                      "" },
-    //{ SSC_OUTPUT,       SSC_ARRAY,      "T_pc_in",                          "PC HTF inlet temperature",                                             "C",            "",         "powerblock",     "sim_type=1",                       "",                      "" },
-    //{ SSC_OUTPUT,       SSC_ARRAY,      "T_pc_out",                         "PC HTF outlet temperature",                                            "C",            "",         "powerblock",     "sim_type=1",                       "",                      "" },
-    //{ SSC_OUTPUT,       SSC_ARRAY,      "m_dot_water_pc",                   "PC water consumption: makeup + cooling",                               "kg/s",         "",         "powerblock",     "sim_type=1",                       "",                      "" },
-    //{ SSC_OUTPUT,       SSC_ARRAY,      "q_pc_startup",                     "PC startup thermal energy",                                            "MWht",         "",         "powerblock",     "sim_type=1",                       "",                      "" },
-    //{ SSC_OUTPUT,       SSC_ARRAY,      "cycle_htf_pump_power",             "PC HTF pump power",                                                    "MWe",          "",         "powerblock",     "sim_type=1",                       "",                      "" },
-    //{ SSC_OUTPUT,       SSC_ARRAY,      "P_cooling_tower_tot",              "Parasitic power condenser operation",                                  "MWe",          "",         "powerblock",     "sim_type=1",                       "",                      "" },
 
     // Heat Sink
     { SSC_OUTPUT,       SSC_ARRAY,      "q_dot_to_heat_sink",               "Heat sink thermal power",                                              "MWt",          "",         "Heat_Sink",      "sim_type=1",                       "",                      "" },
@@ -494,8 +481,12 @@ static var_info _cm_vtab_fresnel_physical_iph[] = {
     { SSC_OUTPUT,       SSC_ARRAY,      "m_dot_htf_heat_sink",              "Heat sink HTF mass flow",                                              "kg/s",         "",         "Heat_Sink",      "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "T_heat_sink_in",                   "Heat sink HTF inlet temp",                                             "C",            "",         "Heat_Sink",      "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "T_heat_sink_out",                  "Heat sink HTF outlet temp",                                            "C",            "",         "Heat_Sink",      "sim_type=1",                       "",                      "" },
-                                                                                                                                                                                                                                      
-                                                                                                                                                                                                                                      
+
+    { SSC_OUTPUT,       SSC_ARRAY,      "m_dot_wf_heat_sink",               "Heat sink steam mass flow rate",                                       "kg/s",         "",         "Heat_Sink",      "sim_type=1&hs_type=1",             "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "x_out_wf_heat_sink",               "Heat sink steam outlet quality",                                       "-",            "",         "Heat_Sink",      "sim_type=1&hs_type=1",             "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "T_out_wf_heat_sink",               "Heat sink steam outlet temp",                                          "C",            "",         "Heat_Sink",      "sim_type=1&hs_type=1",             "",                      "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "hx_min_dT_heat_sink",              "Heat sink HX min temp difference",                                     "C",            "",         "Heat_Sink",      "sim_type=1&hs_type=1",             "",                      "" },
+                                                                                                                                                                                                                                              
     // TES                                                                                                                                                                                                                            
     { SSC_OUTPUT,       SSC_ARRAY,      "tank_losses",                      "TES thermal losses",                                                   "MWt",          "",         "TES",            "sim_type=1",                       "",                      "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "q_tes_heater",                     "TES freeze protection power",                                          "MWt",          "",         "TES",            "sim_type=1",                       "",                      "" },
@@ -924,6 +915,7 @@ public:
         int hs_type = as_integer("hs_type");
         C_csp_power_cycle* c_heat_sink_pointer = nullptr;
         C_pc_heat_sink c_heat_sink;
+        C_pc_heat_sink_physical c_heat_sink_phys;
         
         // Ideal heat sink
         if (hs_type == 0)
@@ -934,16 +926,16 @@ public:
             //for (size_t i = 0; i < n_f_turbine1; i++) {
             //    f_turbine_max1 = max(f_turbine_max1, p_f_turbine1[i]);
             //}
-            double f_turbine_max1 = 1.0;
-            for (S_timeseries_schedule_data data : offtaker_schedule.mv_timeseries_schedule_data)
-                f_turbine_max1 = max(f_turbine_max1, data.nondim_value);
+            //double f_turbine_max1 = 1.0;
+            //for (S_timeseries_schedule_data data : offtaker_schedule.mv_timeseries_schedule_data)
+            //    f_turbine_max1 = max(f_turbine_max1, data.nondim_value);
 
             c_heat_sink.ms_params.m_T_htf_hot_des = T_htf_hot_des;		//[C] FIELD design outlet temperature
             c_heat_sink.ms_params.m_T_htf_cold_des = T_htf_cold_des;	//[C] FIELD design inlet temperature
             c_heat_sink.ms_params.m_q_dot_des = q_dot_pc_des;			//[MWt] HEAT SINK design thermal power (could have field solar multiple...)
             // 9.18.2016 twn: assume for now there's no pressure drop though heat sink
             c_heat_sink.ms_params.m_htf_pump_coef = as_double("pb_pump_coef");		//[kWe/kg/s]
-            c_heat_sink.ms_params.m_max_frac = f_turbine_max1;
+            c_heat_sink.ms_params.m_max_frac = as_double("hs_htf_mdot_max_frac");   // f_turbine_max1;
 
             c_heat_sink.ms_params.m_pc_fl = as_integer("Fluid");
             c_heat_sink.ms_params.m_pc_fl_props = as_matrix("field_fl_props");
@@ -957,6 +949,51 @@ public:
             c_heat_sink.mc_reported_outputs.assign(C_pc_heat_sink::E_T_HTF_OUT, allocate("T_heat_sink_out", n_steps_fixed), n_steps_fixed);
 
             c_heat_sink_pointer = &c_heat_sink;
+        }
+        else if (hs_type == 1)
+        {
+            //size_t n_f_turbine1 = 0;
+            //ssc_number_t* p_f_turbine1 = as_array("f_turb_tou_periods", &n_f_turbine1);   // heat sink, not turbine
+            //double f_turbine_max1 = 1.0;
+            //for (size_t i = 0; i < n_f_turbine1; i++) {
+            //    f_turbine_max1 = max(f_turbine_max1, p_f_turbine1[i]);
+            //}
+
+            c_heat_sink_phys.ms_params.m_T_htf_hot_des = T_htf_hot_des;		//[C] FIELD design outlet temperature
+            c_heat_sink_phys.ms_params.m_T_htf_cold_des = T_htf_cold_des;	//[C] FIELD design inlet temperature
+            c_heat_sink_phys.ms_params.m_q_dot_des = q_dot_pc_des;			//[MWt] HEAT SINK design thermal power (could have field solar multiple...)
+            // 9.18.2016 twn: assume for now there's no pressure drop though heat sink
+            c_heat_sink_phys.ms_params.m_htf_pump_coef = as_double("pb_pump_coef");		//[kWe/kg/s]
+            c_heat_sink_phys.ms_params.m_max_frac = as_double("hs_htf_mdot_max_frac");  // f_turbine_max1;
+
+            c_heat_sink_phys.ms_params.m_pc_fl = as_integer("Fluid");
+            c_heat_sink_phys.ms_params.m_pc_fl_props = as_matrix("field_fl_props");
+
+
+            c_heat_sink_phys.ms_params.m_T_ext_cold_des = as_double("hs_phys_T_steam_cold_des");   //[C] Steam fluid inlet temp
+            c_heat_sink_phys.ms_params.m_Q_ext_hot_des = as_double("hs_phys_Q_steam_hot_des");  //[C] Steam quality target
+            c_heat_sink_phys.ms_params.m_P_ext_cold_des = as_double("hs_phys_P_steam_hot_des") * 100.0;  //[kPa] Steam inlet pressure
+            c_heat_sink_phys.ms_params.m_P_ext_hot_des = as_double("hs_phys_P_steam_hot_des") * 100.0;   //[kPa] Steam outlet pressure
+
+            // 25.02.02 twn: hardcode these for now so users don't have to set them
+            c_heat_sink_phys.ms_params.m_f_m_dot_ext_min = 0.01;    // as_double("hs_phys_f_mdot_steam_min"); //[] Min fraction Steam mass flow rate
+            c_heat_sink_phys.ms_params.m_f_m_dot_ext_max = 1.5;     // as_double("hs_phys_f_mdot_steam_max"); //[] Max fraction Steam mass flow rate
+            c_heat_sink_phys.ms_params.m_N_sub_hx = 15;             // as_double("hs_phys_N_sub");      //[] Number HX nodes
+            c_heat_sink_phys.ms_params.m_od_tol = 0.001;            // as_double("hs_phys_tol");         //[] HX off design tolerance
+
+            // Allocate heat sink outputs
+            c_heat_sink_phys.mc_reported_outputs.assign(C_pc_heat_sink::E_Q_DOT_HEAT_SINK, allocate("q_dot_to_heat_sink", n_steps_fixed), n_steps_fixed);
+            c_heat_sink_phys.mc_reported_outputs.assign(C_pc_heat_sink::E_W_DOT_PUMPING, allocate("W_dot_pc_pump", n_steps_fixed), n_steps_fixed);
+            c_heat_sink_phys.mc_reported_outputs.assign(C_pc_heat_sink::E_M_DOT_HTF, allocate("m_dot_htf_heat_sink", n_steps_fixed), n_steps_fixed);
+            c_heat_sink_phys.mc_reported_outputs.assign(C_pc_heat_sink::E_T_HTF_IN, allocate("T_heat_sink_in", n_steps_fixed), n_steps_fixed);
+            c_heat_sink_phys.mc_reported_outputs.assign(C_pc_heat_sink::E_T_HTF_OUT, allocate("T_heat_sink_out", n_steps_fixed), n_steps_fixed);
+
+            c_heat_sink_phys.mc_reported_outputs.assign(C_pc_heat_sink_physical::E_M_DOT_EXT, allocate("m_dot_wf_heat_sink", n_steps_fixed), n_steps_fixed);
+            c_heat_sink_phys.mc_reported_outputs.assign(C_pc_heat_sink_physical::E_X_OUT_EXT, allocate("x_out_wf_heat_sink", n_steps_fixed), n_steps_fixed);
+            c_heat_sink_phys.mc_reported_outputs.assign(C_pc_heat_sink_physical::E_T_OUT_EXT, allocate("T_out_wf_heat_sink", n_steps_fixed), n_steps_fixed);
+            c_heat_sink_phys.mc_reported_outputs.assign(C_pc_heat_sink_physical::E_HX_MIN_DT, allocate("hx_min_dT_heat_sink", n_steps_fixed), n_steps_fixed);
+
+            c_heat_sink_pointer = &c_heat_sink_phys;
         }
         else
         {
@@ -1104,10 +1141,14 @@ public:
             double disp_csu_cost_calc = 0.0;
             double disp_pen_ramping = 0.0;
 
-            double disp_rsu_cost_calc = as_double("disp_rsu_cost_rel") * q_dot_rec_des;   //[$/start]
+            double disp_rsu_cost_calc = 0.0;    // as_double("disp_rsu_cost_rel")* q_dot_rec_des;   //[$/start]
+
+            double q_rec_standby = 0.0;
+            double q_rec_heattrace = 0.0;
+
             dispatch.params.set_user_params(can_cycle_use_standby, as_double("disp_time_weighting"),
                 disp_rsu_cost_calc, heater_startup_cost, disp_csu_cost_calc, disp_pen_ramping,
-                as_double("disp_inventory_incentive"), as_double("q_rec_standby"), as_double("q_rec_heattrace")); // , ppa_price_year1);
+                as_double("disp_inventory_incentive"), q_rec_standby, q_rec_heattrace); // , ppa_price_year1);
         }
 
         // Instantiate Solver
@@ -1377,34 +1418,20 @@ public:
                 assign("tes_htf_cp", tes_htf_cp);
             }
 
-            // Power Cycle
+            // Heat sink
+            double m_dot_hs_ext_des, T_hs_ext_out_des, hx_min_dT_des, hx_UA_des;
+            m_dot_hs_ext_des = T_hs_ext_out_des = hx_min_dT_des = hx_UA_des = std::numeric_limits<double>::quiet_NaN();
+            if (hs_type == 1) {
+                m_dot_hs_ext_des = c_heat_sink_phys.get_m_dot_ext_des(); //[kg/s]
+                T_hs_ext_out_des = c_heat_sink_phys.get_T_ext_out_des(); //[C]
+                hx_min_dT_des = c_heat_sink_phys.get_hx_min_dT_des();    //[C]
+                hx_UA_des = c_heat_sink_phys.get_hx_UA_des();        //[kW/K]
+            }
 
-            //double m_dot_htf_pc_des_perhr;    //[kg/hr]
-            //double cp_htf_pc_des;       //[kJ/kg-K]
-            //double W_dot_pc_pump_des;   //[MWe]
-            //double W_dot_pc_cooling_des;   //[MWe]
-            //int n_T_htf_pars, n_T_amb_pars, n_m_dot_pars;
-            //n_T_htf_pars = n_T_amb_pars = n_m_dot_pars = -1;
-            //double T_htf_ref_calc, T_htf_low_calc, T_htf_high_calc, T_amb_ref_calc, T_amb_low_calc, T_amb_high_calc,
-            //    m_dot_htf_ND_ref_calc, m_dot_htf_ND_low_calc, m_dot_htf_ND_high_calc, W_dot_gross_ND_des, Q_dot_HTF_ND_des,
-            //    W_dot_cooling_ND_des, m_dot_water_ND_des;
-            //T_htf_ref_calc = T_htf_low_calc = T_htf_high_calc =
-            //    T_amb_ref_calc = T_amb_low_calc = T_amb_high_calc =
-            //    m_dot_htf_ND_ref_calc = m_dot_htf_ND_low_calc = m_dot_htf_ND_high_calc =
-            //    W_dot_gross_ND_des = Q_dot_HTF_ND_des = W_dot_cooling_ND_des = m_dot_water_ND_des = std::numeric_limits<double>::quiet_NaN();
-
-            //rankine_pc.get_design_parameters(m_dot_htf_pc_des_perhr, cp_htf_pc_des, W_dot_pc_pump_des, W_dot_pc_cooling_des,
-            //    n_T_htf_pars, n_T_amb_pars, n_m_dot_pars,
-            //    T_htf_ref_calc /*C*/, T_htf_low_calc /*C*/, T_htf_high_calc /*C*/,
-            //    T_amb_ref_calc /*C*/, T_amb_low_calc /*C*/, T_amb_high_calc /*C*/,
-            //    m_dot_htf_ND_ref_calc, m_dot_htf_ND_low_calc /*-*/, m_dot_htf_ND_high_calc /*-*/,
-            //    W_dot_gross_ND_des, Q_dot_HTF_ND_des, W_dot_cooling_ND_des, m_dot_water_ND_des);
-
-            //// Assign
-            //{
-            //    assign("q_dot_cycle_des", q_dot_pc_des);
-            //    assign("mdot_cycle_des", m_dot_htf_pc_des_perhr / 3600.0); //   [kg/s]
-            //}
+            assign("m_dot_hs_ext_des", m_dot_hs_ext_des);
+            assign("T_hs_ext_out_des", T_hs_ext_out_des);
+            assign("hx_min_dT_des", hx_min_dT_des);
+            assign("hx_UA_des", hx_UA_des);
 
             // System Design
             double W_dot_bop_design, W_dot_fixed_parasitic_design;    //[MWe]
