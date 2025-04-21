@@ -31,10 +31,10 @@ elif sys.platform == 'win32':
     platform = "Windows"
 elif sys.platform == 'darwin':
     proc = processor()
-    if "x86_64" in proc:
-        platform = "Mac Intel"
-    elif "arm" in proc:
+    if "arm" in proc:
         platform = "Mac Arm"
+    else:
+        platform = "Mac Intel"
 else:
     raise RuntimeError(f"Unrecognized platform {sys.platform}")
 
