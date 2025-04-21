@@ -68,7 +68,7 @@ jobs:
           console.log(context.payload.workflow_run.id);
           let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
             return (artifact.name == "${{env.CI_WF}}") &
-                   (artifact.workfow_run.head_sha == "${{env}}")
+                   (artifact.workfow_run.head_sha == "${{env.WORKFLOW_ID}}")
           })[0];
           let download = await github.rest.actions.downloadArtifact({
               owner: context.repo.owner,
