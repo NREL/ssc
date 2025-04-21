@@ -62,13 +62,13 @@ jobs:
         script: |
           let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
               owner: context.repo.owner,
-              repo: context.repo.repo
+              repo: context.repo.repo,
+              run_id: context.payload.workflow_run.id
           });
           console.log("Downloaded Elapsed Test Times from Workflow ID:");
           console.log(context.payload.workflow_run.id);
           let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
-            return (artifact.name == "${{env.CI_WF}}") &
-                   (artifact.workfow_run.head_sha == "${{env.WORKFLOW_ID}}")
+            return (artifact.name == "${{env.CI_WF}}")
           })[0];
           let download = await github.rest.actions.downloadArtifact({
               owner: context.repo.owner,
