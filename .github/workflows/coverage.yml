@@ -1,4 +1,4 @@
-name: CI
+name: coveralls
 
 on:
   push:
@@ -10,7 +10,7 @@ env:
   GTEST_REF: b85864c64758dec007208e56af933fc3f52044ee
 
 jobs:
-  build-on-ubuntu:
+  coveralls-on-ubuntu:
     runs-on: ubuntu-latest
 
     steps:
