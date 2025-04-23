@@ -67,7 +67,7 @@ MYBOOL is_nativeBLAS(void)
 #endif
 }
 
-MYBOOL load_BLAS(char *libname)
+MYBOOL load_BLAS(const char *libname)
 {
   MYBOOL result = TRUE;
 
@@ -95,7 +95,7 @@ MYBOOL load_BLAS(char *libname)
   else {
 #ifdef LoadableBlasLib
   #if (defined LPWINAPP) || (defined WIN64)
-    char *blasname = libname;
+    const char *blasname = libname;
   #else
    /* First standardize UNIX .SO library name format. */
     char blasname[260];

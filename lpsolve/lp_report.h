@@ -17,8 +17,8 @@ extern "C" {
 #endif
 
 /* General information functions */
-char * __VACALL explain(lprec *lp, char *format, ...);
-void __VACALL report(lprec *lp, int level, char *format, ...);
+const char * __VACALL explain(lprec *lp, const char *format, ...);
+void __VACALL report(lprec *lp, int level, const char *format, ...);
 
 /* Prototypes for debugging and general data dumps */
 void debug_print(lprec *lp, char *format, ...);
@@ -37,8 +37,8 @@ void REPORT_duals(lprec *lp);
 void REPORT_extended(lprec *lp);
 
 /* Other rarely used, but sometimes extremely useful reports */
-void REPORT_constraintinfo(lprec *lp, char *datainfo);
-void REPORT_modelinfo(lprec *lp, MYBOOL doName, char *datainfo);
+void REPORT_constraintinfo(lprec *lp, const char *datainfo);
+void REPORT_modelinfo(lprec *lp, MYBOOL doName, const char *datainfo);
 void REPORT_lp(lprec *lp);
 MYBOOL REPORT_tableau(lprec *lp);
 void REPORT_scales(lprec *lp);

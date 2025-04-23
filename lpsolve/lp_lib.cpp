@@ -930,9 +930,9 @@ int __WINAPI get_pivoting(lprec *lp)
   return( (lp->piv_strategy | PRICE_STRATEGYMASK) ^ PRICE_STRATEGYMASK );
 }
 
-STATIC char *get_str_piv_rule(int rule)
+STATIC const char *get_str_piv_rule(int rule)
 {
-  static char *pivotText[PRICER_LASTOPTION+1] =
+  static const char *pivotText[PRICER_LASTOPTION+1] =
   {"Bland first index", "Dantzig", "Devex", "Steepest Edge"};
 
   return( pivotText[rule] );
@@ -1357,7 +1357,7 @@ int __WINAPI get_status(lprec *lp)
   return(lp->spx_status);
 }
 
-char * __WINAPI get_statustext(lprec *lp, int statuscode)
+const char * __WINAPI get_statustext(lprec *lp, int statuscode)
 {
   if (statuscode == NOBFP)             return("No basis factorization package");
   else if (statuscode == DATAIGNORED)  return("Invalid input data provided");
@@ -3169,10 +3169,11 @@ MYBOOL __WINAPI add_constraint(lprec *lp, REAL *row, int constr_type, REAL rh)
   return( add_constraintex(lp, 0, row, NULL, constr_type, rh) );
 }
 
-MYBOOL __WINAPI str_add_constraint(lprec *lp, char *row_string, int constr_type, REAL rh)
+MYBOOL __WINAPI str_add_constraint(lprec *lp, const char *row_string, int constr_type, REAL rh)
 {
   int    i;
-  char   *p, *newp;
+  const char* p;
+  char    *newp;
   REAL   *aRow;
   MYBOOL status = FALSE;
 
@@ -4419,7 +4420,7 @@ REAL __WINAPI get_constr_value(lprec *lp, int rownr, int count, REAL *primsoluti
   return( value );
 }
 
-STATIC char *get_str_constr_class(lprec *lp, int con_class)
+STATIC const char *get_str_constr_class(lprec *lp, int con_class)
 {
   switch(con_class) {
     case ROWCLASS_Unknown:     return("Unknown");
@@ -4437,7 +4438,7 @@ STATIC char *get_str_constr_class(lprec *lp, int con_class)
   }
 }
 
-STATIC char *get_str_constr_type(lprec *lp, int con_type)
+STATIC const char *get_str_constr_type(lprec *lp, int con_type)
 {
   switch(con_type) {
     case FR: return("FR");

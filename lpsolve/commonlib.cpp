@@ -866,7 +866,7 @@ double timeNow(void)
 /* Miscellaneous reporting functions */
 
 /* List a vector of INT values for the given index range */
-void blockWriteINT(FILE *output, char *label, int *myvector, int first, int last)
+void blockWriteINT(FILE *output, const char *label, int *myvector, int first, int last)
 {
   int i, k = 0;
 
@@ -885,7 +885,7 @@ void blockWriteINT(FILE *output, char *label, int *myvector, int first, int last
 }
 
 /* List a vector of MYBOOL values for the given index range */
-void blockWriteBOOL(FILE *output, char *label, MYBOOL *myvector, int first, int last, MYBOOL asRaw)
+void blockWriteBOOL(FILE *output, const char *label, MYBOOL *myvector, int first, int last, MYBOOL asRaw)
 {
   int i, k = 0;
 
@@ -907,7 +907,7 @@ void blockWriteBOOL(FILE *output, char *label, MYBOOL *myvector, int first, int 
 }
 
 /* List a vector of REAL values for the given index range */
-void blockWriteREAL(FILE *output, char *label, REAL *myvector, int first, int last)
+void blockWriteREAL(FILE *output, const char *label, REAL *myvector, int first, int last)
 {
   int i, k = 0;
 
