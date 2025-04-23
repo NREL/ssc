@@ -49,6 +49,7 @@ static var_info _cm_vtab_geothermal[] = {
         { SSC_INPUT,        SSC_NUMBER,      "drilling_success_rate",          "Drilling success rate",              "%",     "",     "GeoHourly",             "",           "",                        "" },
     { SSC_INPUT,        SSC_NUMBER,      "stim_success_rate",          "Stimulation success rate",              "%",     "",     "GeoHourly",             "",           "",                        "" },
     { SSC_INPUT,        SSC_NUMBER,      "failed_prod_flow_ratio",          "Failed production well flow ratio",              "",     "",     "GeoHourly",             "",           "",                        "" },
+    { SSC_INPUT,        SSC_NUMBER,      "stimulation_type",          "Which wells are stimulated",              "0/1/2/3",     "0=Injection,1=Production,2=Both,3=Neither",     "GeoHourly",             "?=3",           "",                        "" },
 
     //{ SSC_INOUT,        SSC_NUMBER,      "baseline_cost",          "Baseline cost",              "$/kW",     "",     "GeoHourly",             "?=0",           "",                        "" },
 
@@ -159,12 +160,17 @@ static var_info _cm_vtab_geothermal[] = {
     // dispatch
     { SSC_INPUT,        SSC_STRING,      "hybrid_dispatch_schedule",           "Daily dispatch schedule",                             "",        "",             "GeoHourly",        "ui_calculations_only=0",    "TOUSCHED",        "" },
 
+    { SSC_INPUT,        SSC_NUMBER,      "allow_reservoir_replacements",           "Allow reservoir replacements",                             "",        "",             "GeoHourly",        "?=0",    "",        "" },
+
 	// OUTPUTS
 	// VARTYPE           DATATYPE         NAME                                   LABEL                                               UNITS      META            GROUP             REQUIRED_IF                    CONSTRAINTS      UI_HINTS
 																																																	             
 	// This first batch of outputs is for calculating UI values																																		             
-    { SSC_OUTPUT,       SSC_NUMBER,      "num_wells_getem_output",             "Number of wells calculated by GETEM",                 "",        "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "num_wells_getem_inj",             "Number of wells calculated by GETEM",                 "",        "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "num_wells_getem_output",             "Number of production wells required",                 "",        "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "num_wells_getem_inj",             "Number of required injection wells calculated by GETEM",                 "",        "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "num_wells_getem_prod_drilled",             "Number of production wells drilled",                 "",        "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "num_wells_getem_prod_failed",             "Number of production wells failed during drilling",                 "",        "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "num_wells_getem_inj_drilled",             "Number of injection wells drilled",                 "",        "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
 
     { SSC_OUTPUT,       SSC_NUMBER,      "plant_brine_eff",                    "Plant Brine Efficiency",                              "",        "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "pump_watthr_per_lb",                    "Pump work Efficiency",                              "",        "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
@@ -173,7 +179,7 @@ static var_info _cm_vtab_geothermal[] = {
     { SSC_OUTPUT,       SSC_NUMBER,      "inj_pump_hp",                    "Injection Pump horsepower",                              "hp",        "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
 
 
-    { SSC_OUTPUT,       SSC_NUMBER,      "gross_output",                       "Gross output from GETEM",                             "",        "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
+    { SSC_OUTPUT,       SSC_NUMBER,      "gross_output",                       "Gross output from GETEM",                             "MW",        "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "gross_cost_output",                       "Gross output from GETEM for cost",                             "",        "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
 
     { SSC_OUTPUT,       SSC_NUMBER,      "pump_depth_ft",                      "Pump depth calculated by GETEM",                      "ft",      "",             "GeoHourly",        "ui_calculations_only=1",   "",                "" },
@@ -196,7 +202,7 @@ static var_info _cm_vtab_geothermal[] = {
 
     { SSC_OUTPUT,       SSC_ARRAY,      "monthly_resource_temperature",       "Monthly avg resource temperature",                    "C",       "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "monthly_power",                      "Monthly power",                                       "kW",      "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
-    { SSC_OUTPUT,       SSC_ARRAY,      "monthly_energy",                     "AC energy (year 1)",              "kWh/mo",    "",                 "GeoHourly",       "",                    "LENGTH=12",                              "" },
+    { SSC_OUTPUT,       SSC_ARRAY,      "monthly_energy",                     "Monthly AC energy in Year 1",              "kWh/mo",    "",                 "GeoHourly",       "",                    "LENGTH=12",                              "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "monthly_energy_lifetime",            "Monthly energy before performance adjustments",       "kWh",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
 
     { SSC_OUTPUT,       SSC_ARRAY,      "timestep_resource_temperature",      "Resource temperature",              "C",       "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
@@ -206,9 +212,9 @@ static var_info _cm_vtab_geothermal[] = {
     { SSC_OUTPUT,       SSC_ARRAY,      "timestep_dry_bulb",                  "Dry bulb temperature",              "C",       "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
     { SSC_OUTPUT,       SSC_ARRAY,      "timestep_wet_bulb",                  "Wet bulb temperature",              "C",       "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
 																																																	             
-    { SSC_OUTPUT,       SSC_NUMBER,     "lifetime_output",                    "Lifetime Output",                                     "kWh",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
-	{ SSC_OUTPUT,		SSC_NUMBER,		"first_year_output",				  "First Year Output",									 "kWh",		"",				 "GeoHourly",		 "ui_calculations_only=0",	 "",				"" },
-	{ SSC_OUTPUT,		SSC_NUMBER,		"annual_energy",					  "Annual Energy",										"kWh",		"",				"GeoHourly",		 "ui_calculations_only=0",	"",					"" },
+    { SSC_OUTPUT,       SSC_NUMBER,     "lifetime_output",                    "Lifetime output",                                     "kWh",     "",             "GeoHourly",        "ui_calculations_only=0",   "",                "" },
+	{ SSC_OUTPUT,		SSC_NUMBER,		"first_year_output",				  "First year output",									 "kWh",		"",				 "GeoHourly",		 "ui_calculations_only=0",	 "",				"" },
+	{ SSC_OUTPUT,		SSC_NUMBER,		"annual_energy",					  "Annual AC energy in Year 1",										"kWh",		"",				"GeoHourly",		 "ui_calculations_only=0",	"",					"" },
 
 
 	{ SSC_OUTPUT,		SSC_NUMBER,		"capacity_factor",					  "Capacity factor",									"",			"",					 "",					"*",				"",					"" },
@@ -276,6 +282,7 @@ public:
         geo_inputs.md_FailedProdFlowRatio = as_double("failed_prod_flow_ratio");
         geo_inputs.md_DesiredSalesCapacityKW = as_double("nameplate");
 		geo_inputs.md_NumberOfWells = as_double("num_wells");
+        geo_inputs.md_WellsStimulated = as_integer("stimulation_type");
 		if ( as_integer("analysis_type") == 0)
 			geo_inputs.me_cb = POWER_SALES;
 		else
@@ -366,6 +373,8 @@ public:
 		geo_inputs.md_EGSFractureWidthM = as_double("fracture_width");
 		geo_inputs.md_EGSFractureAngle = as_double("fracture_angle");
 
+        geo_inputs.md_AllowReservoirReplacements = as_boolean("allow_reservoir_replacements");
+
 		// calculate output array sizes
 		geo_inputs.mi_ModelChoice = as_integer("model_choice");		 // 0=GETEM, 1=Power Block monthly, 2=Power Block hourly
         if (is_assigned("reservoir_model_inputs")) 
@@ -390,13 +399,21 @@ public:
 		if (FillOutputsForUI(err_msg, geo_inputs, geo_outputs) != 0)
 			throw general_error("input error: " + err_msg + ".");
 
+        assign("num_wells_getem_output", var_data((ssc_number_t)geo_outputs.md_NumberOfWells));
+        assign("num_wells_getem_prod_drilled", var_data((ssc_number_t)geo_outputs.md_NumberOfWellsProdDrilled));
+        assign("num_wells_getem_prod_failed", var_data((ssc_number_t)geo_outputs.md_NumberOfWellsProdFailed));
+        assign("num_wells_getem_inj", var_data((ssc_number_t)geo_outputs.md_NumberOfWellsInj));
+        assign("num_wells_getem_inj_drilled", var_data((ssc_number_t)geo_outputs.md_NumberOfWellsInjDrilled));
+
+        assign("gross_output", var_data((ssc_number_t)geo_outputs.md_GrossPlantOutputMW));
+        assign("gross_cost_output", var_data((ssc_number_t)geo_outputs.md_GrossPowerkW));
+
 		if (iControl == 1) {
 			
 		// just doing calculations for the UI, not running the model
 
 			// assign values for UI results
-			assign("num_wells_getem_output", var_data((ssc_number_t)geo_outputs.md_NumberOfWells));
-            assign("num_wells_getem_inj", var_data((ssc_number_t)geo_outputs.md_NumberOfWellsInj));
+			
 			assign("plant_brine_eff", var_data((ssc_number_t)geo_outputs.md_PlantBrineEffectiveness));
             assign("pump_watthr_per_lb", var_data((ssc_number_t)geo_outputs.md_PumpWorkWattHrPerLb));
             assign("pumpwork_prod", var_data((ssc_number_t)geo_outputs.md_pumpwork_prod));
@@ -519,7 +536,7 @@ public:
 			ssc_number_t * p_gen = allocate("gen", n_rec);
 
 			// TODO - implement performance factors 
-			adjustment_factors haf(this, "adjust");
+			adjustment_factors haf(this->get_var_table(), "adjust");
 			if (!haf.setup(8760, geo_inputs.mi_ProjectLifeYears))
 				throw exec_error("geothermal", "failed to setup adjustment factors: " + haf.error());
             std::vector<double> haf_input;
@@ -652,7 +669,7 @@ public:
 			if (geo_inputs.mi_ProjectLifeYears > 0) kWhperkW = kWhperkW / geo_inputs.mi_ProjectLifeYears;
 
 			assign("gross_output", var_data((ssc_number_t)geo_outputs.md_GrossPlantOutputMW));
-            assign("gross_cost_output", var_data((ssc_number_t)geo_outputs.md_GrossPowerMW));
+            assign("gross_cost_output", var_data((ssc_number_t)geo_outputs.md_GrossPowerkW));
 			assign("capacity_factor", var_data((ssc_number_t)(capacity_fac / 87.6)));		//Divided by 8760 and then multiplied by 100 (or divide by 87.6) to return CF as a %
 			assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
 			// 5/28/15 average provided for FCR market

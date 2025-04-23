@@ -43,6 +43,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TIMELIMIT               2
 #define MIPGAP                  3
 #define MIPGAPLPSOLVE           4
+#define FAILED                  5
 
 class base_dispatch_opt
 {
@@ -183,6 +184,7 @@ public:
 
     //Functions to write AMPL data files and solve AMPL model
     virtual std::string write_ampl();
+
     virtual bool optimize_ampl();
 
     //Populated dispatch outputs for csp solver core

@@ -144,6 +144,8 @@ public:
     bool nm_credits_w_rollover; // rate option 0 only
     int net_metering_credit_month;
     double nm_credit_sell_rate;
+    bool nb_credit_expire; // For billing regimes in which credit can be accumulated and spent during a calendar year but cannot be redeemed for cash at the end of the year.
+    bool nb_apply_credit_current_month;
 
 	rate_data();
 	rate_data(const rate_data& tmp);
@@ -156,8 +158,8 @@ public:
 	void setup_energy_rates(ssc_number_t* ec_weekday, ssc_number_t* ec_weekend, size_t ec_tou_rows, ssc_number_t* ec_tou_in, bool sell_eq_buy);
     /* Optional function if demand charges are present */
 	void setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_weekend, size_t dc_tou_rows, ssc_number_t* dc_tou_in, size_t dc_flat_rows, ssc_number_t* dc_flat_in);
-    /* Optional function if energy charges use a ratchet for the billing demand */
-    void setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix, ssc_number_t* bd_tou_period_matrix);
+    /* Optional function if energy charges use a ratchet for the billing demand - returns error code based on data validitiy (at least one active period) */
+    bool setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix, ssc_number_t* bd_tou_period_matrix);
 
     void setup_prev_demand(ssc_number_t* prev_demand);
     /* call ur_month.update_net_and_peak before this, otherwise you'll get low values back */
@@ -201,6 +203,8 @@ public:
 
 private:
     bool check_for_kwh_per_kw_rate(int units);
+    bool check_for_daily_rate(int units);
+    std::string get_units_text(int units_int);
 
 };
 

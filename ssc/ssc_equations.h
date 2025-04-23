@@ -40,10 +40,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cmod_mhk_eqns.h"
 #include "cmod_merchantplant_eqns.h"
 #include "cmod_pvsamv1_eqns.h"
-#include "cmod_csp_trough_eqns.h"
 #include "cmod_financial_eqns.h"
 #include "cmod_utilityrate5_eqns.h"
 #include "cmod_analysisperiodchange_eqns.h"
+#include "cmod_geothermal_costs_eqns.h"
 
 /**
  *  Returns true if completed successfully. For failures, query the "error" string that has been assigned to the `data`.
@@ -82,15 +82,23 @@ struct ssc_equation_entry{
 
 static ssc_equation_entry ssc_equation_table [] = {
         // Marine energy
+        
 		{"me_array_cable_length", me_array_cable_length,
-            "Marine energy", me_array_cable_length_doc,
+            "Marine Energy", me_array_cable_length_doc,
+            false, true},
+        {"me_array_cable_length", me_array_cable_length,
+            "Marine Energy", me_array_cable_length_doc,
             false, true},
         {"tidal_turbine_calculate_powercurve", tidal_turbine_calculate_powercurve,
-            "Marine energy", tidal_turbine_calculate_powercurve_doc,
+            "Marine Energy", tidal_turbine_calculate_powercurve_doc,
             false, true},
         {"me_array_cable_voltage", me_array_cable_voltage,
-            "Marine energy", me_array_cable_voltage_doc,
+            "Marine Energy", me_array_cable_voltage_doc,
             false, true},
+        {"me_array_cable_voltage", me_array_cable_voltage,
+            "Marine Energy", me_array_cable_voltage_doc,
+            false, true},
+            //"Marine Energy" is wrong module name, replace for next FY25 release
 		{"mp_ancillary_services", mp_ancillary_services,
             "Merchant plant", mp_ancillary_services_doc,
             false, true},
@@ -126,6 +134,11 @@ static ssc_equation_entry ssc_equation_table [] = {
         // Wind
         {"Turbine_calculate_powercurve", Turbine_calculate_powercurve,
             "Windpower", Turbine_calculate_powercurve_doc,
+            false, true},
+
+        // Geothermal
+        {"getem_om_cost_calc", getem_om_cost_calc,
+            "GeothermalCosts", getem_om_cost_calc_doc,
             false, true},
 
         // CSP

@@ -70,17 +70,12 @@ static var_info vtab_utility_rate5[] = {
     { SSC_OUTPUT,       SSC_ARRAY,      "annual_energy_value",             "Energy value in each year",     "$",    "",                      "Annual",             "*",                         "",   "" },
 	{ SSC_OUTPUT,       SSC_ARRAY,      "annual_electric_load",            "Electricity load total in each year",  "kWh",    "",                      "Annual",             "*",                         "",   "" },
 
-	// outputs from Paul, Nate and Sean 9/9/13
-    { SSC_OUTPUT, SSC_ARRAY, "elec_cost_with_system",    "Electricity bill with system",    "$/yr", "", "Annual", "*", "", "" },
-	{ SSC_OUTPUT, SSC_ARRAY, "elec_cost_without_system", "Electricity bill without system", "$/yr", "", "Annual", "*", "", "" },
 
 	// year 1 values for metrics
-	{ SSC_OUTPUT, SSC_NUMBER, "elec_cost_with_system_year1",    "Electricity bill with system (year 1)",    "$/yr", "",    "Financial Metrics", "*", "", "" },
-	{ SSC_OUTPUT, SSC_NUMBER, "elec_cost_without_system_year1", "Electricity bill without system (year 1)", "$/yr", "",    "Financial Metrics", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "utility_bill_w_sys_year1",    "Electricity bill with system (year 1)",    "$/yr", "",    "Financial Metrics", "*", "", "" },
+	{ SSC_OUTPUT, SSC_NUMBER, "utility_bill_wo_sys_year1", "Electricity bill without system (year 1)", "$/yr", "",    "Financial Metrics", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "savings_year1",                  "Electricity bill savings with system (year 1)",             "$/yr",    "", "Financial Metrics", "*", "", "" },
 	{ SSC_OUTPUT, SSC_NUMBER, "year1_electric_load",            "Electricity load total (year 1)",                "kWh/yr",  "", "Financial Metrics", "*", "", "" },
-
-
 
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_e_tofromgrid", "Electricity to/from grid (year 1 hourly)", "kWh", "", "Time Series", "*", "", "" },
 	{ SSC_OUTPUT, SSC_ARRAY, "year1_hourly_e_togrid", "Electricity to grid (year 1 hourly)", "kWh", "", "Time Series", "*", "", "" },
@@ -415,6 +410,8 @@ void rate_setup::setup(var_table* vt, int num_recs_yearly, size_t nyears, rate_d
     rate.enable_nm = (metering_option == 0 || metering_option == 1);
     rate.nm_credits_w_rollover = (vt->as_integer("ur_metering_option") == 0);
     rate.net_metering_credit_month = (int)vt->as_number("ur_nm_credit_month");
+    rate.nb_credit_expire = vt->as_boolean("ur_nb_credit_expire");
+    rate.nb_apply_credit_current_month = vt->as_boolean("ur_nb_apply_credit_current_month");
     rate.nm_credit_sell_rate = vt->as_number("ur_nm_yearend_sell_rate");
 
     ssc_number_t* ratchet_matrix = NULL; ssc_number_t* bd_tou_matrix = NULL;
@@ -444,7 +441,13 @@ void rate_setup::setup(var_table* vt, int num_recs_yearly, size_t nyears, rate_d
             throw exec_error(cm_name, ss.str());
         }
 
-        rate.setup_ratcheting_demand(ratchet_matrix, bd_tou_matrix);
+        bool error = rate.setup_ratcheting_demand(ratchet_matrix, bd_tou_matrix);
+
+        if (error) {
+            std::ostringstream ss;
+            ss << "ur_dc_billing_demand_periods should have at least one period where billing demand calculations are enabled.";
+            throw exec_error(cm_name, ss.str());
+        }
     }
 
 
@@ -635,8 +638,6 @@ public:
 		ssc_number_t *energy_net = allocate("scaled_annual_energy", nyears+1);
 		ssc_number_t *annual_revenue_w_sys = allocate("revenue_with_system", nyears+1);
 		ssc_number_t *annual_revenue_wo_sys = allocate("revenue_without_system", nyears+1);
-		ssc_number_t *annual_elec_cost_w_sys = allocate("elec_cost_with_system", nyears+1);
-		ssc_number_t *annual_elec_cost_wo_sys = allocate("elec_cost_without_system", nyears+1);
 
 		// matrices
 		ssc_number_t *utility_bill_w_sys_ym = allocate("utility_bill_w_sys_ym", nyears + 1, 12);
@@ -1527,11 +1528,6 @@ public:
 				annual_revenue_wo_sys[i + 1] += revenue_wo_sys[j];
 			}
 
-			//Outputs from Paul, Nate and Sean 9/9/13
-			annual_elec_cost_w_sys[i + 1] = -annual_revenue_w_sys[i+1];
-			annual_elec_cost_wo_sys[i + 1] = -annual_revenue_wo_sys[i+1];
-
-
 			for (j = 0; j < 12; j++)
 			{
 				utility_bill_w_sys_ym[(i+1)*12 + j] = monthly_bill[j];
@@ -1581,10 +1577,9 @@ public:
 
 		}
 
-		assign("elec_cost_with_system_year1", annual_elec_cost_w_sys[1]);
-		assign("elec_cost_without_system_year1", annual_elec_cost_wo_sys[1]);
-		assign("savings_year1", annual_elec_cost_wo_sys[1] - annual_elec_cost_w_sys[1]);
-
+        assign("utility_bill_w_sys_year1", utility_bill_w_sys[1]);
+        assign("utility_bill_wo_sys_year1", utility_bill_wo_sys[1]);
+        assign("savings_year1", utility_bill_wo_sys[1] - utility_bill_w_sys[1]);
 
         if (!dc_enabled) {
             unassign("monthly_tou_demand_peak_w_sys");
@@ -2235,6 +2230,10 @@ public:
 		//int metering_option = as_integer("ur_metering_option");
 		bool excess_monthly_dollars = (as_integer("ur_metering_option") == 3);
 		int excess_dollars_credit_month = (int)as_number("ur_nm_credit_month");
+        // Do our credits expire at the end of year
+        bool nb_credit_expire = as_boolean("ur_nb_credit_expire"); 
+        // Do we wish to apply our credits in the month they are earned
+        bool nb_apply_credit_current_month = as_boolean("ur_nb_apply_credit_current_month"); 
 
         rate.tou_demand_single_peak = (as_integer("TOU_demand_single_peak") == 1);
 
@@ -2321,75 +2320,87 @@ public:
 // main loop
 		c = 0; // hourly count
 		// process one timestep at a time
-		for (m = 0; m < 12; m++)
+		for (m = 0; m < 12; m++) // for each month
 		{
-			ur_month& curr_month = rate.m_month[m];
-			monthly_surplus_energy = 0;
+			ur_month& curr_month = rate.m_month[m]; 
+			monthly_surplus_energy = 0;                 
 			monthly_deficit_energy = 0;
             if (ur_ec_hourly_acc_period == 1) {
                 surplus_tier = 0;
                 deficit_tier = 0;
             }
 
-			for (d = 0; d<util::nday[m]; d++)
+			for (d = 0; d<util::nday[m]; d++) // for each day
 			{
 				daily_surplus_energy = 0;
 				daily_deficit_energy = 0;
-                if (ur_ec_hourly_acc_period == 2) {
+                if (ur_ec_hourly_acc_period == 2) { // This will never happen because we set it to 1 above
                     surplus_tier = 0;
                     deficit_tier = 0;
                 }
-				for (h = 0; h<24; h++)
+				for (h = 0; h<24; h++) // for each hour
 				{
-					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++)
+					for (s = 0; s < (int)steps_per_hour && c < (int)m_num_rec_yearly; s++) // as far as I can tell given an hour usage profile, etc, this should be a single iteration
 					{
 						// energy charge
-						if (ec_enabled)
+						if (ec_enabled)         // Also always true, "energy charge enabled", 
 						{
 							int row = rate.get_tou_row(c, m);
 
                             step_surplus_energy = 0.0;
                             step_deficit_energy = 0.0;
 
-							if (e_in[c] >= 0.0)
+							if (e_in[c] >= 0.0) // If we have money earned
 							{ // calculate income or credit
                                 e_upper = curr_month.ec_tou_ub.at(row, surplus_tier); // Have to check this each step to swap between surplus and deficit
 								monthly_surplus_energy += e_in[c];
 								daily_surplus_energy += e_in[c];
 
 								// base period charge on units specified
-								ssc_number_t energy_surplus = e_in[c];
+								ssc_number_t energy_surplus = e_in[c];              
 								ssc_number_t cumulative_energy = e_in[c];
-								if (ur_ec_hourly_acc_period == 1)
+								if (ur_ec_hourly_acc_period == 1)                   // Always 1
 									cumulative_energy = monthly_surplus_energy;
-								else if (ur_ec_hourly_acc_period == 2)
+								else if (ur_ec_hourly_acc_period == 2)              // Never taken
 									cumulative_energy = daily_surplus_energy;
 
 
 								// cumulative energy used to determine tier for credit of entire surplus amount
+
+                                // check for vlid tier structure per https://github.com/NREL/SAM/issues/1834
+                                size_t max_tier = curr_month.ec_tou_ub.ncols() - 1;
+                                if (cumulative_energy > curr_month.ec_tou_ub.at(row, max_tier)) {
+                                    std::ostringstream ss;
+                                    ss << "cumulative energy  " << cumulative_energy << "kWh exceeds maximum usage specified for all tiers for period " << row;
+                                    throw exec_error("utilityrate5", ss.str());
+                                }
+
+
 								ssc_number_t credit_amt = 0;
 
                                 ssc_number_t tier_credit = 0.0, sr = 0.0, tier_energy = 0.0;
                                 // time step sell rates
+                                bool use_ec_table_sell_rates = true;
                                 if (as_boolean("ur_en_ts_sell_rate")) {
                                     if (c < rate.m_ec_ts_sell_rate.size()) {
                                         tier_energy = energy_surplus;
                                         sr = rate.m_ec_ts_sell_rate[c];
                                         tier_credit = tier_energy * sr * rate_esc;
                                         curr_month.ec_energy_surplus.at(row, surplus_tier) += (ssc_number_t)tier_energy;
+                                        use_ec_table_sell_rates = false;
                                     }
                                 }
 
                                 // Fall back to TOU rates if m_ec_ts_sell_rate.size() is too small
-                                if (tier_credit == 0) {
-                                    if (cumulative_energy <= e_upper) {
-                                        tier_energy = energy_surplus;
+                                if (use_ec_table_sell_rates) {         // So AFAICT this is to make sure we don't compute both time step and TOU. Maybe better as an else?
+                                    if (cumulative_energy <= e_upper) { // If we are within the max usage for the tier, then it's a simple multiply
+                                        tier_energy = energy_surplus;   // of our usage with that rate  and the escalator
                                         sr = curr_month.ec_tou_sr.at(row, surplus_tier);
 
                                         tier_credit = tier_energy * sr * rate_esc;
                                         curr_month.ec_energy_surplus.at(row, surplus_tier) += (ssc_number_t)tier_energy;
                                     }
-                                    else {
+                                    else {  // Otherwise, we need to handle that the electricity is being sold at different rates
                                         bool break_tier_loop = false;
                                         while (cumulative_energy > e_upper) {
                                             step_surplus_energy = energy_surplus - (cumulative_energy - e_upper); // Subtract amount above the tier to find amount in this tier
@@ -2428,7 +2439,7 @@ public:
 								credit_amt = tier_credit;
 
 
-								if (excess_monthly_dollars)
+								if (excess_monthly_dollars) // NB with carryover to next month
 								{
 									monthly_cumulative_excess_dollars[m] += credit_amt;
 								}
@@ -2447,10 +2458,10 @@ public:
                                     }
 								}
 							}
-							else
+							else // Same calc but with spending money
 							{ // calculate payment or charge
                                 e_upper = curr_month.ec_tou_ub.at(row, deficit_tier); // Have to check this each step to swap between surplus and deficit
-								monthly_deficit_energy -= e_in[c];
+								monthly_deficit_energy -= e_in[c];          
 								daily_deficit_energy -= e_in[c];
 								double charge_amt = 0;
 								double energy_deficit = -e_in[c];
@@ -2462,6 +2473,7 @@ public:
 									cumulative_deficit = daily_deficit_energy;
 
                                 ssc_number_t tier_charge = 0.0, br = 0.0, tier_energy = 0.0;
+                                bool use_ec_table_buy_rates = true;
                                 // time step sell rates
                                 if (as_boolean("ur_en_ts_buy_rate")) {
                                     if (c < rate.m_ec_ts_buy_rate.size()) {
@@ -2471,11 +2483,12 @@ public:
                                         charge_amt = tier_energy * br * rate_esc;
                                         curr_month.ec_energy_use.at(row, deficit_tier) += (ssc_number_t)tier_energy;
                                         curr_month.ec_charge.at(row, deficit_tier) += (ssc_number_t)charge_amt;
+                                        use_ec_table_buy_rates = false;
                                     }
                                 }
 
                                 // Fall back to TOU rates if m_ec_ts_buy_rate.size() is too small
-                                if (tier_charge == 0) {
+                                if (use_ec_table_buy_rates) {
                                     if (cumulative_deficit <= e_upper) {
                                         tier_energy = energy_deficit;
                                         br = curr_month.ec_tou_br.at(row, deficit_tier);
@@ -2555,38 +2568,44 @@ public:
 
 			// Calculate monthly bill (before minimums and fixed charges) and excess kwhs and rollover
 
-			monthly_bill[m] = monthly_ec_charges[m] + rate.monthly_dc_fixed[m] + rate.monthly_dc_tou[m];
+			monthly_bill[m] = monthly_ec_charges[m] + rate.monthly_dc_fixed[m] + rate.monthly_dc_tou[m]; // This code seems unnecessary, it is repeated verbatim below
 
 			excess_dollars_earned[m] = monthly_cumulative_excess_dollars[m];
 
 
 			ssc_number_t dollars_applied = 0;
 			// apply previous month rollover kwhs
-			if (excess_monthly_dollars)
+			if (excess_monthly_dollars) // If in net billing with carrover to next month
 			{
                 // Overwrite this to include the current month's charges
                 monthly_ec_charges_gross[m] = monthly_ec_charges[m];
-				if (m == 0 && excess_dollars_credit_month != 11) {
-					monthly_ec_charges[m] -= prev_excess_dollars;
+				if (m == 0 && excess_dollars_credit_month != 11) { // If start of the year and the rollover month not december
+					monthly_ec_charges[m] -= prev_excess_dollars;   // prev_excess dollars is the value of the credit coming in from last year
 					payment[c - 1] -= prev_excess_dollars;
 					dollars_applied += prev_excess_dollars;
 				}
-				else if (m > 0 && m != excess_dollars_credit_month + 1)
+				else if (m > 0 && m != excess_dollars_credit_month + 1) // If during the middle of the year and the rollover month not the prior month
 				{
 					monthly_ec_charges[m] -= monthly_cumulative_excess_dollars[m - 1];
 					payment[c - 1] -= monthly_cumulative_excess_dollars[m - 1];
 					dollars_applied += monthly_cumulative_excess_dollars[m - 1];
 				}
+                if (nb_apply_credit_current_month) {
+                    monthly_ec_charges[m] -= monthly_cumulative_excess_dollars[m];
+                    payment[c - 1] -= monthly_cumulative_excess_dollars[m];
+                    dollars_applied += monthly_cumulative_excess_dollars[m];
+                    monthly_cumulative_excess_dollars[m] = 0;
+                }
                 // Rollover credits at end of true-up period are applied after annual minimums below this section
 
-                if (monthly_ec_charges[m] < 0)
+                if (monthly_ec_charges[m] < 0)  // If this brings the monthly energy charges negative, then
                 {
-                    payment[c - 1] -= monthly_ec_charges[m];
-                    dollars_applied += monthly_ec_charges[m];
-                    monthly_cumulative_excess_dollars[m] -= monthly_ec_charges[m];
+                    payment[c - 1] -= monthly_ec_charges[m]; // Add the magnitude of the negative amount to the last hour of the month
+                    dollars_applied += monthly_ec_charges[m];// Subtract the magnitude of the negative amount from the dollars applied
+                    monthly_cumulative_excess_dollars[m] -= monthly_ec_charges[m]; //add in the magnitude of the negative amount to the cumulative excess for this month
 					monthly_ec_charges[m] = 0;
 				}
-
+                // I'm pretty sure this branch can't be taken. 
                 if (monthly_ec_charges_gross[m] < dollars_applied) dollars_applied = monthly_ec_charges_gross[m];
                 net_billing_credits[m] = dollars_applied;
 			}
@@ -2645,17 +2664,19 @@ public:
 									}
 								}
 							}
-
-							if (m == excess_dollars_credit_month)
-							{
-								// apply annual rollovers AFTER minimum calculations
-								if (excess_monthly_dollars && (monthly_cumulative_excess_dollars[m] > 0))
-								{
-									income[c] += monthly_cumulative_excess_dollars[m];
-									monthly_bill[m] -= monthly_cumulative_excess_dollars[m];
-                                    monthly_true_up_credits[m] = monthly_cumulative_excess_dollars[m];
-								}
-							}
+                            if (!nb_credit_expire)
+                            {
+                                if (m == excess_dollars_credit_month)
+                                {
+                                    // apply annual rollovers AFTER minimum calculations
+                                    if (excess_monthly_dollars && (monthly_cumulative_excess_dollars[m] > 0))
+                                    {
+                                        income[c] += monthly_cumulative_excess_dollars[m];
+                                        monthly_bill[m] -= monthly_cumulative_excess_dollars[m];
+                                        monthly_true_up_credits[m] = monthly_cumulative_excess_dollars[m];
+                                    }
+                                }
+                            }
 							monthly_bill[m] += monthly_fixed_charges[m] + monthly_minimum_charges[m];
 						}
 						revenue[c] = income[c] - payment[c];
@@ -2671,8 +2692,7 @@ public:
 	void ur_update_ec_monthly(int month, util::matrix_t<double>& charge, util::matrix_t<double>& energy, util::matrix_t<double>& surplus)
 
 	{
-		if (month < 0 || month > (int)rate.m_month.size())
-		{
+		if (month < 0 || month > (int)rate.m_month.size()) {
 			std::ostringstream ss;
 			ss << "ur_update_ec_monthly month not found for Month " << month;
 			throw exec_error("utilityrate5", ss.str());

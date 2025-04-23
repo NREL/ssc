@@ -47,7 +47,7 @@ if ( NOT APPLE)
     set(CURL_DIR build_resources/libcurl_ssl_x64)
 endif()
 
-Project(sam_simulation_core VERSION 1.0.0)
+Project(sam_simulation_core VERSION 1.0.0 LANGUAGES CXX C)
 
 
 #####################################################################################################################
@@ -109,6 +109,11 @@ function(set_default_compile_options target)
         endif()
         if(CMAKE_BUILD_TYPE STREQUAL "Debug")
             set(MAIN_CFLAGS "${MAIN_CFLAGS} -D_DEBUG")
+# code coverage generation using gcov and lcov - linux only
+            if (NOT APPLE AND ENABLE_COVERAGE)
+                # set compiler flags
+                set(MAIN_CFLAGS " -D__UNIX__ -D__64BIT__ -g -O0 --coverage")
+           endif()            
         else()
             set(MAIN_CFLAGS "${MAIN_CFLAGS} -O3 -DNDEBUG")
         endif()
@@ -116,6 +121,7 @@ function(set_default_compile_options target)
     if (SAMAPI_EXPORT AND APPLE)
         SET(MAIN_CFLAGS "${MAIN_CFLAGS} -mmacosx-version-min=12" )
     endif()
+	
     set_target_properties(${target} PROPERTIES COMPILE_FLAGS ${MAIN_CFLAGS})
 endfunction()
 
@@ -168,3 +174,24 @@ endif()
 if (NOT SAM_SKIP_TESTS)
     add_subdirectory(test)
 endif()
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug"
+       AND ENABLE_COVERAGE
+       AND NOT APPLE
+       AND NOT WIN32)
+#    enable_testing()
+
+    # find required tools
+    find_program(LCOV lcov REQUIRED)
+    find_program(GENHTML genhtml REQUIRED)
+
+    # add coverage target
+    add_custom_target(
+        coverage
+        # gather data
+        COMMAND
+        ${LCOV} --directory . --capture --exclude '*/rapidjson/*' --exclude '*/splinter/*' --exclude '*/nlopt/*' --exclude '*/lpsolve/*'  --exclude '*/googletest/*' --exclude '*/tcs/water_properties.cpp' --exclude '*/tcs/CO2_properties.cpp'  --exclude '*/test/*' --exclude '/usr/*'  --output-file coverage.info
+        # generate report
+        COMMAND ${GENHTML} --demangle-cpp -o coverage coverage.info
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+endif()            

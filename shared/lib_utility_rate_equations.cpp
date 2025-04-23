@@ -230,6 +230,21 @@ bool rate_data::check_for_kwh_per_kw_rate(int units) {
     return (units == 1) || (units == 3);
 }
 
+bool rate_data::check_for_daily_rate(int units) {
+    return (units == 2) || (units == 3);
+}
+
+std::string rate_data::get_units_text(int units_int) {
+    std::string units = "kWh";
+    if (check_for_kwh_per_kw_rate(units_int)) {
+        units = "kWh/kW";
+    }
+    if (check_for_daily_rate(units_int)) {
+        units += " daily";
+    }
+    return units;
+}
+
 double rate_data::get_billing_demand(int month) {
     int m = 0;
     double curr_billing_demand = bd_minimum;
@@ -599,7 +614,9 @@ void rate_data::setup_energy_rates(ssc_number_t* ec_weekday, ssc_number_t* ec_we
 	for (m = 0; m < m_month.size(); m++)
 	{
 		int num_periods = 0;
-		int num_tiers = 0; 
+		int num_tiers = 0;
+        std::vector<ssc_number_t> tier_check;
+        std::vector<ssc_number_t> tier_units;
 
 		for (i = 0; i < m_month[m].ec_periods.size(); i++)
 		{
@@ -646,8 +663,7 @@ void rate_data::setup_energy_rates(ssc_number_t* ec_weekday, ssc_number_t* ec_we
 						m_month[m].ec_tou_ub.at(i, j) = ec_tou_mat.at(r, 2);
 						// units kWh, kWh/kW, kWh daily, kWh/kW daily
 						m_month[m].ec_tou_units.at(i, j) = (int)ec_tou_mat.at(r, 3);
-						if ((m_month[m].ec_tou_units.at(i, j) == 2)
-							|| (m_month[m].ec_tou_units.at(i, j) == 3))
+						if (check_for_daily_rate(m_month[m].ec_tou_units.at(i, j)))
 						{// kWh daily or kWh/kW daily - adjust max usage by number of days in month (or billing cycle per Eric 12/14/15
 							m_month[m].ec_tou_ub.at(i, j) *= util::nday[m];
 						}
@@ -657,7 +673,30 @@ void rate_data::setup_energy_rates(ssc_number_t* ec_weekday, ssc_number_t* ec_we
 						if (sell_eq_buy)
 							sell = ec_tou_mat.at(r, 4);
 						m_month[m].ec_tou_sr.at(i, j) = sell;
-						found = true;
+
+                        // handle nan values and negative max usage SAM issue 1856
+                        if (std::isnan(m_month[m].ec_tou_ub.at(i, j)) || m_month[m].ec_tou_ub.at(i, j) < 0) {
+                            std::ostringstream ss;
+                            ss << "Energy rate table has a NaN or negative value for Max Usage in Period " << period << " and Tier " << tier << ".";
+                            throw exec_error("lib_utility_rate_equations", ss.str());
+                        }
+
+                        if (tier_check.size() < tier) {
+                            tier_check.push_back(m_month[m].ec_tou_ub.at(i, j));
+                            tier_units.push_back(m_month[m].ec_tou_units.at(i, j));
+                        }
+                        else if ((std::fabs(tier_check[tier - 1] - m_month[m].ec_tou_ub.at(i, j)) > 1e-7 * std::fmin(tier_check[tier - 1], m_month[m].ec_tou_ub.at(i, j)))) {
+                            std::string original_units = get_units_text(tier_units[tier - 1]);
+                            std::string new_units = get_units_text(m_month[m].ec_tou_units.at(i, j));
+
+                            std::ostringstream ss;
+                            ss << "Energy tier " << tier << " Max. Usage for " << util::schedule_int_to_month(m) << " period " << period << " was expected to be ";
+                            ss << tier_check[tier - 1] << " " << original_units << " but was "; 
+                            ss << m_month[m].ec_tou_ub.at(i, j) << " " << new_units << ". Tiers should have the same Max. Usage across Periods in the same month for TOU rates.";
+                            throw exec_error("lib_utility_rate_equations", ss.str());
+                        }
+
+                        found = true;
 					}
 				}
 
@@ -769,6 +808,7 @@ void rate_data::setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_
 	{
 		int num_periods = 0;
 		int num_tiers = 0;
+        std::vector<ssc_number_t> tier_check;
 		num_periods = (int)m_month[m].dc_periods.size();
 		for (i = 0; i < m_month[m].dc_periods.size(); i++)
 		{
@@ -790,7 +830,7 @@ void rate_data::setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_
 		m_month[m].dc_tou_ch.resize_fill(num_periods, num_tiers, 0); // kWh
 		for (i = 0; i < m_month[m].dc_periods.size(); i++)
 		{
-			// find all periods and check that number of tiers the same for all for the month, if not through error
+			// find all periods and check that number of tiers the same for all for the month, if not throw error
 			std::vector<int>::iterator per_num = std::find(m_dc_tou_periods.begin(), m_dc_tou_periods.end(), m_month[m].dc_periods[i]);
 			period = (*per_num);
 			int ndx = (int)(per_num - m_dc_tou_periods.begin());
@@ -806,6 +846,18 @@ void rate_data::setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_
 					{
 						m_month[m].dc_tou_ub.at(i, j) = dc_tou_mat.at(r, 2);
 						m_month[m].dc_tou_ch.at(i, j) = dc_tou_mat.at(r, 3);//demand charge;
+
+                        if (tier_check.size() < tier) {
+                            tier_check.push_back(m_month[m].dc_tou_ub.at(i, j));
+                        }
+                        else if (std::fabs(tier_check[tier - 1] - m_month[m].dc_tou_ub.at(i, j)) > 1e-7 * std::fmin(tier_check[tier - 1], m_month[m].dc_tou_ub.at(i, j))) {
+                            std::ostringstream ss;
+                            ss << "Demand tier " << tier << " Max. Usage for " << util::schedule_int_to_month(m) << " period " << period << " was expected to be ";
+                            ss << tier_check[tier - 1] << " kW but was ";
+                            ss << m_month[m].dc_tou_ub.at(i, j) << " kW. Tiers should have the same Max. Usage across Periods in the same month for TOU rates.";
+                            throw exec_error("lib_utility_rate_equations", ss.str());
+                        }
+
 						found = true;
 					}
 				}
@@ -869,7 +921,7 @@ void rate_data::setup_demand_charges(ssc_number_t* dc_weekday, ssc_number_t* dc_
 	}
 }
 
-void rate_data::setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix, ssc_number_t* bd_tou_period_matrix)
+bool rate_data::setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix, ssc_number_t* bd_tou_period_matrix)
 {
     // Error checked in SSC variables
     size_t nrows = 12;
@@ -882,12 +934,21 @@ void rate_data::setup_ratcheting_demand(ssc_number_t* ratchet_percent_matrix, ss
         m_month[i].use_current_month_ratchet = ratchet_matrix.at(i, 1) == 1;
     }
 
+    // Must have at least one row at 1, otherwise indicate an error to ssc code
+    bool uses_no_tou_periods = true;
+
     nrows = m_dc_tou_periods.size();
     util::matrix_t<double> tou_matrix(nrows, ncols);
     tou_matrix.assign(bd_tou_period_matrix, nrows, ncols);
     for (size_t i = 0; i < nrows; i++) {
-        bd_tou_periods.emplace((int) tou_matrix.at(i, 0), tou_matrix.at(i, 1) == 1.0);
+        bool use_this_tou_period = tou_matrix.at(i, 1) == 1.0;
+        if (use_this_tou_period) {
+            uses_no_tou_periods = false;
+        }
+        bd_tou_periods.emplace((int) tou_matrix.at(i, 0), use_this_tou_period);
     }
+
+    return uses_no_tou_periods;
 }
 
 void rate_data::sort_energy_to_periods(int month, double energy, size_t step) {
@@ -1178,14 +1239,14 @@ std::vector<double> rate_data::get_composite_tou_sell_rate(int month, size_t yea
 
     size_t num_per = curr_month.ec_tou_sr.nrows();
 
-    if (expected_gen > 0)
+    if (expected_gen > 0) // Net billing should get the sell rate even if expected gen is 0 (e.g. standalone battery)
     {
         for (size_t ir = 0; ir < num_per; ir++)
         {
             bool done = false;
             double periodSellRate = 0;
             // Including the NM credits in the cost function can skew the price signals, causing periods to appear to have higher cost than they actually do. Assume $0 sell rate for NM
-            if (nm_credits_w_rollover)
+            if (nm_credits_w_rollover || !enable_nm) // Not net metering means net billing
             {
                 for (size_t ic = 0; ic < curr_month.ec_tou_ub.ncols() && !done; ic++)
                 {
@@ -1216,7 +1277,7 @@ std::vector<double> rate_data::get_composite_tou_sell_rate(int month, size_t yea
         {
             double periodSellRate = 0;
             // Including the NM credits in the cost function can skew the price signals, causing periods to appear to have higher cost than they actually do. Assume $0 sell rate for NM
-            if (nm_credits_w_rollover)
+            if (nm_credits_w_rollover || !enable_nm)
             {
                 periodSellRate = curr_month.ec_tou_sr.at(ir, 0) * rate_esc;
             }

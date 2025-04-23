@@ -65,6 +65,7 @@ public:
 	enum CURRENT_CHOICE { RESTRICT_POWER, RESTRICT_CURRENT, RESTRICT_BOTH };
 	enum CYCLE_COST {MODEL_CYCLE_COST, INPUT_CYCLE_COST};
 	enum CONNECTION { DC_CONNECTED, AC_CONNECTED };
+    enum CAPACITY_FORECAST_TYPE { PRICE_ONLY, CAPACITY_ONLY, PRICE_AND_CAPACITY };
 
 	dispatch_t(battery_t * Battery,
 		double dt,
@@ -137,6 +138,8 @@ public:
 	virtual double power_batt_target(){ return 0.;}
 	virtual double cost_to_cycle() { return 0.;}
     virtual double cost_to_cycle_per_kwh() { return 0.; }
+
+    virtual size_t get_dispatch_period() { return 0; }
 
 	// control settings
 	double battery_power_to_fill();
@@ -251,13 +254,15 @@ class grid_point
     grid_point = [grid_power, hour, step, cost, marginal_cost]
     */
 public:
-    grid_point(double grid = 0., size_t hour = 0, size_t step = 0, double cost = 0., double marginal_cost = 0.) :
-        _grid(grid), _hour(hour), _step(step), _cost(cost), _marginal_cost(marginal_cost) {}
+    grid_point(double grid = 0., size_t hour = 0, size_t step = 0, double cost = 0., double marginal_cost = 0., double export_price = 0., double export_per_kwh = 0.) :
+        _grid(grid), _hour(hour), _step(step), _cost(cost), _marginal_cost(marginal_cost), _export_price(export_price), _export_per_kwh(export_per_kwh) {}
     double Grid() const { return _grid; }
     size_t Hour() const { return _hour; } 
     size_t Step() const { return _step; } 
     double Cost() const { return _cost; }
     double MarginalCost() const { return _marginal_cost; }
+    double ExportPrice() const { return _export_price; }
+    double ExportPerKWh() const { return _export_per_kwh;  }
 
 private:
 	double _grid; // Power in kW, + is net load, - is net generation
@@ -265,6 +270,8 @@ private:
 	size_t _step; // Steps from time of forecast
     double _cost; // Total $ add to or subtracted from the utility bill for this step, given _grid
     double _marginal_cost; // $ for 1 kW of load in this step
+    double _export_price; // $ paid by utility to discharge battery at full power
+    double _export_per_kwh; // $/kWh from grid export in this step
 };
 
 struct byGrid
@@ -280,6 +287,11 @@ struct byCost
 
 // Sorts low to high
 struct byLowestMarginalCost
+{
+    bool operator() (grid_point const& a, grid_point const& b);
+};
+
+struct byExportPerKWh
 {
     bool operator() (grid_point const& a, grid_point const& b);
 };
@@ -317,6 +329,7 @@ public:
 		bool can_clipcharge,
 		bool can_grid_charge,
 		bool can_fuelcell_charge,
+        bool can_curtail_charge,
         std::vector<double> battReplacementCostPerkWh,
         int battCycleCostChoice,
         std::vector<double> battCycleCost,
@@ -474,6 +487,7 @@ public:
 	double average_battery_conversion_efficiency();
 	double average_battery_roundtrip_efficiency();
 	double pv_charge_percent();
+    double grid_charge_percent();
 
 protected:
 
@@ -492,6 +506,7 @@ protected:
 
 	/*! This is the percentage of energy charge from the PV system [%] */
 	double _pv_charge_percent;
+    double _grid_charge_percent;
 
 	// annual metrics
 	double _e_charge_from_pv_annual;   // [Kwh]

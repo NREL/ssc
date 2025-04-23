@@ -99,7 +99,7 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoad){
 
     EXPECT_EQ(resilience_hours[0], 0); // Max current restrictions prevent this battery from meeting the outage until day 2 (hr 46)
     EXPECT_EQ(resilience_hours[46], 5);
-    EXPECT_NEAR(avg_critical_load, 686.02, 0.1);
+    EXPECT_NEAR(avg_critical_load, 683.90, 0.1);
     EXPECT_NEAR(resilience_hrs_avg, 1.11, 0.01);
     EXPECT_EQ(resilience_hrs_min, 0);
     EXPECT_EQ(outage_durations[0], 0);
@@ -117,7 +117,7 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoad){
         if (power_max - batt_power[i] < 0.1)
             max_indices.push_back(i);
     }
-    EXPECT_EQ(max_indices.size(), 26);
+    EXPECT_EQ(max_indices.size(), 25);
     EXPECT_EQ(max_indices[0], 2743);
 
     auto batt_q0 = data_vtab->as_vector_ssc_number_t("batt_q0");
@@ -155,8 +155,8 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoadLifetime){
 
     EXPECT_EQ(resilience_hours[0], 0); // Max current restrictions prevent this battery from meeting the outage until day 2 (hr 46)
     EXPECT_EQ(resilience_hours[46], 5);
-    EXPECT_NEAR(avg_critical_load, 683.06, 0.1);
-    EXPECT_NEAR(resilience_hrs_avg, 1.103, 0.01);
+    EXPECT_NEAR(avg_critical_load, 674.536, 0.1);
+    EXPECT_NEAR(resilience_hrs_avg, 1.076, 0.01);
     EXPECT_EQ(resilience_hrs_min, 0);
     EXPECT_EQ(outage_durations[0], 0);
     EXPECT_EQ(resilience_hrs_max, 17);
@@ -185,4 +185,56 @@ TEST_F(CMBattery_cmod_battery, ResilienceMetricsFullLoadLifetime){
             max_indices.push_back(i);
     }
     EXPECT_EQ(max_indices[0], 2);
+}
+
+/// Test standalone battery compute modeule with merchant plant prices
+TEST_F(CMBattery_cmod_battery_fom, MerchantPlantAutomatic) {
+
+    // Run with fixed output
+    ssc_number_t n_years;
+    ssc_data_get_number(data, "analysis_period", &n_years);
+    size_t n_lifetime = (size_t)(n_years) * 8760;
+
+    int errors = run_module(data, "battery"); // Happy path - expect no errors
+    EXPECT_FALSE(errors);
+
+    if (!errors)
+    {
+        // roundtrip efficiency test will ensure that the battery cycled
+        ssc_number_t roundtripEfficiency;
+        ssc_data_get_number(data, "average_battery_roundtrip_efficiency", &roundtripEfficiency);
+        EXPECT_NEAR(roundtripEfficiency, 87.47, 2);
+
+        // test that lifetime output is achieved
+        int n;
+        calculated_array = ssc_data_get_array(data, "gen", &n);
+        EXPECT_EQ(n_lifetime, (size_t)n);
+
+        // test that battery was replaced at some point
+        calculated_array = ssc_data_get_array(data, "batt_bank_replacement", &n);
+        int replacements = std::accumulate(calculated_array, calculated_array + n, 0);
+
+        EXPECT_EQ(replacements, 0);
+
+        // test temperature
+        double* arr = ssc_data_get_array(data, "batt_temperature", &n);
+        auto temp_array = std::vector<double>(arr, arr + n);
+        double max_temp = *std::max_element(temp_array.begin(), temp_array.end());
+        EXPECT_NEAR(max_temp, 34.3, 1);
+    }
+}
+
+/// Test standalone battery compute modeule with merchant plant price errors (ssc throws as expected)
+TEST_F(CMBattery_cmod_battery_fom, MerchantPlantAutomaticDimensionError) {
+
+    // Run with fixed output
+    ssc_number_t n_years;
+    ssc_data_get_number(data, "analysis_period", &n_years);
+    size_t n_lifetime = (size_t)(n_years) * 8760;
+
+    set_matrix(data, "mp_energy_market_revenue_single", mp_path, 1, 8760); // Swap the dimensions of the array (this is super easy to do by accident in PySAM)
+
+    int errors = run_module(data, "battery"); // Expect an error
+    EXPECT_TRUE(errors);
+
 }

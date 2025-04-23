@@ -33,8 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "core.h"
 #include "lib_financial.h"
 #include "common_financial.h"
-#include <sstream>
-using namespace libfin;
 
 static var_info vtab_thirdpartyownership[] = {
 /*   VARTYPE           DATATYPE          NAME                        LABEL                                  UNITS         META                      GROUP            REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
@@ -83,8 +81,6 @@ static var_info vtab_thirdpartyownership[] = {
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_cumulative_payback_with_expenses",      "Cumulative simple payback with expenses",         "$",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	
 // NTE additions 8/10/17
-	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_with_system",             "Energy value",                       "$",            "",                      "Electricity Cost",      "*",                       "",                                         "" },
-	{ SSC_INPUT,        SSC_ARRAY,       "elec_cost_without_system",             "Energy value",                       "$",            "",                      "Electricity Cost",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_ARRAY,      "cf_nte",      "Host indifference point by year",         "cents/kWh",            "",                      "Cash Flow",      "*",                     "LENGTH_EQUAL=cf_length",                "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "year1_nte",                "Host indifference point in Year 1",                          "cents/kWh",    "",                      "Financial Metrics",      "*",                       "",                                         "" },
 	{ SSC_OUTPUT,        SSC_NUMBER,     "lnte_real",                "Host indifference point nominal levelized value",                          "cents/kWh",    "",                      "Financial Metrics",      "*",                       "",                                         "" },
@@ -266,15 +262,15 @@ public:
 	
 		}
 		
-		double npv_energy_real = npv( CF_energy_sales, nyears, real_discount_rate );
-		double lcoe_real = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) ) * 100;
+		double npv_energy_real = libfin::npv(cf.row(CF_energy_sales).to_vector(), nyears, real_discount_rate);
+		double lcoe_real = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + libfin::npv(cf.row(CF_after_tax_net_equity_cost_flow).to_vector(), nyears, nom_discount_rate)) * 100;
 		if (npv_energy_real == 0.0) 
 			lcoe_real = std::numeric_limits<double>::quiet_NaN();
 		else
 			lcoe_real /= npv_energy_real;
 
-		double npv_energy_nom = npv( CF_energy_sales, nyears, nom_discount_rate );
-		double lcoe_nom = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + npv(CF_after_tax_net_equity_cost_flow, nyears, nom_discount_rate) ) * 100;
+		double npv_energy_nom = libfin::npv(cf.row(CF_energy_sales).to_vector(), nyears, nom_discount_rate);
+		double lcoe_nom = -( cf.at(CF_after_tax_net_equity_cost_flow,0) + libfin::npv(cf.row(CF_after_tax_net_equity_cost_flow).to_vector(), nyears, nom_discount_rate)) * 100;
 		if (npv_energy_nom == 0.0) 
 			lcoe_nom = std::numeric_limits<double>::quiet_NaN();
 		else
@@ -283,17 +279,17 @@ public:
 
 		// NTE
 		ssc_number_t *ub_w_sys = 0;
-		ub_w_sys = as_array("elec_cost_with_system", &count);
+		ub_w_sys = as_array("utility_bill_w_sys", &count);
 		if (count != nyears+1)
 			throw exec_error("third party ownership", util::format("utility bill with system input wrong length (%d) should be (%d)",count, nyears+1));
 		ssc_number_t *ub_wo_sys = 0;
-		ub_wo_sys = as_array("elec_cost_without_system", &count);
+		ub_wo_sys = as_array("utility_bill_wo_sys", &count);
 		if (count != nyears+1)
 			throw exec_error("third party ownership", util::format("utility bill without system input wrong length (%d) should be (%d)",count, nyears+1));
 
 		for (i = 0; i < (int)count; i++)
 			cf.at(CF_nte, i) = (double) (ub_wo_sys[i] - ub_w_sys[i]) *100.0;// $ to cents
-		double lnte_real = npv(  CF_nte, nyears, nom_discount_rate ); 
+		double lnte_real = libfin::npv(cf.row(CF_nte).to_vector(), nyears, nom_discount_rate);
 
 		for (i = 0; i < (int)count; i++)
 			if (cf.at(CF_energy_sales,i) > 0) cf.at(CF_nte,i) /= cf.at(CF_energy_sales,i);
@@ -314,7 +310,7 @@ public:
 		assign( "year1_nte", var_data((ssc_number_t)cf.at(CF_nte,1)) );
 
 
-		double net_present_value = cf.at(CF_after_tax_cash_flow, 0) + npv(CF_after_tax_cash_flow, nyears, nom_discount_rate );
+		double net_present_value = cf.at(CF_after_tax_cash_flow, 0) + libfin::npv(cf.row(CF_after_tax_cash_flow).to_vector(), nyears, nom_discount_rate);
 
 		assign( "cf_length", var_data( (ssc_number_t) nyears+1 ));
 
@@ -350,23 +346,6 @@ public:
 		ssc_number_t *arrp = allocate( name, nyears+1 );
 		for (size_t i=0;i<=nyears;i++)
 			arrp[i] = (ssc_number_t)cf.at(cf_line, i);
-	}
-
-	double npv( size_t cf_line, size_t nyears, double rate )
-	{		
-		if (rate <= -1.0) throw general_error("cannot calculate NPV with discount rate less or equal to -1.0");
-
-		double rr = 1/(1+rate);
-		double result = 0;
-		for (size_t i=nyears;i>0;i--)
-			result = rr * result + cf.at(cf_line,i);
-
-		return result*rr;
-	}
-
-	double min( double a, double b )
-	{
-		return (a < b) ? a : b;
 	}
 
 };

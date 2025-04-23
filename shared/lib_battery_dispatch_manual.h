@@ -65,6 +65,7 @@ public:
 		std::map<size_t, double> dm_percent_discharge,
 		std::map<size_t, double> dm_percent_gridcharge,
         bool can_clip_charge,
+        bool can_curtail_charge,
         double interconnection_limit,
         bool chargeOnlySystemExceedLoad = true,
         bool dischargeOnlyLoadExceedSystem = true,
@@ -84,6 +85,8 @@ public:
 		size_t hour_of_year,
 		size_t step) override;
 
+    size_t get_dispatch_period() override;
+
 protected:
 
 	/// Helper function to internally set up the dispatch model
@@ -100,6 +103,7 @@ protected:
 		std::map<size_t, double> dm_percent_discharge,
 		std::map<size_t, double> dm_percent_gridcharge,
         bool can_clip_charge,
+        bool can_curtail_charge,
         bool priorityChargeBattery);
 
 	void SOC_controller() override;
@@ -114,7 +118,10 @@ protected:
 	std::vector<bool> _fuelcellcharge_array;
     std::vector<bool> _discharge_grid_array;
     bool _can_clip_charge;
+    bool _can_curtail_charge;
     bool _priority_charge_battery;
+
+    size_t _iprofile;
 
 	double _percent_discharge;
 	double _percent_charge;

@@ -3165,7 +3165,7 @@ bool advanced_financing_cost::compute_cost(double cost_installed, double equity,
 }
 */
 
-bool hourly_energy_calculation::calculate(compute_module *cm)
+bool hourly_energy_calculation::calculate(compute_module *cm, bool heat)
 {
 	if (!cm) return false;
 
@@ -3177,7 +3177,10 @@ bool hourly_energy_calculation::calculate(compute_module *cm)
 	ssc_number_t *pgen;
     size_t nrec_gen = 0;
     m_step_per_hour_gen = 1;
-	pgen = m_cm->as_array("gen", &nrec_gen);
+    if (heat)
+        pgen = m_cm->as_array("gen_heat", &nrec_gen); // kWht
+    else
+        pgen = m_cm->as_array("gen", &nrec_gen);
 
 	// in front of meter - account for charging and
 	size_t i;
