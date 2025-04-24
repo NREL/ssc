@@ -183,6 +183,8 @@ elseif(MSVC)
             PATHS "$ENV{ORTOOLSDIR}/lib/cmake/${library}"
                   "$ENV{ORTOOLSDIR}/cmake"
                   "$ENV{ORTOOLSDIR}/share/${library}/cmake"
+                  "$ENV{ORTOOLSDIR}/include"
+                  "$ENV{ORTOOLSDIR}/lib"
                   $ENV{ORTOOLSDIR}
             REQUIRED
         )
@@ -197,6 +199,7 @@ elseif(MSVC)
         endif()
         set(libs "LIB_${tlibrary_name}")
         get_target_property(lib_release ${library} LOCATION)
+        message("${library} path is ${lib_release}")
         if (NOT "${lib_release}" STREQUAL "lib_release-NOTFOUND")
             string(REPLACE release debug lib_debug ${lib_release})
             set(libs
@@ -217,7 +220,7 @@ elseif(MSVC)
 
     if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR "Debug" IN_LIST CMAKE_CONFIGURATION_TYPES)
         find_library( ZLIBD
-                NAMES zlibd.lib
+                NAMES zlib.lib
                 PATHS $ENV{ORTOOLSDBDIR}/lib)
         target_link_libraries(shared debug ${ZLIBD})
     endif()
@@ -245,7 +248,7 @@ elseif(MSVC)
     find_ortools_package(scip)
     find_ortools_package(ortools)
 
-    foreach(_target IN ITEMS re2::re2 Eigen3::Eigen utf8_range::utf8_validity libscip ortools::ortools)
+    foreach(_target IN ITEMS re2::re2 Eigen3::Eigen utf8_range::utf8_validity ortools::ortools)
         set_library_by_config(shared ${_target} FALSE)
     endforeach()
 endif()
