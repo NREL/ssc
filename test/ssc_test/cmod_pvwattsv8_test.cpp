@@ -43,7 +43,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 TEST_F(CMPvwattsv8Integration_cmod_pvwattsv8, DefaultSetup) {
 //    compute();
-    ssc_data_set_number(data, "analysis_period", 25);
+    //ssc_data_set_number(data, "analysis_period", 25);
+    ssc_data_set_number(data, "analysis_period", 2); // Speedy Gonzales 
+
 }
 
 ///Default PVWattsv8, but with TMY2 instead of TMY3

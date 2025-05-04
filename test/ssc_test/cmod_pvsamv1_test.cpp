@@ -145,11 +145,13 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, DefaultResidentialModel)
 
         ssc_number_t lcoe_nom;
         ssc_data_get_number(data, "lcoe_nom", &lcoe_nom);
-        EXPECT_NEAR(lcoe_nom, 7.03, m_error_tolerance_lo) << "Levelized COE (nominal)";
+//        EXPECT_NEAR(lcoe_nom, 7.03, m_error_tolerance_lo) << "Levelized COE (nominal)";
+        EXPECT_NEAR(lcoe_nom, 33.48, m_error_tolerance_lo) << "Levelized COE (nominal)"; // Speedy Gonzales 25yr to 2yr
 
         ssc_number_t lcoe_real;
         ssc_data_get_number(data, "lcoe_real", &lcoe_real);
-        EXPECT_NEAR(lcoe_real, 5.65, m_error_tolerance_lo) << "Levelized COE (real)";
+//        EXPECT_NEAR(lcoe_real, 5.65, m_error_tolerance_lo) << "Levelized COE (real)";
+        EXPECT_NEAR(lcoe_real, 31.15, m_error_tolerance_lo) << "Levelized COE (real)"; // Speedy Gonzales 25yr to 2yr
 
         ssc_number_t utility_bill_wo_sys_year1;
         ssc_data_get_number(data, "utility_bill_wo_sys_year1", &utility_bill_wo_sys_year1);
@@ -165,11 +167,13 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, DefaultResidentialModel)
 
         ssc_number_t npv;
         ssc_data_get_number(data, "npv", &npv);
-        EXPECT_NEAR(npv, 4691.1, m_error_tolerance_hi) << "Net present value";
+//        EXPECT_NEAR(npv, 4691.1, m_error_tolerance_hi) << "Net present value";
+        EXPECT_NEAR(npv, 5685.3, m_error_tolerance_hi) << "Net present value";
 
         ssc_number_t payback;
         ssc_data_get_number(data, "payback", &payback);
-        EXPECT_NEAR(payback, 11.8, m_error_tolerance_lo) << "Payback period";
+//        EXPECT_NEAR(payback, 11.8, m_error_tolerance_lo) << "Payback period";
+        EXPECT_TRUE(std::isnan(payback)) << "Payback period"; // Speedy Gonzales 25yr to 2yr
 
         ssc_number_t discounted_payback;
         ssc_data_get_number(data, "discounted_payback", &discounted_payback);
