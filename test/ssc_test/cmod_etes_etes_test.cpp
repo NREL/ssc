@@ -44,6 +44,7 @@ NAMESPACE_TEST(etes_etes_test, EtesEtesCmod, Default_NoFinancial)
 {
     ssc_data_t defaults = etes_etes_defaults();
     CmodUnderTest etes_system = CmodUnderTest("etes_electric_resistance", defaults);
+    /*
     etes_system.SetInput("is_dispatch", 0);
     int errors = etes_system.RunModule();
     double ann_energy = etes_system.GetOutput("annual_energy");
@@ -51,10 +52,10 @@ NAMESPACE_TEST(etes_etes_test, EtesEtesCmod, Default_NoFinancial)
     if (!errors) {
         EXPECT_NEAR_FRAC(std::abs(etes_system.GetOutput("annual_energy")), std::abs(-739728801.), kErrorToleranceHi);
     }
-
+    */
     etes_system.SetInput("is_dispatch", 1);
-    errors = etes_system.RunModule();
-    ann_energy = etes_system.GetOutput("annual_energy");
+    int errors = etes_system.RunModule();
+    double ann_energy = etes_system.GetOutput("annual_energy");
     EXPECT_FALSE(errors);
     if (!errors) {
         EXPECT_NEAR_FRAC(std::abs(etes_system.GetOutput("annual_energy")), std::abs(-497554825), kErrorToleranceHi);

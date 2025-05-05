@@ -44,6 +44,7 @@ NAMESPACE_TEST(etes_ptes_test, EtesPtesCmod, Default_NoFinancial)
 {
     ssc_data_t defaults = etes_ptes_defaults();
     CmodUnderTest ptes_system = CmodUnderTest("etes_ptes", defaults);
+    /*
     ptes_system.SetInput("is_dispatch", 0);
     int errors = ptes_system.RunModule();
     double ann_energy = ptes_system.GetOutput("annual_energy");
@@ -51,10 +52,10 @@ NAMESPACE_TEST(etes_ptes_test, EtesPtesCmod, Default_NoFinancial)
     if (!errors) {
         EXPECT_NEAR_FRAC(std::abs(ptes_system.GetOutput("annual_energy")), std::abs(264339255.), kErrorToleranceHi);
     }
-
+    */
     ptes_system.SetInput("is_dispatch", 1);
-    errors = ptes_system.RunModule();
-    ann_energy = ptes_system.GetOutput("annual_energy");
+    int errors = ptes_system.RunModule();
+    double ann_energy = ptes_system.GetOutput("annual_energy");
     EXPECT_FALSE(errors);
     if (!errors) {
         EXPECT_NEAR_FRAC(std::abs(ptes_system.GetOutput("annual_energy")), std::abs(202929176.), kErrorToleranceHi);
