@@ -115,7 +115,7 @@ TEST_F(CmodAllEquityPartnershipFlipTest, CustomGeneration) {
     Test("equpartflip", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
-
+*/
 TEST_F(CmodAllEquityPartnershipFlipTest, Geotherrmal) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_Geothermal_Power_All_Equity_Partnership_Flip_cmod_equpartflip.json";
@@ -126,7 +126,7 @@ TEST_F(CmodAllEquityPartnershipFlipTest, Geotherrmal) {
 
     Test("equpartflip", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-
+/*
 TEST_F(CmodAllEquityPartnershipFlipTest, CPV) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_High-X_Concentrating_PV_All_Equity_Partnership_Flip_cmod_equpartflip.json";
@@ -184,7 +184,7 @@ TEST_F(CmodAllEquityPartnershipFlipTest, PVBattery) {
     Test("equpartflip", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
-/*
+
 TEST_F(CmodAllEquityPartnershipFlipTest, PVWatts) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_PVWatts_All_Equity_Partnership_Flip_cmod_equpartflip.json";
@@ -195,7 +195,7 @@ TEST_F(CmodAllEquityPartnershipFlipTest, PVWatts) {
 
     Test("equpartflip", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-*/
+
 TEST_F(CmodAllEquityPartnershipFlipTest, StandaloneBattery) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_Standalone_Battery_All_Equity_Partnership_Flip_cmod_equpartflip.json";
