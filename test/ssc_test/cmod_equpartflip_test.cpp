@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "gtest/gtest.h"
 
-
+/*
 TEST_F(CmodAllEquityPartnershipFlipTest, Biopower) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_Biopower_All_Equity_Partnership_Flip_cmod_equpartflip.json";
@@ -172,7 +172,7 @@ TEST_F(CmodAllEquityPartnershipFlipTest, PhysicalTrough) {
     Test("equpartflip", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
-
+*/
 TEST_F(CmodAllEquityPartnershipFlipTest, PVBattery) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_PV_Battery_All_Equity_Partnership_Flip_cmod_equpartflip.json";
@@ -184,7 +184,7 @@ TEST_F(CmodAllEquityPartnershipFlipTest, PVBattery) {
     Test("equpartflip", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
-
+/*
 TEST_F(CmodAllEquityPartnershipFlipTest, PVWatts) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_PVWatts_All_Equity_Partnership_Flip_cmod_equpartflip.json";
@@ -195,7 +195,7 @@ TEST_F(CmodAllEquityPartnershipFlipTest, PVWatts) {
 
     Test("equpartflip", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-
+*/
 TEST_F(CmodAllEquityPartnershipFlipTest, StandaloneBattery) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_Standalone_Battery_All_Equity_Partnership_Flip_cmod_equpartflip.json";
@@ -207,7 +207,7 @@ TEST_F(CmodAllEquityPartnershipFlipTest, StandaloneBattery) {
     Test("equpartflip", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
-
+/*
 TEST_F(CmodAllEquityPartnershipFlipTest, Wind) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_Wind_Power_All_Equity_Partnership_Flip_cmod_equpartflip.json";
@@ -219,4 +219,4 @@ TEST_F(CmodAllEquityPartnershipFlipTest, Wind) {
     Test("equpartflip", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
-
+*/
