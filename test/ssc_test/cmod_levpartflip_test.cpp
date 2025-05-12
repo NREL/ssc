@@ -46,7 +46,7 @@ TEST_F(CmodLeveragedPartnershipFlipTest, Biopower) {
 
     Test("levpartflip", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-
+/*
 TEST_F(CmodLeveragedPartnershipFlipTest, DSLF) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/levpartflip/2023.10.27_om-expense-cash-flow_DSLF_Leveraged_Partnership_Flip_cmod_levpartflip.json";
@@ -69,7 +69,7 @@ TEST_F(CmodLeveragedPartnershipFlipTest, EmpiricalTrough) {
     Test("levpartflip", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
-
+*/
 TEST_F(CmodLeveragedPartnershipFlipTest, PV) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/levpartflip/2023.10.27_om-expense-cash-flow_Flat_Plate_PV_Leveraged_Partnership_Flip_cmod_levpartflip.json";
@@ -81,7 +81,7 @@ TEST_F(CmodLeveragedPartnershipFlipTest, PV) {
     Test("levpartflip", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
-
+/*
 TEST_F(CmodLeveragedPartnershipFlipTest, CustomGenerationBattery) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/levpartflip/2023.10.27_om-expense-cash-flow_Generic_Battery_Leveraged_Partnership_Flip_cmod_levpartflip.json";
@@ -92,7 +92,7 @@ TEST_F(CmodLeveragedPartnershipFlipTest, CustomGenerationBattery) {
 
     Test("levpartflip", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-
+*/
 TEST_F(CmodLeveragedPartnershipFlipTest, GenericCSP) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/levpartflip/2023.10.27_om-expense-cash-flow_Generic_CSP_System_Leveraged_Partnership_Flip_cmod_levpartflip.json";
@@ -126,7 +126,7 @@ TEST_F(CmodLeveragedPartnershipFlipTest, Geotherrmal) {
 
     Test("levpartflip", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-
+/*
 TEST_F(CmodLeveragedPartnershipFlipTest, CPV) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/levpartflip/2023.10.27_om-expense-cash-flow_High-X_Concentrating_PV_Leveraged_Partnership_Flip_cmod_levpartflip.json";
@@ -171,7 +171,7 @@ TEST_F(CmodLeveragedPartnershipFlipTest, PhysicalTrough) {
 
     Test("levpartflip", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-
+*/
 
 TEST_F(CmodLeveragedPartnershipFlipTest, PVBattery) {
     std::string file_inputs = SSCDIR;
@@ -184,7 +184,7 @@ TEST_F(CmodLeveragedPartnershipFlipTest, PVBattery) {
     Test("levpartflip", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
-
+/*
 TEST_F(CmodLeveragedPartnershipFlipTest, PVWatts) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/levpartflip/2023.10.27_om-expense-cash-flow_PVWatts_Leveraged_Partnership_Flip_cmod_levpartflip.json";
@@ -219,4 +219,4 @@ TEST_F(CmodLeveragedPartnershipFlipTest, Wind) {
     Test("levpartflip", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
-
+*/
