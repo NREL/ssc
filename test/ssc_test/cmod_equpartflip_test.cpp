@@ -80,7 +80,7 @@ TEST_F(CmodAllEquityPartnershipFlipTest, PV) {
 
     Test("equpartflip", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-
+*/
 
 TEST_F(CmodAllEquityPartnershipFlipTest, CustomGenerationBattery) {
     std::string file_inputs = SSCDIR;
@@ -92,7 +92,7 @@ TEST_F(CmodAllEquityPartnershipFlipTest, CustomGenerationBattery) {
 
     Test("equpartflip", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-
+/*
 TEST_F(CmodAllEquityPartnershipFlipTest, GenericCSP) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_Generic_CSP_System_All_Equity_Partnership_Flip_cmod_equpartflip.json";
