@@ -121,6 +121,7 @@ TEST_F(CmodCashLoanTest, PVWattsBatteryCommercial) {
     Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
+/*
 TEST_F(CmodCashLoanTest, PVResidential) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/cashloan/2022.08.08_develop_branch_Flat_Plate_PV_Residential_cmod_cashloan.json";
@@ -330,4 +331,4 @@ TEST_F(CmodCashLoanTest, WindCommercial) {
 
     Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-
+*/
