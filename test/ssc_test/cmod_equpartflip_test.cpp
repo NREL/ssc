@@ -150,6 +150,7 @@ TEST_F(CmodAllEquityPartnershipFlipTest, MSLF) {
     Test("equpartflip", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
+*/
 TEST_F(CmodAllEquityPartnershipFlipTest, MSPT) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_MSPT_All_Equity_Partnership_Flip_cmod_equpartflip.json";
@@ -160,7 +161,7 @@ TEST_F(CmodAllEquityPartnershipFlipTest, MSPT) {
 
     Test("equpartflip", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-
+/*
 TEST_F(CmodAllEquityPartnershipFlipTest, PhysicalTrough) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/equpartflip/2023.10.27_om-expense-cash-flow_Physical_Trough_All_Equity_Partnership_Flip_cmod_equpartflip.json";
