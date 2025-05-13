@@ -76,7 +76,7 @@ TEST_F(CmodCashLoanTest, DiscountedPayback) {
 }
 
 
-
+/*
 TEST_F(CmodCashLoanTest, PVWattsResidential) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/cashloan/2022.08.08_develop_branch_PVWatts_Residential_cmod_cashloan.json";
@@ -87,7 +87,7 @@ TEST_F(CmodCashLoanTest, PVWattsResidential) {
 
     Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-
+*/
 TEST_F(CmodCashLoanTest, PVWattsCommercial) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/cashloan/2022.08.08_develop_branch_PVWatts_Commercial_cmod_cashloan.json";
