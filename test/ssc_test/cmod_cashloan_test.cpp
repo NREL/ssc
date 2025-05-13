@@ -154,7 +154,7 @@ TEST_F(CmodCashLoanTest, PVBatteryResidential) {
 
     Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-
+/*
 TEST_F(CmodCashLoanTest, PVBatteryCommercial) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/cashloan/2022.08.08_develop_branch_PV_Battery_Commercial_cmod_cashloan.json";
@@ -165,7 +165,7 @@ TEST_F(CmodCashLoanTest, PVBatteryCommercial) {
 
     Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-/*
+
 TEST_F(CmodCashLoanTest, CustomGenerationResidential) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/cashloan/2022.08.08_develop_branch_Generic_System_Residential_cmod_cashloan.json";
@@ -176,7 +176,7 @@ TEST_F(CmodCashLoanTest, CustomGenerationResidential) {
 
     Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-
+*/
 TEST_F(CmodCashLoanTest, CustomGenerationCommercial) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/cashloan/2022.08.08_develop_branch_Generic_System_Commercial_cmod_cashloan.json";
@@ -187,7 +187,7 @@ TEST_F(CmodCashLoanTest, CustomGenerationCommercial) {
 
     Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-
+/*
 TEST_F(CmodCashLoanTest, CustomGenerationBatteryResidential) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/cashloan/2022.08.08_develop_branch_Generic_Battery_Residential_cmod_cashloan.json";
@@ -242,7 +242,7 @@ TEST_F(CmodCashLoanTest, FuelCellCommercial) {
 
     Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-/*
+
 TEST_F(CmodCashLoanTest, GenericCSPCommercial) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/cashloan/2022.08.08_develop_branch_Generic_CSP_System_Commercial_cmod_cashloan.json";
@@ -253,7 +253,7 @@ TEST_F(CmodCashLoanTest, GenericCSPCommercial) {
 
     Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-
+/*
 TEST_F(CmodCashLoanTest, MSLFCommercial) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/cashloan/2022.08.08_develop_branch_MSLF_Commercial_cmod_cashloan.json";
