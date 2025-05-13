@@ -87,7 +87,7 @@ TEST_F(CmodCashLoanTest, PVWattsResidential) {
 
     Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-
+*/
 TEST_F(CmodCashLoanTest, PVWattsCommercial) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/cashloan/2022.08.08_develop_branch_PVWatts_Commercial_cmod_cashloan.json";
@@ -109,7 +109,7 @@ TEST_F(CmodCashLoanTest, PVWattsBatteryResidential) {
 
     Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-
+/*
 TEST_F(CmodCashLoanTest, PVWattsBatteryCommercial) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/cashloan/2022.08.08_develop_branch_PVWatts_Battery_Commercial_cmod_cashloan.json";
@@ -187,7 +187,7 @@ TEST_F(CmodCashLoanTest, CustomGenerationCommercial) {
 
     Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-/*
+
 TEST_F(CmodCashLoanTest, CustomGenerationBatteryResidential) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/cashloan/2022.08.08_develop_branch_Generic_Battery_Residential_cmod_cashloan.json";
@@ -198,7 +198,7 @@ TEST_F(CmodCashLoanTest, CustomGenerationBatteryResidential) {
 
     Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-
+/*
 TEST_F(CmodCashLoanTest, CustomGenerationBatteryCommercial) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/cashloan/2022.08.08_develop_branch_Generic_Battery_Commercial_cmod_cashloan.json";
@@ -330,4 +330,5 @@ TEST_F(CmodCashLoanTest, WindCommercial) {
 
     Test("cashloan", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
+
 */
