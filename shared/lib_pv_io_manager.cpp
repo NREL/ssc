@@ -206,6 +206,8 @@ Irradiance_IO::Irradiance_IO(compute_module* cm, std::string cmName)
             throw exec_error(cmName, "Albedos must be greater than zero and less than one in the monthly uniform albedo matrix.");
         }
     }
+    // read in the user entered snow data
+    userSpecifiedSnowDepth = cm->as_vector_double("snow_array");
 
     checkWeatherFile(cm, cmName);
 }
@@ -725,6 +727,7 @@ PVSystem_IO::PVSystem_IO(compute_module* cm, std::string cmName, Simulation_IO* 
     enableDCLifetimeLosses = cm->as_boolean("en_dc_lifetime_losses");
     enableACLifetimeLosses = cm->as_boolean("en_ac_lifetime_losses");
     enableSnowModel = cm->as_boolean("en_snow_model");
+    useWeatherFileSnow = cm->as_boolean("use_snow_weather_file");
 
     // The shared inverter of the PV array and a tightly-coupled DC connected battery
     std::unique_ptr<SharedInverter> tmpSharedInverter(new SharedInverter(Inverter->inverterType, numberOfInverters, &Inverter->sandiaInverter, &Inverter->partloadInverter, &Inverter->ondInverter, numberOfInvertersClipping));
