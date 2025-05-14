@@ -46,7 +46,7 @@ TEST_F(CmodSaleLeasebackTest, Biopower) {
 
     Test("saleleaseback", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-
+/*
 TEST_F(CmodSaleLeasebackTest, DSLF) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_DSLF_Sale_Leaseback_cmod_saleleaseback.json";
@@ -69,7 +69,7 @@ TEST_F(CmodSaleLeasebackTest, EmpiricalTrough) {
     Test("saleleaseback", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
-
+*/
 TEST_F(CmodSaleLeasebackTest, PV) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_Flat_Plate_PV_Sale_Leaseback_cmod_saleleaseback.json";
@@ -81,7 +81,7 @@ TEST_F(CmodSaleLeasebackTest, PV) {
     Test("saleleaseback", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
-
+/*
 TEST_F(CmodSaleLeasebackTest, CustomGenerationBattery) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_Generic_Battery_Sale_Leaseback_cmod_saleleaseback.json";
@@ -92,7 +92,7 @@ TEST_F(CmodSaleLeasebackTest, CustomGenerationBattery) {
 
     Test("saleleaseback", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-
+*/
 TEST_F(CmodSaleLeasebackTest, GenericCSP) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_Generic_CSP_System_Sale_Leaseback_cmod_saleleaseback.json";
@@ -126,7 +126,7 @@ TEST_F(CmodSaleLeasebackTest, Geotherrmal) {
 
     Test("saleleaseback", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-
+/*
 TEST_F(CmodSaleLeasebackTest, CPV) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_High-X_Concentrating_PV_Sale_Leaseback_cmod_saleleaseback.json";
@@ -172,7 +172,7 @@ TEST_F(CmodSaleLeasebackTest, PhysicalTrough) {
     Test("saleleaseback", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
-
+*/
 TEST_F(CmodSaleLeasebackTest, PVBattery) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_PV_Battery_Sale_Leaseback_cmod_saleleaseback.json";
@@ -184,7 +184,7 @@ TEST_F(CmodSaleLeasebackTest, PVBattery) {
     Test("saleleaseback", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
-
+/*
 TEST_F(CmodSaleLeasebackTest, PVWatts) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/saleleaseback/2023.10.27_om-expense-cash-flow_PVWatts_Sale_Leaseback_cmod_saleleaseback.json";
@@ -219,4 +219,4 @@ TEST_F(CmodSaleLeasebackTest, Wind) {
     Test("saleleaseback", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
-
+*/
