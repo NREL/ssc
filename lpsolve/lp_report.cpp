@@ -107,7 +107,7 @@ STATIC void print_indent(lprec *lp)
   report(lp, NEUTRAL, "> ");
 } /* print_indent */
 
-STATIC void debug_print(lprec *lp, char *format, ...)
+STATIC void debug_print(lprec *lp, const char *format, ...)
 {
   va_list ap;
 

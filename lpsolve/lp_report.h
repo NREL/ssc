@@ -21,7 +21,7 @@ const char * __VACALL explain(lprec *lp, const char *format, ...);
 void __VACALL report(lprec *lp, int level, const char *format, ...);
 
 /* Prototypes for debugging and general data dumps */
-void debug_print(lprec *lp, char *format, ...);
+void debug_print(lprec *lp, const char *format, ...);
 void debug_print_solution(lprec *lp);
 void debug_print_bounds(lprec *lp, REAL *upbo, REAL *lowbo);
 void blockWriteLREAL(FILE *output, char *label, LREAL *vector, int first, int last);

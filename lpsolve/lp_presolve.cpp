@@ -466,7 +466,7 @@ STATIC MYBOOL presolve_rowfeasible(presolverec *psdata, int rownr, MYBOOL userow
   return( status );
 }
 
-STATIC MYBOOL presolve_debugmap(presolverec *psdata, char *caption)
+STATIC MYBOOL presolve_debugmap(presolverec *psdata, const char *caption)
 {
   lprec *lp = psdata->lp;
   MATrec *mat = lp->matA;
