@@ -78,6 +78,26 @@ def convert_log_to_csv(gtest_log_path):
     return test_df
 
 
+def check_workflow_job_status(workflow_id):
+    headers = {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': f'Bearer {access_token}',
+        'X-GitHub-Api-Version': '2022-11-28',
+    }
+
+    response = requests.get(f'https://api.github.com/repos/NREL/ssc/actions/runs/{workflow_id}', headers=headers)
+
+    if response.status_code != 200:
+        print(response.json())
+        raise (f"Error getting data for workflow run {workflow_id}")
+    
+    conclusion = response.json()['conclusion']
+
+    if conclusion == 'failure':
+        return False
+
+    return True
+
 def get_workflow_artifact_branch(base_branch):
     headers = {
         'Accept': 'application/vnd.github+json',
@@ -248,6 +268,12 @@ if __name__ == "__main__":
     if sys.argv[1] == "help":
         print(help_info)
         exit()
+    elif sys.argv[1] == "check_workflow":
+        if len(sys.argv) < 3:
+            raise RuntimeError("Provide workflow id to check")
+        workflow_id = sys.argv[2]
+        if not check_workflow_job_status(workflow_id):
+            raise RuntimeError(f"Workflow {workflow_id} conclusion was not successful.")
     elif sys.argv[1] == "gtest_log":
         if len(sys.argv) < 3:
             raise RuntimeError("Provide path to gtest log file")
