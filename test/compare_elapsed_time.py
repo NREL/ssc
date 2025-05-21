@@ -48,15 +48,14 @@ def convert_log_to_csv(gtest_log_path):
         for line in f:
             if line[0] != '[':
                 continue
-            if 'FAILED TEST' in line:
-                print(line)
-            elif 'OK' in line or 'FAIL' in line:
+            if 'OK' in line or 'FAIL' in line:
                 test_arr = line.split('] ')[1].split("(")
                 test_name = test_arr[0].strip()
                 test_name = test_name.split('.')
                 test_group = test_name[0]
                 test_name = test_name[-1]
-                test_time = float(test_arr[1].split(" ms")[0])
+                if len(test_arr) > 1:
+                    test_time = float(test_arr[1].split(" ms")[0])
             elif 'test suites' in line:
                 test_group = "Total"
                 test_name = "Total"
