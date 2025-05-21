@@ -48,7 +48,9 @@ def convert_log_to_csv(gtest_log_path):
         for line in f:
             if line[0] != '[':
                 continue
-            if 'OK' in line or 'FAIL' in line:
+            if 'FAILED TEST' in line:
+                print(line)
+            elif 'OK' in line or 'FAIL' in line:
                 test_arr = line.split('] ')[1].split("(")
                 test_name = test_arr[0].strip()
                 test_name = test_name.split('.')
