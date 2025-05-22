@@ -294,6 +294,8 @@ private:
 	double m_q_dot_htf_to_sink_fullts;		//[MWt] SYSTEM thermal power to sink (or artificially added to system in recirculation...)
 	double m_q_dot_freeze_protection;		//[MWt] SYSTEM thermal freeze protection
 
+    double m_q_dot_thermal_reported;        //[MWt] HTF thermal power reported back to controller - should be 0 for recirculating startup and off
+
 	double m_dP_total;						//[bar] FIELD pressure drop
 	double m_W_dot_pump;					//[MWe] FIELD pumping power
 
