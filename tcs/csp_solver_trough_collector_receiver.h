@@ -73,6 +73,8 @@ public:
 		E_Q_DOT_HTF_OUT,		    //[MWt]
 		E_Q_DOT_FREEZE_PROT,        //[MWt]
 
+        E_TIME_IN_STARTUP,          //[min]
+
 		E_M_DOT_LOOP,				//[kg/s]
         E_IS_RECIRCULATING,         //[-]
 		E_M_DOT_FIELD_RECIRC,		//[kg/s]
@@ -298,6 +300,10 @@ private:
 
 	double m_dP_total;						//[bar] FIELD pressure drop
 	double m_W_dot_pump;					//[MWe] FIELD pumping power
+
+    double m_time_at_off;                   //[s]
+    double m_time_at_startup;               //[s]
+    double m_time_at_on;                    //[s]
 
 	bool m_is_m_dot_recirc;		//[-] True: trough is recirculationg HTF with interacting with other CSP components
 
