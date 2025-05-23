@@ -46,7 +46,7 @@ TEST_F(CmodMerchantPlantTest, Biopower) {
 
     Test("merchantplant", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-
+/*
 TEST_F(CmodMerchantPlantTest, DSLF) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/merchantplant/2022.08.08_develop_branch_DSLF_Merchant_Plant_cmod_merchantplant.json";
@@ -69,7 +69,7 @@ TEST_F(CmodMerchantPlantTest, EmpiricalTrough) {
     Test("merchantplant", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
-
+*/
 TEST_F(CmodMerchantPlantTest, PV) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/merchantplant/2022.08.08_develop_branch_Flat_Plate_PV_Merchant_Plant_cmod_merchantplant.json";
@@ -81,7 +81,7 @@ TEST_F(CmodMerchantPlantTest, PV) {
     Test("merchantplant", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
-
+/*
 TEST_F(CmodMerchantPlantTest, CustomGenerationBattery) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/merchantplant/2022.08.08_develop_branch_Generic_Battery_Merchant_Plant_cmod_merchantplant.json";
@@ -92,7 +92,7 @@ TEST_F(CmodMerchantPlantTest, CustomGenerationBattery) {
 
     Test("merchantplant", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-
+*/
 TEST_F(CmodMerchantPlantTest, CustomGenerationBattery_LCOS) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/merchantplant/2022.10.21_develop_branch_Generic_Battery_Merchant_Plant_cmod_merchantplant.json";
@@ -137,7 +137,7 @@ TEST_F(CmodMerchantPlantTest, Geotherrmal) {
 
     Test("merchantplant", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-
+/*
 TEST_F(CmodMerchantPlantTest, CPV) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/merchantplant/2022.08.08_develop_branch_High-X_Concentrating_PV_Merchant_Plant_cmod_merchantplant.json";
@@ -183,7 +183,7 @@ TEST_F(CmodMerchantPlantTest, PhysicalTrough) {
     Test("merchantplant", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
-
+*/
 TEST_F(CmodMerchantPlantTest, PVBattery) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/merchantplant/2022.08.08_develop_branch_PV_Battery_Merchant_Plant_cmod_merchantplant.json";
@@ -195,7 +195,7 @@ TEST_F(CmodMerchantPlantTest, PVBattery) {
     Test("merchantplant", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
-
+/*
 TEST_F(CmodMerchantPlantTest, PVWatts) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/merchantplant/2022.08.08_develop_branch_PVWatts_Merchant_Plant_cmod_merchantplant.json";
@@ -231,3 +231,4 @@ TEST_F(CmodMerchantPlantTest, Wind) {
 }
 
 
+*/

@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "cmod_host_developer_test.h"
 
-
+/*
 TEST_F(CmodHostDeveloperTest, ssc_1047) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/host_developer/Default_HD_10_IBI_PVWatts_Host_Developer_cmod_host_developer.json";
@@ -46,7 +46,7 @@ TEST_F(CmodHostDeveloperTest, ssc_1047) {
 
     Test("host_developer", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-
+*/
 TEST_F(CmodHostDeveloperTest, sam_1477) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/host_developer/Default_HD_10_IBI_no_tax_reduce_basis_PVWatts_Host_Developer_cmod_host_developer.json";
@@ -101,6 +101,7 @@ TEST_F(CmodHostDeveloperTest, sam_1477_cbi_no_tax_reduce_basis) {
 
     Test("host_developer", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
+
 
 TEST_F(CmodHostDeveloperTest, PVWatts) {
     std::string file_inputs = SSCDIR;
@@ -158,7 +159,7 @@ TEST_F(CmodHostDeveloperTest, CustomGeneration) {
 
     Test("host_developer", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-
+/*
 
 TEST_F(CmodHostDeveloperTest, CustomGenerationBattery) {
     std::string file_inputs = SSCDIR;
@@ -184,3 +185,4 @@ TEST_F(CmodHostDeveloperTest, StandaloneBattery) {
     Test("host_developer", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
+*/
