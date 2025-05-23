@@ -61,6 +61,8 @@ jobs:
           path: ssc    
 
     - name: Check Test-Running Workflows were Successfully Completed
+      env:
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
       shell: bash
       run: |
         pip install pandas requests
