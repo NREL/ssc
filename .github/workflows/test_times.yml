@@ -55,6 +55,11 @@ jobs:
       run: |
         echo "WORKFLOW_ID=${{ steps.workflow_id.outputs.result }}" >> $GITHUB_ENV
 
+    - name: Checkout SSC
+      uses: actions/checkout@v4
+      with:
+          path: ssc    
+
     - name: Check Test-Running Workflows were Successfully Completed
       shell: bash
       run: |
@@ -100,11 +105,6 @@ jobs:
     - name: Unzip Test Times
       if: ${{ matrix.os != 'windows-2019' }}
       run: unzip ${{steps.get-artifact.outputs.result}}
-
-    - name: Checkout SSC
-      uses: actions/checkout@v4
-      with:
-          path: ssc    
 
     - name: Compare Test Times
       env:
