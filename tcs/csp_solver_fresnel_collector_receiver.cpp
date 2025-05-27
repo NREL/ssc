@@ -19,6 +19,8 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
     {C_csp_fresnel_collector_receiver::E_Q_DOT_HTF_OUT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_fresnel_collector_receiver::E_Q_DOT_FREEZE_PROT, C_csp_reported_outputs::TS_WEIGHTED_AVE},
 
+    {C_csp_fresnel_collector_receiver::E_TIME_IN_STARTUP, C_csp_reported_outputs::SUMMED},
+
     {C_csp_fresnel_collector_receiver::E_M_DOT_LOOP, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_fresnel_collector_receiver::E_IS_RECIRCULATING, C_csp_reported_outputs::TS_WEIGHTED_AVE},
     {C_csp_fresnel_collector_receiver::E_M_DOT_FIELD_RECIRC, C_csp_reported_outputs::TS_WEIGHTED_AVE},
@@ -317,6 +319,8 @@ void C_csp_fresnel_collector_receiver::set_output_value()
 
     mc_reported_outputs.value(E_W_DOT_SCA_TRACK, m_W_dot_sca_tracking);		//[MWe]
     mc_reported_outputs.value(E_W_DOT_PUMP, m_W_dot_pump);					//[MWe]
+
+    mc_reported_outputs.value(E_TIME_IN_STARTUP, m_time_at_startup / 60.0);         //[min] convert from s
 
     return;
 }
@@ -1495,6 +1499,10 @@ C_csp_fresnel_collector_receiver::C_csp_fresnel_collector_receiver()
     m_dP_total = std::numeric_limits<double>::quiet_NaN();		//[bar]
     m_W_dot_pump = std::numeric_limits<double>::quiet_NaN();	//[MWe]
 
+    m_time_at_off = std::numeric_limits<double>::quiet_NaN();       //[s]
+    m_time_at_startup = std::numeric_limits<double>::quiet_NaN();   //[s]
+    m_time_at_on = std::numeric_limits<double>::quiet_NaN();        //[s]
+
     m_is_m_dot_recirc = false;
 
     m_W_dot_sca_tracking = std::numeric_limits<double>::quiet_NaN();	//[MWe]
@@ -2436,6 +2444,10 @@ void C_csp_fresnel_collector_receiver::off(const C_csp_weatherreader::S_outputs&
 
     m_operating_mode = C_csp_collector_receiver::OFF;
 
+    m_time_at_off = sim_info.ms_ts.m_step;
+    m_time_at_startup = 0.0;
+    m_time_at_on = 0.0;
+
     set_output_value();
 
     return;
@@ -2617,6 +2629,10 @@ void C_csp_fresnel_collector_receiver::startup(const C_csp_weatherreader::S_outp
     cr_out_solver.m_W_dot_elec_in_tot = m_W_dot_sca_tracking + m_W_dot_pump;    //[MWe]
     // Shouldn't need freeze protection if in startup, but may want a check on this
     cr_out_solver.m_q_dot_heater = m_q_dot_freeze_protection;    //[MWt]
+
+    m_time_at_off = 0.0;
+    m_time_at_startup = sim_info.ms_ts.m_step;
+    m_time_at_on = 0.0;
 
     set_output_value();
 
@@ -2857,6 +2873,10 @@ void C_csp_fresnel_collector_receiver::on(const C_csp_weatherreader::S_outputs& 
 
         cr_out_solver.m_q_dot_heater = m_q_dot_freeze_protection;    //[MWt]
     }
+
+    m_time_at_off = 0.0;
+    m_time_at_startup = 0.0;
+    m_time_at_on = sim_info.ms_ts.m_step;
 
     set_output_value();
 

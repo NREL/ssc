@@ -132,6 +132,8 @@ public:
         E_Q_DOT_HTF_OUT,		   //[MWt]
         E_Q_DOT_FREEZE_PROT,       //[MWt]
 
+        E_TIME_IN_STARTUP,          //[min]
+
         E_M_DOT_LOOP,				//[kg/s]
         E_IS_RECIRCULATING,         //[-]
         E_M_DOT_FIELD_RECIRC,		//[kg/s]
@@ -317,6 +319,10 @@ private:
     double m_q_dot_freeze_protection;		            // [MWt] SYSTEM thermal freeze protection
 
     double m_q_dot_thermal_reported;        //[MWt] HTF thermal power reported back to controller - should be 0 for recirculating startup and off
+
+    double m_time_at_off;                   //[s]
+    double m_time_at_startup;               //[s]
+    double m_time_at_on;                    //[s]
 
     // Private Methods
 private:
