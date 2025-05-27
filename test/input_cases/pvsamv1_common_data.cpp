@@ -944,8 +944,10 @@ void cashloan_default(ssc_data_t& data)
     ssc_data_set_array(data, "om_fuel_cost", p_om_fuel_cost, 1);
     ssc_data_set_number(data, "om_fuel_cost_escal", 0);
     ssc_number_t itc_amount[1] = { 0 };
-    ssc_number_t itc_fed_percent[1] = { 30 };
-    ssc_number_t itc_sta_percent[1] = { 25 };
+//    ssc_number_t itc_fed_percent[1] = { 30 };
+//    ssc_number_t itc_sta_percent[1] = { 25 };
+    ssc_number_t itc_fed_percent[1] = { 0 };
+    ssc_number_t itc_sta_percent[1] = { 0 };
     ssc_number_t itc_amount_max[1] = { 1e+38 };
     ssc_data_set_array(data, "itc_fed_amount", itc_amount, 1);
     ssc_data_set_array(data, "itc_sta_amount", itc_amount, 1);

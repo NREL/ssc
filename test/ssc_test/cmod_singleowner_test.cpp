@@ -102,7 +102,7 @@ TEST_F(CmodSingleOwnerTest, ETES) {
 
     Test("singleowner", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-/*
+
 TEST_F(CmodSingleOwnerTest, PV) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_Flat_Plate_PV_Single_Owner_cmod_singleowner.json";
@@ -113,7 +113,7 @@ TEST_F(CmodSingleOwnerTest, PV) {
 
     Test("singleowner", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-*/
+
 TEST_F(CmodSingleOwnerTest, FuelCell) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_Fuel_Cell_Single_Owner_cmod_singleowner.json";
@@ -228,7 +228,7 @@ TEST_F(CmodSingleOwnerTest, PVBattery) {
     Test("singleowner", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
 
-/*
+
 TEST_F(CmodSingleOwnerTest, PVWatts) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_PVWatts_Single_Owner_cmod_singleowner.json";
@@ -239,7 +239,7 @@ TEST_F(CmodSingleOwnerTest, PVWatts) {
 
     Test("singleowner", file_inputs, file_outputs, compare_number_variables, compare_array_variables);
 }
-
+/*
 TEST_F(CmodSingleOwnerTest, StandaloneBattery) {
     std::string file_inputs = SSCDIR;
     file_inputs += "/test/input_json/FinancialModels/singleowner/2022.08.08_develop_branch_Standalone_Battery_Single_Owner_cmod_singleowner.json";
