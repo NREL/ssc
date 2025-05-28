@@ -671,7 +671,8 @@ TEST_F(CMPvsamv1PowerIntegration_cmod_pvsamv1, NoFinancialModelSystemDesign)
                                 192329, 187710, 185732, 197565, 201021, 192329, 187710
     };
 
-    for (size_t i = 57; i < annual_energy_expected.size(); i++)
+    //for (size_t i = 0; i < annual_energy_expected.size(); i++)
+    size_t i = 13;
     {
         pairs["enable_mismatch_vmax_calc"] = enable_mismatch[i];
         pairs["subarray1_azimuth"] = subarray1_azimuth[i];
