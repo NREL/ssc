@@ -201,8 +201,11 @@ bool cec6par_module_t::operator() ( pvinput_t &input, double TcellC, double opvo
 		out.Isc_oper = I_sc;
 		out.CellTemp = T_cell - 273.15;
 	}
-
-	return out.Power >= 0;
+    if (out.Power < 0) {
+        m_err = "Output power negative";
+        return false;
+    }
+	return true;
 }
 
 
@@ -359,9 +362,9 @@ static double channel_free_194( double W_gap, double SLOPE, double TA, double T_
 	return  Nu*k_air/W_gap;
 }
 
-bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell )
+bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell ) 
 {	
-
+    m_err = "Populating a default error message";
 	if ( input.Ibeam + input.Idiff + input.Ignd < 1 )
 	{
 		Tcell = input.Tdry;
@@ -381,7 +384,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 	double RefrAng1   = asind(sind(THETA)/n2);
 	double TransSurf1 = 1-0.5*( pow(sind(RefrAng1-THETA),2)/pow(sind(RefrAng1+THETA),2)
 			+ pow(tand(RefrAng1-THETA),2)/pow(tand(RefrAng1+THETA),2) );
-	double TransCoverAbs1 = exp(-k_glass*l_glass/cosd(RefrAng1));
+double TransCoverAbs1 = exp(-k_glass*l_glass/cosd(RefrAng1));
 	double tau1       = TransCoverAbs1*TransSurf1;
         
 	//!Evaluating transmittance at angle Normal to surface (0), use 1 to avoid probs.
@@ -444,29 +447,37 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 		Tcell = input.Tdry;
 		return true;
 	}
-
+    double effective_length;
+    double effective_width;
 	if (HTD == 1)
 	{
 		Nrows = Ncols = 1;
+        //effective_length = Length;
+        //effective_width = Width;
 	}
 	else if (HTD == 2)
 	{
-		Length = Nrows*Length;
-		Width = Ncols*Width;
+		//effective_length = Nrows*Length;
+		//effective_width = Ncols*Width;
+        Length = Nrows * Length;
+        Width = Ncols * Width;
 	}
+
+    effective_length = Nrows*Length;
+    effective_width = Ncols*Width;
 	
 	double Imp = module.ImpRef();
 	double Vmp = module.VmpRef();
 	
 	double Area_base = module.AreaRef();	 // !Use provided area for Duffie and Beckman model to maintain consistency w/ previous model
-	double Area = Area_base * Length * Width; // !Surface area of module
+	double Area = Area_base * effective_length * effective_width; // !Surface area of module
     // !Define characteristic length
-    double L_char     = 4.0 * Length * Width / (2.0 * (Width + Length));
+    double L_char     = 4.0 * effective_length * effective_width / (2.0 * (effective_width + effective_length));
        
     // !If gap is less than 1 mm, use flush mounting configuration
     if (Wgap < 0.001 && MC == 4) MC = 2;
     
-	double R_gap = Wgap / Length;
+	double R_gap = Wgap / effective_length;
 	if ( MC == 4  && R_gap > 1 && MSO == 1) MC = 1;	
 
 	double v_ch = 1.0, Fcg, Fcs, Fbs, Fbg, T_sky, T_ground, T_rw;
@@ -577,12 +588,12 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
                     h_forced   = Nu_forced * k_air / L_char;
                 else {
                     double Re_forced_Lsc = MAX(0.1, rho_air * V_cover * Lsc / mu_air);
-                    h_forced = (k_air / (ground_clearance_height + 2.0 * Length * sind(input.Tilt))) * pow(10, (0.090125 * pow(Re_forced_Lsc, 1. / 5.) * pow(Pr_air, 1. / 12.) + 1.8617));
+                    h_forced = (k_air / (ground_clearance_height + 2.0 * effective_length * sind(input.Tilt))) * pow(10, (0.090125 * pow(Re_forced_Lsc, 1. / 5.) * pow(Pr_air, 1. / 12.) + 1.8617));
                 }
                 double h_sky      = (TC*TC+T_sky*T_sky)*(TC+T_sky);
 				double h_ground   = (TC*TC+T_ground*T_ground)*(TC+T_ground);
-				double h_free_c   = free_convection_194(TC,TA,input.Tilt,rho_air,Area,Length,Width) ; //   !Call function to calculate free convection on tilted surface (top)           
-				double h_free_b   = free_convection_194(TC,TA,180.0-input.Tilt,rho_air,Area,Length,Width); // !Call function to calculate free convection on tilted surface (bottom)              
+				double h_free_c   = free_convection_194(TC,TA,input.Tilt,rho_air,Area, effective_length,effective_width) ; //   !Call function to calculate free convection on tilted surface (top)           
+				double h_free_b   = free_convection_194(TC,TA,180.0-input.Tilt,rho_air,Area, effective_length,effective_width); // !Call function to calculate free convection on tilted surface (bottom)              
 				double h_conv_c   = pow( pow(h_forced,3.) + pow(h_free_c,3.) , 1./3.) ; // !Combine free and forced heat transfer coefficients (top)
 				double h_conv_b   = pow( pow(h_forced,3.) + pow(h_free_b,3.) , 1./3.) ; // !Combine free and forced heat transfer coefficients (bottom)
                 //h_conv_c = h_forced;
@@ -604,7 +615,10 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 				TC         = TC1; //      !Set cell temp to most recent calculation
 					
 				h_iter++;			
-				if ( h_iter > 150 ) return false;
+				if ( h_iter > 150 ) {
+					m_err = "Temperature calculation did not converge in rack mounting configuration (MC=1).";
+					return false;
+				}
 			}
 			break;
 				
@@ -617,7 +631,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 				double h_forced   = Nu_forced * k_air / L_char;
 				double h_sky      = (TC*TC+T_sky*T_sky)*(TC+T_sky);
 				double h_ground   = (TC*TC+T_ground*T_ground)*(TC+T_ground);
-				double h_free_c   = free_convection_194(TC,TA,input.Tilt,rho_air,Area,Length,Width);
+				double h_free_c   = free_convection_194(TC,TA,input.Tilt,rho_air,Area, effective_length,effective_width);
 				double h_conv_c   = pow((pow(h_forced,3.) + pow(h_free_c,3.)), (1./3.));
 					
 				double TC1 = ((h_conv_c)*TA + (Fcs*EmisC)*sigma*h_sky*T_sky + (Fcg*EmisC)*sigma*h_ground*T_ground
@@ -627,7 +641,10 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 				TC         = TC1;
 					
 				h_iter++;
-				if (h_iter > 150) return false;
+				if (h_iter > 150) {
+					m_err = "Temperature calculation did not converge in flush mounting configuration (MC=2).";
+					return false;
+				}
 			}
 			break;
 			
@@ -643,8 +660,8 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 				double h_sky      = (TC*TC+T_sky*T_sky)*(TC+T_sky);
 				double h_ground   = (TC*TC+T_ground*T_ground)*(TC+T_ground);				   
 				double h_radbk    = (TC*TC+TbackK*TbackK)*(TC+TbackK); // !Using TbackK now instead of TA					
-				double h_free_c   = free_convection_194(TC,TA,input.Tilt,rho_air,Area,Length,Width);				 
-				double h_free_b   = free_convection_194(TC,TbackK,180.-input.Tilt,rho_bk,Area,Length,Width);				 
+				double h_free_c   = free_convection_194(TC,TA,input.Tilt,rho_air,Area, effective_length,effective_width);
+				double h_free_b   = free_convection_194(TC,TbackK,180.-input.Tilt,rho_bk,Area, effective_length,effective_width);
 				double h_conv_c   = pow( pow(h_forced,3.) + pow(h_free_c,3.), (1./3.));
 				double h_conv_b   = h_free_b;// !No forced convection on backside
 					
@@ -656,7 +673,10 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 				TC         = TC1;
 					
 				h_iter++;
-				if (h_iter > 150) return false;
+				if (h_iter > 150) {
+					m_err = "Temperature calculation did not converge in integrated mounting configuration (MC=3).";
+					return false;
+				}
 			}
 			break;
 				
@@ -668,8 +688,8 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 				{
 					// !Define channel length and width for gap mounting configuration that does not block air flow in any direction
 					// !Use minimum dimension for length so that MSO 1 will have lower temp than MSO 2 or 3
-					L_charB = MIN(Width, Length);
-					L_str   = MAX(Width, Length);
+					L_charB = MIN(effective_width, effective_length);
+					L_str   = MAX(effective_width, effective_length);
 						
 					// !These values are dependent on MSO
 					A_c        = Wgap * L_str;     // !Cross Sectional area of channel
@@ -678,8 +698,8 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 				}
 				else if (MSO == 2) //  !Vertical supports
 				{
-					L_charB = Length;
-					L_str   = Width / Ncols;
+					L_charB = effective_length;
+					L_str   = effective_width / Ncols;
 					A_c        = Wgap * L_str ; //         !Cross Sectional area of channel
 					Per_cw 	   = 2.*L_str + 2.*Wgap ; //   !Perimeter ACCOUNTING for supports: different than MSO 1
 					D_h 	   = (4.*A_c)/Per_cw ; //       !Hydraulic diameter
@@ -687,15 +707,18 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 				else if (MSO == 3) // ! Horizontal supports
 				{
 					// !Flow is restricted to one direction.  Wind speed has already been adjusted using a cosine projection
-					L_charB = Width;
+					L_charB = effective_width;
 					// !Width of channel is function of number of columns of modules.  Assuming that support structures are exactly the length of a module
-					L_str   = Length / Nrows;
+					L_str   = effective_length / Nrows;
 					A_c        = Wgap * L_str ; //         !Cross Sectional area of channel
 					Per_cw 	   = 2.*L_str + 2.*Wgap ; //   !Perimeter ACCOUNTING for supports: different than MSO 1
 					D_h 	   = (4.*A_c)/Per_cw ; //       !Hydraulic diameter
 				}
 				else
+				{
+					m_err = "Invalid MSO parameter specified for gap (channel) mounting configuration (MC=4).";
 					return false; // invalid parameter specified
+				}
 					
 				// !Begin iteration to find cell temperature
 				while (std::abs(err_TC) > 0.001 )
@@ -731,7 +754,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 					double h_forced   = Nu_forced * k_air / L_char;
 					double h_sky      = (TC*TC+T_sky*T_sky)*(TC+T_sky);
 					double h_ground   = (TC*TC+T_ground*T_ground)*(TC+T_ground);
-					double h_free_c   = free_convection_194(TC,TA,input.Tilt,rho_air,Area,Length,Width);
+					double h_free_c   = free_convection_194(TC,TA,input.Tilt,rho_air,Area, effective_length,effective_width);
 					double h_conv_c   = pow(pow(h_forced,3.) + pow(h_free_c,3.), 1./3.);
 					
 					// !Reynolds number for channel flow
@@ -756,7 +779,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 						double h_fr = 0;
 							
 						if (MSO == 3) h_fr = 0; //  !If E-W supports then assume no free convection
-						else h_fr = channel_free_194(Wgap,input.Tilt,TA,T_cr,rho_air,Length); // !Call function for channel free convection        
+						else h_fr = channel_free_194(Wgap,input.Tilt,TA,T_cr,rho_air, effective_length); // !Call function for channel free convection        
 				 
 						double m_dot 	   = v_ch*rho_air*A_c ; // !mass flow rate through channel
 						double h_conv_b   = pow( pow(h_ch,3) + pow(h_fr,3) , (1./3.)) ; // !total heat transfer coefficient in channel
@@ -809,10 +832,16 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 
 					h_iter++;
 						
-					if (h_iter > 150) return false;
+					if (h_iter > 150) {
+						m_err = "Temperature calculation did not converge in gap mounting configuration (MC=4).";
+						return false;
+					}
 				}
 			}
 			break;
+		default:
+			m_err = "Invalid mounting configuration (MC) specified.";
+			return false;
 		}
 
 		// now calculate module power based on new Cell Temp
@@ -820,7 +849,7 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 		pvoutput_t out;
 		if (!module( input, TC-273.15, opvoltage, out ))
 		{
-			m_err = module.error();
+			m_err = "Module error: " + module.error();
 			return false;
 		}
 
@@ -844,7 +873,11 @@ bool mcsp_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double 
 			return false;
 		}
 	}
-	
+
 	Tcell = TC - 273.15;
+    if (std::isnan(Tcell)) {
+        m_err = "Cell temperature is NA";
+        return false;
+    }
 	return true;
 }

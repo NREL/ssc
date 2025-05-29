@@ -2219,9 +2219,17 @@ void cm_pvsamv1::exec()
                         if (Subarrays[nn]->useCustomCellTemp == 1)
                             tcell = Subarrays[nn]->customCellTempArray[inrec];
                         else {
-                            (*Subarrays[nn]->Module->cellTempModel)(in[nn], *Subarrays[nn]->Module->moduleModel, module_voltage, tcell);
-                            if (std::isnan(tcell)) throw exec_error("pvsamv1", Subarrays[nn]->Module->cellTempModel->error());
-                            (*Subarrays[nn]->Module->cellTempModel)(in_cs[nn], *Subarrays[nn]->Module->moduleModel, module_voltage, tcell_cs);
+                            if (!(*Subarrays[nn]->Module->cellTempModel)(in[nn], *Subarrays[nn]->Module->moduleModel, module_voltage, tcell)) {
+                                throw exec_error("pvsamv1", Subarrays[nn]->Module->cellTempModel->error());
+                            }
+                            // Checking if isnan here is insufficient. The function above could have returned
+                            // without modifying tcell from the assignment of tdry into tcell earlier. 
+                            if (std::isnan(tcell)) {
+                                throw exec_error("pvsamv1", Subarrays[nn]->Module->cellTempModel->error());
+                            }
+                            if (!(*Subarrays[nn]->Module->cellTempModel)(in_cs[nn], *Subarrays[nn]->Module->moduleModel, module_voltage, tcell_cs)) {
+                                throw exec_error("pvsamv1", Subarrays[nn]->Module->cellTempModel->error());
+                            }
                         }
                         // begin Transient Thermal model
                         // steady state cell temperature - confirm modification from module model to cell temp
