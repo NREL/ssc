@@ -103,7 +103,7 @@ cec6par_module_t::cec6par_module_t( )
 	Area = Vmp = Imp = Voc = Isc = alpha_isc = beta_voc 
 		= a = Il = Io = Rs = Rsh = Adj = std::numeric_limits<double>::quiet_NaN();
 }
-double air_mass_modifier( double Zenith_deg, double Elev_m, double a[5] )
+double air_mass_modifier( double Zenith_deg, double Elev_m, double const a[5] )
 {
 	// !Calculation of Air Mass Modifier
 	double air_mass = 1/(cos( Zenith_deg*M_PI/180 )+0.5057*pow(96.080-Zenith_deg, -1.634));
@@ -112,7 +112,7 @@ double air_mass_modifier( double Zenith_deg, double Elev_m, double a[5] )
 	return f1 > 0.0 ? f1 : 0.0;
 }
 
-bool cec6par_module_t::operator() ( pvinput_t &input, double TcellC, double opvoltage, pvoutput_t &out )
+bool cec6par_module_t::operator() ( pvinput_t const &input, double TcellC, double opvoltage, pvoutput_t &out ) const
 {
 	double muIsc = alpha_isc * (1-Adj/100);
 	//double muVoc = beta_voc * (1+Adj/100);
@@ -216,7 +216,7 @@ bool cec6par_module_t::operator() ( pvinput_t &input, double TcellC, double opvo
  *********************************************************************************************
  *********************************************************************************************/
 
-bool noct_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &module, double , double &Tcell ) const
+bool noct_celltemp_t::operator() ( pvinput_t const &  input, pvmodule_t const &  module, double , double &Tcell ) const
 {
 	double G_total, Geff_total;
 	double tau_al = std::abs(TauAlpha);
@@ -362,7 +362,7 @@ static double channel_free_194( double W_gap, double SLOPE, double TA, double T_
 	return  Nu*k_air/W_gap;
 }
 
-bool mcsp_celltemp_t::operator() ( pvinput_t  &input, pvmodule_t &module, double opvoltage, double &Tcell ) const
+bool mcsp_celltemp_t::operator() ( pvinput_t const &input, pvmodule_t const &module, double opvoltage, double &Tcell ) const
 {	
     m_err = "Populating a default error message";
 	if ( input.Ibeam + input.Idiff + input.Ignd < 1 )
