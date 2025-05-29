@@ -116,7 +116,7 @@ private:
 class mock_celltemp_t : public pvcelltemp_t
 {
 public:
-	virtual bool operator() (pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell);
+	virtual bool operator() (pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell) const;
 };
 
 #endif

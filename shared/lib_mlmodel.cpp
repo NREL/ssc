@@ -283,7 +283,7 @@ bool mlmodel_module_t::operator() (pvinput_t &input, double T_C, double opvoltag
 
 // mockup cell temperature model
 // to be used in cases when Tcell is calculated within the module model
-bool mock_celltemp_t::operator() (pvinput_t &, pvmodule_t &, double, double &Tcell)
+bool mock_celltemp_t::operator() (pvinput_t &, pvmodule_t &, double, double &Tcell) const
 {
 	Tcell = -999;
 	return true;

@@ -81,7 +81,7 @@ public:
 	double ffv_wind;
 	double Tnoct;
 
-	virtual bool operator() ( pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell );
+	virtual bool operator() ( pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell ) const;
 
 	virtual ~noct_celltemp_t(){}
 };
@@ -105,7 +105,7 @@ public:
     double ground_clearance_height; //Ground clearance height used in Calaf heat transfer coefficient h fit
     int lacunarity_enable;
     double GCR;
-	virtual bool operator() ( pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell );
+	virtual bool operator() ( pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell ) const;
 
 	virtual ~mcsp_celltemp_t() {};
 };

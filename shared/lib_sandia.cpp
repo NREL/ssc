@@ -517,7 +517,7 @@ C b   = empirical constant
 	return E * exp(a + b * Ws) + Ta;
 }
 
-bool sandia_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &, double , double &Tcell )
+bool sandia_celltemp_t::operator() ( pvinput_t &input, pvmodule_t &, double , double &Tcell ) const
 {
 	//Sev 2015-09-14: changed to permit direct poa data
 	double Itotal;

@@ -91,10 +91,10 @@ class pvmodule_t; // forward decl
 class pvcelltemp_t
 {
 protected:
-	std::string m_err;
+	mutable std::string m_err;
 public:
 	
-	virtual bool operator() ( pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell ) = 0;
+	virtual bool operator() ( pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell ) const = 0;
 	std::string error();
 
 	virtual ~pvcelltemp_t() {};

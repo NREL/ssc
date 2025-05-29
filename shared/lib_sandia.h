@@ -75,7 +75,7 @@ class sandia_celltemp_t : public pvcelltemp_t
 {
 public:
 	double a, b, DT0, fd;	
-	virtual bool operator() ( pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell );
+	virtual bool operator() ( pvinput_t &input, pvmodule_t &module, double opvoltage, double &Tcell ) const;
 		
 	static double sandia_tcell_from_tmodule( double Tm, double poaIrr, double fd, double DT0);
 	static double sandia_module_temperature( double poaIrr, double Ws, double Ta, double fd, double a, double b );
