@@ -208,7 +208,7 @@ Irradiance_IO::Irradiance_IO(compute_module* cm, std::string cmName)
     }
     // read in the user entered snow data
     userSpecifiedSnowDepth = cm->as_vector_double("snow_array");
-    if (userSpecifiedSnowDepth.size() != 1 || userSpecifiedSnowDepth.size() != 8760) {
+    if (userSpecifiedSnowDepth.size() != 1 && userSpecifiedSnowDepth.size() != 8760) {
         throw exec_error(cmName, "User-specified snow depth array must be of length 1 or 8760");
     }
     // if single value, populate it to all values
