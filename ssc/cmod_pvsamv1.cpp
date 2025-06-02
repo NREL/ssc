@@ -2158,7 +2158,11 @@ void cm_pvsamv1::exec()
                                 if (Subarrays[nn]->useCustomCellTemp == 1)
                                     tcell = Subarrays[nn]->customCellTempArray[inrec];
                                 else
-                                    (*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, V, tcell);
+                                {
+                                    if (!(*Subarrays[nn]->Module->cellTempModel)(in, *Subarrays[nn]->Module->moduleModel, V, tcell)) {
+                                        throw exec_error("pvsamv1", Subarrays[nn]->Module->cellTempModel->error());
+                                    }
+                                }
                                 // calculate module power output using conversion model previously specified
                                 (*Subarrays[nn]->Module->moduleModel)(in, tcell, V, out);
                             }
