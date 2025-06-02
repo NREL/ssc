@@ -181,6 +181,10 @@ TEST(save_as_JSON_test_run, pv_batt_mechant_plant_rapidjson) {
     char file_path[256];
     int nfc1 = sprintf(file_path, "%s/test/input_cases/general_data/phoenix_az_33.450495_-111.983688_psmv3_60_tmy.csv", SSCDIR);
     ssc_data_set_string(data, "solar_resource_file", file_path);
+    // Add paths for snow data
+    ssc_data_set_number(data, "use_snow_weather_file", 1);
+    ssc_number_t snow_array[1] = { 0 };
+    ssc_data_set_array(data, "snow_array", snow_array, 1);
     bool success = ssc_module_exec(mod_pv, data);
     EXPECT_TRUE(success);
     auto mod_grid = ssc_module_create("grid");

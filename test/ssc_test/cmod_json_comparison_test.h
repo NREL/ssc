@@ -83,6 +83,11 @@ public:
         // Brute force approach - define both
         ssc_data_set_string(dat_inputs, "file_name", solar_resource_path);
 
+        // Snow data
+        ssc_data_set_number(dat_inputs, "use_snow_weather_file", 1);
+        ssc_number_t snow_array[1] = { 0 };
+        ssc_data_set_array(dat_inputs, "snow_array", snow_array, 1);
+
         tmp.str("");
         int errors = run_module(dat_inputs, compute_module);
 

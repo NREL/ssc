@@ -58,6 +58,12 @@ TEST_F(PVSmoothing_lib_battery_dispatch, PV_Phoenix_all_on) {
     nfc1 = sprintf(file_path, "%s/test/input_cases/general_data/phoenix_az_33.450495_-111.983688_psmv3_60_tmy_1mInterpolated.csv", SSCDIR);
     ssc_data_set_string(dat, "solar_resource_file", file_path);
 
+
+    // Add in options for snow depth
+    ssc_data_set_number(dat, "use_snow_weather_file", 1);
+    ssc_number_t snow_array[1] = { 0 };
+    ssc_data_set_array(dat, "snow_array", snow_array, 1);
+
     // Run with fixed output
     int errors = run_module(dat, "pvsamv1");
     // minimize memory usage for Travis
