@@ -208,6 +208,18 @@ Irradiance_IO::Irradiance_IO(compute_module* cm, std::string cmName)
     }
     // read in the user entered snow data
     userSpecifiedSnowDepth = cm->as_vector_double("snow_array");
+    if (userSpecifiedSnowDepth.size() != 1 || userSpecifiedSnowDepth.size() != 8760) {
+        throw exec_error(cmName, "User-specified snow depth array must be of length 1 or 8760");
+    }
+    // if single value, populate it to all values
+    // useful for testing
+    if (userSpecifiedSnowDepth.size() == 1) {
+        userSpecifiedSnowDepth.reserve(8760);
+        double val = userSpecifiedSnowDepth.front();
+        for (size_t i = 0; i < 8759; i++) {
+            userSpecifiedSnowDepth.push_back(val);
+        }
+    }
 
     checkWeatherFile(cm, cmName);
 }
