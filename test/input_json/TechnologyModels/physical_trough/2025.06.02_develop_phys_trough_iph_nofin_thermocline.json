@@ -1,7 +1,6 @@
 {
     "is_dispatch" : 0,
-	"file_name" : "C:/Users/tneises/Documents/Projects/GitHub/sam/deploy/solar_resource/tucson_az_32.116521_-110.933042_psmv3_60_tmy.csv",
-    "q_pb_design" : 5,
+	"q_pb_design" : 5,
     "nHCEt" : 4,
     "nColt" : 4,
     "nHCEVar" : 4,
