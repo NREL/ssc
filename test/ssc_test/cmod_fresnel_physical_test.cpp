@@ -61,9 +61,10 @@ TEST_F(CmodFresnelPhysicalTest, MSLF_IPH_LCOH_Default) {
     Test("fresnel_physical_iph", file_inputs, file_outputs, compare_number_variables, compare_array_variables, 100., "tucson_az_32.116521_-110.933042_psmv3_60_tmy.csv");
 }
 
-TEST_F(CmodFresnelPhysicalTest, MSLF_IPH_LCOH_STEAM_IPH) {
+TEST_F(CmodFresnelPhysicalTest, MSLF_IPH_LCOH_EMP_STEAM) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/TechnologyModels/fresnel_physical/2025.06.02_develop_branch_MSLF_IPH_LCOH.json";
+    // Had to decrease default freeze protection temp to get empirical field + steam heat sink to solve
+    file_inputs += "/test/input_json/TechnologyModels/fresnel_physical/2025.06.02_develop_branch_MSLF_IPH_LCOH_emp_steam.json";
     std::string file_outputs = SSCDIR;
    
     char solar_resource_path[256];
@@ -75,9 +76,6 @@ TEST_F(CmodFresnelPhysicalTest, MSLF_IPH_LCOH_STEAM_IPH) {
     file.close();
     ssc_data_t dat_inputs = json_to_ssc_data(tmp.str().c_str());
     ssc_data_set_string(dat_inputs, "file_name", solar_resource_path);
-
-    // change heat sink type
-    ssc_data_set_number(dat_inputs, "hs_type", 1);
 
     std::string cmod = "fresnel_physical_iph";
 
@@ -92,7 +90,7 @@ TEST_F(CmodFresnelPhysicalTest, MSLF_IPH_LCOH_STEAM_IPH) {
         double annual_energy_calc = std::numeric_limits<double>::quiet_NaN();
         ssc_data_get_number(dat_inputs, "annual_energy", &annual_energy_calc);
 
-        EXPECT_NEAR_FRAC(annual_energy_calc, 16729300.0, 0.001);
+        EXPECT_NEAR_FRAC(annual_energy_calc, 16651416.0, 0.001);
     }
     ssc_data_free(dat_inputs);
     dat_inputs = nullptr;
