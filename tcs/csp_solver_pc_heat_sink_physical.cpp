@@ -51,7 +51,7 @@ static C_csp_reported_outputs::S_output_info S_output_info[]=
 	csp_info_invalid
 };
 
-C_pc_heat_sink_physical::C_pc_heat_sink_physical()
+C_pc_heat_sink_physical::C_pc_heat_sink_physical() : C_csp_power_cycle(HEAT)
 {
 	mc_reported_outputs.construct(S_output_info);
 

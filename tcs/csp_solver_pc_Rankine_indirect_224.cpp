@@ -81,7 +81,7 @@ static C_csp_reported_outputs::S_dependent_output_info S_dependent_output_info[]
     csp_dep_info_invalid
 };
 
-C_pc_Rankine_indirect_224::C_pc_Rankine_indirect_224()
+C_pc_Rankine_indirect_224::C_pc_Rankine_indirect_224() : C_csp_power_cycle(ELEC)
 {
 	m_is_initialized = false;
 

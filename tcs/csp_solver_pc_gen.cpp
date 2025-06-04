@@ -44,7 +44,7 @@ static C_csp_reported_outputs::S_output_info S_output_info[] =
 	csp_info_invalid
 };
 
-C_pc_gen::C_pc_gen()
+C_pc_gen::C_pc_gen() : C_csp_power_cycle(ELEC)
 {
 	// *************************************************************
 	// Define temperature and cp values so code interfaces with solver

@@ -578,16 +578,25 @@ class C_csp_power_cycle
 {
 
 public:
-	
+
+    enum E_csp_power_cycles_types
+    {
+        ELEC,
+        HEAT
+    };
+
     // Class to save messages for up stream classes
     C_csp_messages mc_csp_messages;
 
     // Collector-receiver technology type
 	bool m_is_sensible_htf;		//[-] True = indirect, sensible HTF, e.g. molten salt. False = direct steam
 
-	C_csp_power_cycle()
+    E_csp_power_cycles_types m_off_taker_type;
+
+	C_csp_power_cycle(E_csp_power_cycles_types off_taker_type)
 	{
-		m_is_sensible_htf = true;
+        m_off_taker_type = off_taker_type;
+        m_is_sensible_htf = true;
 	};
 
 	~C_csp_power_cycle(){};
@@ -678,6 +687,8 @@ public:
 			m_was_method_successful = false;
 		}
 	};
+
+    
 
 	virtual void init(C_csp_power_cycle::S_solved_params &solved_params) = 0;
 
