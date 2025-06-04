@@ -709,6 +709,7 @@ void C_csp_solver::C_MEQ__m_dot_tes::init_calc_member_vars()
 int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double *diff_target /*-*/)
 {
     init_calc_member_vars();
+    mpc_csp_solver->mc_system_metrics.reset_metrics();
 
     // Set timestep
     mpc_csp_solver->mc_kernel.mc_sim_info.ms_ts.m_step = m_t_ts_in;    //[s]
@@ -1185,7 +1186,43 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
     {
         m_t_ts_calc = t_ts_pc_su;       //[s]
     }
-    
+
+    // Calculate system-level parasitics: can happen after controller/solver converges
+    double W_dot_ratio = mpc_csp_solver->mc_pc_out_solver.m_P_cycle / std::max(0.001, mpc_csp_solver->m_cycle_W_dot_des);		//[-]
+
+    double W_dot_bop = mpc_csp_solver->m_cycle_W_dot_des * mpc_csp_solver->ms_system_params.m_bop_par * mpc_csp_solver->ms_system_params.m_bop_par_f *
+        (mpc_csp_solver->ms_system_params.m_bop_par_0 + mpc_csp_solver->ms_system_params.m_bop_par_1 * W_dot_ratio + mpc_csp_solver->ms_system_params.m_bop_par_2 * pow(W_dot_ratio, 2));
+    // [MWe]
+
+    double W_dot_cr_freeze_protection = 0.0;
+    if (mpc_csp_solver->ms_system_params.m_is_field_freeze_protection_electric) {
+        W_dot_cr_freeze_protection = mpc_csp_solver->mc_cr_out_solver.m_q_dot_heater;       //[MWe]
+    }
+
+    double W_dot_tes_pump = 0.0;        //[MWe]
+    if (mpc_csp_solver->m_is_tes) {
+        W_dot_tes_pump = mpc_csp_solver->mc_tes_outputs.m_W_dot_elec_in_tot;    //[MWe]
+    }
+
+    double W_dot_par_htr_elec_load = 0.0;
+    if (mpc_csp_solver->m_is_parallel_heater) {
+        W_dot_par_htr_elec_load = mpc_csp_solver->mc_par_htr_out_solver.m_W_dot_elec_in_tot +
+            mpc_csp_solver->mc_par_htr_out_solver.m_q_dot_heater;       //[MWe]
+    }
+
+    double W_dot_net = mpc_csp_solver->mc_pc_out_solver.m_P_cycle -
+        mpc_csp_solver->mc_cr_out_solver.m_W_dot_elec_in_tot -
+        mpc_csp_solver->mc_pc_out_solver.m_W_dot_elec_parasitics_tot -
+        W_dot_tes_pump -
+        W_dot_cr_freeze_protection -
+        W_dot_par_htr_elec_load -
+        mpc_csp_solver->mc_tes_outputs.m_q_heater -
+        mpc_csp_solver->m_W_dot_fixed_design -
+        W_dot_bop;	//[MWe]
+
+    mpc_csp_solver->mc_system_metrics.set_W_dot_bop(W_dot_bop);
+    mpc_csp_solver->mc_system_metrics.set_W_dot_net(W_dot_net);
+
     if (m_solver_mode == E__TO_PC_PLUS_TES_FULL__ITER_M_DOT_SU
         || m_solver_mode == E__CR_OUT__ITER_M_DOT_SU_CH_ONLY || m_solver_mode == E__CR_OUT__ITER_M_DOT_SU_DC_ONLY
         || m_solver_mode == E__TO_PC__ITER_M_DOT_SU)

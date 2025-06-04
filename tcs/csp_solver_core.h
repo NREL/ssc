@@ -991,7 +991,33 @@ public:
 		const S_sim_setup * get_sim_setup();
 
 	};
-	
+
+    class C_csp_solver_system_calc_metrics
+    {
+    private:
+        double m_W_dot_bop;                   //[MWe]
+        double m_W_dot_net;                   //[MWe]
+
+    public:
+
+        void set_W_dot_bop(double W_dot_bop) {
+            m_W_dot_bop = W_dot_bop;
+        }
+        void set_W_dot_net(double W_dot_net) {
+            m_W_dot_net = W_dot_net;
+        }
+        void reset_metrics() {
+            m_W_dot_bop = std::numeric_limits<double>::quiet_NaN();
+            m_W_dot_net = std::numeric_limits<double>::quiet_NaN();
+        }
+        double get_W_dot_bop() {
+            return m_W_dot_bop;
+        }
+        double get_W_dot_net() {
+            return m_W_dot_net;
+        }
+    };
+
 	struct S_csp_system_params
 	{
 		double m_pb_fixed_par;		//[MWe/MWcap]
@@ -1054,6 +1080,8 @@ private:
     C_csp_tou::S_csp_tou_outputs mc_tou_outputs;
 
 	C_csp_solver::C_csp_solver_kernel mc_kernel;
+
+    C_csp_solver::C_csp_solver_system_calc_metrics mc_system_metrics;
 
 	// member string for exception messages
 	std::string error_msg;

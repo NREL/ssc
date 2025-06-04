@@ -958,41 +958,9 @@ void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
         ------------ End loop to find correct operating mode and system performance --------
         */
 
-		// Calculate system-level parasitics: can happen after controller/solver converges
-		//double W_dot_fixed = ms_system_params.m_pb_fixed_par*m_cycle_W_dot_des;			//[MWe]
-
-		double W_dot_ratio = mc_pc_out_solver.m_P_cycle / std::max(0.001, m_cycle_W_dot_des);		//[-]
-
-		double W_dot_bop = m_cycle_W_dot_des*ms_system_params.m_bop_par*ms_system_params.m_bop_par_f *
-			(ms_system_params.m_bop_par_0 + ms_system_params.m_bop_par_1*W_dot_ratio + ms_system_params.m_bop_par_2*pow(W_dot_ratio,2));
-			// [MWe]
-
-        double W_dot_cr_freeze_protection = 0.0;
-        if (ms_system_params.m_is_field_freeze_protection_electric) {
-            W_dot_cr_freeze_protection = mc_cr_out_solver.m_q_dot_heater;       //[MWe]
-        }
-
-        double W_dot_tes_pump = 0.0;        //[MWe]
-        if (m_is_tes) {
-            W_dot_tes_pump = mc_tes_outputs.m_W_dot_elec_in_tot;    //[MWe]
-        }
-
-        double W_dot_par_htr_elec_load = 0.0;
-        if (m_is_parallel_heater) {
-            W_dot_par_htr_elec_load = mc_par_htr_out_solver.m_W_dot_elec_in_tot +
-                                    mc_par_htr_out_solver.m_q_dot_heater;       //[MWe]
-        }
-
-        double W_dot_net = mc_pc_out_solver.m_P_cycle -
-            mc_cr_out_solver.m_W_dot_elec_in_tot -
-            mc_pc_out_solver.m_W_dot_elec_parasitics_tot -
-            W_dot_tes_pump -
-			W_dot_cr_freeze_protection -
-            W_dot_par_htr_elec_load -
-			mc_tes_outputs.m_q_heater - 
-			m_W_dot_fixed_design -
-			W_dot_bop;	//[MWe]
-
+        // 25-06-04 tn: move system calcs to iteration loop
+        double W_dot_bop = mc_system_metrics.get_W_dot_bop();
+        double W_dot_net = mc_system_metrics.get_W_dot_net();
 
         // Timestep solved: run post-processing, converged()		
 		mc_collector_receiver.converged();
