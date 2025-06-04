@@ -1603,6 +1603,7 @@ bool C_csp_solver::C_operating_mode_core::solve(C_csp_solver* pc_csp_solver, boo
     }
 
     double q_dot_pc_solve = std::numeric_limits<double>::quiet_NaN();
+    C_csp_power_cycle::E_csp_power_cycles_types E_pc_target_type_at_operating_mode = pc_csp_solver->mc_power_cycle.get_off_taker_type();
 
     switch (m_cycle_target_type)
     {
@@ -1619,11 +1620,19 @@ bool C_csp_solver::C_operating_mode_core::solve(C_csp_solver* pc_csp_solver, boo
     case Q_DOT_PC_STARTUP:
     {
         q_dot_pc_solve = q_dot_pc_startup;          //[MWt]
+
+        // target will be heat for both 'elec' and 'heat' generators
+        E_pc_target_type_at_operating_mode = C_csp_power_cycle::HEAT;
+
         break;
     }
     case Q_DOT_PC_STANDBY:
     {
         q_dot_pc_solve = q_dot_pc_standby;          //[MWt]
+
+        // target will be heat for both 'elec' and 'heat' generators
+        E_pc_target_type_at_operating_mode = C_csp_power_cycle::HEAT;
+
         break;
     }
     case Q_DOT_PC_MIN:
@@ -1641,7 +1650,7 @@ bool C_csp_solver::C_operating_mode_core::solve(C_csp_solver* pc_csp_solver, boo
     }
 
     int solve_error_code = pc_csp_solver->solve_operating_mode(m_cr_mode,
-        m_pc_mode, m_htr_mode,
+        m_pc_mode, m_htr_mode, E_pc_target_type_at_operating_mode,
         m_solver_mode, m_step_target_mode,
         q_dot_pc_solve, m_is_defocus, is_rec_outlet_to_hottank,
         q_dot_elec_to_CR_heat, q_dot_elec_to_PAR_HTR,

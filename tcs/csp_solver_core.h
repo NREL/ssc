@@ -576,22 +576,39 @@ public:
 
 class C_csp_power_cycle
 {
-
 public:
-
     enum E_csp_power_cycles_types
     {
         ELEC,
-        HEAT
+        HEAT,
+        UNDEFINED
     };
+
+    enum E_csp_power_cycle_modes
+    {
+        STARTUP = 0,
+        ON,
+        STANDBY,
+        OFF,
+        OFF_NO_SU_REQ,
+        STARTUP_CONTROLLED
+    };
+
+protected:
+
+    E_csp_power_cycles_types m_off_taker_type;
+
+public:
+
+    E_csp_power_cycles_types get_off_taker_type() {
+        return HEAT;    // hardcode until ELEC infrastructure in place; m_off_taker_type;
+    }
 
     // Class to save messages for up stream classes
     C_csp_messages mc_csp_messages;
 
     // Collector-receiver technology type
 	bool m_is_sensible_htf;		//[-] True = indirect, sensible HTF, e.g. molten salt. False = direct steam
-
-    E_csp_power_cycles_types m_off_taker_type;
 
 	C_csp_power_cycle(E_csp_power_cycles_types off_taker_type)
 	{
@@ -600,16 +617,6 @@ public:
 	};
 
 	~C_csp_power_cycle(){};
-
-	enum E_csp_power_cycle_modes
-	{
-		STARTUP = 0,
-		ON,
-		STANDBY,
-		OFF,
-        OFF_NO_SU_REQ,
-		STARTUP_CONTROLLED
-	};
 
 	struct S_control_inputs
 	{
@@ -1260,6 +1267,8 @@ public:
         C_csp_collector_receiver::E_csp_cr_modes m_cr_mode;      //[-]
         C_csp_collector_receiver::E_csp_cr_modes m_htr_mode;    //[-]
 
+        C_csp_power_cycle::E_csp_power_cycles_types m_pc_target_type_at_operating_mode; // If PC is electric, could still target thermal during startup/standby
+
         bool m_is_rec_outlet_to_hottank;    //[-]
 
         double m_q_dot_elec_to_CR_heat;   //[MWt]
@@ -1289,6 +1298,7 @@ public:
 		C_MEQ__m_dot_tes(E_m_dot_solver_modes solver_mode, C_csp_solver* pc_csp_solver,
             C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, C_csp_collector_receiver::E_csp_cr_modes cr_mode,
             C_csp_collector_receiver::E_csp_cr_modes htr_mode,    //[-]
+            C_csp_power_cycle::E_csp_power_cycles_types pc_target_type_at_operating_mode,   //[-]
             double q_dot_elec_to_CR_heat /*MWt*/,
             double q_dot_elec_to_PAR_HTR /*MWt*/,
             bool is_rec_outlet_to_hottank,
@@ -1303,6 +1313,7 @@ public:
 			m_pc_mode = pc_mode;    //[-]
 			m_cr_mode = cr_mode;    //[-]
             m_htr_mode = htr_mode;  //[-]
+            m_pc_target_type_at_operating_mode = pc_target_type_at_operating_mode;  //[-] If PC is electric, could still target thermal during startup/standby
 
             m_q_dot_elec_to_CR_heat = q_dot_elec_to_CR_heat;    //[MWt]
             m_q_dot_elec_to_PAR_HTR = q_dot_elec_to_PAR_HTR;    //[MWt]
@@ -1340,6 +1351,7 @@ public:
         C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
         C_csp_collector_receiver::E_csp_cr_modes m_cr_mode;      //[-]
         C_csp_collector_receiver::E_csp_cr_modes m_htr_mode;    //[-]
+        C_csp_power_cycle::E_csp_power_cycles_types m_pc_target_type_at_operating_mode; // If PC is electric, could still target thermal during startup/standby
 
         double m_q_dot_elec_to_CR_heat;   //[MWt]
         double m_q_dot_elec_to_PAR_HTR;     //[MWt]
@@ -1360,7 +1372,7 @@ public:
         C_MEQ__T_field_cold(C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_csp_solver* pc_csp_solver,
             double q_dot_pc_target /*MWt*/,
             C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, C_csp_collector_receiver::E_csp_cr_modes cr_mode,
-            C_csp_collector_receiver::E_csp_cr_modes htr_mode,    //[-]
+            C_csp_collector_receiver::E_csp_cr_modes htr_mode, C_csp_power_cycle::E_csp_power_cycles_types pc_target_type_at_operating_mode,
             double q_dot_elec_to_CR_heat /*MWt*/, double q_dot_elec_to_PAR_HTR /*MWt*/,
             bool is_rec_outlet_to_hottank,
             double defocus /*-*/, double defocus_PAR_HTR /*-*/, double t_ts /*s*/,
@@ -1377,6 +1389,7 @@ public:
 			m_pc_mode = pc_mode;
 			m_cr_mode = cr_mode;
             m_htr_mode = htr_mode;
+            m_pc_target_type_at_operating_mode = pc_target_type_at_operating_mode;
             m_is_rec_outlet_to_hottank = is_rec_outlet_to_hottank;
 
             m_defocus = defocus;
@@ -1418,6 +1431,8 @@ public:
         C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
         C_csp_collector_receiver::E_csp_cr_modes m_cr_mode;      //[-]
         C_csp_collector_receiver::E_csp_cr_modes m_htr_mode;    //[-]
+        C_csp_power_cycle::E_csp_power_cycles_types m_pc_target_type_at_operating_mode; // If PC is electric, could still target thermal during startup/standby
+
 
         bool m_is_rec_outlet_to_hottank;    //[-]
 
@@ -1429,7 +1444,7 @@ public:
 			C_csp_solver* pc_csp_solver,
 			double q_dot_pc_target /*MWt*/,
             C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, C_csp_collector_receiver::E_csp_cr_modes cr_mode,
-            C_csp_collector_receiver::E_csp_cr_modes htr_mode,    //[-]
+            C_csp_collector_receiver::E_csp_cr_modes htr_mode, C_csp_power_cycle::E_csp_power_cycles_types pc_target_type_at_operating_mode,
             double q_dot_elec_to_CR_heat /*MWt*/, double q_dot_elec_to_PAR_HTR /*MWt*/,
             bool is_rec_outlet_to_hottank,
 			double defocus /*-*/, double defocus_PAR_HTR /*-*/)
@@ -1447,6 +1462,7 @@ public:
 			m_pc_mode = pc_mode;
 			m_cr_mode = cr_mode;
             m_htr_mode = htr_mode;
+            m_pc_target_type_at_operating_mode = pc_target_type_at_operating_mode;
             m_is_rec_outlet_to_hottank = is_rec_outlet_to_hottank;
 
             m_defocus = defocus;
@@ -1480,6 +1496,7 @@ public:
         C_csp_power_cycle::E_csp_power_cycle_modes m_pc_mode;      //[-]
         C_csp_collector_receiver::E_csp_cr_modes m_cr_mode;      //[-]
         C_csp_collector_receiver::E_csp_cr_modes m_htr_mode;    //[-]
+        C_csp_power_cycle::E_csp_power_cycles_types m_pc_target_type_at_operating_mode; // If PC is electric, could still target thermal during startup/standby
 
         bool m_is_rec_outlet_to_hottank;    //[-]
 
@@ -1492,7 +1509,7 @@ public:
             C_csp_solver *pc_csp_solver, 
 			double q_dot_pc_target /*MWt*/,
             C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, C_csp_collector_receiver::E_csp_cr_modes cr_mode,
-            C_csp_collector_receiver::E_csp_cr_modes htr_mode,    //[-]
+            C_csp_collector_receiver::E_csp_cr_modes htr_mode, C_csp_power_cycle::E_csp_power_cycles_types pc_target_type_at_operating_mode,
             double q_dot_elec_to_CR_heat /*MWt*/, double q_dot_elec_to_PAR_HTR /*MWt*/,
             bool is_rec_outlet_to_hottank,
             double t_ts_initial /*s*/)
@@ -1511,6 +1528,7 @@ public:
             m_pc_mode = pc_mode;
             m_cr_mode = cr_mode;
             m_htr_mode = htr_mode;
+            m_pc_target_type_at_operating_mode = pc_target_type_at_operating_mode;
             m_is_rec_outlet_to_hottank = is_rec_outlet_to_hottank;
 
             m_t_ts_initial = t_ts_initial;  //[s]
@@ -1523,6 +1541,7 @@ public:
 
 	int solve_operating_mode(C_csp_collector_receiver::E_csp_cr_modes cr_mode,
         C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, C_csp_collector_receiver::E_csp_cr_modes htr_mode,    //[-]
+        C_csp_power_cycle::E_csp_power_cycles_types pc_target_type_at_operating_mode,
         C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_MEQ__timestep::E_timestep_target_modes step_target_mode,
 		double q_dot_pc_target /*MWt*/, bool is_defocus, bool is_rec_outlet_to_hottank,
         double q_dot_elec_to_CR_heat /*MWt*/, double q_dot_elec_to_PAR_HTR /*MWt*/,
