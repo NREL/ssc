@@ -156,7 +156,15 @@ int C_csp_solver::solve_operating_mode(C_csp_collector_receiver::E_csp_cr_modes 
             is_m_dot_bal_converged = true;
         }
 
-        if ((mc_pc_out_solver.m_q_dot_htf - m_q_dot_pc_max) / m_q_dot_pc_max > 1.E-3)
+        double calc_offtaker_output = std::numeric_limits<double>::quiet_NaN();
+        if (pc_target_type_at_operating_mode == C_csp_power_cycle::HEAT) {
+            calc_offtaker_output = mc_pc_out_solver.m_q_dot_htf;    //[MWt]
+        }
+        else if (pc_target_type_at_operating_mode == C_csp_power_cycle::ELEC) {
+            calc_offtaker_output = mc_system_metrics.get_W_dot_net();   //[MWe]
+        }
+
+        if ((calc_offtaker_output - m_q_dot_pc_max) / m_q_dot_pc_max > 1.E-3)
         {
             // Have defocused such that balancing mass flow rates should not result in
             //    a cycle mass flow rate greater than the max
@@ -203,7 +211,15 @@ int C_csp_solver::solve_operating_mode(C_csp_collector_receiver::E_csp_cr_modes 
 
             C_monotonic_eq_solver::S_xy_pair xy_q_dot_2;
 
-            double defocus_guess_q_dot = (std::max)(0.7 * defocus_guess, (std::min)(0.99 * defocus_guess, defocus_guess * (m_q_dot_pc_max / mc_pc_out_solver.m_q_dot_htf)));
+            calc_offtaker_output = std::numeric_limits<double>::quiet_NaN();
+            if (pc_target_type_at_operating_mode == C_csp_power_cycle::HEAT) {
+                calc_offtaker_output = mc_pc_out_solver.m_q_dot_htf;    //[MWt]
+            }
+            else if (pc_target_type_at_operating_mode == C_csp_power_cycle::ELEC) {
+                calc_offtaker_output = mc_system_metrics.get_W_dot_net();   //[MWe]
+            }
+
+            double defocus_guess_q_dot = (std::max)(0.7 * defocus_guess, (std::min)(0.99 * defocus_guess, defocus_guess * (m_q_dot_pc_max / calc_offtaker_output)));
             while (true) {
 
                 q_dot_df_code = c_q_dot_solver.test_member_function(defocus_guess_q_dot, &q_dot_pc_1);
@@ -331,7 +347,12 @@ double C_csp_solver::C_MEQ__defocus::calc_meq_target()
     }
     else if (m_df_target_mode == C_MEQ__defocus::E_Q_DOT_PC)
     {
-        return mpc_csp_solver->mc_pc_out_solver.m_q_dot_htf;	//[MWt]
+        if (m_pc_target_type_at_operating_mode == C_csp_power_cycle::HEAT) {
+            return mpc_csp_solver->mc_pc_out_solver.m_q_dot_htf;	//[MWt]
+        }
+        else if (m_pc_target_type_at_operating_mode == C_csp_power_cycle::ELEC) {
+            return mpc_csp_solver->mc_system_metrics.get_W_dot_net();   //[MWe]
+        }
     }
 }
 
@@ -686,7 +707,12 @@ int C_csp_solver::C_MEQ__timestep::operator()(double t_ts_guess /*s*/, double *t
     }
     else if (m_step_target_mode == E_STEP_Q_DOT_PC)
     {
-        *target = mpc_csp_solver->mc_pc_out_solver.m_q_dot_htf; //[MWt]
+        if (m_pc_target_type_at_operating_mode == C_csp_power_cycle::HEAT) {
+            *target = mpc_csp_solver->mc_pc_out_solver.m_q_dot_htf; //[MWt]
+        }
+        else if (m_pc_target_type_at_operating_mode == C_csp_power_cycle::ELEC) {
+            return mpc_csp_solver->mc_system_metrics.get_W_dot_net();   //[MWe]
+        }
     }
     else if (m_step_target_mode == E_STEP_FIXED)
     {
