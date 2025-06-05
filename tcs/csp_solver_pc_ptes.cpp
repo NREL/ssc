@@ -310,6 +310,17 @@ double C_pc_ptes::get_htf_pumping_parasitic_coef()		//[kWe/kWt]
     return (m_HT_htf_pump_coef_des*m_m_dot_HT_des + m_CT_htf_pump_coef_des*m_m_dot_CT_des) / (m_q_dot_hot_in_des * 1.E3);   //[kWe/kWt]
 }
 
+double C_pc_ptes::get_design_pumping_power() {
+
+    // Need to include both HTF and CT pumps
+    return m_W_dot_CT_htf_pump_des + m_W_dot_HT_htf_pump_des;   //[MWe]
+}
+
+double C_pc_ptes::get_design_cooling_power() {
+
+    return m_W_dot_elec_parasitic_des;  //[MWe]
+}
+
 // This can vary between timesteps for Type224, depending on remaining startup energy and time
 double C_pc_ptes::get_max_q_pc_startup()		//[MWt]
 {

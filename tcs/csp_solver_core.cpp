@@ -390,6 +390,8 @@ void C_csp_solver::init()
 	m_x_cold_des = cr_solved_params.m_x_cold_des;				//[-]
 	m_q_dot_rec_des = cr_solved_params.m_q_dot_rec_des;			//[MW]
 	m_A_aperture = cr_solved_params.m_A_aper_total;				//[m2]
+    double W_dot_col_tracking_des = mc_collector_receiver.get_tracking_power(); //[MWe]
+    double W_dot_rec_pumping_power_des = mc_collector_receiver.get_design_pumping_power();  //[MWe]
 
         // Parallel Heater
     if (m_is_parallel_heater) {
@@ -426,6 +428,9 @@ void C_csp_solver::init()
 	
 	m_cycle_P_hot_des = pc_solved_params.m_P_hot_des;					//[kPa]
 	m_cycle_x_hot_des = pc_solved_params.m_x_hot_des;					//[-]
+
+    double W_dot_cycle_pump_des = mc_power_cycle.get_design_pumping_power();    //[MWe]
+    double W_dot_cycle_cooling_des = mc_power_cycle.get_design_cooling_power(); //[MWe]
 		// TES
     C_csp_tes::S_csp_tes_init_inputs tes_init_inputs;
     tes_init_inputs.T_to_cr_at_des = cr_solved_params.m_T_htf_cold_des;

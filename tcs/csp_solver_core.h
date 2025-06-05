@@ -513,6 +513,8 @@ public:
     virtual double get_tracking_power() = 0;		//MWe
 	virtual double get_col_startup_power() = 0;		//MWe-hr
 
+    virtual double get_design_pumping_power() = 0;  //[MWe]
+
 	virtual void off(const C_csp_weatherreader::S_outputs &weather,
 		const C_csp_solver_htf_1state &htf_state_in,
 		C_csp_collector_receiver::S_csp_cr_out_solver &cr_out_solver,
@@ -715,7 +717,10 @@ public:
     virtual double get_efficiency_at_TPH(double T_degC, double P_atm, double relhum_pct, double *w_dot_condenser=0) = 0; //-
     virtual double get_efficiency_at_load(double load_frac, double *w_dot_condenser=0) = 0;
 	virtual double get_htf_pumping_parasitic_coef() = 0;	//[kWe/kWt]
-	
+
+    virtual double get_design_pumping_power() = 0;      //[MWe]
+    virtual double get_design_cooling_power() = 0;      //[MWe]
+
 	// This can vary between timesteps for Type224, depending on remaining startup energy and time
 	virtual double get_max_q_pc_startup() = 0;		//[MWt]
 
