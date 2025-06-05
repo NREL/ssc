@@ -134,6 +134,13 @@ bool getem_om_cost_calc(ssc_data_t data)
     double annual_tax_insurance_cost = total_capital_cost * tax_insurance_rate;
 
     double total_om = plant_om + field_om + annual_tax_insurance_cost;
+
+    vt->assign("labor_om_cost", field_labor_om);
+    vt->assign("plant_maintenance_om_cost", plant_om);
+    vt->assign("well_maintenance_om_cost", well_om);
+    vt->assign("gathering_system_maintenance_om_cost", surface_equip_om);
+    vt->assign("water_makeup_om_cost", makeup_water_cost);
+
     vt->assign("total_getem_om_cost", total_om);
     return true;
 }
