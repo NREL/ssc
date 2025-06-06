@@ -310,7 +310,8 @@ C_csp_solver::C_csp_solver(C_csp_weatherreader &weather,
 		m_cycle_P_hot_des = m_cycle_x_hot_des = 
 		m_m_dot_pc_des = m_m_dot_pc_min =
         m_m_dot_pc_max = m_m_dot_pc_max_startup =
-        m_W_dot_bop_design = m_W_dot_fixed_design = m_T_htf_pc_cold_est = std::numeric_limits<double>::quiet_NaN();
+        m_W_dot_bop_design = m_W_dot_fixed_design = m_W_dot_system_net_design =
+        m_T_htf_pc_cold_est = std::numeric_limits<double>::quiet_NaN();
 
     m_is_cr_config_recirc = true;
 
@@ -392,6 +393,8 @@ void C_csp_solver::init()
 	m_A_aperture = cr_solved_params.m_A_aper_total;				//[m2]
     double W_dot_col_tracking_des = mc_collector_receiver.get_tracking_power(); //[MWe]
     double W_dot_rec_pumping_power_des = mc_collector_receiver.get_design_pumping_power();  //[MWe]
+
+    
 
         // Parallel Heater
     if (m_is_parallel_heater) {
@@ -515,6 +518,15 @@ void C_csp_solver::init()
 
     m_W_dot_fixed_design = ms_system_params.m_pb_fixed_par* m_cycle_W_dot_des;			//[MWe]
 
+    // Check if any calculated parasitics are nan?
+    //if (!std::isfinite(W_dot_rec_pumping_power_des)) {
+    //    W_dot_rec_pumping_power_des = 0.02 * m_cycle_W_dot_des;
+    //}
+
+    m_W_dot_system_net_design = m_cycle_W_dot_des - W_dot_col_tracking_des - W_dot_rec_pumping_power_des -
+        W_dot_cycle_pump_des - W_dot_cycle_cooling_des - W_dot_tes_pumping_des -
+        m_W_dot_bop_design - m_W_dot_fixed_design;
+
     // System checks
 	if( mc_collector_receiver.m_is_sensible_htf != mc_power_cycle.m_is_sensible_htf )
 	{
@@ -548,7 +560,12 @@ int C_csp_solver::steps_per_hour()
 
 void C_csp_solver::Ssimulate(C_csp_solver::S_sim_setup & sim_setup)
 {
-	// Get number of records in weather file
+    // Check some design metrics to make sure system is feasible?
+    if (!std::isfinite(m_W_dot_system_net_design)) {
+        throw(C_csp_exception("Design point net power calculation is NaN", "Timeseries simulate pre-checks"));
+    }
+
+    // Get number of records in weather file
 	int n_wf_records = (int)mc_weather.m_weather_data_provider->nrecords();
 	int step_per_hour = n_wf_records / 8760;    // TODO: this is in multiple places (here and dispatch (moved over from tou))
 

@@ -1159,6 +1159,7 @@ private:
         // System design
     double m_W_dot_bop_design;      //[MWe]
     double m_W_dot_fixed_design;    //[MWe]
+    double m_W_dot_system_net_design;   //[MWe]
 
         // Field-side HTF
     double m_T_field_cold_limit;    //[C]

@@ -142,7 +142,7 @@ double C_csp_mspt_collector_receiver::get_col_startup_power()
 
 double C_csp_mspt_collector_receiver::get_design_pumping_power() {
 
-    return std::numeric_limits<double>::quiet_NaN();
+    return mc_pt_receiver.get_design_rec_pumping_power();   //[MWe]
 }
 
 void C_csp_mspt_collector_receiver::call(const C_csp_weatherreader::S_outputs &weather,
