@@ -831,6 +831,8 @@ public:
 
     virtual double get_degradation_rate() = 0;  // s^-1
 
+    virtual double get_design_pumping_power() = 0;  //[MWe]
+
 	virtual void reset_storage_to_initial_state() = 0;
 
     virtual void discharge_avail_est(double T_cold_K, double step_s, double &q_dot_dc_est, double &m_dot_field_est, double &T_hot_field_est) = 0;
@@ -850,8 +852,7 @@ public:
 
 	virtual void assign(int index, double* p_reporting_ts_array, size_t n_reporting_ts_array) = 0;
 
-    virtual double pumping_power(double m_dot_sf, double m_dot_pb, double m_dot_tank,
-        double T_sf_in, double T_sf_out, double T_pb_in, double T_pb_out, bool recirculating) = 0;
+    
 };
 
 class C_csp_solver

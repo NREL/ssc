@@ -453,9 +453,31 @@ void C_csp_solver::init()
     }
 		// TOU
 	mc_tou.init(mc_weather.ms_solved_params.m_leapyear);
+    
 		// Thermal Storage
 	m_is_tes = mc_tes.does_tes_exist();
+
     bool m_does_tes_enable_cr_to_cold_tank = mc_tes.is_cr_to_cold_allowed();
+    double W_dot_tes_pumping_des = mc_tes.get_design_pumping_power();   //[MWe]
+
+    // If no TES exists, initialize values to zero. They won't be touched again
+    if (!m_is_tes)
+    {	// Set constant values for tes HTF states
+        W_dot_tes_pumping_des = 0.0;
+
+        mc_tes_outputs.m_q_heater = 0.0;		//[MW]
+        mc_tes_outputs.m_q_dot_dc_to_htf = 0.0;	//[MW]
+        mc_tes_outputs.m_q_dot_ch_from_htf = 0.0;	//[MW]
+
+        mc_tes_outputs.m_m_dot_cr_to_tes_hot = 0.0;		//[kg/s]
+        mc_tes_outputs.m_m_dot_tes_hot_out = 0.0;		//[kg/s]
+        mc_tes_outputs.m_m_dot_pc_to_tes_cold = 0.0;	//[kg/s]
+        mc_tes_outputs.m_m_dot_tes_cold_out = 0.0;		//[kg/s]
+        mc_tes_outputs.m_m_dot_src_to_sink = 0.0;	    //[kg/s]
+        mc_tes_outputs.m_m_dot_sink_to_src = 0.0;	    //[kg/s]
+
+        mc_tes_outputs.m_m_dot_cold_tank_to_hot_tank = 0.0;
+    }
 
         // System control logic
     m_is_rec_to_coldtank_allowed = ms_system_params.m_is_rec_to_coldtank_allowed;
@@ -486,12 +508,14 @@ void C_csp_solver::init()
     m_T_field_cold_limit = -100.0;      //[C]
     m_T_field_in_hot_limit = (0.9*m_cycle_T_htf_hot_des + 0.1*m_T_htf_cold_des) - 273.15;   //[C]
 
+    // System parasitics
     double W_dot_ratio_des = 1.0;       //[-]
     m_W_dot_bop_design = m_cycle_W_dot_des * ms_system_params.m_bop_par * ms_system_params.m_bop_par_f *
         (ms_system_params.m_bop_par_0 + ms_system_params.m_bop_par_1 * W_dot_ratio_des + ms_system_params.m_bop_par_2 * pow(W_dot_ratio_des, 2));   //[MWe]
 
     m_W_dot_fixed_design = ms_system_params.m_pb_fixed_par* m_cycle_W_dot_des;			//[MWe]
 
+    // System checks
 	if( mc_collector_receiver.m_is_sensible_htf != mc_power_cycle.m_is_sensible_htf )
 	{
 		throw(C_csp_exception("The collector-receiver and power cycle models have incompatible HTF - direct/indirect assumptions", "CSP Solver"));
@@ -505,27 +529,7 @@ void C_csp_solver::init()
         throw(C_csp_exception("Model does not allow parallel heater when receiver is configured to send HTF to cold tank", "CSP Solver"));
     }
 
-    /* 
-    If no TES exists, initialize values to zero. They won't be touched again
-    */
-
-	if(!m_is_tes)
-	{	// Set constant values for tes HTF states
-
-		mc_tes_outputs.m_q_heater = 0.0;		//[MW]
-		mc_tes_outputs.m_q_dot_dc_to_htf = 0.0;	//[MW]
-		mc_tes_outputs.m_q_dot_ch_from_htf = 0.0;	//[MW]
-		
-		mc_tes_outputs.m_m_dot_cr_to_tes_hot = 0.0;		//[kg/s]
-		mc_tes_outputs.m_m_dot_tes_hot_out = 0.0;		//[kg/s]
-		mc_tes_outputs.m_m_dot_pc_to_tes_cold = 0.0;	//[kg/s]
-		mc_tes_outputs.m_m_dot_tes_cold_out = 0.0;		//[kg/s]
-		mc_tes_outputs.m_m_dot_src_to_sink = 0.0;	    //[kg/s]
-		mc_tes_outputs.m_m_dot_sink_to_src = 0.0;	    //[kg/s]
-
-		mc_tes_outputs.m_m_dot_cold_tank_to_hot_tank = 0.0;
-	}
-}
+ }   
 
 void C_csp_solver::get_design_parameters(double& W_dot_bop_design /*MWe*/,
                                     double& W_dot_fixed_design /*MWe*/)
