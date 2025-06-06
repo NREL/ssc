@@ -603,7 +603,7 @@ protected:
 public:
 
     E_csp_power_cycles_types get_off_taker_type() {
-        return HEAT;    // hardcode until ELEC infrastructure in place; m_off_taker_type;
+        return m_off_taker_type;
     }
 
     // Class to save messages for up stream classes
@@ -1193,9 +1193,22 @@ private:
         C_csp_power_cycle::E_csp_power_cycle_modes pc_operating_state, double purchase_mult /*-*/, double sale_mult /*-*/,
         double calc_frac_current /*-*/, double baseline_step /*s*/,
         bool& is_q_dot_pc_target_overwrite,
-        double& q_dot_pc_target /*MWt*/, double& q_dot_pc_max /*MWt*/, double& q_dot_elec_to_CR_heat /*MWt*/,
+        double& q_dot_pc_target /*MWt*/, double& q_dot_pc_max /*MWt*/,
+        double& W_dot_system_target /*MWe*/, double& W_dot_system_max /*MWe*/,
+        double& q_dot_elec_to_CR_heat /*MWt*/,
         bool& is_rec_su_allowed, bool& is_pc_su_allowed, bool& is_pc_sb_allowed,
         double& q_dot_elec_to_PAR_HTR /*MWt*/, bool& is_PAR_HTR_allowed);
+
+    bool m_allow_elec_target;
+    C_csp_power_cycle::E_csp_power_cycles_types get_system_offtaker_type() {
+
+        if (m_allow_elec_target) {
+            return mc_power_cycle.get_off_taker_type();
+        }
+        else {
+            return C_csp_power_cycle::HEAT;
+        }
+    }
 
 public:
 
@@ -1642,6 +1655,7 @@ public:
         bool solve(C_csp_solver* pc_csp_solver, bool is_rec_outlet_to_hottank,
             double q_dot_pc_on_dispatch_target /*MWt*/, double q_dot_pc_startup /*MWt*/, double q_dot_pc_standby /*MWt*/,
             double q_dot_pc_min /*MWt*/, double q_dot_pc_max /*MWt*/, double q_dot_pc_startup_max /*MWt*/,
+            double W_dot_system_max /*MWe*/, double W_dot_system_target /*MWe*/,
             double m_dot_pc_startup_max /*kg/hr*/, double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
             double q_dot_elec_to_CR_heat /*MWt*/, double q_dot_elec_to_PAR_HTR /*MWt*/, double limit_comp_tol /*-*/,
             double& defocus_solved, bool& is_op_mode_avail /*-*/, bool& is_turn_off_plant, bool& is_rec_su_unchanged);
@@ -2320,6 +2334,7 @@ public:
         bool solve(C_system_operating_modes::E_operating_modes op_mode, C_csp_solver* pc_csp_solver, bool is_rec_outlet_to_hottank,
             double q_dot_pc_on_target /*MWt*/, double q_dot_pc_startup /*MWt*/, double q_dot_pc_standby /*MWt*/,
             double q_dot_pc_min /*MWt*/, double q_dot_pc_max /*MWt*/, double q_dot_pc_startup_max /*MWt*/,
+            double W_dot_system_max /*MWe*/, double W_dot_system_target /*MWe*/,
             double m_dot_pc_startup_max /*kg/hr*/, double m_dot_pc_max /*kg/hr*/, double m_dot_pc_min /*kg/hr*/,
             double q_dot_elec_to_CR_heat /*MWe*/, double q_dot_elec_to_PAR_HTR /*MWt*/, double limit_comp_tol /*-*/,
             double& defocus_solved, bool& is_op_mode_avail /*-*/, bool& is_turn_off_plant, bool& is_turn_off_rec_su);
