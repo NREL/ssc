@@ -133,12 +133,14 @@ static var_info _cm_vtab_geothermal_costs[] = {
         { SSC_OUTPUT,       SSC_NUMBER,     "stim_cost_non_drill",					"Non-drilling stimulation costs",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
        { SSC_OUTPUT,       SSC_NUMBER,     "stim_total_cost",					"Stimulation Total costs",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
        //Expl and Confirmation drilling costs
+        { SSC_OUTPUT,       SSC_NUMBER,     "total_expl_permitting",			"Exploration permitting total costs",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
         { SSC_OUTPUT,       SSC_NUMBER,     "expl_total_cost",					"Exploration total costs",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
         { SSC_OUTPUT,       SSC_NUMBER,     "expl_drilling_cost",					"Exploration drilling costs",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
         { SSC_OUTPUT,       SSC_NUMBER,     "conf_total_cost",					"Confirmation total costs",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
         { SSC_OUTPUT,       SSC_NUMBER,     "conf_drilling_cost",					"Confirmation drilling costs",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
         //Drilling costs
         { SSC_OUTPUT,       SSC_NUMBER,     "prod_well_cost",					"Production cost per well",											"$/well",		"",                     "GeoHourly",				"?",                         "",                            "" },
+        { SSC_OUTPUT,       SSC_NUMBER,     "total_drilling_permitting",			"Drilling permitting total costs",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
         { SSC_OUTPUT,       SSC_NUMBER,     "prod_total_cost",					"Total production well system cost",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
         { SSC_OUTPUT,       SSC_NUMBER,     "inj_well_cost",					"Injection cost per well",											"$/well",		"",                     "GeoHourly",				"?",                         "",                            "" },
         { SSC_OUTPUT,       SSC_NUMBER,     "inj_total_cost",					"Total injection well system cost",											"$",		"",                     "GeoHourly",				"?",                         "",                            "" },
@@ -564,6 +566,8 @@ public:
             if (ppi_base_year < 0) ppi_base_year = 0;
             else if (ppi_base_year >= (int)MAX_PPI_SIZE) ppi_base_year = (int)(MAX_PPI_SIZE-1); // TODO 1995 through 2022 - ppi values should be updated
 
+
+
             double stim_non_drill = as_double("geotherm.cost.stim_non_drill");
             double stim_per_well = 1250000 * drilling_ppi[ppi_base_year];
             int stim_type = as_integer("stimulation_type");
@@ -596,7 +600,13 @@ public:
             double expl_multiplier = as_double("geotherm.cost.expl_multiplier");
             double expl_num_wells = as_double("geotherm.cost.expl_num_wells");
             double expl_per_well = expl_multiplier * prod_well_cost;
-            double expl_total_cost = expl_per_well * expl_num_wells + expl_non_drill;
+
+            double total_predrilling_permitting_cost = 60000 * legal_services_ppi[ppi_base_year];// Sheet2:I48 in GETEM Parameter Equation Breakout.xlsx
+            double expl_permitting_cost = 250000 * legal_services_ppi[ppi_base_year]; // Sheet2:I54 in GETEM Parameter Equation Breakout.xlsx
+            double total_expl_permitting = total_predrilling_permitting_cost + expl_permitting_cost; 
+            assign("total_expl_permitting", total_expl_permitting);
+
+            double expl_total_cost = expl_per_well * expl_num_wells + expl_non_drill + total_expl_permitting;
             assign("expl_total_cost", expl_total_cost);
             assign("expl_drilling_cost", expl_per_well* expl_num_wells);
 
@@ -608,7 +618,12 @@ public:
             assign("conf_total_cost", conf_total_cost);
             assign("conf_drilling_cost", conf_per_well* conf_num_wells);
 
-            double total_drilling_cost = expl_total_cost + conf_total_cost + inj_total_cost + prod_total_cost + stim_total_cost;
+            
+            double total_drilling_permitting = 1000000 * legal_services_ppi[ppi_base_year]; // Sheet2:I73 in GETEM Parameter Equation Breakout.xlsx
+            assign("total_drilling_permitting", total_drilling_permitting);
+
+
+            double total_drilling_cost = expl_total_cost + conf_total_cost + inj_total_cost + prod_total_cost + stim_total_cost + total_drilling_permitting;
             assign("total_drilling_cost", total_drilling_cost);
 
         }
