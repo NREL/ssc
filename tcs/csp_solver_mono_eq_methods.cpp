@@ -50,7 +50,8 @@ int C_csp_solver::solve_operating_mode(C_csp_collector_receiver::E_csp_cr_modes 
     C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, C_csp_collector_receiver::E_csp_cr_modes htr_mode,    //[-]
     C_csp_power_cycle::E_csp_power_cycles_types pc_target_type_at_operating_mode,
     C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_MEQ__timestep::E_timestep_target_modes step_target_mode,
-    double q_dot_pc_target /*MWt*/, bool is_defocus, bool is_rec_outlet_to_hottank,
+    double q_dot_pc_target /*MWt*/, double offtaker_power_max /*MWe*/,
+    bool is_defocus, bool is_rec_outlet_to_hottank,
     double q_dot_elec_to_CR_heat /*MWe*/, double q_dot_elec_to_PAR_HTR /*MWt*/,
     std::string op_mode_str, double & defocus_solved)
 {
@@ -164,7 +165,7 @@ int C_csp_solver::solve_operating_mode(C_csp_collector_receiver::E_csp_cr_modes 
             calc_offtaker_output = mc_system_metrics.get_W_dot_net();   //[MWe]
         }
 
-        if ((calc_offtaker_output - m_q_dot_pc_max) / m_q_dot_pc_max > 1.E-3)
+        if ((calc_offtaker_output - offtaker_power_max) / offtaker_power_max > 1.E-3)
         {
             // Have defocused such that balancing mass flow rates should not result in
             //    a cycle mass flow rate greater than the max
@@ -219,7 +220,7 @@ int C_csp_solver::solve_operating_mode(C_csp_collector_receiver::E_csp_cr_modes 
                 calc_offtaker_output = mc_system_metrics.get_W_dot_net();   //[MWe]
             }
 
-            double defocus_guess_q_dot = (std::max)(0.7 * defocus_guess, (std::min)(0.99 * defocus_guess, defocus_guess * (m_q_dot_pc_max / calc_offtaker_output)));
+            double defocus_guess_q_dot = (std::max)(0.7 * defocus_guess, (std::min)(0.99 * defocus_guess, defocus_guess * (offtaker_power_max / calc_offtaker_output)));
             while (true) {
 
                 q_dot_df_code = c_q_dot_solver.test_member_function(defocus_guess_q_dot, &q_dot_pc_1);
@@ -254,7 +255,7 @@ int C_csp_solver::solve_operating_mode(C_csp_collector_receiver::E_csp_cr_modes 
             int solver_code = 0;
             try
             {
-                solver_code = c_q_dot_solver.solve(xy_q_dot_1, xy_q_dot_2, m_q_dot_pc_max, defocus_solved, tol_solved, iter_solved);
+                solver_code = c_q_dot_solver.solve(xy_q_dot_1, xy_q_dot_2, offtaker_power_max, defocus_solved, tol_solved, iter_solved);
             }
             catch (C_csp_exception)
             {

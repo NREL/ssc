@@ -1668,6 +1668,10 @@ bool C_csp_solver::C_operating_mode_core::solve(C_csp_solver* pc_csp_solver, boo
     case QUIETNAN:
     {
         q_dot_pc_solve = std::numeric_limits<double>::quiet_NaN();
+
+        // target will be heat for both 'elec' and 'heat' generators
+        // pc_target_type_at_operating_mode = C_csp_power_cycle::HEAT;
+
         break;
     }
     case Q_DOT_PC_TARGET:
@@ -1715,7 +1719,8 @@ bool C_csp_solver::C_operating_mode_core::solve(C_csp_solver* pc_csp_solver, boo
     int solve_error_code = pc_csp_solver->solve_operating_mode(m_cr_mode,
         m_pc_mode, m_htr_mode, pc_target_type_at_operating_mode,
         m_solver_mode, m_step_target_mode,
-        q_dot_pc_solve, m_is_defocus, is_rec_outlet_to_hottank,
+        q_dot_pc_solve, max_power,
+        m_is_defocus, is_rec_outlet_to_hottank,
         q_dot_elec_to_CR_heat, q_dot_elec_to_PAR_HTR,
         m_op_mode_name, defocus_solved);
 
@@ -1730,57 +1735,13 @@ bool C_csp_solver::C_operating_mode_core::solve(C_csp_solver* pc_csp_solver, boo
 
         double power_solved = std::numeric_limits<double>::quiet_NaN(); //[MW]
         double q_dot_cycle_solved = pc_csp_solver->mc_pc_out_solver.m_q_dot_htf;	//[MWt]
-        double W_dot_system_net_solved = pc_csp_solver->mc_system_metrics.get_W_dot_bop();  //[MWe]
+        double W_dot_system_net_solved = pc_csp_solver->mc_system_metrics.get_W_dot_net();  //[MWe]
 
-        switch (m_cycle_target_type)
-        {
-        case QUIETNAN:
-        {
+        if (pc_target_type_at_operating_mode == C_csp_power_cycle::HEAT) {
             power_solved = q_dot_cycle_solved;
-            break;
         }
-        case Q_DOT_PC_TARGET:
-        {
-            if (pc_target_type_at_operating_mode == C_csp_power_cycle::HEAT) {
-                power_solved = q_dot_cycle_solved;
-            }
-            else if (pc_target_type_at_operating_mode == C_csp_power_cycle::ELEC) {
-                power_solved = W_dot_system_net_solved;
-            }
-
-            break;
-        }
-        case Q_DOT_PC_STARTUP:
-        {
-            power_solved = q_dot_cycle_solved;
-
-            break;
-        }
-        case Q_DOT_PC_STANDBY:
-        {
-            power_solved = q_dot_cycle_solved;
-
-            break;
-        }
-        case Q_DOT_PC_MIN:
-        {
-            power_solved = q_dot_cycle_solved;
-
-            break;
-        }
-        case Q_DOT_PC_MAX:
-        {
-            if (pc_target_type_at_operating_mode == C_csp_power_cycle::HEAT) {
-                power_solved = q_dot_cycle_solved;
-            }
-            else if (pc_target_type_at_operating_mode == C_csp_power_cycle::ELEC) {
-                power_solved = W_dot_system_net_solved;
-            }
-
-            break;
-        }
-        default:
-            throw(C_csp_exception("Unknown cycle target type"));
+        else if (pc_target_type_at_operating_mode == C_csp_power_cycle::ELEC) {
+            power_solved = W_dot_system_net_solved;
         }
 
         check_system_limits(pc_csp_solver,

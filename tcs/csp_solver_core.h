@@ -1563,7 +1563,8 @@ public:
         C_csp_power_cycle::E_csp_power_cycle_modes pc_mode, C_csp_collector_receiver::E_csp_cr_modes htr_mode,    //[-]
         C_csp_power_cycle::E_csp_power_cycles_types pc_target_type_at_operating_mode,
         C_MEQ__m_dot_tes::E_m_dot_solver_modes solver_mode, C_MEQ__timestep::E_timestep_target_modes step_target_mode,
-		double q_dot_pc_target /*MWt*/, bool is_defocus, bool is_rec_outlet_to_hottank,
+		double q_dot_pc_target /*MWt*/, double offtaker_power_max /*MWe*/,
+        bool is_defocus, bool is_rec_outlet_to_hottank,
         double q_dot_elec_to_CR_heat /*MWt*/, double q_dot_elec_to_PAR_HTR /*MWt*/,
         std::string op_mode_str, double& defocus_solved);
 
