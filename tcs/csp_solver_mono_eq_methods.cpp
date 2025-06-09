@@ -1262,7 +1262,7 @@ int C_csp_solver::C_MEQ__m_dot_tes::operator()(double f_m_dot_tes /*-*/, double 
             *diff_target = (mpc_csp_solver->mc_pc_out_solver.m_q_dot_htf - m_q_dot_pc_target) / m_q_dot_pc_target;
         }
         else if (m_pc_target_type_at_operating_mode == C_csp_power_cycle::ELEC) {
-            throw(C_csp_exception("Option to target net electricity in progress in system solution layer of solver..."));
+            *diff_target = (mpc_csp_solver->mc_system_metrics.get_W_dot_net() - m_q_dot_pc_target) / m_q_dot_pc_target;   //[MWe]
         }
     }
 

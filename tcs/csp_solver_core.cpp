@@ -544,9 +544,9 @@ void C_csp_solver::init()
     // ****** HARDCODE ELEC mode off for now
     m_allow_elec_target = false;
 
-    //if (m_cycle_W_dot_des == 115.1234) {
-    //    m_allow_elec_target = true;
-    //}
+    if (m_cycle_W_dot_des == 115.1234) {
+        m_allow_elec_target = true;
+    }
 
 
 
