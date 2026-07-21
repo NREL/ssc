@@ -227,6 +227,30 @@ void C_falling_particle_receiver::init()
         m_mode_prev = C_csp_collector_receiver::OFF;					//[-] 0 = requires startup, 1 = starting up, 2 = running
     }
 
+    // Set locations of multi-stage trough nodes
+    m_is_trough_node.resize(m_n_y, false);
+    m_curtain_dist_nodes.resize(m_n_y, m_curtain_dist);
+    if (m_is_multistage)
+    {
+        double f = 1.0;
+        int jprev = 0;
+        for (size_t i = 0; i < m_trough_locations.nrows(); i++)
+        {
+            double dist_from_top = 1.0 - m_trough_locations.at(i, 0);  // Dimensionless distance between top of curtain and trough location
+            int j = std::round(dist_from_top * (m_n_y - 1));          // Assumes trough is at location of closest discretized node
+
+            if (j == jprev || (j > 0 and m_is_trough_node.at(j - 1)))       // A trough already exists at this node or at the prior node
+                throw(C_csp_exception("Additional curtain axial discretization is needed to simulate the provided trough locations", "Particle receiver initialization"));
+
+            m_is_trough_node.at(j) = true;
+            for (size_t k = jprev; k < j; k++)
+                m_curtain_dist_nodes.at(k) = f * m_curtain_dist;
+            f = m_trough_locations.at(i, 1);
+            jprev = j;
+        }
+        for (size_t k = jprev; k < m_n_y; k++)
+            m_curtain_dist_nodes.at(k) = f * m_curtain_dist;
+    }
 
     // Calculate view factors
     if (m_model_type == 3 && m_rad_model_type > 0)
@@ -260,31 +284,6 @@ void C_falling_particle_receiver::init()
         // Calculate view factors
         calculate_view_factors();
 
-    }
-
-    // Set locations of multi-stage trough nodes
-    m_is_trough_node.resize(m_n_y, false);
-    m_curtain_dist_nodes.resize(m_n_y, m_curtain_dist);
-    if (m_is_multistage)
-    {
-        double f = 1.0;
-        int j0 = 0;
-        for (size_t i = 0; i < m_trough_locations.nrows(); i++)
-        {
-            double dist_from_top = 1.0 - m_trough_locations.at(i, 0);  // Dimensionless distance between top of curtain and trough location
-            int j = std::round(dist_from_top * (m_n_y - 1));          // Assumes trough is at location of closest discretized node
-
-            if (m_is_trough_node.at(j) || (j>0 and m_is_trough_node.at(j-1)))  // A trough already exists at this node or at the prior node
-                throw(C_csp_exception("Additional curtain axial discretization is needed to simulate the provided trough locations", "Particle receiver initialization"));
-
-            m_is_trough_node.at(j) = true;
-            for (size_t k = j0; k < j; k++)
-                m_curtain_dist_nodes.at(k) = f*m_curtain_dist;
-            f = m_trough_locations.at(i, 1);
-            j0 = j;
-        }
-        for (size_t k = j0; k < m_n_y; k++)
-            m_curtain_dist_nodes.at(k) = f * m_curtain_dist;
     }
 
 
@@ -2175,6 +2174,17 @@ void C_falling_particle_receiver::calculate_view_factors()
         top_height = 0.5 * (m_curtain_height - m_ap_height);
     double side_width = 0.5 * (m_cav_width - m_ap_width);
 
+    std::vector<double> group_dist_to_aperture(ny, 0.0);
+    int i0 = 0;
+    for (j = 0; j < ny; j++)  // Height groups
+    {
+        for (i = 0; i < m_ny_per_group.at(j); i++)
+            group_dist_to_aperture.at(j) += m_curtain_dist_nodes.at(i0 + i) / m_ny_per_group.at(j);  // Average distance to aperture over all grouped nodes
+        i0 += m_ny_per_group.at(j);
+    }
+
+
+
     m_vf.resize_fill(nelem, nelem, 0.0);  // View factor matrix. Curtain height/width elements are ordered as (y0,x0), (y0,x1)... (y0,xn), (y1,x0)...
 
     // View factors from each curtain element to the aperture and front wall(note, this assumes the curtain is flat!)
@@ -2211,7 +2221,7 @@ void C_falling_particle_receiver::calculate_view_factors()
             dxg = m_nx_per_group.at(k) * dx;     // x-extent of this group
 
             i = 1 + j * nx + k;  // Front curtain element index in flattened array
-            m_vf.at(i, 0) = vf_parallel_rect(x0*dx, y0*dy, side_width, top_height, dxg, dyg, m_ap_width, m_ap_height, m_curtain_dist);  // View factor from front curtain element to full aperture
+            m_vf.at(i, 0) = vf_parallel_rect(x0*dx, y0*dy, side_width, top_height, dxg, dyg, m_ap_width, m_ap_height, group_dist_to_aperture.at(j));  // View factor from front curtain element to full aperture
             m_vf.at(0, i) = m_vf.at(i, 0) * (dxg * dyg / m_ap_area);                 // View factor from aperture to front curtain element
             m_vf.at(i, ifw) = 1.0 - m_vf.at(i, 0);                                   // View factor from front curtain element to front wall. Each element can only see the aperture or the front wall 
             m_vf.at(ifw, i) = m_vf.at(i, ifw) * (dxg * dyg / m_cav_front_area);     // View factor from front wall to front curtain element
