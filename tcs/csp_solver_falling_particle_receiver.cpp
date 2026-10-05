@@ -1067,6 +1067,8 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
     double dy = m_curtain_height / (m_n_y - 1);
     double dx = m_curtain_width / m_n_x;
 
+    double Aratio = m_ap_area / m_curtain_area;
+
     double Q_inc, Q_refl, Q_rad, Q_adv, Q_cond, Q_thermal, Q_imbalance;
     double Tp_out, T_particle_prop, T_cold_in_rec, cp, cp_cold, cp_hot, particle_density, err, hadv_with_wind, Twavg, Twmax, Twf;
     double qnetc_avg, qnetc_sol_avg, qnetw_avg, qnetw_sol_avg;
@@ -1191,7 +1193,7 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
                 hadv = 0.0;
                 fwind = 1.0;
             }
-            hadv_with_wind = hadv * fwind;
+            hadv_with_wind = hadv * Aratio * fwind;
 
             rhoc_avg = flux_avg = Ec_avg = 0.0;
             vf_to_ap = m_rad_model_type == 1 ? m_vf_curtain_ap_avg : m_vf_rad_type_0;
@@ -1335,7 +1337,7 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
                 hadv = 0.0;
                 fwind = 1.0;
             }
-            hadv_with_wind = hadv * fwind;
+            hadv_with_wind = hadv * Aratio * fwind;
 
 
             //-- Solve IR radiative exchange and calculate net incoming radiative energy to each curtain and wall element
@@ -1397,7 +1399,7 @@ void C_falling_particle_receiver::calculate_steady_state_soln(s_steady_state_sol
                     hwconv = m_include_back_wall_convection ? calculate_wall_convection_coeff(soln.vel.at(j, i), (j + 0.5) * dy, 0.5 * (Tw.at(j, i) + Tp.at(j, i)), P_amb) : 0.0;
 
                     // Solve for particle temperature at next vertical node
-                    qadv = hadv_with_wind* (Tp.at(j, i) - T_amb);
+                    qadv = hadv_with_wind * (Tp.at(j, i) - T_amb);
                     if (j < m_n_y - 1)
                     {
                         qtot = qnetc.at(j, i) - qadv - hwconv * (Tp.at(j, i) - Tw.at(j, i));  // Net heat transfer rate into particles [W/m2]
@@ -2093,7 +2095,7 @@ void C_falling_particle_receiver::calculate_advection_coeff(double vel_max, doub
         B = 1.949;
         C = 0.7002;
         D = 0.2370;
-        E = 0.0089;
+        E = -0.0089;
         F = 178.7;
         G = 134.3;
         H = 27.49;
@@ -2101,11 +2103,8 @@ void C_falling_particle_receiver::calculate_advection_coeff(double vel_max, doub
         double Nu = A + B * pow(Re_max_Hc, C);
         hadv = Nu * k_air / m_curtain_height;   // Advective loss coefficient without wind (W/m2/K)
         double phi_wind = exp(-pow((std::abs(wdir_eff - F) - G) / H, 2));
-        fwind = 1.0 + (D - E * m_ap_height) * wspd * phi_wind;
+        fwind = 1.0 + (D + E * m_ap_height) * wspd * phi_wind;
 
-        // Scale loss coefficient to account for differences in aperture and curtain area
-        // Loss coefficient from Gonzalez et al. assumes equal aperture area and curtain area and will overestimate convective losses if the loss coefficient is applied for cases where curtain area > aperture area
-        hadv *= m_ap_area / m_curtain_area;
     }
 
     // Re-fit advective loss coefficients using both free-fall and multi-stage CFD data
@@ -2116,9 +2115,9 @@ void C_falling_particle_receiver::calculate_advection_coeff(double vel_max, doub
         C1 = 0.409;
         C2 = 0.8171;
         D0 = 0.1738;
-        D1 = -0.002203;
+        D1 = -0.002202;
         D2 = 0.0;
-        D3 = 1.5841;
+        D3 = 1.5843;
         D4 = 1.1779;
         E0 = 310.640;
         E1 = 3.860;
