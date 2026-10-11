@@ -189,6 +189,7 @@ public:
         double T_amb_des_K = std::numeric_limits<double>::quiet_NaN();
         double T_plant_in_des_K = std::numeric_limits<double>::quiet_NaN();
         double carnot_eff_des = std::numeric_limits<double>::quiet_NaN();
+        double T_inj_des_C = std::numeric_limits<double>::quiet_NaN();
 
         geo_surface.get_design_calcs(
             AE_full_brine_dt_design_calc,
@@ -200,7 +201,8 @@ public:
             eta_2nd_low_total_design,
             T_amb_des_K,
             T_plant_in_des_K,
-            carnot_eff_des);
+            carnot_eff_des,
+            T_inj_des_C);
 
         // inputs used in above in refactor
         SGeothermal_Inputs geo_inputs;

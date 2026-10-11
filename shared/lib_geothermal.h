@@ -536,10 +536,6 @@ private:
 	// Condenser Injection Pump Power
 	double injectionDeltaP(void); // D127 - psi (condensate injection delta pressure)
 	double injectionPumpHead(void); // D128 - ft
-	double injCoeffA(void); // R95
-	double injCoeffB(void); // S95
-	double injCoeffC(void); // T95
-	double injCoeffD(void); // U95
 	double evaporativeWaterLoss(void); // D129 - lb/hr (evaporative water loss)
 	double drift(void); // D130
 	double blowDown(void); // D132
@@ -637,12 +633,13 @@ private:
 
     double m_total_brine_effectiveness;                 //[watt-hr/lb_m]
 
-    double m_eta_2nd_low_total_design;                  //[-]
+    double m_eta_2nd_law_total_design;                  //[-]
 
     // Calculate Carnot Efficiency design values
     double m_T_amb_des_K;                           //[K]
     double m_T_plant_in_des_K;                      //[K]
     double m_carnot_eff_des;                        //[-]
+    double m_T_inj_des_C;                               //[C]
 
 public:
     C_geo_surface(double T_plant_design_C /*C*/,
@@ -657,10 +654,11 @@ public:
         double& eta_2nd_law_max_GETEM_and_T_sol_derate,
         double& AE_2nd_law_max_GETEM_and_T_sol_derate,
         double& total_brine_effectiveness,
-        double& eta_2nd_low_total_design,
+        double& eta_2nd_law_total_design,
         double& T_amb_des_K,
         double& T_plant_in_des_K,
-        double& carnot_eff_des) const
+        double& carnot_eff_des,
+        double& T_inj_des_C) const
     {
         AE_full_brine_dt_design_calc = m_AE_full_brine_dt_design_calc;
         AE_brine_T_sol_to_to_amb_design_calc = m_AE_brine_T_sol_to_to_amb_design_calc;
@@ -668,10 +666,11 @@ public:
         eta_2nd_law_max_GETEM_and_T_sol_derate = m_eta_2nd_law_max_GETEM_and_T_sol_derate;
         AE_2nd_law_max_GETEM_and_T_sol_derate = m_AE_2nd_law_max_GETEM_and_T_sol_derate;
         total_brine_effectiveness = m_total_brine_effectiveness;
-        eta_2nd_low_total_design = m_eta_2nd_low_total_design;
+        eta_2nd_law_total_design = m_eta_2nd_law_total_design;
         T_amb_des_K = m_T_amb_des_K;
         T_plant_in_des_K = m_T_plant_in_des_K;
         carnot_eff_des = m_carnot_eff_des;
+        T_inj_des_C = m_T_inj_des_C;
     }
 };
 

@@ -43,9 +43,11 @@ class CmodGeoSystemTest : public JSONComparisonTest {};
 namespace geo_system_test_ns
 {
     //const std::string input_file_prefix = "26-09-04-dev";
-    const std::string input_file_prefix = "2026-09-20-merge-dev-to-eqs-branch";
+    //const std::string input_file_prefix = "2026-09-20-merge-dev-to-eqs-branch-";
+    const std::string input_file_prefix = "";
 
-    const std::string output_file_prefix = "26-09-04-dev";
+    //const std::string output_file_prefix = "26-09-04-dev-";
+    const std::string output_file_prefix = "";
 
     const std::vector<std::string> compare_number_variables = { "annual_energy", "total_installed_cost", "total_getem_om_cost" };
 

@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 TEST_F(CmodGeoSystemTest, GeoSystem_Hydro_Mod_Binary) {
 
-    std::string test_name = "-Hydro Moderate Binary_ATB 2025_Geothermal_Power_Single_Owner_cmod_geothermal";
+    std::string test_name = "Hydro Moderate Binary_ATB 2025_Geothermal_Power_Single_Owner_cmod_geothermal";
 
     std::string file_inputs = SSCDIR + geo_system_test_ns::file_location +
         geo_system_test_ns::input_file_prefix + test_name + ".json";
@@ -57,7 +57,7 @@ TEST_F(CmodGeoSystemTest, GeoSystem_Hydro_Mod_Binary) {
 
 TEST_F(CmodGeoSystemTest, GeoSystem_Hydro_Mod_Flash) {
 
-    std::string test_name = "-Hydro Moderate Flash_ATB 2025_Geothermal_Power_Single_Owner_cmod_geothermal";
+    std::string test_name = "Hydro Moderate Flash_ATB 2025_Geothermal_Power_Single_Owner_cmod_geothermal";
 
     std::string file_inputs = SSCDIR + geo_system_test_ns::file_location +
         geo_system_test_ns::input_file_prefix + test_name + ".json";
@@ -72,7 +72,7 @@ TEST_F(CmodGeoSystemTest, GeoSystem_Hydro_Mod_Flash) {
 
 TEST_F(CmodGeoSystemTest, GeoSystem_Hydro_Adv_Binary) {
 
-    std::string test_name = "-Hydro Advanced Binary_ATB 2025_Geothermal_Power_Single_Owner_cmod_geothermal";
+    std::string test_name = "Hydro Advanced Binary_ATB 2025_Geothermal_Power_Single_Owner_cmod_geothermal";
 
     std::string file_inputs = SSCDIR + geo_system_test_ns::file_location +
         geo_system_test_ns::input_file_prefix + test_name + ".json";
@@ -86,7 +86,7 @@ TEST_F(CmodGeoSystemTest, GeoSystem_Hydro_Adv_Binary) {
 
 TEST_F(CmodGeoSystemTest, GeoSystem_Hydro_Adv_Flash) {
 
-    std::string test_name = "-Hydro Advanced Flash_ATB 2025_Geothermal_Power_Single_Owner_cmod_geothermal";
+    std::string test_name = "Hydro Advanced Flash_ATB 2025_Geothermal_Power_Single_Owner_cmod_geothermal";
 
     std::string file_inputs = SSCDIR + geo_system_test_ns::file_location +
         geo_system_test_ns::input_file_prefix + test_name + ".json";
@@ -100,7 +100,7 @@ TEST_F(CmodGeoSystemTest, GeoSystem_Hydro_Adv_Flash) {
 
 TEST_F(CmodGeoSystemTest, GeoSystem_EGS_Mod_Binary) {
 
-    std::string test_name = "-EGS Moderate Binary_ATB 2025_Geothermal_Power_Single_Owner_cmod_geothermal";
+    std::string test_name = "EGS Moderate Binary_ATB 2025_Geothermal_Power_Single_Owner_cmod_geothermal";
 
     std::string file_inputs = SSCDIR + geo_system_test_ns::file_location +
         geo_system_test_ns::input_file_prefix + test_name + ".json";
@@ -114,7 +114,7 @@ TEST_F(CmodGeoSystemTest, GeoSystem_EGS_Mod_Binary) {
 
 TEST_F(CmodGeoSystemTest, GeoSystem_EGS_Mod_Flash) {
 
-    std::string test_name = "-EGS Moderate Flash_ATB 2025_Geothermal_Power_Single_Owner_cmod_geothermal";
+    std::string test_name = "EGS Moderate Flash_ATB 2025_Geothermal_Power_Single_Owner_cmod_geothermal";
 
     std::string file_inputs = SSCDIR + geo_system_test_ns::file_location +
         geo_system_test_ns::input_file_prefix + test_name + ".json";
@@ -128,7 +128,7 @@ TEST_F(CmodGeoSystemTest, GeoSystem_EGS_Mod_Flash) {
 
 TEST_F(CmodGeoSystemTest, GeoSystem_EGS_Adv_Binary) {
 
-    std::string test_name = "-EGS Advanced Binary_ATB 2025_Geothermal_Power_Single_Owner_cmod_geothermal";
+    std::string test_name = "EGS Advanced Binary_ATB 2025_Geothermal_Power_Single_Owner_cmod_geothermal";
 
     std::string file_inputs = SSCDIR + geo_system_test_ns::file_location +
         geo_system_test_ns::input_file_prefix + test_name + ".json";
@@ -142,7 +142,7 @@ TEST_F(CmodGeoSystemTest, GeoSystem_EGS_Adv_Binary) {
 
 TEST_F(CmodGeoSystemTest, GeoSystem_EGS_Adv_Flash) {
 
-    std::string test_name = "-EGS Advanced Flash_ATB 2025_Geothermal_Power_Single_Owner_cmod_geothermal";
+    std::string test_name = "EGS Advanced Flash_ATB 2025_Geothermal_Power_Single_Owner_cmod_geothermal";
 
     std::string file_inputs = SSCDIR + geo_system_test_ns::file_location +
         geo_system_test_ns::input_file_prefix + test_name + ".json";
@@ -156,7 +156,7 @@ TEST_F(CmodGeoSystemTest, GeoSystem_EGS_Adv_Flash) {
 
 TEST_F(CmodGeoSystemTest, GeoSystem_NF_EGS_Mod_Binary) {
 
-    std::string test_name = "-NF EGS Moderate Binary_ATB 2025_Geothermal_Power_Single_Owner_cmod_geothermal";
+    std::string test_name = "NF EGS Moderate Binary_ATB 2025_Geothermal_Power_Single_Owner_cmod_geothermal";
 
     std::string file_inputs = SSCDIR + geo_system_test_ns::file_location +
         geo_system_test_ns::input_file_prefix + test_name + ".json";
@@ -170,7 +170,7 @@ TEST_F(CmodGeoSystemTest, GeoSystem_NF_EGS_Mod_Binary) {
 
 TEST_F(CmodGeoSystemTest, GeoSystem_NF_EGS_Mod_Flash) {
 
-    std::string test_name = "-NF EGS Moderate Flash_ATB 2025_Geothermal_Power_Single_Owner_cmod_geothermal";
+    std::string test_name = "NF EGS Moderate Flash_ATB 2025_Geothermal_Power_Single_Owner_cmod_geothermal";
 
     std::string file_inputs = SSCDIR + geo_system_test_ns::file_location +
         geo_system_test_ns::input_file_prefix + test_name + ".json";
@@ -184,7 +184,7 @@ TEST_F(CmodGeoSystemTest, GeoSystem_NF_EGS_Mod_Flash) {
 
 TEST_F(CmodGeoSystemTest, GeoSystem_NF_EGS_Adv_Binary) {
 
-    std::string test_name = "-NF EGS Advanced Binary_ATB 2025_Geothermal_Power_Single_Owner_cmod_geothermal";
+    std::string test_name = "NF EGS Advanced Binary_ATB 2025_Geothermal_Power_Single_Owner_cmod_geothermal";
 
     std::string file_inputs = SSCDIR + geo_system_test_ns::file_location +
         geo_system_test_ns::input_file_prefix + test_name + ".json";
@@ -198,7 +198,7 @@ TEST_F(CmodGeoSystemTest, GeoSystem_NF_EGS_Adv_Binary) {
 
 TEST_F(CmodGeoSystemTest, GeoSystem_NF_EGS_Adv_Flash) {
 
-    std::string test_name = "-NF EGS Advanced Flash_ATB 2025_Geothermal_Power_Single_Owner_cmod_geothermal";
+    std::string test_name = "NF EGS Advanced Flash_ATB 2025_Geothermal_Power_Single_Owner_cmod_geothermal";
 
     std::string file_inputs = SSCDIR + geo_system_test_ns::file_location +
         geo_system_test_ns::input_file_prefix + test_name + ".json";

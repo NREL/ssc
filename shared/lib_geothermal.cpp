@@ -542,7 +542,401 @@ namespace geothermal
         inj_wells_exploration = injection_stim_well;
     }
 
-    
+    double flowRatePerWell(double ProductionFlowRateKgPerS /*kg/s*/) {
+        // ProductionFlowRateKgPerS = mo_geo_in.md_ProductionFlowRateKgPerS
+        return (60 * 60 * geothermal::KgToLb(ProductionFlowRateKgPerS));        //[lbm/hr]
+    } // lbs per hour, one well
+
+
+    double GetNumberOfWells(geo_wells_stimulated wells_stim, double ExplorationWellsProd, resourceTypes resource_type,
+        calculationBasis num_wells_calc_basis, double num_wells_in, double ratio_injection_to_production,
+        double& prod_wells_exploration, double& inj_wells_exploration)
+    {
+        //geo_wells_stimulated wells_stim = static_cast<geo_wells_stimulated>(mo_geo_in.md_WellsStimulated);
+        //double ExplorationWellsProd = mo_geo_in.md_ExplorationWellsProd
+
+        geothermal::WellCountDecisionTable(wells_stim, ExplorationWellsProd, resource_type,
+            prod_wells_exploration, inj_wells_exploration);
+
+        bool inj_wells_stimulated = (wells_stim == geo_wells_stimulated::INJECTION_ONLY || wells_stim == geo_wells_stimulated::BOTH);
+        bool prod_wells_stimulated = (wells_stim == geo_wells_stimulated::PRODUCTION_ONLY || wells_stim == geo_wells_stimulated::BOTH);
+
+        //double num_wells_in = mo_geo_in.md_NumberOfWells
+        //double ratio_injection_to_production = mo_geo_in.md_RatioInjectionToProduction;
+        double num_wells_calc = std::numeric_limits<double>::quiet_NaN();
+        double num_wells_inject = std::numeric_limits<double>::quiet_NaN();
+        if( num_wells_calc_basis == NUMBER_OF_WELLS ) {
+
+            num_wells_calc = num_wells_in;
+            num_wells_inject = num_wells_in / ratio_injection_to_production;
+        }
+        else
+        {
+            double abc = 1.23;
+            
+            //double netBrineEffectiveness = GetPlantBrineEffectiveness() - GetPumpWorkWattHrPerLb();
+            //double netCapacityPerWell = flowRatePerWell() * netBrineEffectiveness / 1000.0;			// after pumping losses
+            //double flowPerWellInj = flowRatePerWell() / mo_geo_in.md_RatioInjectionToProduction;
+            //if( netCapacityPerWell == 0 )
+            //{
+            //    ms_ErrorString = "The well capacity was calculated to be zero.  Could not continue analysis.";
+            //    mp_geo_out->md_NumberOfWells = 0;
+            //}
+            //mp_geo_out->md_BrineEff = GetPlantBrineEffectiveness();
+            //mp_geo_out->md_PumpWorkWattHrPerLb = GetPumpWorkWattHrPerLb();
+            //mp_geo_out->md_NumberOfWells = mo_geo_in.md_DesiredSalesCapacityKW / netCapacityPerWell;
+            //if( mp_geo_out->md_NumberOfWells < 0 ) mp_geo_out->md_NumberOfWells = 0;
+            //mp_geo_out->md_NumberOfWellsProdExp = (mp_geo_out->md_NumberOfWells > mp_geo_out->ProdWellsExploration) ? mp_geo_out->md_NumberOfWells - mp_geo_out->ProdWellsExploration : 0.0;
+            //double prod_well_stim_success_rate = (prod_wells_stimulated) ? mo_geo_in.md_StimSuccessRate : 0.0;
+            //mp_geo_out->md_NumberOfWellsProdDrilled = mp_geo_out->md_NumberOfWellsProdExp / (1 - (1 - prod_well_stim_success_rate) * (1 - mo_geo_in.md_DrillSuccessRate));
+            //double num_prod_wells_successful = mp_geo_out->md_NumberOfWellsProdDrilled * mo_geo_in.md_DrillSuccessRate;
+            //double num_prod_wells_failed = mp_geo_out->md_NumberOfWellsProdDrilled * (1 - mo_geo_in.md_DrillSuccessRate);
+            //mp_geo_out->md_NumberOfWellsProdFailed = num_prod_wells_failed;
+            ////2.	# of Injection Wells Required = # successful injection wells required in drilling phase + # successful injection wells drilled in exploration phase
+            //
+            //double inj_flow = flowRatePerWell() * mp_geo_out->md_NumberOfWells;
+            //if( mo_geo_in.me_ct == FLASH ) inj_flow -= inj_flow * (waterLoss() / 1000.0);
+            //double failed_prod_wells_inj = mp_geo_out->md_NumberOfWellsProdDrilled - num_prod_wells_successful;
+            //double friction = 25.0; //psi
+            //double pressure_well_head = 0;
+            //if( mo_geo_in.me_ct == FLASH && FlashCount() == 1 ) pressure_well_head = mp_geo_out->md_PressureHPFlashPSI;
+            //else if( mo_geo_in.me_ct == FLASH && FlashCount() == 2 ) pressure_well_head = mp_geo_out->md_PressureLPFlashPSI;
+            //else pressure_well_head = pressureWellHeadPSI() - mo_geo_in.md_PressureChangeAcrossSurfaceEquipmentPSI;
+            //double prod_failed_inj_rate = (mo_geo_in.md_FailedProdFlowRatio * mo_geo_in.md_ReservoirDeltaPressure) *
+            //    (mo_geo_in.md_InjWellPressurePSI + geothermal::MetersToFeet(GetResourceDepthM()) * InjectionDensity() / 144.0 + (pressure_well_head)-
+            //        mo_geo_in.md_ProdWellFriction * pow(mo_geo_in.md_FailedProdFlowRatio, 2) - pressureHydrostaticPSI());
+            //double inj_failed_inj_rate = (mo_geo_in.md_FailedProdFlowRatio > 0) ? (mo_geo_in.md_FailedProdFlowRatio * mo_geo_in.md_ReservoirDeltaPressure) *
+            //    (mo_geo_in.md_InjWellPressurePSI + geothermal::MetersToFeet(GetResourceDepthM()) * InjectionDensity() / 144.0 + (pressure_well_head)-
+            //        mo_geo_in.md_InjWellFriction * pow(mo_geo_in.md_FailedProdFlowRatio, 2) - pressureHydrostaticPSI()) : 0.0;
+            //double inj_rate_failed_prod_wells = MIN(prod_failed_inj_rate, flowRatePerWell()); //Injectivity of failed production well?
+            //double inj_rate_failed_inj_wells = MIN(inj_failed_inj_rate, flowRatePerWell());
+            //double inj_rate_successful_inj_wells = flowRatePerWell() / mo_geo_in.md_RatioInjectionToProduction;
+            //double num_failed_prod_wells_inj = (mo_geo_in.md_FailedProdFlowRatio > 0) ? mp_geo_out->md_NumberOfWellsProdDrilled - num_prod_wells_successful : 0.0;
+            //double successful_inj_wells_required_drilling = (inj_flow - (num_failed_prod_wells_inj * prod_failed_inj_rate)) / (inj_rate_successful_inj_wells + (inj_rate_failed_inj_wells * (1 / (mo_geo_in.md_DrillSuccessRate) - 1)));
+            //double successful_inj_wells_exploration = mp_geo_out->InjWellsExploration;
+            //double num_injection_wells_required = successful_inj_wells_required_drilling + successful_inj_wells_exploration;
+            //mp_geo_out->md_NumberOfWellsInj = (inj_flow - (failed_prod_wells_inj * inj_rate_failed_prod_wells)) / (flowPerWellInj + inj_rate_failed_inj_wells * (1 / (mo_geo_in.md_DrillSuccessRate) - 1));
+            //mp_geo_out->md_NumberOfWellsInjDrilled = (1 / mo_geo_in.md_DrillSuccessRate) * successful_inj_wells_required_drilling + successful_inj_wells_exploration;
+            //double num_inj_wells_successful = mp_geo_out->md_NumberOfWellsInjDrilled * mo_geo_in.md_DrillSuccessRate;
+            //double num_inj_wells_failed = mp_geo_out->md_NumberOfWellsInjDrilled * (1 - mo_geo_in.md_DrillSuccessRate);
+            ////mp_geo_out->md_NumberOfWellsInj = (mo_geo_in.md_DesiredSalesCapacityKW / (netBrineEffectiveness / 1000)) * (mp_geo_out->md_FractionGFInjected) / flowPerWellInj;
+            //double pump_inj_hp = (GetInjectionPumpWorkft() * (inj_flow) / (60 * 33000)) / mo_geo_in.md_GFPumpEfficiency;
+            //mp_geo_out->md_InjPump_hp = pump_inj_hp;
+            //if( mo_geo_in.me_rt == EGS ) {
+            //    //mp_geo_out->md_NumberOfWellsProdExp = mp_geo_out->md_NumberOfWells - 8;
+            //    if( mo_geo_in.md_WellsStimulated != 1 ) mp_geo_out->md_NumberOfWellsProdDrilled = mp_geo_out->md_NumberOfWellsProdExp / (mo_geo_in.md_DrillSuccessRate);
+            //    else {
+            //        double failed_prod_well_stimulations = 0;
+            //        double successful_prod_well_stimulations = 0;
+            //        if( mo_geo_in.md_WellsStimulated == 3 ) {
+            //            failed_prod_well_stimulations = 0;
+            //            successful_prod_well_stimulations = 0;
+            //        }
+            //        else {
+            //            failed_prod_well_stimulations = mp_geo_out->md_NumberOfWellsProdExp * (1 / mo_geo_in.md_StimSuccessRate - 1);
+            //            successful_prod_well_stimulations = mp_geo_out->md_NumberOfWellsProdExp;
+            //        }
+            //        mp_geo_out->md_NumberOfWellsProdDrilled = (failed_prod_well_stimulations + successful_prod_well_stimulations) / mo_geo_in.md_DrillSuccessRate;
+            //
+            //    }
+            //    double inj_wells_drilled = 0;
+            //    if( inj_wells_stimulated ) {
+            //        inj_wells_drilled = mp_geo_out->md_NumberOfWellsInj / (mo_geo_in.md_DrillSuccessRate * mo_geo_in.md_StimSuccessRate);
+            //    }
+            //    else {
+            //        inj_wells_drilled = mp_geo_out->md_NumberOfWellsInj / (mo_geo_in.md_DrillSuccessRate);
+            //    }
+            //    mp_geo_out->md_NumberOfWellsInj = inj_flow / inj_rate_successful_inj_wells - successful_inj_wells_exploration;
+            //    mp_geo_out->md_NumberOfWellsInjDrilled = inj_wells_drilled;
+            //    //mp_geo_out->md_NumberOfWellsProdDrilled = mp_geo_out->md_NumberOfWellsProdExp / mo_geo_in.md_DrillSuccessRate;
+            //    /*
+            //    num_prod_wells_failed = mp_geo_out->md_NumberOfWellsProdExp / mo_geo_in.md_DrillSuccessRate * (1 - mo_geo_in.md_DrillSuccessRate);
+            //    num_prod_wells_successful = mp_geo_out->md_NumberOfWellsProdExp;
+            //    inj_flow = flowRatePerWell() * mp_geo_out->md_NumberOfWells * (1 + (1 / (1 - 0.05) - 1));
+            //    double successful_inj_wells_expl = inj_flow / (flowPerWellInj) - 1;
+            //    mp_geo_out->md_NumberOfWellsInj = successful_inj_wells_expl;
+            //    mp_geo_out->md_NumberOfWellsInjDrilled = successful_inj_wells_expl / (mo_geo_in.md_DrillSuccessRate * mo_geo_in.md_StimSuccessRate);
+            //    num_inj_wells_failed = mp_geo_out->md_NumberOfWellsInjDrilled * mo_geo_in.md_DrillSuccessRate;
+            //    double inj_wells_stim = successful_inj_wells_expl / mo_geo_in.md_StimSuccessRate;
+            //    double failed_stim_wells = inj_wells_stim - successful_inj_wells_expl;
+            //    */
+            //}
+            //
+            //if( mp_geo_out->md_NumberOfWellsInj < 0 ) mp_geo_out->md_NumberOfWellsInj = 0;
+            //if( mp_geo_out->md_NumberOfWells < 0 ) mp_geo_out->md_NumberOfWells = 0;
+        }
+
+        return num_wells_calc;
+    }
+
+    double pressureSingleFlash(double T_plant_design_C /*C*/, double T_cond_F /*F*/)
+    {
+        //double T_plant_design_C = GetTemperaturePlantDesignC()
+        //double T_cond_F = temperatureCondF()
+
+        double temp_hpdualflash = physics::CelciusToFarenheit(T_plant_design_C) - (physics::CelciusToFarenheit(T_plant_design_C) - T_cond_F) / 2;
+        double si_limit = physics::CelciusToFarenheit(0.000161869 * pow(T_plant_design_C, 2) + 0.83889 * T_plant_design_C - 79.496);
+        double temp_celcius = physics::FarenheitToCelcius(temp_hpdualflash);
+        if( temp_celcius < si_limit ) temp_celcius = si_limit;
+        if( temp_celcius < 125 ) return geothermal::PressureUnder125.evaluate(temp_celcius);
+        else if( temp_celcius >= 125 && temp_celcius < 325 ) return geothermal::Pressure125to325.evaluate(temp_celcius);
+        else if( temp_celcius >= 325 && temp_celcius < 675 ) return geothermal::Pressure325to675.evaluate(temp_celcius);
+        else return geothermal::PressureOver675.evaluate(temp_celcius);
+    }
+
+    double pressureDualFlashTempHigh(double T_plant_design_C /*C*/, double T_cond_F /*F*/)
+    {
+        //double T_plant_design_C = GetTemperaturePlantDesignC()
+        //double T_cond_F = temperatureCondF()
+
+        double temp_lpdualflash = physics::CelciusToFarenheit(T_plant_design_C) - 2 * (physics::CelciusToFarenheit(T_plant_design_C) - T_cond_F) / 3;
+        double si_limit = physics::CelciusToFarenheit(0.000161869 * pow(T_plant_design_C, 2) + 0.83889 * T_plant_design_C - 79.496);
+        if( temp_lpdualflash < si_limit ) temp_lpdualflash = si_limit;
+        double temp_hpdualflash = physics::CelciusToFarenheit(T_plant_design_C) - (physics::CelciusToFarenheit(T_plant_design_C) - temp_lpdualflash) / 2;
+        return geothermal::Pressure125to325.evaluate(temp_hpdualflash);
+    }
+
+    double pressureDualFlashTempLow(double T_plant_design_C /*C*/, double T_cond_F /*F*/)
+    {
+        //double T_plant_design_C = GetTemperaturePlantDesignC()
+        //double T_cond_F = temperatureCondF()
+
+        double temp_lpdualflash = physics::CelciusToFarenheit(T_plant_design_C) - 2 * (physics::CelciusToFarenheit(T_plant_design_C) - T_cond_F) / 3;
+        double si_limit = physics::CelciusToFarenheit(0.000161869 * pow(T_plant_design_C, 2) + 0.83889 * T_plant_design_C - 79.496);
+        if( temp_lpdualflash < si_limit ) temp_lpdualflash = si_limit;
+        return geothermal::Pressure125to325.evaluate(temp_lpdualflash);
+    }
+
+    int FlashCount(flashTypes flash_type) {
+        // mp_geo_out->flash_count
+        return (flash_type >= DUAL_FLASH_NO_TEMP_CONSTRAINT) ? 2 : 1;
+    }
+
+
+    void calculateFlashPressures(flashTypes flash_type, double T_plant_design_C /*C*/, double T_cond_F /*F*/)
+    {	// This function Sets some values that will be used throughout the calculations of the flash brine effectiveness
+        // These cannot be Set during initialization since some of the public properties may have been changed.  These
+        // need to be calculated right when the brine effectiveness is calculated.
+
+        // 26-10-09 refactor: We don't want to check if this has already been called? We can handle that upstream by differentiating between on/off design
+        //if( mp_geo_out->mb_FlashPressuresCalculated ) return;
+
+        double PressureHPFlashPSI = std::numeric_limits<double>::quiet_NaN();
+        double PressureLPFlashPSI = std::numeric_limits<double>::quiet_NaN();
+
+        // if single flash - add flash pressure to delta pressure and quit
+        if( FlashCount(flash_type) == 1 )
+        {
+            PressureHPFlashPSI = pressureSingleFlash(T_plant_design_C, T_cond_F) + geothermal::DELTA_PRESSURE_HP_FLASH_PSI;
+            return;
+        }
+
+        // dual flash, have to calculate both
+        // high pressure flash
+        // old comment: i think this might be using the wrong temperature - resource instead of plant design - for EGS
+        PressureHPFlashPSI = pressureDualFlashTempHigh(T_plant_design_C, T_cond_F) + geothermal::DELTA_PRESSURE_HP_FLASH_PSI;
+
+        // low pressure flash
+        PressureLPFlashPSI = pressureDualFlashTempLow(T_plant_design_C, T_cond_F) + geothermal::DELTA_PRESSURE_LP_FLASH_PSI;
+
+        //mp_geo_out->mb_FlashPressuresCalculated = true;
+    }
+
+    double injCoeffA(void) {return -0.0001769 * log(geothermal::DELTA_TEMPERATURE_CWF) + 0.0011083;}// R95
+    double injCoeffB(void) {return  0.0657628 * log(geothermal::DELTA_TEMPERATURE_CWF) - 0.4091309;}	// S95
+    double injCoeffC(void) {return -6.7041142 * log(geothermal::DELTA_TEMPERATURE_CWF) + 44.3438937;}	// T95
+    double injCoeffD(void) {return -0.0325112 * pow(geothermal::DELTA_TEMPERATURE_CWF, 2) + (6.831236 * geothermal::DELTA_TEMPERATURE_CWF) - 64.6250943;}	// U95
+
+    double evaporativeWaterLoss(double T_wet_bulb_F /*F*/)
+    {
+        throw std::runtime_error("evaporativeWaterLoss is not implemented in new geothermal class based framework.");
+        return std::numeric_limits<double>::quiet_NaN();
+
+        // double T_wet_bulb_F = TemperatureWetBulbF
+        //return ((geothermal::injCoeffA() * pow(T_wet_bulb_F, 3)) + (geothermal::injCoeffB() * pow(T_wet_bulb_F, 2)) +
+        //    (geothermal::injCoeffC() * T_wet_bulb_F) + geothermal::injCoeffD()) * qRejectedTower() / 1000000;
+    } // D129 - lb/hr (evaporative water loss)
+
+    double GetPressureChangeAcrossReservoir(reservoirPressureChangeCalculation res_pres_change_calc_type, double ProductionFlowRateKgPerS /*kg/s*/,
+            double ReservoirDeltaPressure /*?*/)
+    {	//  Only used in GetCalculatedPumpDepthInFeet
+
+        // [7B.Reservoir Hydraulics].G70
+        // res_pres_change_calc_type = mo_geo_in.me_pc
+        // ReservoirDeltaPressure = mo_geo_in.md_ReservoirDeltaPressure
+        if( res_pres_change_calc_type == ENTER_PC ) {
+            return flowRatePerWell(ProductionFlowRateKgPerS) / ReservoirDeltaPressure;
+        }
+
+        throw std::runtime_error("GetPressureChangeAcrossReservoir is not implemented for reservoirPressureChangeCalcalation types other than ENTER_PC.");
+
+        double md_PressureChangeAcrossReservoir = 0.0;
+
+        // if user didn't input the pressure change, we have to calculate it.  start with these
+
+        //// Why does GETEM calculate the average water temperature for EGS two different ways?  Is one better?  Method 2 is certainly simpler.
+        //double dEGSAverageWaterTemperatureC1 = geothermal::calcEGSAverageWaterTemperatureC(T_resource_C, T_plant_C, GetPlantBrineEffectiveness() / EGSAvailableEnergy()); // degrees C (used in EGS makeup, and on [7C.EGS Subsrfce HX]
+        //
+        //// all this is from [7C.EGS Subsrfce HX]
+        //double waterTempC = (geothermal::IMITATE_GETEM) ? dEGSAverageWaterTemperatureC1 : EGSAverageWaterTemperatureC2(); // degrees C
+        //double days = geothermal::EGS_TIME_INPUT * geothermal::DAYS_PER_YEAR;
+        //double tempEGSProductionC_old = GetResourceTemperatureC() + (geothermal::TEMPERATURE_EGS_INJECTIONC - GetResourceTemperatureC()) * EGSReservoirConstant(waterTempC, days);
+        //double tempEGSProductionCtest = Gringarten();
+        //double tempEGSProductionC = Gringarten();
+        //double dEGSAverageReservoirTemperatureF_old = physics::CelciusToFarenheit((geothermal::TEMPERATURE_EGS_INJECTIONC + tempEGSProductionC_old) / 2);
+        //
+        //double dEGSAverageReservoirTemperatureF = physics::CelciusToFarenheit((geothermal::TEMPERATURE_EGS_INJECTIONC + tempEGSProductionC) / 2);
+        //double pres_out = 0;
+        //double t = mp_geo_out->ElapsedHours * 3600; //elapsed time (s)
+        //if( mo_geo_in.me_pc == USER_TEMP ) {
+        //    int i = 0;
+        //    while( mo_geo_in.md_ReservoirInputs.at(i, 0) < t ) {
+        //        i++;
+        //    }
+        //    if( i == 0 ) {
+        //        tempEGSProductionC = mo_geo_in.md_ReservoirInputs.at(i, 1);
+        //        pres_out = mo_geo_in.md_ReservoirInputs.at(i, 2) * 14.5038; //psi
+        //    }
+        //    else if( i > mo_geo_in.md_ReservoirInputs.nrows() ) {
+        //        tempEGSProductionC = mo_geo_in.md_ReservoirInputs.at(mo_geo_in.md_ReservoirInputs.nrows() - 1, 1);
+        //        pres_out = mo_geo_in.md_ReservoirInputs.at(mo_geo_in.md_ReservoirInputs.nrows() - 1, 2) * 14.5038; //psi
+        //    }
+        //    else {
+        //        tempEGSProductionC = (mo_geo_in.md_ReservoirInputs.at(i, 0) - t) / (mo_geo_in.md_ReservoirInputs.at(i, 0) - mo_geo_in.md_ReservoirInputs.at(i - 1, 0)) * (mo_geo_in.md_ReservoirInputs.at(i, 1) - mo_geo_in.md_ReservoirInputs.at(i - 1, 1)) + mo_geo_in.md_ReservoirInputs.at(i - 1, 1);
+        //        pres_out = ((mo_geo_in.md_ReservoirInputs.at(i, 0) - t) / (mo_geo_in.md_ReservoirInputs.at(i, 0) - mo_geo_in.md_ReservoirInputs.at(i - 1, 0)) * (mo_geo_in.md_ReservoirInputs.at(i, 2) - mo_geo_in.md_ReservoirInputs.at(i - 1, 2)) + mo_geo_in.md_ReservoirInputs.at(i - 1, 2)) * 14.5038; //psi
+        //    }
+        //    dEGSAverageReservoirTemperatureF = physics::CelciusToFarenheit((geothermal::TEMPERATURE_EGS_INJECTIONC + tempEGSProductionC) / 2);
+        //    mp_geo_out->md_AverageReservoirTemperatureF = dEGSAverageReservoirTemperatureF;
+        //    return pres_out;
+        //}
+        //
+        //mp_geo_out->md_AverageReservoirTemperatureF = (mo_geo_in.me_rt == EGS) ? dEGSAverageReservoirTemperatureF : physics::CelciusToFarenheit(GetResourceTemperatureC());	// G54 on [7B.Reservoir Hydraulics]
+        //
+        //double density = geothermal::oDensityConstants.evaluate(mp_geo_out->md_AverageReservoirTemperatureF); // lbs per ft^3
+        //double volumetricFlow = (flowRatePerWell() / density) / 3600; // ft^3 per second
+        //double viscosity = 0.115631 * pow(mp_geo_out->md_AverageReservoirTemperatureF, -1.199532); // lb per ft-second
+        //
+        //if( (mo_geo_in.me_rt == EGS) && (mo_geo_in.me_pc == SIMPLE_FRACTURE || mo_geo_in.me_pc == USER_TEMP) )
+        //{	// only a valid option for EGS resources
+        //    // calculate the pressure change across the reservoir using simple fracture flow
+        //    double dEGSFractureLengthUserAdjusted = mo_geo_in.md_EGSFractureLength;
+        //    double effectiveLengthFt = geothermal::MetersToFeet(dEGSFractureLengthUserAdjusted);
+        //    double fracperm = pow(mo_geo_in.md_EGSFractureAperature, 2) / 12; //m^2
+        //    double flowPerFracture = (volumetricFlow * 1 / 35.3147) / mo_geo_in.md_EGSNumberOfFractures; //m^3/s
+        //    double fractureFlowArea = mo_geo_in.md_EGSFractureAperature * mo_geo_in.md_EGSFractureWidthM;  // m^2
+        //    md_PressureChangeAcrossReservoir = flowPerFracture / (fractureFlowArea * fracperm) * (viscosity * 1.48816) * dEGSFractureLengthUserAdjusted * 0.000145038; //psi
+        //    double test = md_PressureChangeAcrossReservoir;
+        //}
+        //else {
+        //    // calculate the change in pressure across reservoir using K*A (from [7B.Reservoir Hydraulics].G70)
+        //    double dReservoirAreaSqFt = geothermal::MetersToFeet(mo_geo_in.md_ReservoirHeightM) * geothermal::MetersToFeet(mo_geo_in.md_ReservoirWidthM);
+        //    double G53 = geothermal::M2ToFeet2(mo_geo_in.md_ReservoirPermeability * dReservoirAreaSqFt * 0.000000000000986923); //ft^4
+        //    double G61 = volumetricFlow * viscosity * geothermal::MetersToFeet(mo_geo_in.md_DistanceBetweenProductionInjectionWellsM) / G53; // lbs per second^2-ft
+        //    md_PressureChangeAcrossReservoir = G61 / physics::GRAVITY_FTS2 / 144; // change in pressure (psi)
+        //}
+        //return md_PressureChangeAcrossReservoir;
+    }
+
+
+    double GetPumpWorkWattHrPerLb(double water_loss_percent /*%*/, resourceTypes resource_type, conversionTypes conv_type, reservoirPressureChangeCalculation res_pres_change_calc_type,
+        double ProductionFlowRateKgPerS /*kg/s*/, double ReservoirDeltaPressure /*?*/,
+        flashTypes flash_type, double T_plant_design_C /*C*/, double T_cond_F /*F*/,
+        double additional_pressure /*psi*/, double excess_pressure_bar /*bar*/)
+    {
+        //if( !ms_ErrorString.empty() ) return 0;
+
+        //double water_loss_percent = mo_geo_in.md_WaterLossPercent
+        //double additional_pressure = mo_geo_in.md_AdditionalPressure
+        //double excess_pressure_bar = mo_geo_in.md_ExcessPressureBar
+
+        double dInjectionPumpPower = 0;
+        double dFractionOfInletGFInjected = 1.0;
+        if( geothermal::ADDITIONAL_PRESSURE_REQUIRED )
+        {
+            double dWaterLoss = (1 / (1 - water_loss_percent)); // G130 - lb/hr
+
+            if( resource_type == EGS )
+                dFractionOfInletGFInjected = 1.0 / (1 - water_loss_percent);
+            else if( conv_type == FLASH )
+            {
+                throw std::runtime_error("Flash calculations not enabled in GetPumpWorkWattHrPerLb.");
+                calculateFlashPressures(flash_type, T_plant_design_C, T_cond_F);
+                //double dWaterLossFractionOfGF = waterLoss() / geothermal::GEOTHERMAL_FLUID_FOR_FLASH;
+                //dFractionOfInletGFInjected = (1 - dWaterLossFractionOfGF);
+            }
+
+            // Calculate injection pump items, on [7A.GF Pumps] unless otherwise noted
+            double dInjectionPressure = additional_pressure + geothermal::BarToPsi(excess_pressure_bar) +
+                                        GetPressureChangeAcrossReservoir(res_pres_change_calc_type, ProductionFlowRateKgPerS, ReservoirDeltaPressure);
+            
+            //double dInjectionPumpHeadFt = dInjectionPressure * 144 / InjectionDensity(); // G129
+            //
+            //dInjectionPumpPower = geothermal::pumpWorkInWattHr(1, GetInjectionPumpWorkft(), mo_geo_in.md_GFPumpEfficiency, ms_ErrorString) * dFractionOfInletGFInjected; // ft-lbs/hr
+        }
+
+        //double dProductionPumpPower = geothermal::pumpWorkInWattHr(1, GetProductionPumpWorkft(), mo_geo_in.md_GFPumpEfficiency, ms_ErrorString); //[W-hr/lb]
+        ////double dProductionPumpPower = geothermal::pumpWorkInWattHr(1,GetProductionPumpWorkft(GetInjectionPumpWorkft()), mo_geo_in.md_GFPumpEfficiency, ms_ErrorString);
+        //mp_geo_out->md_pumpwork_prod = dProductionPumpPower;
+        //mp_geo_out->md_pumpwork_inj = dInjectionPumpPower;
+        //mp_geo_out->md_FractionGFInjected = dFractionOfInletGFInjected;
+        //double check = GetProductionPumpWorkft();
+        double retVal = 0;
+        //if( mo_geo_in.me_ct == FLASH )
+        //    retVal = dInjectionPumpPower; // watt-hr per lb of flow
+        //else if( mo_geo_in.me_ct == BINARY )
+        //    retVal = dProductionPumpPower + dInjectionPumpPower;
+        //
+        //if( retVal < 0 )
+        //{
+        //    ms_ErrorString = ("CGeothermalAnalyzer::GetPumpWorkWattHrPerLb calculated a value < 0");
+        //    return 0;
+        //}
+
+        return retVal;
+    }
+
+    double InjectionTemperatureC(makeupAlgorithmType makeup_type,
+        double T_plant_C /*C*/, double T_amb_C /*C*/,
+        double eta_2nd_law) // calculate injection temperature in degrees C
+    {
+        // Plant design temp AND resource temp have to be Set correctly!!!
+        // These are the calculations done at the bottom of [10B.GeoFluid] with the result in D89
+
+        if( makeup_type == MA_BINARY ) {
+
+            double a = 1;
+            double b = (-0.002954 * T_plant_C - 0.121503);
+            double eff = eta_2nd_law;
+
+            double tr = 1 + (b * eff);
+            double t1 = physics::KelvinToCelcius(physics::CelciusToKelvin(T_plant_C) * tr);
+            double t2 = T_amb_C + 27;
+
+            double x = geothermal::evaluatePolynomial(T_plant_C, 4.205944351495, 0.3672417729236, -0.0036294799613, 0.0000706584462, -0.0000001334837, 0, 0);
+            double x1 = geothermal::evaluatePolynomial(x, -0.294394, 0.307616, -0.000119669, -0.00000000425191, 0.0000000000249634, 0, 0);
+
+            double t3 = physics::FarenheitToCelcius(physics::CelciusToFarenheit(x1) + 1);
+            double y = (t1 > t2) ? t1 : t2;
+
+            return ((t3 > y) ? t3 : y);
+        }
+        else { //Flash
+
+            throw std::runtime_error("Flash is not implemented in InjectionTemperatureC");
+            return std::numeric_limits<double>::quiet_NaN();
+
+            //double p_flash_out = mp_geo_out->md_PressureLPFlashPSI;
+            //double T_inj = physics::FarenheitToCelcius(geothermal::evaluatePolynomial(p_flash_out, 134.575, 7.7497, -0.226287, 0.00456759, -5.4475e-5, 3.4638e-7, -9.0287e-10));
+            //double flash_steam_frac = (turbine1Steam() + turbine2Steam()) / geothermal::GEOTHERMAL_FLUID_FOR_FLASH;
+            //double x = geothermal::evaluatePolynomial(GetTemperaturePlantDesignC(), 4.205944351495, 0.3672417729236, -0.0036294799613, 0.0000706584462, -0.0000001334837, 0, 0);
+            //double sio2 = x / (1 - flash_steam_frac);
+            //double x1 = geothermal::evaluatePolynomial(sio2, -0.294394, 0.307616, -0.000119669, -0.00000000425191, 0.0000000000249634, 0, 0);
+            //double P = geothermal::oPC.evaluate(x1 * 1.8 + 32);
+            //double flash_T_limit = 0.897 * (GetTemperaturePlantDesignC() + 273) - 57 - 273;
+            //return (T_inj > x1) ? T_inj : ((x1 > flash_T_limit) ? x1 : flash_T_limit);
+        }
+    }
+
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Declaration of CGeoFluidContainer2 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1410,7 +1804,7 @@ double CGeothermalAnalyzer::InjectionTemperatureC() // calculate injection tempe
         double a = 1;
         //double b = (-0.00244 * GetTemperaturePlantDesignC()) - 0.0567;
         double b = (-0.002954 * GetTemperaturePlantDesignC() - 0.121503);
-        double dPlantBrineEffectiveness = (geothermal::IMITATE_GETEM) ? 10.35 : GetPlantBrineEffectiveness();
+        double dPlantBrineEffectiveness = (geothermal::IMITATE_GETEM&&false) ? 10.35 : GetPlantBrineEffectiveness();
         double eff = dPlantBrineEffectiveness / GetAEBinary(); //available energy based on resource temp
 
 
@@ -1522,7 +1916,9 @@ double CGeothermalAnalyzer::GetPressureChangeAcrossReservoir()
 {	//  Only used in GetCalculatedPumpDepthInFeet
 
 	// [7B.Reservoir Hydraulics].G70
-	if (mo_geo_in.me_pc == ENTER_PC) return flowRatePerWell() / mo_geo_in.md_ReservoirDeltaPressure;
+    if( mo_geo_in.me_pc == ENTER_PC ) {
+        return flowRatePerWell() / mo_geo_in.md_ReservoirDeltaPressure;
+    }
 	double md_PressureChangeAcrossReservoir = 0.0;
 
     
@@ -2283,12 +2679,8 @@ double CGeothermalAnalyzer::injectionDeltaP(void)
 	return (FlashCount() == 1) ? mp_geo_out->md_PressureHPFlashPSI - mo_geo_in.md_PressureAmbientPSI : mp_geo_out->md_PressureLPFlashPSI - mo_geo_in.md_PressureAmbientPSI;
 }
 double CGeothermalAnalyzer::injectionPumpHead(void) { return physics::PSItoFT(injectionDeltaP()); } // D128 - ft
-double CGeothermalAnalyzer::injCoeffA(void) { return -0.0001769 * log(geothermal::DELTA_TEMPERATURE_CWF) + 0.0011083; }// R95
-double CGeothermalAnalyzer::injCoeffB(void) { return  0.0657628 * log(geothermal::DELTA_TEMPERATURE_CWF) - 0.4091309; }	// S95
-double CGeothermalAnalyzer::injCoeffC(void) { return -6.7041142 * log(geothermal::DELTA_TEMPERATURE_CWF) + 44.3438937; }	// T95
-double CGeothermalAnalyzer::injCoeffD(void) { return -0.0325112 * pow(geothermal::DELTA_TEMPERATURE_CWF, 2) + (6.831236 * geothermal::DELTA_TEMPERATURE_CWF) - 64.6250943; }	// U95
 
-double CGeothermalAnalyzer::evaporativeWaterLoss(void) { return ((injCoeffA() * pow(TemperatureWetBulbF(), 3)) + (injCoeffB() * pow(TemperatureWetBulbF(), 2)) + (injCoeffC() * TemperatureWetBulbF()) + injCoeffD()) * qRejectedTower() / 1000000; } // D129 - lb/hr (evaporative water loss)
+double CGeothermalAnalyzer::evaporativeWaterLoss(void) { return ((geothermal::injCoeffA() * pow(TemperatureWetBulbF(), 3)) + (geothermal::injCoeffB() * pow(TemperatureWetBulbF(), 2)) + (geothermal::injCoeffC() * TemperatureWetBulbF()) + geothermal::injCoeffD()) * qRejectedTower() / 1000000; } // D129 - lb/hr (evaporative water loss)
 double CGeothermalAnalyzer::drift(void) { return 0.001 * cwFlow(); }																												// D130
 double CGeothermalAnalyzer::blowDown(void) { return evaporativeWaterLoss() / (geothermal::INJECTION_PUMPING_CYCLES - 1) - drift(); }																	// D132
 double CGeothermalAnalyzer::waterLoss(void) { return evaporativeWaterLoss() + drift(); }																				// D133
@@ -2861,10 +3253,14 @@ C_geo_surface::C_geo_surface(double T_plant_design_C /*C*/,
 
     m_total_brine_effectiveness = m_AE_2nd_law_max_GETEM_and_T_sol_derate * m_eta_2nd_law_GETEM;                                        //[watt-hr/lb_m]
 
-    m_eta_2nd_low_total_design = m_total_brine_effectiveness / m_AE_full_brine_dt_design_calc;                                          //[-]
+    m_eta_2nd_law_total_design = m_total_brine_effectiveness / m_AE_full_brine_dt_design_calc;                                          //[-]
 
     // Calculate Carnot Efficiency design values
     m_T_amb_des_K = physics::CelciusToKelvin(m_T_amb_design_C);            //[K]
     m_T_plant_in_des_K = physics::CelciusToKelvin(m_T_plant_design_C);     //[K]
-    m_carnot_eff_des = 1 - m_T_amb_des_K / m_T_plant_in_des_K;             //[-]
+    m_carnot_eff_des = 1 - m_T_amb_des_K / m_T_plant_in_des_K;             //[-
+
+    m_T_inj_des_C = geothermal::InjectionTemperatureC(makeupAlgorithmType::MA_BINARY,
+        m_T_plant_design_C, m_T_amb_design_C, m_eta_2nd_law_total_design);
+
 }
