@@ -134,6 +134,12 @@ public:
         double resource_temperature = as_double("resource_temp");    //[C]
 
         int analysis_type = as_integer("analysis_type");
+        calculationBasis calc_basis_type;
+        if( analysis_type == 0 )
+            calc_basis_type = POWER_SALES;
+        else
+            calc_basis_type = NUMBER_OF_WELLS;
+
         int conversion_type = as_integer("conversion_type");
         int resource_type = as_integer("resource_type");
 
@@ -158,6 +164,20 @@ public:
         if( resource_type != 1 && (reservoir_pressure_change_type == 1 || reservoir_pressure_change_type == 3) ) {
             reservoir_pressure_change_type = 0;
         }
+
+        SGeothermal_Inputs geo_inputs;
+        switch( reservoir_pressure_change_type )
+        {
+        case 0: geo_inputs.me_pc = ENTER_PC; break;				// pressure change entered by user
+        case 1: geo_inputs.me_pc = SIMPLE_FRACTURE; break;		// use fracture flow (EGS only)
+        case 2: geo_inputs.me_pc = K_AREA; break;				// permeability * area
+        case 3: geo_inputs.me_pc = USER_TEMP; break;
+        }
+
+        geo_wells_stimulated geo_wells_stim_type = static_cast<geo_wells_stimulated>(as_integer("stimulation_type"));
+
+        depthCalculationForEGS depth_calc_EGS_type = TEMPERATURE;
+
         // --------------------------------------------------------------
         // --------------------------------------------------------------
 
@@ -170,79 +190,117 @@ public:
 
         double conc_SiO2_design_calc_ppm = std::numeric_limits<double>::quiet_NaN();
         double T_plant_design_calc_C = std::numeric_limits<double>::quiet_NaN();
+        double dt_prod_well_des_calc_C = std::numeric_limits<double>::quiet_NaN();
 
-        geo_prod_well.get_design_calcs(conc_SiO2_design_calc_ppm, T_plant_design_calc_C);
+        geo_prod_well.get_design_calcs(conc_SiO2_design_calc_ppm, T_plant_design_calc_C, dt_prod_well_des_calc_C);
 
         // Calculate design point surface plant
         double TemperatureWetBulbC = as_double("wet_bulb_temp");       //[C]
         double PlantEfficiency = as_double("plant_efficiency_input") / 100; //[-]
 
-        C_geo_surface geo_surface(T_plant_design_calc_C, TemperatureWetBulbC, PlantEfficiency, conc_SiO2_design_calc_ppm);
+        
+        if( resource_type == 0 )
+            geo_inputs.me_rt = HYDROTHERMAL;
+        else if( resource_type == 1 )
+            geo_inputs.me_rt = EGS;
 
-        double AE_full_brine_dt_design_calc = std::numeric_limits<double>::quiet_NaN();
-        double AE_brine_T_sol_to_to_amb_design_calc = std::numeric_limits<double>::quiet_NaN();
-        double AE_brine_T_plant_to_T_sol_to_amb_design_calc = std::numeric_limits<double>::quiet_NaN();
-        double eta_2nd_law_max_GETEM_and_T_sol_derate = std::numeric_limits<double>::quiet_NaN();
-        double AE_2nd_law_max_GETEM_and_T_sol_derate = std::numeric_limits<double>::quiet_NaN();
-        double total_brine_effectiveness = std::numeric_limits<double>::quiet_NaN();
-        double eta_2nd_low_total_design = std::numeric_limits<double>::quiet_NaN();
-        double T_amb_des_K = std::numeric_limits<double>::quiet_NaN();
-        double T_plant_in_des_K = std::numeric_limits<double>::quiet_NaN();
-        double carnot_eff_des = std::numeric_limits<double>::quiet_NaN();
-        double T_inj_des_C = std::numeric_limits<double>::quiet_NaN();
+        if( conversion_type == 0 )
+            geo_inputs.me_ct = BINARY;
+        else if( conversion_type == 1 )
+            geo_inputs.me_ct = FLASH;
 
-        geo_surface.get_design_calcs(
-            AE_full_brine_dt_design_calc,
-            AE_brine_T_sol_to_to_amb_design_calc,
-            AE_brine_T_plant_to_T_sol_to_amb_design_calc,
-            eta_2nd_law_max_GETEM_and_T_sol_derate,
-            AE_2nd_law_max_GETEM_and_T_sol_derate,
-            total_brine_effectiveness,
-            eta_2nd_low_total_design,
-            T_amb_des_K,
-            T_plant_in_des_K,
-            carnot_eff_des,
-            T_inj_des_C);
+        // temperature decline
+        if( decline_type == 0 )
+            geo_inputs.me_tdm = ENTER_RATE;
+        else if( decline_type == 1 )
+            geo_inputs.me_tdm = CALCULATE_RATE;
+
+        double num_conf_wells = as_double("geotherm.cost.conf_num_wells");
+        double perc_conf_wells_production = as_double("geotherm.cost.confirm_wells_percent");
+        double num_conf_wells_prod = num_conf_wells * perc_conf_wells_production / 100.0;
+        double ExplorationWellsProd = num_conf_wells;
+
+        double num_wells_in = as_double("num_wells");
+        double ratio_injection_to_production = as_double("geotherm.cost.inj_prod_well_ratio");
+        double ProductionFlowRateKgPerS = as_double("well_flow_rate");
+
+        int InjectionWellDiam = as_integer("geotherm.cost.inj_cost_curve_welldiam");
+        int InjectionWellType = as_integer("geotherm.cost.inj_cost_curve_welltype");
+
+        double resource_depth_in = as_double("resource_depth");     //[m]
+        double InjectivityIndex = as_double("injectivity_index");
+        double ExcessPressureBar = physics::PsiToBar(as_double("excess_pressure_pump"));    //[bar]
+        double PressureChangeAcrossSurfaceEquipment = as_double("delta_pressure_equip");
+        double AdditionalPressure = 1.0;        // ???
+
+        double water_loss_frac = as_double("subsurface_water_loss") / 100;
+        double reservoir_pressure_chage = as_double("reservoir_pressure_change");
+
+        switch( as_integer("conversion_subtype") )
+        {
+        case 0:	geo_inputs.me_ft = SINGLE_FLASH_NO_TEMP_CONSTRAINT; break;
+        case 1:	geo_inputs.me_ft = SINGLE_FLASH_WITH_TEMP_CONSTRAINT; break;
+        case 2:	geo_inputs.me_ft = DUAL_FLASH_NO_TEMP_CONSTRAINT; break;
+        case 3:	geo_inputs.me_ft = DUAL_FLASH_WITH_TEMP_CONSTRAINT; break;
+        }
+
+        if( geo_inputs.me_ct == BINARY && geo_inputs.me_rt == HYDROTHERMAL ) {
+            C_geo_surface geo_surface(T_plant_design_calc_C, TemperatureWetBulbC, PlantEfficiency, conc_SiO2_design_calc_ppm,
+                geo_inputs.me_rt, geo_inputs.me_ct, geo_inputs.me_tdm, geo_inputs.me_ft);
+
+            double AE_full_brine_dt_design_calc = std::numeric_limits<double>::quiet_NaN();
+            double AE_brine_T_sol_to_to_amb_design_calc = std::numeric_limits<double>::quiet_NaN();
+            double AE_brine_T_plant_to_T_sol_to_amb_design_calc = std::numeric_limits<double>::quiet_NaN();
+            double eta_2nd_law_max_GETEM_and_T_sol_derate = std::numeric_limits<double>::quiet_NaN();
+            double AE_2nd_law_max_GETEM_and_T_sol_derate = std::numeric_limits<double>::quiet_NaN();
+            double total_brine_effectiveness = std::numeric_limits<double>::quiet_NaN();
+            double eta_2nd_low_total_design = std::numeric_limits<double>::quiet_NaN();
+            double T_amb_des_K = std::numeric_limits<double>::quiet_NaN();
+            double T_plant_in_des_K = std::numeric_limits<double>::quiet_NaN();
+            double carnot_eff_des = std::numeric_limits<double>::quiet_NaN();
+            double T_inj_des_C = std::numeric_limits<double>::quiet_NaN();
+
+            geo_surface.get_design_calcs(
+                AE_full_brine_dt_design_calc,
+                AE_brine_T_sol_to_to_amb_design_calc,
+                AE_brine_T_plant_to_T_sol_to_amb_design_calc,
+                eta_2nd_law_max_GETEM_and_T_sol_derate,
+                AE_2nd_law_max_GETEM_and_T_sol_derate,
+                total_brine_effectiveness,
+                eta_2nd_low_total_design,
+                T_amb_des_K,
+                T_plant_in_des_K,
+                carnot_eff_des,
+                T_inj_des_C);
+
+            C_geo_subsurface geo_subsurface(geo_wells_stim_type, ExplorationWellsProd, geo_inputs.me_rt,
+                calc_basis_type, num_wells_in, ratio_injection_to_production,
+                ProductionFlowRateKgPerS,
+                InjectionWellDiam, InjectionWellType, resource_depth_in,
+                resource_temperature, T_plant_design_calc_C, dt_prod_well_des_calc_C, T_inj_des_C,
+                InjectivityIndex, geo_inputs.me_ct,
+                ExcessPressureBar, PressureChangeAcrossSurfaceEquipment, AdditionalPressure,
+                TemperatureWetBulbC, depth_calc_EGS_type,
+                water_loss_frac, geo_inputs.me_pc,
+                reservoir_pressure_chage, geo_inputs.me_ft);
+        }
 
         // inputs used in above in refactor
-        SGeothermal_Inputs geo_inputs;
-
         geo_inputs.md_dtProdWell = dt_prod_well;            //[C]
         geo_inputs.md_dtProdWellChoice = dtProdWellChoice;  //[-]
         geo_inputs.md_TemperatureWetBulbC = TemperatureWetBulbC;    //[C]
         geo_inputs.md_PlantEfficiency = PlantEfficiency;    //[-]
 
 		// set the geothermal model inputs -------------------------------------
-        geo_inputs.md_RatioInjectionToProduction = as_double("geotherm.cost.inj_prod_well_ratio"); // THIS SHOULD BE AN INPUT. ALTHOUGH IT'S FROM THE COST PAGE, IT'S USED IN NON-COST EQUATION
+        geo_inputs.md_RatioInjectionToProduction = ratio_injection_to_production; // THIS SHOULD BE AN INPUT. ALTHOUGH IT'S FROM THE COST PAGE, IT'S USED IN NON-COST EQUATION
         geo_inputs.md_DrillSuccessRate = as_double("drilling_success_rate") / 100.0;
         geo_inputs.md_StimSuccessRate = as_double("stim_success_rate") / 100.0;
         geo_inputs.md_FailedProdFlowRatio = as_double("failed_prod_flow_ratio");
         geo_inputs.md_DesiredSalesCapacityKW = as_double("nameplate");
-		geo_inputs.md_NumberOfWells = as_double("num_wells");
+        geo_inputs.md_NumberOfWells = num_wells_in;
         geo_inputs.md_WellsStimulated = as_integer("stimulation_type");
-		if (analysis_type  == 0)
-			geo_inputs.me_cb = POWER_SALES;
-		else
-			geo_inputs.me_cb = NUMBER_OF_WELLS;
 
-		if ( conversion_type == 0)
-			geo_inputs.me_ct = BINARY;
-		else if ( conversion_type == 1)
-			geo_inputs.me_ct = FLASH;
-
-		switch ( as_integer("conversion_subtype") )
-		{
-			case 0:	geo_inputs.me_ft = SINGLE_FLASH_NO_TEMP_CONSTRAINT; break;
-			case 1:	geo_inputs.me_ft = SINGLE_FLASH_WITH_TEMP_CONSTRAINT; break;
-			case 2:	geo_inputs.me_ft = DUAL_FLASH_NO_TEMP_CONSTRAINT; break;
-			case 3:	geo_inputs.me_ft = DUAL_FLASH_WITH_TEMP_CONSTRAINT; break;			
-		}
-
-		// temperature decline
-		if ( decline_type == 0 )
-			geo_inputs.me_tdm = ENTER_RATE;
-		else if ( decline_type == 1 )
-			geo_inputs.me_tdm = CALCULATE_RATE;
+        geo_inputs.me_cb = calc_basis_type;
 
 		geo_inputs.md_TemperatureDeclineRate = as_double("temp_decline_rate")/100;
 		geo_inputs.md_MaxTempDeclineC = as_double("temp_decline_max");
@@ -263,10 +321,10 @@ public:
         }
 
 		//pumping parameters
-		geo_inputs.md_ProductionFlowRateKgPerS = as_double("well_flow_rate");
+		geo_inputs.md_ProductionFlowRateKgPerS = ProductionFlowRateKgPerS;
 		geo_inputs.md_GFPumpEfficiency = as_double("pump_efficiency")/100;
-		geo_inputs.md_PressureChangeAcrossSurfaceEquipmentPSI = as_double("delta_pressure_equip");
-		geo_inputs.md_ExcessPressureBar = physics::PsiToBar( as_double("excess_pressure_pump") );
+        geo_inputs.md_PressureChangeAcrossSurfaceEquipmentPSI = PressureChangeAcrossSurfaceEquipment;
+        geo_inputs.md_ExcessPressureBar = ExcessPressureBar;
 		geo_inputs.md_DiameterProductionWellInches = 0.0;
         geo_inputs.md_ProductionWellType = as_double("geotherm.cost.prod_cost_curve_welltype");
         geo_inputs.md_ProductionWellDiam = as_double("geotherm.cost.prod_cost_curve_welldiam");
@@ -274,8 +332,8 @@ public:
 		geo_inputs.md_DiameterPumpCasingInches = 0.0;
         geo_inputs.md_DiameterInjPumpCasingInches = 0.0;
 		geo_inputs.md_DiameterInjectionWellInches = 0.0;
-        geo_inputs.md_InjectionWellType = as_double("geotherm.cost.inj_cost_curve_welltype");
-        geo_inputs.md_InjectionWellDiam = as_double("geotherm.cost.inj_cost_curve_welldiam");
+        geo_inputs.md_InjectionWellType = InjectionWellType;
+        geo_inputs.md_InjectionWellDiam = InjectionWellDiam;
 		geo_inputs.mb_CalculatePumpWork = ( 1 != as_integer("specify_pump_work") );
 		geo_inputs.md_UserSpecifiedPumpWorkKW = as_double("specified_pump_work_amount") * 1000; // entered in MW
 
@@ -284,14 +342,11 @@ public:
         double design_temp = resource_temperature;    //[C]
         assign("design_temp", ssc_number_t(design_temp));
 
-		if ( resource_type == 0 )
-			geo_inputs.me_rt =  HYDROTHERMAL;
-		else if ( resource_type == 1 )
-			geo_inputs.me_rt = EGS;
+		
 
-		geo_inputs.md_ResourceDepthM = as_double("resource_depth");
+		geo_inputs.md_ResourceDepthM = resource_depth_in;
 		geo_inputs.md_TemperatureResourceC = resource_temperature;
-		geo_inputs.me_dc = TEMPERATURE;
+		geo_inputs.me_dc = depth_calc_EGS_type;
 		geo_inputs.md_TemperaturePlantDesignC = design_temp;
 		
 		
@@ -301,26 +356,18 @@ public:
 		geo_inputs.md_EGSThermalConductivity = as_double("rock_thermal_conductivity");
 		geo_inputs.md_EGSSpecificHeatConstant = as_double("rock_specific_heat");
 		geo_inputs.md_EGSRockDensity = as_double("rock_density");
-		switch( reservoir_pressure_change_type )
-		{
-			case 0: geo_inputs.me_pc = ENTER_PC; break;				// pressure change entered by user
-			case 1: geo_inputs.me_pc = SIMPLE_FRACTURE; break;		// use fracture flow (EGS only)
-			case 2: geo_inputs.me_pc = K_AREA; break;				// permeability * area
-            case 3: geo_inputs.me_pc = USER_TEMP; break;
-		}
-		geo_inputs.md_ReservoirDeltaPressure = as_double("reservoir_pressure_change");
-        geo_inputs.md_InjectivityIndex = as_double("injectivity_index");
+		
+		geo_inputs.md_ReservoirDeltaPressure = reservoir_pressure_chage;
+        geo_inputs.md_InjectivityIndex = InjectivityIndex;
 
-        double num_conf_wells = as_double("geotherm.cost.conf_num_wells");
-        double perc_conf_wells_production = as_double("geotherm.cost.confirm_wells_percent");
-        double num_conf_wells_prod = num_conf_wells * perc_conf_wells_production / 100.0;
+        
         geo_inputs.md_ExplorationWellsProd = num_conf_wells_prod;
 
 		geo_inputs.md_ReservoirWidthM = as_double("reservoir_width");
 		geo_inputs.md_ReservoirHeightM = as_double("reservoir_height");
 		geo_inputs.md_ReservoirPermeability = as_double("reservoir_permeability");
 		geo_inputs.md_DistanceBetweenProductionInjectionWellsM = as_double("inj_prod_well_distance");
-		geo_inputs.md_WaterLossPercent = as_double("subsurface_water_loss")/100;
+		geo_inputs.md_WaterLossPercent = water_loss_frac;      // this variable is mis-named
 		geo_inputs.md_EGSFractureAperature = as_double("fracture_aperature");
         geo_inputs.md_EGSFractureLength = as_double("fracture_length");
         geo_inputs.md_EGSFractureSpacing = as_double("fracture_spacing");

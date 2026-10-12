@@ -590,18 +590,22 @@ class C_geo_prod_well
     double m_dt_prod_well_fixed_C;  //[C]
     bool m_is_prod_well_dt_calc;    //[-]
 
+    // Calculated
     double m_conc_SiO2_design_calc_ppm;    //[ppm]
-    double m_T_plant_design_calc_C; //[C]
+    double m_T_plant_design_calc_C;     //[C]
+    double m_dt_prod_well_des_calc_C;   //[C]
 
 public:
     C_geo_prod_well(double T_resource_design_C /*C*/,
         double dt_prod_well_fixed_C /*C*/,
         bool is_prod_well_dt_calc /*-*/);
 
-    void get_design_calcs(double& conc_SiO2_design_calc_ppm, double& T_plant_design_calc_C)
+    void get_design_calcs(double& conc_SiO2_design_calc_ppm, double& T_plant_design_calc_C,
+        double& dt_prod_well_des_calc)
     {
         conc_SiO2_design_calc_ppm = m_conc_SiO2_design_calc_ppm;
         T_plant_design_calc_C = m_T_plant_design_calc_C;
+        dt_prod_well_des_calc = m_dt_prod_well_des_calc_C;
     }
 };
 
@@ -615,6 +619,13 @@ private:
     double m_eta_2nd_law_GETEM; //[-]
 
     double m_conc_SiO2_design_ppm;  //[ppm]
+
+    resourceTypes m_resource_type;
+    conversionTypes m_conv_type;
+    tempDeclineMethod m_temp_decline_method;
+    flashTypes m_flash_type;
+
+    
 
     // Hardcoded cycle design parameters
     double m_eta_2nd_law_max_GETEM; //[-]
@@ -636,6 +647,8 @@ private:
     double m_eta_2nd_law_total_design;                  //[-]
 
     // Calculate Carnot Efficiency design values
+    makeupAlgorithmType m_makeup_type;
+
     double m_T_amb_des_K;                           //[K]
     double m_T_plant_in_des_K;                      //[K]
     double m_carnot_eff_des;                        //[-]
@@ -645,7 +658,9 @@ public:
     C_geo_surface(double T_plant_design_C /*C*/,
         double T_amb_design_C /*C*/,
         double eta_2nd_law_GETEM /*-*/,
-        double conc_SiO2_design_ppm);
+        double conc_SiO2_design_ppm,
+        resourceTypes resource_type, conversionTypes conv_type,
+        tempDeclineMethod temp_decline_method, flashTypes flash_type);
 
     void get_design_calcs(
         double& AE_full_brine_dt_design_calc,
@@ -672,6 +687,65 @@ public:
         carnot_eff_des = m_carnot_eff_des;
         T_inj_des_C = m_T_inj_des_C;
     }
+};
+
+class C_geo_subsurface{
+
+private:
+
+    // Hardcoded values
+    static constexpr double m_T_amb_hydrostatic_des_C = 11.6;     //[C]
+
+    // Input design parameters
+    geo_wells_stimulated m_wells_stim;
+    resourceTypes m_resource_type;
+    calculationBasis m_num_wells_calc_basis;
+    conversionTypes m_conv_type;
+    depthCalculationForEGS m_depth_calc_EGS_type;
+    reservoirPressureChangeCalculation m_res_pres_change_calc_type;
+    flashTypes m_flash_type;
+
+    double m_ExplorationWellsProd;
+    double m_num_wells_in;
+    double m_ratio_injection_to_production;
+    double m_ProductionFlowRateKgPerS_des;  //[kg/s]
+
+    int m_InjectionWellDiam;
+    int m_InjectionWellType;
+
+    double m_resource_depth_in;     //[m]
+    double m_T_resource_des_C;      //[C]
+    double m_T_plant_des_C;         //[C]
+    double m_dt_prod_well_calc_des_C; //[C]
+    double m_T_inj_des_C;               //[C]
+    double m_T_amb_des_C;               //[C]
+
+    double m_InjectivityIndex;      // ?
+    double m_ExcessPressureBar;     //[bar]
+    double m_PressureChangeAcrossSurfaceEquipmentPSI;   //[psi]
+    double m_AdditionalPressure;    // ?
+
+    double m_water_loss_percent;        //[-] actually a fraction!
+    double m_ReservoirDeltaPressure;    // ?
+
+    // Calculated design parameters
+    double m_resource_depth_calc;                   //[m]
+    double m_temp_gradient_fixed_T_amb_des_calc;    //[C/km]
+    double m_injection_density_des_calc;    // ?
+
+public:
+    C_geo_subsurface(geo_wells_stimulated wells_stim, double ExplorationWellsProd, resourceTypes resource_type,
+        calculationBasis num_wells_calc_basis, double num_wells_in, double ratio_injection_to_production,
+        double ProductionFlowRateKgPerS_des /*kg/s*/,
+        int InjectionWellDiam /*-*/, int InjectionWellType, double resource_depth_in /*m*/, 
+        double T_resource_des_C, double T_plant_des_C /*C*/, double dt_prod_well_des_calc /*C*/, double T_inj_C /*C*/,
+        double InjectivityIndex, conversionTypes conv_type,
+        double ExcessPressureBar /*bar*/, double PressureChangeAcrossSurfaceEquipmentPSI /*psi*/, double AdditionalPressure,
+        double T_amb_C /*C*/, depthCalculationForEGS depth_calc_EGS_type,
+        double water_loss_percent /*-*/, reservoirPressureChangeCalculation res_pres_change_calc_type,
+        double ReservoirDeltaPressure /*?*/, flashTypes flash_type);
+
+
 };
 
 #endif // __geothermalModelDefinitions__
