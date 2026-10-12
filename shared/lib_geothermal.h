@@ -86,7 +86,10 @@ struct SGeothermal_Inputs
 		md_TemperatureEGSAmbientC = md_RatioInjectionToProduction = 0.0;
 		md_AdditionalPressure = 1.0;
         md_dtProdWell = md_dtProdWellChoice = 0.0;
-        md_NumberOfWellsProdExp = md_NumberOfWellsInjDrilled = md_NumberOfWellsProdDrilled = md_FailedWells = md_StimSuccessRate = md_DrillSuccessRate = 0;
+        //md_NumberOfWellsProdExp =
+        md_NumberOfWellsInjDrilled =
+        //md_NumberOfWellsProdDrilled =
+        md_FailedWells = md_StimSuccessRate = md_DrillSuccessRate = 0;
         md_FailedInjFlowRatio = md_FailedProdFlowRatio = md_InjWellFriction = md_ProdWellFriction = md_InjWellPressurePSI = md_InjectivityIndex = md_ExplorationWellsProd = 0;
         md_UseWeatherFileConditions = md_UseWeatherFileConditions_annual_sim = md_AllowReservoirReplacements = 0.0;
 	}
@@ -111,8 +114,8 @@ struct SGeothermal_Inputs
 	size_t mi_TotalMakeupCalculations;						// mi_ProjectLifeYears * mi_MakeupCalculationsPerYear
 
 	double md_DesiredSalesCapacityKW;						// entered or calculated, linked to 'cb'
-    double md_NumberOfWellsProdExp;
-    double md_NumberOfWellsProdDrilled;
+    //double md_NumberOfWellsProdExp;
+    //double md_NumberOfWellsProdDrilled;
     double md_NumberOfWellsInjDrilled;
     double md_FailedWells;
     double md_FailedInjFlowRatio;
@@ -709,9 +712,12 @@ private:
     double m_num_wells_in;
     double m_ratio_injection_to_production;
     double m_ProductionFlowRateKgPerS_des;  //[kg/s]
+    double m_total_brine_effectiveness;  //[watt-hr/lb_m]
 
     int m_InjectionWellDiam;
     int m_InjectionWellType;
+    int m_ProductionWellDiam;
+    int m_ProductionWellType;
 
     double m_resource_depth_in;     //[m]
     double m_T_resource_des_C;      //[C]
@@ -719,6 +725,7 @@ private:
     double m_dt_prod_well_calc_des_C; //[C]
     double m_T_inj_des_C;               //[C]
     double m_T_amb_des_C;               //[C]
+    double m_PressureAmbientPSI;          //[psi]
 
     double m_InjectivityIndex;      // ?
     double m_ExcessPressureBar;     //[bar]
@@ -728,6 +735,14 @@ private:
     double m_water_loss_percent;        //[-] actually a fraction!
     double m_ReservoirDeltaPressure;    // ?
 
+    double m_GFPumpEfficiency;          //[-]
+
+    double m_DesiredSalesCapacityKW;    //[kWe]
+
+    double m_StimSuccessRate;    //[-]
+    double m_DrillSuccessRate;   //[-]
+    double m_FailedProdFlowRatio;   //[-]
+
     // Calculated design parameters
     double m_resource_depth_calc;                   //[m]
     double m_temp_gradient_fixed_T_amb_des_calc;    //[C/km]
@@ -736,14 +751,19 @@ private:
 public:
     C_geo_subsurface(geo_wells_stimulated wells_stim, double ExplorationWellsProd, resourceTypes resource_type,
         calculationBasis num_wells_calc_basis, double num_wells_in, double ratio_injection_to_production,
-        double ProductionFlowRateKgPerS_des /*kg/s*/,
+        double ProductionFlowRateKgPerS_des /*kg/s*/, double tota_brine_effectiveness /*[watt - hr / lb_m]*/,
         int InjectionWellDiam /*-*/, int InjectionWellType, double resource_depth_in /*m*/, 
         double T_resource_des_C, double T_plant_des_C /*C*/, double dt_prod_well_des_calc /*C*/, double T_inj_C /*C*/,
         double InjectivityIndex, conversionTypes conv_type,
         double ExcessPressureBar /*bar*/, double PressureChangeAcrossSurfaceEquipmentPSI /*psi*/, double AdditionalPressure,
         double T_amb_C /*C*/, depthCalculationForEGS depth_calc_EGS_type,
         double water_loss_percent /*-*/, reservoirPressureChangeCalculation res_pres_change_calc_type,
-        double ReservoirDeltaPressure /*?*/, flashTypes flash_type);
+        double ReservoirDeltaPressure /*?*/, flashTypes flash_type,
+        double GFPumpEfficiency,
+        int ProductionWellDiam, int ProductionWellType,
+        double DesiredSalesCapacityKW /*kWe*/,
+        double StimSuccessRate /*-*/, double DrillSuccessRate /*-*/, double PressureAmbientPSI /*psi*/,
+        double FailedProdFlowRatio /*-*/);
 
 
 };

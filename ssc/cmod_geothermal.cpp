@@ -218,7 +218,7 @@ public:
         double num_conf_wells = as_double("geotherm.cost.conf_num_wells");
         double perc_conf_wells_production = as_double("geotherm.cost.confirm_wells_percent");
         double num_conf_wells_prod = num_conf_wells * perc_conf_wells_production / 100.0;
-        double ExplorationWellsProd = num_conf_wells;
+        double ExplorationWellsProd = num_conf_wells_prod;
 
         double num_wells_in = as_double("num_wells");
         double ratio_injection_to_production = as_double("geotherm.cost.inj_prod_well_ratio");
@@ -226,6 +226,8 @@ public:
 
         int InjectionWellDiam = as_integer("geotherm.cost.inj_cost_curve_welldiam");
         int InjectionWellType = as_integer("geotherm.cost.inj_cost_curve_welltype");
+        int ProductionWellDiam = as_integer("geotherm.cost.prod_cost_curve_welldiam");
+        int ProductionWellType = as_integer("geotherm.cost.prod_cost_curve_welltype");
 
         double resource_depth_in = as_double("resource_depth");     //[m]
         double InjectivityIndex = as_double("injectivity_index");
@@ -235,6 +237,16 @@ public:
 
         double water_loss_frac = as_double("subsurface_water_loss") / 100;
         double reservoir_pressure_chage = as_double("reservoir_pressure_change");
+
+        double gf_pump_efficiency = as_double("pump_efficiency") / 100;     //[-]
+
+        double desired_sales_capacity_kw = as_double("nameplate");    //[kWe]
+
+        double stim_success_rate = as_double("stim_success_rate") / 100.0;  //[-]
+        double drill_success_rate = as_double("drilling_success_rate") / 100.0; //[-]
+
+        double PressureAmbientPSI = as_double("ambient_pressure");          //[psi]
+        double FailedProdFlowRatio = as_double("failed_prod_flow_ratio");   //[-]
 
         switch( as_integer("conversion_subtype") )
         {
@@ -275,14 +287,18 @@ public:
 
             C_geo_subsurface geo_subsurface(geo_wells_stim_type, ExplorationWellsProd, geo_inputs.me_rt,
                 calc_basis_type, num_wells_in, ratio_injection_to_production,
-                ProductionFlowRateKgPerS,
+                ProductionFlowRateKgPerS, total_brine_effectiveness,
                 InjectionWellDiam, InjectionWellType, resource_depth_in,
                 resource_temperature, T_plant_design_calc_C, dt_prod_well_des_calc_C, T_inj_des_C,
                 InjectivityIndex, geo_inputs.me_ct,
                 ExcessPressureBar, PressureChangeAcrossSurfaceEquipment, AdditionalPressure,
                 TemperatureWetBulbC, depth_calc_EGS_type,
                 water_loss_frac, geo_inputs.me_pc,
-                reservoir_pressure_chage, geo_inputs.me_ft);
+                reservoir_pressure_chage, geo_inputs.me_ft,
+                gf_pump_efficiency,
+                ProductionWellDiam, ProductionWellType,
+                desired_sales_capacity_kw,
+                stim_success_rate, drill_success_rate, PressureAmbientPSI, FailedProdFlowRatio);
         }
 
         // inputs used in above in refactor
@@ -293,10 +309,10 @@ public:
 
 		// set the geothermal model inputs -------------------------------------
         geo_inputs.md_RatioInjectionToProduction = ratio_injection_to_production; // THIS SHOULD BE AN INPUT. ALTHOUGH IT'S FROM THE COST PAGE, IT'S USED IN NON-COST EQUATION
-        geo_inputs.md_DrillSuccessRate = as_double("drilling_success_rate") / 100.0;
-        geo_inputs.md_StimSuccessRate = as_double("stim_success_rate") / 100.0;
-        geo_inputs.md_FailedProdFlowRatio = as_double("failed_prod_flow_ratio");
-        geo_inputs.md_DesiredSalesCapacityKW = as_double("nameplate");
+        geo_inputs.md_DrillSuccessRate = drill_success_rate;
+        geo_inputs.md_StimSuccessRate = stim_success_rate;
+        geo_inputs.md_FailedProdFlowRatio = FailedProdFlowRatio;
+        geo_inputs.md_DesiredSalesCapacityKW = desired_sales_capacity_kw;
         geo_inputs.md_NumberOfWells = num_wells_in;
         geo_inputs.md_WellsStimulated = as_integer("stimulation_type");
 
@@ -322,12 +338,12 @@ public:
 
 		//pumping parameters
 		geo_inputs.md_ProductionFlowRateKgPerS = ProductionFlowRateKgPerS;
-		geo_inputs.md_GFPumpEfficiency = as_double("pump_efficiency")/100;
+		geo_inputs.md_GFPumpEfficiency = gf_pump_efficiency;                    //[-]
         geo_inputs.md_PressureChangeAcrossSurfaceEquipmentPSI = PressureChangeAcrossSurfaceEquipment;
         geo_inputs.md_ExcessPressureBar = ExcessPressureBar;
 		geo_inputs.md_DiameterProductionWellInches = 0.0;
-        geo_inputs.md_ProductionWellType = as_double("geotherm.cost.prod_cost_curve_welltype");
-        geo_inputs.md_ProductionWellDiam = as_double("geotherm.cost.prod_cost_curve_welldiam");
+        geo_inputs.md_ProductionWellType = ProductionWellType;
+        geo_inputs.md_ProductionWellDiam = ProductionWellDiam;
 
 		geo_inputs.md_DiameterPumpCasingInches = 0.0;
         geo_inputs.md_DiameterInjPumpCasingInches = 0.0;
