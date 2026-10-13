@@ -272,7 +272,7 @@ public:
             double carnot_eff_des = std::numeric_limits<double>::quiet_NaN();
             double T_inj_des_C = std::numeric_limits<double>::quiet_NaN();
 
-            geo_surface.get_design_calcs(
+            geo_surface.get_specific_design_calcs(
                 AE_full_brine_dt_design_calc,
                 AE_brine_T_sol_to_to_amb_design_calc,
                 AE_brine_T_plant_to_T_sol_to_amb_design_calc,
@@ -299,6 +299,52 @@ public:
                 ProductionWellDiam, ProductionWellType,
                 desired_sales_capacity_kw,
                 stim_success_rate, drill_success_rate, PressureAmbientPSI, FailedProdFlowRatio);
+
+            double resource_depth_calc = std::numeric_limits<double>::quiet_NaN();                   //[m]
+            double temp_gradient_fixed_T_amb_des_calc = std::numeric_limits<double>::quiet_NaN();                
+            double injection_density_des_calc = std::numeric_limits<double>::quiet_NaN();                   
+            double pumpwork_watthr_per_lb_design = std::numeric_limits<double>::quiet_NaN(); //[W-hr/lb_m]
+            double total_prod_flow_rate = std::numeric_limits<double>::quiet_NaN();          //[lb_m/hr]
+            double prod_wells_exploration = std::numeric_limits<double>::quiet_NaN();
+            double inj_wells_exploration = std::numeric_limits<double>::quiet_NaN();
+            double num_wells_calc = std::numeric_limits<double>::quiet_NaN();
+            double NumberOfWellsProdExp = std::numeric_limits<double>::quiet_NaN();
+            double NumberOfWellsProdDrilled = std::numeric_limits<double>::quiet_NaN();
+            double NumberOfWellsProdFailed = std::numeric_limits<double>::quiet_NaN();
+            double NumberOfWellsInj = std::numeric_limits<double>::quiet_NaN();
+            double NumberOfWellsInjDrilled = std::numeric_limits<double>::quiet_NaN();
+            double inj_pump_work_ft_design = std::numeric_limits<double>::quiet_NaN();       // ?
+            double prod_pump_power_kWe = std::numeric_limits<double>::quiet_NaN();
+            double inj_pump_power_kWe = std::numeric_limits<double>::quiet_NaN();
+            double total_pump_power_kWe = std::numeric_limits<double>::quiet_NaN();
+            std::string ErrorString;
+
+            geo_subsurface.get_design_calcs(
+                resource_depth_calc,
+                temp_gradient_fixed_T_amb_des_calc,
+                injection_density_des_calc,
+                pumpwork_watthr_per_lb_design,
+                total_prod_flow_rate,                   //[lb_m/hr]
+                prod_wells_exploration,
+                inj_wells_exploration,
+                num_wells_calc,
+                NumberOfWellsProdExp,
+                NumberOfWellsProdDrilled,
+                NumberOfWellsProdFailed,
+                NumberOfWellsInj,
+                NumberOfWellsInjDrilled,
+                inj_pump_work_ft_design,
+                prod_pump_power_kWe,
+                inj_pump_power_kWe,
+                total_pump_power_kWe,
+                ErrorString);
+
+            double cycle_net_power_design_kWe = std::numeric_limits<double>::quiet_NaN();
+            geo_surface.design_for_absolute_power(total_prod_flow_rate, cycle_net_power_design_kWe);
+
+            double net_plant_power = cycle_net_power_design_kWe - total_pump_power_kWe;
+
+            double abc = 1.23;
         }
 
         // inputs used in above in refactor
@@ -314,7 +360,7 @@ public:
         geo_inputs.md_FailedProdFlowRatio = FailedProdFlowRatio;
         geo_inputs.md_DesiredSalesCapacityKW = desired_sales_capacity_kw;
         geo_inputs.md_NumberOfWells = num_wells_in;
-        geo_inputs.md_WellsStimulated = as_integer("stimulation_type");
+        geo_inputs.md_WellsStimulated = static_cast<int> (geo_wells_stim_type);
 
         geo_inputs.me_cb = calc_basis_type;
 
@@ -322,7 +368,7 @@ public:
 		geo_inputs.md_MaxTempDeclineC = as_double("temp_decline_max");
         
 		// flash inputs
-		geo_inputs.md_PressureAmbientPSI = as_double("ambient_pressure" );
+		geo_inputs.md_PressureAmbientPSI = PressureAmbientPSI;
         geo_inputs.md_UseWeatherFileConditions = 0; //initially set to zero for UI calculations
 
         geo_inputs.mi_simulation_timestep_type = static_cast<geo_simulation_timestep_type>(as_integer("simulation_timestep_type"));    // 0=monthly, 1=hourly

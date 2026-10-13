@@ -1193,7 +1193,7 @@ namespace geothermal
 
                 InjWellFriction, InjWellPressurePSI, P_hydrostatic_PSI);
 
-            dInjectionPumpPower = geothermal::pumpWorkInWattHr(1, inj_pump_work_ft, GFPumpEfficiency, ErrorString) * dFractionOfInletGFInjected; // ft-lbs/hr
+            dInjectionPumpPower = geothermal::pumpWorkInWattHr(1, inj_pump_work_ft, GFPumpEfficiency, ErrorString) * dFractionOfInletGFInjected; //[W-hr/lbm]
 
             double abc = 12.3;
         }
@@ -1208,7 +1208,7 @@ namespace geothermal
             ProdWellFriction);
 
 
-        double dProductionPumpPower = geothermal::pumpWorkInWattHr(1, prod_pump_work_ft, GFPumpEfficiency, ErrorString); //[W-hr/lb]
+        double dProductionPumpPower = geothermal::pumpWorkInWattHr(1, prod_pump_work_ft, GFPumpEfficiency, ErrorString); //[W-hr/lbm]
 
         pumpwork_prod = dProductionPumpPower;
         pumpwork_inj = dInjectionPumpPower;
@@ -1245,11 +1245,11 @@ namespace geothermal
         int ProductionWellDiam, int ProductionWellType,
         double DesiredSalesCapacityKW /*kWe*/, double DrillSuccessRate /*-*/,
 
-        double& pumpwork_watthr_per_lb /*W-hr/lb_m*/,
+        double& pumpwork_watthr_per_lb /*W-hr/lb_m*/, double& total_prod_flow_rate /*lb_m/hr*/,
         double& prod_wells_exploration, double& inj_wells_exploration, double& num_wells_calc,
         double& NumberOfWellsProdExp, double& NumberOfWellsProdDrilled, double& NumberOfWellsProdFailed,
         double& NumberOfWellsInj, double& NumberOfWellsInjDrilled,
-        double& pump_inj_hp,
+        double& pump_inj_hp, double& prod_pump_power_kWe, double& inj_pump_power_kWe, double& total_pump_power_kWe,
         std::string& ErrorString)
     {
         // Convert temp gradient from C/km to C/m
@@ -1265,6 +1265,7 @@ namespace geothermal
         double InjWellFriction = std::numeric_limits<double>::quiet_NaN();
         double inj_pump_work_ft = std::numeric_limits<double>::quiet_NaN();
 
+        // Total specific pump work in W-hr/lb_m, including production and injection pumps
         pumpwork_watthr_per_lb = geothermal::GetPumpWorkWattHrPerLb(water_loss_percent, resource_type, conv_type, res_pres_change_calc_type,
             ProductionFlowRateKgPerS, ReservoirDeltaPressure, flash_type, T_resource_C, T_plant_C, dt_prod_well_calc,
             AdditionalPressure, ExcessPressureBar, InjectivityIndex, T_inj_C, ratio_injection_to_production,
@@ -1272,8 +1273,8 @@ namespace geothermal
             injection_density, ExcessPressureBar, PressureChangeAcrossSurfaceEquipmentPSI, AdditionalPressure, T_amb_fixed_hydrostatic_C,
             GFPumpEfficiency, ErrorString,
             ProductionWellDiam, ProductionWellType,
-            inj_pump_work_ft,
-            pumpwork_prod, pumpwork_inj, FractionGFInjected, InjWellPressurePSI, ProdWellFriction, P_hydrostatic_PSI, InjWellFriction);
+            inj_pump_work_ft, pumpwork_prod, pumpwork_inj,
+            FractionGFInjected, InjWellPressurePSI, ProdWellFriction, P_hydrostatic_PSI, InjWellFriction);
 
         double netBrineEffectiveness = total_brine_effectiveness - pumpwork_watthr_per_lb; //[W-hr/lb_m]
 
@@ -1311,12 +1312,28 @@ namespace geothermal
             NumberOfWellsInjDrilled = 0.0;
             // pump_inj_hp (md_InjPump_hp in the original code) does not have a default value in geo outputs structure...
         }
-        else
-        {
+        else {
             num_wells_calc = DesiredSalesCapacityKW / netCapacityPerWell;       //[-]
 
             if( num_wells_calc < 0 ) num_wells_calc = 0;
+        }
 
+        total_prod_flow_rate = flow_rate_per_well * num_wells_calc;      //[lb_m/hr] total production flow rate
+        double inj_flow_rate = flow_rate_per_well * num_wells_calc;      //[lb_m/hr] total injection flow rate
+        if( conv_type == FLASH ) {
+            throw std::runtime_error("Flash calculations not enabled in GetNumberOfWells");
+            //inj_flow -= inj_flow * (waterLoss() / 1000.0);
+        }
+
+        // 'pumpwork' terms already include GFPumpEfficiency, so don't apply it when calculating absolute power
+        prod_pump_power_kWe = pumpwork_prod * (total_prod_flow_rate) / 1000.0;                  //[kWe]
+        inj_pump_power_kWe = pumpwork_inj * (inj_flow_rate) / 1000.0;                           //[kWe]
+        total_pump_power_kWe = pumpwork_watthr_per_lb * total_prod_flow_rate / 1000.0;          //[kWe]
+        double total_pump_power_check = prod_pump_power_kWe + inj_pump_power_kWe;  //[kWe]
+
+        pump_inj_hp = (inj_pump_work_ft * (inj_flow_rate) / (60 * 33000)) / GFPumpEfficiency;        //[hp]
+
+        if (num_wells_calc_basis != NUMBER_OF_WELLS) {
             NumberOfWellsProdExp = (num_wells_calc > prod_wells_exploration) ? num_wells_calc - prod_wells_exploration : 0.0;
             double prod_well_stim_success_rate = (prod_wells_stimulated) ? StimSuccessRate : 0.0;
             NumberOfWellsProdDrilled = NumberOfWellsProdExp / (1.0 - (1.0 - prod_well_stim_success_rate) * (1.0 - DrillSuccessRate));
@@ -1325,12 +1342,6 @@ namespace geothermal
             double num_prod_wells_failed = NumberOfWellsProdDrilled * (1.0 - DrillSuccessRate);
             NumberOfWellsProdFailed = num_prod_wells_failed;
             //2.	# of Injection Wells Required = # successful injection wells required in drilling phase + # successful injection wells drilled in exploration phase
-            
-            double inj_flow = flow_rate_per_well * num_wells_calc;
-            if( conv_type == FLASH ) {
-                throw std::runtime_error("Flash calculations not enabled in GetNumberOfWells");
-                //inj_flow -= inj_flow * (waterLoss() / 1000.0);
-            }
 
             double failed_prod_wells_inj = NumberOfWellsProdDrilled - num_prod_wells_successful;
             double friction = 25.0; //psi
@@ -1355,16 +1366,16 @@ namespace geothermal
             double inj_rate_failed_inj_wells = MIN(inj_failed_inj_rate, flow_rate_per_well);
             double inj_rate_successful_inj_wells = flow_rate_per_well / ratio_injection_to_production;
             double num_failed_prod_wells_inj = (FailedProdFlowRatio > 0) ? NumberOfWellsProdDrilled - num_prod_wells_successful : 0.0;
-            double successful_inj_wells_required_drilling = (inj_flow - (num_failed_prod_wells_inj * prod_failed_inj_rate)) /
+            double successful_inj_wells_required_drilling = (inj_flow_rate - (num_failed_prod_wells_inj * prod_failed_inj_rate)) /
                                                             (inj_rate_successful_inj_wells + (inj_rate_failed_inj_wells * (1 / (DrillSuccessRate) - 1)));
             double successful_inj_wells_exploration = inj_wells_exploration;
             double num_injection_wells_required = successful_inj_wells_required_drilling + successful_inj_wells_exploration;
-            NumberOfWellsInj = (inj_flow - (failed_prod_wells_inj * inj_rate_failed_prod_wells)) /
+            NumberOfWellsInj = (inj_flow_rate - (failed_prod_wells_inj * inj_rate_failed_prod_wells)) /
                                     (flow_rate_per_inj_well + inj_rate_failed_inj_wells * (1 / (DrillSuccessRate) - 1));
             NumberOfWellsInjDrilled = (1 / DrillSuccessRate) * successful_inj_wells_required_drilling + successful_inj_wells_exploration;
             double num_inj_wells_successful = NumberOfWellsInjDrilled * DrillSuccessRate;
             double num_inj_wells_failed = NumberOfWellsInjDrilled * (1 - DrillSuccessRate);
-            pump_inj_hp = (inj_pump_work_ft * (inj_flow) / (60 * 33000)) / GFPumpEfficiency;
+
 
             if( resource_type == EGS ) {
                 if( wells_stim != geo_wells_stimulated::PRODUCTION_ONLY ) {
@@ -1391,7 +1402,7 @@ namespace geothermal
                 else {
                     inj_wells_drilled = NumberOfWellsInj / (DrillSuccessRate);
                 }
-                NumberOfWellsInj = inj_flow / inj_rate_successful_inj_wells - successful_inj_wells_exploration;
+                NumberOfWellsInj = inj_flow_rate / inj_rate_successful_inj_wells - successful_inj_wells_exploration;
                 NumberOfWellsInjDrilled = inj_wells_drilled;
 
             }
@@ -3736,6 +3747,13 @@ C_geo_surface::C_geo_surface(double T_plant_design_C /*C*/,
 
 }
 
+void C_geo_surface::design_for_absolute_power(double total_prod_flow_rate /*lb_m/hr*/,
+    double& cycle_net_power_des /*kWe*/)
+{
+    m_cycle_net_power_des = total_prod_flow_rate * m_total_brine_effectiveness / 1000.0;        //[kWe]
+    cycle_net_power_des = m_cycle_net_power_des;
+}
+
 C_geo_subsurface::C_geo_subsurface(geo_wells_stimulated wells_stim, double ExplorationWellsProd, resourceTypes resource_type,
     calculationBasis num_wells_calc_basis, double num_wells_in, double ratio_injection_to_production,
     double ProductionFlowRateKgPerS_des /*kg/s*/, double tota_brine_effectiveness /*[watt - hr / lb_m]*/,
@@ -3804,17 +3822,20 @@ C_geo_subsurface::C_geo_subsurface(geo_wells_stimulated wells_stim, double Explo
 
     m_injection_density_des_calc = geothermal::InjectionDensity(physics::CelciusToFarenheit(m_T_inj_des_C));
 
-    double pumpwork_watthr_per_lb_design = std::numeric_limits<double>::quiet_NaN();
-
-    double prod_wells_exploration = std::numeric_limits<double>::quiet_NaN();
-    double inj_wells_exploration = std::numeric_limits<double>::quiet_NaN();
-    double num_wells_calc = std::numeric_limits<double>::quiet_NaN();
-    double NumberOfWellsProdExp = std::numeric_limits<double>::quiet_NaN();
-    double NumberOfWellsProdDrilled = std::numeric_limits<double>::quiet_NaN();
-    double NumberOfWellsProdFailed = std::numeric_limits<double>::quiet_NaN();
-    double NumberOfWellsInj = std::numeric_limits<double>::quiet_NaN();
-    double NumberOfWellsInjDrilled = std::numeric_limits<double>::quiet_NaN();
-    double inj_pump_work_ft = std::numeric_limits<double>::quiet_NaN();
+    m_pumpwork_watthr_per_lb_design = std::numeric_limits<double>::quiet_NaN(); //[W-hr/lb_m]
+    m_total_prod_flow_rate = std::numeric_limits<double>::quiet_NaN();          //[lb_m/hr]
+    m_prod_wells_exploration = std::numeric_limits<double>::quiet_NaN();
+    m_inj_wells_exploration = std::numeric_limits<double>::quiet_NaN();
+    m_num_wells_calc = std::numeric_limits<double>::quiet_NaN();
+    m_NumberOfWellsProdExp = std::numeric_limits<double>::quiet_NaN();
+    m_NumberOfWellsProdDrilled = std::numeric_limits<double>::quiet_NaN();
+    m_NumberOfWellsProdFailed = std::numeric_limits<double>::quiet_NaN();
+    m_NumberOfWellsInj = std::numeric_limits<double>::quiet_NaN();
+    m_NumberOfWellsInjDrilled = std::numeric_limits<double>::quiet_NaN();
+    m_inj_pump_work_ft_design = std::numeric_limits<double>::quiet_NaN();       // ?
+    m_prod_pump_power_kWe = std::numeric_limits<double>::quiet_NaN();
+    m_inj_pump_power_kWe = std::numeric_limits<double>::quiet_NaN();
+    m_total_pump_power_kWe = std::numeric_limits<double>::quiet_NaN();
     std::string ErrorString;
 
     double n_wells_calc = geothermal::GetNumberOfWells(m_wells_stim, m_ExplorationWellsProd, m_resource_type,
@@ -3831,11 +3852,12 @@ C_geo_subsurface::C_geo_subsurface(geo_wells_stimulated wells_stim, double Explo
         m_ProductionWellDiam, m_ProductionWellType,
         m_DesiredSalesCapacityKW, m_DrillSuccessRate, 
 
-        pumpwork_watthr_per_lb_design, /*W-hr/lb_m*/
-        prod_wells_exploration, inj_wells_exploration, num_wells_calc,
-        NumberOfWellsProdExp, NumberOfWellsProdDrilled, NumberOfWellsProdFailed,
-        NumberOfWellsInj, NumberOfWellsInjDrilled,
-        inj_pump_work_ft, ErrorString);
+        m_pumpwork_watthr_per_lb_design, /*W-hr/lb_m*/ 
+        m_total_prod_flow_rate,          //[lb_m/hr]
+        m_prod_wells_exploration, m_inj_wells_exploration, m_num_wells_calc,
+        m_NumberOfWellsProdExp, m_NumberOfWellsProdDrilled, m_NumberOfWellsProdFailed,
+        m_NumberOfWellsInj, m_NumberOfWellsInjDrilled,
+        m_inj_pump_work_ft_design, m_prod_pump_power_kWe, m_inj_pump_power_kWe, m_total_pump_power_kWe, ErrorString);
 
-    double abc = 1.23;
+    
 }

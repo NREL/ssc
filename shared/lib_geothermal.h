@@ -649,13 +649,16 @@ private:
 
     double m_eta_2nd_law_total_design;                  //[-]
 
-    // Calculate Carnot Efficiency design values
+    // Calculated Carnot Efficiency design values
     makeupAlgorithmType m_makeup_type;
 
     double m_T_amb_des_K;                           //[K]
     double m_T_plant_in_des_K;                      //[K]
     double m_carnot_eff_des;                        //[-]
     double m_T_inj_des_C;                               //[C]
+
+    // Calculated absoulute power output
+    double m_cycle_net_power_des;  //[kWe]
 
 public:
     C_geo_surface(double T_plant_design_C /*C*/,
@@ -665,7 +668,7 @@ public:
         resourceTypes resource_type, conversionTypes conv_type,
         tempDeclineMethod temp_decline_method, flashTypes flash_type);
 
-    void get_design_calcs(
+    void get_specific_design_calcs(
         double& AE_full_brine_dt_design_calc,
         double& AE_brine_T_sol_to_to_amb_design_calc,
         double& AE_brine_T_plant_to_T_sol_to_amb_design_calc,
@@ -690,6 +693,9 @@ public:
         carnot_eff_des = m_carnot_eff_des;
         T_inj_des_C = m_T_inj_des_C;
     }
+
+    void design_for_absolute_power(double total_prod_flow_rate /*lb_m/hr*/,
+        double& cycle_net_power_des /*kWe*/);
 };
 
 class C_geo_subsurface{
@@ -747,6 +753,21 @@ private:
     double m_resource_depth_calc;                   //[m]
     double m_temp_gradient_fixed_T_amb_des_calc;    //[C/km]
     double m_injection_density_des_calc;    // ?
+    double m_pumpwork_watthr_per_lb_design;
+    double m_total_prod_flow_rate;          //[lb_M/hr]
+    double m_prod_wells_exploration;
+    double m_inj_wells_exploration;
+    double m_num_wells_calc;
+    double m_NumberOfWellsProdExp;
+    double m_NumberOfWellsProdDrilled;
+    double m_NumberOfWellsProdFailed;
+    double m_NumberOfWellsInj;
+    double m_NumberOfWellsInjDrilled;
+    double m_inj_pump_work_ft_design;
+    double m_prod_pump_power_kWe;
+    double m_inj_pump_power_kWe;
+    double m_total_pump_power_kWe;
+    std::string ErrorString;
 
 public:
     C_geo_subsurface(geo_wells_stimulated wells_stim, double ExplorationWellsProd, resourceTypes resource_type,
@@ -765,7 +786,45 @@ public:
         double StimSuccessRate /*-*/, double DrillSuccessRate /*-*/, double PressureAmbientPSI /*psi*/,
         double FailedProdFlowRatio /*-*/);
 
-
+    void get_design_calcs(
+        double& resource_depth_calc,
+        double& temp_gradient_fixed_T_amb_calc,
+        double& injection_density_des_calc,
+        double& pumpwork_watthr_per_lb_design,
+        double& total_prod_flow_rate,
+        double& prod_wells_exploration,
+        double& inj_wells_exploration,
+        double& num_wells_calc,
+        double& number_of_wells_prod_exp,
+        double& number_of_wells_prod_drilled,
+        double& number_of_wells_prod_failed,
+        double& number_of_wells_inj,
+        double& number_of_wells_inj_drilled,
+        double& inj_pump_work_ft_design,
+        double& prod_pump_power_kWe,
+        double& inj_pump_power_kWe,
+        double& total_pump_power_kWe,
+        std::string& error_string) const
+    {
+        resource_depth_calc = m_resource_depth_calc;
+        temp_gradient_fixed_T_amb_calc = m_temp_gradient_fixed_T_amb_des_calc;
+        injection_density_des_calc = m_injection_density_des_calc;
+        pumpwork_watthr_per_lb_design = m_pumpwork_watthr_per_lb_design;
+        total_prod_flow_rate = m_total_prod_flow_rate;
+        prod_wells_exploration = m_prod_wells_exploration;
+        inj_wells_exploration = m_inj_wells_exploration;
+        num_wells_calc = m_num_wells_calc;
+        number_of_wells_prod_exp = m_NumberOfWellsProdExp;
+        number_of_wells_prod_drilled = m_NumberOfWellsProdDrilled;
+        number_of_wells_prod_failed = m_NumberOfWellsProdFailed;
+        number_of_wells_inj = m_NumberOfWellsInj;
+        number_of_wells_inj_drilled = m_NumberOfWellsInjDrilled;
+        inj_pump_work_ft_design = m_inj_pump_work_ft_design;
+        prod_pump_power_kWe = m_prod_pump_power_kWe;
+        inj_pump_power_kWe = m_inj_pump_power_kWe;
+        total_pump_power_kWe = m_total_pump_power_kWe;
+        error_string = ErrorString;
+    }
 };
 
 #endif // __geothermalModelDefinitions__
