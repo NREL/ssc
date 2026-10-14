@@ -2150,7 +2150,8 @@ public:
                                         monthly_true_up_credits[m] += year_end_dollars;
 										income[c] += year_end_dollars;
 									}
-									else if (excess_monthly_dollars && (monthly_cumulative_excess_dollars[m] > 0))
+									// with rollover_credit the $ balance carries to the next month instead of being paid out
+									else if (excess_monthly_dollars && (monthly_cumulative_excess_dollars[m] > 0) && !rollover_credit)
 									{
 										income[c] += monthly_cumulative_excess_dollars[m];
                                         monthly_true_up_credits[m] = monthly_cumulative_excess_dollars[m];
