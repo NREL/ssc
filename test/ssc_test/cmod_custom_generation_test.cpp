@@ -32,6 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include <gtest/gtest.h>
+#include <fstream>
+#include <sstream>
 
 #include "cmod_custom_generation_test.h"
 
@@ -154,6 +156,56 @@ TEST_F(CMCustomGeneration, cmod_custom_generation_test_adjust_losses) {
     ssc_data_set_number(data, "spec_mode", 2);
     ssc_data_get_number(data, "annual_energy", &annual_energy);
     EXPECT_NEAR(annual_energy, 8760 * 100.0 * 0.95, 0.01);
+}
+
+/// Lifetime custom generation reports fuel usage by year, so merchant plant fuel expenses
+/// follow annual generation instead of staying at year 1 (ssc #1422)
+TEST_F(CMCustomGeneration, LifetimeFuelUsage_MerchantPlant) {
+    std::string file_inputs = SSCDIR;
+    file_inputs += "/test/input_json/FinancialModels/merchantplant/2022.08.08_develop_branch_Generic_System_Merchant_Plant_cmod_merchantplant.json";
+    std::ifstream file(file_inputs);
+    std::ostringstream tmp;
+    tmp << file.rdbuf();
+    file.close();
+    ssc_data_free(data);
+    data = json_to_ssc_data(tmp.str().c_str());
+
+    int analysis_period = 25;
+    ssc_data_set_number(data, "analysis_period", analysis_period);
+    ssc_data_set_number(data, "system_use_lifetime_output", 1);
+    ssc_number_t degradation[1] = { 0 };
+    ssc_data_set_array(data, "ac_degradation", degradation, 1);
+    ssc_data_set_number(data, "adjust_constant", 0);
+    ssc_data_set_number(data, "spec_mode", 2);
+    ssc_data_set_number(data, "derate", 0);
+    ssc_data_set_number(data, "user_capacity_factor", 0);
+    ssc_data_set_number(data, "heat_rate", 10);
+    ssc_data_set_number(data, "conv_eff", 34.118049621582031);
+
+    // Year 2 generates a tenth of the other years
+    std::vector<double> gen_lifetime(8760 * analysis_period, 1000.0);
+    for (size_t i = 8760; i < 8760 * 2; i++)
+        gen_lifetime[i] = 100.0;
+    ssc_data_set_array(data, "energy_output_array_lifetime", gen_lifetime.data(), (int)gen_lifetime.size());
+
+    EXPECT_FALSE(run_module(data, "custom_generation"));
+
+    int n = 0;
+    ssc_number_t* fuel_usage = ssc_data_get_array(data, "annual_fuel_usage_lifetime", &n);
+    ASSERT_TRUE(fuel_usage != nullptr);
+    ASSERT_EQ(n, analysis_period);
+    double year1_fuel = 8760 * 1000.0 * 100.0 / 34.118049621582031; // kWht
+    EXPECT_NEAR(fuel_usage[0], year1_fuel, 1.0);
+    EXPECT_NEAR(fuel_usage[1], year1_fuel / 10.0, 1.0);
+    EXPECT_NEAR(fuel_usage[2], year1_fuel, 1.0);
+
+    EXPECT_FALSE(run_module(data, "merchantplant"));
+
+    ssc_number_t* fuel_expense = ssc_data_get_array(data, "cf_om_fuel_expense", &n);
+    ASSERT_EQ(n, analysis_period + 1);
+    double escalation = 1.025; // inflation, no fuel cost escalation
+    EXPECT_NEAR(fuel_expense[2] / fuel_expense[1], 0.1 * escalation, 1e-6);
+    EXPECT_NEAR(fuel_expense[3] / fuel_expense[1], escalation * escalation, 1e-6);
 }
 
 /*
