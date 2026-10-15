@@ -132,6 +132,11 @@ public:
         // --------------------------------------------------------------
         // Get main system paramters
         double resource_temperature = as_double("resource_temp");    //[C]
+        //resource characterization
+
+        // Set design temp equal to resource temperature
+        double design_temp = resource_temperature;    //[C]
+        assign("design_temp", ssc_number_t(design_temp));
 
         int analysis_type = as_integer("analysis_type");
         calculationBasis calc_basis_type;
@@ -266,7 +271,7 @@ public:
             double eta_2nd_law_max_GETEM_and_T_sol_derate = std::numeric_limits<double>::quiet_NaN();
             double AE_2nd_law_max_GETEM_and_T_sol_derate = std::numeric_limits<double>::quiet_NaN();
             double total_brine_effectiveness = std::numeric_limits<double>::quiet_NaN();
-            double eta_2nd_low_total_design = std::numeric_limits<double>::quiet_NaN();
+            double eta_2nd_law_total_cycle_design = std::numeric_limits<double>::quiet_NaN();
             double T_amb_des_K = std::numeric_limits<double>::quiet_NaN();
             double T_plant_in_des_K = std::numeric_limits<double>::quiet_NaN();
             double carnot_eff_des = std::numeric_limits<double>::quiet_NaN();
@@ -279,7 +284,7 @@ public:
                 eta_2nd_law_max_GETEM_and_T_sol_derate,
                 AE_2nd_law_max_GETEM_and_T_sol_derate,
                 total_brine_effectiveness,
-                eta_2nd_low_total_design,
+                eta_2nd_law_total_cycle_design,
                 T_amb_des_K,
                 T_plant_in_des_K,
                 carnot_eff_des,
@@ -313,10 +318,15 @@ public:
             double NumberOfWellsProdFailed = std::numeric_limits<double>::quiet_NaN();
             double NumberOfWellsInj = std::numeric_limits<double>::quiet_NaN();
             double NumberOfWellsInjDrilled = std::numeric_limits<double>::quiet_NaN();
-            double inj_pump_work_ft_design = std::numeric_limits<double>::quiet_NaN();       // ?
+            double inj_pump_hp = std::numeric_limits<double>::quiet_NaN();       // ?
             double prod_pump_power_kWe = std::numeric_limits<double>::quiet_NaN();
             double inj_pump_power_kWe = std::numeric_limits<double>::quiet_NaN();
             double total_pump_power_kWe = std::numeric_limits<double>::quiet_NaN();
+            double prod_pump_work_ft_design = std::numeric_limits<double>::quiet_NaN();
+            double pumpwork_prod = std::numeric_limits<double>::quiet_NaN();
+            double pumpwork_inj  = std::numeric_limits<double>::quiet_NaN();
+            double PressureChangeAcrossReservoir = std::numeric_limits<double>::quiet_NaN();
+            double AverageReservoirTemperatureF = std::numeric_limits<double>::quiet_NaN();
             std::string ErrorString;
 
             geo_subsurface.get_design_calcs(
@@ -333,16 +343,145 @@ public:
                 NumberOfWellsProdFailed,
                 NumberOfWellsInj,
                 NumberOfWellsInjDrilled,
-                inj_pump_work_ft_design,
+                inj_pump_hp,
+                prod_pump_work_ft_design,
                 prod_pump_power_kWe,
                 inj_pump_power_kWe,
                 total_pump_power_kWe,
+                pumpwork_prod,
+                pumpwork_inj,
+                PressureChangeAcrossReservoir,
+                AverageReservoirTemperatureF,
                 ErrorString);
 
             double cycle_net_power_design_kWe = std::numeric_limits<double>::quiet_NaN();
             geo_surface.design_for_absolute_power(total_prod_flow_rate, cycle_net_power_design_kWe);
 
-            double net_plant_power = cycle_net_power_design_kWe - total_pump_power_kWe;
+            double net_plant_power_kWe = cycle_net_power_design_kWe - total_pump_power_kWe;
+
+            // Set design-point outputs
+            assign("GF_flowrate", (ssc_number_t) total_prod_flow_rate);     //[lb_m/hr]
+
+            assign("num_wells_getem", var_data((ssc_number_t)num_wells_calc));
+            assign("num_wells_getem_output", var_data((ssc_number_t)num_wells_calc));
+            assign("num_wells_getem_prod_drilled", var_data((ssc_number_t)NumberOfWellsProdDrilled));   // geo_outputs.md_NumberOfWellsProdDrilled));
+            assign("num_wells_getem_prod_failed", var_data((ssc_number_t)NumberOfWellsProdFailed));     // geo_outputs.md_NumberOfWellsProdFailed));
+            assign("num_wells_getem_inj", var_data((ssc_number_t)NumberOfWellsInj));                    // geo_outputs.md_NumberOfWellsInj));
+            assign("num_wells_getem_inj_drilled", var_data((ssc_number_t)NumberOfWellsInjDrilled));     // geo_outputs.md_NumberOfWellsInjDrilled));
+            assign("num_confirm_wells_to_production", var_data((ssc_number_t)num_conf_wells_prod));
+
+            // The GETEM flash model as of 2026.06.26 uses a different value for gross turbine output
+            double gross_cost_output_for_flash = std::numeric_limits<double>::quiet_NaN();
+            if( geo_inputs.me_ct == FLASH ) {
+                gross_cost_output_for_flash = cycle_net_power_design_kWe;       //[kWe]
+            }
+            assign("gross_cost_output", var_data((ssc_number_t)gross_cost_output_for_flash));
+
+            assign("system_capacity", var_data((ssc_number_t)cycle_net_power_design_kWe));             // geo_outputs.md_GrossPlantOutputMW * 1.E3));
+            assign("cp_system_nameplate", var_data((ssc_number_t)cycle_net_power_design_kWe *1.E-3));   // geo_outputs.md_GrossPlantOutputMW));
+
+            // Hardcode battery nameplate to 0
+            assign("cp_battery_nameplate", 0.0);
+
+            // this assignment happens in UI calculations and model run
+            assign("pump_work", var_data((ssc_number_t)total_pump_power_kWe));              // geo_outputs.md_PumpWorkKW / 1000)); // kW must be converted to MW
+            assign("net_plant_output", ssc_number_t(net_plant_power_kWe*1.E-3));            // geo_outputs.md_GrossPlantOutputMW - (geo_outputs.md_PumpWorkKW / 1000.0))); //[MWe]
+
+            double total_prod_pump_power_kWe = prod_pump_power_kWe*1.341022;             //[hp] total production pumping pump
+            double single_pump_prod_pump_power_hp = prod_pump_power_kWe * 1.341022 / num_wells_calc;    //[hp] single production pumping pump
+            assign("pump_size_hp", (ssc_number_t)single_pump_prod_pump_power_hp);       //[hp] single production pumping pump
+
+            //Assigning 2nd Law efficiency:
+            assign("eff_secondlaw", (ssc_number_t)eta_2nd_law_total_cycle_design);       //eff_secondlaw);       // plant-level (i.e. not considering pump work) 2nd law efficiency
+
+            assign("pump_depth_ft", var_data((ssc_number_t)prod_pump_work_ft_design));      //[ft]    // GetProductionPumpWorkft(void)
+            assign("inj_pump_hp", var_data((ssc_number_t)inj_pump_power_kWe * 1.341022));   //[hp]                                       //geo_outputs.md_InjPump_hp));
+            
+            assign("plant_brine_eff", var_data((ssc_number_t)total_brine_effectiveness));     //[W-hr/lb_m] geo_outputs.md_PlantBrineEffectiveness));
+            assign("pump_watthr_per_lb", var_data((ssc_number_t)pumpwork_watthr_per_lb_design));//[W-hr/lb_m] //geo_outputs.md_PumpWorkWattHrPerLb));
+            assign("pumpwork_prod", var_data((ssc_number_t)pumpwork_prod));                     //[W-hr/lb_m]  //geo_outputs.md_pumpwork_prod));      //[W-hr/lb]
+            assign("pumpwork_inj", var_data((ssc_number_t)pumpwork_inj));                       //[W-hr/lb_m] geo_outputs.md_pumpwork_inj));        //[W-hr/lb]
+            assign("gross_output", var_data((ssc_number_t)cycle_net_power_design_kWe *1.E-3));  //[MWe] geo_outputs.md_GrossPlantOutputMW));
+            
+            assign("reservoir_pressure", var_data((ssc_number_t)PressureChangeAcrossReservoir));    //[psi] geo_outputs.md_PressureChangeAcrossReservoir));
+            assign("reservoir_avg_temp", var_data((ssc_number_t)AverageReservoirTemperatureF)); //[F] physics::FarenheitToCelcius(geo_outputs.md_AverageReservoirTemperatureF)));
+
+            // This calculation doesn't seem consistent in the code, so let's try not to use it until we update the code
+            assign("bottom_hole_pressure", var_data((ssc_number_t) -6.54321));                   // geo_outputs.md_BottomHolePressure));
+            
+            assign("capacity_factor", var_data((ssc_number_t)(0)));
+            assign("kwh_per_kw", var_data((ssc_number_t)0));
+
+            // Flash outputs required
+            assign("cwflow", (ssc_number_t) std::numeric_limits<double>::quiet_NaN());
+
+            // Check cost and OM model calcs
+            double total_installed_cost_calc = std::numeric_limits<double>::quiet_NaN();
+            double total_getem_om_cost = std::numeric_limits<double>::quiet_NaN();
+
+            //***********************************************************
+            // Call cost models
+            if( geo_fin_model < 8 ) {
+                // Update geothermal costs by running the geothermal costs cmod
+                std::string geo_cost_module_name = "geothermal_costs";
+                ssc_module_t geo_cost_module = ssc_module_create(geo_cost_module_name.c_str());
+                var_table* geo_cost_vtab = this->get_var_table();
+
+                ssc_data_t geo_cmod_inputs = static_cast<ssc_data_t>(geo_cost_vtab);
+
+                if( !ssc_module_exec(geo_cost_module, geo_cmod_inputs) ) {
+                    std::string str = geo_cost_module_name + " execution error. ";
+                    int idx = 0;
+                    int type = -1;
+                    while( const char* msg = ssc_module_log(geo_cost_module, idx++, &type, nullptr) )
+                    {
+                        if(/*/(type == SSC_NOTICE) || */(type == SSC_WARNING) || (type == SSC_ERROR) ) {
+                            str += std::string(msg);
+                            str += "\t";
+                        }
+                    }
+                    ssc_module_free(geo_cost_module);
+                    throw std::runtime_error(str);
+                }
+
+                total_installed_cost_calc = as_double("total_installed_cost");
+
+                // *************************************************************
+                // *************************************************************
+
+                if( geo_fin_model < 7 ) {
+                    std:string construction_financing_module_name = "cb_construction_financing";
+                    ssc_module_t construction_financing_module = ssc_module_create(construction_financing_module_name.c_str());
+
+                    if( !ssc_module_exec(construction_financing_module, geo_cmod_inputs) ) {
+                        std::string str = construction_financing_module_name + " execution error. ";
+                        int idx = 0;
+                        int type = -1;
+                        while( const char* msg = ssc_module_log(construction_financing_module, idx++, &type, nullptr) )
+                        {
+                            if(/*/(type == SSC_NOTICE) || */(type == SSC_WARNING) || (type == SSC_ERROR) ) {
+                                str += std::string(msg);
+                                str += "\t";
+                            }
+                        }
+                        ssc_module_free(construction_financing_module);
+                        throw std::runtime_error(str);
+                    }
+
+                    // *****************************************************
+                    assign("num_wells_calc", as_double("num_wells_getem"));
+                    assign("drilling_cost", as_double("total_drilling_cost_used"));
+                    assign("field_gathering_system_cost", as_double("total_surface_equipment_cost"));
+                    assign("water_loss", as_double("subsurface_water_loss"));
+                    assign("pump_depth", as_double("pump_depth_ft"));
+                    assign("pump_type", 0);
+
+                    geo_cmod_inputs = static_cast<ssc_data_t>(geo_cost_vtab);
+                    getem_om_cost_calc(geo_cmod_inputs);
+
+                    total_getem_om_cost = as_double("total_getem_om_cost");
+                }
+            }
 
             double abc = 1.23;
         }
@@ -399,10 +538,7 @@ public:
 		geo_inputs.mb_CalculatePumpWork = ( 1 != as_integer("specify_pump_work") );
 		geo_inputs.md_UserSpecifiedPumpWorkKW = as_double("specified_pump_work_amount") * 1000; // entered in MW
 
-		//resource characterization
-        // Set design temp equal to resource temperature
-        double design_temp = resource_temperature;    //[C]
-        assign("design_temp", ssc_number_t(design_temp));
+		
 
 		
 
@@ -467,11 +603,6 @@ public:
 
         // running the model, we need to specify other inputs
         geo_inputs.md_PotentialResourceMW = as_double("resource_potential");
-
-
-        // we need to create the SPowerBlockInputs & SPowerBlockParameters and set the inputs
-
-        
 
         // hybrid dispatch schedule, which will set the value for pbInputs.TOU
         const char* sched = as_string("hybrid_dispatch_schedule");
@@ -562,8 +693,6 @@ public:
         assign("num_wells_getem_inj_drilled", var_data((ssc_number_t)geo_outputs.md_NumberOfWellsInjDrilled));
         assign("num_confirm_wells_to_production", var_data((ssc_number_t)num_conf_wells_prod));
 
-        assign("gross_output", var_data((ssc_number_t)geo_outputs.md_GrossPlantOutputMW));
-
         // The GETEM flash model as of 2026.06.26 uses a different value for gross turbine output
         double gross_cost_output_for_flash = std::numeric_limits<double>::quiet_NaN();
         if( geo_inputs.me_ct == FLASH ) {
@@ -592,9 +721,10 @@ public:
         //Assigning 2nd Law efficiency:
             //double eff_secondlaw = var_data(static_cast<ssc_number_t>(geo_outputs.eff_secondlaw));
         double eff_secondlaw = geo_outputs.eff_secondlaw;
-        assign("eff_secondlaw", (ssc_number_t)eff_secondlaw);
+        assign("eff_secondlaw", (ssc_number_t)eff_secondlaw);       // plant-level (i.e. not considering pump work) 2nd law efficiency
 
         assign("pump_depth_ft", var_data((ssc_number_t)geo_outputs.md_PumpDepthFt));
+        double pump_depth_ft_calc2 = geo_outputs.md_CalculatedPumpDepthInFeet;
         assign("inj_pump_hp", var_data((ssc_number_t)geo_outputs.md_InjPump_hp));
 
         assign("plant_brine_eff", var_data((ssc_number_t)geo_outputs.md_PlantBrineEffectiveness));
@@ -603,10 +733,11 @@ public:
         assign("pumpwork_inj", var_data((ssc_number_t)geo_outputs.md_pumpwork_inj));        //[W-hr/lb]
         assign("gross_output", var_data((ssc_number_t)geo_outputs.md_GrossPlantOutputMW));
 
-        assign("pump_hp", var_data((ssc_number_t)geo_outputs.md_PumpHorsePower));
         assign("reservoir_pressure", var_data((ssc_number_t)geo_outputs.md_PressureChangeAcrossReservoir));
         assign("reservoir_avg_temp", var_data((ssc_number_t)physics::FarenheitToCelcius(geo_outputs.md_AverageReservoirTemperatureF)));
-        assign("bottom_hole_pressure", var_data((ssc_number_t)geo_outputs.md_BottomHolePressure));
+
+        // This calculation doesn't seem consistent in the code, so let's try not to use it until we update the code
+        assign("bottom_hole_pressure", var_data((ssc_number_t) -6.54321));           // geo_outputs.md_BottomHolePressure));
 
         assign("capacity_factor", var_data((ssc_number_t)(0)));
         assign("kwh_per_kw", var_data((ssc_number_t)0));
@@ -683,9 +814,9 @@ public:
         double flash_count = geo_outputs.flash_count;
         assign("flash_count", (ssc_number_t)flash_count);
 
-        assign("dt_rock_well_head", var_data((ssc_number_t)geo_outputs.md_dtRockWellHead));
-        assign("brine_effectiveness", var_data((ssc_number_t)geo_outputs.md_PlantBrineEffectiveness));
-        assign("max_brine_effectiveness", var_data((ssc_number_t)geo_outputs.md_MaxBrineEffectiveness));
+        // Check cost and OM model calcs
+        double total_installed_cost_calc_old = std::numeric_limits<double>::quiet_NaN();
+        double total_getem_om_cost_old = std::numeric_limits<double>::quiet_NaN();
 
         //***********************************************************
         // Call cost models
@@ -712,11 +843,13 @@ public:
                 throw std::runtime_error(str);
             }
 
+            total_installed_cost_calc_old = as_double("total_installed_cost");
+
             // *************************************************************
             // *************************************************************
 
             if( geo_fin_model < 7 ) {
-            std:string construction_financing_module_name = "cb_construction_financing";
+                std::string construction_financing_module_name = "cb_construction_financing";
                 ssc_module_t construction_financing_module = ssc_module_create(construction_financing_module_name.c_str());
 
                 if( !ssc_module_exec(construction_financing_module, geo_cmod_inputs) ) {
@@ -744,6 +877,8 @@ public:
 
                 geo_cmod_inputs = static_cast<ssc_data_t>(geo_cost_vtab);
                 getem_om_cost_calc(geo_cmod_inputs);
+
+                total_getem_om_cost_old = as_double("total_getem_om_cost");
             }
         }        
         

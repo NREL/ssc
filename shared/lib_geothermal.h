@@ -189,7 +189,8 @@ struct SGeothermal_Outputs
 	{
 		md_PumpWorkKW = md_NumberOfWells = md_NumberOfWellsInj = md_FlashBrineEffectiveness = md_PressureHPFlashPSI = md_PressureLPFlashPSI = 0.0;
 		md_GrossPlantOutputMW = md_GrossPowerkW = md_PlantBrineEffectiveness = md_dtRockWellHead = md_PressureChangeAcrossReservoir = md_AverageReservoirTemperatureF = md_MaxBrineEffectiveness = 0;
-		md_PumpDepthFt = md_PumpHorsePower = md_BottomHolePressure = 0;
+		md_PumpDepthFt = md_CalculatedPumpDepthInFeet = //md_PumpHorsePower =
+            md_BottomHolePressure = 0;
 		maf_ReplacementsByYear = maf_monthly_resource_temp = maf_monthly_power = maf_monthly_energy = maf_timestep_resource_temp = NULL;
 		maf_timestep_power = maf_timestep_test_values = maf_timestep_pressure = maf_timestep_dry_bulb = maf_timestep_wet_bulb = NULL;
 		mb_BrineEffectivenessCalculated = mb_FlashPressuresCalculated = false;
@@ -269,7 +270,8 @@ struct SGeothermal_Outputs
 	double md_GrossPlantOutputMW;	//double GetGrossPlantOutputMW(void) { return this->PlantOutputKW()/1000; }
     double md_GrossPowerkW;
 	double md_PumpDepthFt;
-	double md_PumpHorsePower;
+    double md_CalculatedPumpDepthInFeet;    //[ft]
+	//double md_PumpHorsePower;
 	double md_PressureChangeAcrossReservoir; //double GetPressureChangeAcrossReservoir(void) { return moPPC.GetPressureChangeAcrossReservoir(); }
 	double md_AverageReservoirTemperatureF; //double GetAverageReservoirTemperatureUsedF(void) { return moPPC.GetReservoirTemperatureF(); }
 	double md_BottomHolePressure; //double GetBottomHolePressure(void) { return moPPC.GetBottomHolePressure(); }
@@ -763,10 +765,15 @@ private:
     double m_NumberOfWellsProdFailed;
     double m_NumberOfWellsInj;
     double m_NumberOfWellsInjDrilled;
-    double m_inj_pump_work_ft_design;
+    double m_inj_pump_hp;
+    double m_prod_pump_work_ft_design;
     double m_prod_pump_power_kWe;
     double m_inj_pump_power_kWe;
     double m_total_pump_power_kWe;
+    double m_pumpwork_prod;             //[W-hr/lb_m]
+    double m_pumpwork_inj;              //[W-hr/lb_m]
+    double m_PressureChangeAcrossReservoir; //[psi]
+    double m_AverageReservoirTemperatureF;  //[F]
     std::string ErrorString;
 
 public:
@@ -800,10 +807,15 @@ public:
         double& number_of_wells_prod_failed,
         double& number_of_wells_inj,
         double& number_of_wells_inj_drilled,
-        double& inj_pump_work_ft_design,
+        double& inj_pump_hp,
+        double& prod_pump_work_ft_design,
         double& prod_pump_power_kWe,
         double& inj_pump_power_kWe,
         double& total_pump_power_kWe,
+        double& pumpwork_prod,
+        double& pumpwork_inj,
+        double& PressureChangeAcrossReservoir,
+        double& AverageReservoirTemperatureF,
         std::string& error_string) const
     {
         resource_depth_calc = m_resource_depth_calc;
@@ -819,10 +831,15 @@ public:
         number_of_wells_prod_failed = m_NumberOfWellsProdFailed;
         number_of_wells_inj = m_NumberOfWellsInj;
         number_of_wells_inj_drilled = m_NumberOfWellsInjDrilled;
-        inj_pump_work_ft_design = m_inj_pump_work_ft_design;
+        inj_pump_hp = m_inj_pump_hp;
+        prod_pump_work_ft_design = m_prod_pump_work_ft_design;
         prod_pump_power_kWe = m_prod_pump_power_kWe;
         inj_pump_power_kWe = m_inj_pump_power_kWe;
         total_pump_power_kWe = m_total_pump_power_kWe;
+        pumpwork_prod = m_pumpwork_prod;
+        pumpwork_inj = m_pumpwork_inj;
+        PressureChangeAcrossReservoir = m_PressureChangeAcrossReservoir;
+        AverageReservoirTemperatureF = m_AverageReservoirTemperatureF;
         error_string = ErrorString;
     }
 };

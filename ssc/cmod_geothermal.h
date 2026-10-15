@@ -211,7 +211,6 @@ static var_info _cm_vtab_geothermal[] = {
     { SSC_OUTPUT,       SSC_NUMBER,      "cp_battery_nameplate",               "Battery nameplate",                                  "MWe",     "",             "System Costs",     "*",      "",              "" },
 
     { SSC_OUTPUT,       SSC_NUMBER,      "pump_depth_ft",                      "Pump depth calculated by GETEM",                     "ft",      "",             "GeoHourly",        "*",      "",                "" },
-    { SSC_OUTPUT,       SSC_NUMBER,      "pump_hp",                            "Pump hp calculated by GETEM",                        "hp",      "",             "GeoHourly",        "*",      "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "reservoir_pressure",                 "Reservoir pres calculated by GETEM",                 "",        "",             "GeoHourly",        "*",      "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "reservoir_avg_temp",                 "Avg reservoir temp calculated by GETEM",             "C",       "",             "GeoHourly",        "*",      "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "bottom_hole_pressure",               "Bottom hole pres calculated by GETEM",               "",        "",             "GeoHourly",        "*",      "",                "" },
@@ -251,7 +250,6 @@ static var_info _cm_vtab_geothermal[] = {
     { SSC_OUTPUT,     SSC_ARRAY,      "degradation",                        "Annual energy degradation",                                 "",        "",     "System Output",         "", "",                      "" },
     { SSC_OUTPUT,     SSC_NUMBER,     "system_use_recapitalization",        "Apply recapitalization in financial models?",               "0/1",     "",     "GeoHourly",             "?",        "",                              "" },
 
-
     // The array outputs are only meaningful when the model is run (not UI calculations)                                                                             
     // User can specify whether the analysis should be done hourly or monthly.  With monthly analysis, there are only monthly results.                                
     // With hourly analysis, there are still monthly results, but there are hourly (over the whole lifetime of the project) results as well.                           
@@ -280,18 +278,12 @@ static var_info _cm_vtab_geothermal[] = {
     { SSC_OUTPUT,       SSC_ARRAY,       "plant_net_power_od",                 "Plant net power before availability derate",         "kW",      "",             "GeoHourly",        "sim_type=1",               "",                "" },
     { SSC_OUTPUT,       SSC_ARRAY,       "brine_pumping_power_od",             "Brine pump power",                                   "kW",      "",             "GeoHourly",        "sim_type=1",               "",                "" },
 
-
     { SSC_OUTPUT,       SSC_NUMBER,      "lifetime_output",                    "Lifetime output",                                    "kWh",     "",             "GeoHourly",        "sim_type=1",               "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "first_year_output",                  "First year output",                                  "kWh",     "",             "GeoHourly",        "sim_type=1",               "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "annual_energy",                      "Annual AC energy in Year 1",                         "kWh",     "",             "GeoHourly",        "sim_type=1",               "",                "" },
 
     { SSC_OUTPUT,       SSC_NUMBER,      "capacity_factor",                    "Capacity factor",                                    "",        "",             "",                 "*",                         "",                "" },
     { SSC_OUTPUT,       SSC_NUMBER,      "kwh_per_kw",                          "First year kWh/kW",                                 "",        "",             "",                 "*",                         "",                "" },
-
-    { SSC_OUTPUT,       SSC_NUMBER,		"dt_rock_well_head",                   "dT used in calculations",							 "C",		"",             "GeoHourly",		"*",                         "",                "" },
-    { SSC_OUTPUT,       SSC_NUMBER,		"brine_effectiveness",                 "Brine effectiveness used in calculations",			 "w-h/lb",  "",             "GeoHourly",		"*",                         "",                "" },
-    { SSC_OUTPUT,       SSC_NUMBER,		"max_brine_effectiveness",             "Maximum brine effectiveness",						 "w-h/lb",  "",             "GeoHourly",		"*",                         "",                "" },
-
 
 var_info_invalid };
 

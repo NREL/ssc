@@ -732,13 +732,16 @@ namespace geothermal
     } // D129 - lb/hr (evaporative water loss)
 
     double GetPressureChangeAcrossReservoir(reservoirPressureChangeCalculation res_pres_change_calc_type, double ProductionFlowRateKgPerS /*kg/s*/,
-            double ReservoirDeltaPressure /*?*/)
+            double ReservoirDeltaPressure /*?*/, double T_resource_C /*C*/,
+            double& AverageReservoirTemperatureF /*F*/)
     {	//  Only used in GetCalculatedPumpDepthInFeet
 
         // [7B.Reservoir Hydraulics].G70
         // res_pres_change_calc_type = mo_geo_in.me_pc
         // ReservoirDeltaPressure = mo_geo_in.md_ReservoirDeltaPressure
         if( res_pres_change_calc_type == ENTER_PC ) {
+
+            AverageReservoirTemperatureF = physics::CelciusToFarenheit(T_resource_C);
             return flowRatePerWell(ProductionFlowRateKgPerS) / ReservoirDeltaPressure;
         }
 
@@ -992,10 +995,12 @@ namespace geothermal
                                         double ResourceDepthM_calc /*m*/, double dt_prod_well_calc /*C*/, double T_resource_C /*C*/,
                                         double ExcessPressureBar /*bar*/, conversionTypes conv_type, double GFPumpEfficiency /*-*/,
 
-                                        double& ProdWellFriction)
+                                        double& ProdWellFriction, double& PressureChangeAcrossReservoir /*psi*/, double& AverageReservoirTemperatureF)
     {
         double P_res = P_hydrostatic_PSI;       //[psi]
-        double Prod_well_minus_bottomhole = P_res - geothermal::GetPressureChangeAcrossReservoir(res_pres_change_calc_type, ProductionFlowRateKgPerS, ReservoirDeltaPressure);
+        PressureChangeAcrossReservoir = geothermal::GetPressureChangeAcrossReservoir(res_pres_change_calc_type,
+                                    ProductionFlowRateKgPerS, ReservoirDeltaPressure, T_resource_C, AverageReservoirTemperatureF);
+        double Prod_well_minus_bottomhole = P_res - PressureChangeAcrossReservoir;  //[psi]
 
         double flow = ProductionFlowRateKgPerS; //[kg/s]
         double flow_lbh = KgToLb(flow) * 3600;  //[lbm/hr] convert from kg/s
@@ -1164,9 +1169,10 @@ namespace geothermal
         double ExcessPressureBar /*bar*/, double PressureChangeAcrossSurfaceEquipmentPSI /*psi*/, double AdditionalPressure, double T_amb_fixed_hydrostatic_C /*C*/,
         double GFPumpEfficiency, std::string& ErrorString,
         int ProductionWellDiam, int ProductionWellType,
-        double& inj_pump_work_ft /*ft*/,
+        double& inj_pump_work_ft /*ft*/, double& prod_pump_work_ft /*ft*/,
         double& pumpwork_prod /*W-hr/lbm*/, double& pumpwork_inj /*W-hr/lbm*/, double& FractionGFInjected,
-        double& InjWellPressurePSI, double& ProdWellFriction, double& P_hydrostatic_PSI, double& InjWellFriction)
+        double& InjWellPressurePSI, double& ProdWellFriction, double& P_hydrostatic_PSI, double& InjWellFriction,
+        double& PressureChangeAcrossReservoir /*psi*/, double& AverageReservoirTemperatureF)
     {
 
         double dInjectionPumpPower = 0;
@@ -1199,13 +1205,14 @@ namespace geothermal
         }
 
         ProdWellFriction = std::numeric_limits<double>::quiet_NaN();
-        double prod_pump_work_ft = geothermal::GetProductionPumpWorkft(P_hydrostatic_PSI, res_pres_change_calc_type,
+        PressureChangeAcrossReservoir = std::numeric_limits<double>::quiet_NaN();
+        prod_pump_work_ft = geothermal::GetProductionPumpWorkft(P_hydrostatic_PSI, res_pres_change_calc_type,
             ProductionFlowRateKgPerS, ReservoirDeltaPressure,
             ProductionWellDiam, ProductionWellType, resource_type,
             ResourceDepthM_calc, dt_prod_well_calc, T_resource_C,
             ExcessPressureBar, conv_type, GFPumpEfficiency,
 
-            ProdWellFriction);
+            ProdWellFriction, PressureChangeAcrossReservoir /*psi*/, AverageReservoirTemperatureF);
 
 
         double dProductionPumpPower = geothermal::pumpWorkInWattHr(1, prod_pump_work_ft, GFPumpEfficiency, ErrorString); //[W-hr/lbm]
@@ -1241,7 +1248,7 @@ namespace geothermal
         double T_amb_fixed_hydrostatic_C /*C*/, double water_loss_percent /*%*/, reservoirPressureChangeCalculation res_pres_change_calc_type,
         double ReservoirDeltaPressure /*?*/, flashTypes flash_type,
         double GFPumpEfficiency /*-*/, double StimSuccessRate /*-*/, double PressureAmbientPSI /*psi*/,
-        double FailedProdFlowRatio /*-*/,
+        double FailedProdFlowRatio /*-*/, 
         int ProductionWellDiam, int ProductionWellType,
         double DesiredSalesCapacityKW /*kWe*/, double DrillSuccessRate /*-*/,
 
@@ -1250,20 +1257,23 @@ namespace geothermal
         double& NumberOfWellsProdExp, double& NumberOfWellsProdDrilled, double& NumberOfWellsProdFailed,
         double& NumberOfWellsInj, double& NumberOfWellsInjDrilled,
         double& pump_inj_hp, double& prod_pump_power_kWe, double& inj_pump_power_kWe, double& total_pump_power_kWe,
+        double& prod_pump_work_ft /*ft*/, double& pumpwork_prod, double& pumpwork_inj,
+        double& PressureChangeAcrossReservoir /*psi*/, double& AverageReservoirTemperatureF,
         std::string& ErrorString)
     {
         // Convert temp gradient from C/km to C/m
         double temp_gradient_fixed_T_amb_C_per_m = tempGradient_fixed_T_amb_C_per_km / 1000.0;
 
         // Can call pump work functions reagardless of whether or not we are calculating number of wells, right?
-        double pumpwork_prod = std::numeric_limits<double>::quiet_NaN(); /*W-hr/lbm*/
-        double pumpwork_inj = std::numeric_limits<double>::quiet_NaN(); /*W-hr/lbm*/
+        pumpwork_prod = std::numeric_limits<double>::quiet_NaN(); /*W-hr/lbm*/
+        pumpwork_inj = std::numeric_limits<double>::quiet_NaN(); /*W-hr/lbm*/
         double FractionGFInjected = std::numeric_limits<double>::quiet_NaN();   //[-]
         double InjWellPressurePSI = std::numeric_limits<double>::quiet_NaN();  //[psi]
         double ProdWellFriction = std::numeric_limits<double>::quiet_NaN();  
         double P_hydrostatic_PSI = std::numeric_limits<double>::quiet_NaN();
         double InjWellFriction = std::numeric_limits<double>::quiet_NaN();
         double inj_pump_work_ft = std::numeric_limits<double>::quiet_NaN();
+        prod_pump_work_ft = std::numeric_limits<double>::quiet_NaN();
 
         // Total specific pump work in W-hr/lb_m, including production and injection pumps
         pumpwork_watthr_per_lb = geothermal::GetPumpWorkWattHrPerLb(water_loss_percent, resource_type, conv_type, res_pres_change_calc_type,
@@ -1273,8 +1283,10 @@ namespace geothermal
             injection_density, ExcessPressureBar, PressureChangeAcrossSurfaceEquipmentPSI, AdditionalPressure, T_amb_fixed_hydrostatic_C,
             GFPumpEfficiency, ErrorString,
             ProductionWellDiam, ProductionWellType,
-            inj_pump_work_ft, pumpwork_prod, pumpwork_inj,
-            FractionGFInjected, InjWellPressurePSI, ProdWellFriction, P_hydrostatic_PSI, InjWellFriction);
+            inj_pump_work_ft, prod_pump_work_ft /*ft*/,
+            pumpwork_prod, pumpwork_inj,
+            FractionGFInjected, InjWellPressurePSI, ProdWellFriction, P_hydrostatic_PSI, InjWellFriction,
+            PressureChangeAcrossReservoir, AverageReservoirTemperatureF);
 
         double netBrineEffectiveness = total_brine_effectiveness - pumpwork_watthr_per_lb; //[W-hr/lb_m]
 
@@ -2036,7 +2048,8 @@ double CGeothermalAnalyzer::GetCalculatedPumpDepthInFeet(void)
 	double frictionHeadLossWell = (geothermal::FrictionFactor(ReWell) / dDiameterProductionWellFt)* pow(velocityWell, 2) / (2 * physics::GRAVITY_FTS2);
 
 	double pumpSetting = ((pressureDiff * 144) / productionDensity())*(1 - frictionHeadLossWell);   // [7A.GF Pumps].D89
-	return (geothermal::MetersToFeet(GetResourceDepthM()) - pumpSetting < 0) ? 0 : geothermal::MetersToFeet(GetResourceDepthM()) - pumpSetting; // feet - [7A.GF Pumps].D90
+    mp_geo_out->md_CalculatedPumpDepthInFeet = (geothermal::MetersToFeet(GetResourceDepthM()) - pumpSetting < 0) ? 0 : geothermal::MetersToFeet(GetResourceDepthM()) - pumpSetting; // feet - [7A.GF Pumps].D90
+    return mp_geo_out->md_CalculatedPumpDepthInFeet;
 }
 
 double CGeothermalAnalyzer::pumpHeadFt() // ft
@@ -3607,7 +3620,7 @@ bool CGeothermalAnalyzer::InterfaceOutputsFilled(void)
     mp_geo_out->md_PumpDepthFt = GetProductionPumpWorkft();
 	// mp_geo_out->md_BottomHolePressure  is calculated in GetCalculatedPumpDepthInFeet()
 	//mp_geo_out->md_PumpHorsePower = (flowRatePerWell() * pumpHeadFt())/(60 * 33000 * geothermal::EFFICIENCY_PUMP_GF);
-	mp_geo_out->md_PumpHorsePower = (flowRatePerWell() * pumpHeadFt()) / (60 * 33000 * mo_geo_in.md_GFPumpEfficiency);
+	double PumpHorsePower = (flowRatePerWell() * pumpHeadFt()) / (60 * 33000 * mo_geo_in.md_GFPumpEfficiency);
 
 	mp_geo_out->md_AverageReservoirTemperatureF = physics::CelciusToFarenheit(GetResourceTemperatureC());	// Set a default value, it might be recalculated in "GetPressureChangeAcrossReservoir()" if necessary
 	mp_geo_out->md_PressureChangeAcrossReservoir = GetPressureChangeAcrossReservoir();
@@ -3832,10 +3845,15 @@ C_geo_subsurface::C_geo_subsurface(geo_wells_stimulated wells_stim, double Explo
     m_NumberOfWellsProdFailed = std::numeric_limits<double>::quiet_NaN();
     m_NumberOfWellsInj = std::numeric_limits<double>::quiet_NaN();
     m_NumberOfWellsInjDrilled = std::numeric_limits<double>::quiet_NaN();
-    m_inj_pump_work_ft_design = std::numeric_limits<double>::quiet_NaN();       // ?
+    m_inj_pump_hp = std::numeric_limits<double>::quiet_NaN();       // ?
+    m_prod_pump_work_ft_design = std::numeric_limits<double>::quiet_NaN();
     m_prod_pump_power_kWe = std::numeric_limits<double>::quiet_NaN();
     m_inj_pump_power_kWe = std::numeric_limits<double>::quiet_NaN();
     m_total_pump_power_kWe = std::numeric_limits<double>::quiet_NaN();
+    m_pumpwork_prod = std::numeric_limits<double>::quiet_NaN();
+    m_pumpwork_inj = std::numeric_limits<double>::quiet_NaN();
+    m_PressureChangeAcrossReservoir = std::numeric_limits<double>::quiet_NaN();
+    m_AverageReservoirTemperatureF = std::numeric_limits<double>::quiet_NaN();
     std::string ErrorString;
 
     double n_wells_calc = geothermal::GetNumberOfWells(m_wells_stim, m_ExplorationWellsProd, m_resource_type,
@@ -3857,7 +3875,10 @@ C_geo_subsurface::C_geo_subsurface(geo_wells_stimulated wells_stim, double Explo
         m_prod_wells_exploration, m_inj_wells_exploration, m_num_wells_calc,
         m_NumberOfWellsProdExp, m_NumberOfWellsProdDrilled, m_NumberOfWellsProdFailed,
         m_NumberOfWellsInj, m_NumberOfWellsInjDrilled,
-        m_inj_pump_work_ft_design, m_prod_pump_power_kWe, m_inj_pump_power_kWe, m_total_pump_power_kWe, ErrorString);
+        m_inj_pump_hp, 
+        m_prod_pump_power_kWe, m_inj_pump_power_kWe, m_total_pump_power_kWe, m_prod_pump_work_ft_design /*ft*/,
+        m_pumpwork_prod, m_pumpwork_inj,
+        m_PressureChangeAcrossReservoir /*psi*/, m_AverageReservoirTemperatureF,
+        ErrorString);
 
-    
 }

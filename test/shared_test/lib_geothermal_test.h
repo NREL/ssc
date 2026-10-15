@@ -369,7 +369,7 @@ public:
 				geoPlant_outputs.md_PlantBrineEffectiveness;
 				geoPlant_outputs.md_GrossPlantOutputMW;	//double getgrossplantoutputmw(void) { return this->plantoutputkw()/1000; }
 				geoPlant_outputs.md_PumpDepthFt;
-				geoPlant_outputs.md_PumpHorsePower;
+				//geoPlant_outputs.md_PumpHorsePower;
 				geoPlant_outputs.md_PressureChangeAcrossReservoir; //double getpressurechangeacrossreservoir(void) { return moppc.getpressurechangeacrossreservoir(); }
 				geoPlant_outputs.md_AverageReservoirTemperatureF; //double getaveragereservoirtemperatureusedf(void) { return moppc.getreservoirtemperaturef(); }
 				geoPlant_outputs.md_BottomHolePressure; //double getbottomholepressure(void) { return moppc.getbottomholepressure(); }
