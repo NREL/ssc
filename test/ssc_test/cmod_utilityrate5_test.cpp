@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
+#include <algorithm>
 #include <vector>
 #include <string>
 #include <gtest/gtest.h>
@@ -569,8 +570,9 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_metering_credits_w_s
     std::vector<double> annual_bill_w_sys(nrows);
     annual_bill_w_sys = util::array_to_vector(annual_bills_ub, nrows);
 
-    EXPECT_NEAR(-19600.58, annual_bill_w_sys[1], 0.1);
-    EXPECT_NEAR(-37439.55, annual_bill_w_sys[2], 0.1);
+    // Excess credits roll over to future bills instead of being paid out (SAM #2264)
+    EXPECT_NEAR(0, annual_bill_w_sys[1], 0.1);
+    EXPECT_NEAR(0, annual_bill_w_sys[2], 0.1);
 
     ssc_number_t* annual_bills_ub_no_sys = ssc_data_get_array(data, "utility_bill_wo_sys", &nrows);
     std::vector<double> annual_bill_wo_sys(nrows);
@@ -587,6 +589,100 @@ TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_metering_credits_w_s
     EXPECT_NEAR(0, dec_year_1_credits, 0.1);
 
     ssc_data_free(data);
+}
+
+/// With $ credits and rollover enabled, the true-up balance carries forward to future bills
+/// instead of also being paid out, so it does not compound each year (SAM #2264)
+TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_metering_credits_rollover_not_paid_out) {
+    int analysis_period = 25;
+
+    auto run_case = [&](int rollover, bool gen_after_year_1) {
+        ssc_data_t data = new var_table;
+
+        setup_residential_rates(data);
+        // Sell rates equal to buy rates
+        ssc_number_t p_ur_ec_tou_mat[24] = { 1, 1, 9.9999999999999998e+37, 0, 0.10000000000000001, 0.10000000000000001,
+                             2, 1, 9.9999999999999998e+37, 0, 0.050000000000000003, 0.050000000000000003,
+                             3, 1, 9.9999999999999998e+37, 0, 0.20000000000000001, 0.20000000000000001,
+                             4, 1, 9.9999999999999998e+37, 0, 0.25, 0.25 };
+        ssc_data_set_matrix(data, "ur_ec_tou_mat", p_ur_ec_tou_mat, 4, 6);
+        ssc_data_set_number(data, "ur_metering_option", 1);
+        ssc_data_set_number(data, "ur_nm_credit_rollover", rollover);
+
+        ssc_data_set_number(data, "system_use_lifetime_output", 1);
+        ssc_data_set_number(data, "analysis_period", analysis_period);
+        set_array(data, "load", load_profile_path, 8760);
+        set_array(data, "gen", gen_path, 8760 * analysis_period);
+        if (!gen_after_year_1) {
+            int len;
+            ssc_number_t* gen = ssc_data_get_array(data, "gen", &len);
+            std::vector<ssc_number_t> gen_year_1(gen, gen + len);
+            std::fill(gen_year_1.begin() + 8760, gen_year_1.end(), 0.0);
+            ssc_data_set_array(data, "gen", gen_year_1.data(), len);
+        }
+
+        int status = run_module(data, "utilityrate5");
+        EXPECT_FALSE(status);
+
+        ensure_outputs_line_up(data);
+        return data;
+    };
+
+    auto get_matrix = [](ssc_data_t data, const char* name) {
+        int nrows;
+        int ncols;
+        ssc_number_t* values = ssc_data_get_matrix(data, name, &nrows, &ncols);
+        util::matrix_t<double> matrix(nrows, ncols);
+        matrix.assign(values, nrows, ncols);
+        return matrix;
+    };
+
+    auto lifetime_bill = [&](ssc_data_t data) {
+        int nrows;
+        ssc_number_t* annual_bills = ssc_data_get_array(data, "utility_bill_w_sys", &nrows);
+        double total = 0;
+        for (int y = 1; y < nrows; y++) {
+            total += annual_bills[y];
+        }
+        return total;
+    };
+
+    // Without rollover the December true-up is paid out every year
+    ssc_data_t no_rollover = run_case(0, true);
+    util::matrix_t<double> true_up_no_rollover = get_matrix(no_rollover, "true_up_credits_ym");
+    double dec_year_1_payout = true_up_no_rollover.at((size_t)1, (size_t)11);
+    EXPECT_GT(dec_year_1_payout, 0.0);
+    EXPECT_NEAR(true_up_no_rollover.at((size_t)2, (size_t)11), dec_year_1_payout, 0.1 * dec_year_1_payout);
+
+    // With rollover nothing is paid out and no annual bill goes negative
+    ssc_data_t rollover = run_case(1, true);
+    util::matrix_t<double> true_up_rollover = get_matrix(rollover, "true_up_credits_ym");
+    int nrows;
+    ssc_number_t* annual_bills = ssc_data_get_array(rollover, "utility_bill_w_sys", &nrows);
+    for (int y = 1; y <= analysis_period; y++) {
+        for (int m = 0; m < 12; m++) {
+            EXPECT_NEAR(0.0, true_up_rollover.at((size_t)y, (size_t)m), 0.001) << "year " << y << " month " << m;
+        }
+        EXPECT_GE(annual_bills[y], -0.001) << "year " << y;
+    }
+
+    // With sell rates equal to buy rates, keeping the credit can't be worth more than cashing it out
+    EXPECT_GE(lifetime_bill(rollover), lifetime_bill(no_rollover) - 0.01);
+
+    // The year 1 balance is still carried into year 2: with no generation after year 1,
+    // year 2 bills use exactly the credit that would otherwise have been paid out
+    ssc_data_t year_1_only = run_case(1, false);
+    util::matrix_t<double> nm_applied = get_matrix(year_1_only, "nm_dollars_applied_ym");
+    double year_2_applied = 0;
+    for (int m = 0; m < 12; m++) {
+        year_2_applied += nm_applied.at((size_t)2, (size_t)m);
+    }
+    EXPECT_GT(nm_applied.at((size_t)2, (size_t)0), 0.0);
+    EXPECT_NEAR(year_2_applied, dec_year_1_payout, 0.01);
+
+    ssc_data_free(no_rollover);
+    ssc_data_free(rollover);
+    ssc_data_free(year_1_only);
 }
 
 TEST(cmod_utilityrate5_eqns, Test_Residential_TOU_Rates_net_billing) {
