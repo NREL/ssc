@@ -69,10 +69,6 @@ BatteryPower::BatteryPower(double dtHour) :
 		powerFuelCellToLoad(0),
 		powerFuelCellToBattery(0),
 		powerPVInverterDraw(0),
-		powerBatteryChargeMaxDC(0),
-		powerBatteryDischargeMaxDC(0),
-		powerBatteryChargeMaxAC(0),
-		powerBatteryDischargeMaxAC(0),
 		powerSystemLoss(0),
 		powerConversionLoss(0),
         powerInterconnectionLimit(1e+38),
@@ -80,11 +76,11 @@ BatteryPower::BatteryPower(double dtHour) :
         powerCurtailmentLimit(1e+38),
         voltageSystem(0),
         acLossWiring(0.0),
-        acLossSystemAvailability(0.0),
-        adjustLosses(0.0),
         acXfmrLoadLoss(0.0),
         acXfmrNoLoadLoss(0.0),
         acXfmrRating(0.0),
+        acLossSystemAvailability(0.0),
+        adjustLosses(0.0),
         isOutageStep(false),
 		connectionMode(0),
         meterPosition(0),
@@ -105,9 +101,13 @@ BatteryPower::BatteryPower(double dtHour) :
 		stateOfChargeMax(1),
 		stateOfChargeMin(0),
 		depthOfDischargeMax(1),
+		tolerance(powerflow_tolerance),
+		powerBatteryChargeMaxDC(0),
+		powerBatteryDischargeMaxDC(0),
+		powerBatteryChargeMaxAC(0),
+		powerBatteryDischargeMaxAC(0),
         currentChargeMax(0),
-        currentDischargeMax(0),
-		tolerance(powerflow_tolerance){}
+        currentDischargeMax(0){}
 
 BatteryPower::BatteryPower(const BatteryPower& orig) {
     sharedInverter = orig.sharedInverter;
