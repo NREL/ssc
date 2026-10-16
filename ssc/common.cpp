@@ -1545,7 +1545,7 @@ bool forecast_price_signal::setup(size_t step_per_hour)
 
             if (count_ppa_price_input > 1) {
                 if (y < count_ppa_price_input) {
-                    ppa_price[y];
+                    ppa = ppa_price[y];
                 }
                 else {
                     ppa = 0; // Match convention in single owner 
