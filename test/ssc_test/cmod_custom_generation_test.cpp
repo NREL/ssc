@@ -158,11 +158,11 @@ TEST_F(CMCustomGeneration, cmod_custom_generation_test_adjust_losses) {
     EXPECT_NEAR(annual_energy, 8760 * 100.0 * 0.95, 0.01);
 }
 
-/// Lifetime custom generation reports fuel usage by year, so merchant plant fuel expenses
-/// follow annual generation instead of staying at year 1 (ssc #1422)
-TEST_F(CMCustomGeneration, LifetimeFuelUsage_MerchantPlant) {
+/// Runs lifetime custom generation where year 2 generates a tenth of the other years, then the
+/// financial model, and checks that fuel expenses follow annual fuel usage instead of staying at year 1 (ssc #1422)
+static void check_lifetime_fuel_expense(ssc_data_t& data, const std::string& json_file, const char* financial_module) {
     std::string file_inputs = SSCDIR;
-    file_inputs += "/test/input_json/FinancialModels/merchantplant/2022.08.08_develop_branch_Generic_System_Merchant_Plant_cmod_merchantplant.json";
+    file_inputs += "/test/input_json/FinancialModels/" + json_file;
     std::ifstream file(file_inputs);
     std::ostringstream tmp;
     tmp << file.rdbuf();
@@ -199,13 +199,34 @@ TEST_F(CMCustomGeneration, LifetimeFuelUsage_MerchantPlant) {
     EXPECT_NEAR(fuel_usage[1], year1_fuel / 10.0, 1.0);
     EXPECT_NEAR(fuel_usage[2], year1_fuel, 1.0);
 
-    EXPECT_FALSE(run_module(data, "merchantplant"));
+    EXPECT_FALSE(run_module(data, financial_module));
 
     ssc_number_t* fuel_expense = ssc_data_get_array(data, "cf_om_fuel_expense", &n);
+    ASSERT_TRUE(fuel_expense != nullptr);
     ASSERT_EQ(n, analysis_period + 1);
     double escalation = 1.025; // inflation, no fuel cost escalation
-    EXPECT_NEAR(fuel_expense[2] / fuel_expense[1], 0.1 * escalation, 1e-6);
-    EXPECT_NEAR(fuel_expense[3] / fuel_expense[1], escalation * escalation, 1e-6);
+    EXPECT_NEAR(fuel_expense[2] / fuel_expense[1], 0.1 * escalation, 1e-6) << financial_module;
+    EXPECT_NEAR(fuel_expense[3] / fuel_expense[1], escalation * escalation, 1e-6) << financial_module;
+}
+
+TEST_F(CMCustomGeneration, LifetimeFuelUsage_MerchantPlant) {
+    check_lifetime_fuel_expense(data, "merchantplant/2022.08.08_develop_branch_Generic_System_Merchant_Plant_cmod_merchantplant.json", "merchantplant");
+}
+
+TEST_F(CMCustomGeneration, LifetimeFuelUsage_EquPartFlip) {
+    check_lifetime_fuel_expense(data, "equpartflip/2023.10.27_om-expense-cash-flow_Generic_System_All_Equity_Partnership_Flip_cmod_equpartflip.json", "equpartflip");
+}
+
+TEST_F(CMCustomGeneration, LifetimeFuelUsage_LevPartFlip) {
+    check_lifetime_fuel_expense(data, "levpartflip/2023.10.27_om-expense-cash-flow_Generic_System_Leveraged_Partnership_Flip_cmod_levpartflip.json", "levpartflip");
+}
+
+TEST_F(CMCustomGeneration, LifetimeFuelUsage_SaleLeaseback) {
+    check_lifetime_fuel_expense(data, "saleleaseback/2023.10.27_om-expense-cash-flow_Generic_System_Sale_Leaseback_cmod_saleleaseback.json", "saleleaseback");
+}
+
+TEST_F(CMCustomGeneration, LifetimeFuelUsage_HostDeveloper) {
+    check_lifetime_fuel_expense(data, "host_developer/2023.10.27_om-expense-cash-flow_Generic_System_Host_Developer_cmod_host_developer.json", "host_developer");
 }
 
 /*
