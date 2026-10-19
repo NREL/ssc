@@ -146,9 +146,8 @@ void csp_dispatch_ortools::init(double cycle_q_dot_des, double cycle_eta_des, do
         // TODO: update the parameters below.
         params.batt_charge_efficiency = pointers.battery->battstor_csp->batt_vars->batt_ac_dc_efficiency / 100.0;        //0.99; // 0.938;
         params.batt_discharge_efficiency = pointers.battery->battstor_csp->batt_vars->batt_dc_ac_efficiency / 100.0;//0.99; // 0.938;
-        params.batt_charge_cost = 0.9; //$/MWh
-        params.batt_discharge_cost = 0.9; //$/MWh
-        params.batt_lifecycle_cost = 26.5; //$/MWh-cycle, Todo: add variable to System Control, pass through dispatch  
+        // batt_charge_cost, batt_discharge_cost, and batt_lifecycle_cost are now set via s_params::set_user_params()
+        // prior to init() being called. If not explicitly set by the user, these default to 0.0 (see s_params constructor).
     }
     else {
         params.is_battery_included = false;

@@ -328,7 +328,8 @@ public:
 
         void set_user_params(bool cycle_use_standby, double disp_time_weighting,
             double disp_rsu_cost, double disp_hsu_cost, double disp_csu_cost, double disp_pen_delta_w, double disp_inventory_incentive,
-            double disp_pv_op_cost, double max_pv_gen, double rec_standby_loss, double rec_heattrace, double tes_buffer)
+            double disp_pv_op_cost, double max_pv_gen, double rec_standby_loss, double rec_heattrace, double tes_buffer,
+            double disp_batt_charge_cost, double disp_batt_discharge_cost, double disp_batt_lifecycle_cost)
         {
             can_cycle_use_standby = cycle_use_standby;
             time_weighting = disp_time_weighting;
@@ -352,6 +353,20 @@ public:
             w_rec_ht = rec_heattrace;           //TODO: Update to pull from receiver model
 
             tes_min_buffer = tes_buffer;
+
+            batt_charge_cost = disp_batt_charge_cost;
+            batt_discharge_cost = disp_batt_discharge_cost;
+            batt_lifecycle_cost = disp_batt_lifecycle_cost;
+        }
+
+        void set_user_params(bool cycle_use_standby, double disp_time_weighting,
+            double disp_rsu_cost, double disp_hsu_cost, double disp_csu_cost, double disp_pen_delta_w, double disp_inventory_incentive,
+            double disp_pv_op_cost, double max_pv_gen, double rec_standby_loss, double rec_heattrace, double tes_buffer)
+        {
+            // Preserve existing behavior: keep whatever battery costs are currently set (e.g. hardcoded defaults in init())
+            this->set_user_params(cycle_use_standby, disp_time_weighting, disp_rsu_cost, disp_hsu_cost, disp_csu_cost, disp_pen_delta_w,
+                disp_inventory_incentive, disp_pv_op_cost, max_pv_gen, rec_standby_loss, rec_heattrace, tes_buffer,
+                batt_charge_cost, batt_discharge_cost, batt_lifecycle_cost);
         }
 
         void set_user_params(bool cycle_use_standby, double disp_time_weighting,
