@@ -1248,7 +1248,7 @@ namespace geothermal
         double T_amb_fixed_hydrostatic_C /*C*/, double water_loss_percent /*%*/, reservoirPressureChangeCalculation res_pres_change_calc_type,
         double ReservoirDeltaPressure /*?*/, flashTypes flash_type,
         double GFPumpEfficiency /*-*/, double StimSuccessRate /*-*/, double PressureAmbientPSI /*psi*/,
-        double FailedProdFlowRatio /*-*/, 
+        double FailedProdFlowRatio /*-*/, double PotentialResourceMW /*MWe*/,
         int ProductionWellDiam, int ProductionWellType,
         double DesiredSalesCapacityKW /*kWe*/, double DrillSuccessRate /*-*/,
 
@@ -1256,6 +1256,7 @@ namespace geothermal
         double& prod_wells_exploration, double& inj_wells_exploration, double& num_wells_calc,
         double& NumberOfWellsProdExp, double& NumberOfWellsProdDrilled, double& NumberOfWellsProdFailed,
         double& NumberOfWellsInj, double& NumberOfWellsInjDrilled,
+        int& NumberOfReservoirs_calc,
         double& pump_inj_hp, double& prod_pump_power_kWe, double& inj_pump_power_kWe, double& total_pump_power_kWe,
         double& prod_pump_work_ft /*ft*/, double& pumpwork_prod, double& pumpwork_inj,
         double& PressureChangeAcrossReservoir /*psi*/, double& AverageReservoirTemperatureF,
@@ -1341,7 +1342,12 @@ namespace geothermal
         prod_pump_power_kWe = pumpwork_prod * (total_prod_flow_rate) / 1000.0;                  //[kWe]
         inj_pump_power_kWe = pumpwork_inj * (inj_flow_rate) / 1000.0;                           //[kWe]
         total_pump_power_kWe = pumpwork_watthr_per_lb * total_prod_flow_rate / 1000.0;          //[kWe]
-        double total_pump_power_check = prod_pump_power_kWe + inj_pump_power_kWe;  //[kWe]
+        double total_pump_power_check = prod_pump_power_kWe + inj_pump_power_kWe;               //[kWe]
+
+        double cycle_net_power = total_prod_flow_rate*total_brine_effectiveness/1000.0;         //[kWe]
+        double check_net_plant_power = cycle_net_power - total_pump_power_check;                //[kWe]
+
+        NumberOfReservoirs_calc = floor(PotentialResourceMW * 1000 / cycle_net_power);
 
         pump_inj_hp = (inj_pump_work_ft * (inj_flow_rate) / (60 * 33000)) / GFPumpEfficiency;        //[hp]
 
@@ -1426,6 +1432,10 @@ namespace geothermal
         return num_wells_calc;
     }
 
+    double Getem_Binary_OD_Scaling(double carnot_ratio) {
+
+        return -10.956 * pow(carnot_ratio, 2) + 22.422 * carnot_ratio - 10.466;
+    }
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Declaration of CGeoFluidContainer2 
@@ -1517,7 +1527,7 @@ double CGeothermalAnalyzer::PlantGrossPowerkW_offdesign(double T_resource_od_C /
 
     // Get carnot ratio and then carnot scaling
     double carnot_ratio = carnot_eff_od / mp_geo_out->m_carnot_eff_des;
-    double carnot_od_scaling = Getem_Binary_OD_Scaling(carnot_ratio);
+    double carnot_od_scaling = geothermal::Getem_Binary_OD_Scaling(carnot_ratio);
 
     // Get off-design 2nd law efficiency
     double getem_2nd_law_total_od = mp_geo_out->m_getem_2nd_law_total_design * carnot_od_scaling;   //[-]
@@ -1614,11 +1624,6 @@ double CGeothermalAnalyzer::MaxSecondLawEfficiency()
 		return (GetPlantBrineEffectiveness() / dGetemAEForSecondLaw);
 }
 
-double CGeothermalAnalyzer::Getem_Binary_OD_Scaling(double carnot_ratio){
-
-    return -10.956 * pow(carnot_ratio, 2) + 22.422 * carnot_ratio - 10.466;
-}
-
 double CGeothermalAnalyzer::FractionOfMaxEfficiency()
 {
     //double T_sink_des = mo_geo_in.md_TemperatureWetBulbC;       //[C]
@@ -1653,7 +1658,7 @@ double CGeothermalAnalyzer::FractionOfMaxEfficiency()
 
 	}
 	else // Binary and EGS
-		return Getem_Binary_OD_Scaling(carnot_ratio);
+		return geothermal::Getem_Binary_OD_Scaling(carnot_ratio);
 }
 
 bool CGeothermalAnalyzer::CanReplaceReservoir(double dTimePassedInYears)
@@ -3679,29 +3684,111 @@ int FillOutputsForUI(std::string &err_msg, const SGeothermal_Inputs &geo_inputs,
 		}
 }
 
+double C_geo_prod_well::DT_prod_well()
+{
+    if( m_is_prod_well_dt_calc ) {
+        throw std::runtime_error("Calculated production well temperature drop is not implemented.");
+        //return RameyWellbore();
+    }
+    else
+        return m_dt_prod_well_fixed_C;      //[C]
+}
+
 C_geo_prod_well::C_geo_prod_well(double T_resource_design_C /*C*/,
     double dt_prod_well_fixed_C /*C*/,
-    bool is_prod_well_dt_calc /*-*/)
+    bool is_prod_well_dt_calc /*-*/,
+    double TemperatureDeclineRate /*-*/,
+    double MaxTempDeclineC /*C*/,
+    bool AllowReservoirReplacements)
 {
     m_T_resource_design_C = T_resource_design_C;    //[C]
     m_dt_prod_well_fixed_C = dt_prod_well_fixed_C;  //[C]
     m_is_prod_well_dt_calc = is_prod_well_dt_calc;  //[-]
+    m_TemperatureDeclineRate = TemperatureDeclineRate;  //[-]
+    m_MaxTempDeclineC = MaxTempDeclineC;
+    m_AllowReservoirReplacements = AllowReservoirReplacements;
 
     // Calculate concentration and solubility temperature at design
     m_conc_SiO2_design_calc_ppm = std::numeric_limits<double>::quiet_NaN();
     geothermal::brine_concentration(m_T_resource_design_C, m_conc_SiO2_design_calc_ppm);
 
     // Calculate plant inlet temperature by applying production well temperature loss
-    m_dt_prod_well_des_calc_C = std::numeric_limits<double>::quiet_NaN();
-    if(m_is_prod_well_dt_calc){
-        m_dt_prod_well_des_calc_C = std::numeric_limits<double>::quiet_NaN();
-        throw std::runtime_error("Calculated production well temperature drop is not implemented.");
-    }
-    else{
-        m_dt_prod_well_des_calc_C = m_dt_prod_well_fixed_C;      //[C]
-    }
+    m_dt_prod_well_des_calc_C = DT_prod_well();
 
     m_T_plant_design_calc_C = m_T_resource_design_C - m_dt_prod_well_des_calc_C;    //[C]
+
+    // Set state values for timeseries simulation
+    m_T_resource_od_C = m_T_resource_design_C;          //[C]
+    m_T_resource_od_next_C = m_T_resource_od_C;         //[C]
+    m_ReservoirReplacements = 0;
+}
+
+bool C_geo_prod_well::CanReplaceReservoir(double dTimePassedInYears, int NumberOfReservoirs, size_t ProjectLifeYears)
+{
+    return ((m_ReservoirReplacements < NumberOfReservoirs) &&
+        (dTimePassedInYears + geothermal::FINAL_YEARS_WITH_NO_REPLACEMENT <= ProjectLifeYears)) ? true : false;
+}
+
+double C_geo_prod_well::calculate_new_off_design_resource_temp(double ElaspedTimeInYears, makeupAlgorithmType makeup_type)
+{
+    if( makeup_type != MA_EGS_FLASH && makeup_type != MA_EGS_BINARY )
+        return m_T_resource_od_C * (1 - (m_TemperatureDeclineRate / 12));
+    else
+    {
+        throw std::runtime_error("EGS is not implemented in calculate_new_off_design_resource_temp.");
+
+        //// The EGS temperature drop depends on the amount of fluid being produced (makes intuitive sense).
+        //md_LastProductionTemperatureC = md_WorkingTemperatureC;
+        //
+        //double dAverageReservoirTempC = geothermal::calcEGSAverageWaterTemperatureC(md_LastProductionTemperatureC, md_LastProductionTemperatureC, MaxSecondLawEfficiency());
+        ////double dDaysSinceLastReDrill = (md_YearsAtNextTimeStep - md_TimeOfLastReservoirReplacement) * geothermal::DAYS_PER_YEAR;
+        //double dDaysSinceLastReDrill = (dElapsedTimeInYears - md_TimeOfLastReservoirReplacement) * geothermal::DAYS_PER_YEAR;
+        //double dFunctionOfRockProperties = EGSReservoirConstant(dAverageReservoirTempC, dDaysSinceLastReDrill); //[6Bb.Makeup-EGS HX] column AG
+        //
+        //double tempBrineEfficiencyC = physics::KelvinToCelcius(exp((-0.42 * log(md_LastProductionTemperatureC) + 1.4745) * MaxSecondLawEfficiency() * FractionOfMaxEfficiency()) * physics::CelciusToKelvin(md_LastProductionTemperatureC));
+        //double tempSILimitC = physics::FarenheitToCelcius(geothermal::GetSiPrecipitationTemperatureF(physics::CelciusToFarenheit(md_LastProductionTemperatureC)));
+        //double dNewInjectionTemperatureC = MAX(tempBrineEfficiencyC, tempSILimitC);
+        //double dNewEGSProductionTemperatureC = GetResourceTemperatureC() + ((dNewInjectionTemperatureC - GetResourceTemperatureC()) * dFunctionOfRockProperties);
+        //
+        //md_WorkingTemperatureC = dNewEGSProductionTemperatureC;
+        //if( mo_geo_in.me_pc == SIMPLE_FRACTURE ) md_WorkingTemperatureC = Gringarten();
+    }
+}
+
+void C_geo_prod_well::ReplaceReservoir(double dElapsedTimeInYears, makeupAlgorithmType makeup_type)
+{
+    m_ReservoirReplacements++;
+    m_T_resource_od_next_C = m_T_resource_design_C;
+
+    if( makeup_type == MA_EGS_FLASH || makeup_type == MA_EGS_BINARY )
+    {	// have to keep track of the last temperature of the working fluid, and the last time the reservoir was "replaced" (re-drilled)
+        throw std::runtime_error("EGS is not implemented in ReplaceReservoir.");
+
+
+        //md_LastProductionTemperatureC = md_WorkingTemperatureC;
+        //double dYearsAtNextTimeStep = dElapsedTimeInYears + (1.0 / 12.0);
+        //if( dElapsedTimeInYears > 0 ) md_TimeOfLastReservoirReplacement = dYearsAtNextTimeStep - (EGSTimeStar(EGSAverageWaterTemperatureC2()) / geothermal::DAYS_PER_YEAR);
+    }
+}
+
+void C_geo_prod_well::calculate_off_design_resource_temp(double dElapsedTimeInYears, makeupAlgorithmType makeup_type,
+    int NumberOfReservoirs, size_t ProjectLifeYears,
+    double& T_resource_od_C, bool& is_replace_next_step)
+{
+    // Set current timestep temperature to calculated next
+    m_T_resource_od_C = m_T_resource_od_next_C;
+    T_resource_od_C = m_T_resource_od_C;
+
+    // Is it possible and do we want to replace the reservoir in the next time step?
+    bool bWantToReplaceReservoir = (T_resource_od_C < (m_T_resource_design_C - m_MaxTempDeclineC) && m_AllowReservoirReplacements) ? true : false;
+    if( bWantToReplaceReservoir && CanReplaceReservoir(dElapsedTimeInYears + (1.0 / 12), NumberOfReservoirs, ProjectLifeYears) ) {
+        ReplaceReservoir(dElapsedTimeInYears, makeup_type); // this will 'reset' temperature back to original resource temp
+        is_replace_next_step = true;
+    }
+    else {
+        m_T_resource_od_next_C = calculate_new_off_design_resource_temp(dElapsedTimeInYears + (1.0 / 12), makeup_type); // once per month -> reduce temperature from last temp
+        is_replace_next_step = false;
+    }
 }
 
 // Geothermal component classes
@@ -3758,6 +3845,34 @@ C_geo_surface::C_geo_surface(double T_plant_design_C /*C*/,
     m_T_inj_des_C = geothermal::InjectionTemperatureC(m_makeup_type,
         m_T_plant_design_C, m_T_amb_design_C, m_eta_2nd_law_total_design);
 
+    // Set values calculated downstream to NaN
+    m_cycle_net_power_des = std::numeric_limits<double>::quiet_NaN();
+}
+
+void C_geo_surface::calc_cycle_off_design(double T_cycle_od_C /*C*/, double T_amb_od_C /*C*/,
+    double total_flow_rate /*lb_m/hr*/, double& cycle_net_power /*kWe*/)
+{
+    // Off-design, so want to calculate as a function of brine and ambient temperatures
+    double AE_od = geothermal::oGFC.GetAEForBinaryWattHrUsingC(T_cycle_od_C, T_amb_od_C);     //[watt-hr/lb_m]
+
+    // Adjust 2nd law efficiency for off-design
+    double T_cycle_in_od_K = physics::CelciusToKelvin(T_cycle_od_C);
+    double T_amb_od_K = physics::CelciusToKelvin(T_amb_od_C);
+    double carnot_eff_od = 1 - T_amb_od_K / T_cycle_in_od_K;
+
+    // Get carnot ratio and then carnot scaling
+    double carnot_ratio = carnot_eff_od / m_carnot_eff_des;
+    double carnot_od_scaling = geothermal::Getem_Binary_OD_Scaling(carnot_ratio);
+
+    // Get off-design 2nd law efficiency
+    double getem_2nd_law_total_od = m_eta_2nd_law_total_design * carnot_od_scaling;   //[-]
+
+    // Get actual brine effectiveness
+    double plant_brine_effectiveness_od = AE_od * getem_2nd_law_total_od;       //[watt-hr/lb_m]
+
+    cycle_net_power = plant_brine_effectiveness_od * total_flow_rate / 1000.0;   //[kWe]
+
+    return;
 }
 
 void C_geo_surface::design_for_absolute_power(double total_prod_flow_rate /*lb_m/hr*/,
@@ -3777,7 +3892,7 @@ C_geo_subsurface::C_geo_subsurface(geo_wells_stimulated wells_stim, double Explo
     double T_amb_C /*C*/, depthCalculationForEGS depth_calc_EGS_type,
     double water_loss_percent /*%*/, reservoirPressureChangeCalculation res_pres_change_calc_type,
     double ReservoirDeltaPressure /*?*/, flashTypes flash_type,
-    double GFPumpEfficiency,
+    double GFPumpEfficiency, double PotentialResourceMW /*MWe*/,
     int ProductionWellDiam, int ProductionWellType,
     double DesiredSalesCapacityKW /*kWe*/,
     double StimSuccessRate /*-*/, double DrillSuccessRate /*-*/, double PressureAmbientPSI /*psi*/,
@@ -3819,6 +3934,7 @@ C_geo_subsurface::C_geo_subsurface(geo_wells_stimulated wells_stim, double Explo
     m_ReservoirDeltaPressure = ReservoirDeltaPressure;
 
     m_GFPumpEfficiency = GFPumpEfficiency;
+    m_PotentialResourceMW = PotentialResourceMW;
 
     m_DesiredSalesCapacityKW = DesiredSalesCapacityKW;
 
@@ -3845,6 +3961,7 @@ C_geo_subsurface::C_geo_subsurface(geo_wells_stimulated wells_stim, double Explo
     m_NumberOfWellsProdFailed = std::numeric_limits<double>::quiet_NaN();
     m_NumberOfWellsInj = std::numeric_limits<double>::quiet_NaN();
     m_NumberOfWellsInjDrilled = std::numeric_limits<double>::quiet_NaN();
+    m_NumberOfReservoirs = -1;
     m_inj_pump_hp = std::numeric_limits<double>::quiet_NaN();       // ?
     m_prod_pump_work_ft_design = std::numeric_limits<double>::quiet_NaN();
     m_prod_pump_power_kWe = std::numeric_limits<double>::quiet_NaN();
@@ -3866,7 +3983,7 @@ C_geo_subsurface::C_geo_subsurface(geo_wells_stimulated wells_stim, double Explo
         m_T_amb_hydrostatic_des_C, m_water_loss_percent, m_res_pres_change_calc_type,
         m_ReservoirDeltaPressure, m_flash_type,
         m_GFPumpEfficiency, m_StimSuccessRate, m_PressureAmbientPSI,
-        m_FailedProdFlowRatio,
+        m_FailedProdFlowRatio, m_PotentialResourceMW /*MWe*/,
         m_ProductionWellDiam, m_ProductionWellType,
         m_DesiredSalesCapacityKW, m_DrillSuccessRate, 
 
@@ -3875,10 +3992,317 @@ C_geo_subsurface::C_geo_subsurface(geo_wells_stimulated wells_stim, double Explo
         m_prod_wells_exploration, m_inj_wells_exploration, m_num_wells_calc,
         m_NumberOfWellsProdExp, m_NumberOfWellsProdDrilled, m_NumberOfWellsProdFailed,
         m_NumberOfWellsInj, m_NumberOfWellsInjDrilled,
+        m_NumberOfReservoirs,
         m_inj_pump_hp, 
         m_prod_pump_power_kWe, m_inj_pump_power_kWe, m_total_pump_power_kWe, m_prod_pump_work_ft_design /*ft*/,
         m_pumpwork_prod, m_pumpwork_inj,
         m_PressureChangeAcrossReservoir /*psi*/, m_AverageReservoirTemperatureF,
         ErrorString);
 
+}
+
+C_geo_weather_file::C_geo_weather_file(const char* WeatherFileName)
+{
+    m_WeatherFileName = WeatherFileName;
+
+    mb_WeatherFileOpen = false;
+    ml_ReadCount = 0;
+
+    mf_LastIntervalDone = 0.0;
+}
+
+void C_geo_weather_file::OpenWeatherFile()
+{
+    mb_WeatherFileOpen = false;
+    ml_ReadCount = 0;
+    if( !m_wFile.open(m_WeatherFileName) )
+        throw std::runtime_error("Could not open the weather file ");
+    else
+        mb_WeatherFileOpen = true;
+
+}
+
+bool C_geo_weather_file::TimeToUpdateInterface(float fPercentDone, float fNotificationIntervalInPercent)
+{	// Needs to be called with fPercentDone = zero at beginning of each run to reset the static var
+
+    if( fPercentDone == 0 )
+    {
+        mf_LastIntervalDone = 0;
+        return true;
+    }
+
+    if( fPercentDone >= (mf_LastIntervalDone + fNotificationIntervalInPercent) )
+    {
+        mf_LastIntervalDone += fNotificationIntervalInPercent;
+        return true;
+    }
+
+    return false;
+}
+
+bool C_geo_weather_file::ReadNextLineInWeatherFile(void)
+// Private function, called from ReadWeatherForTimeStep(timeStep)
+// Read the next line from weather file; rewind file if passed the end; assumes 8760 hour weather file;
+{
+    if( ml_ReadCount >= 8760 ) {
+        m_wFile.rewind();
+        ml_ReadCount = 0;
+    }
+
+    if( !m_wFile.read(&m_wf) ) {
+        throw std::runtime_error("Could not read  line " + util::to_string((int)ml_ReadCount + 1) + " in the weather file.");
+    }
+    ml_ReadCount++;
+
+    return true;
+}
+
+bool C_geo_weather_file::ReadWeatherForTimeStep(geo_weather_timestep_type weather_timestep_type,
+                                    unsigned int timeStep,
+                        double& P_amb, double& T_wb, double& T_dry, double& relhum)
+// Read one line in weather file for hourly analysis, or calculate the average values for a month for monthly analysis
+{
+    // if this is an hourly analysis, just ignore the time step and get the data from the next line in the weather file
+    if( weather_timestep_type == geo_weather_timestep_type::WEATHER_HOURLY ) {
+        ReadNextLineInWeatherFile();
+
+        P_amb = m_wf.pres;
+        T_wb = m_wf.twet;
+        T_dry = m_wf.tdry;
+        relhum = m_wf.rhum;
+    }
+    else if( weather_timestep_type == geo_weather_timestep_type::WEATHER_MONTHLY ) {
+        // Not an hourly analysis, so calculate the monthly weather info
+        int month = (timeStep % 12) + 1;
+        size_t hours = util::hours_in_month(month);
+        if( hours == 0 ) {
+            throw std::runtime_error("util::hours_in_month returned zero for month =  ");
+            return false;
+        }
+
+        P_amb = T_wb = T_dry = relhum = 0.0;
+        for( size_t i = 0; i < hours; i++ )
+        {
+            ReadNextLineInWeatherFile();
+            P_amb += m_wf.pres;
+            T_wb += m_wf.twet;
+            T_dry += m_wf.tdry;
+            relhum += m_wf.rhum;
+        }
+        P_amb /= hours;
+        T_wb /= hours;
+        T_dry /= hours;
+        relhum /= hours;
+        return true;
+    }
+}
+
+C_geo_system::C_geo_system(C_geo_prod_well* geo_prod_well, C_geo_surface* geo_surface,
+    C_geo_subsurface* geo_subsurface, C_geo_weather_file* geo_weather_file,
+    geo_simulation_timestep_type sim_timestep_type,
+    geo_weather_timestep_type weather_timestep_type,
+    bool(*update_function)(float, void*), void* user_data)
+{
+    m_geo_prod_well = geo_prod_well;
+    m_geo_surface = geo_surface;
+    m_geo_subsurface = geo_subsurface;
+    m_geo_weather_file = geo_weather_file;
+
+    m_sim_timestep_type = sim_timestep_type;
+    m_weather_timestep_type = weather_timestep_type;
+
+    mp_update_function = update_function;
+    mp_cmod_active = user_data;
+}
+
+bool C_geo_system::simulate(size_t ProjectLifeYears, int TotalMakeupCalculations, int performance_simulations_per_year)
+{
+    m_geo_weather_file->OpenWeatherFile();
+
+    double T_amb_des_C = std::numeric_limits<double>::quiet_NaN();
+    m_geo_surface->get_T_amb_des(T_amb_des_C);
+
+    int NumberOfReservoirs = -1;
+    m_geo_subsurface->get_number_reservoirs(NumberOfReservoirs);
+
+    makeupAlgorithmType makeup_type = m_geo_surface->get_makeup_type();
+
+    double total_prod_flow_rate = m_geo_subsurface->get_total_prod_flow_rate_des();     //[lb_m/hr]
+
+    double total_pump_power_des_kWe = m_geo_subsurface->get_total_pump_power_des();     //[kWe]
+
+    // ReSet all calculated values to zero
+    float fPercentDone = 0.0;
+    bool bWantToReplaceReservoir = false;
+    double dElapsedTimeInYears = 0.0;
+
+    // Go through time step (hours or months) one by one
+    unsigned int iElapsedMonths = 0, iElapsedTimeSteps = 0, iEvaluationsInMonth = 0, iElapsedHours = 0;
+    float fMonthlyPowerTotal = 0;
+
+    for( unsigned int year = 0; year < ProjectLifeYears; year++ )
+    {
+    //    mp_geo_out->maf_ReplacementsByYear[year] = 0;
+        for( unsigned int month = 1; month < 13; month++ )
+        {
+            fPercentDone = (float)iElapsedMonths / (float)(12 * ProjectLifeYears) * 100.0f;
+    
+            if( (mp_update_function != 0) && (m_geo_weather_file->TimeToUpdateInterface(fPercentDone, 2.0f)) )
+            {
+                if( !(*mp_update_function)(fPercentDone, mp_cmod_active) )
+                {
+                    //ms_ErrorString = "Aborted by user.";
+                    return false;
+                }
+            }
+
+            // Get resource temperature
+            double T_resource_od_C = std::numeric_limits<double>::quiet_NaN();
+            bool is_replace_next_step = false;
+
+            m_geo_prod_well->calculate_off_design_resource_temp(dElapsedTimeInYears, makeup_type,
+                NumberOfReservoirs, ProjectLifeYears, T_resource_od_C, is_replace_next_step);
+
+            double dt_prod_well = m_geo_prod_well->DT_prod_well();
+
+            double T_cycle_od_C = T_resource_od_C - dt_prod_well;
+
+            fMonthlyPowerTotal = 0;
+            double cycle_net_power_od = std::numeric_limits<double>::quiet_NaN();
+            double plant_net_power_od = std::numeric_limits<double>::quiet_NaN();
+            for( unsigned int hour = 0; hour < (unsigned int)util::hours_in_month(month); hour++ )
+            {
+                if( m_sim_timestep_type == HOURLY_TIMESTEPS || (hour == 0) )
+                {
+                    // Error check
+                    if( iElapsedTimeSteps >= TotalMakeupCalculations )
+                    {
+                        throw std::runtime_error("Time step exceded the array size in CGeoHourlyAnalysis::RunAnalysis().");
+                    }
+
+                    double P_amb, T_wb, T_dry, relhum;
+                    P_amb = T_wb = T_dry = relhum = std::numeric_limits<double>::quiet_NaN();
+
+                    if( m_weather_timestep_type == geo_weather_timestep_type::WEATHER_HOURLY ||
+                        m_weather_timestep_type == geo_weather_timestep_type::WEATHER_MONTHLY ){
+                        // If hourly or monthly ambient timesteps, use weather file
+
+                        // Read weather file info (function is smart enough to average for month if tis is a monthly analysis)
+                        // The call to ReadWeatherForTimeStep increments the hour counter (over whole life), and file read counter [0 to 8760(=# lines in weather file]
+                        m_geo_weather_file->ReadWeatherForTimeStep(m_weather_timestep_type,
+                            iElapsedTimeSteps, P_amb, T_wb, T_dry, relhum);
+
+                    }
+                    else if( m_weather_timestep_type == geo_weather_timestep_type::WEATHER_DESIGN){
+                        // If "annual" timestep, use the design ambient conditions
+                        T_wb = T_amb_des_C;
+                        T_dry = T_amb_des_C;
+                    }
+                    else {
+                        throw std::runtime_error("Simulation timestep type not recognized");
+                    }
+
+                    
+                    double cycle_net_power = std::numeric_limits<double>::quiet_NaN();
+                    m_geo_surface->calc_cycle_off_design(T_cycle_od_C, T_dry, total_prod_flow_rate, cycle_net_power);
+
+                    plant_net_power_od = std::max(cycle_net_power - total_pump_power_des_kWe, 0.0);  //[kWe]
+
+                    maf_hourly_power[iElapsedHours] = plant_net_power_od;  //[kWe]
+
+                    double abce = 123.;
+
+    //                // record current temperature (temperature changes monthly, but this is an hourly record of it)
+    //                mp_geo_out->maf_timestep_resource_temp[iElapsedTimeSteps] = (float)md_WorkingTemperatureC; // NOTE: If EGS temp drop is being calculated, then PlantGrossPowerkW must be called.  No production = no temp change
+    //                mp_geo_out->maf_timestep_pressure[iElapsedTimeSteps] = (float)mo_pb_in.P_amb;
+    //
+    //                // record outputs based on current inputs
+    //                if( mo_geo_in.mi_cycle_model_type == GETEM_CYCLE ) { // model choice 0 = GETEM
+    //                    //cycle_net_power_od = PlantGrossPowerkW_offdesign(md_WorkingTemperatureC, mo_pb_in.T_db);
+    //                    //plant_net_power_od = std::max(cycle_net_power_od - mp_geo_out->md_PumpWorkKW, 0.0);
+    //                    //double W_dot_plant_net_avail_calc = plant_net_power_od * mo_geo_in.haf[iElapsedHours];
+    //                    mp_geo_out->maf_timestep_power[iElapsedTimeSteps] = (float)MAX(PlantGrossPowerkW() - mp_geo_out->md_PumpWorkKW, 0) * mo_geo_in.haf[iElapsedHours];
+    //                    //mp_geo_out->maf_timestep_power[iElapsedTimeSteps] = W_dot_plant_net_avail_calc;     //[kWe]
+    //                }
+    //                else
+    //                {	// run power block model
+    //                    if( !mo_PowerBlock.Execute((ml_HourCount - 1) * 3600, mo_pb_in) )
+    //                        ms_ErrorString = "There was an error running the power block model: " + mo_PowerBlock.GetLastError();
+    //                    mp_geo_out->maf_timestep_power[iElapsedTimeSteps] = (float)MAX(mo_PowerBlock.GetOutputkW() - mp_geo_out->md_PumpWorkKW, 0) * mo_geo_in.haf[iElapsedHours];
+    //                    //fJunk = (float)moMA->PlantGrossPowerkW(); // kinda works, but not quite the same
+    //                }
+    //
+    //                mp_geo_out->maf_timestep_test_values[iElapsedTimeSteps] = (float)(year + 1) * 1000 + (month);//+(hour); // puts number formatted "year,month,hour_of_month" number into test value
+    //
+    //                fMonthlyPowerTotal += mp_geo_out->maf_timestep_power[iElapsedTimeSteps];
+    //
+    //                // record hourly power which = hourly energy
+    //                mp_geo_out->maf_hourly_power[iElapsedHours] = mp_geo_out->maf_timestep_power[iElapsedTimeSteps];
+    //                mp_geo_out->maf_timestep_dry_bulb[iElapsedHours] = (float)mo_pb_in.T_db;
+    //                mp_geo_out->maf_timestep_wet_bulb[iElapsedHours] = (float)mo_pb_in.T_wb;
+    //
+    //                mp_geo_out->maf_AE[iElapsedHours] = mp_geo_out->md_AE;
+    //                mp_geo_out->maf_getem_2nd_law_total_od[iElapsedHours] = mp_geo_out->md_getem_2nd_law_total_od;
+    //                mp_geo_out->maf_carnot_od_scaling[iElapsedHours] = mp_geo_out->md_carnot_od_scaling;
+    //                mp_geo_out->maf_cycle_net_power_od[iElapsedHours] = cycle_net_power_od;
+    //                mp_geo_out->maf_plant_net_power_od[iElapsedHours] = plant_net_power_od;
+    //                mp_geo_out->maf_brine_pumping_power_od[iElapsedHours] = mp_geo_out->md_PumpWorkKW;
+    //
+    //                //md_ElapsedTimeInYears = year + util::percent_of_year(month,hour);
+    //                if( !ms_ErrorString.empty() ) {
+    //                    return false;
+    //                }
+                    iElapsedTimeSteps++;
+                    dElapsedTimeInYears = iElapsedTimeSteps * (1.0 / performance_simulations_per_year);  //moved to be after iElapsedTimeSteps++;
+                }
+                else {
+
+                    maf_hourly_power[iElapsedHours] = plant_net_power_od;  //[kWe]
+
+                    double abce = 123.;
+
+    //                mp_geo_out->maf_hourly_power[iElapsedHours] = fMonthlyPowerTotal;
+    //                mp_geo_out->maf_timestep_dry_bulb[iElapsedHours] = (float)mo_pb_in.T_db;
+    //                mp_geo_out->maf_timestep_wet_bulb[iElapsedHours] = (float)mo_pb_in.T_wb;
+    //
+    //                mp_geo_out->maf_AE[iElapsedHours] = mp_geo_out->md_AE;
+    //                mp_geo_out->maf_getem_2nd_law_total_od[iElapsedHours] = mp_geo_out->md_getem_2nd_law_total_od;
+    //                mp_geo_out->maf_carnot_od_scaling[iElapsedHours] = mp_geo_out->md_carnot_od_scaling;
+    //                mp_geo_out->maf_cycle_net_power_od[iElapsedHours] = cycle_net_power_od;
+    //                mp_geo_out->maf_plant_net_power_od[iElapsedHours] = plant_net_power_od;
+    //                mp_geo_out->maf_brine_pumping_power_od[iElapsedHours] = mp_geo_out->md_PumpWorkKW;
+                }
+    
+                iElapsedHours++;
+    //            mp_geo_out->ElapsedHours = iElapsedHours;
+            }//hours
+    //
+    //        mp_geo_out->maf_monthly_resource_temp[iElapsedMonths] = (float)md_WorkingTemperatureC;	// resource temperature for this month
+    //        iEvaluationsInMonth = (mo_geo_in.mi_simulation_timestep_type == HOURLY_TIMESTEPS) ? (unsigned int)util::hours_in_month(month) : 1;
+    //        mp_geo_out->maf_monthly_power[iElapsedMonths] = fMonthlyPowerTotal / iEvaluationsInMonth;		// avg monthly power
+    //        mp_geo_out->maf_monthly_energy[iElapsedMonths] = fMonthlyPowerTotal * util::hours_in_month(month) / iEvaluationsInMonth;		// energy output in month (kWh)
+    //
+    //        // Is it possible and do we want to replace the reservoir in the next time step?
+    //        //bWantToReplaceReservoir = ( md_WorkingTemperatureC < (GetResourceTemperatureC() - geothermal::MAX_TEMPERATURE_DECLINE_C) ) ? true : false;
+    //        bWantToReplaceReservoir = (md_WorkingTemperatureC < (GetResourceTemperatureC() - mo_geo_in.md_MaxTempDeclineC) && mo_geo_in.md_AllowReservoirReplacements) ? true : false;
+    //        if( bWantToReplaceReservoir && CanReplaceReservoir(dElapsedTimeInYears + (1.0 / 12)) )
+    //        {
+    //            ReplaceReservoir(dElapsedTimeInYears); // this will 'reset' temperature back to original resource temp
+    //            mp_geo_out->maf_ReplacementsByYear[year] = mp_geo_out->maf_ReplacementsByYear[year] + 1;
+    //        }
+    //        else
+    //            //CalculateNewTemperature( dElapsedTimeInYears ); // once per month -> reduce temperature from last temp
+    //            CalculateNewTemperature(dElapsedTimeInYears + (1.0 / 12)); // once per month -> reduce temperature from last temp
+    //
+            iElapsedMonths++;  //for recording values into arrays, not used in calculations
+    //        mp_geo_out->ElapsedMonths = iElapsedMonths;
+        }   //months
+    }   //years
+
+
+    double abaadfadf = 1.23;
+
+    double adnfadfa = 123434.1;
+
+    return true;
 }

@@ -191,16 +191,21 @@ public:
         double dtProdWellChoice = as_double("prod_well_choice");    //[-]
         bool is_prod_well_dt_calc = bool(dtProdWellChoice);
 
-        C_geo_prod_well geo_prod_well(resource_temperature, dt_prod_well, is_prod_well_dt_calc);;
+        double TemperatureDeclineRate = as_double("temp_decline_rate") / 100;   //[-/yr]
+        double MaxTempDeclineC = as_double("temp_decline_max");                 //[C]
+        bool AllowReservoirReplacements = as_boolean("allow_reservoir_replacements");   //[-]
+
+        C_geo_prod_well* p_geo_prod_well = new C_geo_prod_well (resource_temperature, dt_prod_well, is_prod_well_dt_calc,
+                                        TemperatureDeclineRate, MaxTempDeclineC, AllowReservoirReplacements);
 
         double conc_SiO2_design_calc_ppm = std::numeric_limits<double>::quiet_NaN();
         double T_plant_design_calc_C = std::numeric_limits<double>::quiet_NaN();
         double dt_prod_well_des_calc_C = std::numeric_limits<double>::quiet_NaN();
 
-        geo_prod_well.get_design_calcs(conc_SiO2_design_calc_ppm, T_plant_design_calc_C, dt_prod_well_des_calc_C);
+        p_geo_prod_well->get_design_calcs(conc_SiO2_design_calc_ppm, T_plant_design_calc_C, dt_prod_well_des_calc_C);
 
         // Calculate design point surface plant
-        double TemperatureWetBulbC = as_double("wet_bulb_temp");       //[C]
+        double TemperatureWetBulbC = as_double("wet_bulb_temp");            //[C]
         double PlantEfficiency = as_double("plant_efficiency_input") / 100; //[-]
 
         
@@ -253,6 +258,10 @@ public:
         double PressureAmbientPSI = as_double("ambient_pressure");          //[psi]
         double FailedProdFlowRatio = as_double("failed_prod_flow_ratio");   //[-]
 
+        double PotentialResourceMW = as_double("resource_potential");       //[MWe]
+
+        int use_weather_file_conditions = as_integer("use_weather_file_conditions");    //[-]
+
         switch( as_integer("conversion_subtype") )
         {
         case 0:	geo_inputs.me_ft = SINGLE_FLASH_NO_TEMP_CONSTRAINT; break;
@@ -261,8 +270,11 @@ public:
         case 3:	geo_inputs.me_ft = DUAL_FLASH_WITH_TEMP_CONSTRAINT; break;
         }
 
+        C_geo_surface* p_geo_surface = nullptr;
+        C_geo_subsurface* p_geo_subsurface = nullptr;
+        C_geo_weather_file* p_geo_weather_file = nullptr;
         if( geo_inputs.me_ct == BINARY && geo_inputs.me_rt == HYDROTHERMAL ) {
-            C_geo_surface geo_surface(T_plant_design_calc_C, TemperatureWetBulbC, PlantEfficiency, conc_SiO2_design_calc_ppm,
+            p_geo_surface = new C_geo_surface(T_plant_design_calc_C, TemperatureWetBulbC, PlantEfficiency, conc_SiO2_design_calc_ppm,
                 geo_inputs.me_rt, geo_inputs.me_ct, geo_inputs.me_tdm, geo_inputs.me_ft);
 
             double AE_full_brine_dt_design_calc = std::numeric_limits<double>::quiet_NaN();
@@ -277,7 +289,7 @@ public:
             double carnot_eff_des = std::numeric_limits<double>::quiet_NaN();
             double T_inj_des_C = std::numeric_limits<double>::quiet_NaN();
 
-            geo_surface.get_specific_design_calcs(
+            p_geo_surface->get_specific_design_calcs(
                 AE_full_brine_dt_design_calc,
                 AE_brine_T_sol_to_to_amb_design_calc,
                 AE_brine_T_plant_to_T_sol_to_amb_design_calc,
@@ -290,7 +302,7 @@ public:
                 carnot_eff_des,
                 T_inj_des_C);
 
-            C_geo_subsurface geo_subsurface(geo_wells_stim_type, ExplorationWellsProd, geo_inputs.me_rt,
+            p_geo_subsurface = new C_geo_subsurface(geo_wells_stim_type, ExplorationWellsProd, geo_inputs.me_rt,
                 calc_basis_type, num_wells_in, ratio_injection_to_production,
                 ProductionFlowRateKgPerS, total_brine_effectiveness,
                 InjectionWellDiam, InjectionWellType, resource_depth_in,
@@ -300,7 +312,7 @@ public:
                 TemperatureWetBulbC, depth_calc_EGS_type,
                 water_loss_frac, geo_inputs.me_pc,
                 reservoir_pressure_chage, geo_inputs.me_ft,
-                gf_pump_efficiency,
+                gf_pump_efficiency, PotentialResourceMW,
                 ProductionWellDiam, ProductionWellType,
                 desired_sales_capacity_kw,
                 stim_success_rate, drill_success_rate, PressureAmbientPSI, FailedProdFlowRatio);
@@ -318,6 +330,7 @@ public:
             double NumberOfWellsProdFailed = std::numeric_limits<double>::quiet_NaN();
             double NumberOfWellsInj = std::numeric_limits<double>::quiet_NaN();
             double NumberOfWellsInjDrilled = std::numeric_limits<double>::quiet_NaN();
+            int NumberOfReservoirs = -1;
             double inj_pump_hp = std::numeric_limits<double>::quiet_NaN();       // ?
             double prod_pump_power_kWe = std::numeric_limits<double>::quiet_NaN();
             double inj_pump_power_kWe = std::numeric_limits<double>::quiet_NaN();
@@ -329,7 +342,7 @@ public:
             double AverageReservoirTemperatureF = std::numeric_limits<double>::quiet_NaN();
             std::string ErrorString;
 
-            geo_subsurface.get_design_calcs(
+            p_geo_subsurface->get_design_calcs(
                 resource_depth_calc,
                 temp_gradient_fixed_T_amb_des_calc,
                 injection_density_des_calc,
@@ -343,6 +356,7 @@ public:
                 NumberOfWellsProdFailed,
                 NumberOfWellsInj,
                 NumberOfWellsInjDrilled,
+                NumberOfReservoirs,
                 inj_pump_hp,
                 prod_pump_work_ft_design,
                 prod_pump_power_kWe,
@@ -355,7 +369,7 @@ public:
                 ErrorString);
 
             double cycle_net_power_design_kWe = std::numeric_limits<double>::quiet_NaN();
-            geo_surface.design_for_absolute_power(total_prod_flow_rate, cycle_net_power_design_kWe);
+            p_geo_surface->design_for_absolute_power(total_prod_flow_rate, cycle_net_power_design_kWe);
 
             double net_plant_power_kWe = cycle_net_power_design_kWe - total_pump_power_kWe;
 
@@ -483,7 +497,166 @@ public:
                 }
             }
 
-            double abc = 1.23;
+            // Other settings that I suppose can be design-point
+            bool system_use_lifetime_output = false;
+            int analysis_period_years = 1;              // geo_inputs.mi_ProjectLifeYears = 1;
+            if( geo_fin_model <= 6 ) {
+                system_use_lifetime_output = true;
+                analysis_period_years = as_integer("analysis_period");
+            }
+            else {
+                assign("analysis_period", (ssc_number_t)analysis_period_years);
+            }
+            assign("system_use_lifetime_output", (ssc_number_t)system_use_lifetime_output);
+
+            geo_inputs.mi_ProjectLifeYears = analysis_period_years; // as_integer("geothermal_analysis_period");
+            assign("geothermal_analysis_period", (ssc_number_t)analysis_period_years);
+
+            if( geo_inputs.mi_ProjectLifeYears == 0 )
+                throw general_error("invalid analysis period specified in the geothermal hourly model");
+
+            // weather file and time-of-use data
+            const char* WeatherFileName = as_string("file_name");
+            p_geo_weather_file = new C_geo_weather_file(WeatherFileName);
+
+            // Hardcoded outputs
+            // Always use recapitalization for geothermal
+            assign("system_use_recapitalization", 1);
+
+            // Hardcode degradation to 0
+            ssc_number_t* p_deg = allocate("degradation", 1);
+            p_deg[0] = 0.0;
+            //assign("degradation", 0);
+
+            if( sim_type == 2 ) {
+
+                return;
+
+            }
+            else {
+
+                geo_simulation_timestep_type simulation_timestep_type = static_cast<geo_simulation_timestep_type>(as_integer("simulation_timestep_type"));    // 0=monthly, 1=hourly
+
+
+                geo_weather_timestep_type weather_timestep_type = geo_weather_timestep_type::WEATHER_UNDEFINED;
+                if(simulation_timestep_type == MONTHLY_TIMESTEPS && use_weather_file_conditions == 0){
+                    weather_timestep_type = geo_weather_timestep_type::WEATHER_DESIGN;
+                }
+                else if( simulation_timestep_type == MONTHLY_TIMESTEPS ) {
+                    weather_timestep_type == geo_weather_timestep_type::WEATHER_MONTHLY;
+                }
+                else{
+                    weather_timestep_type == geo_weather_timestep_type::WEATHER_HOURLY;
+                }
+
+                C_geo_system geo_system(p_geo_prod_well, p_geo_surface,
+                    p_geo_subsurface, p_geo_weather_file,
+                    simulation_timestep_type,
+                    weather_timestep_type,
+                    my_update_function, this);
+                
+                // allocate lifetime annual arrays (one element per year, over lifetime of project)
+                ////geo_outputs.maf_ReplacementsByYear = allocate("annual_replacements", geo_inputs.mi_ProjectLifeYears);
+                //geo_outputs.maf_ReplacementsByYear = allocate("system_lifetime_recapitalize", geo_inputs.mi_ProjectLifeYears);
+                ////ssc_number_t *annual_replacements = allocate( "annual_replacements", geo_inputs.mi_ProjectLifeYears);
+                //
+                //// allocate lifetime monthly arrays (one element per month, over lifetime of project)
+                //geo_outputs.maf_monthly_resource_temp = allocate("monthly_resource_temperature", 12 * geo_inputs.mi_ProjectLifeYears);
+                //geo_outputs.maf_monthly_power = allocate("monthly_power", 12 * geo_inputs.mi_ProjectLifeYears);
+                //geo_outputs.maf_monthly_energy = allocate("monthly_energy_lifetime", 12 * geo_inputs.mi_ProjectLifeYears);
+                //
+                //// allocate lifetime timestep arrays (one element per timestep, over lifetime of project)
+                //// if this is a monthly analysis, these are redundant with monthly arrays that track same outputs
+                int performance_simulations_per_year = 0;
+                if( simulation_timestep_type == HOURLY_TIMESTEPS ) {
+                    performance_simulations_per_year = 8760;
+                }
+                else {
+                    performance_simulations_per_year = 12;
+                }
+                
+                int TotalMakeupCalculations = analysis_period_years * performance_simulations_per_year;
+                //
+                //geo_outputs.maf_timestep_resource_temp = allocate("timestep_resource_temperature", geo_inputs.mi_TotalMakeupCalculations);
+                //geo_outputs.maf_timestep_power = allocate("timestep_power", geo_inputs.mi_TotalMakeupCalculations);
+                //geo_outputs.maf_timestep_test_values = allocate("timestep_test_values", geo_inputs.mi_TotalMakeupCalculations);
+                //
+                //geo_outputs.maf_timestep_pressure = allocate("timestep_pressure", geo_inputs.mi_TotalMakeupCalculations);
+                
+                size_t n_rec = 8760;
+                if( as_boolean("system_use_lifetime_output") ) {
+                    n_rec *= geo_inputs.mi_ProjectLifeYears;
+                }
+                
+                //// Still want hourly reporting for some outputs even if simulation timestep is monthly
+                //geo_outputs.maf_timestep_dry_bulb = allocate("timestep_dry_bulb", n_rec);
+                //geo_outputs.maf_timestep_wet_bulb = allocate("timestep_wet_bulb", n_rec);
+                //
+                //geo_outputs.maf_AE = allocate("AE_od", n_rec);
+                //geo_outputs.maf_getem_2nd_law_total_od = allocate("getem_2nd_law_total_od", n_rec);
+                //geo_outputs.maf_carnot_od_scaling = allocate("carnot_scaling_od", n_rec);
+                //geo_outputs.maf_cycle_net_power_od = allocate("cycle_net_power_od", n_rec);
+                //geo_outputs.maf_plant_net_power_od = allocate("plant_net_power_od", n_rec);
+                //geo_outputs.maf_brine_pumping_power_od = allocate("brine_pumping_power_od", n_rec);
+                //
+                //
+                geo_system.maf_hourly_power = allocate("tmp", n_rec);
+                //ssc_number_t* p_gen = allocate("gen", n_rec);
+                //
+                // TODO - implement performance factors 
+                adjustment_factors haf1(this->get_var_table(), "adjust");
+                if( !haf1.setup(8760, analysis_period_years) )
+                    throw exec_error("geothermal", "failed to setup adjustment factors: " + haf1.error());
+                std::vector<double> haf_input1;
+                haf_input1.resize(8760 * analysis_period_years);
+                for( int a = 0; a < analysis_period_years; a++ ) {
+                    for( int i = 0; i < 8760; i++ )
+                        haf_input1[int(a * 8760 + i)] = haf1(a * 8760 + i);
+                }
+
+                
+                bool is_simulate_success = geo_system.simulate(analysis_period_years, TotalMakeupCalculations, performance_simulations_per_year);
+
+                // Summary calculations
+                ssc_number_t total_energy = 0;
+                //for( size_t i = 0; i < 12 * geo_inputs.mi_ProjectLifeYears; ++i ) {
+                //    total_energy += geo_outputs.maf_monthly_energy[i];
+                //}
+                //assign("lifetime_output", var_data(total_energy));
+                //
+                total_energy = 0;
+                for( size_t i = 0; i < 8760; ++i ) {
+                    total_energy += geo_system.maf_hourly_power[i];
+                }
+                assign("first_year_output", var_data(total_energy));
+                //
+                //// metric outputs moved to technology
+                //double capacity_fac;	//geothermal plant capacity factor
+                //double kWhperkW = 0.0;
+                //double nameplate = geo_inputs.md_DesiredSalesCapacityKW; // Was md_GrossPlantOutputMW*1000 -> now it is md_DesiredSalesCapacityKW
+
+                double annual_energy = 0.0;
+                for( size_t i = 0; i < n_rec; i++ ) {
+                    annual_energy += geo_system.maf_hourly_power[i];
+                    //p_gen[i] = geo_outputs.maf_hourly_power[i];
+                }
+                
+                
+                //gen_heatmap(this, 1);
+                //
+                //if( nameplate > 0 ) kWhperkW = annual_energy / nameplate;
+                //capacity_fac = total_energy / nameplate;
+                //if( geo_inputs.mi_ProjectLifeYears > 0 ) kWhperkW = kWhperkW / geo_inputs.mi_ProjectLifeYears;
+                //
+                ////assign("gross_output", var_data((ssc_number_t)geo_outputs.md_GrossPlantOutputMW));
+                ////assign("gross_cost_output", var_data((ssc_number_t)geo_outputs.md_GrossPowerkW));
+                //assign("capacity_factor", var_data((ssc_number_t)(capacity_fac / 87.6)));		//Divided by 8760 and then multiplied by 100 (or divide by 87.6) to return CF as a %
+                //assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
+                //// 5/28/15 average provided for FCR market
+                //assign("annual_energy", var_data((ssc_number_t)(annual_energy / geo_inputs.mi_ProjectLifeYears)));
+                //accumulate_monthly_for_year("gen", "monthly_energy", 8760.0 / n_rec, n_rec / 8760);
+            }
+
         }
 
         // inputs used in above in refactor
@@ -503,8 +676,8 @@ public:
 
         geo_inputs.me_cb = calc_basis_type;
 
-		geo_inputs.md_TemperatureDeclineRate = as_double("temp_decline_rate")/100;
-		geo_inputs.md_MaxTempDeclineC = as_double("temp_decline_max");
+		geo_inputs.md_TemperatureDeclineRate = TemperatureDeclineRate;
+		geo_inputs.md_MaxTempDeclineC = MaxTempDeclineC;
         
 		// flash inputs
 		geo_inputs.md_PressureAmbientPSI = PressureAmbientPSI;
@@ -514,7 +687,7 @@ public:
 
         // Need to use this input during annual simulation but not design
         // So save as a separate member variable, the use this new variable to set md_UseWeatherFileConditions during annual simulation
-        geo_inputs.md_UseWeatherFileConditions_annual_sim = as_integer("use_weather_file_conditions");
+        geo_inputs.md_UseWeatherFileConditions_annual_sim = use_weather_file_conditions;
 
         // If hourly timestep, always want to use weather file conditions
         if( geo_inputs.mi_simulation_timestep_type == HOURLY_TIMESTEPS ){
@@ -573,7 +746,7 @@ public:
 		geo_inputs.md_EGSFractureWidthM = as_double("fracture_width");
 		geo_inputs.md_EGSFractureAngle = as_double("fracture_angle");
 
-        geo_inputs.md_AllowReservoirReplacements = as_boolean("allow_reservoir_replacements");
+        geo_inputs.md_AllowReservoirReplacements = AllowReservoirReplacements;
 
 		// calculate output array sizes
 		//geo_inputs.mi_ModelChoice = as_integer("model_choice");		                    // 0=GETEM, 1=Power Block monthly, 2=Power Block hourly
@@ -602,7 +775,7 @@ public:
 			throw general_error("invalid analysis period specified in the geothermal hourly model");
 
         // running the model, we need to specify other inputs
-        geo_inputs.md_PotentialResourceMW = as_double("resource_potential");
+        geo_inputs.md_PotentialResourceMW = PotentialResourceMW;
 
         // hybrid dispatch schedule, which will set the value for pbInputs.TOU
         const char* sched = as_string("hybrid_dispatch_schedule");
@@ -1010,7 +1183,10 @@ public:
             accumulate_monthly_for_year("gen", "monthly_energy", 8760.0 / n_rec, n_rec / 8760);
 		}
 
-		
+        delete p_geo_prod_well;
+        delete p_geo_surface;
+        delete p_geo_subsurface;
+        delete p_geo_weather_file;
 	}
 
 };

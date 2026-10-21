@@ -51,6 +51,10 @@ enum geo_simulation_timestep_type {
     MONTHLY_TIMESTEPS = 0, HOURLY_TIMESTEPS = 1, UNDEFINED_TIMESTEPS = -1
 };
 
+enum class geo_weather_timestep_type {
+    WEATHER_MONTHLY = 0, WEATHER_HOURLY = 1, WEATHER_DESIGN = 2, WEATHER_UNDEFINED = -1
+};
+
 enum class geo_wells_stimulated {
     INJECTION_ONLY = 0, PRODUCTION_ONLY = 1, BOTH = 2, NEITHER = 3
 };
@@ -586,7 +590,7 @@ private:
 int RunGeothermalAnalysis(bool(*update_function)(float, void*), void*user_data, std::string &err_msg,
 	const SPowerBlockParameters &pbp, SPowerBlockInputs &pbInputs,
 	const SGeothermal_Inputs &geo_inputs, SGeothermal_Outputs &geo_outputs);
-
+ 
 int FillOutputsForUI(std::string &err_msg, const SGeothermal_Inputs &geo_inputs, SGeothermal_Outputs &geo_outputs);
 
 class C_geo_prod_well
@@ -594,16 +598,35 @@ class C_geo_prod_well
     double m_T_resource_design_C;   //[C]
     double m_dt_prod_well_fixed_C;  //[C]
     bool m_is_prod_well_dt_calc;    //[-]
+    double m_TemperatureDeclineRate; /*-/yr*/
+    double m_MaxTempDeclineC;       //[C]
+    bool m_AllowReservoirReplacements;
 
     // Calculated
     double m_conc_SiO2_design_calc_ppm;    //[ppm]
     double m_T_plant_design_calc_C;     //[C]
     double m_dt_prod_well_des_calc_C;   //[C]
 
+    // State values
+    double m_T_resource_od_C;       //[C]
+    double m_T_resource_od_next_C;  //[C]
+    int m_ReservoirReplacements;
+
+    double calculate_new_off_design_resource_temp(double ElapsedTimeInYears, makeupAlgorithmType makeup_type );
+
+    bool CanReplaceReservoir(double dTimePassedInYears, int NumberOfReservoirs, size_t ProjectLifeYears);
+
+    void ReplaceReservoir(double dElapsedTimeInYears, makeupAlgorithmType makeup_type );
+
 public:
     C_geo_prod_well(double T_resource_design_C /*C*/,
         double dt_prod_well_fixed_C /*C*/,
-        bool is_prod_well_dt_calc /*-*/);
+        bool is_prod_well_dt_calc /*-*/,
+        double TemperatureDeclineRate /*-*/,
+        double MaxTempDeclineC /*C*/,
+        bool AllowReservoirReplacements);
+
+    double DT_prod_well();
 
     void get_design_calcs(double& conc_SiO2_design_calc_ppm, double& T_plant_design_calc_C,
         double& dt_prod_well_des_calc)
@@ -612,6 +635,10 @@ public:
         T_plant_design_calc_C = m_T_plant_design_calc_C;
         dt_prod_well_des_calc = m_dt_prod_well_des_calc_C;
     }
+
+    void calculate_off_design_resource_temp(double dElaspedTimeInYears, makeupAlgorithmType makeup_type,
+        int NumberOfReservoirs, size_t ProjectLifeYears,
+        double& T_resource_od_C, bool& is_replace_next_year);
 };
 
 class C_geo_surface
@@ -696,8 +723,20 @@ public:
         T_inj_des_C = m_T_inj_des_C;
     }
 
+    void get_T_amb_des(double& T_amb_des_C) const
+    {
+        T_amb_des_C = m_T_amb_design_C;
+    }
+
     void design_for_absolute_power(double total_prod_flow_rate /*lb_m/hr*/,
         double& cycle_net_power_des /*kWe*/);
+
+    void calc_cycle_off_design(double T_cycle_od_C /*C*/, double T_amb_od_C /*C*/,
+        double total_flow_rate /*lb_m/hr*/, double& cycle_net_power /*kWe*/);
+
+    makeupAlgorithmType get_makeup_type(){
+        return m_makeup_type;
+    }
 };
 
 class C_geo_subsurface{
@@ -744,6 +783,7 @@ private:
     double m_ReservoirDeltaPressure;    // ?
 
     double m_GFPumpEfficiency;          //[-]
+    double m_PotentialResourceMW;       //[MWe]
 
     double m_DesiredSalesCapacityKW;    //[kWe]
 
@@ -765,11 +805,12 @@ private:
     double m_NumberOfWellsProdFailed;
     double m_NumberOfWellsInj;
     double m_NumberOfWellsInjDrilled;
+    int m_NumberOfReservoirs;
     double m_inj_pump_hp;
     double m_prod_pump_work_ft_design;
     double m_prod_pump_power_kWe;
     double m_inj_pump_power_kWe;
-    double m_total_pump_power_kWe;
+    double m_total_pump_power_kWe;      //[kWe]
     double m_pumpwork_prod;             //[W-hr/lb_m]
     double m_pumpwork_inj;              //[W-hr/lb_m]
     double m_PressureChangeAcrossReservoir; //[psi]
@@ -787,7 +828,7 @@ public:
         double T_amb_C /*C*/, depthCalculationForEGS depth_calc_EGS_type,
         double water_loss_percent /*-*/, reservoirPressureChangeCalculation res_pres_change_calc_type,
         double ReservoirDeltaPressure /*?*/, flashTypes flash_type,
-        double GFPumpEfficiency,
+        double GFPumpEfficiency, double PotentialResourceMW /*MWe*/,
         int ProductionWellDiam, int ProductionWellType,
         double DesiredSalesCapacityKW /*kWe*/,
         double StimSuccessRate /*-*/, double DrillSuccessRate /*-*/, double PressureAmbientPSI /*psi*/,
@@ -807,6 +848,7 @@ public:
         double& number_of_wells_prod_failed,
         double& number_of_wells_inj,
         double& number_of_wells_inj_drilled,
+        int& number_of_reservoirs,
         double& inj_pump_hp,
         double& prod_pump_work_ft_design,
         double& prod_pump_power_kWe,
@@ -831,6 +873,7 @@ public:
         number_of_wells_prod_failed = m_NumberOfWellsProdFailed;
         number_of_wells_inj = m_NumberOfWellsInj;
         number_of_wells_inj_drilled = m_NumberOfWellsInjDrilled;
+        number_of_reservoirs = m_NumberOfReservoirs;
         inj_pump_hp = m_inj_pump_hp;
         prod_pump_work_ft_design = m_prod_pump_work_ft_design;
         prod_pump_power_kWe = m_prod_pump_power_kWe;
@@ -842,6 +885,79 @@ public:
         AverageReservoirTemperatureF = m_AverageReservoirTemperatureF;
         error_string = ErrorString;
     }
+
+    void get_number_reservoirs(int& NumberOfReservoirs) const
+    {
+        NumberOfReservoirs = m_NumberOfReservoirs;
+    }
+
+    double get_total_prod_flow_rate_des(){
+        return m_total_prod_flow_rate;  //[lb_m/hr]
+    }
+
+    double get_total_pump_power_des(){
+        return m_total_pump_power_kWe;  //[kWe]
+    }
+};
+
+class C_geo_weather_file{
+
+private:
+
+    // Input
+    const char* m_WeatherFileName;
+
+    // Calculated
+    bool mb_WeatherFileOpen;
+    long ml_ReadCount;  // resource file reads through the year, 1 to 8760
+
+    double mf_LastIntervalDone; // 
+
+    // Internal classes
+    weatherfile m_wFile;
+    weather_record m_wf;
+
+    bool ReadNextLineInWeatherFile(void);
+
+public:
+    C_geo_weather_file(const char* WeatherFileName);
+
+    void OpenWeatherFile();
+
+    bool TimeToUpdateInterface(float fPercentDone, float fNotificationIntervalInPercent);
+
+    bool ReadWeatherForTimeStep(geo_weather_timestep_type weather_timestep_type, unsigned int timeStep,
+        double& P_amb, double& T_wb, double& T_dry, double& relhum);
+};
+
+class C_geo_system{
+
+private:
+    C_geo_prod_well* m_geo_prod_well;
+    C_geo_surface* m_geo_surface;
+    C_geo_subsurface* m_geo_subsurface;
+    C_geo_weather_file* m_geo_weather_file;
+
+    geo_simulation_timestep_type m_sim_timestep_type;
+    geo_weather_timestep_type m_weather_timestep_type;
+
+    bool(*mp_update_function)(float, void*);
+    void* mp_cmod_active;
+
+    
+public:
+    C_geo_system(C_geo_prod_well* geo_prod_well, C_geo_surface* geo_surface,
+        C_geo_subsurface* geo_subsurface, C_geo_weather_file* geo_weather_file,
+        geo_simulation_timestep_type sim_timestep_type,
+        geo_weather_timestep_type weather_timestep_type,
+        bool(*update_function)(float, void*), void* user_data);
+
+    bool simulate(size_t ProjectLifeYears, int TotalMakeupCalculations,
+        int performance_simulations_per_year);
+
+    // Hourly outputs
+    double* maf_hourly_power;				//[kWe]
+
 };
 
 #endif // __geothermalModelDefinitions__
