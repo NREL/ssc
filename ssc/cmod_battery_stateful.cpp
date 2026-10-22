@@ -493,6 +493,7 @@ std::shared_ptr<battery_params> create_battery_params(var_table* vt, double dt_h
 
     // lifetime
     auto lifetime = params->lifetime;
+    vt_get_number(vt, "dt_hr", &lifetime->dt_hr);
     vt_get_int(vt, "life_model", &choice);
     lifetime->model_choice = static_cast<lifetime_params::MODEL_CHOICE>(choice);
 
