@@ -30,20 +30,30 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef _CMOD_GEO_SYSTEM_TEST_H_
+#define _CMOD_GEO_SYSTEM_TEST_H_
 
-#include <gtest/gtest.h>
+#include "cmod_json_comparison_test.h"
 
-#include "cmod_geothermal_costs_test.h"
+/**
+ * Host Developer tests
+ */
+class CmodGeoSystemTest : public JSONComparisonTest {};
 
-
-//Fixture is currently testing binary plant (Conversion type = 0)
-TEST_F(CMGeothermalCosts, CostModuleTest_cmod_geothermal_costs)
+namespace geo_system_test_ns
 {
-	//Check whether module runs with any errors:
-	int geothermal_errors = run_module(data, "geothermal_costs");
-	ASSERT_EQ(geothermal_errors, 0);
-		
-	ssc_number_t baseline_cost;
-	ssc_data_get_number(data, "baseline_cost", &baseline_cost);
-	EXPECT_NEAR(baseline_cost, 2544, 100 );
-}
+    //const std::string input_file_prefix = "26-09-04-dev";
+    const std::string input_file_prefix = "2026-09-20-merge-dev-to-eqs-branch";
+
+    const std::string output_file_prefix = "26-09-04-dev";
+
+    const std::vector<std::string> compare_number_variables = { "annual_energy", "total_installed_cost", "total_getem_om_cost" };
+
+    const std::vector<std::string> compare_array_variables = { "monthly_energy" };
+
+    const std::string file_location = "/test/input_json/TechnologyModels/geothermal/";
+
+    const std::string weather_file = "fargo_nd_46.9_-96.8_mts1_60_tmy.csv";
+};
+
+#endif
