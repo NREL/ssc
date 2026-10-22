@@ -556,10 +556,8 @@ public:
                     my_update_function, this);
                 
                 // allocate lifetime annual arrays (one element per year, over lifetime of project)
-                ////geo_outputs.maf_ReplacementsByYear = allocate("annual_replacements", geo_inputs.mi_ProjectLifeYears);
-                //geo_outputs.maf_ReplacementsByYear = allocate("system_lifetime_recapitalize", geo_inputs.mi_ProjectLifeYears);
-                ////ssc_number_t *annual_replacements = allocate( "annual_replacements", geo_inputs.mi_ProjectLifeYears);
-                //
+                geo_system.maf_ReplacementsByYear = allocate("system_lifetime_recapitalize", analysis_period_years);
+                
                 //// allocate lifetime monthly arrays (one element per month, over lifetime of project)
                 //geo_outputs.maf_monthly_resource_temp = allocate("monthly_resource_temperature", 12 * geo_inputs.mi_ProjectLifeYears);
                 //geo_outputs.maf_monthly_power = allocate("monthly_power", 12 * geo_inputs.mi_ProjectLifeYears);
@@ -585,7 +583,7 @@ public:
                 
                 size_t n_rec = 8760;
                 if( as_boolean("system_use_lifetime_output") ) {
-                    n_rec *= geo_inputs.mi_ProjectLifeYears;
+                    n_rec *= analysis_period_years;
                 }
                 
                 //// Still want hourly reporting for some outputs even if simulation timestep is monthly
@@ -598,11 +596,12 @@ public:
                 //geo_outputs.maf_cycle_net_power_od = allocate("cycle_net_power_od", n_rec);
                 //geo_outputs.maf_plant_net_power_od = allocate("plant_net_power_od", n_rec);
                 //geo_outputs.maf_brine_pumping_power_od = allocate("brine_pumping_power_od", n_rec);
-                //
-                //
-                geo_system.maf_hourly_power = allocate("tmp", n_rec);
-                //ssc_number_t* p_gen = allocate("gen", n_rec);
-                //
+                
+                // 26-10-21: Refactor approach is *NOT* applying the availability derate in the hourly calcs, while the old approach did
+                //   instead applying availability after timeseries simulation
+                //   renaming hourly array to clarify this change approach
+                geo_system.maf_hourly_power_no_derate = allocate("W_dot_system_net", n_rec);
+                
                 // TODO - implement performance factors 
                 adjustment_factors haf1(this->get_var_table(), "adjust");
                 if( !haf1.setup(8760, analysis_period_years) )
@@ -617,44 +616,38 @@ public:
                 
                 bool is_simulate_success = geo_system.simulate(analysis_period_years, TotalMakeupCalculations, performance_simulations_per_year);
 
-                // Summary calculations
-                ssc_number_t total_energy = 0;
-                //for( size_t i = 0; i < 12 * geo_inputs.mi_ProjectLifeYears; ++i ) {
-                //    total_energy += geo_outputs.maf_monthly_energy[i];
-                //}
-                //assign("lifetime_output", var_data(total_energy));
-                //
-                total_energy = 0;
-                for( size_t i = 0; i < 8760; ++i ) {
-                    total_energy += geo_system.maf_hourly_power[i];
-                }
-                assign("first_year_output", var_data(total_energy));
-                //
-                //// metric outputs moved to technology
-                //double capacity_fac;	//geothermal plant capacity factor
-                //double kWhperkW = 0.0;
-                //double nameplate = geo_inputs.md_DesiredSalesCapacityKW; // Was md_GrossPlantOutputMW*1000 -> now it is md_DesiredSalesCapacityKW
-
-                double annual_energy = 0.0;
+                // Apply availability derate
+                ssc_number_t* p_gen = allocate("gen", n_rec);
                 for( size_t i = 0; i < n_rec; i++ ) {
-                    annual_energy += geo_system.maf_hourly_power[i];
-                    //p_gen[i] = geo_outputs.maf_hourly_power[i];
+                    p_gen[i] = geo_system.maf_hourly_power_no_derate[i]*haf_input1[i];
                 }
+
+                ssc_number_t first_year_total_energy = 0;
+                for( size_t i = 0; i < 8760; ++i ) {
+                    first_year_total_energy += p_gen[i];
+                }
+                assign("first_year_output", var_data(first_year_total_energy));
                 
-                
-                //gen_heatmap(this, 1);
-                //
-                //if( nameplate > 0 ) kWhperkW = annual_energy / nameplate;
-                //capacity_fac = total_energy / nameplate;
-                //if( geo_inputs.mi_ProjectLifeYears > 0 ) kWhperkW = kWhperkW / geo_inputs.mi_ProjectLifeYears;
-                //
-                ////assign("gross_output", var_data((ssc_number_t)geo_outputs.md_GrossPlantOutputMW));
-                ////assign("gross_cost_output", var_data((ssc_number_t)geo_outputs.md_GrossPowerkW));
-                //assign("capacity_factor", var_data((ssc_number_t)(capacity_fac / 87.6)));		//Divided by 8760 and then multiplied by 100 (or divide by 87.6) to return CF as a %
-                //assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
-                //// 5/28/15 average provided for FCR market
-                //assign("annual_energy", var_data((ssc_number_t)(annual_energy / geo_inputs.mi_ProjectLifeYears)));
-                //accumulate_monthly_for_year("gen", "monthly_energy", 8760.0 / n_rec, n_rec / 8760);
+                double lifetime_energy = 0.0;
+                for( size_t i = 0; i < n_rec; i++ ) {
+                    lifetime_energy += p_gen[i];
+                }
+                assign("lifetime_output", var_data(lifetime_energy));
+
+                gen_heatmap(this, 1);
+
+                // The following terms use *first year* total energy
+                double kWhperkW = 0.0;
+                if( cycle_net_power_design_kWe > 0 ) kWhperkW = first_year_total_energy / cycle_net_power_design_kWe;
+                assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
+
+                double capacity_fac = first_year_total_energy / cycle_net_power_design_kWe / 87.6;  //[%]
+                assign("capacity_factor", var_data((ssc_number_t)(capacity_fac)));		//[%] 
+
+                assign("annual_energy", var_data((ssc_number_t)(first_year_total_energy)));
+                accumulate_monthly_for_year("gen", "monthly_energy", 8760.0 / n_rec, n_rec / 8760);
+
+                //return;
             }
 
         }
@@ -1159,14 +1152,12 @@ public:
 			double nameplate = geo_inputs.md_DesiredSalesCapacityKW; // Was md_GrossPlantOutputMW*1000 -> now it is md_DesiredSalesCapacityKW
 			double annual_energy = 0.0;
 
-
 			//Loop calculates total energy generation over entire project lifetime (in kWh) 
 			// Why?  Is the annual energy changing from year to year?
 			for (size_t i = 0; i <n_rec ; i++)	{
 				annual_energy += geo_outputs.maf_hourly_power[i];
                 p_gen[i] = geo_outputs.maf_hourly_power[i];
 			}
-
 
             gen_heatmap(this, 1);
 

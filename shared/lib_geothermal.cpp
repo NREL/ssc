@@ -4142,7 +4142,8 @@ bool C_geo_system::simulate(size_t ProjectLifeYears, int TotalMakeupCalculations
 
     for( unsigned int year = 0; year < ProjectLifeYears; year++ )
     {
-    //    mp_geo_out->maf_ReplacementsByYear[year] = 0;
+        maf_ReplacementsByYear[year] = 0.0;
+
         for( unsigned int month = 1; month < 13; month++ )
         {
             fPercentDone = (float)iElapsedMonths / (float)(12 * ProjectLifeYears) * 100.0f;
@@ -4162,6 +4163,10 @@ bool C_geo_system::simulate(size_t ProjectLifeYears, int TotalMakeupCalculations
 
             m_geo_prod_well->calculate_off_design_resource_temp(dElapsedTimeInYears, makeup_type,
                 NumberOfReservoirs, ProjectLifeYears, T_resource_od_C, is_replace_next_step);
+
+            if(is_replace_next_step){
+                maf_ReplacementsByYear[year]++;
+            }
 
             double dt_prod_well = m_geo_prod_well->DT_prod_well();
 
@@ -4208,7 +4213,7 @@ bool C_geo_system::simulate(size_t ProjectLifeYears, int TotalMakeupCalculations
 
                     plant_net_power_od = std::max(cycle_net_power - total_pump_power_des_kWe, 0.0);  //[kWe]
 
-                    maf_hourly_power[iElapsedHours] = plant_net_power_od;  //[kWe]
+                    maf_hourly_power_no_derate[iElapsedHours] = plant_net_power_od;  //[kWe]
 
                     double abce = 123.;
 
@@ -4257,7 +4262,7 @@ bool C_geo_system::simulate(size_t ProjectLifeYears, int TotalMakeupCalculations
                 }
                 else {
 
-                    maf_hourly_power[iElapsedHours] = plant_net_power_od;  //[kWe]
+                    maf_hourly_power_no_derate[iElapsedHours] = plant_net_power_od;  //[kWe]
 
                     double abce = 123.;
 

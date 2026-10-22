@@ -956,7 +956,10 @@ public:
         int performance_simulations_per_year);
 
     // Hourly outputs
-    double* maf_hourly_power;				//[kWe]
+    double* maf_hourly_power_no_derate;				//[kWe]
+
+    // Annual outputs
+    double* maf_ReplacementsByYear;                 //[-]
 
 };
 
