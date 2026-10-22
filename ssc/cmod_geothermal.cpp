@@ -1140,37 +1140,36 @@ public:
 			}
 			assign("lifetime_output", var_data(total_energy));
 
-			total_energy = 0;
+			double first_year_energy = 0;
 			for (size_t i = 0; i < 12; ++i) {
-				total_energy += geo_outputs.maf_monthly_energy[i];
+				first_year_energy += geo_outputs.maf_monthly_energy[i];
 			}
-			assign("first_year_output", var_data(total_energy));	
+			assign("first_year_output", var_data(first_year_energy));
 
 			// metric outputs moved to technology
 			double capacity_fac;	//geothermal plant capacity factor
 			double kWhperkW = 0.0;
 			double nameplate = geo_inputs.md_DesiredSalesCapacityKW; // Was md_GrossPlantOutputMW*1000 -> now it is md_DesiredSalesCapacityKW
-			double annual_energy = 0.0;
+			//double annual_energy = 0.0;
 
 			//Loop calculates total energy generation over entire project lifetime (in kWh) 
 			// Why?  Is the annual energy changing from year to year?
 			for (size_t i = 0; i <n_rec ; i++)	{
-				annual_energy += geo_outputs.maf_hourly_power[i];
+				//annual_energy += geo_outputs.maf_hourly_power[i];
                 p_gen[i] = geo_outputs.maf_hourly_power[i];
 			}
 
             gen_heatmap(this, 1);
 
-			if (nameplate > 0) kWhperkW = annual_energy / nameplate;
-			capacity_fac = total_energy / nameplate;
-			if (geo_inputs.mi_ProjectLifeYears > 0) kWhperkW = kWhperkW / geo_inputs.mi_ProjectLifeYears;
+			if (nameplate > 0) kWhperkW = first_year_energy / nameplate;
+			capacity_fac = first_year_energy / nameplate;
 
 			//assign("gross_output", var_data((ssc_number_t)geo_outputs.md_GrossPlantOutputMW));
             //assign("gross_cost_output", var_data((ssc_number_t)geo_outputs.md_GrossPowerkW));
 			assign("capacity_factor", var_data((ssc_number_t)(capacity_fac / 87.6)));		//Divided by 8760 and then multiplied by 100 (or divide by 87.6) to return CF as a %
 			assign("kwh_per_kw", var_data((ssc_number_t)kWhperkW));
 			// 5/28/15 average provided for FCR market
-			assign("annual_energy", var_data((ssc_number_t)(annual_energy / geo_inputs.mi_ProjectLifeYears)));
+			assign("annual_energy", var_data((ssc_number_t)(first_year_energy)));
             accumulate_monthly_for_year("gen", "monthly_energy", 8760.0 / n_rec, n_rec / 8760);
 		}
 
