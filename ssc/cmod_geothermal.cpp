@@ -146,7 +146,15 @@ public:
             calc_basis_type = NUMBER_OF_WELLS;
 
         int conversion_type = as_integer("conversion_type");
-        int resource_type = as_integer("resource_type");
+
+        // Convert resource type to enum here, then use enum comparisons in downstream logic
+        int resource_type_in = as_integer("resource_type");
+        resourceTypes e_resource_type = resourceTypes::NO_RESOURCE_TYPE;
+        if( resource_type_in == 0 )
+            e_resource_type = HYDROTHERMAL;
+        else if( resource_type_in == 1 )
+            e_resource_type = EGS;
+        // --------------------------------------------------------------
 
         int geo_fin_model = as_integer("geo_financial_model");
 
@@ -154,7 +162,7 @@ public:
         int decline_type = decline_type_in;
         // Apply decline type logic and reset if necessary
         // This logic was on the Plant and Equipment page on 5/24/26
-        if( resource_type == HYDROTHERMAL ){
+        if( e_resource_type == resourceTypes::HYDROTHERMAL ){
             decline_type = 0;
         }
         else if( conversion_type == BINARY ) {
@@ -166,7 +174,7 @@ public:
 
         int reservoir_pressure_change_type = as_integer("reservoir_pressure_change_type");
         // Logic from the Plant and Equipment page on 5/24/26
-        if( resource_type != 1 && (reservoir_pressure_change_type == 1 || reservoir_pressure_change_type == 3) ) {
+        if( e_resource_type != resourceTypes::EGS && (reservoir_pressure_change_type == 1 || reservoir_pressure_change_type == 3) ) {
             reservoir_pressure_change_type = 0;
         }
 
@@ -209,10 +217,6 @@ public:
         double PlantEfficiency = as_double("plant_efficiency_input") / 100; //[-]
 
         
-        if( resource_type == 0 )
-            geo_inputs.me_rt = HYDROTHERMAL;
-        else if( resource_type == 1 )
-            geo_inputs.me_rt = EGS;
 
         if( conversion_type == 0 )
             geo_inputs.me_ct = BINARY;
@@ -649,6 +653,8 @@ public:
             }
 
         }
+
+        geo_inputs.me_rt = e_resource_type;
 
         // inputs used in above in refactor
         geo_inputs.md_dtProdWell = dt_prod_well;            //[C]
