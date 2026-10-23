@@ -145,7 +145,14 @@ public:
         else
             calc_basis_type = NUMBER_OF_WELLS;
 
-        int conversion_type = as_integer("conversion_type");
+        // Convert conversion type to enum here, then use enum comparisons in downstream logic
+        int conversion_type_in = as_integer("conversion_type");
+        conversionTypes e_conversion_type = conversionTypes::NO_CONVERSION_TYPE;
+        if( conversion_type_in == 0 )
+            e_conversion_type = conversionTypes::BINARY;
+        else if( conversion_type_in == 1 )
+            e_conversion_type = conversionTypes::FLASH;
+        // ----------------------------------------------------------------------------------
 
         // Convert resource type to enum here, then use enum comparisons in downstream logic
         int resource_type_in = as_integer("resource_type");
@@ -159,18 +166,20 @@ public:
         int geo_fin_model = as_integer("geo_financial_model");
 
         int decline_type_in = as_integer("decline_type");
-        int decline_type = decline_type_in;
+        tempDeclineMethod e_decline_type = tempDeclineMethod::NO_TEMPERATURE_DECLINE_METHOD;
+        //int decline_type = decline_type_in;
         // Apply decline type logic and reset if necessary
         // This logic was on the Plant and Equipment page on 5/24/26
         if( e_resource_type == resourceTypes::HYDROTHERMAL ){
-            decline_type = 0;
+            e_decline_type = ENTER_RATE;
         }
-        else if( conversion_type == BINARY ) {
-            decline_type = decline_type_in;
+        else if( e_conversion_type == BINARY ) {
+            e_decline_type = static_cast<tempDeclineMethod>(decline_type_in + 1);
         }
         else{
-            decline_type = 0;
+            e_decline_type = ENTER_RATE;
         }
+        // --------------------------------------------------------------
 
         int reservoir_pressure_change_type = as_integer("reservoir_pressure_change_type");
         // Logic from the Plant and Equipment page on 5/24/26
@@ -217,17 +226,6 @@ public:
         double PlantEfficiency = as_double("plant_efficiency_input") / 100; //[-]
 
         
-
-        if( conversion_type == 0 )
-            geo_inputs.me_ct = BINARY;
-        else if( conversion_type == 1 )
-            geo_inputs.me_ct = FLASH;
-
-        // temperature decline
-        if( decline_type == 0 )
-            geo_inputs.me_tdm = ENTER_RATE;
-        else if( decline_type == 1 )
-            geo_inputs.me_tdm = CALCULATE_RATE;
 
         double num_conf_wells = as_double("geotherm.cost.conf_num_wells");
         double perc_conf_wells_production = as_double("geotherm.cost.confirm_wells_percent");
@@ -277,9 +275,9 @@ public:
         C_geo_surface* p_geo_surface = nullptr;
         C_geo_subsurface* p_geo_subsurface = nullptr;
         C_geo_weather_file* p_geo_weather_file = nullptr;
-        if( geo_inputs.me_ct == BINARY && geo_inputs.me_rt == HYDROTHERMAL ) {
+        if( e_conversion_type == conversionTypes::BINARY && e_resource_type == HYDROTHERMAL ) {
             p_geo_surface = new C_geo_surface(T_plant_design_calc_C, TemperatureWetBulbC, PlantEfficiency, conc_SiO2_design_calc_ppm,
-                geo_inputs.me_rt, geo_inputs.me_ct, geo_inputs.me_tdm, geo_inputs.me_ft);
+                e_resource_type, e_conversion_type, e_decline_type, geo_inputs.me_ft);
 
             double AE_full_brine_dt_design_calc = std::numeric_limits<double>::quiet_NaN();
             double AE_brine_T_sol_to_to_amb_design_calc = std::numeric_limits<double>::quiet_NaN();
@@ -306,12 +304,12 @@ public:
                 carnot_eff_des,
                 T_inj_des_C);
 
-            p_geo_subsurface = new C_geo_subsurface(geo_wells_stim_type, ExplorationWellsProd, geo_inputs.me_rt,
+            p_geo_subsurface = new C_geo_subsurface(geo_wells_stim_type, ExplorationWellsProd, e_resource_type,
                 calc_basis_type, num_wells_in, ratio_injection_to_production,
                 ProductionFlowRateKgPerS, total_brine_effectiveness,
                 InjectionWellDiam, InjectionWellType, resource_depth_in,
                 resource_temperature, T_plant_design_calc_C, dt_prod_well_des_calc_C, T_inj_des_C,
-                InjectivityIndex, geo_inputs.me_ct,
+                InjectivityIndex, e_conversion_type,
                 ExcessPressureBar, PressureChangeAcrossSurfaceEquipment, AdditionalPressure,
                 TemperatureWetBulbC, depth_calc_EGS_type,
                 water_loss_frac, geo_inputs.me_pc,
@@ -390,7 +388,7 @@ public:
 
             // The GETEM flash model as of 2026.06.26 uses a different value for gross turbine output
             double gross_cost_output_for_flash = std::numeric_limits<double>::quiet_NaN();
-            if( geo_inputs.me_ct == FLASH ) {
+            if( e_conversion_type == conversionTypes::FLASH ) {
                 gross_cost_output_for_flash = cycle_net_power_design_kWe;       //[kWe]
             }
             assign("gross_cost_output", var_data((ssc_number_t)gross_cost_output_for_flash));
@@ -655,6 +653,8 @@ public:
         }
 
         geo_inputs.me_rt = e_resource_type;
+        geo_inputs.me_tdm = e_decline_type;
+        geo_inputs.me_ct = e_conversion_type;
 
         // inputs used in above in refactor
         geo_inputs.md_dtProdWell = dt_prod_well;            //[C]
