@@ -977,7 +977,7 @@ namespace geothermal
         double P_bottomhole = P_upper_bottom_interval + rho_sat * rho_correction * physics::FT_PER_METER * L_int / 144 - friction_head_psid2;
 
         InjWellFriction = friction_head_psid1 + friction_head_psid2;
-        double reservoir_buildup = flow_lbh / RatioInjectionToProduction / InjectivityIndex;
+        double reservoir_buildup = flow_lbh / InjectivityIndex;
         P_hydrostatic_PSI = pressureHydrostaticPSI(T_resource_C, T_amb_fixed_hydrostatic_C, ResourceDepthM_calc, tempGradient_fixed_T_amb_C_per_m);
         double excess_pressure = P_bottomhole - P_hydrostatic_PSI;
         double injection_pump_head_psi = -excess_pressure + reservoir_buildup + AdditionalPressure;
@@ -1332,7 +1332,7 @@ namespace geothermal
         }
 
         total_prod_flow_rate = flow_rate_per_well * num_wells_calc;      //[lb_m/hr] total production flow rate
-        double inj_flow_rate = flow_rate_per_well * num_wells_calc;      //[lb_m/hr] total injection flow rate
+        double inj_flow_rate = total_prod_flow_rate;                    //[lb_m/hr] total injection flow rate
         if( conv_type == FLASH ) {
             throw std::runtime_error("Flash calculations not enabled in GetNumberOfWells");
             //inj_flow -= inj_flow * (waterLoss() / 1000.0);
@@ -2605,11 +2605,15 @@ double CGeothermalAnalyzer::GetNumberOfWells(void)
         double prod_failed_inj_rate = (mo_geo_in.md_FailedProdFlowRatio * mo_geo_in.md_ReservoirDeltaPressure) *
             (mo_geo_in.md_InjWellPressurePSI + geothermal::MetersToFeet(GetResourceDepthM()) * InjectionDensity() / 144.0 + (pressure_well_head) -
             mo_geo_in.md_ProdWellFriction * pow(mo_geo_in.md_FailedProdFlowRatio, 2) - pressureHydrostaticPSI());
+        double ResourceDepth_here = GetResourceDepthM();
+        double InjectionDensity_here = InjectionDensity();
+        double pressureHydrostaticPSI_here = pressureHydrostaticPSI();
         double inj_failed_inj_rate = (mo_geo_in.md_FailedProdFlowRatio > 0) ? (mo_geo_in.md_FailedProdFlowRatio * mo_geo_in.md_ReservoirDeltaPressure) *
-            (mo_geo_in.md_InjWellPressurePSI + geothermal::MetersToFeet(GetResourceDepthM()) * InjectionDensity() / 144.0 + (pressure_well_head) -
-            mo_geo_in.md_InjWellFriction * pow(mo_geo_in.md_FailedProdFlowRatio, 2) - pressureHydrostaticPSI()) : 0.0;
+            (mo_geo_in.md_InjWellPressurePSI + geothermal::MetersToFeet(ResourceDepth_here) * InjectionDensity_here / 144.0 + (pressure_well_head) -
+            mo_geo_in.md_InjWellFriction * pow(mo_geo_in.md_FailedProdFlowRatio, 2) - pressureHydrostaticPSI_here) : 0.0;
         double inj_rate_failed_prod_wells = MIN(prod_failed_inj_rate, flowRatePerWell()); //Injectivity of failed production well?
-        double inj_rate_failed_inj_wells = MIN(inj_failed_inj_rate, flowRatePerWell());
+        double FlowRatePerWell_here = flowRatePerWell();
+        double inj_rate_failed_inj_wells = MIN(inj_failed_inj_rate, FlowRatePerWell_here);
         double inj_rate_successful_inj_wells = flowRatePerWell() / mo_geo_in.md_RatioInjectionToProduction;
         double num_failed_prod_wells_inj = (mo_geo_in.md_FailedProdFlowRatio > 0) ? mp_geo_out->md_NumberOfWellsProdDrilled - num_prod_wells_successful : 0.0;
         double successful_inj_wells_required_drilling = (inj_flow - (num_failed_prod_wells_inj * prod_failed_inj_rate)) / (inj_rate_successful_inj_wells + (inj_rate_failed_inj_wells * (1 / (mo_geo_in.md_DrillSuccessRate) - 1)));
@@ -4208,10 +4212,10 @@ bool C_geo_system::simulate(size_t ProjectLifeYears, int TotalMakeupCalculations
                     }
 
                     
-                    double cycle_net_power = std::numeric_limits<double>::quiet_NaN();
-                    m_geo_surface->calc_cycle_off_design(T_cycle_od_C, T_dry, total_prod_flow_rate, cycle_net_power);
+                    cycle_net_power_od = std::numeric_limits<double>::quiet_NaN();
+                    m_geo_surface->calc_cycle_off_design(T_cycle_od_C, T_dry, total_prod_flow_rate, cycle_net_power_od);
 
-                    plant_net_power_od = std::max(cycle_net_power - total_pump_power_des_kWe, 0.0);  //[kWe]
+                    plant_net_power_od = std::max(cycle_net_power_od - total_pump_power_des_kWe, 0.0);  //[kWe]
 
                     maf_hourly_power_no_derate[iElapsedHours] = plant_net_power_od;  //[kWe]
 
@@ -4239,7 +4243,7 @@ bool C_geo_system::simulate(size_t ProjectLifeYears, int TotalMakeupCalculations
     //
     //                mp_geo_out->maf_timestep_test_values[iElapsedTimeSteps] = (float)(year + 1) * 1000 + (month);//+(hour); // puts number formatted "year,month,hour_of_month" number into test value
     //
-    //                fMonthlyPowerTotal += mp_geo_out->maf_timestep_power[iElapsedTimeSteps];
+                    fMonthlyPowerTotal += plant_net_power_od;       //[kWe]
     //
     //                // record hourly power which = hourly energy
     //                mp_geo_out->maf_hourly_power[iElapsedHours] = mp_geo_out->maf_timestep_power[iElapsedTimeSteps];
@@ -4280,11 +4284,11 @@ bool C_geo_system::simulate(size_t ProjectLifeYears, int TotalMakeupCalculations
     
                 iElapsedHours++;
     //            mp_geo_out->ElapsedHours = iElapsedHours;
-            }//hours
+            } //hours
     //
     //        mp_geo_out->maf_monthly_resource_temp[iElapsedMonths] = (float)md_WorkingTemperatureC;	// resource temperature for this month
-    //        iEvaluationsInMonth = (mo_geo_in.mi_simulation_timestep_type == HOURLY_TIMESTEPS) ? (unsigned int)util::hours_in_month(month) : 1;
-    //        mp_geo_out->maf_monthly_power[iElapsedMonths] = fMonthlyPowerTotal / iEvaluationsInMonth;		// avg monthly power
+            iEvaluationsInMonth = (m_sim_timestep_type == HOURLY_TIMESTEPS) ? (unsigned int)util::hours_in_month(month) : 1;
+            maf_monthly_power[iElapsedMonths] = fMonthlyPowerTotal / iEvaluationsInMonth;		// avg monthly power
     //        mp_geo_out->maf_monthly_energy[iElapsedMonths] = fMonthlyPowerTotal * util::hours_in_month(month) / iEvaluationsInMonth;		// energy output in month (kWh)
     //
     //        // Is it possible and do we want to replace the reservoir in the next time step?

@@ -560,7 +560,7 @@ public:
                 
                 //// allocate lifetime monthly arrays (one element per month, over lifetime of project)
                 //geo_outputs.maf_monthly_resource_temp = allocate("monthly_resource_temperature", 12 * geo_inputs.mi_ProjectLifeYears);
-                //geo_outputs.maf_monthly_power = allocate("monthly_power", 12 * geo_inputs.mi_ProjectLifeYears);
+                geo_system.maf_monthly_power = allocate("monthly_power", 12 * geo_inputs.mi_ProjectLifeYears);
                 //geo_outputs.maf_monthly_energy = allocate("monthly_energy_lifetime", 12 * geo_inputs.mi_ProjectLifeYears);
                 //
                 //// allocate lifetime timestep arrays (one element per timestep, over lifetime of project)
@@ -647,7 +647,7 @@ public:
                 assign("annual_energy", var_data((ssc_number_t)(first_year_total_energy)));
                 accumulate_monthly_for_year("gen", "monthly_energy", 8760.0 / n_rec, n_rec / 8760);
 
-                //return;
+                return;
             }
 
         }

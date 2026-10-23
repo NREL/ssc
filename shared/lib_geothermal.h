@@ -958,6 +958,10 @@ public:
     // Hourly outputs
     double* maf_hourly_power_no_derate;				//[kWe]
 
+    // Monthly outputs
+    double* maf_monthly_power;				//[kWe] *avg* monthly values, even if timestep is hourly
+    //double* maf_monthly_energy;             //[kWhe] total monthly energy
+
     // Annual outputs
     double* maf_ReplacementsByYear;                 //[-]
 

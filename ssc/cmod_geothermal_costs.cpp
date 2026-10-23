@@ -254,6 +254,9 @@ public:
 
 	void exec() override
 	{
+        //FILE* fp = fopen("geo_costs_to_lk.lk", "w");
+        //write_cmod_to_lk_script(fp, m_vartab);
+
 		SGeothermal_Inputs geo_inputs;
 
         double conf_drilling_cost = std::numeric_limits<double>::quiet_NaN();
