@@ -732,7 +732,8 @@ public:
         double& cycle_net_power_des /*kWe*/);
 
     void calc_cycle_off_design(double T_cycle_od_C /*C*/, double T_amb_od_C /*C*/,
-        double total_flow_rate /*lb_m/hr*/, double& cycle_net_power /*kWe*/);
+        double total_flow_rate /*lb_m/hr*/, double& cycle_net_power /*kWe*/,
+        double& AE_od /*kWe*/, double& carnot_od_scaling /*-*/, double& second_law_eta_total_od /*-*/);
 
     makeupAlgorithmType get_makeup_type(){
         return m_makeup_type;
@@ -956,7 +957,16 @@ public:
         int performance_simulations_per_year);
 
     // Hourly outputs
-    double* maf_hourly_power_no_derate;				//[kWe]
+    double* maf_timestep_resource_temp;     //[C]
+    double* maf_timestep_dry_bulb;          //[C]
+    double* maf_timestep_wet_bulb;          //[C]
+
+    double* maf_AE_total_od;                   //[kWe]
+    double* maf_second_law_eta_total_od;        //[-]
+    double* maf_carnot_od_scaling;             //[-]
+    double* maf_cycle_net_power_od;            //[kWe]
+    double* maf_brine_pumping_power_od;           //[kWe]
+    double* maf_hourly_power_no_derate;		//[kWe]
 
     // Monthly outputs
     double* maf_monthly_power;				//[kWe] *avg* monthly values, even if timestep is hourly

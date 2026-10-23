@@ -539,14 +539,14 @@ public:
 
 
                 geo_weather_timestep_type weather_timestep_type = geo_weather_timestep_type::WEATHER_UNDEFINED;
-                if(simulation_timestep_type == MONTHLY_TIMESTEPS && use_weather_file_conditions == 0){
+                if(simulation_timestep_type == geo_simulation_timestep_type::MONTHLY_TIMESTEPS && use_weather_file_conditions == 0){
                     weather_timestep_type = geo_weather_timestep_type::WEATHER_DESIGN;
                 }
-                else if( simulation_timestep_type == MONTHLY_TIMESTEPS ) {
-                    weather_timestep_type == geo_weather_timestep_type::WEATHER_MONTHLY;
+                else if( simulation_timestep_type == geo_simulation_timestep_type::MONTHLY_TIMESTEPS ) {
+                    weather_timestep_type = geo_weather_timestep_type::WEATHER_MONTHLY;
                 }
                 else{
-                    weather_timestep_type == geo_weather_timestep_type::WEATHER_HOURLY;
+                    weather_timestep_type = geo_weather_timestep_type::WEATHER_HOURLY;
                 }
 
                 C_geo_system geo_system(p_geo_prod_well, p_geo_surface,
@@ -560,7 +560,7 @@ public:
                 
                 //// allocate lifetime monthly arrays (one element per month, over lifetime of project)
                 //geo_outputs.maf_monthly_resource_temp = allocate("monthly_resource_temperature", 12 * geo_inputs.mi_ProjectLifeYears);
-                geo_system.maf_monthly_power = allocate("monthly_power", 12 * geo_inputs.mi_ProjectLifeYears);
+                geo_system.maf_monthly_power = allocate("monthly_power", 12 * analysis_period_years);
                 //geo_outputs.maf_monthly_energy = allocate("monthly_energy_lifetime", 12 * geo_inputs.mi_ProjectLifeYears);
                 //
                 //// allocate lifetime timestep arrays (one element per timestep, over lifetime of project)
@@ -574,11 +574,9 @@ public:
                 }
                 
                 int TotalMakeupCalculations = analysis_period_years * performance_simulations_per_year;
-                //
-                //geo_outputs.maf_timestep_resource_temp = allocate("timestep_resource_temperature", geo_inputs.mi_TotalMakeupCalculations);
-                //geo_outputs.maf_timestep_power = allocate("timestep_power", geo_inputs.mi_TotalMakeupCalculations);
+                
                 //geo_outputs.maf_timestep_test_values = allocate("timestep_test_values", geo_inputs.mi_TotalMakeupCalculations);
-                //
+                
                 //geo_outputs.maf_timestep_pressure = allocate("timestep_pressure", geo_inputs.mi_TotalMakeupCalculations);
                 
                 size_t n_rec = 8760;
@@ -587,20 +585,20 @@ public:
                 }
                 
                 //// Still want hourly reporting for some outputs even if simulation timestep is monthly
-                //geo_outputs.maf_timestep_dry_bulb = allocate("timestep_dry_bulb", n_rec);
-                //geo_outputs.maf_timestep_wet_bulb = allocate("timestep_wet_bulb", n_rec);
-                //
-                //geo_outputs.maf_AE = allocate("AE_od", n_rec);
-                //geo_outputs.maf_getem_2nd_law_total_od = allocate("getem_2nd_law_total_od", n_rec);
-                //geo_outputs.maf_carnot_od_scaling = allocate("carnot_scaling_od", n_rec);
-                //geo_outputs.maf_cycle_net_power_od = allocate("cycle_net_power_od", n_rec);
-                //geo_outputs.maf_plant_net_power_od = allocate("plant_net_power_od", n_rec);
-                //geo_outputs.maf_brine_pumping_power_od = allocate("brine_pumping_power_od", n_rec);
+                geo_system.maf_timestep_resource_temp = allocate("timestep_resource_temperature", n_rec);
+                geo_system.maf_timestep_dry_bulb = allocate("timestep_dry_bulb", n_rec);
+                geo_system.maf_timestep_wet_bulb = allocate("timestep_wet_bulb", n_rec);
+                
+                geo_system.maf_AE_total_od = allocate("AE_od", n_rec);
+                geo_system.maf_second_law_eta_total_od = allocate("getem_2nd_law_total_od", n_rec);
+                geo_system.maf_carnot_od_scaling = allocate("carnot_scaling_od", n_rec);
+                geo_system.maf_cycle_net_power_od = allocate("cycle_net_power_od", n_rec);
+                geo_system.maf_brine_pumping_power_od = allocate("brine_pumping_power_od", n_rec);
                 
                 // 26-10-21: Refactor approach is *NOT* applying the availability derate in the hourly calcs, while the old approach did
                 //   instead applying availability after timeseries simulation
                 //   renaming hourly array to clarify this change approach
-                geo_system.maf_hourly_power_no_derate = allocate("W_dot_system_net", n_rec);
+                geo_system.maf_hourly_power_no_derate = allocate("plant_net_power_od", n_rec);
                 
                 // TODO - implement performance factors 
                 adjustment_factors haf1(this->get_var_table(), "adjust");

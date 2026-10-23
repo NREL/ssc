@@ -3854,10 +3854,11 @@ C_geo_surface::C_geo_surface(double T_plant_design_C /*C*/,
 }
 
 void C_geo_surface::calc_cycle_off_design(double T_cycle_od_C /*C*/, double T_amb_od_C /*C*/,
-    double total_flow_rate /*lb_m/hr*/, double& cycle_net_power /*kWe*/)
+    double total_flow_rate /*lb_m/hr*/, double& cycle_net_power /*kWe*/,
+    double& AE_od /*W-hr/lb_m*/, double& carnot_od_scaling /*-*/, double& second_law_eta_total_od /*-*/)
 {
     // Off-design, so want to calculate as a function of brine and ambient temperatures
-    double AE_od = geothermal::oGFC.GetAEForBinaryWattHrUsingC(T_cycle_od_C, T_amb_od_C);     //[watt-hr/lb_m]
+    double AE_od_spec = geothermal::oGFC.GetAEForBinaryWattHrUsingC(T_cycle_od_C, T_amb_od_C);     //[watt-hr/lb_m]
 
     // Adjust 2nd law efficiency for off-design
     double T_cycle_in_od_K = physics::CelciusToKelvin(T_cycle_od_C);
@@ -3866,15 +3867,16 @@ void C_geo_surface::calc_cycle_off_design(double T_cycle_od_C /*C*/, double T_am
 
     // Get carnot ratio and then carnot scaling
     double carnot_ratio = carnot_eff_od / m_carnot_eff_des;
-    double carnot_od_scaling = geothermal::Getem_Binary_OD_Scaling(carnot_ratio);
+    carnot_od_scaling = geothermal::Getem_Binary_OD_Scaling(carnot_ratio);
 
     // Get off-design 2nd law efficiency
-    double getem_2nd_law_total_od = m_eta_2nd_law_total_design * carnot_od_scaling;   //[-]
+    second_law_eta_total_od = m_eta_2nd_law_total_design * carnot_od_scaling;   //[-]
 
     // Get actual brine effectiveness
-    double plant_brine_effectiveness_od = AE_od * getem_2nd_law_total_od;       //[watt-hr/lb_m]
+    double plant_brine_effectiveness_od = AE_od_spec * second_law_eta_total_od;       //[watt-hr/lb_m]
 
     cycle_net_power = plant_brine_effectiveness_od * total_flow_rate / 1000.0;   //[kWe]
+    AE_od = AE_od_spec * total_flow_rate / 1000.0;                              //[kWe]
 
     return;
 }
@@ -4177,8 +4179,15 @@ bool C_geo_system::simulate(size_t ProjectLifeYears, int TotalMakeupCalculations
             double T_cycle_od_C = T_resource_od_C - dt_prod_well;
 
             fMonthlyPowerTotal = 0;
+            double AE_od = std::numeric_limits<double>::quiet_NaN();                //[kWe]
+            double carnot_od_scaling = std::numeric_limits<double>::quiet_NaN();
+            double second_law_eta_total_od = std::numeric_limits<double>::quiet_NaN();
             double cycle_net_power_od = std::numeric_limits<double>::quiet_NaN();
             double plant_net_power_od = std::numeric_limits<double>::quiet_NaN();
+
+            double P_amb, T_wb, T_dry, relhum;
+            P_amb = T_wb = T_dry = relhum = std::numeric_limits<double>::quiet_NaN();
+
             for( unsigned int hour = 0; hour < (unsigned int)util::hours_in_month(month); hour++ )
             {
                 if( m_sim_timestep_type == HOURLY_TIMESTEPS || (hour == 0) )
@@ -4189,7 +4198,6 @@ bool C_geo_system::simulate(size_t ProjectLifeYears, int TotalMakeupCalculations
                         throw std::runtime_error("Time step exceded the array size in CGeoHourlyAnalysis::RunAnalysis().");
                     }
 
-                    double P_amb, T_wb, T_dry, relhum;
                     P_amb = T_wb = T_dry = relhum = std::numeric_limits<double>::quiet_NaN();
 
                     if( m_weather_timestep_type == geo_weather_timestep_type::WEATHER_HOURLY ||
@@ -4213,98 +4221,38 @@ bool C_geo_system::simulate(size_t ProjectLifeYears, int TotalMakeupCalculations
 
                     
                     cycle_net_power_od = std::numeric_limits<double>::quiet_NaN();
-                    m_geo_surface->calc_cycle_off_design(T_cycle_od_C, T_dry, total_prod_flow_rate, cycle_net_power_od);
+                    m_geo_surface->calc_cycle_off_design(T_cycle_od_C, T_dry, total_prod_flow_rate, cycle_net_power_od,
+                        AE_od, carnot_od_scaling, second_law_eta_total_od);
 
                     plant_net_power_od = std::max(cycle_net_power_od - total_pump_power_des_kWe, 0.0);  //[kWe]
-
-                    maf_hourly_power_no_derate[iElapsedHours] = plant_net_power_od;  //[kWe]
-
-                    double abce = 123.;
-
-    //                // record current temperature (temperature changes monthly, but this is an hourly record of it)
-    //                mp_geo_out->maf_timestep_resource_temp[iElapsedTimeSteps] = (float)md_WorkingTemperatureC; // NOTE: If EGS temp drop is being calculated, then PlantGrossPowerkW must be called.  No production = no temp change
-    //                mp_geo_out->maf_timestep_pressure[iElapsedTimeSteps] = (float)mo_pb_in.P_amb;
-    //
-    //                // record outputs based on current inputs
-    //                if( mo_geo_in.mi_cycle_model_type == GETEM_CYCLE ) { // model choice 0 = GETEM
-    //                    //cycle_net_power_od = PlantGrossPowerkW_offdesign(md_WorkingTemperatureC, mo_pb_in.T_db);
-    //                    //plant_net_power_od = std::max(cycle_net_power_od - mp_geo_out->md_PumpWorkKW, 0.0);
-    //                    //double W_dot_plant_net_avail_calc = plant_net_power_od * mo_geo_in.haf[iElapsedHours];
-    //                    mp_geo_out->maf_timestep_power[iElapsedTimeSteps] = (float)MAX(PlantGrossPowerkW() - mp_geo_out->md_PumpWorkKW, 0) * mo_geo_in.haf[iElapsedHours];
-    //                    //mp_geo_out->maf_timestep_power[iElapsedTimeSteps] = W_dot_plant_net_avail_calc;     //[kWe]
-    //                }
-    //                else
-    //                {	// run power block model
-    //                    if( !mo_PowerBlock.Execute((ml_HourCount - 1) * 3600, mo_pb_in) )
-    //                        ms_ErrorString = "There was an error running the power block model: " + mo_PowerBlock.GetLastError();
-    //                    mp_geo_out->maf_timestep_power[iElapsedTimeSteps] = (float)MAX(mo_PowerBlock.GetOutputkW() - mp_geo_out->md_PumpWorkKW, 0) * mo_geo_in.haf[iElapsedHours];
-    //                    //fJunk = (float)moMA->PlantGrossPowerkW(); // kinda works, but not quite the same
-    //                }
-    //
-    //                mp_geo_out->maf_timestep_test_values[iElapsedTimeSteps] = (float)(year + 1) * 1000 + (month);//+(hour); // puts number formatted "year,month,hour_of_month" number into test value
-    //
                     fMonthlyPowerTotal += plant_net_power_od;       //[kWe]
-    //
-    //                // record hourly power which = hourly energy
-    //                mp_geo_out->maf_hourly_power[iElapsedHours] = mp_geo_out->maf_timestep_power[iElapsedTimeSteps];
-    //                mp_geo_out->maf_timestep_dry_bulb[iElapsedHours] = (float)mo_pb_in.T_db;
-    //                mp_geo_out->maf_timestep_wet_bulb[iElapsedHours] = (float)mo_pb_in.T_wb;
-    //
-    //                mp_geo_out->maf_AE[iElapsedHours] = mp_geo_out->md_AE;
-    //                mp_geo_out->maf_getem_2nd_law_total_od[iElapsedHours] = mp_geo_out->md_getem_2nd_law_total_od;
-    //                mp_geo_out->maf_carnot_od_scaling[iElapsedHours] = mp_geo_out->md_carnot_od_scaling;
-    //                mp_geo_out->maf_cycle_net_power_od[iElapsedHours] = cycle_net_power_od;
-    //                mp_geo_out->maf_plant_net_power_od[iElapsedHours] = plant_net_power_od;
-    //                mp_geo_out->maf_brine_pumping_power_od[iElapsedHours] = mp_geo_out->md_PumpWorkKW;
-    //
-    //                //md_ElapsedTimeInYears = year + util::percent_of_year(month,hour);
-    //                if( !ms_ErrorString.empty() ) {
-    //                    return false;
-    //                }
+
                     iElapsedTimeSteps++;
                     dElapsedTimeInYears = iElapsedTimeSteps * (1.0 / performance_simulations_per_year);  //moved to be after iElapsedTimeSteps++;
                 }
-                else {
 
-                    maf_hourly_power_no_derate[iElapsedHours] = plant_net_power_od;  //[kWe]
+                // Should be able to write hourly outputs here regardless of monthly or hourly weather timesteps
+                
+                maf_timestep_resource_temp[iElapsedHours] = T_resource_od_C; // NOTE: If EGS temp drop is being calculated, then PlantGrossPowerkW must be called.  No production = no temp change
+                maf_timestep_dry_bulb[iElapsedHours] = T_dry;
+                maf_timestep_wet_bulb[iElapsedHours] = T_wb;
 
-                    double abce = 123.;
+                maf_AE_total_od[iElapsedHours] = AE_od;         //[kWe]
+                maf_second_law_eta_total_od[iElapsedHours] = second_law_eta_total_od;       //[-]
+                maf_carnot_od_scaling[iElapsedHours] = carnot_od_scaling;                   //[-]
+                maf_cycle_net_power_od[iElapsedHours] = cycle_net_power_od;                 //[kWe]
+                maf_brine_pumping_power_od[iElapsedHours] = total_pump_power_des_kWe;       //[kWe]
+                maf_hourly_power_no_derate[iElapsedHours] = plant_net_power_od;             //[kWe]
 
-    //                mp_geo_out->maf_hourly_power[iElapsedHours] = fMonthlyPowerTotal;
-    //                mp_geo_out->maf_timestep_dry_bulb[iElapsedHours] = (float)mo_pb_in.T_db;
-    //                mp_geo_out->maf_timestep_wet_bulb[iElapsedHours] = (float)mo_pb_in.T_wb;
-    //
-    //                mp_geo_out->maf_AE[iElapsedHours] = mp_geo_out->md_AE;
-    //                mp_geo_out->maf_getem_2nd_law_total_od[iElapsedHours] = mp_geo_out->md_getem_2nd_law_total_od;
-    //                mp_geo_out->maf_carnot_od_scaling[iElapsedHours] = mp_geo_out->md_carnot_od_scaling;
-    //                mp_geo_out->maf_cycle_net_power_od[iElapsedHours] = cycle_net_power_od;
-    //                mp_geo_out->maf_plant_net_power_od[iElapsedHours] = plant_net_power_od;
-    //                mp_geo_out->maf_brine_pumping_power_od[iElapsedHours] = mp_geo_out->md_PumpWorkKW;
-                }
-    
                 iElapsedHours++;
-    //            mp_geo_out->ElapsedHours = iElapsedHours;
+
             } //hours
-    //
-    //        mp_geo_out->maf_monthly_resource_temp[iElapsedMonths] = (float)md_WorkingTemperatureC;	// resource temperature for this month
+    
             iEvaluationsInMonth = (m_sim_timestep_type == HOURLY_TIMESTEPS) ? (unsigned int)util::hours_in_month(month) : 1;
             maf_monthly_power[iElapsedMonths] = fMonthlyPowerTotal / iEvaluationsInMonth;		// avg monthly power
-    //        mp_geo_out->maf_monthly_energy[iElapsedMonths] = fMonthlyPowerTotal * util::hours_in_month(month) / iEvaluationsInMonth;		// energy output in month (kWh)
-    //
-    //        // Is it possible and do we want to replace the reservoir in the next time step?
-    //        //bWantToReplaceReservoir = ( md_WorkingTemperatureC < (GetResourceTemperatureC() - geothermal::MAX_TEMPERATURE_DECLINE_C) ) ? true : false;
-    //        bWantToReplaceReservoir = (md_WorkingTemperatureC < (GetResourceTemperatureC() - mo_geo_in.md_MaxTempDeclineC) && mo_geo_in.md_AllowReservoirReplacements) ? true : false;
-    //        if( bWantToReplaceReservoir && CanReplaceReservoir(dElapsedTimeInYears + (1.0 / 12)) )
-    //        {
-    //            ReplaceReservoir(dElapsedTimeInYears); // this will 'reset' temperature back to original resource temp
-    //            mp_geo_out->maf_ReplacementsByYear[year] = mp_geo_out->maf_ReplacementsByYear[year] + 1;
-    //        }
-    //        else
-    //            //CalculateNewTemperature( dElapsedTimeInYears ); // once per month -> reduce temperature from last temp
-    //            CalculateNewTemperature(dElapsedTimeInYears + (1.0 / 12)); // once per month -> reduce temperature from last temp
-    //
+
             iElapsedMonths++;  //for recording values into arrays, not used in calculations
-    //        mp_geo_out->ElapsedMonths = iElapsedMonths;
+    
         }   //months
     }   //years
 
