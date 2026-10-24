@@ -181,19 +181,11 @@ public:
         }
         // --------------------------------------------------------------
 
-        int reservoir_pressure_change_type = as_integer("reservoir_pressure_change_type");
+        reservoirPressureChangeCalculation e_reservoir_pressure_change_type = static_cast<reservoirPressureChangeCalculation>(as_integer("reservoir_pressure_change_type")+1);
         // Logic from the Plant and Equipment page on 5/24/26
-        if( e_resource_type != resourceTypes::EGS && (reservoir_pressure_change_type == 1 || reservoir_pressure_change_type == 3) ) {
-            reservoir_pressure_change_type = 0;
-        }
-
-        SGeothermal_Inputs geo_inputs;
-        switch( reservoir_pressure_change_type )
-        {
-        case 0: geo_inputs.me_pc = ENTER_PC; break;				// pressure change entered by user
-        case 1: geo_inputs.me_pc = SIMPLE_FRACTURE; break;		// use fracture flow (EGS only)
-        case 2: geo_inputs.me_pc = K_AREA; break;				// permeability * area
-        case 3: geo_inputs.me_pc = USER_TEMP; break;
+        if( e_resource_type != resourceTypes::EGS &&
+            (e_reservoir_pressure_change_type == SIMPLE_FRACTURE || e_reservoir_pressure_change_type == USER_TEMP) ) {
+            e_reservoir_pressure_change_type = ENTER_PC;
         }
 
         geo_wells_stimulated geo_wells_stim_type = static_cast<geo_wells_stimulated>(as_integer("stimulation_type"));
@@ -223,9 +215,7 @@ public:
 
         // Calculate design point surface plant
         double TemperatureWetBulbC = as_double("wet_bulb_temp");            //[C]
-        double PlantEfficiency = as_double("plant_efficiency_input") / 100; //[-]
-
-        
+        double PlantEfficiency = as_double("plant_efficiency_input") / 100; //[-]      
 
         double num_conf_wells = as_double("geotherm.cost.conf_num_wells");
         double perc_conf_wells_production = as_double("geotherm.cost.confirm_wells_percent");
@@ -264,20 +254,26 @@ public:
 
         int use_weather_file_conditions = as_integer("use_weather_file_conditions");    //[-]
 
-        switch( as_integer("conversion_subtype") )
-        {
-        case 0:	geo_inputs.me_ft = SINGLE_FLASH_NO_TEMP_CONSTRAINT; break;
-        case 1:	geo_inputs.me_ft = SINGLE_FLASH_WITH_TEMP_CONSTRAINT; break;
-        case 2:	geo_inputs.me_ft = DUAL_FLASH_NO_TEMP_CONSTRAINT; break;
-        case 3:	geo_inputs.me_ft = DUAL_FLASH_WITH_TEMP_CONSTRAINT; break;
+        flashTypes e_flash_type = static_cast<flashTypes>(as_integer("conversion_subtype") + 1);
+
+        // Other settings that I suppose can be design-point
+        bool system_use_lifetime_output = false;
+        int analysis_period_years = 1;              // geo_inputs.mi_ProjectLifeYears = 1;
+        if( geo_fin_model <= 6 ) {
+            system_use_lifetime_output = true;
+            analysis_period_years = as_integer("analysis_period");
         }
+        else {
+            assign("analysis_period", (ssc_number_t)analysis_period_years);
+        }
+        assign("system_use_lifetime_output", (ssc_number_t)system_use_lifetime_output);
 
         C_geo_surface* p_geo_surface = nullptr;
         C_geo_subsurface* p_geo_subsurface = nullptr;
         C_geo_weather_file* p_geo_weather_file = nullptr;
         if( e_conversion_type == conversionTypes::BINARY && e_resource_type == HYDROTHERMAL ) {
             p_geo_surface = new C_geo_surface(T_plant_design_calc_C, TemperatureWetBulbC, PlantEfficiency, conc_SiO2_design_calc_ppm,
-                e_resource_type, e_conversion_type, e_decline_type, geo_inputs.me_ft);
+                e_resource_type, e_conversion_type, e_decline_type, e_flash_type);
 
             double AE_full_brine_dt_design_calc = std::numeric_limits<double>::quiet_NaN();
             double AE_brine_T_sol_to_to_amb_design_calc = std::numeric_limits<double>::quiet_NaN();
@@ -312,8 +308,8 @@ public:
                 InjectivityIndex, e_conversion_type,
                 ExcessPressureBar, PressureChangeAcrossSurfaceEquipment, AdditionalPressure,
                 TemperatureWetBulbC, depth_calc_EGS_type,
-                water_loss_frac, geo_inputs.me_pc,
-                reservoir_pressure_chage, geo_inputs.me_ft,
+                water_loss_frac, e_reservoir_pressure_change_type,
+                reservoir_pressure_chage, e_flash_type,
                 gf_pump_efficiency, PotentialResourceMW,
                 ProductionWellDiam, ProductionWellType,
                 desired_sales_capacity_kw,
@@ -499,22 +495,10 @@ public:
                 }
             }
 
-            // Other settings that I suppose can be design-point
-            bool system_use_lifetime_output = false;
-            int analysis_period_years = 1;              // geo_inputs.mi_ProjectLifeYears = 1;
-            if( geo_fin_model <= 6 ) {
-                system_use_lifetime_output = true;
-                analysis_period_years = as_integer("analysis_period");
-            }
-            else {
-                assign("analysis_period", (ssc_number_t)analysis_period_years);
-            }
-            assign("system_use_lifetime_output", (ssc_number_t)system_use_lifetime_output);
-
-            geo_inputs.mi_ProjectLifeYears = analysis_period_years; // as_integer("geothermal_analysis_period");
+            
             assign("geothermal_analysis_period", (ssc_number_t)analysis_period_years);
 
-            if( geo_inputs.mi_ProjectLifeYears == 0 )
+            if( analysis_period_years == 0 )
                 throw general_error("invalid analysis period specified in the geothermal hourly model");
 
             // weather file and time-of-use data
@@ -652,9 +636,13 @@ public:
 
         }
 
+        SGeothermal_Inputs geo_inputs;
+
         geo_inputs.me_rt = e_resource_type;
         geo_inputs.me_tdm = e_decline_type;
         geo_inputs.me_ct = e_conversion_type;
+        geo_inputs.me_pc = e_reservoir_pressure_change_type;
+        geo_inputs.me_ft = e_flash_type;
 
         // inputs used in above in refactor
         geo_inputs.md_dtProdWell = dt_prod_well;            //[C]
@@ -708,16 +696,10 @@ public:
 		geo_inputs.mb_CalculatePumpWork = ( 1 != as_integer("specify_pump_work") );
 		geo_inputs.md_UserSpecifiedPumpWorkKW = as_double("specified_pump_work_amount") * 1000; // entered in MW
 
-		
-
-		
-
 		geo_inputs.md_ResourceDepthM = resource_depth_in;
 		geo_inputs.md_TemperatureResourceC = resource_temperature;
 		geo_inputs.me_dc = depth_calc_EGS_type;
 		geo_inputs.md_TemperaturePlantDesignC = design_temp;
-		
-		
 
 		//reservoir properties
 		geo_inputs.md_TemperatureEGSAmbientC = 10.0;
@@ -727,7 +709,6 @@ public:
 		
 		geo_inputs.md_ReservoirDeltaPressure = reservoir_pressure_chage;
         geo_inputs.md_InjectivityIndex = InjectivityIndex;
-
         
         geo_inputs.md_ExplorationWellsProd = num_conf_wells_prod;
 
@@ -753,17 +734,6 @@ public:
 
         if (is_assigned("reservoir_model_inputs")) 
             geo_inputs.md_ReservoirInputs = as_matrix("reservoir_model_inputs");
-
-        bool system_use_lifetime_output = false;
-        int analysis_period_years = 1;              // geo_inputs.mi_ProjectLifeYears = 1;
-        if( geo_fin_model <= 6 ) {
-            system_use_lifetime_output = true;
-            analysis_period_years = as_integer("analysis_period");
-        }
-        else {
-            assign("analysis_period", (ssc_number_t)analysis_period_years);
-        }
-        assign("system_use_lifetime_output", (ssc_number_t)system_use_lifetime_output);
 
         geo_inputs.mi_ProjectLifeYears = analysis_period_years; // as_integer("geothermal_analysis_period");
         assign("geothermal_analysis_period", (ssc_number_t)analysis_period_years);
@@ -823,7 +793,6 @@ public:
         pbp.F_wc[6] = as_double("hc_ctl7");
         pbp.F_wc[7] = as_double("hc_ctl8");
         pbp.F_wc[8] = as_double("hc_ctl9");
-
     
 		// Create output object
 		SGeothermal_Outputs geo_outputs;
@@ -885,7 +854,6 @@ public:
         // hr to s = divide by 3600, so kg/s to lb/hr is multiply by 2.20462 and divide by (1/3600) which is multiply by 3600, so total conversion factor is 2.20462 * 3600 = 7936.64
         double pump_size_hp = geo_outputs.md_pumpwork_prod / 745.7 * geo_inputs.md_ProductionFlowRateKgPerS * 7936.64; // convert W to hp and kg/s to lb/hr
         assign("pump_size_hp", (ssc_number_t)pump_size_hp);
-
         
 
         //Assigning 2nd Law efficiency:
@@ -927,8 +895,6 @@ public:
         assign("v_stage_2", (ssc_number_t)v_stage_2);
         double v_stage_3 = geo_outputs.v_stage_3;
         assign("v_stage_3", (ssc_number_t)v_stage_3);
-
-        
 
         //Assigning Rejected Total Heat from Flash Plant:
         double qRejectTotal = geo_outputs.qRejectedTotal;	//total heat rejected 
@@ -1116,7 +1082,6 @@ public:
             geo_outputs.maf_plant_net_power_od = allocate("plant_net_power_od", n_rec);
             geo_outputs.maf_brine_pumping_power_od = allocate("brine_pumping_power_od", n_rec);
 
-
 			geo_outputs.maf_hourly_power = allocate("tmp", n_rec);
 			ssc_number_t * p_gen = allocate("gen", n_rec);
 
@@ -1135,7 +1100,6 @@ public:
 			// running
 			if (RunGeothermalAnalysis(my_update_function, this, err_msg, pbp, pbInputs, geo_inputs, geo_outputs) != 0)
 				throw exec_error("geothermal", "error from geothermal hourly model: " + err_msg + ".");
-
 
 			// Summary calculations
 			ssc_number_t total_energy = 0;
@@ -1185,7 +1149,7 @@ public:
 
 };
 
-DEFINE_MODULE_ENTRY( geothermal, "Geothermal monthly and hourly models using general power block code from TRNSYS Type 224 code by M.Wagner, and some GETEM model code.", 3 );
+DEFINE_MODULE_ENTRY( geothermal, "Geothermal hourly or monthly annual and multi-year simulation", 4 );
 
 // above is equivalent to:
 //static compute_module *_create_geothermal () { return new cm_geothermal; }
